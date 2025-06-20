@@ -1,0 +1,18 @@
+
+# IDE files
+.idea/*
+CMakeLists.txt
+
+# Build files
+cmake-build-*/**
+Kernel/BuildTools/*.json
+OS/BuildTools/*.json
+**/Build/
+Install
+
+# Scons files
+**/.sconsign.dblite
+
+# Toolkit files
+**/*.image
+Toolkit/tmp
