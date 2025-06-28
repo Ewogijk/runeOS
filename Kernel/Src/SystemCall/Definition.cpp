@@ -27,15 +27,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1),
-                            forward<U64>(args->arg2),
-                            forward<U64>(args->arg3),
-                            forward<U64>(args->arg4),
-                            forward<U64>(args->arg5),
-                            forward<U64>(args->arg6)
+                            forward<U64>(arg1),
+                            forward<U64>(arg2),
+                            forward<U64>(arg3),
+                            forward<U64>(arg4),
+                            forward<U64>(arg5),
+                            forward<U64>(arg6)
                     );
                 },
                 context
@@ -52,14 +60,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg6)
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1),
-                            forward<U64>(args->arg2),
-                            forward<U64>(args->arg3),
-                            forward<U64>(args->arg4),
-                            forward<U64>(args->arg5)
+                            forward<U64>(arg1),
+                            forward<U64>(arg2),
+                            forward<U64>(arg3),
+                            forward<U64>(arg4),
+                            forward<U64>(arg5)
                     );
                 },
                 context
@@ -76,13 +93,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1),
-                            forward<U64>(args->arg2),
-                            forward<U64>(args->arg3),
-                            forward<U64>(args->arg4)
+                            forward<U64>(arg1),
+                            forward<U64>(arg2),
+                            forward<U64>(arg3),
+                            forward<U64>(arg4)
                     );
                 },
                 context
@@ -99,12 +126,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1),
-                            forward<U64>(args->arg2),
-                            forward<U64>(args->arg3)
+                            forward<U64>(arg1),
+                            forward<U64>(arg2),
+                            forward<U64>(arg3)
                     );
                 },
                 context
@@ -121,11 +159,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1),
-                            forward<U64>(args->arg2)
+                            forward<U64>(arg1),
+                            forward<U64>(arg2)
                     );
                 },
                 context
@@ -142,10 +192,23 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
                     return handler(
                             forward<void*>(sys_call_ctx),
-                            forward<U64>(args->arg1)
+                            forward<U64>(arg1)
                     );
                 },
                 context
@@ -162,8 +225,21 @@ namespace Rune::SystemCall {
         return {
                 handle,
                 name,
-                [handler](void* sys_call_ctx, Args* args) {
-                    SILENCE_UNUSED(args)
+                [handler](
+                        void* sys_call_ctx,
+                        U64 arg1,
+                        U64 arg2,
+                        U64 arg3,
+                        U64 arg4,
+                        U64 arg5,
+                        U64 arg6
+                ) {
+                    SILENCE_UNUSED(arg1)
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
                     return handler(forward<void*>(sys_call_ctx));
                 },
                 context

@@ -26,30 +26,30 @@
 namespace Rune::SystemCall {
 
     /**
-     * @brief The handle of a system call with up to 6 arguments that will be passed to the kernel.
-     */
-    struct Args {
-        U16 handle = 0;
-        U64 arg1   = 0;
-        U64 arg2   = 0;
-        U64 arg3   = 0;
-        U64 arg4   = 0;
-        U64 arg5   = 0;
-        U64 arg6   = 0;
-    };
-
-    /**
      * @brief Function definition of a system call handler.
      */
-    using Handler = Function<S64(void*, Args*)>;
+    using Handler = Function<S64(void*, U64, U64, U64, U64, U64, U64)>;
 
 
     /**
      * @brief Convenience constant that defines a system call handler that simply returns -1.
      */
-    inline const Handler SYS_CALL_HANDLER_NONE = [](void* sys_call_ctx, Args* args) {
+    inline const Handler SYS_CALL_HANDLER_NONE = [](
+            void* sys_call_ctx,
+            U64 arg1,
+            U64 arg2,
+            U64 arg3,
+            U64 arg4,
+            U64 arg5,
+            U64 arg6
+    ) {
         SILENCE_UNUSED(sys_call_ctx)
-        SILENCE_UNUSED(args)
+        SILENCE_UNUSED(arg1)
+        SILENCE_UNUSED(arg2)
+        SILENCE_UNUSED(arg3)
+        SILENCE_UNUSED(arg4)
+        SILENCE_UNUSED(arg5)
+        SILENCE_UNUSED(arg6)
         return (S64) -1;
     };
 

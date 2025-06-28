@@ -20,19 +20,16 @@
 namespace Rune::Pickaxe {
 
     size_t memory_get_page_size() {
-        SystemCallPayload payload = create_payload0(0);
-        return (size_t) make_system_call(&payload);
+        return (size_t) system_call0(0);
     }
 
 
     void* memory_allocate_page(void* v_addr, size_t num_pages, PageProtection page_protection) {
-        SystemCallPayload payload = create_payload3(1, (U64) (uintptr_t) v_addr, num_pages, (U64) page_protection);
-        return  (void*) (uintptr_t) make_system_call(&payload);
+        return (void*) (uintptr_t) system_call3(1, (U64) (uintptr_t) v_addr, num_pages, (U64) page_protection);
     }
 
 
     int memory_free_page(void* v_addr, size_t num_pages) {
-        SystemCallPayload payload = create_payload2(2, (U64) (uintptr_t) v_addr, num_pages);
-        return make_system_call(&payload);
+        return system_call2(2, (U64) (uintptr_t) v_addr, num_pages);
     }
 }

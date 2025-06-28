@@ -74,11 +74,11 @@ namespace Rune::SystemCall {
 
     /**
      * @brief Try to uninstall the system call with the given ID.
-     * @param systemCallID ID of the system call.
+     * @param system_call_id ID of the system call.
      * @return True: The system call was uninstalled, False: No system call with the ID was installed or the ID is
      *          invalid (systemCallID >= SystemCallLimit).
      */
-    bool system_call_uninstall(U16 systemCallID);
+    bool system_call_uninstall(U16 system_call_id);
 }
 
 #endif //RUNEOS_SYSTEMCALL_H

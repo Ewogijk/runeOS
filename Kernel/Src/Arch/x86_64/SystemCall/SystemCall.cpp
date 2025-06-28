@@ -46,28 +46,28 @@ namespace Rune::SystemCall {
     CLINK void system_call_accept();
 
 
-    CLINK U64 system_call_dispatch(Args* args) {
-        Args k_args;
-        if (!K_GUARD->copy_byte_buffer_user_to_kernel(args, sizeof(Args), &k_args))
-            return -1;
-
-        U64  system_call_id = k_args.handle;
+    CLINK U64 system_call_dispatch(U16 handle, U64 arg1, U64 arg2, U64 arg3, U64 arg4, U64 arg5, U64 arg6) {
         U64  ret            = -1;
-        auto handler        = SYSTEM_CALL_HANDLER_TABLE.find(system_call_id);
+        auto handler        = SYSTEM_CALL_HANDLER_TABLE.find(handle);
         if (handler != SYSTEM_CALL_HANDLER_TABLE.end()) {
             LOGGER->trace(
                     FILE,
                     R"(Handling system call request: "{}-{}"!)",
-                    system_call_id,
+                    handle,
                     handler->value->info.name
             );
             handler->value->info.requested++;
             ret = handler->value->sys_call_handler(
                     forward<void*>(handler->value->context),
-                    forward<Args*>(&k_args)
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6
             );
         } else {
-            LOGGER->warn(FILE, "No system call with handle {} installed!", system_call_id);
+            LOGGER->warn(FILE, "No system call with handle {} installed!", handle);
         }
         return ret;
     }

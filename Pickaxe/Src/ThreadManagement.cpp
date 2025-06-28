@@ -20,25 +20,21 @@
 namespace Rune::Pickaxe {
 
     int mutex_create(const char* mutex_name) {
-        SystemCallPayload payload = create_payload1(300, (uintptr_t) mutex_name);
-        return make_system_call(&payload);
+        return system_call1(300, (uintptr_t) mutex_name);
     }
 
 
     int mutex_lock(U16 handle) {
-        SystemCallPayload payload = create_payload1(301, handle);
-        return make_system_call(&payload);
+        return system_call1(301, handle);
     }
 
 
     int mutex_unlock(U16 handle) {
-        SystemCallPayload payload = create_payload1(302, handle);
-        return make_system_call(&payload);
+        return system_call1(302, handle);
     }
 
 
     int mutex_release(U16 handle) {
-        SystemCallPayload payload = create_payload1(303, handle);
-        return make_system_call(&payload);
+        return system_call1(303, handle);
     }
 }

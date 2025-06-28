@@ -93,21 +93,18 @@ namespace Rune::Pickaxe {
 
     VirtualKey read_std_in() {
         U16               key_code_out = 0;
-        SystemCallPayload payload      = create_payload1(200, (uintptr_t) &key_code_out);
-        int               ret          = make_system_call(&payload);
+        S64 ret = system_call1(200, (uintptr_t) &key_code_out);
         return ret >= 0 ? VirtualKey(key_code_out) : VirtualKey::NONE;
     }
 
 
     void write_std_out(const char* msg, size_t length) {
-        SystemCallPayload payload = create_payload2(201, (uintptr_t) msg, length);
-        make_system_call(&payload);
+        system_call2(201, (uintptr_t) msg, length);
     }
 
 
     void write_std_err(const char* msg, size_t length) {
-        SystemCallPayload payload = create_payload2(202, (uintptr_t) msg, length);
-        make_system_call(&payload);
+        system_call2(202, (uintptr_t) msg, length);
     }
 
 
@@ -119,7 +116,7 @@ namespace Rune::Pickaxe {
             const char* stdout_target,
             const char* stderr_target
     ) {
-        SystemCallPayload payload = create_payload6(
+        return system_call6(
                 203,
                 (uintptr_t) app_path,
                 (uintptr_t) argv,
@@ -128,30 +125,25 @@ namespace Rune::Pickaxe {
                 (uintptr_t) stdout_target,
                 (uintptr_t) stderr_target
         );
-        return make_system_call(&payload);
     }
 
 
     void app_exit(int exit_code) {
-        SystemCallPayload payload = create_payload1(204, exit_code);
-        make_system_call(&payload);
+        system_call1(204, exit_code);
     }
 
 
     int app_join(int app_handle) {
-        SystemCallPayload payload = create_payload1(205, app_handle);
-        return make_system_call(&payload);
+        return system_call1(205, app_handle);
     }
 
 
     S64 app_get_working_directory(const char* wd_out, int wd_size) {
-        SystemCallPayload payload = create_payload2(206, (uintptr_t) wd_out, wd_size);
-        return make_system_call(&payload);
+        return system_call2(206, (uintptr_t) wd_out, wd_size);
     }
 
 
     S64 app_change_working_directory(const char* new_wd) {
-        SystemCallPayload payload = create_payload1(207, (uintptr_t) new_wd);
-        return make_system_call(&payload);
+        return system_call1(207, (uintptr_t) new_wd);
     }
 }

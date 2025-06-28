@@ -33,86 +33,82 @@ namespace Rune::Pickaxe {
      */
     static const U16 MAX_STRING_SIZE = 128;
 
+
     /**
-     * @brief The handle of a system call with up to 6 arguments that will be passed to the kernel.
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @return A handle returned by the system call.
      */
-    struct SystemCallPayload {
-        U16 handle = 0;
-        U64 arg_1  = 0;
-        U64 arg_2  = 0;
-        U64 arg_3  = 0;
-        U64 arg_4  = 0;
-        U64 arg_5  = 0;
-        U64 arg_6  = 0;
-    };
+    S64 system_call0(U16 handle);
 
 
     /**
-     * @brief Make a system call with the given arguments.
-     *
-     * This function makes the system call directly at assembly level, it will simply pass the arguments to the kernel
-     * as specified in the SystemCall ABI.
-     *
-     * @param sys_call_args A pointer to the system call arguments.
-     * @return The return value from the kernel.
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   First system call argument.
+     * @return A handle returned by the system call.
      */
-    extern "C" int make_system_call(SystemCallPayload* sys_call_payload);
+    S64 system_call1(U16 handle, U64 arg1);
 
 
     /**
-     * @brief Create a system call payload with zero args.
-     * @param id
-     * @return
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   First system call argument.
+     * @param arg2   Second system call argument.
+     * @return A handle returned by the system call.
      */
-    SystemCallPayload create_payload0(U16 handle);
+    S64 system_call2(U16 handle, U64 arg1, U64 arg2);
 
 
     /**
-     * @brief Create a system call payload with one args.
-     * @param id
-     * @return
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   First system call argument.
+     * @param arg2   Second system call argument.
+     * @param arg3   Third system call argument.
+     * @return A handle returned by the system call.
      */
-    SystemCallPayload create_payload1(U16 handle, U64 arg_1);
+    S64 system_call3(U16 handle, U64 arg1, U64 arg2, U64 arg3);
 
 
     /**
-     * @brief Create a system call payload with two args.
-     * @param id
-     * @return
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   1st system call argument.
+     * @param arg2   2nd system call argument.
+     * @param arg3   3rd system call argument.
+     * @param arg4   4th system call argument.
+     * @return A handle returned by the system call.
      */
-    SystemCallPayload create_payload2(U16 handle, U64 arg_1, U64 arg_2);
+    S64 system_call4(U16 handle, U64 arg1, U64 arg2, U64 arg3, U64 arg4);
 
 
     /**
-     * @brief Create a system call payload with three args.
-     * @param id
-     * @return
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   1st system call argument.
+     * @param arg2   2nd system call argument.
+     * @param arg3   3rd system call argument.
+     * @param arg4   4th system call argument.
+     * @param arg5   5th system call argument.
+     * @return A handle returned by the system call.
      */
-    SystemCallPayload create_payload3(U16 handle, U64 arg_1, U64 arg_2, U64 arg_3);
+    S64 system_call5(U16 handle, U64 arg1, U64 arg2, U64 arg3, U64 arg4, U64 arg5);
 
 
     /**
-     * @brief Create a system call payload with four args.
-     * @param id
-     * @return
+     * @brief Make a system call with zero arguments.
+     * @param handle System call handle.
+     * @param arg1   1st system call argument.
+     * @param arg2   2nd system call argument.
+     * @param arg3   3rd system call argument.
+     * @param arg4   4th system call argument.
+     * @param arg5   5th system call argument.
+     * @param arg6   6th system call argument.
+     * @return A handle returned by the system call.
      */
-    SystemCallPayload create_payload4(U16 handle, U64 arg_1, U64 arg_2, U64 arg_3, U64 arg_4);
-
-
-    /**
-     * @brief Create a system call payload with five args.
-     * @param id
-     * @return
-     */
-    SystemCallPayload create_payload5(U16 handle, U64 arg_1, U64 arg_2, U64 arg_3, U64 arg_4, U64 arg_5);
-
-
-    /**
-     * @brief Create a system call payload with six args.
-     * @param id
-     * @return
-     */
-    SystemCallPayload create_payload6(U16 handle, U64 arg_1, U64 arg_2, U64 arg_3, U64 arg_4, U64 arg_5, U64 arg_6);
+    S64 system_call6(U16 handle, U64 arg1, U64 arg2, U64 arg3, U64 arg4, U64 arg5, U64 arg6);
 }
 
 #endif //RUNEOS_SYSTEMCALL_H
