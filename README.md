@@ -1,4 +1,4 @@
-# TODO ADD PROJECT LOGO
+# runeOS
 
 A x86-64 hobby operating system.
 
