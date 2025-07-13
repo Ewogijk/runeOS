@@ -31,7 +31,7 @@ namespace Rune::SystemCall {
         if (m_name.is_empty())
             m_name = String::format("Mutex-App{}", t_ctx->app_subsys->get_active_app()->handle);
 
-        auto                            m = t_ctx->cpu_subsys->create_mutex(m_name);
+        auto m = t_ctx->cpu_subsys->create_mutex(m_name);
         if (!m)
             return -2;
         return m->handle;
@@ -74,6 +74,16 @@ namespace Rune::SystemCall {
         if (!t_ctx->cpu_subsys->release_mutex(handle))
             return -2;
 
+        return 0;
+    }
+
+
+    S64 get_thread_ID(void* sys_call_ctx, U64 ID_out) {
+        auto* t_ctx = (ThreadManagementContext*) sys_call_ctx;
+        auto* ID_out_ptr = LibK::memory_addr_to_pointer<U16>(ID_out);
+        if (!t_ctx->k_guard->verify_user_buffer(ID_out_ptr, 2))
+            return -1;
+        *ID_out_ptr = t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->handle;
         return 0;
     }
 }

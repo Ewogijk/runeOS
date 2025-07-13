@@ -37,4 +37,11 @@ namespace Rune::Pickaxe {
     int mutex_release(U16 handle) {
         return system_call1(303, handle);
     }
+
+
+    int get_thread_ID() {
+        U16 ID_out;
+        S64 ret = system_call1(304, (uintptr_t) &ID_out);
+        return ret >= 0 ? ID_out : ret;
+    }
 }

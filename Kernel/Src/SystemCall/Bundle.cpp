@@ -145,6 +145,7 @@ namespace Rune::SystemCall {
         defs.add_back(define1(301, "mutex_lock", &mutex_lock, &TM_CTX));
         defs.add_back(define1(302, "mutex_unlock", &mutex_unlock, &TM_CTX));
         defs.add_back(define1(303, "mutex_release", &mutex_release, &TM_CTX));
+        defs.add_back(define1(304, "get_thread_ID", &get_thread_ID, &TM_CTX));
         return {
                 "ThreadManagement",
                 defs

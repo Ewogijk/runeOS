@@ -84,6 +84,16 @@ namespace Rune::SystemCall {
      *          -2: Failed to release the mutex.
      */
     S64 mutex_release(void* sys_call_ctx, U64 handle);
+
+
+    /**
+     * @brief Get the ID of the currently running thread.
+     * @param sys_call_ctx A pointer to the thread management context.
+     * @param ID_out       U16 pointer where the thread ID will be put.
+     * @return 0: Success.
+     *          -1: The ID_out buffer is null or in kernel memory.
+     */
+    S64 get_thread_ID(void* sys_call_ctx, U64 ID_out);
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H

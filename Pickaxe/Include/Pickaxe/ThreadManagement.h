@@ -64,6 +64,15 @@ namespace Rune::Pickaxe {
      *          -2: Failed to release the mutex.
      */
     int mutex_release(U16 handle);
+
+
+    /**
+     * @brief Get the ID of the currently running thread.
+     * @param ID_out       U16 pointer where the thread ID will be put.
+     * @return >0: Thread ID.
+     *          -1: The buffer is null or in kernel memory.
+     */
+    int get_thread_ID();
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H
