@@ -29,7 +29,7 @@ kernel_elf=$3
 os_elf=$4
 build=$5
 
-if [ "$build" != "dev" ] && [ "$build" = "release" ]; then
+if [ "$build" != "dev" ] && [ "$build" != "release" ]; then
   echo "Error - Unknown build type: ${build}, Expected one of: [dev, release]"
   exit 1
 fi

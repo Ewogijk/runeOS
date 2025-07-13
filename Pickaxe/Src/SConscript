@@ -20,7 +20,6 @@ sources = [
     target_env.File('AppManagement.cpp'),
     target_env.File('MemoryManagement.cpp'),
     target_env.File('SystemCall.cpp'),
-    target_env.File('SystemCall-a.asm'),
     target_env.File('ThreadManagement.cpp'),
     target_env.File('VFS.cpp'),
 ]

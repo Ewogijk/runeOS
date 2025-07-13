@@ -99,8 +99,8 @@ target_env['ASFLAGS'] = [
 
 if build == 'release':
     # enable optimizations
-    cxxflags.append('-O2')
-    ldflags.append('-O2')
+    target_env['CXXFLAGS'].append('-O2')
+    target_env['LINKFLAGS'].append('-O2')
 
 # Change scons messages for better readability
 target_env.Replace(
