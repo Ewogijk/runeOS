@@ -1,8 +1,9 @@
-# TODO ADD PROJECT LOGO
+# runeOS
 
-A x86-64 hobby operating system.
-
-## About
+<p>
+    <a href="https://github.com/Ewogijk/runeOS/releases"/>
+    <image alt="Latest runeOS release" src="https://img.shields.io/github/v/release/Ewogijk/runeOS?color=blue"/>
+</p>
 
 runeOS is the product of a man's journey to understand how kernels and operating systems works. Roughly speaking, the
 goal is to develop a small operating system with a modern and intuitive graphical user interface that can run basic
