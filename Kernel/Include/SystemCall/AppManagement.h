@@ -65,22 +65,20 @@ namespace Rune::SystemCall {
      * @brief Write a c string to the display in the white color of the currently active app.
      * @param sys_call_Ctx A pointer to the app management context.
      * @param arg1         A pointer to a c string.
-     * @param arg2         The length of the c string including the null terminator.
      * @return >= 0: The number of written characters.
      *          -1: The kernel guardian did not copy the content of the c string over to kernel land.
      */
-    S64 write_std_out(void* sys_call_Ctx, U64 arg1, U64 arg2);
+    S64 write_std_out(void* sys_call_Ctx, U64 arg1);
 
 
     /**
      * @brief Write a c string to the display in red color of the currently active app.
      * @param sys_call_Ctx A pointer to the app management context.
      * @param arg1         A pointer to a c string.
-     * @param arg2         The length of the c string including the null terminator.
      * @return >= 0: The number of written characters.
      *          -1: The kernel guardian did not copy the content of the c string over to kernel land.
      */
-    S64 write_std_err(void* sys_call_Ctx, U64 arg1, U64 arg2);
+    S64 write_std_err(void* sys_call_Ctx, U64 arg1);
 
 
     /**

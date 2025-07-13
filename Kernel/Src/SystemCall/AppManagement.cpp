@@ -34,32 +34,30 @@ namespace Rune::SystemCall {
     }
 
 
-    S64 write_std_out(void* sys_call_ctx, U64 arg1, U64 arg2) {
+    S64 write_std_out(void* sys_call_ctx, U64 arg1) {
         auto* app_mng_ctx = (AppManagementContext*) sys_call_ctx;
 
-        int msg_size = (int) arg2;
-        const char* k_buf_msg = new char[msg_size + 1];
-        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*) arg1, msg_size, k_buf_msg))
+        const char* k_buf_msg = new char[KernelGuardian::USER_STRING_LIMIT + 1];
+        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*) arg1, -1, k_buf_msg))
             return -1;
-
-        S64 byte_out = (S64) app_mng_ctx->app_subsys->get_active_app()->std_out->write((U8*) k_buf_msg, msg_size);
+        String k_msg(k_buf_msg);
+        S64 byte_out = (S64) app_mng_ctx->app_subsys->get_active_app()->std_out->write((U8*) k_buf_msg, k_msg.size());
         delete[] k_buf_msg;
         return byte_out;
     }
 
 
-    S64 write_std_err(void* sys_call_ctx, U64 arg1, U64 arg2) {
+    S64 write_std_err(void* sys_call_ctx, U64 arg1) {
         auto* app_mng_ctx = (AppManagementContext*) sys_call_ctx;
 
-        int msg_size = (int) arg2;
-        const char* k_buf_msg = new char[msg_size + 1];
-        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*) arg1, msg_size, k_buf_msg))
+        const char* k_buf_msg = new char[KernelGuardian::USER_STRING_LIMIT + 1];
+        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*) arg1, -1, k_buf_msg))
             return -1;
-
+        String k_msg(k_buf_msg);
         SharedPointer<LibK::TextStream> std_err = app_mng_ctx->app_subsys->get_active_app()->std_err;
 
         std_err->set_foreground_color(LibK::Pixie::VSCODE_RED);
-        S64 byte_out = (S64) app_mng_ctx->app_subsys->get_active_app()->std_err->write((U8*) k_buf_msg, msg_size);
+        S64 byte_out = (S64) app_mng_ctx->app_subsys->get_active_app()->std_err->write((U8*) k_buf_msg, k_msg.size());
         std_err->reset_style();
         delete[] k_buf_msg;
         return byte_out;

@@ -55,8 +55,8 @@ namespace Rune::SystemCall {
 
         LinkedList<Definition> defs;
         defs.add_back(define1(200, "read_std_in", &read_std_in, &APP_MNG_CTX));
-        defs.add_back(define2(201, "write_std_out", &write_std_out, &APP_MNG_CTX));
-        defs.add_back(define2(202, "write_std_err", &write_std_err, &APP_MNG_CTX));
+        defs.add_back(define1(201, "write_std_out", &write_std_out, &APP_MNG_CTX));
+        defs.add_back(define1(202, "write_std_err", &write_std_err, &APP_MNG_CTX));
         defs.add_back(define6(203, "app_start", &app_start, &APP_MNG_CTX));
         defs.add_back(define1(204, "app_exit", &app_exit, &APP_MNG_CTX));
         defs.add_back(define1(205, "app_join", &app_join, &APP_MNG_CTX));
