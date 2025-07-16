@@ -79,7 +79,11 @@ namespace Rune::App {
          * @brief Set the ID and working directory in the entry and schedule it's main thread for execution.
          * @return The assigned ID of the app.
          */
-        int schedule_for_start(const SharedPointer<Info>& app, const Path& working_directory);
+        int schedule_for_start(
+                const SharedPointer<Info>& app,
+                const CPU::Stack& user_stack,
+                const Path& working_directory
+        );
 
 
         /**

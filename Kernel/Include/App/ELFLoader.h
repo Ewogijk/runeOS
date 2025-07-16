@@ -23,6 +23,8 @@
 
 #include <Memory/MemorySubsystem.h>
 
+#include <CPU/CPU.h>
+
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 
@@ -129,6 +131,7 @@ namespace Rune::App {
          * @param executable Path to the ELF executable.
          * @param args       Command line arguments for the app.
          * @param entry      App table entry that will be filled with ELF information.
+         * @param user_stack User stack of the main thread, will be setup by the ELF loader.
          * @param keep_vas   True: Do not allocate a new VAS for the executable but load it into the current VAS, this
          *                      essentially deactivates steps 3 and 7.<br>
          *                   False: Allocate a new VAS for the executable.
@@ -139,6 +142,7 @@ namespace Rune::App {
                 const Path& executable,
                 char* args[],
                 const SharedPointer<Info>& entry,
+                CPU::Stack &user_stack,
                 bool keep_vas
         );
     };

@@ -129,14 +129,6 @@ namespace Rune::App {
 
 
         /**
-         * @brief The user stack
-         */
-        LibK::VirtualAddr stack_bottom = 0x0;
-        LibK::VirtualAddr stack_top    = 0x0;
-        LibK::MemorySize  stack_size   = 0x0;
-
-
-        /**
          * Running threads of the app
          */
         LinkedList<int> thread_table = LinkedList<int>();

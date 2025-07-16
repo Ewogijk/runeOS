@@ -44,4 +44,8 @@ namespace Rune::Pickaxe {
         S64 ret = system_call1(304, (uintptr_t) &ID_out);
         return ret >= 0 ? ID_out : ret;
     }
+
+    S64 get_thread_control_block(ThreadControlBlock& tcb_out) {
+        return system_call1(305, (uintptr_t) &tcb_out);
+    }
 }

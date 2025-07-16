@@ -340,6 +340,7 @@ namespace Rune::App {
             const Path& executable,
             char* args[],
             const SharedPointer<Info>& handle,
+            CPU::Stack &user_stack,
             bool keep_vas
     ) {
         VFS::IOStatus io_status = _vfs_subsys->open(executable, VFS::IOMode::READ, _elf_file);
@@ -462,9 +463,9 @@ namespace Rune::App {
         handle->heap_start = heap_start;    // The heap starts after the ELF segments
         handle->heap_limit = heap_start;
 
-        handle->stack_bottom = argv_stack_area_start + stack_size;
-        handle->stack_top    = CPU::setup_empty_stack(argv_stack_area_start + stack_size);  // Grows down
-        handle->stack_size   = stack_size;                                                  // 8 KiB
+        user_stack.stack_bottom = LibK::memory_addr_to_pointer<void>(argv_stack_area_start + stack_size);
+        user_stack.stack_top    = CPU::setup_empty_stack(argv_stack_area_start + stack_size);  // Grows down
+        user_stack.stack_size   = stack_size;                                                  // 8 KiB
 
         _elf_file->close();
 

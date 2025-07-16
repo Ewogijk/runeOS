@@ -25,6 +25,17 @@
 
 
 namespace Rune::SystemCall {
+
+    /**
+     * @brief Information about a thread for user space.
+     */
+    struct ThreadControlBlock {
+        U16 thread_ID;
+        void* stack_addr;
+        size_t stack_size;
+    };
+
+
     /**
      * @brief The context for all threading related system calls.
      */
@@ -33,7 +44,6 @@ namespace Rune::SystemCall {
         CPU::Subsystem* cpu_subsys = nullptr;
         App::Subsystem* app_subsys = nullptr;
     };
-
 
 
     /**
@@ -94,6 +104,16 @@ namespace Rune::SystemCall {
      *          -1: The ID_out buffer is null or in kernel memory.
      */
     S64 get_thread_ID(void* sys_call_ctx, U64 ID_out);
+
+
+    /**
+     * @brief Get the thread control block of the currently running thread.
+     * @param sys_call_ctx A pointer to the thread management context.
+     * @param tcb_out      Thread control block buffer.
+     * @return 0: Success.
+     *          -1: The tcb_out buffer is null or in kernel memory.
+     */
+    S64 get_thread_control_block(void* sys_call_ctx, U64 tcb_out);
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H

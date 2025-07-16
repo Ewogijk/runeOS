@@ -32,7 +32,11 @@ namespace Rune::App {
     IMPLEMENT_ENUM(StdStream, STD_STREAMS, 0x0)
 
 
-    int Subsystem::schedule_for_start(const SharedPointer<Info>& app, const Path& working_directory) {
+    int Subsystem::schedule_for_start(
+            const SharedPointer<Info>& app,
+            const CPU::Stack& user_stack,
+            const Path& working_directory
+    ) {
         app->working_directory = move(working_directory);
         _logger->info(
                 FILE,
@@ -51,7 +55,7 @@ namespace Rune::App {
                 app->argv,
                 app->base_page_table_address,
                 CPU::SchedulingPolicy::NORMAL,
-                app->stack_top
+                user_stack
         );
         app->handle = _app_handle_counter.acquire_handle();
         _app_table.put(app->handle, app);
@@ -69,7 +73,7 @@ namespace Rune::App {
     ) {
         LinkedList<String> t_split = target.split(':');
         if (t_split.is_empty() || t_split.size() > 2)
-            return {};
+            return { };
         String t = *t_split[0];
         String arg;
         if (t_split.size() > 1)
@@ -480,11 +484,12 @@ namespace Rune::App {
             return LoadStatus::LOAD_ERROR;
         ELFLoader loader(_memory_subsys, _vfs_subsys, _logger);
         auto      app = SharedPointer<Info>(new Info());
+        CPU::Stack user_stack;
         _logger->info(FILE, "Loading OS: {}", os_exec.to_string());
         char* dummy_args[1] = {
                 nullptr
         };
-        LoadStatus load_status = loader.load(os_exec, dummy_args, app, true);
+        LoadStatus load_status = loader.load(os_exec, dummy_args, app, user_stack, true);
         if (load_status != LoadStatus::LOADED) {
             _logger->warn(FILE, "Failed to load OS. Status: {}", load_status.to_string());
             return load_status;
@@ -506,7 +511,7 @@ namespace Rune::App {
         // Hook up the stdin to the keyboard
         app->std_in  = SharedPointer<LibK::TextStream>(_dev_subsys->get_keyboard().get());
 
-        schedule_for_start(app, move(working_directory));
+        schedule_for_start(app, user_stack, move(working_directory));
         return LoadStatus::RUNNING;
     }
 
@@ -521,10 +526,11 @@ namespace Rune::App {
     ) {
         if (!_app_handle_counter.has_more_handles())
             return { LoadStatus::LOAD_ERROR, -1 };
-        ELFLoader loader(_memory_subsys, _vfs_subsys, _logger);
-        auto      app = SharedPointer<Info>(new Info());
+        ELFLoader  loader(_memory_subsys, _vfs_subsys, _logger);
+        auto       app = SharedPointer<Info>(new Info());
+        CPU::Stack user_stack;
         _logger->info(FILE, "Loading executable: {}", executable.to_string());
-        LoadStatus load_status = loader.load(executable, argv, app, false);
+        LoadStatus load_status = loader.load(executable, argv, app, user_stack, false);
         if (load_status != LoadStatus::LOADED) {
             _logger->warn(FILE, "Failed to load executable. Status: {}", load_status.to_string());
             return { load_status, -1 };
@@ -558,7 +564,7 @@ namespace Rune::App {
         app->std_out = move(std_out);
         app->std_err = move(std_err);
 
-        int app_id = schedule_for_start(app, move(working_directory));
+        int app_id = schedule_for_start(app, user_stack, move(working_directory));
         return { LoadStatus::RUNNING, app_id };
     }
 

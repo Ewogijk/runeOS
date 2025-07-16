@@ -813,7 +813,7 @@ namespace Rune::App {
                     _render_thread_argv,
                     Memory::get_base_page_table_address(),
                     CPU::SchedulingPolicy::LOW_LATENCY,
-                    0x0
+                    { nullptr, 0x0, 0x0 }
             );
             if (_render_thread_handle == 0)
                 _initialized      = false;

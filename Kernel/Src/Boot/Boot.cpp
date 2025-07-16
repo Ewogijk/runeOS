@@ -300,7 +300,7 @@ namespace Rune {
                 dummy_args,
                 Memory::get_base_page_table_address(),
                 CPU::SchedulingPolicy::LOW_LATENCY,
-                0x0
+                { nullptr, 0x0, 0x0 }
         );
         cpu_subsys->get_scheduler()->unlock();
     }

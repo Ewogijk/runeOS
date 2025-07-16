@@ -89,6 +89,16 @@ namespace Rune::CPU {
 
 
     /**
+     * @brief A thread stack.
+     */
+    struct Stack {
+        void* stack_bottom = nullptr;       // First allocated stack page
+        LibK::VirtualAddr stack_top  = 0x0; // Stack pointer
+        LibK::MemorySize  stack_size = 0x0; // Maximum stack size
+    };
+
+
+    /**
      * The thread struct contains general information about a running thread.
      */
     struct Thread {
@@ -108,10 +118,8 @@ namespace Rune::CPU {
         U8* kernel_stack_bottom = nullptr;                // Pointer to the heap allocated memory
         LibK::VirtualAddr kernel_stack_top = 0x0;
 
-        // The user mode stack is used to run an application, it is allocated in user space memory
-        // It will be initially allocated by the kernel but after that it is on the app to manage its stack
-        // we just need the stack top so we can swap it with the kernel stack when a syscall is made
-        LibK::VirtualAddr user_stack_top = 0x0;
+        // The user mode stack contains application data, is managed by an application.
+        Stack user_stack;
 
         // Address of the base page table defining the threads virtual address space.
         LibK::PhysicalAddr base_page_table_address = 0x0;
@@ -127,7 +135,7 @@ namespace Rune::CPU {
         int join_app_id = -1;
 
         // Number of arguments in argv
-        int        argc = 0;
+        int argc = 0;
         // Null terminated array pointers to the thread arguments
         char** argv = nullptr;
         // Main function of the thread
