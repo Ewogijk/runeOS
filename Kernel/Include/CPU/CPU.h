@@ -141,6 +141,12 @@ namespace Rune::CPU {
         // Main function of the thread
         ThreadMain main = nullptr;
 
+        /**
+         * The thread control block contains the thread local storage (TLS) and other data, it is maintained by libc.
+         * We simply provide easy access to it through an arch specific TLS register.
+         */
+        void* thread_control_block = nullptr;
+
 
         friend bool operator==(const Thread& one, const Thread& two);
 
@@ -206,6 +212,8 @@ namespace Rune::CPU {
      */
     class Core {
     public:
+
+        virtual ~Core() = default;
 
         /**
          * @brief Setup CPU specific data structures for this core.
@@ -284,6 +292,13 @@ namespace Rune::CPU {
          * @param t
          */
         virtual void execute_in_user_mode(Thread* t) = 0;
+
+
+        /**
+         * Update the TLS struct of the running thread.
+         * @param tls_ptr Pointer to a TSL struct.
+         */
+        virtual void update_thread_local_storage(void* tls_ptr) = 0;
     };
 
 
