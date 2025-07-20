@@ -78,13 +78,9 @@ namespace Rune::SystemCall {
     }
 
 
-    S64 get_thread_ID(void* sys_call_ctx, U64 ID_out) {
+    S64 get_thread_ID(void* sys_call_ctx) {
         auto* t_ctx      = (ThreadManagementContext*) sys_call_ctx;
-        auto* ID_out_ptr = LibK::memory_addr_to_pointer<U16>(ID_out);
-        if (!t_ctx->k_guard->verify_user_buffer(ID_out_ptr, 2))
-            return -1;
-        *ID_out_ptr = t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->handle;
-        return 0;
+        return t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->handle;
     }
 
 

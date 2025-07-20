@@ -99,11 +99,9 @@ namespace Rune::SystemCall {
     /**
      * @brief Get the ID of the currently running thread.
      * @param sys_call_ctx A pointer to the thread management context.
-     * @param ID_out       U16 pointer where the thread ID will be put.
-     * @return 0: Success.
-     *          -1: The ID_out buffer is null or in kernel memory.
+     * @return 0: The thread ID.
      */
-    S64 get_thread_ID(void* sys_call_ctx, U64 ID_out);
+    S64 get_thread_ID(void* sys_call_ctx);
 
 
     /**
