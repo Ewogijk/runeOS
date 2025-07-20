@@ -96,4 +96,15 @@ namespace Rune::SystemCall {
         tcb_out_ptr->stack_size = c_t->user_stack.stack_size;
         return 0;
     }
+
+
+    S64 set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
+        const auto* t_ctx   = static_cast<ThreadManagementContext*>(sys_call_ctx);
+        auto* tcb_ptr = LibK::memory_addr_to_pointer<void>(tcb);
+        if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(ThreadControlBlock)))
+            return -1;
+        t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;
+        CPU::current_core()->update_thread_local_storage(tcb_ptr);
+        return 0;
+    }
 }

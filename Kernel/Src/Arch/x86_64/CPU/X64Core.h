@@ -217,8 +217,8 @@ namespace Rune::CPU {
 
     class X64Core : public Core {
         U8       _core_id;
-        Register _kgs_base;
-        Register _gs_base;
+        Register _kgs_base; // Current thread's kernel stack pointer
+        Register _gs_base;  // Current thread's user stack pointer
 
     public:
 
@@ -258,6 +258,9 @@ namespace Rune::CPU {
 
 
         void execute_in_user_mode(Thread* t) override;
+
+
+        void update_thread_local_storage(void* tls_ptr) override;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -96,8 +96,8 @@ namespace Rune::CPU {
         // GSBase holds a pointer to the user stack of the running thread
         // These are needed during system calls as the CPU does not switch stacks automatically, so we need to keep
         // track of them ourselves, these MSRs are intended to do exactly that
-        write_msr(ModelSpecificRegister::KERNEL_GS_BASE, (uintptr_t) &_kgs_base);
-        write_msr(ModelSpecificRegister::GS_Base, (uintptr_t) &_gs_base);
+        write_msr(ModelSpecificRegister::KERNEL_GS_BASE, reinterpret_cast<uintptr_t>(&_kgs_base));
+        write_msr(ModelSpecificRegister::GS_Base, reinterpret_cast<uintptr_t>(&_gs_base));
 
         // Initial values are set for debugging purposes
         _kgs_base = 1;
@@ -189,6 +189,7 @@ namespace Rune::CPU {
         TSS.rsp_0 = kernel_sp_bottom;
         _kgs_base = kernel_sp_bottom;
         _gs_base  = n_thread->user_stack.stack_top;
+        write_msr(ModelSpecificRegister::FS_Base, reinterpret_cast<uintptr_t>(c_thread->thread_control_block));
 
         context_switch_ass(
                 &c_thread->kernel_stack_top,       // Passed as pointer so the assembly can update the value in the thread struct
@@ -216,6 +217,11 @@ namespace Rune::CPU {
     }
 
 
+    void X64Core::update_thread_local_storage(void* tls_ptr) {
+        write_msr(ModelSpecificRegister::FS_Base, reinterpret_cast<uintptr_t>(tls_ptr));
+    }
+
+    
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      x64 core specific API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
