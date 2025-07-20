@@ -112,6 +112,17 @@ namespace Rune::SystemCall {
      *          -1: The tcb_out buffer is null or in kernel memory.
      */
     S64 get_thread_control_block(void* sys_call_ctx, U64 tcb_out);
+
+
+    /**
+     * @brief Set the current thread's thread control block.
+     * @param sys_call_ctx A pointer to the thread management context.
+     * @param tcb          A pointer to the thread control block.
+     * @return 0: Success.
+     *          -1: The tcb buffer is null or in kernel memory.
+     */
+    S64 set_thread_control_block(void* sys_call_ctx, U64 tcb);
+
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H
