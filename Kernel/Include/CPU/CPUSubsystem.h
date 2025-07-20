@@ -106,7 +106,7 @@ namespace Rune::CPU {
                 char* argv[],
                 LibK::PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
-                LibK::VirtualAddr user_stack_top
+                Stack user_stack
         );
 
 
@@ -244,7 +244,7 @@ namespace Rune::CPU {
          * @param argv           A null terminated array of string arguments for the thread.
          * @param base_pt_addr   Address of the base page table defining the virtual address space of the thread.
          * @param policy         Scheduling policy to use for the thread.
-         * @param user_stack_top The top of the user mode stack.
+         * @param user_stack     The user mode stack.
          *
          * @return The ID if the scheduled thread, 0 if the thread could not be created or scheduled.
          */
@@ -255,7 +255,7 @@ namespace Rune::CPU {
                 char* argv[],
                 LibK::PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
-                LibK::VirtualAddr user_stack_top
+                Stack user_stack
         );
 
 

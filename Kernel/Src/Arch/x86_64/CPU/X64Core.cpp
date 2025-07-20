@@ -188,7 +188,7 @@ namespace Rune::CPU {
         auto kernel_sp_bottom = ((LibK::MemorySize) (uintptr_t) n_thread->kernel_stack_bottom) + Thread::KERNEL_STACK_SIZE - 8;
         TSS.rsp_0 = kernel_sp_bottom;
         _kgs_base = kernel_sp_bottom;
-        _gs_base  = n_thread->user_stack_top;
+        _gs_base  = n_thread->user_stack.stack_top;
 
         context_switch_ass(
                 &c_thread->kernel_stack_top,       // Passed as pointer so the assembly can update the value in the thread struct
@@ -211,7 +211,7 @@ namespace Rune::CPU {
         // Update cached stack pointers
         TSS.rsp_0 = t->kernel_stack_top;
         _kgs_base = t->kernel_stack_top;
-        _gs_base  = t->user_stack_top;
+        _gs_base  = t->user_stack.stack_top;
         exec_user_mode(t->argc, (uintptr_t) t->argv, (uintptr_t) t->main);
     }
 

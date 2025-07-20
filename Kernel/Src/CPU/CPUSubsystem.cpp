@@ -45,7 +45,7 @@ namespace Rune::CPU {
         SCHEDULER->unlock();
         // Use raw pointer -> See "ThreadExit" for explanation
         auto* t = SCHEDULER->get_running_thread().get();
-        if (t->user_stack_top == 0x0) {
+        if (!t->user_stack.stack_top) {
             SCHED_LOGGY->trace(FILE, "Will execute main in kernel mode.");
             current_core()->execute_in_kernel_mode(t, (uintptr_t) &thread_exit);
         } else {
@@ -129,7 +129,7 @@ namespace Rune::CPU {
             char* argv[],
             LibK::PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
-            LibK::VirtualAddr user_stack_top
+            Stack user_stack
     ) {
         SharedPointer<Thread> new_thread(new Thread);
         new_thread->name                    = move(thread_name);
@@ -138,7 +138,7 @@ namespace Rune::CPU {
         new_thread->argv                    = argv;
         new_thread->base_page_table_address = base_pt_addr;
         new_thread->policy                  = policy;
-        new_thread->user_stack_top          = user_stack_top;
+        new_thread->user_stack = move(user_stack);
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
         return new_thread;
     }
@@ -278,27 +278,27 @@ namespace Rune::CPU {
 
         // Init Scheduling
         _logger->debug(FILE, "Starting the Scheduler...");
-        LibK::PhysicalAddr base_pt_addr      = Memory::get_base_page_table_address();
+        LibK::PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
         char* dummy_args[1] = {
                 nullptr
         };
-        auto               thread_terminator = create_thread(
+        auto thread_terminator = create_thread(
                 TERMINATOR_THREAD_NAME,
                 &terminator_thread,
                 0,
                 dummy_args,
                 base_pt_addr,
                 SchedulingPolicy::NONE,
-                0x0
+                { nullptr, 0x0, 0x0 }
         );
-        auto               le_idle_thread    = create_thread(
+        auto le_idle_thread    = create_thread(
                 IDLE_THREAD_NAME,
                 &idle_thread,
                 0,
                 dummy_args,
                 base_pt_addr,
                 SchedulingPolicy::NONE,
-                0x0
+                { nullptr, 0x0, 0x0 }
         );
         if (!_scheduler.init(
                 Memory::get_base_page_table_address(),
@@ -444,10 +444,10 @@ namespace Rune::CPU {
             const String& thread_name,
             ThreadMain t_main,
             int argc,
-            char** argv,
+            char* argv[],
             LibK::PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
-            LibK::VirtualAddr user_stack_top
+            Stack user_stack
     ) {
         if (!_thread_handle_counter.has_more_handles())
             return 0;
@@ -459,7 +459,7 @@ namespace Rune::CPU {
                 argv,
                 base_pt_addr,
                 policy,
-                user_stack_top
+                move(user_stack)
         );
         _scheduler.lock();
         if (!_scheduler.schedule_new_thread(new_thread)) {

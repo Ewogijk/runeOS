@@ -21,6 +21,15 @@
 
 namespace Rune::Pickaxe {
     /**
+     * @brief Information about a thread for user space.
+     */
+    struct ThreadControlBlock {
+        U16 thread_ID;
+        void* stack_addr;
+        size_t stack_size;
+    };
+
+    /**
     * If the mutex_name is an empty string then the kernel will choose a name for it.
     *
     * @brief Create mutex with the requested name.
@@ -73,6 +82,15 @@ namespace Rune::Pickaxe {
      *          -1: The buffer is null or in kernel memory.
      */
     int get_thread_ID();
+
+
+    /**
+     * @brief Get the thread control block of the currently running thread.
+     * @param tcb_out      Thread control block.
+     * @return 0: Success.
+     *          -1: The tcb_out buffer is null or in kernel memory.
+     */
+    S64 get_thread_control_block(ThreadControlBlock& tcb_out);
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H
