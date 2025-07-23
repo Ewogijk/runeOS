@@ -17,6 +17,7 @@ from SCons.Environment import *
 Import('target_env')
 target_env: Environment
 sources = [
+    target_env.File('Assert.cpp'),
     target_env.File('EventHook.cpp'),
     target_env.File('FrameBuffer.cpp'),
     target_env.File('KernelRuntimeEnvironment.cpp'),

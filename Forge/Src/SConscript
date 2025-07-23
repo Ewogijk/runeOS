@@ -20,6 +20,7 @@ sources = [
     target_env.File('DwLibAlloc11.cpp'),
     target_env.File('LibAlloc11.cpp'),
     target_env.File('RuntimeSupport.cpp'),
+    target_env.File('ForgeMain.cpp'),
     target_env.File('Start.asm'),
 ]
 Forge = target_env.StaticLibrary('Forge.o', target_env.Object(sources))
