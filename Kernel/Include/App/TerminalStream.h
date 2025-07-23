@@ -214,6 +214,7 @@ namespace Rune::App {
         U16    _render_thread_handle;
         String _render_thread_arg;
         char* _render_thread_argv[2];
+        CPU::StartInfo _render_thread_start_info;
 
         bool _initialized;
 

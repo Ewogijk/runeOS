@@ -173,9 +173,8 @@ namespace Rune {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    int kernel_boot_phase_2(int argc, char* argv[]) {
-        SILENCE_UNUSED(argc)
-        SILENCE_UNUSED(argv)
+    int kernel_boot_phase_2(CPU::StartInfo* start_info) {
+        SILENCE_UNUSED(start_info)
 
         // Install the panic handler
         PANIC_STREAM = SharedPointer<LibK::TextStream>(new CPU::E9Stream);
@@ -293,11 +292,13 @@ namespace Rune {
         char* dummy_args[1] = {
                 nullptr
         };
+        CPU::StartInfo start_info;
+        start_info.argc = 0;
+        start_info.argv = dummy_args;
+        start_info.main = &kernel_boot_phase_2;
         cpu_subsys->schedule_new_thread(
                 BOOT_THREAD_NAME,
-                &kernel_boot_phase_2,
-                0,
-                dummy_args,
+                &start_info,
                 Memory::get_base_page_table_address(),
                 CPU::SchedulingPolicy::LOW_LATENCY,
                 { nullptr, 0x0, 0x0 }

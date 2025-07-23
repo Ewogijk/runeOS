@@ -266,16 +266,6 @@ namespace Rune::CPU {
                 next_thread->name
         );
 
-//        auto      begin = (uintptr_t) _running_thread->kernel_stack_bottom;
-//        uintptr_t end   = begin + Thread::KERNEL_STACK_SIZE;
-//        e9.write_formatted(
-//                "Stack - {}: {:0=#16x}-{:0=#16x}, Top:{:0=#16x}\n",
-//                _running_thread->name,
-//                begin,
-//                end,
-//                CPU::get_stack_pointer()
-//        );
-
         auto* old_thread = _running_thread.get();
         _running_thread = move(next_thread);
         _running_thread->state = ThreadState::RUNNING;

@@ -24,7 +24,6 @@
 
 
 namespace Rune::CPU {
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CPU state
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -74,6 +73,7 @@ namespace Rune::CPU {
      * @brief Load the current CPU state into the state object.
      */
     CLINK void read_state(x86CoreState* state);
+
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CPUID functions
@@ -127,8 +127,7 @@ namespace Rune::CPU {
     X(ModelSpecificRegister, EFER, 0xC0000080)              \
     X(ModelSpecificRegister, FS_Base, 0xC0000100)           \
     X(ModelSpecificRegister, GS_Base, 0xC0000101)           \
-    X(ModelSpecificRegister, KERNEL_GS_BASE, 0xC0000102)    \
-
+    X(ModelSpecificRegister, KERNEL_GS_BASE, 0xC0000102)
 
     /**
      * ID's of model specific registers.
@@ -153,6 +152,7 @@ namespace Rune::CPU {
      */
     CLINK Register read_gs();
 
+
     /**
      * @brief Call the "swapgs" instruction. If GS was currently pointing to KernelGSBase is will be pointing to GSBase
      *          after this call and vice versa.
@@ -173,25 +173,25 @@ namespace Rune::CPU {
      * @param nVAS   Virtual address space of the next thread.
      */
     CLINK void context_switch_ass(
-            LibK::VirtualAddr* c_stack,
-            LibK::PhysicalAddr c_vas,
-            LibK::VirtualAddr n_stack,
-            LibK::PhysicalAddr n_vas
+        LibK::VirtualAddr* c_stack,
+        LibK::PhysicalAddr c_vas,
+        LibK::VirtualAddr  n_stack,
+        LibK::PhysicalAddr n_vas
     );
 
 
     /**
      * @brief Call the thread main function with argc and argv as parameters in kernel mode.
      */
-    CLINK void exec_kernel_mode(Register argc, Register argv, Register func_ptr, Register thread_exit);
+    CLINK void exec_kernel_mode(Register start_info, Register func_ptr, Register thread_exit);
 
 
     /**
-    * @brief Call the thread main function with argc and argv as parameters in user mode.
-    *
-    * Note that the user stack must be setup as execution stack else undefined behavior will occur.
-    */
-    CLINK void exec_user_mode(Register argc, Register argv, Register func_ptr);
+     * @brief Call the thread main function with argc and argv as parameters in user mode.
+     *
+     * Note that the user stack must be setup as execution stack else undefined behavior will occur.
+     */
+    CLINK void exec_user_mode(Register start_info, Register func_ptr);
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -221,7 +221,6 @@ namespace Rune::CPU {
         Register _gs_base;  // Current thread's user stack pointer
 
     public:
-
         explicit X64Core(U8 core_id);
 
 
@@ -269,7 +268,6 @@ namespace Rune::CPU {
 
         void dump_core_state(const SharedPointer<LibK::TextStream>& stream, const x86CoreState& state);
     };
-
 }
 
 #endif //RUNEOS_X64CORE_H

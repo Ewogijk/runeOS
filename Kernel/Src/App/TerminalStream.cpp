@@ -31,11 +31,11 @@ namespace Rune::App {
     //                                          Cursor Renderer
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    int render_cursor(int argc, char* argv[]) {
-        if (argc != 1)
+    int render_cursor(CPU::StartInfo* start_info) {
+        if (start_info->argc != 1)
             return -1;
         uintptr_t ptr = 0;
-        if (!parse_int<uintptr_t>(argv[0], 16, ptr))
+        if (!parse_int<uintptr_t>(start_info->argv[0], 16, ptr))
             return -1;
         auto* state = (TerminalState*) ptr;
         double thickness = 1.0;
@@ -780,6 +780,9 @@ namespace Rune::App {
         _render_thread_arg = int_to_string((uintptr_t) &_state, 16);
         _render_thread_argv[0] = (char*) _render_thread_arg.to_cstr();
         _render_thread_argv[1] = nullptr;
+        _render_thread_start_info.argc = 1;
+        _render_thread_start_info.argv = _render_thread_argv;
+        _render_thread_start_info.main = &render_cursor;
         if (_state.mutex)
             _initialized = true;
     }
@@ -808,9 +811,7 @@ namespace Rune::App {
             _cpu_subsys->get_scheduler()->lock();
             _render_thread_handle = _cpu_subsys->schedule_new_thread(
                     "Terminal-Cursor Render Thread",
-                    &render_cursor,
-                    1,
-                    _render_thread_argv,
+                    &_render_thread_start_info,
                     Memory::get_base_page_table_address(),
                     CPU::SchedulingPolicy::LOW_LATENCY,
                     { nullptr, 0x0, 0x0 }

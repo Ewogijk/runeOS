@@ -29,19 +29,18 @@
 
 
 namespace Rune::App {
-
     /**
      * The ELF loader loads an ELF64 executable into memory.
      */
     class ELFLoader {
         // File content buffering
         static constexpr U16 BUF_SIZE = 8192;
-        U16 _buf_pos;
-        U16 _buf_limit;
-        U8  _file_buf[BUF_SIZE];
+        U16                  _buf_pos;
+        U16                  _buf_limit;
+        U8                   _file_buf[BUF_SIZE];
 
-        Memory::Subsystem* _memory_subsys;
-        VFS::Subsystem   * _vfs_subsys;
+        Memory::Subsystem*          _memory_subsys;
+        VFS::Subsystem*             _vfs_subsys;
         SharedPointer<LibK::Logger> _logger;
 
         // Open ELF file
@@ -60,45 +59,26 @@ namespace Rune::App {
         bool seek(U64 byte_count);
 
 
-        bool verify_elf_identification(ELFIdentification& elf_ident);
+        LoadStatus load_elf_file(ELF64File& elf_file);
 
 
-        bool verify_elf_header(ELF64Header& elf_64_header);
+        bool allocate_segments(const ELF64File& elf64_file, LibK::VirtualAddr& heap_start);
 
 
-        bool verify_program_headers(
-                const ELF64Header& elf_64_hdr,
-                LinkedList<ELF64ProgramHeader>& loadable_program_headers,
-                ELF64ProgramHeader& note_ph
-        );
+        bool load_segments(const ELF64File& elf_file);
 
 
-        bool allocate_segments_pages(
-                LinkedList<ELF64ProgramHeader>& loadable_program_headers,
-                LibK::VirtualAddr& v_big
-        );
-
-
-        bool load_segments(
-                LinkedList<ELF64ProgramHeader>& loadable_program_headers
-        );
-
-
-        bool parse_vendor_information(
-                const ELF64Header& elf_64_hdr,
-                const ELF64ProgramHeader& note_ph,
-                String& vendor,
-                U16& major,
-                U16& minor,
-                U16& patch
-        );
+        CPU::StartInfo* setup_bootstrap_area(
+            const ELF64File& elf_file,
+            char*            args[],
+            size_t           stack_size);
 
 
     public:
         ELFLoader(
-                Memory::Subsystem* memory_subsys,
-                VFS::Subsystem* vfs_subsys,
-                SharedPointer<LibK::Logger> logger
+            Memory::Subsystem*          memory_subsys,
+            VFS::Subsystem*             vfs_subsys,
+            SharedPointer<LibK::Logger> logger
         );
 
 
@@ -128,23 +108,24 @@ namespace Rune::App {
          *  </ol>
          * </p>
          *
-         * @param executable Path to the ELF executable.
-         * @param args       Command line arguments for the app.
-         * @param entry      App table entry that will be filled with ELF information.
-         * @param user_stack User stack of the main thread, will be setup by the ELF loader.
-         * @param keep_vas   True: Do not allocate a new VAS for the executable but load it into the current VAS, this
-         *                      essentially deactivates steps 3 and 7.<br>
+         * @param executable          Path to the ELF executable.
+         * @param args                Command line arguments for the app.
+         * @param entry_out           App table entry that will be filled with ELF information.
+         * @param user_stack_out      User stack of the main thread, will be setup by the ELF loader.
+         * @param start_info_addr_out Virtual address of the start info struct.
+         * @param keep_vas            True: Do not allocate a new VAS for the executable but load it into the current
+         *                              VAS, this essentially deactivates steps 3 and 7.<br>
          *                   False: Allocate a new VAS for the executable.
          *
          * @return The final status of the ELF loading.
          */
         LoadStatus load(
-                const Path& executable,
-                char* args[],
-                const SharedPointer<Info>& entry,
-                CPU::Stack &user_stack,
-                bool keep_vas
-        );
+            const Path&                executable,
+            char*                      args[],
+            const SharedPointer<Info>& entry_out,
+            CPU::Stack&                user_stack_out,
+            LibK::VirtualAddr&         start_info_addr_out,
+            bool                       keep_vas);
     };
 }
 

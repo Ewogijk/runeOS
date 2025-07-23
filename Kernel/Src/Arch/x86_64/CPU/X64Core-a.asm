@@ -213,12 +213,11 @@ swapgs:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-; CLINK void exec_kernel_mode(Register argc, Register argv, Register func_ptr, Register thread_exit);
+; CLINK void exec_kernel_mode(Register start_info, Register func_ptr, Register thread_exit);
 ; Args:
-;   rdi -> artc
-;   rsi -> argv
-;   rdx -> func_ptr
-;   rcx -> thread_exit
+;   rdi -> start_info
+;   rsi -> func_ptr
+;   rdx -> thread_exit
 ; Returns:
 ;   -
 global exec_kernel_mode
@@ -227,12 +226,12 @@ exec_kernel_mode:
     push rbp            ; save old call frame
     mov rbp, rsp        ; initialize new call frame
 
-    push rcx            ; Save threadExit so we can call it later
-    call rdx            ; Call thread main
+    push rdx            ; Save threadExit so we can call it later
+    call rsi            ; Call thread main
 
     mov rdi, rax        ; Pass the exit code to threadExit
-    pop rcx             ; Restore threadExit
-    call rcx            ; Call threadExit
+    pop rdx             ; Restore threadExit
+    call rdx            ; Call threadExit
 
 
     mov rsp, rbp
@@ -243,11 +242,10 @@ exec_kernel_mode:
     ret
 
 
-; CLINK void exec_user_mode(Register argc, Register argv, Register func_ptr);
+; CLINK void exec_user_mode(Register start_info, Register func_ptr);
 ; Args:
-;   rdi -> argc
-;   rsi -> argv
-;   rdx -> func_ptr
+;   rdi -> start_info
+;   rsi -> func_ptr
 ; Returns:
 ;   -
 global exec_user_mode
@@ -255,7 +253,7 @@ exec_user_mode:
     swapgs
     mov rsp, [gs:0] ; Load user stack
 
-    mov rcx, rdx    ; Load funcPtr into rcx
+    mov rcx, rsi    ; Load funcPtr into rcx
     mov r11, 0x202  ; 0x200 -> Enable Interrupts, 0x002 -> Reserved, always 1
     o64 sysret      ; Loads rcx -> rip and r11 -> rflags
 
