@@ -86,7 +86,7 @@ namespace Rune::VFS {
         NodeIOResult write(void* buf, size_t buf_size) override;
 
 
-        NodeIOResult seek(size_t byte_pos) override;
+        NodeIOResult seek(SeekMode seek_mode, int offset) override;
 
 
         [[nodiscard]] bool has_attribute(NodeAttribute f_attr) const override;

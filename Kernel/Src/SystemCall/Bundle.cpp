@@ -92,7 +92,7 @@ namespace Rune::SystemCall {
         defs.add_back(define1(104, "vfs_close", &vfs_close, &VFS_CTX));
         defs.add_back(define3(105, "vfs_read", &vfs_read, &VFS_CTX));
         defs.add_back(define3(106, "vfs_write", &vfs_write, &VFS_CTX));
-        defs.add_back(define2(107, "vfs_seek", &vfs_seek, &VFS_CTX));
+        defs.add_back(define3(107, "vfs_seek", &vfs_seek, &VFS_CTX));
         defs.add_back(define1(108, "vfs_directory_stream_open", &vfs_directory_stream_open, &VFS_CTX));
         defs.add_back(define2(109, "vfs_directory_stream_next", &vfs_directory_stream_next, &VFS_CTX));
         defs.add_back(define1(110, "vfs_directory_stream_close", &vfs_directory_stream_close, &VFS_CTX));

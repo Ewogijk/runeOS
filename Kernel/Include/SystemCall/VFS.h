@@ -139,7 +139,7 @@ namespace Rune::SystemCall {
      *          -1: The node handle is zero.
      *          -2: No node with the requested handle was found.
      *          -3: The node is a directory.
-     *          -4: The user buffer buffer is null or intersects kernel memory.
+     *          -4: The user buffer is null or intersects kernel memory.
      *          -5: Read is not supported.
      *          -6: The node handle is invalid, because the node has already been closed.
      *          -7: An IO error happened.
@@ -168,18 +168,20 @@ namespace Rune::SystemCall {
 
 
     /**
-     * @brief Try to skip bytePos bytes from the beginning of the file with the requested handle.
+     * @brief Try to skip 'offset' bytes in a file depending on the requested 'seek_mode'.
      * @param sys_call_ctx A pointer to the VFS context.
      * @param handle       Handle to a node.
-     * @param byte_pos     Amount of bytes to skip starting from the beginning of the file.
+     * @param seek_mode    Determines how the new file cursor position is calculated.
+     * @param offset       Number of bytes to skip.
      * @return >=0: The number of bytes skipped.
      *          -1: The node handle is zero.
      *          -2: No node with the requested handle was found.
-     *          -3: The node is a directory.
-     *          -4: The node handle is invalid, because the node has already been closed.
-     *          -5: An IO error occurred.
+     *          -3: Invalid seek mode requested.
+     *          -4: The node is a directory.
+     *          -5: The node handle is invalid, because the node has already been closed.
+     *          -6: An IO error occurred.
      */
-    S64 vfs_seek(void* sys_call_ctx, U64 handle, U64 byte_pos);
+    S64 vfs_seek(void* sys_call_ctx, U64 handle, U64 seek_mode, U64 offset);
 
 
     /**

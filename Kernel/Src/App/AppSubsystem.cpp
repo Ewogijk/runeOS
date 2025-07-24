@@ -484,11 +484,9 @@ namespace Rune::App {
         CPU::Stack        user_stack;
         LibK::VirtualAddr start_info_addr;
         _logger->info(FILE, "Loading OS: {}", os_exec.to_string());
-        const char* a = "Ahoy brause";
-        char*       dummy_args[3];
-        dummy_args[0]          = (char*)a;
-        dummy_args[1]          = (char*)"Was geht ab?";
-        dummy_args[2]          = nullptr;
+        char*       dummy_args[1] = {
+            nullptr
+        };
         LoadStatus load_status = loader.load(os_exec, dummy_args, app, user_stack, start_info_addr, true);
         if (load_status != LoadStatus::LOADED) {
             _logger->warn(FILE, "Failed to load OS. Status: {}", load_status.to_string());
