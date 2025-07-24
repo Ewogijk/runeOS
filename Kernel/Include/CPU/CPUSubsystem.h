@@ -69,6 +69,9 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
         static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
         static constexpr char const* IDLE_THREAD_NAME       = "Idle";
+        static char* DUMMY_ARGS[1];
+        static StartInfo TERMINATOR_THREAD_START_INFO;
+        static StartInfo IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt Properties
@@ -101,9 +104,7 @@ namespace Rune::CPU {
 
         SharedPointer<Thread> create_thread(
                 const String& thread_name,
-                ThreadMain t_main,
-                int argc,
-                char* argv[],
+                StartInfo* start_info,
                 LibK::PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
                 Stack user_stack
@@ -236,12 +237,8 @@ namespace Rune::CPU {
          * </p>
          *
          * @param thread_name    Name of the thread.
-         * @param t_main         Main function of the thread. It has the signature int(int, char*[]). Parameters are the
-         *                          number of arguments and a pointer to the array with the string arguments. The return
-         *                          value is the thread status after it finished. status >= 0 -> everything fine,
-         *                          status < 0 -> exit with error.
-         * @param argc           The number of arguments for the thread.
-         * @param argv           A null terminated array of string arguments for the thread.
+         * @param start_info     The thread start info contains the thread arguments, thread main and more info.
+         *
          * @param base_pt_addr   Address of the base page table defining the virtual address space of the thread.
          * @param policy         Scheduling policy to use for the thread.
          * @param user_stack     The user mode stack.
@@ -250,9 +247,7 @@ namespace Rune::CPU {
          */
         U16 schedule_new_thread(
                 const String& thread_name,
-                ThreadMain t_main,
-                int argc,
-                char* argv[],
+                StartInfo* start_info,
                 LibK::PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
                 Stack user_stack

@@ -55,9 +55,8 @@ namespace Rune::CPU {
     }
 
 
-    int idle_thread(int argc, char* argv[]) {
-        SILENCE_UNUSED(argc)
-        SILENCE_UNUSED(argv)
+    int idle_thread(StartInfo* start_info) {
+        SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_enable();
             halt();
@@ -67,9 +66,8 @@ namespace Rune::CPU {
     }
 
 
-    int terminator_thread(int argc, char* argv[]) {
-        SILENCE_UNUSED(argc)
-        SILENCE_UNUSED(argv)
+    int terminator_thread(StartInfo* start_info) {
+        SILENCE_UNUSED(start_info)
         for (;;) {
             SCHEDULER->lock();
             auto* terminated_threads = SCHEDULER->get_terminated_threads();
@@ -121,21 +119,20 @@ namespace Rune::CPU {
 
     IMPLEMENT_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
+    char* Subsystem::DUMMY_ARGS[];
+    StartInfo Subsystem::TERMINATOR_THREAD_START_INFO;
+    StartInfo Subsystem::IDLE_THREAD_START_INFO;
 
     SharedPointer<Thread> Subsystem::create_thread(
             const String& thread_name,
-            ThreadMain t_main,
-            int argc,
-            char* argv[],
+            StartInfo* start_info,
             LibK::PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
             Stack user_stack
     ) {
         SharedPointer<Thread> new_thread(new Thread);
         new_thread->name                    = move(thread_name);
-        new_thread->main                    = t_main;
-        new_thread->argc                    = argc;
-        new_thread->argv                    = argv;
+        new_thread->start_info = start_info;
         new_thread->base_page_table_address = base_pt_addr;
         new_thread->policy                  = policy;
         new_thread->user_stack = move(user_stack);
@@ -279,23 +276,23 @@ namespace Rune::CPU {
         // Init Scheduling
         _logger->debug(FILE, "Starting the Scheduler...");
         LibK::PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
-        char* dummy_args[1] = {
-                nullptr
-        };
+        DUMMY_ARGS[0] = nullptr;
+        TERMINATOR_THREAD_START_INFO.argc = 0;
+        TERMINATOR_THREAD_START_INFO.argv = DUMMY_ARGS;
+        TERMINATOR_THREAD_START_INFO.main = &terminator_thread;
         auto thread_terminator = create_thread(
                 TERMINATOR_THREAD_NAME,
-                &terminator_thread,
-                0,
-                dummy_args,
+                &TERMINATOR_THREAD_START_INFO,
                 base_pt_addr,
                 SchedulingPolicy::NONE,
                 { nullptr, 0x0, 0x0 }
         );
+        IDLE_THREAD_START_INFO.argc = 0;
+        IDLE_THREAD_START_INFO.argv = DUMMY_ARGS;
+        IDLE_THREAD_START_INFO.main = &idle_thread;
         auto le_idle_thread    = create_thread(
                 IDLE_THREAD_NAME,
-                &idle_thread,
-                0,
-                dummy_args,
+                &IDLE_THREAD_START_INFO,
                 base_pt_addr,
                 SchedulingPolicy::NONE,
                 { nullptr, 0x0, 0x0 }
@@ -442,9 +439,7 @@ namespace Rune::CPU {
 
     U16 Subsystem::schedule_new_thread(
             const String& thread_name,
-            ThreadMain t_main,
-            int argc,
-            char* argv[],
+            StartInfo* start_info,
             LibK::PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
             Stack user_stack
@@ -454,9 +449,7 @@ namespace Rune::CPU {
 
         SharedPointer<Thread> new_thread = create_thread(
                 thread_name,
-                t_main,
-                argc,
-                argv,
+                move(start_info),
                 base_pt_addr,
                 policy,
                 move(user_stack)

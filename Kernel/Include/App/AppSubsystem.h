@@ -80,9 +80,10 @@ namespace Rune::App {
          * @return The assigned ID of the app.
          */
         int schedule_for_start(
-                const SharedPointer<Info>& app,
-                const CPU::Stack& user_stack,
-                const Path& working_directory
+            const SharedPointer<Info>& app,
+            const CPU::Stack&          user_stack,
+            CPU::StartInfo*             start_info,
+            const Path&                working_directory
         );
 
 
@@ -97,7 +98,6 @@ namespace Rune::App {
                 StdStream std_stream,
                 const String& target
         );
-
 
     public:
         Subsystem();

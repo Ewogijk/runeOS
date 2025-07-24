@@ -22,8 +22,8 @@ _start:
     extern liballoc_init
     call liballoc_init
 
-    extern main     ; Run the app
-    call main
+    extern forge_main     ; Run the app
+    call forge_main
     push rax        ; Save the exit code on the stack
 
     mov rdi, rax

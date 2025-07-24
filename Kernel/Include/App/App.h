@@ -31,11 +31,8 @@
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 
-#include <Memory/MemorySubsystem.h>
-
 
 namespace Rune::App {
-
 #define LOAD_STATUSES(X)                \
     X(LoadStatus, LOADED, 0x1)          \
     X(LoadStatus, RUNNING, 0x2)         \
@@ -45,7 +42,7 @@ namespace Rune::App {
     X(LoadStatus, MEMORY_ERROR, 0x6)    \
     X(LoadStatus, LOAD_ERROR, 0x7)      \
     X(LoadStatus, BAD_VENDOR_INFO, 0x8) \
-    X(LoadStatus, BAD_STDIO, 0x9)       \
+    X(LoadStatus, BAD_STDIO, 0x9)
 
     /**
      * Status of the finished ELF loading.
@@ -107,19 +104,6 @@ namespace Rune::App {
         LibK::PhysicalAddr base_page_table_address = 0x0;
         LibK::VirtualAddr  entry                   = 0x0;
 
-        /**
-         * Memory location where the app arguments are actually stored. They will be stored one after another e.g.
-         * Arg1\0Arg2\0...ArgN\0
-         */
-        LibK::VirtualAddr arguments_storage_location = 0x0;
-        /**
-         * @brief Number of arguments.
-         */
-        int               argc                       = 0;
-        /**
-         * Null terminated array of pointers to the app arguments that point into the "arguments_storage_location".
-         */
-        char** argv = nullptr;
 
         /**
          * @brief Application heap
@@ -143,18 +127,21 @@ namespace Rune::App {
         /**
          * @brief All open nodes of the app.
          */
-        LinkedList<U16> node_table;
+        LinkedList<U16> node_table = LinkedList<U16>();
 
 
         /**
          * @brief All open directory streams of the app.
          */
-        LinkedList<U16> directory_stream_table;
+        LinkedList<U16> directory_stream_table = LinkedList<U16>();
 
 
-        SharedPointer<LibK::TextStream> std_in;
-        SharedPointer<LibK::TextStream> std_out;
-        SharedPointer<LibK::TextStream> std_err;
+        /**
+         * @brief stdio streams.
+         */
+        SharedPointer<LibK::TextStream> std_in  = SharedPointer<LibK::TextStream>();
+        SharedPointer<LibK::TextStream> std_out = SharedPointer<LibK::TextStream>();
+        SharedPointer<LibK::TextStream> std_err = SharedPointer<LibK::TextStream>();
 
 
         friend bool operator==(const Info& one, const Info& two);

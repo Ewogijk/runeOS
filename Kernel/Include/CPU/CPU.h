@@ -40,13 +40,14 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    /**
-     * @brief Main function of a thread. This is defined as function pointer because it is more efficient, this will
-     *        keep the call stack small and simple and a small and simple call stack is easy to debug when the stack
-     *        gets messed up. Hint: Debugging a complex and big (or any) stack is not fun!
-     */
-    using ThreadMain = int (*)(int, char* []);
+    struct StartInfo;
 
+    /**
+     * @brief Main function of a thread. It has the signature int(int, char*[]). Parameters are the number of arguments
+     *          and a pointer to the array with the string arguments. The return value is the thread status after it
+     *          finished. status >= 0 -> everything fine, status < 0 -> exit with error.
+     */
+    using ThreadMain = int (*)(StartInfo*);
 
     /**
      * @brief Describes what a thread is currently doing.
@@ -63,11 +64,10 @@ namespace Rune::CPU {
             X(ThreadState, RUNNING, 0x2)       \
             X(ThreadState, SLEEPING, 0x3)      \
             X(ThreadState, WAITING, 0x4)       \
-            X(ThreadState, TERMINATED, 0x5)    \
+            X(ThreadState, TERMINATED, 0x5)
 
 
-
-    DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0)  // NOLINT
+    DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
 
     /**
@@ -81,20 +81,77 @@ namespace Rune::CPU {
 #define SCHEDULING_POLICIES(X)                      \
             X(SchedulingPolicy, LOW_LATENCY, 0x1)   \
             X(SchedulingPolicy, NORMAL, 0x2)        \
-            X(SchedulingPolicy, BACKGROUND, 0x3)    \
+            X(SchedulingPolicy, BACKGROUND, 0x3)
 
 
-
-    DECLARE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)  // NOLINT
+    DECLARE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0) // NOLINT
 
 
     /**
      * @brief A thread stack.
      */
     struct Stack {
-        void* stack_bottom = nullptr;       // First allocated stack page
-        LibK::VirtualAddr stack_top  = 0x0; // Stack pointer
-        LibK::MemorySize  stack_size = 0x0; // Maximum stack size
+        void*             stack_bottom = nullptr; // First allocated stack page
+        LibK::VirtualAddr stack_top    = 0x0;     // Stack pointer
+        LibK::MemorySize  stack_size   = 0x0;     // Maximum stack size
+    };
+
+
+    /**
+     * @brief The thread arguments, dynamic linker information and other useful information.
+     *
+     * A thread is either an application main thread or a minor thread. The type of thread determines how much
+     * information shall be passed in the start info.
+     *
+     * <p>
+     *  The information passed in the StartInfo is defined as followed:
+     *  <ul>
+     *   <li>Application Main Thread: All StartInfo information shall be provided.</li>
+     *   <li>Minor Thread: Argc, argv and main shall be provided, the state of the other fields is undefined.</li>
+     *  </ul>
+     * </p>
+     */
+    struct StartInfo {
+        /**
+         * @brief Number of arguments.
+         */
+        int argc;
+
+        /**
+         * @brief A null terminated array of string arguments.
+         */
+        char** argv;
+
+        /**
+         * @brief Low and high bytes of a random 16 byte value.
+         */
+        U64 random_low;
+        U64 random_high;
+
+        /**
+         * @brief Virtual address of an array where the ELF program headers are stored.
+         */
+        void* program_header_address;
+
+        /**
+         * @brief Size of a program header.
+         */
+        size_t program_header_size;
+
+        /**
+         * @brief Size of the program header array.
+         */
+        size_t program_header_count;
+
+        /**
+         * @brief Main function of the thread.
+         */
+        ThreadMain main;
+
+        /**
+         * @brief Address of a 16 byte random value.
+         */
+        void* random;
     };
 
 
@@ -115,8 +172,8 @@ namespace Rune::CPU {
 
         // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or syscall
         // It is dynamically allocated on the kernel heap and has a preconfigured fixed size
-        U8* kernel_stack_bottom = nullptr;                // Pointer to the heap allocated memory
-        LibK::VirtualAddr kernel_stack_top = 0x0;
+        U8*               kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
+        LibK::VirtualAddr kernel_stack_top    = 0x0;
 
         // The user mode stack contains application data, is managed by an application.
         Stack user_stack;
@@ -134,12 +191,16 @@ namespace Rune::CPU {
          */
         int join_app_id = -1;
 
-        // Number of arguments in argv
-        int argc = 0;
-        // Null terminated array pointers to the thread arguments
-        char** argv = nullptr;
-        // Main function of the thread
-        ThreadMain main = nullptr;
+        // // Number of arguments in argv
+        // int argc = 0;
+        // // Null terminated array pointers to the thread arguments
+        // char** argv = nullptr;
+        // // Main function of the thread
+        // ThreadMain main = nullptr;
+        /**
+         * @brief Thread arguments and more.
+         */
+        StartInfo* start_info;
 
         /**
          * The thread control block contains the thread local storage (TLS) and other data, it is maintained by libc.
@@ -189,11 +250,10 @@ namespace Rune::CPU {
      */
 #define PRIVILEGE_LEVELS(X)             \
          X(PrivilegeLevel, KERNEL, 0x1) \
-         X(PrivilegeLevel, USER, 0x2)   \
+         X(PrivilegeLevel, USER, 0x2)
 
 
-
-    DECLARE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)  // NOLINT
+    DECLARE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0) // NOLINT
 
 
     /**
@@ -212,8 +272,8 @@ namespace Rune::CPU {
      */
     class Core {
     public:
-
         virtual ~Core() = default;
+
 
         /**
          * @brief Setup CPU specific data structures for this core.
