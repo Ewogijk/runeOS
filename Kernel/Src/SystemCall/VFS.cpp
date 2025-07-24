@@ -265,27 +265,29 @@ namespace Rune::SystemCall {
     }
 
 
-    S64 vfs_seek(void* sys_call_ctx, U64 handle, U64 byte_pos) {
-        auto* vfs_ctx = (VFSContext*) sys_call_ctx;
-        U16 node_handle = handle;
+    S64 vfs_seek(void* sys_call_ctx, const U64 handle, const U64 seek_mode, const U64 offset) {
+        const auto* vfs_ctx     = static_cast<VFSContext*>(sys_call_ctx);
+        const U16   node_handle = handle;
         if (node_handle == 0)
             return -1;
 
-        SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_handle);
+        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_handle);
         if (!node)
             return -2;
 
-        VFS::NodeIOResult io_res = node->seek(VFS::SeekMode::BEGIN, byte_pos);
-        switch (io_res.status) {
+        const VFS::SeekMode k_seek_mode = VFS::SeekMode::from_value(seek_mode);
+        if (k_seek_mode == VFS::SeekMode::NONE)
+            return -3;
 
+        switch (auto [status, byte_count] = node->seek(k_seek_mode, static_cast<int>(offset)); status) {
             case VFS::NodeIOStatus::OKAY:
-                return (S64) io_res.byte_count;
+                return static_cast<S64>(byte_count);
             case VFS::NodeIOStatus::NOT_SUPPORTED:
-                return -3;
-            case VFS::NodeIOStatus::CLOSED:
                 return -4;
+            case VFS::NodeIOStatus::CLOSED:
+                return -5;
             default:
-                return -5; // DEV_ERROR
+                return -6; // DEV_ERROR
         }
     }
 
