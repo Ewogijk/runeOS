@@ -275,7 +275,7 @@ namespace Rune::SystemCall {
         if (!node)
             return -2;
 
-        VFS::NodeIOResult io_res = node->seek(byte_pos);
+        VFS::NodeIOResult io_res = node->seek(VFS::SeekMode::BEGIN, byte_pos);
         switch (io_res.status) {
 
             case VFS::NodeIOStatus::OKAY:

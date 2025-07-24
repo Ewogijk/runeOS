@@ -67,15 +67,15 @@ namespace Rune::VFS {
 
 #define NODE_IO_STATUSES(X)             \
     X(NodeIOStatus, OKAY, 0x1)          \
-    X(NodeIOStatus, BAD_ARGS, 0x1)      \
-    X(NodeIOStatus, NOT_ALLOWED, 0x2)   \
-    X(NodeIOStatus, NOT_SUPPORTED, 0x3) \
-    X(NodeIOStatus, DEV_ERROR, 0x4)     \
-    X(NodeIOStatus, CLOSED, 0x5)        \
+    X(NodeIOStatus, BAD_ARGS, 0x2)      \
+    X(NodeIOStatus, NOT_ALLOWED, 0x3)   \
+    X(NodeIOStatus, NOT_SUPPORTED, 0x4) \
+    X(NodeIOStatus, DEV_ERROR, 0x5)     \
+    X(NodeIOStatus, CLOSED, 0x6)        \
 
 
     /**
-     * @brief End result of an node IO operation.
+     * @brief End result of a node IO operation.
      *
      * <ul>
      *  <li>Okay:               The operation was finished without errors.</li>
@@ -87,6 +87,22 @@ namespace Rune::VFS {
      * <ul>
      */
     DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) //NOLINT
+
+
+    /**
+     * @brief Seek modes describe how the new cursor position will be calculated.
+     * <ul>
+     *  <li>BEGIN: From the beginning of the file -> cursor = offset</li>
+     *  <li>CURSOR: Relative to the cursor position -> cursor += offset</li>
+     *  <li>END: From the end of the file -> cursor = file_size + offset</li>
+     * </ul>
+     */
+#define SEEK_MODE(X)                \
+         X(SeekMode, BEGIN, 0x1)    \
+         X(SeekMode, CURSOR, 0x2)   \
+         X(SeekMode, END, 0x3)
+
+    DECLARE_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT
 
 
     /**
@@ -242,15 +258,15 @@ namespace Rune::VFS {
          * </p>
          *
          * @brief Move the file cursor to the requested byte position counting from the start of the file.
-         * @param byte_pos Byte position as counted from the start of the file.
-         * @return Okay:                The file cursor was moved to the requested byte position counting from the
-         *                              start of the file.
+         * @param seek_mode The seek mode describes how the cursor position will be calculated.
+         * @param offset    Byte position as counted from the start of the file.
+         * @return Okay:                The file cursor was moved according to the requested seek mode.
          *          NotSupported:       The node is a directory, seeking is not supported.
-         *          BadArgs:            bytePos is bigger than the file size.
+         *          BadArgs:            The new cursor position would be <0 or >get_size().
          *          Closed:             The node has been closed, no more seeking allowed.
          *          StorageDevError:    An IO error happened.
          */
-        virtual NodeIOResult seek(size_t byte_pos) = 0;
+        virtual NodeIOResult seek(SeekMode seek_mode, int offset) = 0;
 
         //TODO implement creation, modification and last access date/time support
 
@@ -274,7 +290,7 @@ namespace Rune::VFS {
          * </p>
          *
          * @brief Set the requested node attribute to the requested value.
-         * @param fAttr Node attribute that will be changed.
+         * @param n_attr Node attribute that will be changed.
          * @param val   New value of the node attribute.
          * @return True: The node attribute got changed, False: It was not or the node is closed.
          */

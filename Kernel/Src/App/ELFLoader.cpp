@@ -58,7 +58,7 @@ namespace Rune::App {
 
 
     bool ELFLoader::seek(U64 byte_count) {
-        VFS::NodeIOResult fa   = _elf_file->seek(byte_count);
+        VFS::NodeIOResult fa   = _elf_file->seek(VFS::SeekMode::BEGIN, byte_count);
         bool              good = fa.status == VFS::NodeIOStatus::OKAY;
         if (!good)
             _logger->warn(FILE, "Failed to seek {} bytes. Actual seeked: {}", byte_count, fa.byte_count);
