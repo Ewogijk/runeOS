@@ -200,6 +200,10 @@ namespace Rune::VFS {
             if (!create_system_directory(k_subsys_dir))
                 return false;
         }
+
+        // stdin, stdout and stderr reserve handles 0-2 -> Start handle counter at 3
+        _node_handle_counter.acquire_handle();
+        _node_handle_counter.acquire_handle();
         return true;
     }
 
