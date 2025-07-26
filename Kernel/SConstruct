@@ -253,6 +253,11 @@ target_env.SConscript(
     duplicate=0
 )
 target_env.SConscript(
+    str(Path('Src') / 'Ember' / 'SConscript'),
+    variant_dir=str(build_dir / 'Ember'),
+    duplicate=0
+)
+target_env.SConscript(
     str(Path('Src') / 'App' / 'SConscript'),
     variant_dir=str(build_dir / 'App'),
     duplicate=0
@@ -304,6 +309,7 @@ target_env.SConscript(
 )
 
 Import('Hammer')
+Import('Ember')
 Import('App')
 Import('Boot')
 Import('BuiltInPlugin')
@@ -329,6 +335,7 @@ objects = [
     Memory,
     Arch,
     LibK,
+    Ember,
     Hammer,
     compiler / 'lib' / 'gcc' / 'x86_64-elf' / '13.2.0' / 'crtend.o',
     crtn

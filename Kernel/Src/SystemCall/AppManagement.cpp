@@ -16,15 +16,17 @@
 
 #include <SystemCall/AppManagement.h>
 
+#include <Ember/VirtualKey.h>
 
 namespace Rune::SystemCall {
     S64 read_std_in(void* sys_call_ctx, U64 arg1) {
         auto* app_mng_ctx = (AppManagementContext*) sys_call_ctx;
         auto* timer       = app_mng_ctx->cpu_subsys->get_system_timer();
-        Device::VirtualKey key(app_mng_ctx->app_subsys->get_active_app()->std_in->read());
+
+        Ember::VirtualKey key(app_mng_ctx->app_subsys->get_active_app()->std_in->read());
         while (key.is_none()) {
             timer->sleep_milli(2); // 1ms is too fast, dunno why but nothing happens
-            key = Device::VirtualKey(app_mng_ctx->app_subsys->get_active_app()->std_in->read());
+            key = Ember::VirtualKey(app_mng_ctx->app_subsys->get_active_app()->std_in->read());
         }
         U16 key_code = key.get_key_code();
         auto* key_code_buffer = (U16*) arg1;
@@ -220,10 +222,10 @@ namespace Rune::SystemCall {
             return -2;
 
         SharedPointer<VFS::Node> node;
-        VFS::IOStatus            st = app_mng_ctx->vfs_subsys->open(path, VFS::IOMode::READ, node);
+        VFS::IOStatus            st = app_mng_ctx->vfs_subsys->open(path, Ember::IOMode::READ, node);
         switch (st) {
             case VFS::IOStatus::OPENED:
-                if (node->has_attribute(VFS::NodeAttribute::FILE)) {
+                if (node->has_attribute(Ember::NodeAttribute::FILE)) {
                     // Not a directory
                     node->close();
                     return -4;

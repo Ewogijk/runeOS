@@ -18,7 +18,7 @@
 #define RUNEOS_KERNELGUARDIAN_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 #include <LibK/KMemory.h>
 

@@ -25,13 +25,12 @@
 
 
 namespace Rune::SystemCall {
-
     /**
      * @brief Information about a thread for user space.
      */
     struct ThreadControlBlock {
-        U16 thread_ID;
-        void* stack_addr;
+        U16    thread_ID;
+        void*  stack_addr;
         size_t stack_size;
     };
 
@@ -52,9 +51,9 @@ namespace Rune::SystemCall {
      * @brief Create mutex with the requested name.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param mutex_name   Name of the mutex.
-     * @return >0: Handle to the mutex.
-     *          -1: The mutex name is null or exceeds the maximum length of 128 bytes.
-     *          -2: Failed to create the mutex.
+     * @return >0:       Mutex ID.<br>
+     *          BAD_ARG: The mutex name is null or exceeds the string size limit.<br>
+     *          FAULT:   Failed to create the mutex.
      */
     S64 mutex_create(void* sys_call_ctx, U64 mutex_name);
 
@@ -62,38 +61,38 @@ namespace Rune::SystemCall {
     /**
      * If the mutex is already locked the system call will block the calling thread until the mutex is unlocked.
      *
-     * @brief Lock the mutex with the requested handle.
+     * @brief Lock the mutex with the requested ID.
      * @param sys_call_ctx A pointer to the thread management context.
-     * @param handle       The handle of a mutex.
-     * @return 0: The mutex got locked
-     *          -1: The handle is zero.
-     *          -2: No mutex with the requested handle was found.
+     * @param ID           The ID of a mutex.
+     * @return 0:        The mutex got locked<br>
+     *          BAD_ARG: The ID is zero.<br>
+     *          BAD_ID:  No mutex with the requested ID was found.
      */
-    S64 mutex_lock(void* sys_call_ctx, U64 handle);
+    S64 mutex_lock(void* sys_call_ctx, U64 ID);
 
 
     /**
      * If the mutex is not locked by the calling thread then this system call will do nothing.
      *
-     * @brief Unlock the mutex with the requested handle.
+     * @brief Unlock the mutex with the requested ID.
      * @param sys_call_ctx A pointer to the thread management context.
-     * @param handle       The handle of a mutex.
-     * @return 0: The mutex got locked
-     *          -1: The handle is zero.
-     *          -2: No mutex with the requested handle was found.
+     * @param ID           The ID of a mutex.
+     * @return 0:        The mutex got locked<br>
+     *          BAD_ARG: The ID is zero.<br>
+     *          BAD_ID:  No mutex with the requested ID was found.
      */
-    S64 mutex_unlock(void* sys_call_ctx, U64 handle);
+    S64 mutex_unlock(void* sys_call_ctx, U64 ID);
 
 
     /**
-     * @brief Free all resources associated with the mutex with the requested handle.
+     * @brief Free all resources associated with the requested mutex.
      * @param sys_call_ctx A pointer to the thread management context.
-     * @param handle       The handle of a mutex.
-     * @return 0: The mutex got locked
-     *          -1: The handle is zero.
-     *          -2: Failed to release the mutex.
+     * @param ID           The ID of a mutex.
+     * @return 0:        The mutex got locked.<br>
+     *          BAD_ARG: The ID is zero.<br>
+     *          BAD_ID:  Failed to release the mutex.
      */
-    S64 mutex_release(void* sys_call_ctx, U64 handle);
+    S64 mutex_release(void* sys_call_ctx, U64 ID);
 
 
     /**
@@ -105,24 +104,13 @@ namespace Rune::SystemCall {
 
 
     /**
-     * @brief Get the thread control block of the currently running thread.
-     * @param sys_call_ctx A pointer to the thread management context.
-     * @param tcb_out      Thread control block buffer.
-     * @return 0: Success.
-     *          -1: The tcb_out buffer is null or in kernel memory.
-     */
-    S64 get_thread_control_block(void* sys_call_ctx, U64 tcb_out);
-
-
-    /**
      * @brief Set the current thread's thread control block.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param tcb          A pointer to the thread control block.
-     * @return 0: Success.
-     *          -1: The tcb buffer is null or in kernel memory.
+     * @return 0:        Success.<br>
+     *          BAD_ARG: The tcb buffer is null or in kernel memory.
      */
     S64 set_thread_control_block(void* sys_call_ctx, U64 tcb);
-
 }
 
 #endif //RUNEOS_THREADMANAGEMENT_H

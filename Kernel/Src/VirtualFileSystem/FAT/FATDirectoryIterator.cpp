@@ -18,7 +18,7 @@
 
 
 namespace Rune::VFS {
-    IMPLEMENT_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0)
+    DEFINE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0)
 
 
     void FATDirectoryIterator::get_next_cluster() {
@@ -323,15 +323,15 @@ namespace Rune::VFS {
         if (_fat_it.has_next()) {
             U8 node_attr = 0;
             if (_fat_it->file.has_attribute(FATFileAttribute::READONLY))
-                node_attr |= NodeAttribute::READONLY;
+                node_attr |= Ember::NodeAttribute::READONLY;
             if (_fat_it->file.has_attribute(FATFileAttribute::HIDDEN))
-                node_attr |= NodeAttribute::HIDDEN;
+                node_attr |= Ember::NodeAttribute::HIDDEN;
             if (_fat_it->file.has_attribute(FATFileAttribute::SYSTEM))
-                node_attr |= NodeAttribute::SYSTEM;
+                node_attr |= Ember::NodeAttribute::SYSTEM;
             if (_fat_it->file.has_attribute(FATFileAttribute::DIRECTORY))
-                node_attr |= NodeAttribute::DIRECTORY;
+                node_attr |= Ember::NodeAttribute::DIRECTORY;
             if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE))
-                node_attr |= NodeAttribute::FILE;
+                node_attr |= Ember::NodeAttribute::FILE;
 
             node_info = {
                     _fat_it->file_name,

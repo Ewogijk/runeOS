@@ -36,19 +36,19 @@ namespace Rune::VFS {
 
     U8 FATDriver::node_attributes_to_fat_file_attributes(U8 node_attr) {
         U8 fat_attr = 0;
-        if (node_attr & NodeAttribute::READONLY)
+        if (node_attr & Ember::NodeAttribute::READONLY)
             fat_attr |= FATFileAttribute::READONLY;
 
-        if (node_attr & NodeAttribute::HIDDEN)
+        if (node_attr & Ember::NodeAttribute::HIDDEN)
             fat_attr |= FATFileAttribute::HIDDEN;
 
-        if (node_attr & NodeAttribute::SYSTEM)
+        if (node_attr & Ember::NodeAttribute::SYSTEM)
             fat_attr |= FATFileAttribute::SYSTEM;
 
-        if (node_attr & NodeAttribute::DIRECTORY)
+        if (node_attr & Ember::NodeAttribute::DIRECTORY)
             fat_attr |= FATFileAttribute::DIRECTORY;
 
-        if (node_attr & NodeAttribute::FILE)
+        if (node_attr & Ember::NodeAttribute::FILE)
             fat_attr |= FATFileAttribute::ARCHIVE;
 
         return fat_attr;
@@ -495,7 +495,7 @@ namespace Rune::VFS {
             U16 storage_dev,
             const Path& mount_point,
             const Path& path,
-            IOMode node_io_mode,
+            Ember::IOMode node_io_mode,
             Function<void()> on_close,
             SharedPointer<Node>& out
     ) {
@@ -548,15 +548,15 @@ namespace Rune::VFS {
 
         U8 node_attr = 0;
         if (node.file.has_attribute(FATFileAttribute::READONLY))
-            node_attr |= NodeAttribute::READONLY;
+            node_attr |= Ember::NodeAttribute::READONLY;
         if (node.file.has_attribute(FATFileAttribute::HIDDEN))
-            node_attr |= NodeAttribute::HIDDEN;
+            node_attr |= Ember::NodeAttribute::HIDDEN;
         if (node.file.has_attribute(FATFileAttribute::SYSTEM))
-            node_attr |= NodeAttribute::SYSTEM;
+            node_attr |= Ember::NodeAttribute::SYSTEM;
         if (node.file.has_attribute(FATFileAttribute::DIRECTORY))
-            node_attr |= NodeAttribute::DIRECTORY;
+            node_attr |= Ember::NodeAttribute::DIRECTORY;
         if (node.file.has_attribute(FATFileAttribute::ARCHIVE))
-            node_attr |= NodeAttribute::FILE;
+            node_attr |= Ember::NodeAttribute::FILE;
 
         out.node_path = node.file_name;
         out.size = node.file.file_size;

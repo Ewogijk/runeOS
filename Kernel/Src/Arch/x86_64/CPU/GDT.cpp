@@ -20,7 +20,7 @@
 
 
 namespace Rune::CPU {
-    IMPLEMENT_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
+    DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
 
 
     void init_gdt(GlobalDescriptorTable* gdt, TaskStateSegment64* tss) {

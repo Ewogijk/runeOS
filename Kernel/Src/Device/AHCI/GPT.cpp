@@ -85,7 +85,7 @@ namespace Rune::Device {
     //                                      GPTPartitionTableEntry Impl
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    IMPLEMENT_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0)
+    DEFINE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0)
 
 
     String GPTPartitionTableEntry::get_name() {

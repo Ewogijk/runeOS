@@ -18,7 +18,7 @@
 #define RUNEOS_LEXER_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 
 namespace Rune::Shell {

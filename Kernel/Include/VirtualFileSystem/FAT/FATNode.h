@@ -30,7 +30,7 @@
 namespace Rune::VFS {
     class FATNode : public Node {
         Path                   _path;
-        IOMode             _node_io_mode;
+        Ember::IOMode             _node_io_mode;
         LocationAwareFileEntry _file_entry;
         VolumeManager   & _volume_manager;
         FileEntryManager& _file_entry_manager;
@@ -57,7 +57,7 @@ namespace Rune::VFS {
         FATNode(
                 Function<void()> on_close,
                 Path path,
-                IOMode node_io_mode,
+                Ember::IOMode node_io_mode,
                 LocationAwareFileEntry file_entry,
                 VolumeManager& volume_manager,
                 FileEntryManager& file_entry_manager,
@@ -71,7 +71,7 @@ namespace Rune::VFS {
         [[nodiscard]] Path get_node_path() const override;
 
 
-        [[nodiscard]] IOMode get_io_mode() const override;
+        [[nodiscard]] Ember::IOMode get_io_mode() const override;
 
 
         [[nodiscard]] size_t get_size() const override;
@@ -86,13 +86,13 @@ namespace Rune::VFS {
         NodeIOResult write(void* buf, size_t buf_size) override;
 
 
-        NodeIOResult seek(SeekMode seek_mode, int offset) override;
+        NodeIOResult seek(Ember::SeekMode seek_mode, int offset) override;
 
 
-        [[nodiscard]] bool has_attribute(NodeAttribute f_attr) const override;
+        [[nodiscard]] bool has_attribute(Ember::NodeAttribute f_attr) const override;
 
 
-        bool set_attribute(NodeAttribute n_attr, bool val) override;
+        bool set_attribute(Ember::NodeAttribute n_attr, bool val) override;
     };
 }
 

@@ -21,10 +21,10 @@ namespace Rune::Memory {
     constexpr char const* FILE = "Slab Allocator";
 
 
-    IMPLEMENT_TYPED_ENUM(CacheType, U8, CACHE_TYPES, 0x0)
+    DEFINE_TYPED_ENUM(CacheType, U8, CACHE_TYPES, 0x0)
 
 
-    IMPLEMENT_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0)
+    DEFINE_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0)
 
 
 ////////////////////////////////////////////////////////////////////////

@@ -18,7 +18,8 @@
 #define RUNEOS_FIS_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Definitions.h>
+#include <Ember/Enum.h>
 
 
 namespace Rune::Device {

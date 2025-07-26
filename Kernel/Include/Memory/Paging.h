@@ -18,7 +18,7 @@
 #define RUNEOS_PAGING_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 #include <Hammer/Memory.h>
 
 #include <LibK/KMemory.h>

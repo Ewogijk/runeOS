@@ -34,7 +34,7 @@ namespace Rune::LibK {
     //                                          Kernel Subsystem Registry
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    IMPLEMENT_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0)
+    DEFINE_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0)
 
 
     SubsystemRegistry::SubsystemRegistry(Subsystem** k_subsys_registry, size_t k_subsys_count) :

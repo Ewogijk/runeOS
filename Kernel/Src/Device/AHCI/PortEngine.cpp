@@ -25,7 +25,7 @@ namespace Rune::Device {
     constexpr char const* FILE = "PortEngine";
 
 
-    IMPLEMENT_ENUM(PartitionType, PARTITION_TYPES, 0x0) //NOLINT
+    DEFINE_ENUM(PartitionType, PARTITION_TYPES, 0x0) //NOLINT
 
 
     HardDrive::HardDrive()

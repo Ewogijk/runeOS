@@ -24,7 +24,7 @@ namespace Rune::Memory {
     constexpr char const* FILE = "VirtualMemoryManager";
 
 
-    IMPLEMENT_ENUM(VMMStartFailure, VMMStartFailures, 0x0)
+    DEFINE_ENUM(VMMStartFailure, VMMStartFailures, 0x0)
 
 
     KernelSpaceEntryAllocResult VirtualMemoryManager::allocate_kernel_space_entries(

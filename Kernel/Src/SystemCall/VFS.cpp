@@ -81,11 +81,11 @@ namespace Rune::SystemCall {
             return -1;
 
         U8 k_node_attr = node_attr;
-        U8 verify_mask = VFS::NodeAttribute::READONLY
-                         | VFS::NodeAttribute::HIDDEN
-                         | VFS::NodeAttribute::SYSTEM
-                         | VFS::NodeAttribute::DIRECTORY
-                         | VFS::NodeAttribute::FILE;
+        U8 verify_mask = Ember::NodeAttribute::READONLY
+                         | Ember::NodeAttribute::HIDDEN
+                         | Ember::NodeAttribute::SYSTEM
+                         | Ember::NodeAttribute::DIRECTORY
+                         | Ember::NodeAttribute::FILE;
         if ((k_node_attr & ~verify_mask) != 0)
             return -2;
 
@@ -119,8 +119,8 @@ namespace Rune::SystemCall {
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return -1;
 
-        VFS::IOMode io_mode(arg2);
-        if (io_mode == VFS::IOMode::NONE)
+        Ember::IOMode io_mode(arg2);
+        if (io_mode == Ember::IOMode::NONE)
             return -2;
 
         Path k_node_path(k_node_path_buf);
@@ -203,7 +203,7 @@ namespace Rune::SystemCall {
         if (!node)
             return -2;
 
-        if (!node->has_attribute(VFS::NodeAttribute::FILE))
+        if (!node->has_attribute(Ember::NodeAttribute::FILE))
             return -3;
 
         void* u_buff = (void*) u_buf;
@@ -238,7 +238,7 @@ namespace Rune::SystemCall {
         if (!node)
             return -2;
 
-        if (!node->has_attribute(VFS::NodeAttribute::FILE))
+        if (!node->has_attribute(Ember::NodeAttribute::FILE))
             return -3;
 
         void* u_buff = (void*) u_buf;
@@ -275,8 +275,8 @@ namespace Rune::SystemCall {
         if (!node)
             return -2;
 
-        const VFS::SeekMode k_seek_mode = VFS::SeekMode::from_value(seek_mode);
-        if (k_seek_mode == VFS::SeekMode::NONE)
+        const Ember::SeekMode k_seek_mode = Ember::SeekMode(seek_mode);
+        if (k_seek_mode == Ember::SeekMode::NONE)
             return -3;
 
         switch (auto [status, byte_count] = node->seek(k_seek_mode, static_cast<int>(offset)); status) {

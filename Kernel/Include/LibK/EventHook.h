@@ -18,7 +18,7 @@
 #define RUNEOS_EVENTHOOK_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/String.h>
 
 #include <LibK/Stream.h>

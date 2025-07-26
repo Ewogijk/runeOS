@@ -18,7 +18,7 @@
 #define RUNEOS_STRING_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/Collection.h>
 
 

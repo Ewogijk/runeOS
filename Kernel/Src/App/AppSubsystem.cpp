@@ -29,7 +29,7 @@
 namespace Rune::App {
     constexpr char const* FILE = "App";
 
-    IMPLEMENT_ENUM(StdStream, STD_STREAMS, 0x0)
+    DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 
 
     int Subsystem::schedule_for_start(
@@ -104,19 +104,19 @@ namespace Rune::App {
                 SharedPointer<VFS::Node> node;
                 VFS::IOStatus            st = _vfs_subsys->open(
                     maybe_path,
-                    std_stream == StdStream::IN ? VFS::IOMode::READ : VFS::IOMode::WRITE,
+                    std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
                     node
                 );
                 if (st == VFS::IOStatus::NOT_FOUND) {
                     // File not found -> Create it
-                    st = _vfs_subsys->create(maybe_path, (int)VFS::NodeAttribute::FILE);
+                    st = _vfs_subsys->create(maybe_path, (int)Ember::NodeAttribute::FILE);
                     if (st != VFS::IOStatus::CREATED)
                         return { };
 
                     // Try to open it again
                     st = _vfs_subsys->open(
                         maybe_path,
-                        std_stream == StdStream::IN ? VFS::IOMode::READ : VFS::IOMode::WRITE,
+                        std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
                         node
                     );
                 }

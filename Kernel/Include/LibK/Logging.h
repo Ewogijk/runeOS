@@ -19,7 +19,7 @@
 
 
 #include <Hammer/String.h>
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 #include <Hammer/Memory.h>
 
 #include <LibK/Stream.h>

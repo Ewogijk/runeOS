@@ -33,7 +33,7 @@ namespace Rune::VFS {
         }
 
         // Move the cluster cursor
-        if (_node_io_mode == IOMode::APPEND) {
+        if (_node_io_mode == Ember::IOMode::APPEND) {
             U32 cluster_size    = _mounted_storage->BPB->bytes_per_sector * _mounted_storage->BPB->sectors_per_cluster;
             _processed_clusters = i;
             if (_file_entry.file.file_size % cluster_size != 0)
@@ -58,7 +58,7 @@ namespace Rune::VFS {
     FATNode::FATNode(
         Function<void()>             on_close,
         Path                         path,
-        IOMode                       node_io_mode,
+        Ember::IOMode                node_io_mode,
         LocationAwareFileEntry       file_entry,
         VolumeManager&               volume_manager,
         FileEntryManager&            file_entry_manager,
@@ -82,7 +82,7 @@ namespace Rune::VFS {
     }
 
 
-    IOMode FATNode::get_io_mode() const {
+    Ember::IOMode FATNode::get_io_mode() const {
         return _node_io_mode;
     }
 
@@ -96,7 +96,7 @@ namespace Rune::VFS {
         if (_closed)
             return false;
 
-        if (!has_attribute(NodeAttribute::FILE))
+        if (!has_attribute(Ember::NodeAttribute::FILE))
             return false;
         return processed_bytes() < _file_entry.file.file_size;
     }
@@ -106,7 +106,7 @@ namespace Rune::VFS {
         if (_closed)
             return {NodeIOStatus::CLOSED, 0};
 
-        if (!has_attribute(NodeAttribute::FILE))
+        if (!has_attribute(Ember::NodeAttribute::FILE))
             return {NodeIOStatus::NOT_SUPPORTED, 0};
 
         if (_file_entry.file.file_size == 0)
@@ -161,10 +161,10 @@ namespace Rune::VFS {
         if (_closed)
             return {NodeIOStatus::CLOSED, 0};
 
-        if (!has_attribute(NodeAttribute::FILE))
+        if (!has_attribute(Ember::NodeAttribute::FILE))
             return {NodeIOStatus::NOT_SUPPORTED, 0};
 
-        if (_node_io_mode == IOMode::READ)
+        if (_node_io_mode == Ember::IOMode::READ)
             return {NodeIOStatus::NOT_ALLOWED, 0};
 
         if (!buf)
@@ -204,7 +204,7 @@ namespace Rune::VFS {
             // Copy buffer bytes to the cluster buffer
             size_t b_to_copy = min(buf_size - buf_pos, cluster_size - _cluster_offset);
             memcpy(&w_buf[_cluster_offset], &((U8*)buf)[buf_pos], b_to_copy); // _cluster_offset needs update
-            if (_node_io_mode == IOMode::WRITE && is_first_write)
+            if (_node_io_mode == Ember::IOMode::WRITE && is_first_write)
                 memset(&w_buf[b_to_copy], 0, cluster_size - b_to_copy);
 
             // Write updated cluster to volume
@@ -235,7 +235,7 @@ namespace Rune::VFS {
 
         // Update file size
         U32 old_size               = _file_entry.file.file_size;
-        _file_entry.file.file_size = _node_io_mode == IOMode::WRITE && is_first_write
+        _file_entry.file.file_size = _node_io_mode == Ember::IOMode::WRITE && is_first_write
                                          ? buf_pos
                                          : _file_entry.file.file_size + buf_pos;
 
@@ -275,37 +275,37 @@ namespace Rune::VFS {
     }
 
 
-    NodeIOResult FATNode::seek(const SeekMode seek_mode, const int offset) {
+    NodeIOResult FATNode::seek(const Ember::SeekMode seek_mode, const int offset) {
         if (_closed) return {NodeIOStatus::CLOSED, 0};
-        if (!has_attribute(NodeAttribute::FILE)) return {NodeIOStatus::NOT_SUPPORTED, 0};
+        if (!has_attribute(Ember::NodeAttribute::FILE)) return {NodeIOStatus::NOT_SUPPORTED, 0};
 
         const size_t cluster_size = _mounted_storage->BPB->sectors_per_cluster
             * _mounted_storage->BPB->bytes_per_sector;
         const size_t file_cursor = (_processed_clusters * cluster_size) + _cluster_offset;
-        bool bad_offset = false;
+        bool         bad_offset  = false;
         switch (seek_mode) {
-            case SeekMode::BEGIN:
+            case Ember::SeekMode::BEGIN:
                 bad_offset = offset < 0 || static_cast<U32>(offset) >= _file_entry.file.file_size;
                 break;
-            case SeekMode::CURSOR:
+            case Ember::SeekMode::CURSOR:
                 bad_offset = file_cursor + offset >= _file_entry.file.file_size;
                 break;
-            case SeekMode::END:
+            case Ember::SeekMode::END:
                 bad_offset = offset > 0 || static_cast<U32>(abs(offset)) > _file_entry.file.file_size;
                 break;
             default: break;
         }
         if (bad_offset) return {NodeIOStatus::BAD_ARGS, 0};
 
-        size_t to_seek    = offset;
+        size_t to_seek = offset;
         switch (seek_mode) {
-            case SeekMode::BEGIN:
+            case Ember::SeekMode::BEGIN:
                 to_seek = offset;
                 break;
-            case SeekMode::CURSOR:
+            case Ember::SeekMode::CURSOR:
                 to_seek = file_cursor + offset;
                 break;
-            case SeekMode::END:
+            case Ember::SeekMode::END:
                 to_seek = _file_entry.file.file_size + offset;
                 break;
             default: break;
@@ -317,12 +317,12 @@ namespace Rune::VFS {
         _processed_clusters = 0;
         _current_cluster    = 0;
         _cluster_offset     = 0;
-        U32    cluster   = _file_entry.file.first_cluster_high << 16 | _file_entry.file.first_cluster_low;
-        _current_cluster = cluster;
+        U32 cluster         = _file_entry.file.first_cluster_high << 16 | _file_entry.file.first_cluster_low;
+        _current_cluster    = cluster;
         while (to_seek > 0) {
             if (to_seek < cluster_size) {
                 _cluster_offset = to_seek;
-                to_seek          = 0;
+                to_seek         = 0;
             } else {
                 cluster = _volume_manager.fat_read(_mounted_storage->storage_dev, _mounted_storage->BPB, cluster);
                 if (cluster == 0 && cluster >= _volume_manager.get_max_cluster_count() + 1)
@@ -334,28 +334,28 @@ namespace Rune::VFS {
                 to_seek -= cluster_size;
             }
         }
-        return {NodeIOStatus::OKAY,  abs(offset) - to_seek};
+        return {NodeIOStatus::OKAY, abs(offset) - to_seek};
     }
 
 
-    bool FATNode::has_attribute(NodeAttribute f_attr) const {
+    bool FATNode::has_attribute(Ember::NodeAttribute f_attr) const {
         if (_closed)
             return false;
         FATFileAttribute fat_attr;
         switch (f_attr) {
-            case NodeAttribute::READONLY:
+            case Ember::NodeAttribute::READONLY:
                 fat_attr = FATFileAttribute::READONLY;
                 break;
-            case NodeAttribute::HIDDEN:
+            case Ember::NodeAttribute::HIDDEN:
                 fat_attr = FATFileAttribute::HIDDEN;
                 break;
-            case NodeAttribute::SYSTEM:
+            case Ember::NodeAttribute::SYSTEM:
                 fat_attr = FATFileAttribute::SYSTEM;
                 break;
-            case NodeAttribute::DIRECTORY:
+            case Ember::NodeAttribute::DIRECTORY:
                 fat_attr = FATFileAttribute::DIRECTORY;
                 break;
-            case NodeAttribute::FILE:
+            case Ember::NodeAttribute::FILE:
                 fat_attr = FATFileAttribute::ARCHIVE;
                 break;
             default:
@@ -365,10 +365,10 @@ namespace Rune::VFS {
     }
 
 
-    bool FATNode::set_attribute(NodeAttribute n_attr, bool val) {
+    bool FATNode::set_attribute(Ember::NodeAttribute n_attr, bool val) {
         if (_closed)
             return false;
-        if (n_attr == NodeAttribute::FILE || n_attr == NodeAttribute::DIRECTORY)
+        if (n_attr == Ember::NodeAttribute::FILE || n_attr == Ember::NodeAttribute::DIRECTORY)
             return false;
         if (val)
             _file_entry.file.attributes |= n_attr;

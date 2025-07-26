@@ -62,7 +62,7 @@ namespace Rune {
             SharedPointer<VFS::Node> node;
             VFS::IOStatus            io_status = _vfs_subsystem->open(
                     _system_directory / path,
-                    VFS::IOMode::APPEND,
+                    Ember::IOMode::APPEND,
                     node
             );
             if (io_status == VFS::IOStatus::OPENED) {
@@ -104,7 +104,7 @@ namespace Rune {
             Path     log_file = _system_directory / ((LibK::SystemLogger*) l.get())->get_log_file();
             VFS::IOStatus st       = _vfs_subsystem->create(
                     log_file,
-                    VFS::NodeAttribute::FILE | VFS::NodeAttribute::SYSTEM
+                    Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM
             );
             if (st != VFS::IOStatus::CREATED && st != VFS::IOStatus::FOUND) {
                 return;
@@ -113,7 +113,7 @@ namespace Rune {
             SharedPointer<VFS::Node> node;
             VFS::IOStatus            io_status = _vfs_subsystem->open(
                     _system_directory / ((LibK::SystemLogger*) l.get())->get_log_file(),
-                    VFS::IOMode::WRITE,
+                    Ember::IOMode::WRITE,
                     node
             );
             if (io_status == VFS::IOStatus::OPENED) {

@@ -18,7 +18,7 @@
 #define RUNEOS_DRIVER_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 #include <Hammer/String.h>
 #include <Hammer/Path.h>
 
@@ -148,7 +148,7 @@ namespace Rune::VFS {
                 U16 storage_dev,
                 const Path& mount_point,
                 const Path& path,
-                IOMode io_mode,
+                Ember::IOMode io_mode,
                 Function<void()> on_close,
                 SharedPointer<Node>& out
         ) = 0;

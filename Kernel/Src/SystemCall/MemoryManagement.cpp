@@ -21,10 +21,10 @@
 
 namespace Rune::SystemCall {
 
-    IMPLEMENT_TYPED_ENUM(MemoryMapReturnCode, LibK::VirtualAddr, MEM_MAP_RC, 0x0)
+    DEFINE_TYPED_ENUM(MemoryMapReturnCode, LibK::VirtualAddr, MEM_MAP_RC, 0x0)
 
 
-    IMPLEMENT_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)
+    DEFINE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)
 
 
     S64 memory_get_page_size(void* sys_call_ctx) {

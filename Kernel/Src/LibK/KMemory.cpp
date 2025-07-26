@@ -20,7 +20,7 @@
 
 
 namespace Rune::LibK {
-    IMPLEMENT_TYPED_ENUM(MemoryUnit, MemorySize, MEMORY_UNITS, 0x0)
+    DEFINE_TYPED_ENUM(MemoryUnit, MemorySize, MEMORY_UNITS, 0x0)
 
 
     MemoryFloatSize memory_bytes_in(MemorySize bytes, MemoryUnit unit) {
@@ -45,7 +45,7 @@ namespace Rune::LibK {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    IMPLEMENT_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0)
+    DEFINE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0)
 
 
     MemoryAddr MemoryRegion::end() const {

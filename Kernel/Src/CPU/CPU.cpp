@@ -22,10 +22,10 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 namespace Rune::CPU {
-    IMPLEMENT_ENUM(ThreadState, THREAD_STATES, 0x0)
+    DEFINE_ENUM(ThreadState, THREAD_STATES, 0x0)
 
 
-    IMPLEMENT_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
+    DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
 
 
 
@@ -39,5 +39,5 @@ namespace Rune::CPU {
     }
 
 
-    IMPLEMENT_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)
+    DEFINE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)
 }

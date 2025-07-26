@@ -18,7 +18,7 @@
 
 
 namespace Rune::VFS {
-    IMPLEMENT_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0)
+    DEFINE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0)
 
 
     FileEntryManager::FileEntryManager(

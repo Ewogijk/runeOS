@@ -18,8 +18,8 @@
 #define RUNEOS_CPU_H
 
 
-#include <Hammer/Definitions.h>
-#include <Hammer/Enum.h>
+#include <Ember/Definitions.h>
+#include <Ember/Enum.h>
 #include <Hammer/String.h>
 
 #include <LibK/KMemory.h>

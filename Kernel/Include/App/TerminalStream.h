@@ -20,7 +20,7 @@
 
 #include <Hammer/Collection.h>
 #include <Hammer/String.h>
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 #include <LibK/Stream.h>
 #include <LibK/FrameBuffer.h>

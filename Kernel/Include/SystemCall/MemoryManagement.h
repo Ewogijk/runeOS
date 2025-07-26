@@ -91,10 +91,10 @@ namespace Rune::SystemCall {
      *                          chooses where to map the memory region.
      * @param num_pages       Number of pages that should be mapped.
      * @param page_protection Requested page protection level.
-     * @return Success:                 A pointer to the start of the mapped memory region.
-     *          BAD_ADDRESS:            The requested memory region intersects kernel memory.
-     *          BAD_PAGE_PROTECTION:    Unknown page protection flags where given.
-     *          BAD_ALLOC:              The allocation of the memory region failed.
+     * @return Success:  A pointer to the start of the mapped memory region.<br>
+     *          BAD_ARG: The requested memory region intersects kernel memory or the page protection
+     *                   flag is invalid.<br>
+     *          FAULT:   The memory allocation failed.
      */
     S64 memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection);
 
@@ -106,9 +106,9 @@ namespace Rune::SystemCall {
      * @param sys_call_ctx The memory management context.
      * @param v_addr       Staring address of the memory region that will be freed.
      * @param num_pages    Number of pages that should be freed.
-     * @return 0: The memory region is freed.
-     *          -1: The requested memory region intersects kernel memory.
-     *          -2: The free of the memory region failed.
+     * @return 0:        The memory region is freed.<br>
+     *          BAD_ARG: The requested memory region intersects kernel memory.<br>
+     *          FAULT:   The memory free failed.
      */
     S64 memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages);
 }

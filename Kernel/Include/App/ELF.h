@@ -17,8 +17,10 @@
 #ifndef RUNEOS_ELF_H
 #define RUNEOS_ELF_H
 
-#include <Hammer/Definitions.h>
-#include <Hammer/Enum.h>
+#include <Ember/Definitions.h>
+#include <Hammer/String.h>
+
+#include <Ember/Enum.h>
 
 
 namespace Rune::App {

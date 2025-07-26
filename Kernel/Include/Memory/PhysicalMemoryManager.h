@@ -18,7 +18,7 @@
 #define RUNEOS_PHYSICALMEMORYMANAGER_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 #include <Hammer/Utility.h>
 
 #include <LibK/Logging.h>

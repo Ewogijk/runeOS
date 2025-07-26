@@ -14,7 +14,9 @@
  *  limitations under the License.
  */
 
-#include "Device/Keyboard/PS2Keyboard.h"
+#include <Device/Keyboard/PS2Keyboard.h>
+
+#include <Ember/VirtualKey.h>
 
 #include <CPU/IO.h>
 
@@ -85,13 +87,13 @@ namespace Rune::Device {
 
     // Keycode decoder maps a scan code to it's virtual keycode
     constexpr U8 SCANCODE_MAX_SIZE = 255;
-    VirtualKey   SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
-    VirtualKey   E_0_SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
+    Ember::VirtualKey   SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
+    Ember::VirtualKey   E_0_SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
 
 
-    void insert_key_code(VirtualKey decoder[], U8 scan_code, U8 row, U8 col) {
-        decoder[scan_code]        = VirtualKey::build_pressed(row, col);
-        decoder[scan_code | 0x80] = VirtualKey::build_released(row, col);
+    void insert_key_code(Ember::VirtualKey decoder[], U8 scan_code, U8 row, U8 col) {
+        decoder[scan_code]        = Ember::VirtualKey::build_pressed(row, col);
+        decoder[scan_code | 0x80] = Ember::VirtualKey::build_released(row, col);
     }
 
 
@@ -129,7 +131,7 @@ namespace Rune::Device {
                 return CPU::IRQState::HANDLED;
             }
 
-            VirtualKey key = _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
+            Ember::VirtualKey key = _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
             if (!key.is_none()) {
                 _key_code_cache[_end] = key.get_key_code();
                 _end = (_end + 1) % 256;
@@ -146,7 +148,7 @@ namespace Rune::Device {
 
     int PS2Keyboard::read() {
         if (_start == _end)
-            return VirtualKey::NONE_KEY_CODE;
+            return Ember::VirtualKey::NONE_KEY_CODE;
         int key_code = _key_code_cache[_start];
         _start = (_start + 1) % 256;
         return key_code;

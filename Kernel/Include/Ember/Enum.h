@@ -18,15 +18,27 @@
 #define RUNEOS_ENUM_H
 
 
-#include <Hammer/String.h>
+#include <stddef.h>
+
+
+/**
+ * @brief
+ * @param str C string.
+ * @return Length of the c string.
+ */
+size_t e_strlen(const char* str);
+
+
+int e_memcmp(const void* lhs, const void* rhs, size_t count);
+
 
 #define ENUM_VALUE(ClassName, Name, Value) Name = Value,
 
 #define ENUM_TO_STRING(ClassName, Name, Value) if (_value == ClassName::Name) return #Name;
 
-#define ENUM_FROM_STRING(ClassName, Name, Value) if (str == #Name) return ClassName::Name;
+#define ENUM_FROM_STRING(ClassName, Name, Value) if (e_memcmp(str, #Name, e_strlen(str)) == 0) return ClassName::Name;
 
-#define ENUM_CONSTRUCT_FROM_STRING(ClassName, Name, Value) if (str == #Name) _value = ClassName::Name;
+#define ENUM_CONSTRUCT_FROM_STRING(ClassName, Name, Value) if (e_memcmp(str, #Name, e_strlen(str)) == 0) _value = ClassName::Name;
 
 #define ENUM_FROM_VALUE(ClassName, Name, Value)  if (value == Value) return ClassName::Name;
 
@@ -36,6 +48,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Typed Enum
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
 
 /**
  * Preprocessor macro black magic that automatically declares a class with a nested typed enum class and conversion
@@ -78,9 +91,9 @@
  *     X(Fruit, Strawberry, 2)\ <br>
  *     X(Fruit, Banana, 4)\ <br><br>
  *  In header file: <br>
- *  DECLARE_ENUM(Fruit, U8, FRUITS, 0) <br><br>
+ *  DECLARE_TYPED_ENUM(Fruit, U8, FRUITS, 0) <br><br>
  *  In Source file: <br>
- *  DEFINE_ENUM(Fruit, U8, FRUITS, 0)
+ *  DEFINE_TYPED_ENUM(Fruit, U8, FRUITS, 0)
  * </p>
  */
 #define DECLARE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)                \
@@ -95,7 +108,7 @@ public:                                                                         
     ClassName() = default;                                                          \
                                                                                     \
                                                                                     \
-    explicit ClassName(const Rune::String &str);                                   \
+    explicit ClassName(const char* str);                                            \
                                                                                     \
                                                                                     \
     explicit ClassName(EnumType value);                                             \
@@ -107,24 +120,24 @@ public:                                                                         
     constexpr operator _E() const { return _value; }                                \
                                                                                     \
                                                                                     \
-    [[nodiscard]] Rune::String to_string() const;                                  \
+    [[nodiscard]] const char* to_string() const;                                   \
                                                                                     \
                                                                                     \
     [[nodiscard]] EnumType to_value() const;                                        \
                                                                                     \
                                                                                     \
-    [[nodiscard]] static ClassName from_string(const Rune::String &str);           \
+    [[nodiscard]] static ClassName from_string(const char* str);                    \
                                                                                     \
                                                                                     \
     [[nodiscard]] static ClassName from_value(EnumType value);                      \
                                                                                     \
 private:                                                                            \
     _E _value = _E::NONE;                                                           \
-};                                                                                  \
+};
 
 
-#define IMPLEMENT_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)  \
-ClassName::ClassName(const Rune::String &str) {                        \
+#define DEFINE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)     \
+ClassName::ClassName(const char* str) {                                 \
     EnumDefs(ENUM_CONSTRUCT_FROM_STRING)                                \
 }                                                                       \
                                                                         \
@@ -134,7 +147,7 @@ ClassName::ClassName(EnumType value) {                                  \
 }                                                                       \
                                                                         \
                                                                         \
-Rune::String ClassName::to_string() const {                            \
+const char* ClassName::to_string() const {                              \
     EnumDefs(ENUM_TO_STRING)                                            \
     return "NONE";                                                      \
 }                                                                       \
@@ -144,7 +157,7 @@ EnumType ClassName::to_value() const {                                  \
 }                                                                       \
                                                                         \
                                                                         \
-ClassName ClassName::from_string(const Rune::String &str) {            \
+ClassName ClassName::from_string(const char* str) {                     \
     EnumDefs(ENUM_FROM_STRING)                                          \
     return ClassName::NONE;                                             \
 }                                                                       \
@@ -153,8 +166,7 @@ ClassName ClassName::from_string(const Rune::String &str) {            \
 ClassName ClassName::from_value(EnumType value) {                       \
     EnumDefs(ENUM_FROM_VALUE)                                           \
     return ClassName::NONE;                                             \
-}                                                                       \
-
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Enum
@@ -219,10 +231,10 @@ public:                                                                         
     ClassName() = default;                                                          \
                                                                                     \
                                                                                     \
-    explicit ClassName(const Rune::String &str);                                   \
+    ClassName(const char* str);                                            \
                                                                                     \
                                                                                     \
-    explicit ClassName(size_t value);                                               \
+    ClassName(size_t value);                                               \
                                                                                     \
                                                                                     \
     constexpr ClassName(_E value) : _value(value)  { }                              \
@@ -231,24 +243,17 @@ public:                                                                         
     constexpr operator _E() const { return _value; }                                \
                                                                                     \
                                                                                     \
-    [[nodiscard]] Rune::String to_string() const;                                  \
+    [[nodiscard]] const char* to_string() const;                                    \
                                                                                     \
                                                                                     \
     [[nodiscard]] size_t to_value() const;                                          \
                                                                                     \
-                                                                                    \
-    [[nodiscard]] static ClassName from_string(const Rune::String &str);           \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] static ClassName from_value(size_t value);                        \
-                                                                                    \
 private:                                                                            \
     _E _value = _E::NONE;                                                           \
-};                                                                                  \
+};
 
-
-#define IMPLEMENT_ENUM(ClassName, EnumDefs, NoneValue)                  \
-ClassName::ClassName(const Rune::String &str) {                        \
+#define DEFINE_ENUM(ClassName, EnumDefs, NoneValue)                     \
+ClassName::ClassName(const char* str) {                                 \
     EnumDefs(ENUM_CONSTRUCT_FROM_STRING)                                \
 }                                                                       \
                                                                         \
@@ -258,26 +263,13 @@ ClassName::ClassName(size_t value) {                                    \
 }                                                                       \
                                                                         \
                                                                         \
-Rune::String ClassName::to_string() const {                            \
+const char* ClassName::to_string() const {                              \
     EnumDefs(ENUM_TO_STRING)                                            \
     return "NONE";                                                      \
 }                                                                       \
                                                                         \
 size_t ClassName::to_value() const {                                    \
     return (size_t) _value;                                             \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName ClassName::from_string(const Rune::String &str) {            \
-    EnumDefs(ENUM_FROM_STRING)                                          \
-    return ClassName::NONE;                                             \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName ClassName::from_value(size_t value) {                         \
-    EnumDefs(ENUM_FROM_VALUE)                                           \
-    return ClassName::NONE;                                             \
-}                                                                       \
+}
 
-
-#endif //RuneOS_ENUM_H
+#endif //RUNEOS_ENUM_H

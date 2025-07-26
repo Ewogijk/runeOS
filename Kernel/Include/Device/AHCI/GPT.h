@@ -18,9 +18,11 @@
 #define RUNEOS_GPT_H
 
 
-#include <Hammer/Definitions.h>
 #include <Hammer/String.h>
-#include <Hammer/Enum.h>
+
+#include <Ember/Definitions.h>
+#include <Ember/Enum.h>
+
 #include <LibK/Logging.h>
 
 

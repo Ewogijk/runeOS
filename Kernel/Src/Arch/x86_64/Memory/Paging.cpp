@@ -269,10 +269,10 @@ namespace Rune::Memory {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    IMPLEMENT_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0)
+    DEFINE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0)
 
 
-    IMPLEMENT_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0)
+    DEFINE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0)
 
 
     PageTableAccess allocate_page(

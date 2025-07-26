@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/String.h>
 
 #include <Pickaxe/AppManagement.h>

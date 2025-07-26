@@ -18,7 +18,7 @@
 #define RUNEOS_MEMORY_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 
 CLINK void* memset(void* dest, int ch, size_t count);

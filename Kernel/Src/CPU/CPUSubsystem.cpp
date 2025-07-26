@@ -117,7 +117,7 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    IMPLEMENT_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
+    DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
     char* Subsystem::DUMMY_ARGS[];
     StartInfo Subsystem::TERMINATOR_THREAD_START_INFO;

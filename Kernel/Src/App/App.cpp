@@ -18,7 +18,7 @@
 
 
 namespace Rune::App {
-    IMPLEMENT_ENUM(LoadStatus, LOAD_STATUSES, 0x0)
+    DEFINE_ENUM(LoadStatus, LOAD_STATUSES, 0x0)
 
     bool operator==(const Info &one, const Info &two) {
         return one.handle == two.handle;

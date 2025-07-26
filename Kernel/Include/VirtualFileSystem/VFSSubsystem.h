@@ -455,7 +455,7 @@ namespace Rune::VFS {
          *          DEV_ERROR:      An IO error happened.
          *
          */
-        [[nodiscard]] IOStatus open(const Path& path, IOMode node_io_mode, SharedPointer<Node>& out);
+        [[nodiscard]] IOStatus open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out);
 
 
         /**

@@ -18,7 +18,7 @@
 
 
 namespace Rune::VFS {
-    IMPLEMENT_ENUM(DirectoryStreamState, DIRECTORY_STREAM_STATES, 0x0)
+    DEFINE_ENUM(DirectoryStreamState, DIRECTORY_STREAM_STATES, 0x0)
 
 
     DirectoryStream::DirectoryStream(const Function<void()>& on_close) : _state(DirectoryStreamState::HAS_MORE),

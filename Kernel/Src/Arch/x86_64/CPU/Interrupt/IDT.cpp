@@ -18,7 +18,7 @@
 
 
 namespace Rune::CPU {
-    IMPLEMENT_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)
+    DEFINE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)
 
 
     GateDescriptor           GD[256];
