@@ -28,6 +28,9 @@ system_call_accept:
     push rcx    ; Save return user mode rip
     push r11    ; Save user mode rflags
 
+    push r14    ; Save user mode values
+    push r15    ; These are used as tmp registers for syscall args
+
     ; System Call ABI:
     ; | Handle | Arg1 | Arg2 | Arg3 | Arg4 | Arg5 | Arg6 |
     ; | rax    | rdi  | rsi  | rdx  | r8   | r9   | r10  |
@@ -53,6 +56,9 @@ system_call_accept:
     call system_call_dispatch
 
     pop r10     ; Remove Arg6
+
+    pop r15     ; Restore user mode registers
+    pop r14
 
     pop r11     ; Restore user mode rflags
     pop rcx     ; Restore return user mode rip
