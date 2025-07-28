@@ -25,15 +25,6 @@
 
 
 namespace Rune::SystemCall {
-    /**
-     * @brief Information about a thread for user space.
-     */
-    struct ThreadControlBlock {
-        U16    thread_ID;
-        void*  stack_addr;
-        size_t stack_size;
-    };
-
 
     /**
      * @brief The context for all threading related system calls.
@@ -64,9 +55,9 @@ namespace Rune::SystemCall {
      * @brief Lock the mutex with the requested ID.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param ID           The ID of a mutex.
-     * @return 0:        The mutex got locked<br>
+     * @return OKAY:     The mutex got locked<br>
      *          BAD_ARG: The ID is zero.<br>
-     *          BAD_ID:  No mutex with the requested ID was found.
+     *          UNKNOWN_ID:  No mutex with the requested ID was found.
      */
     S64 mutex_lock(void* sys_call_ctx, U64 ID);
 
@@ -77,9 +68,9 @@ namespace Rune::SystemCall {
      * @brief Unlock the mutex with the requested ID.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param ID           The ID of a mutex.
-     * @return 0:        The mutex got locked<br>
+     * @return OKAY:     The mutex got locked<br>
      *          BAD_ARG: The ID is zero.<br>
-     *          BAD_ID:  No mutex with the requested ID was found.
+     *          UNKNOWN_ID:  No mutex with the requested ID was found.
      */
     S64 mutex_unlock(void* sys_call_ctx, U64 ID);
 
@@ -88,9 +79,9 @@ namespace Rune::SystemCall {
      * @brief Free all resources associated with the requested mutex.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param ID           The ID of a mutex.
-     * @return 0:        The mutex got locked.<br>
+     * @return OKAY:     The mutex got locked.<br>
      *          BAD_ARG: The ID is zero.<br>
-     *          BAD_ID:  Failed to release the mutex.
+     *          UNKNOWN_ID:  Failed to release the mutex.
      */
     S64 mutex_release(void* sys_call_ctx, U64 ID);
 
@@ -98,7 +89,7 @@ namespace Rune::SystemCall {
     /**
      * @brief Get the ID of the currently running thread.
      * @param sys_call_ctx A pointer to the thread management context.
-     * @return 0: The thread ID.
+     * @return Success: The thread ID.
      */
     S64 get_thread_ID(void* sys_call_ctx);
 
@@ -107,7 +98,7 @@ namespace Rune::SystemCall {
      * @brief Set the current thread's thread control block.
      * @param sys_call_ctx A pointer to the thread management context.
      * @param tcb          A pointer to the thread control block.
-     * @return 0:        Success.<br>
+     * @return OKAY:     Success.<br>
      *          BAD_ARG: The tcb buffer is null or in kernel memory.
      */
     S64 set_thread_control_block(void* sys_call_ctx, U64 tcb);

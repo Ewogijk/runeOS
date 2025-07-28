@@ -15,12 +15,11 @@
  */
 
 #include <SystemCall/Bundle.h>
-
 #include <SystemCall/KernelGuardian.h>
-#include <SystemCall/AppManagement.h>
-#include <SystemCall/VFS.h>
-#include <SystemCall/MemoryManagement.h>
-#include <SystemCall/ThreadManagement.h>
+#include <SystemCall/AppBundle.h>
+#include <SystemCall/VFSBundle.h>
+#include <SystemCall/MemoryBundle.h>
+#include <SystemCall/ThreadingBundle.h>
 
 #include <Device/DeviceSubsystem.h>
 
@@ -37,7 +36,7 @@ namespace Rune::SystemCall {
     AppManagementContext APP_MNG_CTX;
 
 
-    Bundle make_app_management_bundle(
+    Bundle make_app_bundle(
             KernelGuardian* k_guard,
             const LibK::SubsystemRegistry& k_subsys_reg
     ) {
@@ -106,7 +105,7 @@ namespace Rune::SystemCall {
     MemoryManagementContext MM_CTX;
 
 
-    Bundle make_mm_bundle(
+    Bundle make_memory_bundle(
             KernelGuardian* k_guard,
             const LibK::SubsystemRegistry& k_subsys_reg
     ) {
@@ -130,7 +129,7 @@ namespace Rune::SystemCall {
     ThreadManagementContext TM_CTX;
 
 
-    Bundle make_tm_bundle(
+    Bundle make_threading_bundle(
             KernelGuardian* k_guard,
             const LibK::SubsystemRegistry& k_subsys_reg
     ) {
@@ -159,10 +158,10 @@ namespace Rune::SystemCall {
             const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         LinkedList<Bundle> bundles;
-        bundles.add_back(make_app_management_bundle(k_guard, k_subsys_reg));
+        bundles.add_back(make_app_bundle(k_guard, k_subsys_reg));
         bundles.add_back(make_vfs_bundle(k_guard, k_subsys_reg));
-        bundles.add_back(make_mm_bundle(k_guard, k_subsys_reg));
-        bundles.add_back(make_tm_bundle(k_guard, k_subsys_reg));
+        bundles.add_back(make_memory_bundle(k_guard, k_subsys_reg));
+        bundles.add_back(make_threading_bundle(k_guard, k_subsys_reg));
         return bundles;
     }
 }

@@ -45,16 +45,10 @@ namespace Rune::SystemCall {
 
 
     /**
-     * @brief Maximum number of CLI arguments (including the null terminator) an app can receive.
-     */
-    constexpr U8 APP_ARG_LIMIT = 32;
-
-
-    /**
      * @brief Wait until a key is available in the virtual keyboard buffer and write the keycode to given buffer.
      * @param sys_call_Ctx A pointer to the app management context.
      * @param key_code_out A pointer to a keycode buffer, U16*.
-     * @return 0:        A key code is returned in the given key buffer.<br>
+     * @return OKAY:     A key code is returned in the given key buffer.<br>
      *          BAD_ARG: The key code buffer is null or intersects kernel memory.
      */
     S64 read_std_in(void* sys_call_Ctx, U64 key_code_out);
@@ -107,11 +101,11 @@ namespace Rune::SystemCall {
      * @param stdin_target  stdin stream target.
      * @param stdout_target stdout stream target.
      * @param stderr_target stderr stream target.
-     * @return >=0:                 The app has been started, the returned value is the assigned ID.<br>
-     *          BAD_ARG:            One of the arguments is null, intersects kernel memory, exceeds the string size
-     *                              limit or the number of arguments in argv exceeds the argument count limit.<br>
+     * @return >0:              The app has been started, the returned value is the assigned ID.<br>
+     *          BAD_ARG:        One of the arguments is null, intersects kernel memory, exceeds the string size
+     *                          limit or the number of arguments in argv exceeds the argument count limit.<br>
      *          NODE_NOT_FOUND: The path to the application or the working directory does not exist.<br>
-     *          FAULT:              The app could not be started.
+     *          FAULT:          The app could not be started.
      */
     S64 app_start(
         void* sys_call_ctx,
@@ -126,48 +120,48 @@ namespace Rune::SystemCall {
 
     /**
      * @brief Exit the currently running app with the given exit code.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param exit_code    Exit code of the apps main thread. >=0 indicates successful app exit and <0 indicates an
      *                     error.
-     * @return 0: For the sake of the ABI but this function will never exit anyway and there is no app that can use
-     *              the return value.
+     * @return OKAY: For the sake of the ABI but this function will never exit anyway and there is no app that can use
+     *               the return value.
      */
-    S64 app_exit(void* sys_call_Ctx, U64 exit_code);
+    S64 app_exit(void* sys_call_ctx, U64 exit_code);
 
 
     /**
      * @brief Wait until the application with the requested ID has exited.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param ID           ID of an application.
-     * @return BAD_ID: No application with the requested ID was running.<br>
-     *          Else: The exit code of the application.
+     * @return UNKNOWN_ID: No application with the requested ID was running.<br>
+     *          Else:  The exit code of the application.
      */
-    S64 app_join(void* sys_call_Ctx, U64 ID);
+    S64 app_join(void* sys_call_ctx, U64 ID);
 
 
     /**
      * @brief Get the current working directory of the active app and copy it to the char buffer.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param wd_out       Pointer to a char buffer.
      * @param wd_out_size  Size of the buffer.
-     * @return 0: The working directory has been copied to the given buffer.<br>
+     * @return OKAY:     The working directory has been copied to the given buffer.<br>
      *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit the working directory.
      */
-    S64 app_get_working_directory(void* sys_call_Ctx, U64 wd_out, U64 wd_out_size);
+    S64 app_get_working_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
 
 
     /**
      * @brief Change the working directory of the active app to the requested working directory.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param wd           A pointer to a c string containing the new working directory.
-     * @return 0:                  The working directory of the active app has been changed.<br>
-     *          BAD_ARG:           The working directory is null, intersects kernel memory or contains illegal
-     *                             characters.<br>
-     *          NODE_NOT_FOUND:    The working directory does not exist.<br>
-     *          NODE_IS_DIRECTORY: The node is not a directory.<br>
-     *          IO:                An IO error happened.
+     * @return OKAY:            The working directory of the active app has been changed.<br>
+     *          BAD_ARG:        The working directory is null, intersects kernel memory or contains illegal
+     *                          characters.<br>
+     *          NODE_NOT_FOUND: The working directory does not exist.<br>
+     *          NODE_IS_FILE:   The node is not a directory.<br>
+     *          IO:             An IO error happened.
      */
-    S64 app_change_working_directory(void* sys_call_Ctx, U64 wd);
+    S64 app_change_working_directory(void* sys_call_ctx, U64 wd);
 }
 
 #endif //RUNEOS_APPMANAGEMENT_H

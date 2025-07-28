@@ -14,44 +14,40 @@
  *  limitations under the License.
  */
 
-#include <SystemCall/MemoryManagement.h>
+#include <SystemCall/MemoryBundle.h>
 
 #include <Hammer/Algorithm.h>
 
+#include <Ember/StatusCode.h>
+#include <Ember/MemoryProtection.h>
+
 
 namespace Rune::SystemCall {
-
-    DEFINE_TYPED_ENUM(MemoryMapReturnCode, LibK::VirtualAddr, MEM_MAP_RC, 0x0)
-
-
-    DEFINE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)
-
-
-    S64 memory_get_page_size(void* sys_call_ctx) {
+    S64 memory_get_page_size(const void* sys_call_ctx) {
         SILENCE_UNUSED(sys_call_ctx)
-        return (S64) Memory::get_page_size();
+        return static_cast<S64>(Memory::get_page_size());
     }
 
 
-    S64 memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection) {
-        auto* mem_ctx = (MemoryManagementContext*) sys_call_ctx;
-        auto* vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
+    S64 memory_allocate_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages, U64 page_protection) {
+        const auto* mem_ctx = static_cast<MemoryManagementContext*>(sys_call_ctx);
+        auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
 
-        App::Info* app = mem_ctx->app_subsys->get_active_app();
-        Memory::PageTable base_pt   = Memory::get_base_page_table();
-        LibK::MemorySize  page_size = Memory::get_page_size();
-        auto              kv_addr   = (LibK::VirtualAddr) v_addr;
+        App::Info*              app       = mem_ctx->app_subsys->get_active_app();
+        const Memory::PageTable base_pt   = Memory::get_base_page_table();
+        const LibK::MemorySize  page_size = Memory::get_page_size();
+        auto                    kv_addr   = static_cast<LibK::VirtualAddr>(v_addr);
         if (kv_addr == 0) {
             // No specific memory location is requested -> The kernel selects where to map the pages
 
             // The heap can have gaps due to freeing pages in the middle of it, we will try to reuse those gaps if they
             // are large enough to fit the requested amount of memory.
             // This counter counts the number of consecutive pages in a heap gap.
-            size_t                 consecutive_free = 0;
-            LibK::VirtualAddr      gap_start        = 0x0;
-            for (LibK::VirtualAddr c_addr           = app->heap_start; c_addr < app->heap_limit; c_addr += page_size) {
-                Memory::PageTableAccess pta = Memory::find_page(base_pt, c_addr);
-                if (pta.status == Memory::PageTableAccessStatus::PAGE_TABLE_ENTRY_MISSING) {
+            size_t            consecutive_free = 0;
+            LibK::VirtualAddr gap_start        = 0x0;
+            for (LibK::VirtualAddr c_addr = app->heap_start; c_addr < app->heap_limit; c_addr += page_size) {
+                if (Memory::PageTableAccess pta = Memory::find_page(base_pt, c_addr);
+                    pta.status == Memory::PageTableAccessStatus::PAGE_TABLE_ENTRY_MISSING) {
                     // c_addr is not mapped -> This is a heap gap
                     if (consecutive_free == 0)
                         // c_addr is pointing to the start of the heap gap
@@ -77,70 +73,68 @@ namespace Rune::SystemCall {
             // that the requested memory region does not intersect kernel memory
             if (!LibK::memory_is_aligned(kv_addr, page_size))
                 kv_addr = LibK::memory_align(kv_addr, page_size, true);
-            if (!mem_ctx->k_guard->verify_user_buffer((void*) kv_addr, num_pages * page_size))
-                return MemoryMapReturnCode::BAD_ADDRESS;
+            if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
+                return Ember::StatusCode::BAD_ARG;
         }
 
-
-        if (page_protection > PageProtection::READ + PageProtection::WRITE)
+        if (page_protection > Ember::PageProtection::READ + Ember::PageProtection::WRITE)
             // The requested page protection contains unknown flags
-            return MemoryMapReturnCode::BAD_PAGE_PROTECTION;
+            return Ember::StatusCode::BAD_ARG;
 
         // Map it with write rights so the memory region can be initialized
-        U16               page_flags           = Memory::PageFlag::PRESENT
-                                                 | Memory::PageFlag::USER_MODE_ACCESS
-                                                 | Memory::PageFlag::WRITE_ALLOWED;
+        const U16 page_flags = Memory::PageFlag::PRESENT
+            | Memory::PageFlag::USER_MODE_ACCESS
+            | Memory::PageFlag::WRITE_ALLOWED;
 
         if (!vmm->allocate(kv_addr, page_flags, num_pages))
-            return MemoryMapReturnCode::BAD_ALLOC;
+            return Ember::StatusCode::FAULT;
 
         // Zero init the memory region
         // TODO allow init with buffer
-        memset((void*) kv_addr, 0, num_pages * page_size);
+        memset((void*)kv_addr, 0, num_pages * page_size);
 
         if (!check_bit(page_protection, 1)) {
             // Memory was requested as readonly -> remove the write allowed flag
             for (LibK::VirtualAddr c_addr = kv_addr; c_addr < kv_addr + num_pages * page_size; c_addr += page_size) {
                 Memory::PageTableAccess pta = Memory::modify_page_flags(
-                        base_pt,
-                        c_addr,
-                        Memory::PageFlag::WRITE_ALLOWED,
-                        false
+                    base_pt,
+                    c_addr,
+                    Memory::PageFlag::WRITE_ALLOWED,
+                    false
                 );
                 if (pta.status != Memory::PageTableAccessStatus::OKAY)
-                    return MemoryMapReturnCode::BAD_ALLOC;
+                    return Ember::StatusCode::FAULT;
             }
         }
-        LibK::VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
-        if (maybe_new_heap_limit > app->heap_limit)
+        if (LibK::VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
+            maybe_new_heap_limit > app->heap_limit)
             app->heap_limit = maybe_new_heap_limit;
 
-        return (S64) kv_addr;
+        return static_cast<S64>(kv_addr);
     }
 
 
-    S64 memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages) {
-        auto* mem_ctx = (MemoryManagementContext*) sys_call_ctx;
-        auto* vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
-        auto* app     = mem_ctx->app_subsys->get_active_app();
+    S64 memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages) {
+        const auto* mem_ctx = static_cast<MemoryManagementContext*>(sys_call_ctx);
+        auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
+        auto*       app     = mem_ctx->app_subsys->get_active_app();
 
-        LibK::MemorySize page_size = Memory::get_page_size();
-        auto             kv_addr   = (LibK::VirtualAddr) v_addr;
+        const LibK::MemorySize page_size = Memory::get_page_size();
+        auto                   kv_addr   = static_cast<LibK::VirtualAddr>(v_addr);
 
         // Align the address to a page boundary (if needed) and verify that the requested memory region does not
         // intersect kernel memory
         if (!LibK::memory_is_aligned(kv_addr, page_size))
             kv_addr = LibK::memory_align(kv_addr, page_size, true);
-        if (!mem_ctx->k_guard->verify_user_buffer((void*) kv_addr, num_pages * page_size))
-            return -1;
+        if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
+            return Ember::StatusCode::BAD_ARG;
 
         if (!vmm->free(kv_addr, num_pages))
-            return -2;
+            return Ember::StatusCode::FAULT;
 
-        LibK::VirtualAddr mem_region_end = kv_addr + num_pages * page_size;
-        if (mem_region_end == app->heap_limit)
-            app->heap_limit = kv_addr;
+        if (const LibK::VirtualAddr mem_region_end = kv_addr + num_pages * page_size; mem_region_end == app->heap_limit)
+            app->heap_limit                        = kv_addr;
 
-        return 0;
+        return Ember::StatusCode::OKAY;
     }
 }

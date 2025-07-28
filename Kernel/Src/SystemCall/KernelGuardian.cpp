@@ -66,12 +66,12 @@ namespace Rune::SystemCall {
 
         int size = 0;
         const char* c_pos = user_str;
-        while (*c_pos && size < USER_STRING_LIMIT) {
+        while (*c_pos && size < Ember::STRING_SIZE_LIMIT) {
             c_pos++;
             size++;
         }
 
-        if (size >= USER_STRING_LIMIT)
+        if (size >= Ember::STRING_SIZE_LIMIT)
             // The user land string is not null terminated.
             return false;
 

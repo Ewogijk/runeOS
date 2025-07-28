@@ -24,17 +24,10 @@
 
 
 namespace Rune::SystemCall {
-
     class KernelGuardian {
         LibK::VirtualAddr _kernel_memory_start;
 
     public:
-        /**
-         * @brief Maximum number of characters (including the null terminator) a user land string can have.
-         */
-        static constexpr U8 USER_STRING_LIMIT = 128;
-
-
         void set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start);
 
 

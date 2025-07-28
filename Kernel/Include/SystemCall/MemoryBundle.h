@@ -35,45 +35,13 @@ namespace Rune::SystemCall {
         App::Subsystem   * app_subsys = nullptr;
     };
 
-    /**
-     * @brief Return codes for "memory_map" in case of failure.
-     * <ul>
-     *  <li>BAD_ADDRESS: The requested memory region intersects kernel memory.</li>
-     *  <li>BAD_PAGE_PROTECTION: Unknown page protection flags where given.</li>
-     *  <li>BAD_ALLOC: The mapping of the memory region failed.</li>
-     * </ul>
-     */
-    #define MEM_MAP_RC(X)                                                           \
-             X(MemoryMapReturnCode, BAD_ADDRESS, (LibK::VirtualAddr) -1)            \
-             X(MemoryMapReturnCode, BAD_PAGE_PROTECTION, (LibK::VirtualAddr) -2)    \
-             X(MemoryMapReturnCode, BAD_ALLOC, (LibK::VirtualAddr) -3)              \
-
-
-        DECLARE_TYPED_ENUM(MemoryMapReturnCode, LibK::VirtualAddr, MEM_MAP_RC, 0x0)  // NOLINT
-
-
-    /**
-     * @brief Describes page protection levels.
-     * <ul>
-     *  <li>READ: The page can only be read.</li>
-     *  <li>WRITE: The page can be read and written.</li>
-     * </ul>
-     */
-#define PAGE_PROTECTIONS(X)                 \
-             X(PageProtection, READ, 0x1)   \
-             X(PageProtection, WRITE, 0x2)  \
-
-
-
-    DECLARE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)  // NOLINT
-
 
     /**
      * @brief Gets the size of a virtual page in bytes.
      * @param sys_call_ctx The memory management context.
      * @return Page size.
      */
-    S64 memory_get_page_size(void* sys_call_ctx);
+    S64 memory_get_page_size(const void* sys_call_ctx);
 
 
     /**
@@ -106,7 +74,7 @@ namespace Rune::SystemCall {
      * @param sys_call_ctx The memory management context.
      * @param v_addr       Staring address of the memory region that will be freed.
      * @param num_pages    Number of pages that should be freed.
-     * @return 0:        The memory region is freed.<br>
+     * @return OKAY:     The memory region is freed.<br>
      *          BAD_ARG: The requested memory region intersects kernel memory.<br>
      *          FAULT:   The memory free failed.
      */

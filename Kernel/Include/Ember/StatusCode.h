@@ -14,27 +14,30 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_ERROR_H
-#define RUNEOS_ERROR_H
+#ifndef RUNEOS_STATUSCODE_H
+#define RUNEOS_STATUSCODE_H
 
 
-namespace Ember::Error {
+namespace Ember::StatusCode {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          System Call Error Codes
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    constexpr int OKAY = 0; // The system call finished without error.
 
     constexpr int BAD_ARG       = -100; // A bad system call argument was passed to the kernel.
     constexpr int FAULT         = -101; // An error happened during the system call.
-    constexpr int BAD_ID        = -102; // No resource with the requested ID was found.
+    constexpr int UNKNOWN_ID    = -102; // No resource with the requested ID was found.
     constexpr int ACCESS_DENIED = -103; // Access to the resource was denied.
-    constexpr int IO            = -104; // An IO error occurred.
+    constexpr int IO_ERROR      = -104; // An IO error occurred.
 
-    constexpr int NODE_NOT_FOUND    = -105; // A node does not exist but should exist.
-    constexpr int NODE_EXISTS       = -106; // A node does exist but was expected to not exist.
-    constexpr int NODE_IS_DIRECTORY = -107; // The node is a directory but should be a file.
-    constexpr int NODE_IS_FILE      = -108; // A node is a file but should be a directory.
-    constexpr int NODE_IN_USE       = -109; // A node is in use by another application.
-    constexpr int NODE_CLOSED       = -110; // The node has already been closed.
+    constexpr int DIRECTORY_STREAM_EOD      = 0;    // End of directory reached
+    constexpr int DIRECTORY_STREAM_HAS_MORE = 1;    // Has at least one more node.
+    constexpr int NODE_NOT_FOUND            = -105; // A node does not exist but should exist.
+    constexpr int NODE_EXISTS               = -106; // A node does exist but was expected to not exist.
+    constexpr int NODE_IS_DIRECTORY         = -107; // The node is a directory but should be a file.
+    constexpr int NODE_IS_FILE              = -108; // A node is a file but should be a directory.
+    constexpr int NODE_IN_USE               = -109; // A node is in use by another application.
+    constexpr int NODE_CLOSED               = -110; // The node has already been closed.
 }
 
-#endif //RUNEOS_ERROR_H
+#endif //RUNEOS_STATUSCODE_H
