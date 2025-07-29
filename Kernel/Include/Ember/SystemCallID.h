@@ -14,72 +14,87 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SYSTEMCALLID_H
-#define RUNEOS_SYSTEMCALLID_H
+#ifndef EMBER_SYSTEMCALLID_H
+#define EMBER_SYSTEMCALLID_H
 
 #include <Ember/Definitions.h>
+#include <Ember/Enum.h>
 
 
 namespace Ember {
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          "System" System Calls
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    using SystemCallID       = U16;
+    using SystemCallArgument = U64;
+
+    /**
+     * @brief The memory system call IDs.
+     * <ul>
+     *  <li>TODO describe enum values</li>
+     * </ul>
+     */
+#define MEMORY_SYSCALLS(X)              \
+        X(Memory, GET_PAGE_SIZE, 100)   \
+        X(Memory, ALLOCATE_PAGE, 101)   \
+        X(Memory, FREE_PAGE, 102)
+
+    DECLARE_TYPED_ENUM(Memory, SystemCallID, MEMORY_SYSCALLS, 0x0) // NOLINT
 
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Memory System Calls
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    /**
+     * @brief The threading system call IDs.
+     * <ul>
+     *  <li>TODO describe enum values</li>
+     * </ul>
+     */
+#define THREADING_SYSCALLS(X)                       \
+        X(Threading, MUTEX_CREATE, 200)             \
+        X(Threading, MUTEX_LOCK, 201)               \
+        X(Threading, MUTEX_UNLOCK, 202)             \
+        X(Threading, MUTEX_FREE, 203)               \
+        X(Threading, THREAD_GET_ID, 204)            \
+        X(Threading, THREAD_CONTROL_BLOCK_SET, 205)
+
+    DECLARE_TYPED_ENUM(Threading, SystemCallID, THREADING_SYSCALLS, 0x0) // NOLINT
 
 
-    constexpr U16 MEMORY_GET_PAGE_SIZE = 100;
-    constexpr U16 MEMORY_ALLOCATE_PAGE = 101;
-    constexpr U16 MEMORY_FREE_PAGE     = 102;
+    /**
+     * @brief The VFS system call IDs.
+     * <ul>
+     *  <li>TODO describe enum values</li>
+     * </ul>
+     */
+#define VFS_SYSCALLS(X)                     \
+        X(VFS, GET_NODE_INFO, 300)          \
+        X(VFS, CREATE, 301)                 \
+        X(VFS, OPEN, 302)                   \
+        X(VFS, DELETE, 303)                 \
+        X(VFS, CLOSE, 304)                  \
+        X(VFS, READ, 305)                   \
+        X(VFS, WRITE, 306)                  \
+        X(VFS, SEEK, 307)                   \
+        X(VFS, DIRECTORY_STREAM_OPEN, 308)  \
+        X(VFS, DIRECTORY_STREAM_NEXT, 309)  \
+        X(VFS, DIRECTORY_STREAM_CLOSE, 310)
+
+    DECLARE_TYPED_ENUM(VFS, SystemCallID, VFS_SYSCALLS, 0x0) // NOLINT
 
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Threading System Calls
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    /**
+     * @brief The app system call IDs.
+     * <ul>
+     *  <li>TODO describe enum values</li>
+     * </ul>
+     */
+#define APP_SYSCALLS(X)                 \
+        X(App, READ_STDIN, 400)         \
+        X(App, WRITE_STDOUT, 401)       \
+        X(App, WRITE_STDERR, 402)       \
+        X(App, START, 403)              \
+        X(App, EXIT, 404)               \
+        X(App, JOIN, 405)               \
+        X(App, CURRENT_DIRECTORY, 406)  \
+        X(App, CHANGE_DIRECTORY, 407)
 
-
-    constexpr U16 THREADING_MUTEX_CREATE             = 200;
-    constexpr U16 THREADING_MUTEX_LOCK               = 201;
-    constexpr U16 THREADING_MUTEX_UNLOCK             = 202;
-    constexpr U16 THREADING_MUTEX_RELEASE            = 203;
-    constexpr U16 THREADING_THREAD_GET_ID            = 204;
-    constexpr U16 THREADING_THREAD_CONTROL_BLOCK_SET = 205;
-
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          VFS System Calls
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-
-    constexpr U16 VFS_GET_NODE_INFO          = 300;
-    constexpr U16 VFS_CREATE                 = 301;
-    constexpr U16 VFS_OPEN                   = 302;
-    constexpr U16 VFS_DELETE                 = 303;
-    constexpr U16 VFS_CLOSE                  = 304;
-    constexpr U16 VFS_READ                   = 305;
-    constexpr U16 VFS_WRITE                  = 306;
-    constexpr U16 VFS_SEEK                   = 307;
-    constexpr U16 VFS_DIRECTORY_STREAM_OPEN  = 308;
-    constexpr U16 VFS_DIRECTORY_STREAM_NEXT  = 309;
-    constexpr U16 VFS_DIRECTORY_STREAM_CLOSE = 310;
-
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          App System Calls
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-
-    constexpr U16 APP_READ_STD_IN              = 400;
-    constexpr U16 APP_WRITE_STD_OUT            = 401;
-    constexpr U16 APP_WRITE_STD_ERR            = 402;
-    constexpr U16 APP_START                    = 403;
-    constexpr U16 APP_EXIT                     = 404;
-    constexpr U16 APP_JOIN                     = 405;
-    constexpr U16 APP_GET_WORKING_DIRECTORY    = 406;
-    constexpr U16 APP_CHANGE_WORKING_DIRECTORY = 407;
+    DECLARE_TYPED_ENUM(App, SystemCallID, APP_SYSCALLS, 0x0) // NOLINT
 }
 
-#endif //RUNEOS_SYSTEMCALLID_H
+#endif //EMBER_SYSTEMCALLID_H

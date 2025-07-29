@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_ENUM_H
-#define RUNEOS_ENUM_H
+#ifndef EMBER_ENUM_H
+#define EMBER_ENUM_H
 
 
 #include <stddef.h>
@@ -120,7 +120,7 @@ public:                                                                         
     constexpr operator _E() const { return _value; }                                \
                                                                                     \
                                                                                     \
-    [[nodiscard]] const char* to_string() const;                                   \
+    [[nodiscard]] const char* to_string() const;                                    \
                                                                                     \
                                                                                     \
     [[nodiscard]] EnumType to_value() const;                                        \
@@ -231,10 +231,10 @@ public:                                                                         
     ClassName() = default;                                                          \
                                                                                     \
                                                                                     \
-    ClassName(const char* str);                                            \
+    ClassName(const char* str);                                                     \
                                                                                     \
                                                                                     \
-    ClassName(size_t value);                                               \
+    ClassName(size_t value);                                                        \
                                                                                     \
                                                                                     \
     constexpr ClassName(_E value) : _value(value)  { }                              \
@@ -272,4 +272,4 @@ size_t ClassName::to_value() const {                                    \
     return (size_t) _value;                                             \
 }
 
-#endif //RUNEOS_ENUM_H
+#endif //EMBER_ENUM_H

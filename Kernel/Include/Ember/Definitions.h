@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_DEFINITIONS_H
-#define RUNEOS_DEFINITIONS_H
+#ifndef EMBER_DEFINITIONS_H
+#define EMBER_DEFINITIONS_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -69,4 +69,4 @@ namespace Ember {
 }
 
 
-#endif //RUNEOS_DEFINITIONS_H
+#endif //EMBER_DEFINITIONS_H

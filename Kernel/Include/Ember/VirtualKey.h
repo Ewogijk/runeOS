@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_VIRTUALKEY_H
-#define RUNEOS_VIRTUALKEY_H
+#ifndef EMBER_VIRTUALKEY_H
+#define EMBER_VIRTUALKEY_H
 
 #include <Ember/Definitions.h>
 
@@ -135,4 +135,4 @@ namespace Ember {
     };
 }
 
-#endif //RUNEOS_VIRTUALKEY_H
+#endif //EMBER_VIRTUALKEY_H

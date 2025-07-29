@@ -13,8 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_NODEDEFINITIONS_H
-#define RUNEOS_NODEDEFINITIONS_H
+#ifndef EMBER_NODEDEFINITIONS_H
+#define EMBER_NODEDEFINITIONS_H
 
 #include <Ember/Enum.h>
 #include <Ember/Definitions.h>
@@ -99,4 +99,4 @@ namespace Ember {
     };
 }
 
-#endif //RUNEOS_NODEDEFINITIONS_H
+#endif //EMBER_NODEDEFINITIONS_H

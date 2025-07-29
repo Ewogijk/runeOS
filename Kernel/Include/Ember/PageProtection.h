@@ -13,8 +13,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_MEMORYPROTECTION_H
-#define RUNEOS_MEMORYPROTECTION_H
+#ifndef EMBER_PAGEPROTECTION_H
+#define EMBER_PAGEPROTECTION_H
 
 #include <Ember/Enum.h>
 
@@ -35,4 +35,4 @@ namespace Ember {
 
 }
 
-#endif //RUNEOS_MEMORYPROTECTION_H
+#endif //EMBER_PAGEPROTECTION_H
