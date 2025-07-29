@@ -19,18 +19,18 @@
 #include <Hammer/Algorithm.h>
 
 #include <Ember/StatusCode.h>
-#include <Ember/MemoryProtection.h>
+#include <Ember/PageProtection.h>
 
 
 namespace Rune::SystemCall {
-    S64 memory_get_page_size(const void* sys_call_ctx) {
+    Ember::StatusCode memory_get_page_size(const void* sys_call_ctx) {
         SILENCE_UNUSED(sys_call_ctx)
-        return static_cast<S64>(Memory::get_page_size());
+        return static_cast<Ember::StatusCode>(Memory::get_page_size());
     }
 
 
-    S64 memory_allocate_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages, U64 page_protection) {
-        const auto* mem_ctx = static_cast<MemoryManagementContext*>(sys_call_ctx);
+    Ember::StatusCode memory_allocate_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages, U64 page_protection) {
+        const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
         auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
 
         App::Info*              app       = mem_ctx->app_subsys->get_active_app();
@@ -74,12 +74,12 @@ namespace Rune::SystemCall {
             if (!LibK::memory_is_aligned(kv_addr, page_size))
                 kv_addr = LibK::memory_align(kv_addr, page_size, true);
             if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
-                return Ember::StatusCode::BAD_ARG;
+                return Ember::Status::BAD_ARG;
         }
 
         if (page_protection > Ember::PageProtection::READ + Ember::PageProtection::WRITE)
             // The requested page protection contains unknown flags
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
         // Map it with write rights so the memory region can be initialized
         const U16 page_flags = Memory::PageFlag::PRESENT
@@ -87,7 +87,7 @@ namespace Rune::SystemCall {
             | Memory::PageFlag::WRITE_ALLOWED;
 
         if (!vmm->allocate(kv_addr, page_flags, num_pages))
-            return Ember::StatusCode::FAULT;
+            return Ember::Status::FAULT;
 
         // Zero init the memory region
         // TODO allow init with buffer
@@ -103,19 +103,19 @@ namespace Rune::SystemCall {
                     false
                 );
                 if (pta.status != Memory::PageTableAccessStatus::OKAY)
-                    return Ember::StatusCode::FAULT;
+                    return Ember::Status::FAULT;
             }
         }
         if (LibK::VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
             maybe_new_heap_limit > app->heap_limit)
             app->heap_limit = maybe_new_heap_limit;
 
-        return static_cast<S64>(kv_addr);
+        return static_cast<Ember::StatusCode>(kv_addr);
     }
 
 
-    S64 memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages) {
-        const auto* mem_ctx = static_cast<MemoryManagementContext*>(sys_call_ctx);
+    Ember::StatusCode memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages) {
+        const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
         auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
         auto*       app     = mem_ctx->app_subsys->get_active_app();
 
@@ -127,14 +127,14 @@ namespace Rune::SystemCall {
         if (!LibK::memory_is_aligned(kv_addr, page_size))
             kv_addr = LibK::memory_align(kv_addr, page_size, true);
         if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
         if (!vmm->free(kv_addr, num_pages))
-            return Ember::StatusCode::FAULT;
+            return Ember::Status::FAULT;
 
         if (const LibK::VirtualAddr mem_region_end = kv_addr + num_pages * page_size; mem_region_end == app->heap_limit)
             app->heap_limit                        = kv_addr;
 
-        return Ember::StatusCode::OKAY;
+        return Ember::Status::OKAY;
     }
 }

@@ -19,29 +19,38 @@
 
 
 #include <Ember/Definitions.h>
+#include <Ember/StatusCode.h>
+#include <Ember/SystemCallID.h>
+
 #include <Hammer/String.h>
 #include <Hammer/Utility.h>
 
 
 namespace Rune::SystemCall {
-
     /**
      * @brief Function definition of a system call handler.
      */
-    using Handler = Function<S64(void*, U64, U64, U64, U64, U64, U64)>;
+    using Handler = Function<Ember::StatusCode(
+        void*,
+        Ember::SystemCallArgument,
+        Ember::SystemCallArgument,
+        Ember::SystemCallArgument,
+        Ember::SystemCallArgument,
+        Ember::SystemCallArgument,
+        Ember::SystemCallArgument)>;
 
 
     /**
      * @brief Convenience constant that defines a system call handler that simply returns -1.
      */
     inline const Handler SYS_CALL_HANDLER_NONE = [](
-            void* sys_call_ctx,
-            U64 arg1,
-            U64 arg2,
-            U64 arg3,
-            U64 arg4,
-            U64 arg5,
-            U64 arg6
+        const void*                     sys_call_ctx,
+        const Ember::SystemCallArgument arg1,
+        const Ember::SystemCallArgument arg2,
+        const Ember::SystemCallArgument arg3,
+        const Ember::SystemCallArgument arg4,
+        const Ember::SystemCallArgument arg5,
+        const Ember::SystemCallArgument arg6
     ) {
         SILENCE_UNUSED(sys_call_ctx)
         SILENCE_UNUSED(arg1)
@@ -50,7 +59,7 @@ namespace Rune::SystemCall {
         SILENCE_UNUSED(arg4)
         SILENCE_UNUSED(arg5)
         SILENCE_UNUSED(arg6)
-        return (S64) -1;
+        return -1;
     };
 
 
@@ -58,7 +67,7 @@ namespace Rune::SystemCall {
      * @brief Defines a system call to the kernel.
      *
      * <p>
-     *  Each system call has a unique handle and has an associated system call context which contains all the information
+     *  Each system call has a unique ID and has an associated system call context which contains all the information
      *  needed for the system call to run.
      * </p>
      * <p>
@@ -67,10 +76,10 @@ namespace Rune::SystemCall {
      * </p>
      */
     struct Definition {
-        U16     handle           = 0;
-        String  name             = "";
-        Handler sys_call_handler = SYS_CALL_HANDLER_NONE;
-        void* context = nullptr;
+        Ember::SystemCallID ID           = 0;
+        String              name             = "";
+        Handler             sys_call_handler = SYS_CALL_HANDLER_NONE;
+        void*               context          = nullptr;
     };
 
 
@@ -83,106 +92,128 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define6(
-            U16 sys_call_ctx,
-            const String& name,
-            const Function<S64(void*, U64, U64, U64, U64, U64, U64)>& handler,
-            void* context
+        Ember::SystemCallID sys_call_ctx,
+        const String&       name,
+        const Function<S64(
+            void*,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument)>& handler,
+        void*                            context
     );
 
 
     /**
      * @brief Define a system call that takes only five user application arguments.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define5(
-            U16 handle,
-            const String& name,
-            const Function<S64(void*, U64, U64, U64, U64, U64)>& handler,
-            void* context
+        Ember::SystemCallID ID,
+        const String&       name,
+        const Function<S64(
+            void*,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument)>& handler,
+        void*                            context
     );
 
 
     /**
      * @brief Define a system call that takes only four user application arguments.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define4(
-            U16 handle,
-            const String& name,
-            const Function<S64(void*, U64, U64, U64, U64)>& handler,
-            void* context
+        Ember::SystemCallID ID,
+        const String&       name,
+        const Function<S64(
+            void*,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument)>& handler,
+        void*                            context
     );
 
 
     /**
      * @brief Define a system call that takes only three user application arguments.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define3(
-            U16 handle,
-            const String& name,
-            const Function<S64(void*, U64, U64, U64)>& handler,
-            void* context
+        Ember::SystemCallID ID,
+        const String&       name,
+        const Function<S64(
+            void*,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument,
+            Ember::SystemCallArgument)>& handler,
+        void*                            context
     );
 
 
     /**
      * @brief Define a system call that takes only two user application arguments.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define2(
-            U16 handle,
-            const String& name,
-            const Function<S64(void*, U64, U64)>& handler,
-            void* context
+        Ember::SystemCallID                                                               ID,
+        const String&                                                                     name,
+        const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
+        void*                                                                             context
     );
 
 
     /**
      * @brief Define a system call that takes only one user application argument.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define1(
-            U16 handle,
-            const String& name,
-            const Function<S64(void*, U64)>& handler,
-            void* context
+        Ember::SystemCallID                                    ID,
+        const String&                                          name,
+        const Function<S64(void*, Ember::SystemCallArgument)>& handler,
+        void*                                                  context
     );
 
 
     /**
      * @brief Define a system call that takes only one user application argument.
-     * @param handle
+     * @param ID
      * @param name
      * @param handler
      * @param context
      * @return
      */
     Definition define0(
-            U16 handle,
-            const String& name,
-            Function<S64(void*)> handler,
-            void* context
+        Ember::SystemCallID  ID,
+        const String&        name,
+        Function<S64(void*)> handler,
+        void*                context
     );
 }
 

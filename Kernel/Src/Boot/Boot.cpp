@@ -57,7 +57,7 @@ namespace Rune {
 
 
     constexpr char const* BOOT_THREAD_NAME = "Boot";
-    LibK::LogLevel                  KERNEL_LOG_LEVEL = LibK::LogLevel::INFO;
+    LibK::LogLevel                  KERNEL_LOG_LEVEL = LibK::LogLevel::TRACE;
     LibK::Version                   KERNEL_VERSION   = { K_MAJOR, K_MINOR, K_PATCH, K_PRERELEASE };
     SharedPointer<LibK::TextStream> PANIC_STREAM;
 

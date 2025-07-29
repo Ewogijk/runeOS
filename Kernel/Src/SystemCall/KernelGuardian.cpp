@@ -18,6 +18,11 @@
 
 
 namespace Rune::SystemCall {
+    KernelGuardian::KernelGuardian() : _kernel_memory_start(0) {
+
+    }
+
+
     void KernelGuardian::set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start) {
         _kernel_memory_start = kernel_memory_start;
     }

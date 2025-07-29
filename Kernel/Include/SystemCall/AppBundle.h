@@ -19,6 +19,7 @@
 
 
 #include <Ember/Definitions.h>
+#include <Ember/StatusCode.h>
 
 #include <App/AppSubsystem.h>
 
@@ -35,7 +36,7 @@ namespace Rune::SystemCall {
     /**
      * @brief The context for all app management system calls.
      */
-    struct AppManagementContext {
+    struct AppSystemCallContext {
         KernelGuardian*    k_guard       = nullptr;
         App::Subsystem*    app_subsys    = nullptr;
         Device::Subsystem* device_subsys = nullptr;
@@ -46,22 +47,22 @@ namespace Rune::SystemCall {
 
     /**
      * @brief Wait until a key is available in the virtual keyboard buffer and write the keycode to given buffer.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param key_code_out A pointer to a keycode buffer, U16*.
      * @return OKAY:     A key code is returned in the given key buffer.<br>
      *          BAD_ARG: The key code buffer is null or intersects kernel memory.
      */
-    S64 read_std_in(void* sys_call_Ctx, U64 key_code_out);
+    Ember::StatusCode read_std_in(void* sys_call_ctx, U64 key_code_out);
 
 
     /**
      * @brief Write the msg to the stdout stream of the running app.
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param msg          A pointer to a c string.
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    S64 write_std_out(void* sys_call_Ctx, U64 msg);
+    Ember::StatusCode write_std_out(void* sys_call_ctx, U64 msg);
 
 
     /**
@@ -69,12 +70,12 @@ namespace Rune::SystemCall {
      *
      * If the stream supports colors the msg will be written in red.
      *
-     * @param sys_call_Ctx A pointer to the app management context.
+     * @param sys_call_ctx A pointer to the app management context.
      * @param msg          A pointer to a c string.
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    S64 write_std_err(void* sys_call_Ctx, U64 msg);
+    Ember::StatusCode write_std_err(void* sys_call_ctx, U64 msg);
 
 
     /**
@@ -107,7 +108,7 @@ namespace Rune::SystemCall {
      *          NODE_NOT_FOUND: The path to the application or the working directory does not exist.<br>
      *          FAULT:          The app could not be started.
      */
-    S64 app_start(
+    Ember::StatusCode app_start(
         void* sys_call_ctx,
         U64   app_path,
         U64   argv,
@@ -126,7 +127,7 @@ namespace Rune::SystemCall {
      * @return OKAY: For the sake of the ABI but this function will never exit anyway and there is no app that can use
      *               the return value.
      */
-    S64 app_exit(void* sys_call_ctx, U64 exit_code);
+    Ember::StatusCode app_exit(void* sys_call_ctx, U64 exit_code);
 
 
     /**
@@ -136,7 +137,7 @@ namespace Rune::SystemCall {
      * @return UNKNOWN_ID: No application with the requested ID was running.<br>
      *          Else:  The exit code of the application.
      */
-    S64 app_join(void* sys_call_ctx, U64 ID);
+    Ember::StatusCode app_join(void* sys_call_ctx, U64 ID);
 
 
     /**
@@ -147,7 +148,7 @@ namespace Rune::SystemCall {
      * @return OKAY:     The working directory has been copied to the given buffer.<br>
      *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit the working directory.
      */
-    S64 app_get_working_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
+    Ember::StatusCode app_current_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
 
 
     /**
@@ -161,7 +162,7 @@ namespace Rune::SystemCall {
      *          NODE_IS_FILE:   The node is not a directory.<br>
      *          IO:             An IO error happened.
      */
-    S64 app_change_working_directory(void* sys_call_ctx, U64 wd);
+    Ember::StatusCode app_change_directory(void* sys_call_ctx, U64 wd);
 }
 
 #endif //RUNEOS_APPMANAGEMENT_H

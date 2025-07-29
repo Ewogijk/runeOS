@@ -18,8 +18,6 @@
 #define RUNEOS_KERNELGUARDIAN_H
 
 
-#include <Ember/Definitions.h>
-
 #include <LibK/KMemory.h>
 
 
@@ -28,6 +26,9 @@ namespace Rune::SystemCall {
         LibK::VirtualAddr _kernel_memory_start;
 
     public:
+        KernelGuardian();
+
+
         void set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start);
 
 

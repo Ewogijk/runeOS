@@ -20,72 +20,72 @@
 
 
 namespace Rune::SystemCall {
-    S64 mutex_create(void* sys_call_ctx, const U64 mutex_name) {
-        const auto* t_ctx = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode mutex_create(void* sys_call_ctx, const U64 mutex_name) {
+        const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
 
         char km_name[Ember::STRING_SIZE_LIMIT] = {};
         if (!t_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(mutex_name), -1, km_name))
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
         String m_name(km_name);
         if (m_name.is_empty())
             m_name = String::format("Mutex-App{}", t_ctx->app_subsys->get_active_app()->handle);
 
         const auto m = t_ctx->cpu_subsys->create_mutex(m_name);
-        return m ? m->handle : Ember::StatusCode::FAULT;
+        return m ? m->handle : Ember::Status::FAULT;
     }
 
 
-    S64 mutex_lock(void* sys_call_ctx, const U64 ID) {
-        const auto* t_ctx = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode mutex_lock(void* sys_call_ctx, const U64 ID) {
+        const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0)
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
         const auto m = t_ctx->cpu_subsys->find_mutex(ID);
         if (!m)
-            return Ember::StatusCode::UNKNOWN_ID;
+            return Ember::Status::UNKNOWN_ID;
 
         m->lock();
-        return Ember::StatusCode::OKAY;
+        return Ember::Status::OKAY;
     }
 
 
-    S64 mutex_unlock(void* sys_call_ctx, const U64 ID) {
-        const auto* t_ctx = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode mutex_unlock(void* sys_call_ctx, const U64 ID) {
+        const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0)
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
         const auto  m = t_ctx->cpu_subsys->find_mutex(ID);
         if (!m)
-            return Ember::StatusCode::UNKNOWN_ID;
+            return Ember::Status::UNKNOWN_ID;
 
         m->unlock();
-        return Ember::StatusCode::OKAY;
+        return Ember::Status::OKAY;
     }
 
 
-    S64 mutex_release(void* sys_call_ctx, const U64 ID) {
-        const auto* t_ctx = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode mutex_free(void* sys_call_ctx, const U64 ID) {
+        const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0)
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
 
-        return t_ctx->cpu_subsys->release_mutex(ID) ? Ember::StatusCode::OKAY : Ember::StatusCode::UNKNOWN_ID;
+        return t_ctx->cpu_subsys->release_mutex(ID) ? Ember::Status::OKAY : Ember::Status::UNKNOWN_ID;
     }
 
 
-    S64 get_thread_ID(void* sys_call_ctx) {
-        const auto* t_ctx = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode get_thread_ID(void* sys_call_ctx) {
+        const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         return t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->handle;
     }
 
 
-    S64 set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
-        const auto* t_ctx   = static_cast<ThreadManagementContext*>(sys_call_ctx);
+    Ember::StatusCode set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
+        const auto* t_ctx   = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         auto*       tcb_ptr = LibK::memory_addr_to_pointer<void>(tcb);
         if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(void*)))
-            return Ember::StatusCode::BAD_ARG;
+            return Ember::Status::BAD_ARG;
         t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;
         CPU::current_core()->update_thread_local_storage(tcb_ptr);
-        return Ember::StatusCode::OKAY;
+        return Ember::Status::OKAY;
     }
 }

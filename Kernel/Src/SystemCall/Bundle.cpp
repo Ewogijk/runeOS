@@ -15,6 +15,9 @@
  */
 
 #include <SystemCall/Bundle.h>
+
+#include <Ember/SystemCallID.h>
+
 #include <SystemCall/KernelGuardian.h>
 #include <SystemCall/AppBundle.h>
 #include <SystemCall/VFSBundle.h>
@@ -33,129 +36,326 @@ namespace Rune::SystemCall {
     //                                          App Management Systemcalls
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    AppManagementContext APP_MNG_CTX;
+    AppSystemCallContext APP_MNG_CTX;
 
 
     Bundle make_app_bundle(
-            KernelGuardian* k_guard,
-            const LibK::SubsystemRegistry& k_subsys_reg
+        KernelGuardian*                k_guard,
+        const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         auto* app_subsys    = k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP);
         auto* device_subsys = k_subsys_reg.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
         auto* cpu_subsys    = k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
         auto* file_subsys   = k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
-        APP_MNG_CTX = {
-                k_guard,
-                app_subsys,
-                device_subsys,
-                cpu_subsys,
-                file_subsys
+        APP_MNG_CTX         = {
+            k_guard,
+            app_subsys,
+            device_subsys,
+            cpu_subsys,
+            file_subsys
         };
 
         LinkedList<Definition> defs;
-        defs.add_back(define1(200, "read_std_in", &read_std_in, &APP_MNG_CTX));
-        defs.add_back(define1(201, "write_std_out", &write_std_out, &APP_MNG_CTX));
-        defs.add_back(define1(202, "write_std_err", &write_std_err, &APP_MNG_CTX));
-        defs.add_back(define6(203, "app_start", &app_start, &APP_MNG_CTX));
-        defs.add_back(define1(204, "app_exit", &app_exit, &APP_MNG_CTX));
-        defs.add_back(define1(205, "app_join", &app_join, &APP_MNG_CTX));
-        defs.add_back(define2(206, "app_get_working_directory", &app_get_working_directory, &APP_MNG_CTX));
-        defs.add_back(define1(207, "app_change_working_directory", &app_change_working_directory, &APP_MNG_CTX));
+        defs.add_back(
+            define1(
+                Ember::App::READ_STDIN,
+                Ember::App(Ember::App::READ_STDIN).to_string(),
+                &read_std_in,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::App::WRITE_STDOUT,
+                Ember::App(Ember::App::WRITE_STDOUT).to_string(),
+                &write_std_out,
+                &APP_MNG_CTX
+            )
+        );
+
+        defs.add_back(
+            define1(
+                Ember::App::WRITE_STDERR,
+                Ember::App(Ember::App::WRITE_STDERR).to_string(),
+                &write_std_err,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define6(
+                Ember::App::START,
+                Ember::App(Ember::App::START).to_string(),
+                &app_start,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::App::EXIT,
+                Ember::App(Ember::App::EXIT).to_string(),
+                &app_exit,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::App::JOIN,
+                Ember::App(Ember::App::JOIN).to_string(),
+                &app_join,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define2(
+                Ember::App::CURRENT_DIRECTORY,
+                Ember::App(Ember::App::CURRENT_DIRECTORY).to_string(),
+                &app_current_directory,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::App::CHANGE_DIRECTORY,
+                Ember::App(Ember::App::CHANGE_DIRECTORY).to_string(),
+                &app_change_directory,
+                &APP_MNG_CTX
+            )
+        );
 
         return {
-                "App Management",
-                defs
+            "App",
+            defs
         };
     }
 
 
-    VFSContext VFS_CTX;
+    VFSSystemCallContext VFS_CTX;
 
 
     Bundle make_vfs_bundle(
-            KernelGuardian* k_guard,
-            const LibK::SubsystemRegistry& k_subsys_reg
+        KernelGuardian*                k_guard,
+        const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         VFS_CTX = {
-                k_guard,
-                k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS),
-                k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_guard,
+            k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS),
+            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
 
-        defs.add_back(define2(100, "vfs_get_node_info", &vfs_get_node_info, &VFS_CTX));
-        defs.add_back(define2(101, "vfs_create", &vfs_create, &VFS_CTX));
-        defs.add_back(define2(102, "vfs_open", &vfs_open, &VFS_CTX));
-        defs.add_back(define1(103, "vfs_delete", &vfs_delete, &VFS_CTX));
-        defs.add_back(define1(104, "vfs_close", &vfs_close, &VFS_CTX));
-        defs.add_back(define3(105, "vfs_read", &vfs_read, &VFS_CTX));
-        defs.add_back(define3(106, "vfs_write", &vfs_write, &VFS_CTX));
-        defs.add_back(define3(107, "vfs_seek", &vfs_seek, &VFS_CTX));
-        defs.add_back(define1(108, "vfs_directory_stream_open", &vfs_directory_stream_open, &VFS_CTX));
-        defs.add_back(define2(109, "vfs_directory_stream_next", &vfs_directory_stream_next, &VFS_CTX));
-        defs.add_back(define1(110, "vfs_directory_stream_close", &vfs_directory_stream_close, &VFS_CTX));
+        defs.add_back(
+            define2(
+                Ember::VFS::GET_NODE_INFO,
+                Ember::VFS(Ember::VFS::GET_NODE_INFO).to_string(),
+                &vfs_get_node_info,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define2(
+                Ember::VFS::CREATE,
+                Ember::VFS(Ember::VFS::CREATE).to_string(),
+                &vfs_create,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define2(
+                Ember::VFS::OPEN,
+                Ember::VFS(Ember::VFS::OPEN).to_string(),
+                &vfs_open,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::VFS::DELETE,
+                Ember::VFS(Ember::VFS::DELETE).to_string(),
+                &vfs_delete,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::VFS::CLOSE,
+                Ember::VFS(Ember::VFS::CLOSE).to_string(),
+                &vfs_close,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define3(
+                Ember::VFS::READ,
+                Ember::VFS(Ember::VFS::READ).to_string(),
+                &vfs_read,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define3(
+                Ember::VFS::WRITE,
+                Ember::VFS(Ember::VFS::WRITE).to_string(),
+                &vfs_write,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define3(
+                Ember::VFS::SEEK,
+                Ember::VFS(Ember::VFS::SEEK).to_string(),
+                &vfs_seek,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::VFS::DIRECTORY_STREAM_OPEN,
+                Ember::VFS(Ember::VFS::DIRECTORY_STREAM_OPEN).to_string(),
+                &vfs_directory_stream_open,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define2(
+                Ember::VFS::DIRECTORY_STREAM_NEXT,
+                Ember::VFS(Ember::VFS::DIRECTORY_STREAM_NEXT).to_string(),
+                &vfs_directory_stream_next,
+                &VFS_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::VFS::DIRECTORY_STREAM_CLOSE,
+                Ember::VFS(Ember::VFS::DIRECTORY_STREAM_CLOSE).to_string(),
+                &vfs_directory_stream_close,
+                &VFS_CTX
+            )
+        );
         return {
-                "VFS",
-                defs
+            "VFS",
+            defs
         };
     }
 
 
-    MemoryManagementContext MM_CTX;
+    MemorySystemCallContext MM_CTX;
 
 
     Bundle make_memory_bundle(
-            KernelGuardian* k_guard,
-            const LibK::SubsystemRegistry& k_subsys_reg
+        KernelGuardian*                k_guard,
+        const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         MM_CTX = {
-                k_guard,
-                k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY),
-                k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_guard,
+            k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY),
+            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
-        defs.add_back(define0(0, "memory_get_page_size", &memory_get_page_size, &MM_CTX));
-        defs.add_back(define3(1, "memory_allocate_page", &memory_allocate_page, &MM_CTX));
-        defs.add_back(define2(2, "memory_free_page", &memory_free_page, &MM_CTX));
+        defs.add_back(
+            define0(
+                Ember::Memory::GET_PAGE_SIZE,
+                Ember::Memory(Ember::Memory::GET_PAGE_SIZE).to_string(),
+                &memory_get_page_size,
+                &MM_CTX
+            )
+        );
+        defs.add_back(
+            define3(
+                Ember::Memory::ALLOCATE_PAGE,
+                Ember::Memory(Ember::Memory::ALLOCATE_PAGE).to_string(),
+                &memory_allocate_page,
+                &MM_CTX
+            )
+        );
+        defs.add_back(
+            define2(
+                Ember::Memory::FREE_PAGE,
+                Ember::Memory(Ember::Memory::FREE_PAGE).to_string(),
+                &memory_free_page,
+                &MM_CTX
+            )
+        );
         return {
-                "MemoryManagement",
-                defs
+            "Memory",
+            defs
         };
     }
 
 
-    ThreadManagementContext TM_CTX;
+    ThreadingSystemCallContext TM_CTX;
 
 
     Bundle make_threading_bundle(
-            KernelGuardian* k_guard,
-            const LibK::SubsystemRegistry& k_subsys_reg
+        KernelGuardian*                k_guard,
+        const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         TM_CTX = {
-                k_guard,
-                k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU),
-                k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_guard,
+            k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU),
+            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
-        defs.add_back(define1(300, "mutex_create", &mutex_create, &TM_CTX));
-        defs.add_back(define1(301, "mutex_lock", &mutex_lock, &TM_CTX));
-        defs.add_back(define1(302, "mutex_unlock", &mutex_unlock, &TM_CTX));
-        defs.add_back(define1(303, "mutex_release", &mutex_release, &TM_CTX));
-        defs.add_back(define0(304, "get_thread_ID", &get_thread_ID, &TM_CTX));
-        defs.add_back(define1(306, "set_thread_control_block", &set_thread_control_block, &TM_CTX));
+        defs.add_back(
+            define1(
+                Ember::Threading::MUTEX_CREATE,
+                Ember::Threading(Ember::Threading::MUTEX_CREATE).to_string(),
+                &mutex_create,
+                &TM_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::Threading::MUTEX_LOCK,
+                Ember::Threading(Ember::Threading::MUTEX_LOCK).to_string(),
+                &mutex_lock,
+                &TM_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::Threading::MUTEX_UNLOCK,
+                Ember::Threading(Ember::Threading::MUTEX_UNLOCK).to_string(),
+                &mutex_unlock,
+                &TM_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::Threading::MUTEX_FREE,
+                Ember::Threading(Ember::Threading::MUTEX_FREE).to_string(),
+                &mutex_free,
+                &TM_CTX
+            )
+        );
+        defs.add_back(
+            define0(
+                Ember::Threading::THREAD_GET_ID,
+                Ember::Threading(Ember::Threading::THREAD_GET_ID).to_string(),
+                &get_thread_ID,
+                &TM_CTX
+            )
+        );
+        defs.add_back(
+            define1(
+                Ember::Threading::THREAD_CONTROL_BLOCK_SET,
+                Ember::Threading(Ember::Threading::THREAD_CONTROL_BLOCK_SET).to_string(),
+                &set_thread_control_block,
+                &TM_CTX
+            )
+        );
         return {
-                "ThreadManagement",
-                defs
+            "Threading",
+            defs
         };
     }
 
 
     LinkedList<Bundle> system_call_get_native_bundles(
-            KernelGuardian* k_guard,
-            const LibK::SubsystemRegistry& k_subsys_reg
+        KernelGuardian*                k_guard,
+        const LibK::SubsystemRegistry& k_subsys_reg
     ) {
         LinkedList<Bundle> bundles;
         bundles.add_back(make_app_bundle(k_guard, k_subsys_reg));
