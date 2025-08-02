@@ -751,7 +751,7 @@ namespace Rune::App {
             LibK::Pixel def_fg_color
     ) : _cpu_subsys(cpu_subsys),
         _state(),
-        _render_thread_handle(0),
+        _render_thread_ID(0),
         _render_thread_arg(""),
         _render_thread_argv(),
         _initialized(false),
@@ -807,16 +807,16 @@ namespace Rune::App {
         if (!_initialized)
             return false;
 
-        if (_render_thread_handle == 0) {
+        if (_render_thread_ID == 0) {
             _cpu_subsys->get_scheduler()->lock();
-            _render_thread_handle = _cpu_subsys->schedule_new_thread(
+            _render_thread_ID = _cpu_subsys->schedule_new_thread(
                     "Terminal-Cursor Render Thread",
                     &_render_thread_start_info,
                     Memory::get_base_page_table_address(),
                     CPU::SchedulingPolicy::LOW_LATENCY,
                     { nullptr, 0x0, 0x0 }
             );
-            if (_render_thread_handle == 0)
+            if (_render_thread_ID == 0)
                 _initialized      = false;
             _cpu_subsys->get_scheduler()->unlock();
         }
