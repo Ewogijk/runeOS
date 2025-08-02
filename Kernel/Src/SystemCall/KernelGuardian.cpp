@@ -18,9 +18,7 @@
 
 
 namespace Rune::SystemCall {
-    KernelGuardian::KernelGuardian() : _kernel_memory_start(0) {
-
-    }
+    KernelGuardian::KernelGuardian() : _kernel_memory_start(0) { }
 
 
     void KernelGuardian::set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start) {
@@ -29,7 +27,7 @@ namespace Rune::SystemCall {
 
 
     bool KernelGuardian::verify_user_buffer(void* user_buf, size_t user_buf_size) const {
-        return user_buf && (uintptr_t) user_buf + user_buf_size < _kernel_memory_start;
+        return user_buf && (uintptr_t)user_buf + user_buf_size < _kernel_memory_start;
     }
 
 
@@ -38,8 +36,8 @@ namespace Rune::SystemCall {
             return false;
 
         // Check that the user memory buffer does not intersect with kernel memory
-        // If we would copy without the check undefined behavior could occur (we could overwrite something important or not)
-        if ((uintptr_t) user_buf >= _kernel_memory_start || (uintptr_t) user_buf + user_buf_size >= _kernel_memory_start)
+        // If we would copy without the check undefined behavior could occur (we could overwrite something important)
+        if ((uintptr_t)user_buf >= _kernel_memory_start || (uintptr_t)user_buf + user_buf_size >= _kernel_memory_start)
             return false;
 
         // Copy the content of the user memory buffer over to the kernel memory buffer
@@ -54,8 +52,8 @@ namespace Rune::SystemCall {
             return false;
 
         // Check that the user memory buffer does not intersect with kernel memory
-        // If we would copy without the check undefined behavior could occur (we could overwrite something important or not)
-        if ((uintptr_t) user_buf >= _kernel_memory_start || (uintptr_t) user_buf + user_buf_size >= _kernel_memory_start)
+        // If we would copy without the check undefined behavior could occur (we could overwrite something important)
+        if ((uintptr_t)user_buf >= _kernel_memory_start || (uintptr_t)user_buf + user_buf_size >= _kernel_memory_start)
             return false;
 
         // Copy the content of the kernel memory buffer over to the user memory buffer
@@ -65,26 +63,38 @@ namespace Rune::SystemCall {
     }
 
 
-    bool KernelGuardian::copy_string_user_to_kernel(const char* user_str, int exp_size, const char* kernel_str) const {
+    bool KernelGuardian::copy_string_user_to_kernel(
+        const char* user_str,
+        const int   max_size,
+        const char* kernel_str) const {
         if (!user_str || !kernel_str)
             return false;
 
-        int size = 0;
+        // Check that the user string does not intersect with kernel memory
+        // If we would copy without the check undefined behavior could occur (we could overwrite something important)
+        if (reinterpret_cast<uintptr_t>(user_str) >= _kernel_memory_start
+            || reinterpret_cast<uintptr_t>(user_str) + max_size >= _kernel_memory_start)
+            return false;
+
+        int         size  = 0;
         const char* c_pos = user_str;
         while (*c_pos && size < Ember::STRING_SIZE_LIMIT) {
             c_pos++;
             size++;
+            if (max_size >= 0 && size >= max_size) break;
         }
 
         if (size >= Ember::STRING_SIZE_LIMIT)
-            // The user land string is not null terminated.
+            // The user memory string is not null terminated.
             return false;
 
-        if (exp_size >= 0 && size != exp_size)
-            // The user land string does not have the expected size.
+
+        if (max_size >= 0 && size > max_size)
+            // The user memory string is bigger than expected
             return false;
 
-        memcpy((void*) kernel_str, (void*) user_str, size + 1); // size + 1 -> Include the null terminator
+        memcpy((void*)kernel_str, (void*)user_str, size + 1); // size + 1 -> Include the null terminator
+        const_cast<char*>(kernel_str)[size] = '\0';
         return true;
     }
 }
