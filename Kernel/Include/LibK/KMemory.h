@@ -18,9 +18,9 @@
 #define RUNEOS_KMEMORY_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/Memory.h>
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 #include <LibK/Stream.h>
 #include <LibK/Build.h>

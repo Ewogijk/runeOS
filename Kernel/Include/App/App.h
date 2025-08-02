@@ -27,8 +27,6 @@
 
 #include <LibK/Stream.h>
 
-#include <CPU/CPUSubsystem.h>
-
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 

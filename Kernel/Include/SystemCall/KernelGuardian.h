@@ -18,21 +18,15 @@
 #define RUNEOS_KERNELGUARDIAN_H
 
 
-#include <Hammer/Definitions.h>
-
 #include <LibK/KMemory.h>
 
 
 namespace Rune::SystemCall {
-
     class KernelGuardian {
         LibK::VirtualAddr _kernel_memory_start;
 
     public:
-        /**
-         * @brief Maximum number of characters (including the null terminator) a user land string can have.
-         */
-        static constexpr U8 USER_STRING_LIMIT = 128;
+        KernelGuardian();
 
 
         void set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start);
@@ -94,24 +88,24 @@ namespace Rune::SystemCall {
 
 
         /**
-         * @brief Verify that the c string is null terminated and copy it into the kernelStr buffer.
+         * @brief Verify that the c string is null terminated and copy it into the kernel_str buffer.
          *
          * <p>
-         *  If (expSize >= 0) it is additionally checked that the c string has the expSize.
+         *  If (max_size >= 0) it is additionally checked that the c string has at most max_size bytes.
          * </p>
          * <p>
-         *  It is assumed that the kernelStr buffer has enough space to fit the whole string
+         *  It is assumed that the kernel_str buffer has enough space to fit the whole string
          *  (including the null terminator). That is it has a size of at least (UserStringLimit + 1) or if
-         *  (expSize >= 0) at least (expSize + 1).
+         *  (max_size >= 0) at least (max_size + 1).
          * </p>
          * @param user_str   A c string buffer in user mode memory.
-         * @param exp_size   The expected size of the user mode string, set to -1 to disable the size check.
+         * @param max_size   The expected size of the user mode string, set to -1 to disable the size check.
          * @param kernel_str A c string buffer in kernel mode memory.
-         * @return True: The user mode string is null terminated and has a valid size, it got copied to the kernelStr.
+         * @return True: The user mode string is null terminated and has a valid size, it got copied to the kernel_str.
          *          False: The user mode string is not null terminated or has an invalid size, it was not copied to
-         *                 kernelStr.
+         *                 kernel_str.
          */
-        bool copy_string_user_to_kernel(const char* user_str, int exp_size, const char* kernel_str) const;
+        bool copy_string_user_to_kernel(const char* user_str, int max_size, const char* kernel_str) const;
     };
 }
 

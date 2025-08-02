@@ -20,7 +20,7 @@
 
 #include <Hammer/Collection.h>
 #include <Hammer/String.h>
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 #include <LibK/Stream.h>
 #include <LibK/FrameBuffer.h>
@@ -211,7 +211,7 @@ namespace Rune::App {
         CPU::Subsystem* _cpu_subsys;
         TerminalState _state;
 
-        U16    _render_thread_handle;
+        U16    _render_thread_ID;
         String _render_thread_arg;
         char* _render_thread_argv[2];
         CPU::StartInfo _render_thread_start_info;

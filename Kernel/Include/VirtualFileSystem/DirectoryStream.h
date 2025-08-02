@@ -18,7 +18,7 @@
 #define RUNEOS_DIRECTORYSTREAM_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 #include <VirtualFileSystem/Node.h>
 

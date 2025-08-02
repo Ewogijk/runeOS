@@ -82,7 +82,7 @@ namespace Rune::SystemCall {
                     _logger->error(
                             FILE,
                             R"(Failed to install system call "{}-{}" of bundle {})",
-                            def.handle,
+                            def.ID,
                             def.name,
                             bundle.name
                     );

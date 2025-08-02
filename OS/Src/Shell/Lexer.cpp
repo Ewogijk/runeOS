@@ -19,7 +19,7 @@
 
 namespace Rune::Shell {
 
-    IMPLEMENT_ENUM(TokenType, TOKEN_TYPES, 0x0)  // NOLINT
+    DEFINE_ENUM(TokenType, TOKEN_TYPES, 0x0)  // NOLINT
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -18,8 +18,10 @@
 #define RUNEOS_FAT_H
 
 
-#include <Hammer/Enum.h>
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
+#include <Hammer/String.h>
+
+#include <Ember/Enum.h>
 
 
 namespace Rune::VFS {

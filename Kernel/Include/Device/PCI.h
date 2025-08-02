@@ -201,7 +201,7 @@ namespace Rune::Device {
                 volatile auto* hba = reinterpret_cast<HBAMemory*>(Memory::physical_to_virtual_address(ahci_header.bar_5));
                 if (!ahci_driver.start(hba)) {
                     logger->error("PCI", "Failed to init AHCI");
-                    FOR_ETERNITY()
+                    while (true);
                 }
             }
 

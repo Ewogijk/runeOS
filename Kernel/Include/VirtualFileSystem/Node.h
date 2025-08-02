@@ -18,61 +18,22 @@
 #define RUNEOS_NODE_H
 
 
-#include <Hammer/Enum.h>
+#include <Ember/Definitions.h>
+#include <Ember/Enum.h>
+#include <Ember/NodeDefinitions.h>
+
 #include <Hammer/Collection.h>
 #include <Hammer/Path.h>
 
 
 namespace Rune::VFS {
-
-
-#define NODE_ATTRIBUTES(X)              \
-    X(NodeAttribute, READONLY, 0x01)    \
-    X(NodeAttribute, HIDDEN, 0x02)      \
-    X(NodeAttribute, SYSTEM, 0x04)      \
-    X(NodeAttribute, DIRECTORY, 0x08)   \
-    X(NodeAttribute, FILE, 0x10)        \
-
-    /**
-     * @brief Virtual representation of node attributes each filesystem implementation must support.
-     *
-     * <ul>
-     *  <li>Readonly:  The VFS node cannot be modified.</li>
-     *  <li>Hidden:    The VFS node should not be presented to the user if not explicitly requested.</li>
-     *  <li>System:    This directory belongs to the kernel or OS.</li>
-     *  <li>Directory: The VFS node represents a directory.</li>
-     *  <li>File:      The VFS node represents a file.</li>
-     * <ul>
-     */
-    DECLARE_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) //NOLINT
-
-
-
-#define IO_MODES(X)         \
-    X(IOMode, READ, 0x1)    \
-    X(IOMode, WRITE, 0x2)   \
-    X(IOMode, APPEND, 0x3)  \
-
-
-    /**
-     * @brief The mode of operation for a node.
-     * <ul>
-     *  <li>Read:   Read only allowed, start at beginning of node</li>
-     *  <li>Write:  Read and write allowed, start at beginning of node</li>
-     *  <li>append: Read and write allowed, start at end of node</li>
-     * </ul>
-     */
-    DECLARE_ENUM(IOMode, IO_MODES, 0x0) //NOLINT
-
-
 #define NODE_IO_STATUSES(X)             \
     X(NodeIOStatus, OKAY, 0x1)          \
     X(NodeIOStatus, BAD_ARGS, 0x2)      \
     X(NodeIOStatus, NOT_ALLOWED, 0x3)   \
     X(NodeIOStatus, NOT_SUPPORTED, 0x4) \
     X(NodeIOStatus, DEV_ERROR, 0x5)     \
-    X(NodeIOStatus, CLOSED, 0x6)        \
-
+    X(NodeIOStatus, CLOSED, 0x6)
 
     /**
      * @brief End result of a node IO operation.
@@ -84,25 +45,9 @@ namespace Rune::VFS {
      *                          mode.</li>
      *  <li>NotSupported:       The operation is not supported, e.g. node read on a directory</li>
      *  <li>StorageDeviceError: Error on the underlying storage device.</li>
-     * <ul>
-     */
-    DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) //NOLINT
-
-
-    /**
-     * @brief Seek modes describe how the new cursor position will be calculated.
-     * <ul>
-     *  <li>BEGIN: From the beginning of the file -> cursor = offset</li>
-     *  <li>CURSOR: Relative to the cursor position -> cursor += offset</li>
-     *  <li>END: From the end of the file -> cursor = file_size + offset</li>
      * </ul>
      */
-#define SEEK_MODE(X)                \
-         X(SeekMode, BEGIN, 0x1)    \
-         X(SeekMode, CURSOR, 0x2)   \
-         X(SeekMode, END, 0x3)
-
-    DECLARE_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT
+    DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) //NOLINT
 
 
     /**
@@ -136,9 +81,8 @@ namespace Rune::VFS {
         bool _closed;
 
     public:
-
         // Required for the "Lib::Column::MakeHandleNameColumn" function.
-        U16    handle{ };
+        U16 handle{ };
         /**
          * @brief The name of the node e.g. MyFile.txt or MyDirectory. That is this value does not contain any path
          *          elements. If this node is the root node of a filesystem the name can be empty.
@@ -169,7 +113,7 @@ namespace Rune::VFS {
          * @brief
          * @return The node IO mode that was requested when the node was opened.
          */
-        [[nodiscard]] virtual IOMode get_io_mode() const = 0;
+        [[nodiscard]] virtual Ember::IOMode get_io_mode() const = 0;
 
 
         /**
@@ -196,7 +140,7 @@ namespace Rune::VFS {
          *  <li>The node is a file.</li>
          *  <li>The node IO mode is at least "Read".</li>
          *  <li>The buffer points to a valid address (non-null)</li>
-         * <ol>
+         * </ol>
          *
          * <p>
          *  If the node is closed, a call to this function must not read any bytes and return
@@ -223,7 +167,7 @@ namespace Rune::VFS {
          *  <li>The node is a file.</li>
          *  <li>The node IO mode is at least "Write" or "append".</li>
          *  <li>The buffer points to a valid address (non-null)</li>
-         * <ol>
+         * </ol>
          *
          * <p>
          *  If the node is closed, a call to this function must not write any bytes and return
@@ -250,7 +194,7 @@ namespace Rune::VFS {
          * <ol>
          *  <li>The node is a file.</li>
          *  <li>The byte position is smaller than the file size.</li>
-         * <ol>
+         * </ol>
          *
          * <p>
          *  If the node is closed, a call to this function must not change the file cursor position and return
@@ -266,7 +210,8 @@ namespace Rune::VFS {
          *          Closed:             The node has been closed, no more seeking allowed.
          *          StorageDevError:    An IO error happened.
          */
-        virtual NodeIOResult seek(SeekMode seek_mode, int offset) = 0;
+        virtual NodeIOResult seek(Ember::SeekMode seek_mode, int offset) = 0;
+
 
         //TODO implement creation, modification and last access date/time support
 
@@ -279,7 +224,7 @@ namespace Rune::VFS {
          * @param n_attr The node attribute to check.
          * @return True: The node attribute is set, False: It is not or the node is closed.
          */
-        [[nodiscard]] virtual bool has_attribute(NodeAttribute n_attr) const = 0;
+        [[nodiscard]] virtual bool has_attribute(Ember::NodeAttribute n_attr) const = 0;
 
 
         /**
@@ -294,7 +239,7 @@ namespace Rune::VFS {
          * @param val   New value of the node attribute.
          * @return True: The node attribute got changed, False: It was not or the node is closed.
          */
-        virtual bool set_attribute(NodeAttribute n_attr, bool val) = 0;
+        virtual bool set_attribute(Ember::NodeAttribute n_attr, bool val) = 0;
 
 
         /**

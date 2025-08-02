@@ -51,20 +51,20 @@ limine_framebuffer_request LIMINE_FRAME_BUFFERS = {
 
 int Rune::kernel_bootstrap() {
     if (!CPU::init_bootstrap_core())
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
     // Init CPP related features
     call_global_constructors();
 
 
     if (!LIMINE_BASE_REVISION_SUPPORTED)
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
     if (LIMINE_BOOTLOADER_INFO.response == nullptr)
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
     if (LIMINE_MEM_MAP.response == nullptr)
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
 
     // Create the physical memory map
@@ -75,7 +75,7 @@ int Rune::kernel_bootstrap() {
     // Convert limine memory map to memory regions
     for (size_t i = 0; i < LIMINE_MEM_MAP.response->entry_count; i++) {
         if (regions_end >= LibK::MemoryMap::LIMIT)
-            FOR_ETERNITY(CPU::halt())
+            while (true) CPU::halt();
 
 
         auto* l_mem_map_entry = LIMINE_MEM_MAP.response->entries[i];
@@ -128,7 +128,7 @@ int Rune::kernel_bootstrap() {
                     // Current region is reserved, bootloader reclaimable or entry code
                     // Ensure reserved regions and the entry code region do not overlap
                     if (overlap > 0 && next.memory_type == LibK::MemoryRegionType::KERNEL_CODE)
-                        FOR_ETERNITY(CPU::halt())
+                        while (true) CPU::halt();
 
                     if (overlap < next.size) {
                         // Give overlapping memory to reserved region
@@ -193,11 +193,11 @@ int Rune::kernel_bootstrap() {
 
     // Create framebuffer
     if (LIMINE_FRAME_BUFFERS.response == nullptr)
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
     LibK::FrameBuffer frame_buffer;
     if (LIMINE_FRAME_BUFFERS.response->framebuffer_count == 0)
-        FOR_ETERNITY(CPU::halt())
+        while (true) CPU::halt();
 
     for (U64 i = 0; i < LIMINE_FRAME_BUFFERS.response->framebuffer_count; i++) {
         limine_framebuffer* fb = LIMINE_FRAME_BUFFERS.response->framebuffers[i];

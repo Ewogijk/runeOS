@@ -18,7 +18,7 @@
 #define RUNEOS_RESOURCE_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/String.h>
 #include <Hammer/Memory.h>
 

@@ -20,7 +20,7 @@ sources = [
     target_env.File('Boot.cpp'),
     target_env.File('Bootstrap.cpp'),
     target_env.File('FancyLogFormatter.cpp'),
-    target_env.File('LogRegistry.cpp'),
+    target_env.File('LogRegistry.cpp')
 ]
 Boot = target_env.StaticLibrary('Boot.o', target_env.Object(sources))
 Export('Boot')

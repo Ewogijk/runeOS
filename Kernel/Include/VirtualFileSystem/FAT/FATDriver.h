@@ -116,7 +116,7 @@ namespace Rune::VFS {
                 U16 storage_dev,
                 const Path& mount_point,
                 const Path& path,
-                IOMode node_io_mode,
+                Ember::IOMode node_io_mode,
                 Function<void()> on_close,
                 SharedPointer<Node>& out
         ) override;

@@ -21,7 +21,7 @@
 
 
 namespace Rune::LibK {
-    IMPLEMENT_ENUM(LogLevel, LOG_LEVELS, 0x0)
+    DEFINE_ENUM(LogLevel, LOG_LEVELS, 0x0)
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -23,7 +23,7 @@ namespace Rune::Memory {
     constexpr char const* FILE = "Physical Memory Manager";
 
 
-    IMPLEMENT_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
+    DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
 
     bool PhysicalMemoryManager::detect_memory_range() {

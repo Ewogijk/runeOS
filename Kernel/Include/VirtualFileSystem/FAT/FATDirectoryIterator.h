@@ -18,7 +18,7 @@
 #define RUNEOS_FATDIRECTORYITERATOR_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 #include <Hammer/Path.h>
 
 #include <VirtualFileSystem/DirectoryStream.h>

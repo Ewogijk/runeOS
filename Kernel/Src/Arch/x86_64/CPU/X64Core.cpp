@@ -53,7 +53,7 @@ namespace Rune::CPU {
     }
 
 
-    IMPLEMENT_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0)
+    DEFINE_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0)
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -184,12 +184,20 @@ namespace Rune::CPU {
         // Kernel code is only ever run after an exception, IRQ or syscall and after this is handled
         // the kernel stack will be emptied, that is we set the stack pointer (nearly) to the bottom
         // on top of the null frame
-        auto kernel_sp_bottom = ((LibK::MemorySize)(uintptr_t)n_thread->kernel_stack_bottom) + Thread::KERNEL_STACK_SIZE
+        const auto kernel_sp_bottom = reinterpret_cast<uintptr_t>(n_thread->kernel_stack_bottom)
+            + Thread::KERNEL_STACK_SIZE
             - 8;
+
+        // The user stack top in the thread struct will be out of date since it is not updated when a system call is
+        // accepted, only the GSBase MSR is updated and contains the latest user stack top value
+        // -> Update the thread struct user stack top to prevent it from being corrupted when we switch back to the
+        //      current stack at some point
+        c_thread->user_stack.stack_top = _gs_base;
+
         TSS.rsp_0 = kernel_sp_bottom;
         _kgs_base = kernel_sp_bottom;
         _gs_base  = n_thread->user_stack.stack_top;
-        write_msr(ModelSpecificRegister::FS_Base, reinterpret_cast<uintptr_t>(c_thread->thread_control_block));
+        write_msr(ModelSpecificRegister::FS_Base, reinterpret_cast<uintptr_t>(n_thread->thread_control_block));
 
         context_switch_ass(
             &c_thread->kernel_stack_top,

@@ -17,8 +17,8 @@
 #ifndef RUNEOS_IDT_H
 #define RUNEOS_IDT_H
 
-#include <Hammer/Definitions.h>
-#include <Hammer/Enum.h>
+#include <Ember/Definitions.h>
+#include <Ember/Enum.h>
 
 
 namespace Rune::CPU {

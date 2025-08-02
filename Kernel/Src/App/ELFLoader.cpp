@@ -58,7 +58,7 @@ namespace Rune::App {
 
 
     bool ELFLoader::seek(U64 byte_count) {
-        VFS::NodeIOResult fa   = _elf_file->seek(VFS::SeekMode::BEGIN, byte_count);
+        VFS::NodeIOResult fa   = _elf_file->seek(Ember::SeekMode::BEGIN, byte_count);
         bool              good = fa.status == VFS::NodeIOStatus::OKAY;
         if (!good)
             _logger->warn(FILE, "Failed to seek {} bytes. Actual seeked: {}", byte_count, fa.byte_count);
@@ -414,7 +414,7 @@ namespace Rune::App {
         CPU::Stack&                user_stack_out,
         LibK::VirtualAddr&         start_info_addr_out,
         bool                       keep_vas) {
-        if (const VFS::IOStatus io_status = _vfs_subsys->open(executable, VFS::IOMode::READ, _elf_file);
+        if (const VFS::IOStatus io_status = _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {
             _logger->error(FILE, "Failed to open {}.", executable.to_string());
             return LoadStatus::IO_ERROR;
@@ -450,7 +450,7 @@ namespace Rune::App {
             return LoadStatus::LOAD_ERROR;
         }
 
-        constexpr LibK::MemorySize stack_size = 8 * LibK::MemoryUnit::KiB;
+        constexpr LibK::MemorySize stack_size = 16 * LibK::MemoryUnit::KiB;
         auto* start_info = setup_bootstrap_area(elf64_file, args, stack_size);
         if (!start_info) {
             _logger->error(FILE, "Bootstrap area setup failed.");

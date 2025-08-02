@@ -18,7 +18,7 @@
 #define RUNEOS_BOOTSTRAP_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 
 namespace Rune {

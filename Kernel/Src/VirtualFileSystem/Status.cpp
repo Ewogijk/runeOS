@@ -18,11 +18,11 @@
 
 
 namespace Rune::VFS {
-    IMPLEMENT_ENUM(FormatStatus, FORMAT_STATUSES, 0x0)
+    DEFINE_ENUM(FormatStatus, FORMAT_STATUSES, 0x0)
 
 
-    IMPLEMENT_ENUM(MountStatus, MOUNT_STATUSES, 0x0)
+    DEFINE_ENUM(MountStatus, MOUNT_STATUSES, 0x0)
 
 
-    IMPLEMENT_ENUM(IOStatus, IO_STATUSES, 0x0)
+    DEFINE_ENUM(IOStatus, IO_STATUSES, 0x0)
 }

@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_DEFINITIONS_H
-#define RUNEOS_DEFINITIONS_H
+#ifndef EMBER_DEFINITIONS_H
+#define EMBER_DEFINITIONS_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -26,19 +26,19 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-using U8 = uint8_t;
+using U8  = uint8_t;
 using U16 = uint16_t;
 using U32 = uint32_t;
 using U64 = uint64_t;
 
-using S8 = int8_t;
+using S8  = int8_t;
 using S16 = int16_t;
 using S32 = int32_t;
 using S64 = int64_t;
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//                                      Macros Definitions
+//                                      Macro Definitions
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
@@ -51,8 +51,22 @@ using S64 = int64_t;
 // Silence the unused parameter compiler warning
 #define SILENCE_UNUSED(x) (void)x;
 
-// Endless loop
-#define FOR_ETERNITY(x) for (;;) x;
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+//                                          Comment
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+namespace Ember {
+    /**
+     * @brief Maximum size of a string that can be passed to the kernel.
+     */
+    constexpr U8 STRING_SIZE_LIMIT = 128;
+
+    /**
+     * @brief Maximum number of command line args that can be passed to the kernel.
+     */
+    constexpr U8 ARG_COUNT_LIMIT = 32;
+}
 
 
-#endif //RUNEOS_DEFINITIONS_H
+#endif //EMBER_DEFINITIONS_H

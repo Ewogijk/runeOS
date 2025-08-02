@@ -18,7 +18,7 @@
 #define RUNEOS_INTERRUPT_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 
 namespace Rune::CPU {

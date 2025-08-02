@@ -19,7 +19,7 @@
 
 
 #include <Hammer/Collection.h>
-#include <Hammer/Enum.h>
+#include <Ember/Enum.h>
 
 #include <LibK/FrameBuffer.h>
 #include <LibK/KMemory.h>

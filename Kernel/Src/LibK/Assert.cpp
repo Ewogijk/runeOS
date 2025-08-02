@@ -14,13 +14,13 @@ namespace Rune::LibK {
     void assert(const bool condition, const String& file, const String& message) {
         if (condition) return;
         if (err_stream) err_stream->write(file + " - " + message);
-        FOR_ETERNITY()
+        while (true);
     }
 
 
     void assert(const bool condition, const String& file) {
         if (condition) return;
         if (err_stream) err_stream->write(file + " - Assertion failed!");
-        FOR_ETERNITY()
+        while (true);
     }
 }

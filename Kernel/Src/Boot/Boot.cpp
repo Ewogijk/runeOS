@@ -98,7 +98,7 @@ namespace Rune {
 
     void on_stack_guard_fail_callback() {
         SYSTEM_LOGGER->critical(FILE, "Yoho, the stack got smashed real hard!");
-        FOR_ETERNITY()
+        while (true) CPU::halt();
     }
 
 
@@ -110,7 +110,7 @@ namespace Rune {
     void start_kernel_subsystem(LibK::Subsystem* k_subsys) {
         if (!k_subsys->start(BOOT_INFO, K_SUBSYS_REG)) {
             SYSTEM_LOGGER->critical(FILE, "Subsystem start failure: {}", k_subsys->get_name());
-            FOR_ETERNITY(CPU::halt())
+            while (true) CPU::halt();
         }
         SYSTEM_LOGGER->info(FILE, "Subsystem started: {}", k_subsys->get_name());
     }
@@ -132,7 +132,7 @@ namespace Rune {
                         info.version.to_string(),
                         info.vendor
                 );
-                FOR_ETERNITY(CPU::halt())
+                while (true) CPU::halt();
             }
             SYSTEM_LOGGER->info(
                     FILE,
@@ -207,7 +207,7 @@ namespace Rune {
         VFS::IOStatus st = file_subsys->get_node_info(os, dummy);
         if (st != VFS::IOStatus::FOUND) {
             SYSTEM_LOGGER->critical(FILE, R"("{}": OS not found!)", os.to_string());
-            FOR_ETERNITY(CPU::halt());
+            while (true) CPU::halt();
         }
 
         App::LoadStatus ls = app_subsys->start_os(os, Path::ROOT);
@@ -238,7 +238,7 @@ namespace Rune {
         };
 
         if (!MEMORY_SUBSYSTEM.start(boot_loader_info, K_SUBSYS_REG))
-            FOR_ETERNITY(CPU::halt())
+            while (true) CPU::halt();
 
         // Allocate the kernel subsystems - We do this here because the log registry needs an allocated FILE subsystem
         KERNEL_SUBSYSTEMS[0] = &MEMORY_SUBSYSTEM;

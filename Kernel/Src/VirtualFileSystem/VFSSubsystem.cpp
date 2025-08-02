@@ -23,7 +23,7 @@ namespace Rune::VFS {
     constexpr char const* FILE = "VFS";
 
 
-    IMPLEMENT_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0)  // NOLINT
+    DEFINE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0)  // NOLINT
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -129,17 +129,17 @@ namespace Rune::VFS {
                         10,
                         [](const Node* file) {
                             String fa("");
-                            if (file->has_attribute(NodeAttribute::READONLY))
+                            if (file->has_attribute(Ember::NodeAttribute::READONLY))
                                 fa += "R";
                             else
                                 fa += "W";
 
-                            if (file->has_attribute(NodeAttribute::DIRECTORY))
+                            if (file->has_attribute(Ember::NodeAttribute::DIRECTORY))
                                 fa += "D";
                             else
                                 fa += "F";
 
-                            if (file->has_attribute(NodeAttribute::SYSTEM))
+                            if (file->has_attribute(Ember::NodeAttribute::SYSTEM))
                                 fa += "S";
                             else
                                 fa += "-";
@@ -244,7 +244,7 @@ namespace Rune::VFS {
     bool Subsystem::create_system_directory(const Path& path) {
         IOStatus st = create(
                 path,
-                NodeAttribute::DIRECTORY | NodeAttribute::SYSTEM
+                Ember::NodeAttribute::DIRECTORY | Ember::NodeAttribute::SYSTEM
         );
         if (st != IOStatus::CREATED && st != IOStatus::FOUND) {
             _logger->critical(
@@ -620,7 +620,7 @@ namespace Rune::VFS {
     }
 
 
-    IOStatus Subsystem::open(const Path& path, IOMode node_io_mode, SharedPointer<Node>& out) {
+    IOStatus Subsystem::open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out) {
         if (!path.is_absolute())
             return IOStatus::BAD_PATH;
 

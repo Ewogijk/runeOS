@@ -17,7 +17,7 @@
 #ifndef RUNEOS_HBAMEMORY_H
 #define RUNEOS_HBAMEMORY_H
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 #include <Device/AHCI/Port.h>
 

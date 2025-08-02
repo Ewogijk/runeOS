@@ -18,7 +18,6 @@
 #define RUNEOS_PLUGIN_H
 
 
-#include <Hammer/Enum.h>
 #include <Hammer/String.h>
 
 #include <LibK/Subsystem.h>

@@ -18,7 +18,7 @@
 #define RUNEOS_INTERPRETER_H
 
 
-#include <Hammer/Definitions.h>
+#include <Ember/Definitions.h>
 
 #include <Shell/AST.h>
 #include <Shell/Parser.h>

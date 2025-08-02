@@ -18,7 +18,7 @@
 
 
 namespace Rune {
-    IMPLEMENT_TYPED_ENUM(ByteOrder, U8, BYTE_ORDERS, 0)
+    DEFINE_TYPED_ENUM(ByteOrder, U8, BYTE_ORDERS, 0)
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
