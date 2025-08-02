@@ -450,7 +450,7 @@ namespace Rune::App {
             return LoadStatus::LOAD_ERROR;
         }
 
-        constexpr LibK::MemorySize stack_size = 8 * LibK::MemoryUnit::KiB;
+        constexpr LibK::MemorySize stack_size = 16 * LibK::MemoryUnit::KiB;
         auto* start_info = setup_bootstrap_area(elf64_file, args, stack_size);
         if (!start_info) {
             _logger->error(FILE, "Bootstrap area setup failed.");
