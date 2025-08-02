@@ -65,7 +65,7 @@ namespace Rune::SystemCall {
             )
         );
         defs.add_back(
-            define1(
+            define2(
                 Ember::App::WRITE_STDOUT,
                 Ember::App(Ember::App::WRITE_STDOUT).to_string(),
                 &write_std_out,
@@ -74,7 +74,7 @@ namespace Rune::SystemCall {
         );
 
         defs.add_back(
-            define1(
+            define2(
                 Ember::App::WRITE_STDERR,
                 Ember::App(Ember::App::WRITE_STDERR).to_string(),
                 &write_std_err,

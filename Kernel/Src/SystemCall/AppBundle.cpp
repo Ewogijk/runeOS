@@ -38,11 +38,11 @@ namespace Rune::SystemCall {
     }
 
 
-    Ember::StatusCode write_std_out(void* sys_call_ctx, U64 arg1) {
+    Ember::StatusCode write_std_out(void* sys_call_ctx, const U64 msg, const U64 msg_size) {
         const auto* app_mng_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
-        const char* k_buf_msg = new char[Ember::STRING_SIZE_LIMIT + 1];
-        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*)arg1, -1, k_buf_msg))
+        const char* k_buf_msg = new char[msg_size + 1];
+        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(msg), msg_size, k_buf_msg))
             return Ember::Status::BAD_ARG;
         const String                k_msg(k_buf_msg);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
@@ -53,14 +53,14 @@ namespace Rune::SystemCall {
     }
 
 
-    Ember::StatusCode write_std_err(void* sys_call_ctx, U64 arg1) {
+    Ember::StatusCode write_std_err(void* sys_call_ctx, const U64 msg, const U64 msg_size) {
         const auto* app_mng_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
-        const char* k_buf_msg = new char[Ember::STRING_SIZE_LIMIT + 1];
-        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel((const char*)arg1, -1, k_buf_msg))
+        const char* k_buf_msg = new char[msg_size + 1];
+        if (!app_mng_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(msg), msg_size, k_buf_msg))
             return Ember::Status::BAD_ARG;
-        String                          k_msg(k_buf_msg);
-        SharedPointer<LibK::TextStream> std_err = app_mng_ctx->app_subsys->get_active_app()->std_err;
+        const String                          k_msg(k_buf_msg);
+        const SharedPointer<LibK::TextStream> std_err = app_mng_ctx->app_subsys->get_active_app()->std_err;
 
         std_err->set_foreground_color(LibK::Pixie::VSCODE_RED);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(

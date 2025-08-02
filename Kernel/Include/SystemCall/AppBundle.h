@@ -56,26 +56,28 @@ namespace Rune::SystemCall {
 
 
     /**
-     * @brief Write the msg to the stdout stream of the running app.
+     * @brief Write at most msg_size characters of the msg to the stdout stream of the running app.
      * @param sys_call_ctx A pointer to the app management context.
      * @param msg          A pointer to a c string.
+     * @param msg_size     The length of the c string.
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    Ember::StatusCode write_std_out(void* sys_call_ctx, U64 msg);
+    Ember::StatusCode write_std_out(void* sys_call_ctx, U64 msg, U64 msg_size);
 
 
     /**
-     * @brief Write the msg to the stderr stream of the running app.
+     * @brief Write at most msg_size characters of the msg to the stderr stream of the running app.
      *
      * If the stream supports colors the msg will be written in red.
      *
      * @param sys_call_ctx A pointer to the app management context.
      * @param msg          A pointer to a c string.
+     * @param msg_size     The length of the c string.
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    Ember::StatusCode write_std_err(void* sys_call_ctx, U64 msg);
+    Ember::StatusCode write_std_err(void* sys_call_ctx, U64 msg, U64 msg_size);
 
 
     /**
