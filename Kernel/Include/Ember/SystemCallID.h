@@ -88,11 +88,12 @@ namespace Ember {
         X(App, READ_STDIN, 400)         \
         X(App, WRITE_STDOUT, 401)       \
         X(App, WRITE_STDERR, 402)       \
-        X(App, START, 403)              \
-        X(App, EXIT, 404)               \
-        X(App, JOIN, 405)               \
-        X(App, CURRENT_DIRECTORY, 406)  \
-        X(App, CHANGE_DIRECTORY, 407)
+        X(App, GET_ID, 403)             \
+        X(App, START, 404)              \
+        X(App, EXIT, 405)               \
+        X(App, JOIN, 406)               \
+        X(App, CURRENT_DIRECTORY, 407)  \
+        X(App, CHANGE_DIRECTORY, 408)
 
     DECLARE_TYPED_ENUM(App, SystemCallID, APP_SYSCALLS, 0x0) // NOLINT
 }

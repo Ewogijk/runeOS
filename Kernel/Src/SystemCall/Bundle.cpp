@@ -60,7 +60,7 @@ namespace Rune::SystemCall {
             define1(
                 Ember::App::READ_STDIN,
                 Ember::App(Ember::App::READ_STDIN).to_string(),
-                &read_std_in,
+                &read_stdin,
                 &APP_MNG_CTX
             )
         );
@@ -68,16 +68,23 @@ namespace Rune::SystemCall {
             define2(
                 Ember::App::WRITE_STDOUT,
                 Ember::App(Ember::App::WRITE_STDOUT).to_string(),
-                &write_std_out,
+                &write_stdout,
                 &APP_MNG_CTX
             )
         );
-
         defs.add_back(
             define2(
                 Ember::App::WRITE_STDERR,
                 Ember::App(Ember::App::WRITE_STDERR).to_string(),
-                &write_std_err,
+                &write_stderr,
+                &APP_MNG_CTX
+            )
+        );
+        defs.add_back(
+            define0(
+                Ember::App::GET_ID,
+                Ember::App(Ember::App::GET_ID).to_string(),
+                &get_ID,
                 &APP_MNG_CTX
             )
         );
