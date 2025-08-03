@@ -14,23 +14,19 @@
  *  limitations under the License.
  */
 
-/*
- * This file is auto generated.
- */
-
 #ifndef RUNEOS_BUILD_H
 #define RUNEOS_BUILD_H
 
 // The OS major version
-#define OS_MAJOR 0
+#mesondefine MAJOR
 
 // The OS minor version
-#define OS_MINOR 1
+#mesondefine MINOR
 
 // The OS patch version
-#define OS_PATCH 0
+#mesondefine PATCH
 
 // The OS prerelease version
-#define OS_PRERELEASE "alpha"
+#mesondefine PRERELEASE
 
 #endif //RUNEOS_BUILD_H

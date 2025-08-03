@@ -40,9 +40,9 @@ namespace Rune {
         if (!interpreter.setup_environment(wd))
             return -1;
 
-        std::cout << "Welcome to runeOS v" << OS_MAJOR << "." << OS_MINOR << "." << OS_PATCH;
-        if (!std::string(OS_PRERELEASE).empty())
-            std::cout << "-" << OS_PRERELEASE << std::endl;
+        std::cout << "Welcome to runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
+        if (!std::string(PRERELEASE).empty())
+            std::cout << "-" << PRERELEASE << std::endl;
         else
             std::cout << std::endl;
         std::cout << std::endl;

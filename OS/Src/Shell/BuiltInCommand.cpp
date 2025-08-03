@@ -102,9 +102,9 @@ namespace Rune::Shell {
             return 0;
         }
 
-        std::cout << "runeOS v" << OS_MAJOR << "." << OS_MINOR << "." << OS_PATCH;
-        if (!std::string(OS_PRERELEASE).empty())
-            std::cout << "-" << OS_PRERELEASE << std::endl;
+        std::cout << "runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
+        if (!std::string(PRERELEASE).empty())
+            std::cout << "-" << PRERELEASE << std::endl;
         std::cout << std::endl;
 
         std::cout << "The shell executes built-in and external commands." << std::endl;
