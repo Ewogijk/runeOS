@@ -18,7 +18,7 @@
 #define RUNEOS_SYSTEMCALL_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 
 #include <LibK/Logging.h>
 

@@ -18,8 +18,8 @@
 #define RUNEOS_APPMANAGEMENT_H
 
 
-#include <Ember/Definitions.h>
-#include <Ember/StatusCode.h>
+#include <Ember/Ember.h>
+#include <Ember/Ember.h>
 
 #include <App/AppSubsystem.h>
 

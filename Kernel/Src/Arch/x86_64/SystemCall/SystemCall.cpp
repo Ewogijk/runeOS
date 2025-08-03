@@ -33,7 +33,7 @@ namespace Rune::SystemCall {
     };
 
 
-    HashMap<Ember::SystemCallID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE;
+    HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE;
     KernelGuardian*                                   K_GUARD;
     SharedPointer<LibK::Logger>                       LOGGER;
 
@@ -47,7 +47,7 @@ namespace Rune::SystemCall {
 
 
     CLINK Ember::StatusCode system_call_dispatch(
-        Ember::SystemCallID       ID,
+        Ember::ResourceID       ID,
         Ember::SystemCallArgument arg1,
         Ember::SystemCallArgument arg2,
         Ember::SystemCallArgument arg3,

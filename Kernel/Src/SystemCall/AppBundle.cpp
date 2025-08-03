@@ -16,8 +16,8 @@
 
 #include <SystemCall/AppBundle.h>
 
-#include <Ember/VirtualKey.h>
-#include <Ember/StatusCode.h>
+#include <Ember/Ember.h>
+#include <Ember/AppBits.h>
 
 
 namespace Rune::SystemCall {

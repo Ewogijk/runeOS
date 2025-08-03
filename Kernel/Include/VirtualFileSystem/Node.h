@@ -18,9 +18,9 @@
 #define RUNEOS_NODE_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
-#include <Ember/NodeDefinitions.h>
+#include <Ember/VFSBits.h>
 
 #include <Hammer/Collection.h>
 #include <Hammer/Path.h>

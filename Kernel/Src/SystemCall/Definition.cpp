@@ -19,7 +19,7 @@
 
 namespace Rune::SystemCall {
     Definition define6(
-        const Ember::SystemCallID ID,
+        const Ember::ResourceID ID,
         const String&             name,
         const Function<S64(
             void*,
@@ -59,7 +59,7 @@ namespace Rune::SystemCall {
 
 
     Definition define5(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -98,7 +98,7 @@ namespace Rune::SystemCall {
 
 
     Definition define4(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -136,7 +136,7 @@ namespace Rune::SystemCall {
 
 
     Definition define3(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -173,7 +173,7 @@ namespace Rune::SystemCall {
 
 
     Definition define2(
-        Ember::SystemCallID                                                               ID,
+        Ember::ResourceID                                                               ID,
         const String&                                                                     name,
         const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
         void*                                                                             context
@@ -206,7 +206,7 @@ namespace Rune::SystemCall {
 
 
     Definition define1(
-        Ember::SystemCallID                                    ID,
+        Ember::ResourceID                                    ID,
         const String&                                          name,
         const Function<S64(void*, Ember::SystemCallArgument)>& handler,
         void*                                                  context
@@ -239,7 +239,7 @@ namespace Rune::SystemCall {
 
 
     Definition define0(
-        Ember::SystemCallID  ID,
+        Ember::ResourceID  ID,
         const String&        name,
         Function<S64(void*)> handler,
         void*                context

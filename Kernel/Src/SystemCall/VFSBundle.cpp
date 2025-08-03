@@ -16,8 +16,8 @@
 
 #include <SystemCall/VFSBundle.h>
 
-#include <Ember/StatusCode.h>
-#include <Ember/NodeDefinitions.h>
+#include <Ember/Ember.h>
+#include <Ember/VFSBits.h>
 
 
 namespace Rune::SystemCall {

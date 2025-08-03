@@ -33,10 +33,10 @@
 
 namespace Rune::SystemCall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          App Management Systemcalls
+    //                                          App System Call Bundle
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    AppSystemCallContext APP_MNG_CTX;
+    AppSystemCallContext APP_SYSCALL_CTX;
 
 
     Bundle make_app_bundle(
@@ -47,7 +47,7 @@ namespace Rune::SystemCall {
         auto* device_subsys = k_subsys_reg.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
         auto* cpu_subsys    = k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
         auto* file_subsys   = k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
-        APP_MNG_CTX         = {
+        APP_SYSCALL_CTX     = {
             k_guard,
             app_subsys,
             device_subsys,
@@ -61,7 +61,7 @@ namespace Rune::SystemCall {
                 Ember::App::READ_STDIN,
                 Ember::App(Ember::App::READ_STDIN).to_string(),
                 &read_stdin,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -69,7 +69,7 @@ namespace Rune::SystemCall {
                 Ember::App::WRITE_STDOUT,
                 Ember::App(Ember::App::WRITE_STDOUT).to_string(),
                 &write_stdout,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -77,7 +77,7 @@ namespace Rune::SystemCall {
                 Ember::App::WRITE_STDERR,
                 Ember::App(Ember::App::WRITE_STDERR).to_string(),
                 &write_stderr,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -85,7 +85,7 @@ namespace Rune::SystemCall {
                 Ember::App::GET_ID,
                 Ember::App(Ember::App::GET_ID).to_string(),
                 &get_ID,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -93,7 +93,7 @@ namespace Rune::SystemCall {
                 Ember::App::START,
                 Ember::App(Ember::App::START).to_string(),
                 &app_start,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -101,7 +101,7 @@ namespace Rune::SystemCall {
                 Ember::App::EXIT,
                 Ember::App(Ember::App::EXIT).to_string(),
                 &app_exit,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -109,7 +109,7 @@ namespace Rune::SystemCall {
                 Ember::App::JOIN,
                 Ember::App(Ember::App::JOIN).to_string(),
                 &app_join,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -117,7 +117,7 @@ namespace Rune::SystemCall {
                 Ember::App::CURRENT_DIRECTORY,
                 Ember::App(Ember::App::CURRENT_DIRECTORY).to_string(),
                 &app_current_directory,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -125,7 +125,7 @@ namespace Rune::SystemCall {
                 Ember::App::CHANGE_DIRECTORY,
                 Ember::App(Ember::App::CHANGE_DIRECTORY).to_string(),
                 &app_change_directory,
-                &APP_MNG_CTX
+                &APP_SYSCALL_CTX
             )
         );
 
@@ -136,14 +136,18 @@ namespace Rune::SystemCall {
     }
 
 
-    VFSSystemCallContext VFS_CTX;
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          VFS System Call Bundle
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    VFSSystemCallContext VFS_SYSCALL_CTX;
 
 
     Bundle make_vfs_bundle(
         KernelGuardian*                k_guard,
         const LibK::SubsystemRegistry& k_subsys_reg
     ) {
-        VFS_CTX = {
+        VFS_SYSCALL_CTX = {
             k_guard,
             k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS),
             k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
@@ -156,7 +160,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::GET_NODE_INFO,
                 Ember::VFS(Ember::VFS::GET_NODE_INFO).to_string(),
                 &vfs_get_node_info,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -164,7 +168,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::CREATE,
                 Ember::VFS(Ember::VFS::CREATE).to_string(),
                 &vfs_create,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -172,7 +176,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::OPEN,
                 Ember::VFS(Ember::VFS::OPEN).to_string(),
                 &vfs_open,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -180,7 +184,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::DELETE,
                 Ember::VFS(Ember::VFS::DELETE).to_string(),
                 &vfs_delete,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -188,7 +192,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::CLOSE,
                 Ember::VFS(Ember::VFS::CLOSE).to_string(),
                 &vfs_close,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -196,7 +200,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::READ,
                 Ember::VFS(Ember::VFS::READ).to_string(),
                 &vfs_read,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -204,7 +208,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::WRITE,
                 Ember::VFS(Ember::VFS::WRITE).to_string(),
                 &vfs_write,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -212,7 +216,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::SEEK,
                 Ember::VFS(Ember::VFS::SEEK).to_string(),
                 &vfs_seek,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -220,7 +224,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::DIRECTORY_STREAM_OPEN,
                 Ember::VFS(Ember::VFS::DIRECTORY_STREAM_OPEN).to_string(),
                 &vfs_directory_stream_open,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -228,7 +232,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::DIRECTORY_STREAM_NEXT,
                 Ember::VFS(Ember::VFS::DIRECTORY_STREAM_NEXT).to_string(),
                 &vfs_directory_stream_next,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -236,7 +240,7 @@ namespace Rune::SystemCall {
                 Ember::VFS::DIRECTORY_STREAM_CLOSE,
                 Ember::VFS(Ember::VFS::DIRECTORY_STREAM_CLOSE).to_string(),
                 &vfs_directory_stream_close,
-                &VFS_CTX
+                &VFS_SYSCALL_CTX
             )
         );
         return {
@@ -246,14 +250,18 @@ namespace Rune::SystemCall {
     }
 
 
-    MemorySystemCallContext MM_CTX;
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Memory System Call Bundle
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    MemorySystemCallContext MM_SYSCALL_CTX;
 
 
     Bundle make_memory_bundle(
         KernelGuardian*                k_guard,
         const LibK::SubsystemRegistry& k_subsys_reg
     ) {
-        MM_CTX = {
+        MM_SYSCALL_CTX = {
             k_guard,
             k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY),
             k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
@@ -265,7 +273,7 @@ namespace Rune::SystemCall {
                 Ember::Memory::GET_PAGE_SIZE,
                 Ember::Memory(Ember::Memory::GET_PAGE_SIZE).to_string(),
                 &memory_get_page_size,
-                &MM_CTX
+                &MM_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -273,7 +281,7 @@ namespace Rune::SystemCall {
                 Ember::Memory::ALLOCATE_PAGE,
                 Ember::Memory(Ember::Memory::ALLOCATE_PAGE).to_string(),
                 &memory_allocate_page,
-                &MM_CTX
+                &MM_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -281,7 +289,7 @@ namespace Rune::SystemCall {
                 Ember::Memory::FREE_PAGE,
                 Ember::Memory(Ember::Memory::FREE_PAGE).to_string(),
                 &memory_free_page,
-                &MM_CTX
+                &MM_SYSCALL_CTX
             )
         );
         return {
@@ -291,14 +299,19 @@ namespace Rune::SystemCall {
     }
 
 
-    ThreadingSystemCallContext TM_CTX;
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Threading System Call Context
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+
+    ThreadingSystemCallContext T_SYSCALL_CTX;
 
 
     Bundle make_threading_bundle(
         KernelGuardian*                k_guard,
         const LibK::SubsystemRegistry& k_subsys_reg
     ) {
-        TM_CTX = {
+        T_SYSCALL_CTX = {
             k_guard,
             k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU),
             k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
@@ -310,7 +323,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::MUTEX_CREATE,
                 Ember::Threading(Ember::Threading::MUTEX_CREATE).to_string(),
                 &mutex_create,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -318,7 +331,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::MUTEX_LOCK,
                 Ember::Threading(Ember::Threading::MUTEX_LOCK).to_string(),
                 &mutex_lock,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -326,7 +339,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::MUTEX_UNLOCK,
                 Ember::Threading(Ember::Threading::MUTEX_UNLOCK).to_string(),
                 &mutex_unlock,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -334,7 +347,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::MUTEX_FREE,
                 Ember::Threading(Ember::Threading::MUTEX_FREE).to_string(),
                 &mutex_free,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -342,7 +355,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::THREAD_GET_ID,
                 Ember::Threading(Ember::Threading::THREAD_GET_ID).to_string(),
                 &get_thread_ID,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         defs.add_back(
@@ -350,7 +363,7 @@ namespace Rune::SystemCall {
                 Ember::Threading::THREAD_CONTROL_BLOCK_SET,
                 Ember::Threading(Ember::Threading::THREAD_CONTROL_BLOCK_SET).to_string(),
                 &set_thread_control_block,
-                &TM_CTX
+                &T_SYSCALL_CTX
             )
         );
         return {

@@ -18,7 +18,7 @@
 #define RUNEOS_GDT_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
 namespace Rune::CPU {

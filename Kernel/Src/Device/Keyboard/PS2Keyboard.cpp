@@ -16,7 +16,7 @@
 
 #include <Device/Keyboard/PS2Keyboard.h>
 
-#include <Ember/VirtualKey.h>
+#include <Ember/AppBits.h>
 
 #include <CPU/IO.h>
 
