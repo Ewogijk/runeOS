@@ -13,7 +13,7 @@
 //  limitations under the License.
 
 
-#include <Ember/NodeDefinitions.h>
+#include <Ember/VFSBits.h>
 
 
 namespace Ember {

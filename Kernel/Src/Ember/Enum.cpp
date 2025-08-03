@@ -26,9 +26,9 @@ size_t e_strlen(const char* str) {
 }
 
 
-int e_memcmp(const void* lhs, const void* rhs, size_t count) {
-    auto* l = (unsigned char*)lhs;
-    auto* r = (unsigned char*)rhs;
+int e_memcmp(const void* lhs, const void* rhs, const size_t count) {
+    const auto* l = (unsigned char*)lhs;
+    const auto* r = (unsigned char*)rhs;
 
     for (size_t i = 0; i < count; i++) {
         if (l[i] < r[i])

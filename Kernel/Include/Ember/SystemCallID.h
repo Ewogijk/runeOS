@@ -17,13 +17,11 @@
 #ifndef EMBER_SYSTEMCALLID_H
 #define EMBER_SYSTEMCALLID_H
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
 
 namespace Ember {
-    using SystemCallID       = U16;
-    using SystemCallArgument = U64;
 
     /**
      * @brief The memory system call IDs.
@@ -36,7 +34,7 @@ namespace Ember {
         X(Memory, ALLOCATE_PAGE, 101)   \
         X(Memory, FREE_PAGE, 102)
 
-    DECLARE_TYPED_ENUM(Memory, SystemCallID, MEMORY_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(Memory, ResourceID, MEMORY_SYSCALLS, 0x0) // NOLINT
 
 
     /**
@@ -53,7 +51,7 @@ namespace Ember {
         X(Threading, THREAD_GET_ID, 204)            \
         X(Threading, THREAD_CONTROL_BLOCK_SET, 205)
 
-    DECLARE_TYPED_ENUM(Threading, SystemCallID, THREADING_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(Threading, ResourceID, THREADING_SYSCALLS, 0x0) // NOLINT
 
 
     /**
@@ -75,7 +73,7 @@ namespace Ember {
         X(VFS, DIRECTORY_STREAM_NEXT, 309)  \
         X(VFS, DIRECTORY_STREAM_CLOSE, 310)
 
-    DECLARE_TYPED_ENUM(VFS, SystemCallID, VFS_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(VFS, ResourceID, VFS_SYSCALLS, 0x0) // NOLINT
 
 
     /**
@@ -95,7 +93,7 @@ namespace Ember {
         X(App, CURRENT_DIRECTORY, 407)  \
         X(App, CHANGE_DIRECTORY, 408)
 
-    DECLARE_TYPED_ENUM(App, SystemCallID, APP_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(App, ResourceID, APP_SYSCALLS, 0x0) // NOLINT
 }
 
 #endif //EMBER_SYSTEMCALLID_H
