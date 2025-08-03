@@ -16,33 +16,32 @@
 
 #include <Shell/AST.h>
 
-#include <Hammer/Path.h>
+#include <Forge/VFS.h>
+#include <Forge/App.h>
 
-#include <Pickaxe/VFS.h>
+#include <utility>
+#include <cstring>
+#include <iostream>
 
-#include <StdIO.h>
+#include <Shell/Path.h>
+#include <Shell/Utility.h>
 
 
 namespace Rune::Shell {
-    const String Environment::PATH = "PATH";
-
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Input
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    Input::Input(UniquePointer<ASTNode> cs_evd_or_ev) : _cs_evd_or_ev(move(cs_evd_or_ev)) {
-
-    }
+    Input::Input(std::unique_ptr<ASTNode> cs_evd_or_ev) : _cs_evd_or_ev(std::move(cs_evd_or_ev)) { }
 
 
-    String Input::get_text() {
+    std::string Input::get_text() {
         return _cs_evd_or_ev->get_text();
     }
 
 
-    String Input::evaluate(Environment& shell_env) {
+    std::string Input::evaluate(Environment& shell_env) {
         return _cs_evd_or_ev->evaluate(shell_env);
     }
 
@@ -52,14 +51,10 @@ namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    // Maximum size for app arguments
-    static const int ARGV_LIMIT = 2048;
-
-
     /**
      * @brief Check that the file with file_name is an executable and the file requested in a command has the same name.
-     * @param app_file_name     Name of a file on the filesystem.
-     * @param req_app_file_name Name of a file requested
+     * @param file_name     Name of a file on the filesystem.
+     * @param target_file Name of a file requested
      * @return
      */
     bool is_target_application(const Path& file_name, const Path& target_file) {
@@ -67,7 +62,7 @@ namespace Rune::Shell {
         // it is okay if the ".app" extension is omitted in the shell input
         // E.g. "MyApp.app" on the filesystem will match with "MyApp.app" or "MyApp"
         return file_name.get_file_extension() == "app"
-               && file_name.get_file_name_without_extension() == target_file.get_file_name_without_extension();
+            && file_name.get_file_name_without_extension() == target_file.get_file_name_without_extension();
     }
 
 
@@ -78,24 +73,23 @@ namespace Rune::Shell {
      * @return
      */
     Path find_target_app(const Path& dir, const Path& target_file) {
-        S64 dir_stream_handle = Pickaxe::vfs_directory_stream_open(dir.to_string().to_cstr());
-        if (dir_stream_handle > 0) {
+        if (const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(dir.to_string().c_str());
+            dir_stream_ID > Ember::Status::OKAY) {
             // Search for the app
-            Pickaxe::VFSNodeInfo node_info;
-            S64                  ret   = Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-            bool                 found = false;
-            while (ret > 0) {
+            Ember::NodeInfo node_info;
+            S64             ret   = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+            bool            found = false;
+            while (ret > Ember::Status::OKAY) {
                 if (node_info.is_file()) {
                     // Only check if the node is a file
-                    Path node_path(node_info.node_path);
-                    if (is_target_application(node_path, target_file)) {
+                    if (Path node_path(node_info.node_path); is_target_application(node_path, target_file)) {
                         found = true;
                         break;
                     }
                 }
-                ret = Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+                ret = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
             }
-            Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+            Forge::vfs_directory_stream_close(dir_stream_ID);
 
             if (!found && node_info.is_file()) {
                 // Target app not found and end of directory stream was reached -> Check last file
@@ -104,57 +98,52 @@ namespace Rune::Shell {
 
             if (found)
                 return dir / node_info.node_path;
-
         }
         return Path("");
     }
 
+
     CommandSequence::CommandSequence(
-            UniquePointer<ASTNode> command,
-            LinkedList<UniquePointer<ASTNode>> arguments_or_flags,
-            Path redirect_file
-    ) : _command(move(command)),
-        _arguments_or_flags(move(arguments_or_flags)),
-        _redirect_file(move(redirect_file)) {
-
-    }
+        std::unique_ptr<ASTNode>              command,
+        std::vector<std::unique_ptr<ASTNode>> arguments_or_flags,
+        Path                                  redirect_file
+    ) : _command(std::move(command)),
+        _arguments_or_flags(std::move(arguments_or_flags)),
+        _redirect_file(std::move(redirect_file)) { }
 
 
-    String CommandSequence::get_text() {
-        String cs = _command->get_text();
-        for (auto& arg: _arguments_or_flags)
+    std::string CommandSequence::get_text() {
+        std::string cs = _command->get_text();
+        for (const auto& arg : _arguments_or_flags)
             cs += " " + arg->get_text();
         return cs;
     }
 
 
-    String CommandSequence::evaluate(Environment& shell_env) {
-        String              cmd  = _command->evaluate(shell_env);
-        UniquePointer<char> args = UniquePointer<char>((char*) new char[ARGV_LIMIT]);
-        char* argv[_arguments_or_flags.size() + 1];
-
-        memset(args.get(), 0, ARGV_LIMIT);
-        int argv_idx = 0;
-        int pos      = 0;
-        for (auto& aof: _arguments_or_flags) {
-            String aof_str = aof->evaluate(shell_env);
-            memcpy(&args.get()[pos], (void*) aof_str.to_cstr(), aof_str.size() + 1);
+    std::string CommandSequence::evaluate(Environment& shell_env) {
+        const std::string cmd                                  = _command->evaluate(shell_env);
+        const auto  args                                 = std::unique_ptr<char>(new char[ARGV_LIMIT]);
+        char*       argv[_arguments_or_flags.size() + 1] = { };
+        int         argv_idx                             = 0;
+        int         pos                                  = 0;
+        for (const auto& aof : _arguments_or_flags) {
+            std::string aof_str = aof->evaluate(shell_env);
+            memcpy(&args.get()[pos], (void*)aof_str.c_str(), aof_str.size() + 1);
             argv[argv_idx++] = &args.get()[pos];
-            pos += (int) aof_str.size() + 1;
+            pos += static_cast<int>(aof_str.size()) + 1;
             if (pos >= ARGV_LIMIT) {
-                print_err("Too many arguments. Max size: {}, Is: {}\n", ARGV_LIMIT, pos);
+                std::cerr << "Too many arguments. Max size: " << ARGV_LIMIT << ", Is: " << pos << std::endl;
                 return "";
             }
         }
         argv[_arguments_or_flags.size()] = nullptr;
 
-        auto maybe_builtin = shell_env.command_table.find(cmd);
-        if (maybe_builtin == shell_env.command_table.end()) {
-            Path wd = shell_env.working_directory;
-
-            Path cmd_file(cmd);                           // User provided app path e.g. a/b/app
-            Path cmd_file_name(cmd_file.get_file_name());     // Name of the application e.g. app
-            Path cmd_file_dir = cmd_file.get_parent();        // Directory of the application e.g. a/b
+        if (const auto maybe_builtin = shell_env.command_table.find(cmd);
+            maybe_builtin == shell_env.command_table.end()) {
+            const Path wd = shell_env.working_directory;
+            const Path cmd_file(cmd);                           // User provided app path e.g. a/b/app
+            const Path cmd_file_name(cmd_file.get_file_name()); // Name of the application e.g. app
+            Path       cmd_file_dir = cmd_file.get_parent();    // Directory of the application e.g. a/b
             if (cmd_file_dir.to_string() == ".")
                 // cmd_file is an app name without any path -> make cmd_file_dir an empty string, so we can concatenate
                 // without any consequence
@@ -164,7 +153,6 @@ namespace Rune::Shell {
             if (cmd_file.is_absolute()) {
                 // An absolute path was given -> Check if the file exists
                 target_app = find_target_app(cmd_file_dir, cmd_file_name);
-
             } else {
                 // Search in the current directory
                 target_app = find_target_app(wd / cmd_file_dir, cmd_file_name);
@@ -172,11 +160,12 @@ namespace Rune::Shell {
                     // Search through the directories in $PATH
                     auto path = shell_env.env_var_table.find("PATH");
                     if (path == shell_env.env_var_table.end()) {
-                        print_err("\"Missing environment variable: \"{}\"\n", "$PATH");
+                        std::cerr << "\"Missing environment variable: \"" << Environment::PATH << "\"" << std::endl;
                         return "";
                     }
-                    LinkedList<String> path_vars = path->value->split(':');
-                    for (auto& dir: path_vars) {
+
+                    const std::vector<std::string> path_vars = str_split(path->second, ':');
+                    for (auto& dir : path_vars) {
                         target_app = find_target_app(Path(dir) / cmd_file_dir, cmd_file_name);
                         if (target_app != Path(""))
                             break;
@@ -185,27 +174,27 @@ namespace Rune::Shell {
             }
 
             if (target_app == Path("")) {
-                print_err("Unknown command: \"{}\"\n", cmd);
+                std::cerr << "Unknown command: \"" << cmd << "\"" << std::endl;
                 return "";
             }
-
-            String redirect   = _redirect_file == Path("") ? "inherit" : "file:" + _redirect_file.to_string();
-            S64    app_handle = Pickaxe::app_start(
-                    target_app.to_string().to_cstr(),
-                    (const char**) argv,
-                    wd.to_string().to_cstr(),
-                    "inherit",
-                    redirect.to_cstr(),
-                    redirect.to_cstr()
+            const std::string redirect = _redirect_file == Path("") ? "inherit" : "file:" + _redirect_file.to_string();
+            const Ember::ResourceID app_ID = Forge::app_start(
+                target_app.to_string().c_str(),
+                const_cast<const char**>(argv),
+                wd.to_string().c_str(),
+                "inherit",
+                redirect.c_str(),
+                redirect.c_str()
             );
-            if (app_handle < 0) {
-                print_err("Failed to start app \"{}\". Reason: {}\n", target_app.to_string(), app_handle);
+            if (app_ID < Ember::Status::OKAY) {
+                std::cerr << "Failed to start app \"" << target_app.to_string()
+                    << "\". Reason: " << app_ID << std::endl;
                 return "";
             }
-            Pickaxe::app_join((int) app_handle);
+            Forge::app_join(app_ID);
         } else {
-            int argc = (int) _arguments_or_flags.size();
-            (*maybe_builtin->value)(argc, argv, shell_env);
+            const int argc = static_cast<int>(_arguments_or_flags.size());
+            (maybe_builtin->second)(argc, argv, shell_env);
         }
         return "";
     }
@@ -216,27 +205,25 @@ namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    EnvVarDecl::EnvVarDecl(UniquePointer<ASTNode> env_var, LinkedList<UniquePointer<ASTNode>> value)
-            : _env_var(move(env_var)),
-              _value(move(value)) {
-
-    }
+    EnvVarDecl::EnvVarDecl(std::unique_ptr<ASTNode> env_var, std::vector<std::unique_ptr<ASTNode>> value)
+        : _env_var(std::move(env_var)),
+          _value(std::move(value)) { }
 
 
-    String EnvVarDecl::get_text() {
-        String v;
-        for (auto& vv: _value)
+    std::string EnvVarDecl::get_text() {
+        std::string v;
+        for (auto& vv : _value)
             v += vv->get_text();
         return _env_var->get_text() + "=" + v;
     }
 
 
-    String EnvVarDecl::evaluate(Environment& shell_env) {
-        String new_env_var = _env_var->get_text();
-        String val;
-        for (auto& v: _value)
+    std::string EnvVarDecl::evaluate(Environment& shell_env) {
+        const std::string new_env_var = _env_var->get_text();
+        std::string       val;
+        for (const auto& v : _value)
             val += " " + v->evaluate(shell_env);
-        shell_env.env_var_table.put(new_env_var, val);
+        shell_env.env_var_table[new_env_var] = val;
         return "";
     }
 
@@ -246,24 +233,22 @@ namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    EnvVar::EnvVar(UniquePointer<ASTNode> env_var) : _env_var(move(env_var)) {
-
-    }
+    EnvVar::EnvVar(std::unique_ptr<ASTNode> env_var) : _env_var(std::move(env_var)) { }
 
 
-    String EnvVar::get_text() {
+    std::string EnvVar::get_text() {
         return _env_var->get_text();
     }
 
 
-    String EnvVar::evaluate(Environment& shell_env) {
-        String env_var = _env_var->get_text();
-        auto   var     = shell_env.env_var_table.find(env_var);
+    std::string EnvVar::evaluate(Environment& shell_env) {
+        const std::string env_var = _env_var->get_text();
+        const auto        var     = shell_env.env_var_table.find(env_var);
         if (var == shell_env.env_var_table.end()) {
-            print_err("Unknown env var \"${}\"\n", env_var);
+            std::cerr << "Environment variable not found: " << env_var << std::endl;
             return "";
         }
-        return *var->value;
+        return var->second;
     }
 
 
@@ -272,42 +257,39 @@ namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    ShellString::ShellString(LinkedList<UniquePointer<ASTNode>> content) : _content(move(content)) {
-
-    }
+    ShellString::ShellString(std::vector<std::unique_ptr<ASTNode>> content) : _content(std::move(content)) { }
 
 
-    String ShellString::get_text() {
-        String text;
-        for (auto& ele: _content)
+    std::string ShellString::get_text() {
+        std::string text;
+        for (const auto& ele : _content)
             text += ele->get_text();
         return text;
     }
 
 
-    String ShellString::evaluate(Shell::Environment& shell_env) {
-        String value("");
-        for (auto& ele: _content)
+    std::string ShellString::evaluate(Shell::Environment& shell_env) {
+        std::string value("");
+        for (const auto& ele : _content)
             value += ele->evaluate(shell_env);
         return value;
     }
+
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          IdentifierOrPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    IdentifierOrPath::IdentifierOrPath(const String& value) : _value(value) {
-
-    }
+    IdentifierOrPath::IdentifierOrPath(const std::string& value) : _value(value) { }
 
 
-    String IdentifierOrPath::get_text() {
+    std::string IdentifierOrPath::get_text() {
         return _value;
     }
 
 
-    String IdentifierOrPath::evaluate(Environment& shell_env) {
+    std::string IdentifierOrPath::evaluate(Environment& shell_env) {
         SILENCE_UNUSED(shell_env)
         return _value;
     }

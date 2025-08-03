@@ -20,6 +20,9 @@
 
 #include <Ember/Enum.h>
 
+#include <string>
+#include <vector>
+
 
 namespace Rune::Shell {
     /**
@@ -59,7 +62,7 @@ namespace Rune::Shell {
      */
     struct Token {
         TokenType type;
-        String    text;     // Value of the token e.g. "hi"
+        std::string    text;     // Value of the token e.g. "hi"
         int       position; // Start index of this token relative to the input e.g "123 hi" -> Token "hi", character=4
     };
 
@@ -67,10 +70,10 @@ namespace Rune::Shell {
     class Lexer {
         static constexpr size_t BUF_SIZE = 64;
 
-        String _input;
+        std::string _input;
         int    _cursor;
 
-        LinkedList<Token> _token_buffer;
+        std::vector<Token> _token_buffer;
 
         //OLD STUFF
         bool  _skip_ws;
@@ -126,7 +129,7 @@ namespace Rune::Shell {
 
 
     public:
-        explicit Lexer(const String& input);
+        explicit Lexer(const std::string& input);
 
 
         Token next_token();

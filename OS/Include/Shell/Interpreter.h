@@ -18,11 +18,12 @@
 #define RUNEOS_INTERPRETER_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 
 #include <Shell/AST.h>
 #include <Shell/Parser.h>
 
+#include <string>
 
 namespace Rune::Shell {
 
@@ -104,10 +105,10 @@ namespace Rune::Shell {
         Parser                _parser;
 
 
-        void print_pretty_line_start();
+        void print_pretty_line_start() const;
 
 
-        void exec(const String& input);
+        void exec(const std::string& input);
 
 
     public:

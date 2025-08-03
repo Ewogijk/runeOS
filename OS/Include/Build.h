@@ -18,8 +18,8 @@
  * This file is auto generated.
  */
 
-#ifndef RUNEOS_BUILD_INFO_H
-#define RUNEOS_BUILD_INFO_H
+#ifndef RUNEOS_BUILD_H
+#define RUNEOS_BUILD_H
 
 // The OS major version
 #define OS_MAJOR 0
@@ -33,4 +33,4 @@
 // The OS prerelease version
 #define OS_PRERELEASE "alpha"
 
-#endif //RUNEOS_BUILD_INFO_H
+#endif //RUNEOS_BUILD_H

@@ -16,47 +16,51 @@
 
 #include <Shell/BuiltInCommand.h>
 
+#include <Forge/App.h>
+
+#include <iostream>
+#include <unordered_map>
+#include <string>
 
 #include <Build.h>
 
 
 namespace Rune::Shell {
-    HashMap<String, String> HELP_TEXT_TABLE;
+    std::unordered_map<std::string, std::string> HELP_TEXT_TABLE;
 
 
-    int cd(int argc, char* argv[], Environment& shell_env) {
+    int cd(const int argc, char* argv[], Environment& shell_env) {
         if (argc == 0)
             // Stay in the current directory
             return 0;
         if (argc > 1) {
-            print_err("Error: Too many arguments.\n");
+            std::cerr << "Error: Too many arguments" << std::endl;
             return -1;
         }
 
-        const char* new_wd = argv[0];
-        S64 ret = Pickaxe::app_change_working_directory(new_wd);
-        if (ret < 0) {
+        const char*       new_wd = argv[0];
+        Ember::StatusCode ret    = Forge::app_change_directory(new_wd);
+        if (ret < Ember::Status::OKAY) {
             switch (ret) {
-                case -1:
-                case -2:
-                    print_err("'{}': Bad path.\n", new_wd);
+                case Ember::Status::BAD_ARG:
+                    std::cerr << "'" << new_wd << "': Bad Path." << std::endl;
                     break;
-                case -3:
-                    print_err("'{}': Directory not found.\n", new_wd);
+                case Ember::Status::NODE_NOT_FOUND:
+                    std::cerr << "'" << new_wd << "': Directory not found." << std::endl;
                     break;
-                case -4:
-                    print_err("'{}': Not a directory.\n", new_wd);
+                case Ember::Status::NODE_IS_FILE:
+                    std::cerr << "'" << new_wd << "': Not a directory." << std::endl;
                     break;
                 default:
-                    print_err("'{}': IO error.\n", new_wd);
+                    std::cerr << "'" << new_wd << "': IO error." << std::endl;
             }
             return -1;
         }
 
         char new_wd_resolved[128];
-        ret = Pickaxe::app_get_working_directory(new_wd_resolved, 128);
-        if (ret < 0) {
-            print_err("'{}': Bad path.\n");
+        ret = Forge::app_current_directory(new_wd_resolved, 128);
+        if (ret < Ember::Status::OKAY) {
+            std::cerr << "'" << new_wd << "': Bad path." << std::endl;
             return -1;
         }
 
@@ -65,16 +69,15 @@ namespace Rune::Shell {
     }
 
 
-    int pwd(int argc, char* argv[], Environment& shell_env) {
+    int pwd(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
-        print_out(shell_env.working_directory.to_string().to_cstr());
-        print_out("\n");
+        std::cout << shell_env.working_directory.to_string().c_str() << std::endl;
         return 0;
     }
 
 
-    int clear(int argc, char* argv[], Environment& shell_env) {
+    int clear(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
         SILENCE_UNUSED(shell_env)
@@ -82,73 +85,63 @@ namespace Rune::Shell {
         // ANSI Escape Code explanations
         // \033[3J   -> Clear the screen and scroll back buffer
         // \033[1;1H -> Set the cursor to the top left corner
-        print_out("\033[3J\033[1;1H");
+        std::cout << "\033[3J\033[1;1H";
+        std::cout.flush();
         return 0;
     }
 
 
-    int help(int argc, char* argv[], Environment& shell_env) {
+    int help(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(shell_env)
         if (argc == 1) {
-            String cmd            = argv[0];
-            auto   maybe_help_txt = HELP_TEXT_TABLE.find(cmd);
-            if (maybe_help_txt != HELP_TEXT_TABLE.end()) {
-                print_out((*maybe_help_txt->value).to_cstr());
-            } else {
-                print_out("Unknown command: {}\n", cmd);
-            }
+            const std::string cmd            = argv[0];
+            if (const auto maybe_help_txt = HELP_TEXT_TABLE.find(cmd); maybe_help_txt != HELP_TEXT_TABLE.end())
+                std::cout << maybe_help_txt->second;
+            else
+                std::cout << "Unknown command: " << cmd << std::endl;
             return 0;
         }
 
-        String version = String::format("v{}.{}.{}", OS_MAJOR, OS_MINOR, OS_PATCH);
-        if (!String(OS_PRERELEASE).is_empty())
-            version += String::format("-{}", OS_PRERELEASE);
-        print_out("runeOS {}\n\n", version);
+        std::cout << "runeOS v" << OS_MAJOR << "." << OS_MINOR << "." << OS_PATCH;
+        if (!std::string(OS_PRERELEASE).empty())
+            std::cout << "-" << OS_PRERELEASE << std::endl;
+        std::cout << std::endl;
 
-        print_out("The shell executes built-in and external commands.\n");
-        print_out("Scroll with arrow down/up through the command history.\n");
-        print_out("Press 'Tab' to auto complete commands and file paths.\n");
-        print_out(
-                "External commands are applications found in '/Apps/' which in return are files with the '.app'"
-                " extension.\n"
-        );
-        print_out("Type 'help [command]' to get more info about a built-in command, e.g. 'help cd'.\n\n");
+        std::cout << "The shell executes built-in and external commands." << std::endl;
+        std::cout << "Scroll with arrow down/up through the command history." << std::endl;
+        std::cout << "Press 'Tab' to auto complete commands and file paths." << std::endl;
+        std::cout << "External commands are applications found in '/Apps/' which in return are files with the '.app'"
+            " extension." << std::endl;
+        std::cout << "Type 'help [command]' to get more info about a built-in command, e.g. 'help cd'." << std::endl;
+        std::cout << std::endl;
 
-        print_out("Following built-in commands are available:\n\n");
-        print_out("    cd [directory]\n");
-        print_out("    pwd\n");
-        print_out("    clear\n");
-        print_out("    help [command]\n");
+        std::cout << "Following built-in commands are available:" << std::endl;
+        std::cout << "    cd [directory]" << std::endl;
+        std::cout << "    pwd" << std::endl;
+        std::cout << "    clear" << std::endl;
+        std::cout << "    help [command]" << std::endl;
         return 0;
     }
 
 
     void register_builtin_commands(Environment& shell_env) {
-        shell_env.command_table.put("cd", &cd);
-        shell_env.command_table.put("pwd", &pwd);
-        shell_env.command_table.put("clear", &clear);
-        shell_env.command_table.put("help", &help);
 
-        HELP_TEXT_TABLE = HashMap<String, String>();
-        HELP_TEXT_TABLE.put(
-                "cd",
-                "cd [directory]\n"
-                "    Change the current directory of the shell to another directory.\n"
-        );
-        HELP_TEXT_TABLE.put(
-                "pwd",
-                "pwd\n"
-                "    Print the current directory of the shell.\n"
-        );
-        HELP_TEXT_TABLE.put(
-                "clear",
-                "clear\n"
-                "    Clear the screen and the terminal scroll back buffer.\n"
-        );
-        HELP_TEXT_TABLE.put(
-                "help",
-                "help [command]\n"
-                "    Display information about the shell or a built-in command.\n"
-        );
+        shell_env.command_table["cd"] = &cd;
+        shell_env.command_table["pwd"] = &pwd;
+        shell_env.command_table["clear"] = &clear;
+        shell_env.command_table["help"] = &help;
+
+        HELP_TEXT_TABLE["cd"] =
+            "cd [directory]\n"
+            "    Change the current directory of the shell to another directory.\n";
+        HELP_TEXT_TABLE["pwd"] =
+            "pwd\n"
+            "    Print the current directory of the shell.\n";
+        HELP_TEXT_TABLE["clear"] =
+            "clear\n"
+            "    Clear the screen and the terminal scroll back buffer.\n";
+        HELP_TEXT_TABLE["help"] =
+            "help [command]\n"
+            "    Display information about the shell or a built-in command.\n";
     }
 }

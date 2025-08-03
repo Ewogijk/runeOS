@@ -83,15 +83,15 @@ namespace Rune::Shell {
 
 
     void Lexer::parse_escape_code() {
-        char escaped = advance();
+        const char escaped = advance();
         char b[2]    = {
                 '\\', escaped
         };
-        bool is_good = is_esc_ch(escaped);
-        _token_buffer.add_back(
+        const bool is_good = is_esc_ch(escaped);
+        _token_buffer.push_back(
                 {
                         is_good ? TokenType::ESCAPE_CODE : TokenType::UNEXPECTED_TOKEN,
-                        String(b, 2),
+                        std::string(b, 2),
                         is_good ? _cursor - 2 : _cursor - 1
                 }
         );
@@ -101,7 +101,7 @@ namespace Rune::Shell {
     void Lexer::parse_identifier_or_path_element(bool include_ws) {
         char b[BUF_SIZE];
         int  b_pos = 0;
-        int  start = _cursor - 1;
+        const int  start = _cursor - 1;
         b[b_pos++] = _input[start]; // scan_token has consumed the first identifier character -> add it manually
 
         bool is_path = false;
@@ -109,15 +109,14 @@ namespace Rune::Shell {
         // If skip_ws == true -> !skip_ws is false therefore the final evaluation depends on "peek() != ' '" which means
         //      we parse as long as we don't see any whitespace
         // If skip_ws == false -> !skip_ws is always true therefore we will also parse any whitespace
-        while (has_more() && peek() != ' ' && b_pos < (int) BUF_SIZE) {
+        while (has_more() && peek() != ' ' && b_pos < static_cast<int>(BUF_SIZE)) {
             // Add all identifier characters to the buffer
             if (is_path)
                 while (is_path_element(peek())) b[b_pos++] = advance();
             else
                 while (is_identifier(peek())) b[b_pos++] = advance();
 
-            char peek_a_boo = peek();
-            if (peek_a_boo == '\0'
+            if (char peek_a_boo = peek(); peek_a_boo == '\0'
                 || peek_a_boo == '\''
                 || peek_a_boo == '\\'
                 || peek_a_boo == '='
@@ -134,21 +133,20 @@ namespace Rune::Shell {
                 is_path = true;
             } else {
                 // Current char is not an IDENTIFIER or PATH_ELEMENT -> We found an undefined char
-                _token_buffer.add_back({ TokenType::UNEXPECTED_TOKEN, String(peek()), _cursor });
+                _token_buffer.push_back({ TokenType::UNEXPECTED_TOKEN, std::string(1, peek()), _cursor });
                 return;
             }
         }
-        _token_buffer.add_back({ is_path ? TokenType::PATH : TokenType::IDENTIFIER, String(b, b_pos), start });
+        _token_buffer.push_back({ is_path ? TokenType::PATH : TokenType::IDENTIFIER, std::string(b, b_pos), start });
     }
 
 
     void Lexer::parse_string() {
         // The opening quote token is already buffered
         while (has_more() && peek() != '\'') {
-            char c = advance();
-            switch (c) {
+            switch (char c = advance()) {
                 case '$':
-                    _token_buffer.add_back({ TokenType::DOLLAR, String(c), _cursor - 1 });
+                    _token_buffer.push_back({ TokenType::DOLLAR, std::string(1, c), _cursor - 1 });
                     advance(); // parse_identifier_or_path_element expects the first character already to be consumed
                     parse_identifier_or_path_element(false);
                     break;
@@ -160,32 +158,31 @@ namespace Rune::Shell {
             }
         }
         if (has_more())
-            _token_buffer.add_back({ TokenType::QUOTE, String(advance()), _cursor - 1 });
+            _token_buffer.push_back({ TokenType::QUOTE, std::string(1, advance()), _cursor - 1 });
     }
 
 
     void Lexer::scan_token() {
         while (peek() == ' ') advance(); // skip leading white space
 
-        char c = advance();
-        switch (c) {
+        switch (char c = advance()) {
             case '\0':
-                _token_buffer.add_back({ TokenType::END, "", _cursor });
+                _token_buffer.push_back({ TokenType::END, "", _cursor });
                 break;
             case '$':
-                _token_buffer.add_back({ TokenType::DOLLAR, String(c), _cursor - 1 });
+                _token_buffer.push_back({ TokenType::DOLLAR, std::string(1, c), _cursor - 1 });
                 break;
             case '=':
-                _token_buffer.add_back({ TokenType::ASSIGNMENT, String(c), _cursor - 1 });
+                _token_buffer.push_back({ TokenType::ASSIGNMENT, std::string(1, c), _cursor - 1 });
                 break;
             case '-':
-                _token_buffer.add_back({ TokenType::DASH, String(c), _cursor - 1 });
+                _token_buffer.push_back({ TokenType::DASH, std::string(1, c), _cursor - 1 });
                 break;
             case '>':
-                _token_buffer.add_back({ TokenType::REDIRECT, String(c), _cursor - 1 });
+                _token_buffer.push_back({ TokenType::REDIRECT, std::string(1, c), _cursor - 1 });
                 break;
             case '\'':
-                _token_buffer.add_back({ TokenType::QUOTE, String(c), _cursor - 1 });
+                _token_buffer.push_back({ TokenType::QUOTE, std::string(1, c), _cursor - 1 });
                 parse_string();
                 break;
             case '\\':
@@ -197,7 +194,7 @@ namespace Rune::Shell {
     }
 
 
-    Lexer::Lexer(const String& input) :
+    Lexer::Lexer(const std::string& input) :
             _input(input),
             _cursor(0),
             _token_buffer(),
@@ -208,24 +205,24 @@ namespace Rune::Shell {
 
 
     Token Lexer::next_token() {
-        if (!has_more() && _token_buffer.is_empty())
-            return { TokenType::END, "", (int) _input.size() };
+        if (!has_more() && _token_buffer.empty())
+            return { TokenType::END, "", static_cast<int>(_input.size()) };
 
-        if (_token_buffer.is_empty())
+        if (_token_buffer.empty())
             scan_token();
 
-        Token t = *_token_buffer.head();
-        _token_buffer.remove_front();
+        Token t = _token_buffer.front();
+        _token_buffer.erase(_token_buffer.begin());
         return t;
     }
 
 
     Token Lexer::peek_token() {
-        if (!has_more() && _token_buffer.is_empty())
+        if (!has_more() && _token_buffer.empty())
             return { TokenType::END, "", (int) _input.size() };
 
-        if (_token_buffer.is_empty())
+        if (_token_buffer.empty())
             scan_token();
-        return *_token_buffer.head();
+        return _token_buffer.front();
     }
 }

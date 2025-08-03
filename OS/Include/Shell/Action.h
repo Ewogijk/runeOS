@@ -18,8 +18,6 @@
 #define RUNEOS_ACTION_H
 
 
-#include <Pickaxe/AppManagement.h>
-
 #include <Shell/Environment.h>
 
 
@@ -61,7 +59,7 @@ namespace Rune::Shell {
 
 
     /**
-     * @brief Perform auto completion on the current shell input.
+     * @brief Perform autocompletion on the current shell input.
      * @param shell_env
      */
     void perform_auto_completion(Environment& shell_env);

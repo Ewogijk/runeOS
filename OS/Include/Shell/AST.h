@@ -18,11 +18,11 @@
 #define RUNEOS_AST_H
 
 
-#include <Hammer/String.h>
-#include <Hammer/Collection.h>
-#include <Hammer/Utility.h>
-
 #include <Shell/Environment.h>
+
+#include <string>
+#include <vector>
+#include <memory>
 
 
 namespace Rune::Shell {
@@ -40,7 +40,7 @@ namespace Rune::Shell {
          * @brief
          * @return The text content without any reserved character e.g. $stuff -> stuff, 'hi 123' -> hi 123
          */
-        virtual String get_text() = 0;
+        virtual std::string get_text() = 0;
 
 
         /**
@@ -48,113 +48,116 @@ namespace Rune::Shell {
          * @param shell_env Environment of the running shell.
          * @return A string representation of the evaluated node.
          */
-        virtual String evaluate(Environment& shell_env) = 0;
+        virtual std::string evaluate(Environment& shell_env) = 0;
     };
 
 
     /**
      * @brief User input for the shell interpreter e.g. "foo a 1 2 3", "$env_var=value", etc.
      */
-    class Input : public ASTNode {
-        UniquePointer<ASTNode> _cs_evd_or_ev;
+    class Input final : public ASTNode {
+        std::unique_ptr<ASTNode> _cs_evd_or_ev;
 
     public:
-        explicit Input(UniquePointer<ASTNode> cs_evd_or_ev);
+        explicit Input(std::unique_ptr<ASTNode> cs_evd_or_ev);
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 
 
     /**
      * @brief A command sequence represents a built-in or external command and all arguments e.g. "foo a 1 2 3".
      */
-    class CommandSequence : public ASTNode {
-        static constexpr int ARGV_SIZE = 2048;
+    class CommandSequence final : public ASTNode {
+        /**
+         * @brief The maximum size of all command line arguments in byte.
+         */
+        static constexpr int ARGV_LIMIT = 2048;
 
-        UniquePointer<ASTNode>             _command;
-        LinkedList<UniquePointer<ASTNode>> _arguments_or_flags;
+        std::unique_ptr<ASTNode>             _command;
+        std::vector<std::unique_ptr<ASTNode>> _arguments_or_flags;
         Path _redirect_file;
     public:
         explicit CommandSequence(
-                UniquePointer<ASTNode> command,
-                LinkedList<UniquePointer<ASTNode>> arguments_or_flags,
+                std::unique_ptr<ASTNode> command,
+                std::vector<std::unique_ptr<ASTNode>> arguments_or_flags,
                 Path redirect_file
         );
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 
 
     /**
      * @brief An environment variable declaration e.g. $key=value, $key2='more value'
      */
-    class EnvVarDecl : public ASTNode {
-        UniquePointer<ASTNode>             _env_var;
-        LinkedList<UniquePointer<ASTNode>> _value;
+    class EnvVarDecl final : public ASTNode {
+        std::unique_ptr<ASTNode>             _env_var;
+        std::vector<std::unique_ptr<ASTNode>> _value;
     public:
-        explicit EnvVarDecl(UniquePointer<ASTNode> env_var, LinkedList<UniquePointer<ASTNode>> value);
+        explicit EnvVarDecl(std::unique_ptr<ASTNode> env_var, std::vector<std::unique_ptr<ASTNode>> value);
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 
 
     /**
      * @brief An environment variable declaration e.g. $key=value, $key2='more value'
      */
-    class EnvVar : public ASTNode {
-        UniquePointer<ASTNode> _env_var;
+    class EnvVar final : public ASTNode {
+        std::unique_ptr<ASTNode> _env_var;
     public:
-        explicit EnvVar(UniquePointer<ASTNode> env_var);
+        explicit EnvVar(std::unique_ptr<ASTNode> env_var);
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 
 
     /**
      * @brief A string with its individual components, e.g. 'A $cool \$string\$!!!'
      */
-    class ShellString : public ASTNode {
-        LinkedList<UniquePointer<ASTNode>> _content;
+    class ShellString final : public ASTNode {
+        std::vector<std::unique_ptr<ASTNode>> _content;
     public:
-        explicit ShellString(LinkedList<UniquePointer<ASTNode>> content);
+        explicit ShellString(std::vector<std::unique_ptr<ASTNode>> content);
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 
 
     /**
      * @brief An identifier or path e.g. a/b or Hi123.
      */
-    class IdentifierOrPath : public ASTNode {
-        String _value;
+    class IdentifierOrPath final : public ASTNode {
+        std::string _value;
     public:
-        explicit IdentifierOrPath(const String& value);
+        explicit IdentifierOrPath(const std::string& value);
 
 
-        String get_text() override;
+        std::string get_text() override;
 
 
-        String evaluate(Environment& shell_env) override;
+        std::string evaluate(Environment& shell_env) override;
     };
 }
 

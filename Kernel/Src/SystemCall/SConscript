@@ -17,14 +17,14 @@ from SCons.Environment import *
 Import('target_env')
 target_env: Environment
 sources = [
-    target_env.File('AppManagement.cpp'),
+    target_env.File('AppBundle.cpp'),
     target_env.File('Bundle.cpp'),
     target_env.File('Definition.cpp'),
     target_env.File('KernelGuardian.cpp'),
-    target_env.File('MemoryManagement.cpp'),
+    target_env.File('MemoryBundle.cpp'),
     target_env.File('SystemCallSubsystem.cpp'),
-    target_env.File('ThreadManagement.cpp'),
-    target_env.File('VFS.cpp'),
+    target_env.File('ThreadingBundle.cpp'),
+    target_env.File('VFSBundle.cpp'),
 ]
 SystemCall = target_env.StaticLibrary('SystemCall.o', target_env.Object(sources))
 Export('SystemCall')
