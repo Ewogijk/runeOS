@@ -14,113 +14,75 @@
  *  limitations under the License.
  */
 
-#include <Ember/Definitions.h>
-#include <Hammer/String.h>
+#include <Forge/VFS.h>
 
-#include <Pickaxe/AppManagement.h>
-#include <Pickaxe/VFS.h>
-
-
-template<typename... Args>
-void printl_out(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_out((const char*) b, s);
-    Rune::Pickaxe::write_std_out("\n", 1);
-}
-
-
-template<typename... Args>
-void printl_err(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_err((const char*) b, s);
-    Rune::Pickaxe::write_std_err("\n", 1);
-}
-
-
-size_t get_cstr_size(const char* c_str) {
-    size_t size = 0;
-    const char* c_pos = c_str;
-    while (*c_pos) {
-        c_pos++;
-        size++;
-    }
-    return size;
-}
+#include <string>
+#include <iostream>
 
 
 struct CLIArgs {
-    static constexpr U8 MAX_PATH_SIZE = 128;
-    char                file[128]     = { };
-
-    bool help = false;
+    std::string node_path;
+    bool        help = false;
 };
 
 
-bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
-    bool     file_seen = false;
-    for (int i         = 0; i < argc; i++) {
-        const char* arg = argv[i];
-        size_t size = get_cstr_size(arg);
-        if (size == 0)
+bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+    bool file_seen = false;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg.size() == 0)
             continue;
 
         if (arg[0] == '-') {
-            for (size_t j = 1; j < size; j++) {
+            for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
                     case 'h':
                         args_out.help = true;
                         break;
                     default: {
-                        printl_err("Error: Unknown option {}.", argv[i][j]);
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
                 }
             }
         } else {
             if (file_seen) {
-                printl_err("Error: Unknown arg {}.", arg);
+                std::cerr << "Unknown argument '" << arg << "'" << std::endl;
                 return false;
             }
-            memcpy(args_out.file, (char*) arg, get_cstr_size(arg));
-            file_seen = true;
+            args_out.node_path = arg;
+            file_seen          = true;
         }
     }
     if (!file_seen && !args_out.help)
-        printl_err("Error: Missing file argument.");
+        std::cerr << "Missing node argument." << std::endl;
     return file_seen || args_out.help;
 }
 
 
-CLINK int main(int argc, char* argv[]) {
+CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args))
         return -1;
 
     if (args.help) {
-        printl_out("touch [file] [options]...");
-        printl_out("    Create a file.");
-        printl_out("Options:");
-        printl_out("    -h: Print this help menu.");
+        std::cout << "touch [node] [options]" << std::endl;
+        std::cout << "    Create a file." << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "    -h: Print this help menu." << std::endl;
         return 0;
     }
-    S64 ret = Rune::Pickaxe::vfs_create(args.file, (int) Rune::Pickaxe::NodeAttribute::FILE);
-    if (ret < 0) {
+    if (const Ember::StatusCode ret = Forge::vfs_create(args.node_path.c_str(), Ember::NodeAttribute::FILE);
+        ret < Ember::Status::OKAY) {
         switch (ret) {
-            case -4:
-                printl_err("Error: '{}' - Exists already.", args.file);
+            case Ember::Status::BAD_ARG:
+                std::cerr << "'" << args.node_path << "' - Bad path." << std::endl;
                 break;
-            case -1:
-            case -3:
-                printl_err("Error: '{}' - Bad path.", args.file);
+            case Ember::Status::NODE_EXISTS:
+                std::cerr << "'" << args.node_path << "' - Node exists." << std::endl;
                 break;
             default:
-                printl_err("Error: '{}' - IO error.", args.file);
+                std::cerr << "'" << args.node_path << "' - IO error." << std::endl;
                 break;
         }
     }

@@ -14,49 +14,39 @@
  *  limitations under the License.
  */
 
-#include <Ember/Definitions.h>
-#include <Hammer/String.h>
+#include <Forge/VFS.h>
 
-#include <Pickaxe/AppManagement.h>
-#include <Pickaxe/VFS.h>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <sstream>
 
-
-template<typename... Args>
-void printl_out(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_out((const char*) b, s);
-    Rune::Pickaxe::write_std_out("\n", 1);
-}
+constexpr U16 BUF_SIZE = 4096;
 
 
-template<typename... Args>
-void printl_err(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_err((const char*) b, s);
-    Rune::Pickaxe::write_std_err("\n", 1);
+std::vector<std::string> str_split(const std::string& s, const char delimiter) {
+    std::vector<std::string> tokens;
+    std::istringstream       tokenStream(s);
+    std::string              token;
+    while (std::getline(tokenStream, token, delimiter)) tokens.push_back(token);
+    return tokens;
 }
 
 
 struct CLIArgs {
-    Rune::String src_path  = "";
-    Rune::String dest_path = "";
+    std::string src_path  = "";
+    std::string dest_path = "";
 
     bool help      = false;
     bool recursive = false;
 };
 
 
-bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
-    bool     src_found  = false;
-    bool     dest_found = false;
-    for (int i          = 0; i < argc; i++) {
-        Rune::String arg = argv[i];
+bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+    bool src_found  = false;
+    bool dest_found = false;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
         if (arg.size() == 0)
             continue;
 
@@ -70,130 +60,127 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
                         args_out.recursive = true;
                         break;
                     default: {
-                        printl_err("Error: Unknown option {}.", argv[i][j]);
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
                 }
             }
         } else {
             if (src_found && dest_found) {
-                printl_err("Error: Unknown arg {}.", arg);
+                std::cerr << "Unknown argument '" << arg << "'" << std::endl;
                 return false;
             }
             if (!src_found) {
                 args_out.src_path = arg;
-                src_found = true;
+                src_found         = true;
             } else if (!dest_found) {
                 args_out.dest_path = arg;
-                dest_found = true;
+                dest_found         = true;
             }
         }
     }
     if (!src_found && !args_out.help)
-        printl_err("Error: Missing src argument.");
+        std::cerr << "Missing src argument" << std::endl;
     else if (!dest_found && !args_out.help)
-        printl_err("Error: Missing dest argument.");
+        std::cerr << "Missing dest argument" << std::endl;
 
     return (src_found && dest_found) || args_out.help;
 }
 
+
 /**
  * @brief Try to get the node info of the node path.
- * @param node
+ * @param node Path to a node.
  * @param out  This will contain the node info if no error happens.
  * @return 1: Got the node info.
  *           0: The node does not exist.
  *          -1: An error happened.
  */
-int get_node_info(const Rune::String& node, Rune::Pickaxe::VFSNodeInfo &out) {
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         ret = Rune::Pickaxe::vfs_get_node_info(node.to_cstr(), &node_info);
-    int function_ret = -1;
+int get_node_info(const std::string& node, Ember::NodeInfo& out) {
+    Ember::NodeInfo         node_info;
+    const Ember::StatusCode ret          = Forge::vfs_get_node_info(node.c_str(), &node_info);
+    int                     function_ret = -1;
     switch (ret) {
-        case 0:
+        case Ember::Status::OKAY:
             function_ret = 1;
             break;
-        case -4:
+        case Ember::Status::NODE_NOT_FOUND:
             function_ret = 0;
             break;
-        case -1: // Path too long
-        case -2: // Illegal characters on path
-        case -5: // Intermediate path element is a file
-            printl_err("'{}': {} - Bad path.", node, ret);
+        case Ember::Status::BAD_ARG:
+            std::cerr << "'" << node << "': Bad path." << std::endl;
             break;
         default:
-            printl_err("'{}': {} - IO error.", node, ret);
+            std::cerr << "'" << node << "': IO error." << std::endl;
     }
     out = node_info;
     return function_ret;
 }
 
 
-S64 open_node(const Rune::String& node_path, Rune::Pickaxe::NodeIOMode io_mode) {
-    S64 file_handle = Rune::Pickaxe::vfs_open(node_path.to_cstr(), io_mode);
-    if (file_handle < 0) {
-        switch (file_handle) {
-            case -4:
-                printl_err("'{}': {} - File not found.", node_path, file_handle);
+Ember::StatusCode open_node(const std::string& node_path, const Ember::IOMode io_mode) {
+    const Ember::StatusCode file_ID = Forge::vfs_open(node_path.c_str(), io_mode);
+    if (file_ID < Ember::Status::OKAY) {
+        switch (file_ID) {
+            case Ember::Status::NODE_NOT_FOUND:
+                std::cerr << "'" << node_path << "': Node not found." << std::endl;
                 break;
-            case -1:
-            case -3:
-                printl_err("'{}': {} - Bad path.", node_path, file_handle);
+            case Ember::Status::BAD_ARG:
+                std::cerr << "'" << node_path << "': Bad path." << std::endl;
                 break;
             default:
-                printl_err("'{}': {} - IO error.", node_path, file_handle);
+                std::cerr << "'" << node_path << "': IO error." << std::endl;
                 break;
         }
     }
-    return file_handle;
+    return file_ID;
 }
 
 
-bool create_node(const Rune::String& node_path, U8 attr) {
-    S64 ret = Rune::Pickaxe::vfs_create(node_path.to_cstr(), attr);
+bool create_node(const std::string& node_path, const U8 attr) {
+    const Ember::StatusCode ret = Forge::vfs_create(node_path.c_str(), attr);
     switch (ret) {
-        case -1: // Bad buffer
-        case -2: // Unknown attributes
-        case -5: // Bad attributes
-        case -6: // IO error
-            printl_err("'{}': {} - IO error.", node_path, ret);
+        case Ember::Status::BAD_ARG:
+            std::cerr << "'" << node_path << "': Bad path." << std::endl;
             break;
-        case -3: // Bad Path
-            printl_err("'{}': {} - Bad path.", node_path, ret);
+        case Ember::Status::NODE_EXISTS:
+            std::cerr << "'" << node_path << "': Node exists." << std::endl;
+            break;
+        case Ember::Status::IO_ERROR:
+            std::cerr << "'" << node_path << "': IO error." << std::endl;
             break;
         default:
-            break; // Good cases: Node created or already exists
+            break; // Node is created.
     }
     return ret >= 0;
 }
 
 
-bool delete_node(const Rune::String& node_path) {
-    S64 ret = Rune::Pickaxe::vfs_delete(node_path.to_cstr());
-    if (ret < 0) {
-        if (ret == -3)
-            printl_err("'{}': Cannot delete, because the node is used by another app.", node_path);
+bool delete_node(const std::string& node_path) {
+    if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str()); ret < Ember::Status::OKAY) {
+        if (ret == Ember::Status::NODE_IN_USE)
+            std::cerr << "'" << node_path << "': Cannot delete, node is used by another app." << std::endl;
         else
-            printl_err("'{}': IO error.", node_path);
+            std::cerr << "'" << node_path << "': IO error." << std::endl;
         return false;
     }
     return true;
 }
 
 
-void close_node(S64 node_handle) {
-    if (node_handle <= 0)
-        return; // Invalid node handle
-    Rune::Pickaxe::vfs_close(node_handle);
+void close_node(const Ember::StatusCode node_ID) {
+    if (node_ID <= 0)
+        return; // Invalid node ID
+    Forge::vfs_close(node_ID);
     // Both possible return values are fine, no need for error handling
-    //   0 -> Node was closed
-    //  -2 -> No node with the handle was found
+    //   Ember::Status::OKAY -> Node was closed
+    //   Ember::Status::UNKNOWN_ID -> No node with the ID was found
 }
 
 
-bool copy_file_content(const Rune::String& src, const Rune::String& dest) {
-    Rune::String dest_node = dest;
-    Rune::Pickaxe::VFSNodeInfo dest_node_info;
+bool copy_file_content(const std::string& src, const std::string& dest) {
+    std::string     dest_node = dest;
+    Ember::NodeInfo dest_node_info;
     if (get_node_info(dest, dest_node_info) < 0)
         return false;
 
@@ -201,43 +188,43 @@ bool copy_file_content(const Rune::String& src, const Rune::String& dest) {
         // dest is a directory -> append the src file name to dest
         // We know source is a file, therefore it must contain at least a valid filename -> parts.size() > 0
         dest_node += '/';
-        dest_node += *src.split('/').tail();
+        dest_node += str_split(src, '/').back();
     }
-    if (!create_node(dest_node, (int) Rune::Pickaxe::NodeAttribute::FILE))
+    if (!create_node(dest_node, Ember::NodeAttribute::FILE))
         return false;
 
-    S64 src_file_handle = open_node(src, Rune::Pickaxe::NodeIOMode::READ);
-    if (src_file_handle < 0)
+    const Ember::StatusCode src_file_ID = open_node(src, Ember::IOMode::READ);
+    if (src_file_ID < Ember::Status::OKAY)
         return false;
-    S64 dest_file_handle = open_node(dest_node, Rune::Pickaxe::NodeIOMode::WRITE);
-    if (dest_file_handle < 0)
+    const Ember::StatusCode dest_file_ID = open_node(dest_node, Ember::IOMode::WRITE);
+    if (dest_file_ID < Ember::Status::OKAY)
         return false;
 
-    U8  buf[Rune::Pickaxe::MAX_STRING_SIZE];
-    S64 bytes_read = Rune::Pickaxe::vfs_read(src_file_handle, buf, Rune::Pickaxe::MAX_STRING_SIZE);
+    U8                buf[BUF_SIZE];
+    Ember::StatusCode bytes_read = Forge::vfs_read(src_file_ID, buf, BUF_SIZE);
     while (bytes_read > 0) {
-        S64 bytes_written = Rune::Pickaxe::vfs_write(dest_file_handle, buf, Rune::Pickaxe::MAX_STRING_SIZE);
-        if (bytes_written < 0) {
-            if (bytes_written == -5) {
-                printl_err("'{}': {} - Writing the file is not supported.", dest_node, bytes_written);
+        if (const Ember::StatusCode bytes_written = Forge::vfs_write(dest_file_ID, buf, BUF_SIZE);
+            bytes_written < 0) {
+            if (bytes_written == Ember::Status::NODE_IS_DIRECTORY) {
+                std::cerr << "'" << dest_node << "': Not a file." << std::endl;
             } else {
-                printl_err("'{}': {} - IO error.", dest_node, bytes_written);
+                std::cerr << "'" << dest_node << "': IO Error." << std::endl;
             }
-            close_node(src_file_handle);
-            close_node(dest_file_handle);
-            return -1;
+            close_node(src_file_ID);
+            close_node(dest_file_ID);
+            return false;
         }
-        bytes_read = Rune::Pickaxe::vfs_read(src_file_handle, buf, Rune::Pickaxe::MAX_STRING_SIZE);
+        bytes_read = Forge::vfs_read(src_file_ID, buf, BUF_SIZE);
     }
     if (bytes_read < 0) {
-        if (bytes_read == -5) {
-            printl_err("'{}': {} - Reading the file is not supported.", src, bytes_read);
+        if (bytes_read == Ember::Status::NODE_IS_DIRECTORY) {
+            std::cerr << "'" << src << "': Not a file." << std::endl;
         } else {
-            printl_err("'{}': {} - IO error.", src, bytes_read);
+            std::cerr << "'" << src << "': IO Error." << std::endl;
         }
     }
-    close_node(src_file_handle);
-    close_node(dest_file_handle);
+    close_node(src_file_ID);
+    close_node(dest_file_ID);
 
     if (!delete_node(src))
         return false;
@@ -246,73 +233,72 @@ bool copy_file_content(const Rune::String& src, const Rune::String& dest) {
 }
 
 
-void close_dir_stream(S64 dir_stream_handle) {
-    if (dir_stream_handle <= 0)
-        return; // Invalid Dir stream handle
-    Rune::Pickaxe::vfs_close(dir_stream_handle);
+void close_dir_stream(const S64 dir_stream_ID) {
+    if (dir_stream_ID <= 0)
+        return; // Invalid stream ID
+    Forge::vfs_directory_stream_close(dir_stream_ID);
     // Both possible return values are fine, no need for error handling
-    //   0 -> Dir stream was closed
-    //  -2 -> No Dir stream with the handle was found
+    //   Ember::Status::OKAY -> Stream was closed
+    //   Ember::Status::UNKNOWN_ID -> No stream with the ID was found
 }
 
 
-bool delete_dir(const Rune::String& directory_path) {
-    S64 dir_stream_handle = Rune::Pickaxe::vfs_directory_stream_open(directory_path.to_cstr());
-    if (dir_stream_handle < 0) {
-        printl_err("'{}': IO error occurred.", directory_path);
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+bool delete_dir(const std::string& directory_path) {
+    const S64 dir_stream_ID = Forge::vfs_directory_stream_open(directory_path.c_str());
+    if (dir_stream_ID < Ember::Status::OKAY) {
+        std::cerr << "'" << directory_path << "': IO error." << std::endl;
+        close_dir_stream(dir_stream_ID);
         return false;
     }
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-    Rune::String               node_path = node_info.node_path;
-    while (next > 0) {
+    Ember::NodeInfo node_info;
+    S64             next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+    std::string     node_path = node_info.node_path;
+    while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
         if (node_path != "." && node_path != "..") {
             if (node_info.is_directory()) {
                 if (!delete_dir(directory_path + "/" + node_path)) {
-                    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                    Forge::vfs_directory_stream_close(dir_stream_ID);
                     return false;
                 }
             } else {
                 if (!delete_node(directory_path + "/" + node_path)) {
-                    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                    Forge::vfs_directory_stream_close(dir_stream_ID);
                     return false;
                 }
             }
         }
-        next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+        next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
     }
     if (node_path != "." && node_path != "..") {
         // Delete last node
         if (node_info.is_directory()) {
             if (!delete_dir(directory_path + "/" + node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                Forge::vfs_directory_stream_close(dir_stream_ID);
                 return false;
             }
         } else {
             if (!delete_node(directory_path + "/" + node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                Forge::vfs_directory_stream_close(dir_stream_ID);
                 return false;
             }
         }
     }
 
-
     // Delete this directory
     if (!delete_node(directory_path)) {
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+        Forge::vfs_directory_stream_close(dir_stream_ID);
         return false;
     }
-    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+    Forge::vfs_directory_stream_close(dir_stream_ID);
     return true;
 }
 
 
-bool copy_dir_content(const Rune::String& src, const Rune::String& dest) {
-    Rune::String dest_node = dest;
-    Rune::Pickaxe::VFSNodeInfo dest_node_info;
+bool copy_dir_content(const std::string& src, const std::string& dest) {
+    std::string     dest_node = dest;
+    Ember::NodeInfo dest_node_info;
     if (get_node_info(dest, dest_node_info) < 0)
         return false;
 
@@ -320,82 +306,79 @@ bool copy_dir_content(const Rune::String& src, const Rune::String& dest) {
         // dest is a directory -> append the src file name to dest
         // We know source is a file, therefore it must contain at least a valid filename -> parts.size() > 0
         dest_node += '/';
-        dest_node += *src.split('/').tail();
+        dest_node += str_split(src, '/').back();
     }
-    if (!create_node(dest_node, (int) Rune::Pickaxe::NodeAttribute::DIRECTORY))
+    if (!create_node(dest_node, Ember::NodeAttribute::DIRECTORY))
         return false;
 
-    S64 dir_stream_handle = Rune::Pickaxe::vfs_directory_stream_open(src.to_cstr());
-    if (dir_stream_handle < 0) {
-        printl_err("'{}': {} - IO error.", src, dir_stream_handle);
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+    const Ember::StatusCode dir_stream_ID = Forge::vfs_directory_stream_open(src.c_str());
+    if (dir_stream_ID < 0) {
+        std::cerr << "'" << src << "': IO Error." << std::endl;
+        close_dir_stream(dir_stream_ID);
         return false;
     }
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-    Rune::String               node_path = node_info.node_path;
-    while (next > 0) {
+    Ember::NodeInfo   node_info;
+    Ember::StatusCode next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+    std::string       node_path = node_info.node_path;
+    while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
         if (node_path != "." && node_path != "..") {
-            Rune::String src_node_to_cp = src + '/' + node_path;
-            Rune::String dest_node_to_cp = dest_node + '/' + node_path;
+            std::string src_node_to_cp  = src + '/' + node_path;
+            std::string dest_node_to_cp = dest_node + '/' + node_path;
             if (node_info.is_directory()) {
-
-
                 if (!copy_dir_content(src_node_to_cp, dest_node_to_cp)) {
-                    close_dir_stream(dir_stream_handle);
+                    close_dir_stream(dir_stream_ID);
                     return false;
                 }
             } else {
                 if (!copy_file_content(src_node_to_cp, dest_node_to_cp)) {
-                    close_dir_stream(dir_stream_handle);
+                    close_dir_stream(dir_stream_ID);
                     return false;
                 }
             }
         }
-        next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+        next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
     }
     if (node_path != "." && node_path != "..") {
         // Copy last node
-        Rune::String src_node_to_cp = src + '/' + node_path;
-        Rune::String dest_node_to_cp = dest_node + '/' + node_path;
+        const std::string src_node_to_cp  = src + '/' + node_path;
+        const std::string dest_node_to_cp = dest_node + '/' + node_path;
         if (node_info.is_directory()) {
             if (!copy_dir_content(src_node_to_cp, dest_node_to_cp)) {
-                close_dir_stream(dir_stream_handle);
+                close_dir_stream(dir_stream_ID);
                 return false;
             }
         } else {
             if (!copy_file_content(src_node_to_cp, dest_node_to_cp)) {
-                close_dir_stream(dir_stream_handle);
+                close_dir_stream(dir_stream_ID);
                 return false;
             }
         }
     }
-    close_dir_stream(dir_stream_handle);
+    close_dir_stream(dir_stream_ID);
     return delete_dir(src);
 }
 
 
-CLINK int main(int argc, char* argv[]) {
+CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args))
         return -1;
 
     if (args.help) {
-        printl_out("mv [src] [dest] [options]...");
-        printl_out("    Move the src file/directory to dest.");
-        printl_out("Options:");
-        printl_out("    -h: Print this help menu.");
-        printl_out("    -r: Move the content of the src directory recursively.");
+        std::cout << "mv [src] [dest] [options]" << std::endl;
+        std::cout << "    Move the src file/directory to dest." << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "    -h: Print this help menu." << std::endl;
+        std::cout << "    -r: Move the content of the src directory recursively." << std::endl;
         return 0;
     }
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    int ret = get_node_info(args.src_path, node_info);
-    if (ret < 1) {
+    Ember::NodeInfo node_info;
+    if (const int ret = get_node_info(args.src_path, node_info); ret < 1) {
         if (ret == 0)
-            printl_err("'{}': File not found.", args.src_path);
+            std::cerr << "'" << args.src_path << "': Node not found." << std::endl;
         return -1;
     }
 
@@ -406,7 +389,7 @@ CLINK int main(int argc, char* argv[]) {
         if (args.recursive)
             copy_dir_content(args.src_path, args.dest_path);
         else
-            printl_out("'{}': Cannot move directory. Use -r to move the directory and its content.", args.src_path);
+            std::cerr << "'" << args.src_path << "': Is a directory. Use '-r' to move directories." << std::endl;
     }
     return 0;
 }
