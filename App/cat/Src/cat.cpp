@@ -44,14 +44,14 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
                         args_out.help = true;
                         break;
                     default: {
-                        std::cerr << "Error: Unknown option '" << arg << "'" << std::endl;
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
                 }
             }
         } else {
             if (file_seen) {
-                std::cerr << "Error: Unknown argument '" << arg << "'" << std::endl;
+                std::cerr << "Unknown argument '" << arg << "'" << std::endl;
                 return false;
             }
             args_out.file = arg;
@@ -59,7 +59,7 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
         }
     }
     if (!file_seen && !args_out.help)
-        std::cerr << "Error: Missing file argument." << std::endl;
+        std::cerr << "Missing file argument." << std::endl;
     return file_seen || args_out.help;
 }
 
@@ -76,47 +76,47 @@ CLINK int main(const int argc, char* argv[]) {
         std::cout << "    -h: Print this help menu." << std::endl;
         return 0;
     }
-    Ember::ResourceID file_handle = Forge::vfs_open(args.file.c_str(), Ember::IOMode::READ);
-    if (file_handle < Ember::Status::OKAY) {
-        switch (file_handle) {
+    const Ember::ResourceID file_ID = Forge::vfs_open(args.file.c_str(), Ember::IOMode::READ);
+    if (file_ID < Ember::Status::OKAY) {
+        switch (file_ID) {
             case Ember::Status::BAD_ARG:
-                std::cerr << "Error: '" << args.file << "' - Bad path." << std::endl;
+                std::cerr << "'" << args.file << "' - Bad path." << std::endl;
                 break;
             case Ember::Status::NODE_NOT_FOUND:
-                std::cerr << "Error: '" << args.file << "' - File not found." << std::endl;
+                std::cerr << "'" << args.file << "' - File not found." << std::endl;
                 break;
             default:
-                std::cerr << "Error: '" << args.file << "' - IO error." << std::endl;
+                std::cerr << "'" << args.file << "' - IO error." << std::endl;
                 break;
         }
         return -1;
     }
 
     U8  buf[BUF_SIZE];
-    Ember::StatusCode bytes_read = Forge::vfs_read(file_handle, buf, BUF_SIZE - 1); // leave space for null terminator
+    Ember::StatusCode bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1); // leave space for null terminator
     while (bytes_read > Ember::Status::OKAY) {
         buf[BUF_SIZE - 1] = 0;
         std::cout << reinterpret_cast<const char*>(buf) << std::endl;
-        bytes_read = Forge::vfs_read(file_handle, buf, BUF_SIZE - 1);
+        bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1);
     }
     if (bytes_read < Ember::Status::OKAY) {
         switch (bytes_read) {
             case Ember::Status::BAD_ARG:
-                std::cerr << "Error: '" << args.file << "' - Bad path." << std::endl;
+                std::cerr << "'" << args.file << "' - Bad path." << std::endl;
                 break;
             case Ember::Status::NODE_IS_DIRECTORY:
-                std::cerr << "Error: '" << args.file << "' - Not a file." << std::endl;
+                std::cerr << "'" << args.file << "' - Not a file." << std::endl;
                 break;
             case Ember::Status::NODE_NOT_FOUND:
-                std::cerr << "Error: '" << args.file << "' - File not found." << std::endl;
+                std::cerr << "'" << args.file << "' - File not found." << std::endl;
                 break;
             default:
-                std::cerr << "Error: '" << args.file << "' - IO error." << std::endl;
+                std::cerr << "'" << args.file << "' - IO error." << std::endl;
                 break;
         }
-        Forge::vfs_close(file_handle);
+        Forge::vfs_close(file_ID);
         return -1;
     }
-    Forge::vfs_close(file_handle);
+    Forge::vfs_close(file_ID);
     return 0;
 }
