@@ -76,10 +76,10 @@ namespace Rune::Shell {
         if (const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(dir.to_string().c_str());
             dir_stream_ID > Ember::Status::OKAY) {
             // Search for the app
-            Ember::NodeInfo node_info;
-            S64             ret   = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
-            bool            found = false;
-            while (ret > Ember::Status::OKAY) {
+            Ember::NodeInfo   node_info;
+            Ember::StatusCode ret   = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+            bool              found = false;
+            while (ret > Ember::Status::DIRECTORY_STREAM_EOD) {
                 if (node_info.is_file()) {
                     // Only check if the node is a file
                     if (Path node_path(node_info.node_path); is_target_application(node_path, target_file)) {
@@ -122,10 +122,10 @@ namespace Rune::Shell {
 
     std::string CommandSequence::evaluate(Environment& shell_env) {
         const std::string cmd                                  = _command->evaluate(shell_env);
-        const auto  args                                 = std::unique_ptr<char>(new char[ARGV_LIMIT]);
-        char*       argv[_arguments_or_flags.size() + 1] = { };
-        int         argv_idx                             = 0;
-        int         pos                                  = 0;
+        const auto        args                                 = std::unique_ptr<char>(new char[ARGV_LIMIT]);
+        char*             argv[_arguments_or_flags.size() + 1] = { };
+        int               argv_idx                             = 0;
+        int               pos                                  = 0;
         for (const auto& aof : _arguments_or_flags) {
             std::string aof_str = aof->evaluate(shell_env);
             memcpy(&args.get()[pos], (void*)aof_str.c_str(), aof_str.size() + 1);
