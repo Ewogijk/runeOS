@@ -14,26 +14,12 @@
  *  limitations under the License.
  */
 
-#include <Ember/Definitions.h>
-#include <Hammer/String.h>
-
-#include <Pickaxe/AppManagement.h>
-#include <Pickaxe/VFS.h>
+#include <iostream>
 
 
-template<typename... Args>
-void print_out(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_out((const char*) b, s);
-}
-
-
-CLINK int main(int argc, char* argv[]) {
-    for (int i = 0; i < argc; i++)
-        print_out("{}{}", argv[i], i < argc - 1 ? " " : "");
-    print_out("\n");
+int main(const int argc, char* argv[]) {
+    for (int i = 1; i < argc; i++) // Skip the application path
+        std::cout << argv[i] << (i < argc - 1 ? " " : "");
+    std::cout << std::endl;
     return 0;
 }
