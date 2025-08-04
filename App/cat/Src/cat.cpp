@@ -76,7 +76,7 @@ CLINK int main(const int argc, char* argv[]) {
         std::cout << "    -h: Print this help menu." << std::endl;
         return 0;
     }
-    const Ember::ResourceID file_ID = Forge::vfs_open(args.file.c_str(), Ember::IOMode::READ);
+    const Ember::StatusCode file_ID = Forge::vfs_open(args.file.c_str(), Ember::IOMode::READ);
     if (file_ID < Ember::Status::OKAY) {
         switch (file_ID) {
             case Ember::Status::BAD_ARG:
@@ -96,7 +96,7 @@ CLINK int main(const int argc, char* argv[]) {
     Ember::StatusCode bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1); // leave space for null terminator
     while (bytes_read > Ember::Status::OKAY) {
         buf[BUF_SIZE - 1] = 0;
-        std::cout << reinterpret_cast<const char*>(buf) << std::endl;
+        std::cout << reinterpret_cast<const char*>(buf);
         bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1);
     }
     if (bytes_read < Ember::Status::OKAY) {
@@ -118,5 +118,6 @@ CLINK int main(const int argc, char* argv[]) {
         return -1;
     }
     Forge::vfs_close(file_ID);
+    std::cout.flush();
     return 0;
 }

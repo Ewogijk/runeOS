@@ -118,8 +118,8 @@ int get_node_info(const std::string& node, Ember::NodeInfo& out) {
 }
 
 
-Ember::ResourceID open_node(const std::string& node_path, const Ember::IOMode io_mode) {
-    const Ember::ResourceID file_ID = Forge::vfs_open(node_path.c_str(), io_mode);
+Ember::StatusCode open_node(const std::string& node_path, const Ember::IOMode io_mode) {
+    const Ember::StatusCode file_ID = Forge::vfs_open(node_path.c_str(), io_mode);
     if (file_ID < Ember::Status::OKAY) {
         switch (file_ID) {
             case Ember::Status::NODE_NOT_FOUND:
@@ -156,7 +156,7 @@ bool create_node(const std::string& node_path, const U8 attr) {
 }
 
 
-void close_node(const Ember::ResourceID node_ID) {
+void close_node(const Ember::StatusCode node_ID) {
     if (node_ID <= 0)
         return; // Invalid node ID
     Forge::vfs_close(node_ID);
@@ -181,10 +181,10 @@ bool copy_file_content(const std::string& src, const std::string& dest) {
     if (!create_node(dest_node, Ember::NodeAttribute::FILE))
         return false;
 
-    const Ember::ResourceID src_file_ID = open_node(src, Ember::IOMode::READ);
+    const Ember::StatusCode src_file_ID = open_node(src, Ember::IOMode::READ);
     if (src_file_ID < Ember::Status::OKAY)
         return false;
-    const Ember::ResourceID dest_file_ID = open_node(dest_node, Ember::IOMode::WRITE);
+    const Ember::StatusCode dest_file_ID = open_node(dest_node, Ember::IOMode::WRITE);
     if (dest_file_ID < Ember::Status::OKAY)
         return false;
 
@@ -242,7 +242,7 @@ bool copy_dir_content(const std::string& src, const std::string& dest) {
     if (!create_node(dest_node, Ember::NodeAttribute::DIRECTORY))
         return false;
 
-    const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(src.c_str());
+    const Ember::StatusCode dir_stream_ID = Forge::vfs_directory_stream_open(src.c_str());
     if (dir_stream_ID < 0) {
         std::cerr << "'" << src << "': IO Error." << std::endl;
         close_dir_stream(dir_stream_ID);
