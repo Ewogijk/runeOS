@@ -20,7 +20,7 @@
 
 #include <Hammer/String.h>
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
 #include <LibK/Logging.h>

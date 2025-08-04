@@ -18,20 +18,20 @@
 #define RUNEOS_AUTOCOMPLETION_H
 
 
-#include <Hammer/Collection.h>
-#include <Hammer/String.h>
-#include <Hammer/Path.h>
+#include <Ember/VFSBits.h>
 
-#include <Pickaxe/VFS.h>
+#include <string>
+#include <vector>
 
+#include <Shell/Path.h>
 
 namespace Rune::Shell {
     class AutoCompletion {
-        LinkedList<String> _builtin_command_vocabulary;
-        LinkedList<String> _path_vocabulary;
+        std::vector<std::string> _builtin_command_vocabulary;
+        std::vector<std::string> _path_vocabulary;
 
 
-        static bool list_directory(const String& directory, LinkedList<Pickaxe::VFSNodeInfo>& out);
+        static bool list_directory(const std::string& directory, std::vector<Ember::NodeInfo>& out);
 
 
     public:
@@ -41,18 +41,18 @@ namespace Rune::Shell {
          * @param builtin_commands
          * @param path_variables
          */
-        bool init_vocabulary(const LinkedList<String>& builtin_commands, const LinkedList<String>& path_variables);
+        bool init_vocabulary(const std::vector<std::string>& builtin_commands, const std::vector<std::string>& path_variables);
 
 
         /**
          * @brief
-         * @param input
+         * @param command_prefix
          * @return
          */
-        LinkedList<String> auto_complete_command(const String& command_prefix);
+        std::vector<std::string> auto_complete_command(const std::string& command_prefix) const;
 
 
-        LinkedList<String> auto_complete_node(const Path& working_dir, const Path& node_prefix);
+        std::vector<std::string> auto_complete_node(const Path& working_dir, const Path& node_prefix);
     };
 }
 

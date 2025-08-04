@@ -16,15 +16,16 @@
 
 #include <Shell/Parser.h>
 
+#include <vector>
+
 
 namespace Rune::Shell {
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          ParsedInput
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    ParsedInput ParsedInput::make_good(UniquePointer<Shell::ASTNode> ast_node) {
+    ParsedInput ParsedInput::make_good(std::unique_ptr<ASTNode> ast_node) {
         ParsedInput good;
         good.ast_node  = move(ast_node);
         good.has_error = false;
@@ -34,9 +35,9 @@ namespace Rune::Shell {
     }
 
 
-    ParsedInput ParsedInput::make_error(const Shell::Token& actual, Shell::TokenType expected) {
+    ParsedInput ParsedInput::make_error(const Token& actual, const TokenType expected) {
         ParsedInput err;
-        err.ast_node  = UniquePointer<ASTNode>();
+        err.ast_node  = std::unique_ptr<ASTNode>();
         err.has_error = true;
         err.actual    = actual;
         err.expected  = expected;
@@ -72,38 +73,35 @@ namespace Rune::Shell {
         if (path_or_identifier.has_error)
             return path_or_identifier;
 
-        LinkedList<UniquePointer<ASTNode>> args;
-        Token peek_a_boo = _lexer.peek_token();
+        std::vector<std::unique_ptr<ASTNode>> args;
+        Token                                 peek_a_boo = _lexer.peek_token();
         while (peek_a_boo.type != TokenType::REDIRECT && peek_a_boo.type != TokenType::END) {
             ParsedInput arg = parse_argument();
             if (arg.has_error)
                 return arg;
-            args.add_back(move(arg.ast_node));
+            args.push_back(move(arg.ast_node));
             peek_a_boo = _lexer.peek_token();
         }
-        String                             redirect_str;
+        std::string redirect_str;
         if (_lexer.peek_token().type == TokenType::REDIRECT) {
             _lexer.next_token();
-            Token redirect_token = _lexer.next_token();
+            const Token redirect_token = _lexer.next_token();
             if (redirect_token.type != TokenType::PATH && redirect_token.type != TokenType::IDENTIFIER)
                 return ParsedInput::make_error(redirect_token, TokenType::PATH);
             redirect_str = redirect_token.text;
         }
         return ParsedInput::make_good(
-                UniquePointer<ASTNode>(
-                        new CommandSequence(
-                                move(path_or_identifier.ast_node),
-                                move(args),
-                                Path(redirect_str)
-                        )
-                )
+            std::make_unique<CommandSequence>(
+                move(path_or_identifier.ast_node),
+                move(args),
+                Path(redirect_str)
+            )
         );
     }
 
 
     ParsedInput Parser::parse_argument() {
-        Token identifier_path_or_string = _lexer.peek_token();
-        switch (identifier_path_or_string.type) {
+        switch (const Token identifier_path_or_string = _lexer.peek_token(); identifier_path_or_string.type) {
             case TokenType::IDENTIFIER:
                 return parse_identifier();
             case TokenType::PATH:
@@ -122,9 +120,9 @@ namespace Rune::Shell {
 
 
     ParsedInput Parser::parse_flag() {
-        Token dash               = _lexer.next_token();
-        Token dash_or_identifier = _lexer.next_token();
-        bool  double_dash        = false;
+        const Token dash               = _lexer.next_token();
+        Token       dash_or_identifier = _lexer.next_token();
+        bool        double_dash        = false;
         if (dash.type == TokenType::DASH) {
             if (dash_or_identifier.type != TokenType::DASH && dash_or_identifier.type != TokenType::IDENTIFIER)
                 return ParsedInput::make_error(dash_or_identifier, TokenType::IDENTIFIER);
@@ -133,15 +131,14 @@ namespace Rune::Shell {
                 dash_or_identifier = _lexer.next_token();
                 double_dash        = true;
             }
-
         } else {
             return ParsedInput::make_error(dash, TokenType::DASH);
         }
 
         if (dash_or_identifier.type != TokenType::IDENTIFIER)
             return ParsedInput::make_error(dash_or_identifier, TokenType::IDENTIFIER);
-        String dashes = double_dash ? "--" : "-";
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new IdentifierOrPath(dashes + dash_or_identifier.text)));
+        const std::string dashes = double_dash ? "--" : "-";
+        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(dashes + dash_or_identifier.text));
     }
 
 
@@ -149,47 +146,46 @@ namespace Rune::Shell {
         ParsedInput env_var = parse_env_var();
         if (env_var.has_error)
             return env_var;
-        Token token = _lexer.next_token();
-        if (token.type != TokenType::ASSIGNMENT)
+        if (Token token = _lexer.next_token(); token.type != TokenType::ASSIGNMENT)
             return ParsedInput::make_error(token, TokenType::ASSIGNMENT);
 
-        LinkedList<UniquePointer<ASTNode>> value;
-        Token                              t = _lexer.peek_token();
+        std::vector<std::unique_ptr<ASTNode>> value;
+        Token                                 t = _lexer.peek_token();
         while (t.type != TokenType::END) {
             switch (t.type) {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
                     if (identifier.has_error)
                         return identifier;
-                    value.add_back(move(identifier.ast_node));
+                    value.push_back(move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
                     if (escape_code.has_error)
                         return escape_code;
-                    value.add_back(move(escape_code.ast_node));
+                    value.push_back(move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput more_env_var = parse_env_var();
                     if (more_env_var.has_error)
                         return more_env_var;
-                    value.add_back(move(more_env_var.ast_node));
+                    value.push_back(move(more_env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
                     if (path.has_error)
                         return path;
-                    value.add_back(move(path.ast_node));
+                    value.push_back(move(path.ast_node));
                     break;
                 }
                 case TokenType::QUOTE: {
                     ParsedInput sh_string = parse_string();
                     if (sh_string.has_error)
                         return sh_string;
-                    value.add_back(move(sh_string.ast_node));
+                    value.push_back(move(sh_string.ast_node));
                     break;
                 }
                 default:
@@ -198,10 +194,10 @@ namespace Rune::Shell {
             t = _lexer.peek_token();
         }
 
-        if (value.is_empty())
+        if (value.empty())
             return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
 
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new EnvVarDecl(move(env_var.ast_node), move(value))));
+        return ParsedInput::make_good(std::make_unique<EnvVarDecl>(move(env_var.ast_node), move(value)));
     }
 
 
@@ -210,36 +206,36 @@ namespace Rune::Shell {
         if (opening_quote.type != TokenType::QUOTE)
             return ParsedInput::make_error(opening_quote, TokenType::QUOTE);
 
-        LinkedList<UniquePointer<ASTNode>> content;
-        Token                              t = _lexer.peek_token();
+        std::vector<std::unique_ptr<ASTNode>> content;
+        Token                                 t = _lexer.peek_token();
         while (t.type != TokenType::QUOTE && t.type != TokenType::END) {
             switch (t.type) {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
                     if (identifier.has_error)
                         return identifier;
-                    content.add_back(move(identifier.ast_node));
+                    content.push_back(move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
                     if (escape_code.has_error)
                         return escape_code;
-                    content.add_back(move(escape_code.ast_node));
+                    content.push_back(move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput env_var = parse_env_var();
                     if (env_var.has_error)
                         return env_var;
-                    content.add_back(move(env_var.ast_node));
+                    content.push_back(move(env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
                     if (path.has_error)
                         return path;
-                    content.add_back(move(path.ast_node));
+                    content.push_back(move(path.ast_node));
                     break;
                 }
                 default:
@@ -252,18 +248,17 @@ namespace Rune::Shell {
         if (opening_quote.type != TokenType::QUOTE)
             return ParsedInput::make_error(closing_quote, TokenType::QUOTE);
 
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new ShellString(move(content))));
+        return ParsedInput::make_good(std::make_unique<ShellString>(move(content)));
     }
 
 
     ParsedInput Parser::parse_env_var() {
-        Token token = _lexer.next_token();
-        if (token.type != TokenType::DOLLAR)
+        if (const Token token = _lexer.next_token(); token.type != TokenType::DOLLAR)
             return ParsedInput::make_error(token, TokenType::DOLLAR);
         ParsedInput env_var = parse_identifier();
         if (env_var.has_error)
             return env_var;
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new EnvVar(move(env_var.ast_node))));
+        return ParsedInput::make_good(std::make_unique<EnvVar>(move(env_var.ast_node)));
     }
 
 
@@ -271,7 +266,7 @@ namespace Rune::Shell {
         Token token = _lexer.next_token();
         if (token.type != TokenType::PATH)
             return ParsedInput::make_error(token, TokenType::PATH);
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new IdentifierOrPath(token.text)));
+        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
 
 
@@ -279,24 +274,22 @@ namespace Rune::Shell {
         Token token = _lexer.next_token();
         if (token.type != TokenType::IDENTIFIER)
             return ParsedInput::make_error(token, TokenType::IDENTIFIER);
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new IdentifierOrPath(token.text)));
+        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
 
 
     ParsedInput Parser::parse_escape_code() {
-        Token token = _lexer.next_token();
+        const Token token = _lexer.next_token();
         if (token.type != TokenType::ESCAPE_CODE)
             return ParsedInput::make_error(token, TokenType::ESCAPE_CODE);
-        return ParsedInput::make_good(UniquePointer<ASTNode>(new IdentifierOrPath(String(token.text[1]))));
+        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(std::string(1, token.text[1])));
     }
 
 
-    Parser::Parser() : _lexer("") {
-
-    }
+    Parser::Parser() : _lexer("") { }
 
 
-    ParsedInput Parser::parse_shell_input(const String& input) {
+    ParsedInput Parser::parse_shell_input(const std::string& input) {
         _lexer = Lexer(input);
         return parse_input();
     }

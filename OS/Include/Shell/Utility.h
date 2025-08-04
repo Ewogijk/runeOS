@@ -1,3 +1,4 @@
+
 //  Copyright 2025 Ewogijk
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,29 +13,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#ifndef RUNEOS_UTILITY_H
+#define RUNEOS_UTILITY_H
 
-#include <Ember/Enum.h>
+#include <string>
+#include <vector>
 
+namespace Rune {
+    std::vector<std::string> str_split(const std::string& s, char delimiter);
 
-size_t e_strlen(const char* str) {
-    size_t size = 0;
-    while (*str != '\0') {
-        size++;
-        ++str;
-    }
-    return size;
+    bool str_is_prefix(const std::string& prefix, const std::string& word);
 }
 
-
-int e_memcmp(const void* lhs, const void* rhs, const size_t count) {
-    const auto* l = (unsigned char*)lhs;
-    const auto* r = (unsigned char*)rhs;
-
-    for (size_t i = 0; i < count; i++) {
-        if (l[i] < r[i])
-            return -1;
-        else if (l[i] > r[i])
-            return 1;
-    }
-    return 0;
-}
+#endif //RUNEOS_UTILITY_H

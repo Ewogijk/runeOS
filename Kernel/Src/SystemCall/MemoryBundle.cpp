@@ -18,8 +18,8 @@
 
 #include <Hammer/Algorithm.h>
 
-#include <Ember/StatusCode.h>
-#include <Ember/PageProtection.h>
+#include <Ember/Ember.h>
+#include <Ember/MemoryBits.h>
 
 
 namespace Rune::SystemCall {

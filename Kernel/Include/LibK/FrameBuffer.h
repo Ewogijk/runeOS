@@ -18,7 +18,7 @@
 #define RUNEOS_FRAMEBUFFER_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 
 
 namespace Rune::LibK {

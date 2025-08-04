@@ -18,7 +18,7 @@
 #define RUNEOS_CPU_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
 #include <Hammer/String.h>
 

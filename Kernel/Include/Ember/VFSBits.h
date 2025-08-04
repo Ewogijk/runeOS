@@ -13,11 +13,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef EMBER_NODEDEFINITIONS_H
-#define EMBER_NODEDEFINITIONS_H
+#ifndef EMBER_VFSBITS_H
+#define EMBER_VFSBITS_H
 
 #include <Ember/Enum.h>
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 
 namespace Ember {
 
@@ -99,4 +99,4 @@ namespace Ember {
     };
 }
 
-#endif //EMBER_NODEDEFINITIONS_H
+#endif //EMBER_VFSBITS_H

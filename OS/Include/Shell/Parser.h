@@ -18,10 +18,11 @@
 #define RUNEOS_PARSER_H
 
 
-#include <Hammer/String.h>
-
 #include <Shell/AST.h>
 #include <Shell/Lexer.h>
+
+#include <string>
+#include <memory>
 
 
 namespace Rune::Shell {
@@ -29,10 +30,10 @@ namespace Rune::Shell {
      * @brief Parsed shell input either the AST node or error information.
      */
     struct ParsedInput {
-        UniquePointer<ASTNode> ast_node;
-        bool has_error;
-        Token actual;
-        TokenType expected;
+        std::unique_ptr<ASTNode> ast_node;
+        bool                   has_error;
+        Token                  actual;
+        TokenType              expected;
 
 
         /**
@@ -41,7 +42,7 @@ namespace Rune::Shell {
          * @param ast_node
          * @return
          */
-        static ParsedInput make_good(UniquePointer<ASTNode> ast_node);
+        static ParsedInput make_good(std::unique_ptr<ASTNode> ast_node);
 
 
         /**
@@ -52,6 +53,7 @@ namespace Rune::Shell {
          */
         static ParsedInput make_error(const Token& actual, TokenType expected);
     };
+
 
     /**
      * The grammar of the parser is defined as followed:
@@ -106,12 +108,11 @@ namespace Rune::Shell {
 
         ParsedInput parse_escape_code();
 
-
     public:
         Parser();
 
 
-        ParsedInput parse_shell_input(const String& input);
+        ParsedInput parse_shell_input(const std::string& input);
     };
 }
 

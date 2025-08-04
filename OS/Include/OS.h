@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef EWOGIJKOS_BROTHER_H
-#define EWOGIJKOS_BROTHER_H
+#ifndef RUNEOS_OS_H
+#define RUNEOS_OS_H
 
 
 namespace Rune {
     extern "C" int main(int argc, char* argv[]);
 }
 
-#endif //EWOGIJKOS_BROTHER_H
+#endif //RUNEOS_OS_H

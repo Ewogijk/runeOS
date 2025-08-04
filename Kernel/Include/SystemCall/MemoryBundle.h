@@ -18,7 +18,7 @@
 #define RUNEOS_MEMORYMANAGEMENT_H
 
 
-#include <Ember/StatusCode.h>
+#include <Ember/Ember.h>
 
 #include <SystemCall/KernelGuardian.h>
 

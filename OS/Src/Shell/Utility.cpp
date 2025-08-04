@@ -12,10 +12,21 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include <Shell/Utility.h>
 
-#include <Ember/PageProtection.h>
+#include <sstream>
 
+namespace Rune {
+    std::vector<std::string> str_split(const std::string& s, char delimiter) {
+        std::vector<std::string> tokens;
+        std::istringstream       tokenStream(s);
+        std::string              token;
+        while (std::getline(tokenStream, token, delimiter)) tokens.push_back(token);
+        return tokens;
+    }
 
-namespace Ember {
-    DEFINE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)
+    bool str_is_prefix(const std::string& prefix, const std::string& word) {
+        auto [fst, snd] = std::mismatch(prefix.begin(), prefix.end(), word.begin());
+        return fst == prefix.end();
+    }
 }

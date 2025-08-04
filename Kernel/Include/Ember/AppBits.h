@@ -12,10 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef EMBER_VIRTUALKEY_H
-#define EMBER_VIRTUALKEY_H
+#ifndef EMBER_APP_H
+#define EMBER_APP_H
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 
 
 namespace Ember {
@@ -135,4 +135,4 @@ namespace Ember {
     };
 }
 
-#endif //EMBER_VIRTUALKEY_H
+#endif //EMBER_APP_H

@@ -16,35 +16,38 @@
 
 #include <OS.h>
 
-#include <StdIO.h>
-#include <Build.h>
+#include <Forge/App.h>
 
 #include <Shell/Interpreter.h>
 
+#include <Build.h>
+
+#include <iostream>
+
 
 namespace Rune {
-    int main(int argc, char* argv[]) {
+    int main(const int argc, char* argv[]) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
 
-        char wd[128];
-        memset(wd, '\0', 128);
-        S64  ret = Pickaxe::app_get_working_directory(wd, 128);
-        if (ret != 0)
+        constexpr char wd[128] = { };
+        if (const Ember::StatusCode ret = Forge::app_current_directory(wd, 128); ret != 0)
             // Failed to get the working directory
-            Pickaxe::app_exit(-1);
+            Forge::app_exit(-1);
 
         Shell::Interpreter interpreter;
 
         if (!interpreter.setup_environment(wd))
             return -1;
 
-        String version = String::format("v{}.{}.{}", OS_MAJOR, OS_MINOR, OS_PATCH);
-        if (!String(OS_PRERELEASE).is_empty())
-            version += String::format("-{}", OS_PRERELEASE);
-        print_out("Welcome to runeOS {}!\n\n", version);
+        std::cout << "Welcome to runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
+        if (!std::string(PRERELEASE).empty())
+            std::cout << "-" << PRERELEASE << std::endl;
+        else
+            std::cout << std::endl;
+        std::cout << std::endl;
 
-        print_out("Use the 'help' command to get more information about the shell.\n\n", version);
+        std::cout << "Use the 'help' command to get more information about the shell." << std::endl << std::endl;
 
         interpreter.run();
         return 0;

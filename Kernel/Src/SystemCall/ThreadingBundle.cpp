@@ -16,7 +16,7 @@
 
 #include <SystemCall/ThreadingBundle.h>
 
-#include <Ember/StatusCode.h>
+#include <Ember/Ember.h>
 
 
 namespace Rune::SystemCall {

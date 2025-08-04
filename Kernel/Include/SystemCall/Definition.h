@@ -18,9 +18,7 @@
 #define RUNEOS_DEFINITION_H
 
 
-#include <Ember/Definitions.h>
-#include <Ember/StatusCode.h>
-#include <Ember/SystemCallID.h>
+#include <Ember/Ember.h>
 
 #include <Hammer/String.h>
 #include <Hammer/Utility.h>
@@ -76,7 +74,7 @@ namespace Rune::SystemCall {
      * </p>
      */
     struct Definition {
-        Ember::SystemCallID ID           = 0;
+        Ember::ResourceID ID           = 0;
         String              name             = "";
         Handler             sys_call_handler = SYS_CALL_HANDLER_NONE;
         void*               context          = nullptr;
@@ -92,7 +90,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define6(
-        Ember::SystemCallID sys_call_ctx,
+        Ember::ResourceID sys_call_ctx,
         const String&       name,
         const Function<S64(
             void*,
@@ -115,7 +113,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define5(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -137,7 +135,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define4(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -158,7 +156,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define3(
-        Ember::SystemCallID ID,
+        Ember::ResourceID ID,
         const String&       name,
         const Function<S64(
             void*,
@@ -178,7 +176,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define2(
-        Ember::SystemCallID                                                               ID,
+        Ember::ResourceID                                                               ID,
         const String&                                                                     name,
         const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
         void*                                                                             context
@@ -194,7 +192,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define1(
-        Ember::SystemCallID                                    ID,
+        Ember::ResourceID                                    ID,
         const String&                                          name,
         const Function<S64(void*, Ember::SystemCallArgument)>& handler,
         void*                                                  context
@@ -210,7 +208,7 @@ namespace Rune::SystemCall {
      * @return
      */
     Definition define0(
-        Ember::SystemCallID  ID,
+        Ember::ResourceID  ID,
         const String&        name,
         Function<S64(void*)> handler,
         void*                context

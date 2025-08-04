@@ -18,11 +18,7 @@
 #define RUNEOS_BUILTINCOMMAND_H
 
 
-#include <StdIO.h>
-
 #include <Shell/AST.h>
-
-#include <Pickaxe/AppManagement.h>
 
 
 namespace Rune::Shell {
@@ -42,7 +38,7 @@ namespace Rune::Shell {
      * @param shell_env
      * @return
      */
-    int pwd(int argc, char* argv[], Environment& shell_env);
+    int pwd(int argc, char* argv[], const Environment& shell_env);
 
 
     /**
@@ -52,7 +48,7 @@ namespace Rune::Shell {
      * @param shell_env
      * @return
      */
-    int clear(int argc, char* argv[], Environment& shell_env);
+    int clear(int argc, char* argv[], const Environment& shell_env);
 
     /**
      * @brief Print the shell help menu.
@@ -61,7 +57,7 @@ namespace Rune::Shell {
      * @param shell_env
      * @return
      */
-    int help(int argc, char* argv[], Environment& shell_env);
+    int help(int argc, char* argv[], const Environment& shell_env);
 
 
     /**

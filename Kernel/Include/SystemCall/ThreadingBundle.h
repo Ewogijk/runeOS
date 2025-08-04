@@ -17,7 +17,7 @@
 #ifndef RUNEOS_THREADMANAGEMENT_H
 #define RUNEOS_THREADMANAGEMENT_H
 
-#include <Ember/StatusCode.h>
+#include <Ember/Ember.h>
 
 #include <SystemCall/KernelGuardian.h>
 

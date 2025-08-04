@@ -18,7 +18,7 @@
 #define RUNEOS_UTILITY_H
 
 
-#include <Ember/Definitions.h>
+#include <Ember/Ember.h>
 #include <Hammer/Memory.h>
 
 
