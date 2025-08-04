@@ -14,49 +14,16 @@
  *  limitations under the License.
  */
 
-#include <Ember/Definitions.h>
-#include <Hammer/String.h>
+#include <Forge/App.h>
+#include <Forge/VFS.h>
 
-#include <Pickaxe/AppManagement.h>
-#include <Pickaxe/VFS.h>
-
-
-template<typename... Args>
-void printl_out(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_out((const char*) b, s);
-    Rune::Pickaxe::write_std_out("\n", 1);
-}
-
-
-template<typename... Args>
-void printl_err(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_err((const char*) b, s);
-    Rune::Pickaxe::write_std_err("\n", 1);
-}
-
-
-size_t get_cstr_size(const char* c_str) {
-    size_t size = 0;
-    const char* c_pos = c_str;
-    while (*c_pos) {
-        c_pos++;
-        size++;
-    }
-    return size;
-}
+#include <string>
+#include <iostream>
+#include <format>
 
 
 struct CLIArgs {
-    static constexpr U8 MAX_PATH_SIZE = 128;
-    char                dir[128]      = { };
+    std::string dir;
 
     bool help = false;
     bool all  = false;
@@ -65,15 +32,14 @@ struct CLIArgs {
 
 
 bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
-    bool     dir_seen = false;
-    for (int i        = 0; i < argc; i++) {
-        const char* arg = argv[i];
-        size_t size = get_cstr_size(arg);
-        if (size == 0)
+    bool dir_seen = false;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg.size() == 0)
             continue;
 
         if (arg[0] == '-') {
-            for (size_t j = 1; j < size; j++) {
+            for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
                     case 'a':
                         args_out.all = true;
@@ -85,37 +51,38 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
                         args_out.help = true;
                         break;
                     default: {
-                        printl_err("Unknown option: {}", argv[i][j]);
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
                 }
             }
         } else {
             if (dir_seen) {
-                printl_err("Unknown arg: {}", arg);
+                std::cerr << "Unknown argument '" << arg << "'" << std::endl;
                 return false;
             }
-            memcpy(args_out.dir, (char*) arg, get_cstr_size(arg));
-            dir_seen = true;
+            args_out.dir = arg;
+            dir_seen     = true;
         }
     }
 
     if (!dir_seen) {
-        S64 ret = Rune::Pickaxe::app_get_working_directory(args_out.dir, CLIArgs::MAX_PATH_SIZE);
-        if (ret < 0) {
-            printl_err("IO error: Could not get current directory.\n");
+        char c_path[Ember::STRING_SIZE_LIMIT];
+        if (const Ember::StatusCode ret = Forge::app_current_directory(c_path, Ember::STRING_SIZE_LIMIT); ret < 0) {
+            std::cerr << "IO error: Cannot get current directory." << std::endl;
             return false;
         }
+        args_out.dir = c_path;
     }
     return true;
 }
 
 
-void print_node_info(const CLIArgs& args, const Rune::Pickaxe::VFSNodeInfo& node_info) {
-    Rune::String node_path = node_info.node_path;
-    if (args.all || (!node_info.is_hidden() && node_path != "." && node_path != "..")) {
+void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
+    if (const std::string node_path = node_info.node_path;
+        args.all || (!node_info.is_hidden() && node_path != "." && node_path != "..")) {
         if (args.list) {
-            char attr[4] = { '-', '-', '-', '-' };
+            char attr[4] = {'-', '-', '-', '-'};
             if (node_info.is_file())
                 attr[0] = 'F';
             else
@@ -128,53 +95,55 @@ void print_node_info(const CLIArgs& args, const Rune::Pickaxe::VFSNodeInfo& node
             if (node_info.is_readonly()) {
                 attr[3] = 'R';
             }
-            printl_out("{:<10} {:<15} {}", attr, node_info.size, node_info.node_path);
+            std::cout << std::format("{:<10} {:<15} {}", attr, node_info.size, node_info.node_path) << std::endl;
         } else {
-            printl_out("{} ", node_info.node_path);
+            std::cout << node_info.node_path << std::endl;
         }
     }
 }
 
 
-CLINK int main(int argc, char* argv[]) {
+CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args))
         return -1;
 
     if (args.help) {
-        printl_out("ls [directory] [options]...");
-        printl_out("    List the content of a directory");
-        printl_out("Options:");
-        printl_out("    -a: Include hidden files.");
-        printl_out("    -h: Print this help menu.");
-        printl_out("    -l: Print detailed information about each node.");
+        std::cout << "ls [directory] [options]" << std::endl;
+        std::cout << "    List the content of a directory" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "    -a: Include hidden files." << std::endl;
+        std::cout << "    -h: Print this help menu." << std::endl;
+        std::cout << "    -l: Print detailed information about each node." << std::endl;
         return 0;
     }
 
-    S64 dir_stream_handle = Rune::Pickaxe::vfs_directory_stream_open(args.dir);
-    if (dir_stream_handle < 0) {
-        switch (dir_stream_handle) {
-            case -4:
-                printl_err("'{}': Directory not found.", args.dir);
+    Ember::StatusCode dir_stream_ID = Forge::vfs_directory_stream_open(args.dir.c_str());
+    if (dir_stream_ID < 0) {
+        switch (dir_stream_ID) {
+            case Ember::Status::BAD_ARG:
+                std::cerr << "'" << args.dir << "': Bad path.";
                 break;
-            case -5:
-                printl_err("'{}': Not a directory.", args.dir);
+            case Ember::Status::NODE_NOT_FOUND:
+                std::cerr << "'" << args.dir << "': Directory not found.";
+                break;
+            case Ember::Status::NODE_IS_FILE:
+                std::cerr << "'" << args.dir << "': Not a directory.";
                 break;
             default:
-                printl_err("'{}': IO error occurred.", args.dir);
+                std::cerr << "'" << args.dir << "': IO error.";
         }
         return -1;
     }
 
-
     if (args.list)
-        printl_out("Attributes Size            Name");
+        std::cout << "Attributes Size            Name" << std::endl;
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         next = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-    while (next > 0) {
+    Ember::NodeInfo   node_info;
+    Ember::StatusCode next = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+    while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
         print_node_info(args, node_info);
-        next = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+        next = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
     }
     print_node_info(args, node_info); // Print the last node
     return 0;
