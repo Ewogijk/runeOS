@@ -14,65 +14,29 @@
  *  limitations under the License.
  */
 
-#include <Ember/Definitions.h>
-#include <Hammer/String.h>
+#include <Forge/VFS.h>
 
-#include <Pickaxe/AppManagement.h>
-#include <Pickaxe/VFS.h>
-
-
-template<typename... Args>
-void printl_out(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_out((const char*) b, s);
-    Rune::Pickaxe::write_std_out("\n", 1);
-}
-
-
-template<typename... Args>
-void printl_err(const char* fmt, Args... args) {
-    Rune::Argument arg_array[] = { args... };
-    char            b[128];
-    memset(b, 0, 128);
-    int s = Rune::interpolate(fmt, b, 128, arg_array, sizeof...(Args));
-    Rune::Pickaxe::write_std_err((const char*) b, s);
-    Rune::Pickaxe::write_std_err("\n", 1);
-}
-
-
-size_t get_cstr_size(const char* c_str) {
-    size_t size = 0;
-    const char* c_pos = c_str;
-    while (*c_pos) {
-        c_pos++;
-        size++;
-    }
-    return size;
-}
+#include <string>
+#include <iostream>
 
 
 struct CLIArgs {
-    static constexpr U8 MAX_PATH_SIZE  = 128;
-    char                node_path[128] = { };
+    std::string node_path = "";
 
     bool help      = false;
     bool recursive = false;
 };
 
 
-bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
-    bool     node_path_seen = false;
-    for (int i              = 0; i < argc; i++) {
-        const char* arg = argv[i];
-        size_t size = get_cstr_size(arg);
-        if (size == 0)
+bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+    bool node_path_seen = false;
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg.size() == 0)
             continue;
 
         if (arg[0] == '-') {
-            for (size_t j = 1; j < size; j++) {
+            for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
                     case 'h':
                         args_out.help = true;
@@ -81,121 +45,127 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
                         args_out.recursive = true;
                         break;
                     default: {
-                        printl_err("Error: Unknown option {}.", argv[i][j]);
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
                 }
             }
         } else {
             if (node_path_seen) {
-                printl_err("Error: Unknown arg {}.", arg);
+                std::cerr << "Unknown argument '" << arg << "'" << std::endl;
                 return false;
             }
-            memcpy(args_out.node_path, (char*) arg, get_cstr_size(arg));
-            node_path_seen = true;
+            args_out.node_path = arg;
+            node_path_seen     = true;
         }
     }
     if (!node_path_seen && !args_out.help)
-        printl_err("Error: Missing path argument.");
+        std::cerr << "Missing node argument" << std::endl;
     return node_path_seen || args_out.help;
 }
 
 
-bool delete_node(const Rune::String& node_path) {
-    S64 ret = Rune::Pickaxe::vfs_delete(node_path.to_cstr());
-    if (ret < 0) {
-        if (ret == -3)
-            printl_err("'{}': Cannot delete, because the node is used by another app.", node_path);
+bool delete_node(const std::string& node_path) {
+    if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str()); ret < Ember::Status::OKAY) {
+        if (ret == Ember::Status::NODE_IN_USE)
+            std::cerr << "'" << node_path << "': Cannot delete, node is used by another app." << std::endl;
         else
-            printl_err("'{}': IO error.", node_path);
+            std::cerr << "'" << node_path << "': IO error." << std::endl;
         return false;
     }
     return true;
 }
 
 
-bool delete_dir(const Rune::String& directory_path) {
-    S64 dir_stream_handle = Rune::Pickaxe::vfs_directory_stream_open(directory_path.to_cstr());
-    if (dir_stream_handle < 0) {
-        printl_err("'{}': IO error occurred.", directory_path);
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+void close_dir_stream(const S64 dir_stream_ID) {
+    if (dir_stream_ID <= 0)
+        return; // Invalid stream ID
+    Forge::vfs_directory_stream_close(dir_stream_ID);
+    // Both possible return values are fine, no need for error handling
+    //   Ember::Status::OKAY -> Stream was closed
+    //   Ember::Status::UNKNOWN_ID -> No stream with the ID was found
+}
+
+
+bool delete_dir(const std::string& directory_path) {
+    const S64 dir_stream_ID = Forge::vfs_directory_stream_open(directory_path.c_str());
+    if (dir_stream_ID < Ember::Status::OKAY) {
+        std::cerr << "'" << directory_path << "': IO error." << std::endl;
+        close_dir_stream(dir_stream_ID);
         return false;
     }
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-    Rune::String               node_path = node_info.node_path;
-    while (next > 0) {
+    Ember::NodeInfo node_info;
+    S64             next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+    std::string     node_path = node_info.node_path;
+    while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
         if (node_path != "." && node_path != "..") {
             if (node_info.is_directory()) {
                 if (!delete_dir(directory_path + "/" + node_path)) {
-                    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                    Forge::vfs_directory_stream_close(dir_stream_ID);
                     return false;
                 }
             } else {
                 if (!delete_node(directory_path + "/" + node_path)) {
-                    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                    Forge::vfs_directory_stream_close(dir_stream_ID);
                     return false;
                 }
             }
         }
-        next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+        next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
     }
     if (node_path != "." && node_path != "..") {
         // Delete last node
         if (node_info.is_directory()) {
             if (!delete_dir(directory_path + "/" + node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                Forge::vfs_directory_stream_close(dir_stream_ID);
                 return false;
             }
         } else {
             if (!delete_node(directory_path + "/" + node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                Forge::vfs_directory_stream_close(dir_stream_ID);
                 return false;
             }
         }
     }
 
-
     // Delete this directory
     if (!delete_node(directory_path)) {
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+        Forge::vfs_directory_stream_close(dir_stream_ID);
         return false;
     }
-    Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+    Forge::vfs_directory_stream_close(dir_stream_ID);
     return true;
 }
 
 
-CLINK int main(int argc, char* argv[]) {
+CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args))
         return -1;
 
     if (args.help) {
-        printl_out("rm [file|directory] [options]...");
-        printl_out("    Delete a file or directory.");
-        printl_out("Options:");
-        printl_out("    -r: Remove the directory and all its content recursively.");
-        printl_out("    -h: Print this help menu.");
+        std::cout << "rm [file|directory] [options]" << std::endl;
+        std::cout << "    Delete a file or directory." << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "    -r: Remove the directory and all its content recursively." << std::endl;
+        std::cout << "    -h: Print this help menu." << std::endl;
         return 0;
     }
 
-    Rune::Pickaxe::VFSNodeInfo node_info;
-    S64                         ret = Rune::Pickaxe::vfs_get_node_info(args.node_path, &node_info);
-    if (ret < 0) {
+    Ember::NodeInfo node_info;
+    if (const Ember::StatusCode ret = Forge::vfs_get_node_info(args.node_path.c_str(), &node_info);
+        ret < Ember::Status::OKAY) {
         switch (ret) {
-            case -4:
-                printl_err("'{}': File or directory not found.", args.node_path);
+            case Ember::Status::NODE_NOT_FOUND:
+                std::cerr << "'" << args.node_path << "': Node not found." << std::endl;
                 break;
-            case -1: // Path too long
-            case -2: // Illegal characters on path
-            case -5: // Intermediate path element is a file
-                printl_err("'{}': Bad path.", args.node_path);
+            case Ember::Status::BAD_ARG: // Intermediate path element is a file
+                std::cerr << "'" << args.node_path << "': Bad path." << std::endl;
                 break;
             default:
-                printl_err("'{}': IO error.", args.node_path);
+                std::cerr << "'" << args.node_path << "': IO error." << std::endl;
         }
         return -1;
     }
@@ -205,20 +175,20 @@ CLINK int main(int argc, char* argv[]) {
         if (!delete_node(args.node_path))
             return -1;
     } else {
-        S64 dir_stream_handle = Rune::Pickaxe::vfs_directory_stream_open(args.node_path);
-        if (dir_stream_handle < 0) {
+        const S64 dir_stream_ID = Forge::vfs_directory_stream_open(args.node_path.c_str());
+        if (dir_stream_ID < 0) {
             // We know node path arg is fine, the node is a dir and exists -> Can only be IO error
-            printl_err("'{}': IO error occurred.", args.node_path);
-            Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+            std::cerr << "'" << args.node_path << "': IO error." << std::endl;
+            close_dir_stream(dir_stream_ID);
             return -1;
         }
-        size_t        nodes_in_dir = 0;
-        S64           next         = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
-        Rune::String node_path    = node_info.node_path;
-        while (next > 0) {
+        size_t            nodes_in_dir = 0;
+        Ember::StatusCode next         = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+        std::string       node_path    = node_info.node_path;
+        while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
             if (node_path != "." && node_path != "..")
                 nodes_in_dir++;
-            next      = Rune::Pickaxe::vfs_directory_stream_next(dir_stream_handle, &node_info);
+            next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
             node_path = node_info.node_path;
         }
         if (node_path != "." && node_path != ".." && (node_info.is_directory() || node_info.is_file()))
@@ -226,26 +196,24 @@ CLINK int main(int argc, char* argv[]) {
 
         if (nodes_in_dir == 0) {
             if (!delete_node(args.node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                close_dir_stream(dir_stream_ID);
                 return -1;
             }
         } else {
             if (!args.recursive) {
-                printl_out(
-                        "'{}': Cannot delete, directory is not empty. Use -r to delete the "
-                        "directory and all its content.",
-                        args.node_path
-                );
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                std::cerr << "'" << args.node_path
+                    << "': Cannot delete, directory is not empty. Use '-r' to delete the directory and its content."
+                    << std::endl;
+                close_dir_stream(dir_stream_ID);
                 return -1;
             }
 
             if (!delete_dir(args.node_path)) {
-                Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+                close_dir_stream(dir_stream_ID);
                 return -1;
             }
         }
-        Rune::Pickaxe::vfs_directory_stream_close(dir_stream_handle);
+        close_dir_stream(dir_stream_ID);
     }
 
     return 0;
