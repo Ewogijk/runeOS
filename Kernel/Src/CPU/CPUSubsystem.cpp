@@ -22,7 +22,7 @@
 namespace Rune::CPU {
     constexpr char const* FILE      = "CPU";
     Scheduler           * SCHEDULER = nullptr;
-    SharedPointer<LibK::Logger>      SCHED_LOGGY;
+    SharedPointer<Logger>      SCHED_LOGGY;
     Function<void(Thread*, Thread*)> NOTIFY_THREAD_BOOM = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)
         SILENCE_UNUSED(next)
@@ -119,14 +119,14 @@ namespace Rune::CPU {
 
     DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
-    char* Subsystem::DUMMY_ARGS[];
-    StartInfo Subsystem::TERMINATOR_THREAD_START_INFO;
-    StartInfo Subsystem::IDLE_THREAD_START_INFO;
+    char* CPUSubsystem::DUMMY_ARGS[];
+    StartInfo CPUSubsystem::TERMINATOR_THREAD_START_INFO;
+    StartInfo CPUSubsystem::IDLE_THREAD_START_INFO;
 
-    SharedPointer<Thread> Subsystem::create_thread(
+    SharedPointer<Thread> CPUSubsystem::create_thread(
             const String& thread_name,
             StartInfo* start_info,
-            LibK::PhysicalAddr base_pt_addr,
+            PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
             Stack user_stack
     ) {
@@ -141,8 +141,8 @@ namespace Rune::CPU {
     }
 
 
-    Subsystem::Subsystem() :
-            LibK::Subsystem(),
+    CPUSubsystem::CPUSubsystem() :
+            Subsystem(),
             _pic_driver_table(),
             _active_pic(nullptr),
             _thread_table(),
@@ -157,29 +157,29 @@ namespace Rune::CPU {
     }
 
 
-    String Subsystem::get_name() const {
+    String CPUSubsystem::get_name() const {
         return "CPU";
     }
 
 
-    bool Subsystem::start(
-            const LibK::BootLoaderInfo& boot_info,
-            const LibK::SubsystemRegistry& k_subsys_reg
+    bool CPUSubsystem::start(
+            const BootLoaderInfo& boot_info,
+            const SubsystemRegistry& k_subsys_reg
     ) {
         SILENCE_UNUSED(k_subsys_reg)
 
         // Init Event Hook table
         _event_hook_table.put(
                 EventHook(EventHook::THREAD_CREATED).to_string(),
-                LinkedList<LibK::EventHandlerTableEntry>()
+                LinkedList<EventHandlerTableEntry>()
         );
         _event_hook_table.put(
                 EventHook(EventHook::THREAD_TERMINATED).to_string(),
-                LinkedList<LibK::EventHandlerTableEntry>()
+                LinkedList<EventHandlerTableEntry>()
         );
         _event_hook_table.put(
                 EventHook(EventHook::CONTEXT_SWITCH).to_string(),
-                LinkedList<LibK::EventHandlerTableEntry>());
+                LinkedList<EventHandlerTableEntry>());
 
         install_event_handler(
                 EventHook(EventHook::THREAD_TERMINATED).to_string(),
@@ -215,8 +215,8 @@ namespace Rune::CPU {
 
 
         //Init Resource Tables
-        LinkedList<LibK::Column<Thread>> tt_cols;
-        tt_cols.add_back(LibK::Column<Thread>::make_handle_column_table(26));
+        LinkedList<Column<Thread>> tt_cols;
+        tt_cols.add_back(Column<Thread>::make_handle_column_table(26));
         tt_cols.add_back({ "State", 12, [](Thread* t) { return t->state.to_string(); }});
         tt_cols.add_back({ "Policy", 12, [](Thread* t) { return t->policy.to_string(); }});
         tt_cols.add_back(
@@ -228,8 +228,8 @@ namespace Rune::CPU {
         );
         _thread_table_fmt.configure("Thread", tt_cols);
 
-        LinkedList<LibK::Column<Mutex>> mt_cols;
-        mt_cols.add_back(LibK::Column<Mutex>::make_handle_column_table(26));
+        LinkedList<Column<Mutex>> mt_cols;
+        mt_cols.add_back(Column<Mutex>::make_handle_column_table(26));
         mt_cols.add_back(
                 {
                         "Owner",
@@ -275,7 +275,7 @@ namespace Rune::CPU {
 
         // Init Scheduling
         _logger->debug(FILE, "Starting the Scheduler...");
-        LibK::PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
+        PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
         DUMMY_ARGS[0] = nullptr;
         TERMINATOR_THREAD_START_INFO.argc = 0;
         TERMINATOR_THREAD_START_INFO.argv = DUMMY_ARGS;
@@ -348,7 +348,7 @@ namespace Rune::CPU {
     }
 
 
-    void Subsystem::set_logger(SharedPointer<LibK::Logger> logger) {
+    void CPUSubsystem::set_logger(SharedPointer<Logger> logger) {
         if (!_logger) {
             _logger = logger;
             _scheduler.set_logger(logger);
@@ -361,12 +361,12 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    PICDriver* Subsystem::get_active_pic() {
+    PICDriver* CPUSubsystem::get_active_pic() {
         return _active_pic;
     }
 
 
-    LinkedList<PICDriver*> Subsystem::get_pic_driver_table() {
+    LinkedList<PICDriver*> CPUSubsystem::get_pic_driver_table() {
         LinkedList<PICDriver*> dt;
         for (auto& d: _pic_driver_table)
             dt.add_back(d.get());
@@ -374,7 +374,7 @@ namespace Rune::CPU {
     }
 
 
-    bool Subsystem::install_pic_driver(UniquePointer<PICDriver> driver) {
+    bool CPUSubsystem::install_pic_driver(UniquePointer<PICDriver> driver) {
         if (!driver)
             return false;
         _pic_driver_table.add_back(move(driver));
@@ -382,12 +382,12 @@ namespace Rune::CPU {
     }
 
 
-    bool Subsystem::install_irq_handler(U8 irq_line, U16 dev_id, const String& dev_name, const IRQHandler& handler) {
+    bool CPUSubsystem::install_irq_handler(U8 irq_line, U16 dev_id, const String& dev_name, const IRQHandler& handler) {
         return irq_install_handler(irq_line, dev_id, dev_name, handler);
     }
 
 
-    bool Subsystem::uninstall_irq_handler(U8 irq_line, U16 dev_handle) {
+    bool CPUSubsystem::uninstall_irq_handler(U8 irq_line, U16 dev_handle) {
         return irq_uninstall_handler(irq_line, dev_handle);
     }
 
@@ -397,12 +397,12 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    Scheduler* Subsystem::get_scheduler() {
+    Scheduler* CPUSubsystem::get_scheduler() {
         return &_scheduler;
     }
 
 
-    LinkedList<Thread*> Subsystem::get_thread_table() {
+    LinkedList<Thread*> CPUSubsystem::get_thread_table() {
         LinkedList<Thread*> copy;
         for (auto& t: _thread_table)
             copy.add_back(t.value->get());
@@ -410,7 +410,7 @@ namespace Rune::CPU {
     }
 
 
-    void Subsystem::dump_thread_table(const SharedPointer<LibK::TextStream>& stream) const {
+    void CPUSubsystem::dump_thread_table(const SharedPointer<TextStream>& stream) const {
         auto it = _thread_table.begin();
         _thread_table_fmt.dump(
                 stream, [&it] {
@@ -425,7 +425,7 @@ namespace Rune::CPU {
     }
 
 
-    Thread* Subsystem::find_thread(int handle) {
+    Thread* CPUSubsystem::find_thread(int handle) {
         Thread   * le_thread = nullptr;
         for (auto& t: _thread_table) {
             if (t.value->get()->handle == handle) {
@@ -437,10 +437,10 @@ namespace Rune::CPU {
     }
 
 
-    U16 Subsystem::schedule_new_thread(
+    U16 CPUSubsystem::schedule_new_thread(
             const String& thread_name,
             StartInfo* start_info,
-            LibK::PhysicalAddr base_pt_addr,
+            PhysicalAddr base_pt_addr,
             SchedulingPolicy policy,
             Stack user_stack
     ) {
@@ -466,7 +466,7 @@ namespace Rune::CPU {
     }
 
 
-    bool Subsystem::terminate_thread(int handle) {
+    bool CPUSubsystem::terminate_thread(int handle) {
         // Check if a thread with the ID exists
         SharedPointer<Thread> da_thread(nullptr);
         for (auto& t: _thread_table) {
@@ -582,7 +582,7 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    LinkedList<Mutex*> Subsystem::get_mutex_table() {
+    LinkedList<Mutex*> CPUSubsystem::get_mutex_table() {
         LinkedList<Mutex*> copy;
         for (auto& m: _mutex_table)
             copy.add_back(m.value->get());
@@ -590,13 +590,13 @@ namespace Rune::CPU {
     }
 
 
-    SharedPointer<Mutex> Subsystem::find_mutex(U16 mutex_handle) {
+    SharedPointer<Mutex> CPUSubsystem::find_mutex(U16 mutex_handle) {
         auto it = _mutex_table.find(mutex_handle);
         return it == _mutex_table.end() ? SharedPointer<Mutex>() : *it->value;
     }
 
 
-    void Subsystem::dump_mutex_table(const SharedPointer<LibK::TextStream>& stream) const {
+    void CPUSubsystem::dump_mutex_table(const SharedPointer<TextStream>& stream) const {
         auto it = _mutex_table.begin();
         _mutex_table_fmt.dump(
                 stream, [&it] {
@@ -611,7 +611,7 @@ namespace Rune::CPU {
     }
 
 
-    SharedPointer<Mutex> Subsystem::create_mutex(String name) {
+    SharedPointer<Mutex> CPUSubsystem::create_mutex(String name) {
         if (!_mutex_handle_counter.has_more_handles())
             return SharedPointer<Mutex>(nullptr);
         auto m = SharedPointer<Mutex>(new Mutex(&_scheduler, _logger, move(name)));
@@ -621,7 +621,7 @@ namespace Rune::CPU {
     }
 
 
-    bool Subsystem::release_mutex(U16 mutex_handle) {
+    bool CPUSubsystem::release_mutex(U16 mutex_handle) {
         SharedPointer<Mutex> to_remove;
         for (auto& m: _mutex_table) {
             if (m.value->get()->handle == mutex_handle) {
@@ -642,13 +642,13 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    void Subsystem::install_timer_driver(UniquePointer<Timer> driver) {
+    void CPUSubsystem::install_timer_driver(UniquePointer<Timer> driver) {
         if (driver)
             _timer = move(driver);
     }
 
 
-    Timer* Subsystem::get_system_timer() {
+    Timer* CPUSubsystem::get_system_timer() {
         return _timer.get();
     }
 }

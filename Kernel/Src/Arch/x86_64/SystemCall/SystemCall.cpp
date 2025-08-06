@@ -16,8 +16,8 @@
 
 #include <SystemCall/SystemCall.h>
 
-#include <Hammer/Collection.h>
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/Algorithm.h>
 
 #include "../CPU/X64Core.h"
 
@@ -35,7 +35,7 @@ namespace Rune::SystemCall {
 
     HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE;
     KernelGuardian*                                   K_GUARD;
-    SharedPointer<LibK::Logger>                       LOGGER;
+    SharedPointer<Logger>                       LOGGER;
 
 
     /**
@@ -85,7 +85,7 @@ namespace Rune::SystemCall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    bool system_call_init(SharedPointer<LibK::Logger> logger, KernelGuardian* kGuard) {
+    bool system_call_init(SharedPointer<Logger> logger, KernelGuardian* kGuard) {
         LOGGER                    = move(logger);
         K_GUARD                   = kGuard;
         SYSTEM_CALL_HANDLER_TABLE = HashMap<U16, SystemCallContainer>();

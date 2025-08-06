@@ -20,9 +20,9 @@
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::CPU {
@@ -92,8 +92,8 @@ namespace Rune::CPU {
      */
     struct Stack {
         void*             stack_bottom = nullptr; // First allocated stack page
-        LibK::VirtualAddr stack_top    = 0x0;     // Stack pointer
-        LibK::MemorySize  stack_size   = 0x0;     // Maximum stack size
+        VirtualAddr stack_top    = 0x0;     // Stack pointer
+        MemorySize  stack_size   = 0x0;     // Maximum stack size
     };
 
 
@@ -159,7 +159,7 @@ namespace Rune::CPU {
      * The thread struct contains general information about a running thread.
      */
     struct Thread {
-        static constexpr LibK::MemorySize KERNEL_STACK_SIZE = 32 * LibK::MemoryUnit::KiB;
+        static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
         // Unique ID of the thread
         U16 handle = 0;
@@ -173,13 +173,13 @@ namespace Rune::CPU {
         // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or syscall
         // It is dynamically allocated on the kernel heap and has a preconfigured fixed size
         U8*               kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
-        LibK::VirtualAddr kernel_stack_top    = 0x0;
+        VirtualAddr kernel_stack_top    = 0x0;
 
         // The user mode stack contains application data, is managed by an application.
         Stack user_stack;
 
         // Address of the base page table defining the threads virtual address space.
-        LibK::PhysicalAddr base_page_table_address = 0x0;
+        PhysicalAddr base_page_table_address = 0x0;
 
         /**
          * @brief ID of the mutex this thread is owning at the moment.
@@ -261,7 +261,7 @@ namespace Rune::CPU {
      */
     struct InterruptVector {
         const U8                vector = 0;   // The ID of the interrupt vector
-        const LibK::VirtualAddr handler_addr; // Virtual address of the function handling this interrupt vector
+        const VirtualAddr handler_addr; // Virtual address of the function handling this interrupt vector
         const PrivilegeLevel    level;        // The privilege level at which this interrupt can be manually triggered
         const bool              active;       // True: The interrupt handler is used, False: It is unused.
     };
@@ -321,7 +321,7 @@ namespace Rune::CPU {
          * @brief Write the current values of general purpose registers and CPU specific structures to the logger.
          * @param stream
          */
-        virtual void dump_core_state(const SharedPointer<LibK::TextStream>& stream) = 0;
+        virtual void dump_core_state(const SharedPointer<TextStream>& stream) = 0;
 
 
         /**

@@ -16,7 +16,7 @@
 
 #include <App/TerminalStream.h>
 
-#include <Hammer/Math.h>
+#include <KernelRuntime/Math.h>
 
 #include <CPU/Time/Timer.h>
 
@@ -47,7 +47,7 @@ namespace Rune::App {
                     U32         x       = (U32) state->cursor_sbb.column * state->font->pixel_width;
                     U32         y_start = (U32) screen_line * state->font->pixel_height;
                     U32         y_end   = y_start + state->font->pixel_height;
-                    LibK::Pixel c       = state->is_cursor_rendered ? state->default_bg_color : state->default_fg_color;
+                    Pixel c       = state->is_cursor_rendered ? state->default_bg_color : state->default_fg_color;
                     state->frame_buffer->draw_line({ x, y_start }, { x, y_end }, c, thickness);
                     state->is_cursor_rendered = !state->is_cursor_rendered;
                 }
@@ -79,7 +79,7 @@ namespace Rune::App {
     }
 
 
-    void TextLine::style_raw_text(LibK::Pixel bg_color, LibK::Pixel fg_color) {
+    void TextLine::style_raw_text(Pixel bg_color, Pixel fg_color) {
         if (styled_text.tail()->text.is_empty())
             return;
         styled_text.tail()->bg_color = bg_color;
@@ -325,7 +325,7 @@ namespace Rune::App {
     }
 
 
-    void TerminalStream::draw_char(char ch, U16 x, U16 y, LibK::Pixel bg_color, LibK::Pixel fg_color) const {
+    void TerminalStream::draw_char(char ch, U16 x, U16 y, Pixel bg_color, Pixel fg_color) const {
         _state.mutex->lock();
         _state.frame_buffer->draw_glyph(
                 _state.font,
@@ -339,7 +339,7 @@ namespace Rune::App {
     }
 
 
-    void TerminalStream::draw_cursor(const LibK::Pixel& color) const {
+    void TerminalStream::draw_cursor(const Pixel& color) const {
         // The cursor will be drawn in the first column of the glyph is, this is fine for most glyphs as they are padded
         // by at least on pixel and for the other case we do not care atm. In the pic the cursor is donated by the "C"
         // (yeah you guessed it right :)
@@ -744,11 +744,11 @@ namespace Rune::App {
 
 
     TerminalStream::TerminalStream(
-            CPU::Subsystem* cpu_subsys,
-            LibK::FrameBuffer* frame_buffer,
-            LibK::BitMapFont* font,
-            LibK::Pixel def_bg_color,
-            LibK::Pixel def_fg_color
+            CPU::CPUSubsystem* cpu_subsys,
+            FrameBuffer* frame_buffer,
+            BitMapFont* font,
+            Pixel def_bg_color,
+            Pixel def_fg_color
     ) : _cpu_subsys(cpu_subsys),
         _state(),
         _render_thread_ID(0),

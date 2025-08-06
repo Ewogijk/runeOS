@@ -16,7 +16,7 @@
 
 #include <SystemCall/MemoryBundle.h>
 
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Algorithm.h>
 
 #include <Ember/Ember.h>
 #include <Ember/MemoryBits.h>
@@ -35,8 +35,8 @@ namespace Rune::SystemCall {
 
         App::Info*              app       = mem_ctx->app_subsys->get_active_app();
         const Memory::PageTable base_pt   = Memory::get_base_page_table();
-        const LibK::MemorySize  page_size = Memory::get_page_size();
-        auto                    kv_addr   = static_cast<LibK::VirtualAddr>(v_addr);
+        const MemorySize  page_size = Memory::get_page_size();
+        auto                    kv_addr   = static_cast<VirtualAddr>(v_addr);
         if (kv_addr == 0) {
             // No specific memory location is requested -> The kernel selects where to map the pages
 
@@ -44,8 +44,8 @@ namespace Rune::SystemCall {
             // are large enough to fit the requested amount of memory.
             // This counter counts the number of consecutive pages in a heap gap.
             size_t            consecutive_free = 0;
-            LibK::VirtualAddr gap_start        = 0x0;
-            for (LibK::VirtualAddr c_addr = app->heap_start; c_addr < app->heap_limit; c_addr += page_size) {
+            VirtualAddr gap_start        = 0x0;
+            for (VirtualAddr c_addr = app->heap_start; c_addr < app->heap_limit; c_addr += page_size) {
                 if (Memory::PageTableAccess pta = Memory::find_page(base_pt, c_addr);
                     pta.status == Memory::PageTableAccessStatus::PAGE_TABLE_ENTRY_MISSING) {
                     // c_addr is not mapped -> This is a heap gap
@@ -71,8 +71,8 @@ namespace Rune::SystemCall {
         } else {
             // A specific memory location is requested -> Align the address to a page boundary (if needed) and verify
             // that the requested memory region does not intersect kernel memory
-            if (!LibK::memory_is_aligned(kv_addr, page_size))
-                kv_addr = LibK::memory_align(kv_addr, page_size, true);
+            if (!memory_is_aligned(kv_addr, page_size))
+                kv_addr = memory_align(kv_addr, page_size, true);
             if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
                 return Ember::Status::BAD_ARG;
         }
@@ -95,7 +95,7 @@ namespace Rune::SystemCall {
 
         if (!check_bit(page_protection, 1)) {
             // Memory was requested as readonly -> remove the write allowed flag
-            for (LibK::VirtualAddr c_addr = kv_addr; c_addr < kv_addr + num_pages * page_size; c_addr += page_size) {
+            for (VirtualAddr c_addr = kv_addr; c_addr < kv_addr + num_pages * page_size; c_addr += page_size) {
                 Memory::PageTableAccess pta = Memory::modify_page_flags(
                     base_pt,
                     c_addr,
@@ -106,7 +106,7 @@ namespace Rune::SystemCall {
                     return Ember::Status::FAULT;
             }
         }
-        if (LibK::VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
+        if (VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
             maybe_new_heap_limit > app->heap_limit)
             app->heap_limit = maybe_new_heap_limit;
 
@@ -119,20 +119,20 @@ namespace Rune::SystemCall {
         auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
         auto*       app     = mem_ctx->app_subsys->get_active_app();
 
-        const LibK::MemorySize page_size = Memory::get_page_size();
-        auto                   kv_addr   = static_cast<LibK::VirtualAddr>(v_addr);
+        const MemorySize page_size = Memory::get_page_size();
+        auto                   kv_addr   = static_cast<VirtualAddr>(v_addr);
 
         // Align the address to a page boundary (if needed) and verify that the requested memory region does not
         // intersect kernel memory
-        if (!LibK::memory_is_aligned(kv_addr, page_size))
-            kv_addr = LibK::memory_align(kv_addr, page_size, true);
+        if (!memory_is_aligned(kv_addr, page_size))
+            kv_addr = memory_align(kv_addr, page_size, true);
         if (!mem_ctx->k_guard->verify_user_buffer((void*)kv_addr, num_pages * page_size))
             return Ember::Status::BAD_ARG;
 
         if (!vmm->free(kv_addr, num_pages))
             return Ember::Status::FAULT;
 
-        if (const LibK::VirtualAddr mem_region_end = kv_addr + num_pages * page_size; mem_region_end == app->heap_limit)
+        if (const VirtualAddr mem_region_end = kv_addr + num_pages * page_size; mem_region_end == app->heap_limit)
             app->heap_limit                        = kv_addr;
 
         return Ember::Status::OKAY;

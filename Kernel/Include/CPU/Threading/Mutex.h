@@ -27,7 +27,7 @@ namespace Rune::CPU {
      */
     class Mutex {
         Scheduler* _scheduler;
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
 
 
         SharedPointer<Thread>             _owner;
@@ -39,7 +39,7 @@ namespace Rune::CPU {
 
     public:
 
-        // Per requirement of the "LibK::Column::make_handle_column_table" these properties must be publicly accessible
+        // Per requirement of the "Column::make_handle_column_table" these properties must be publicly accessible
         U16    handle;
         String name;
 
@@ -48,7 +48,7 @@ namespace Rune::CPU {
         Mutex();
 
 
-        Mutex(Scheduler* scheduler, SharedPointer<LibK::Logger> logger, String name);
+        Mutex(Scheduler* scheduler, SharedPointer<Logger> logger, String name);
 
 
         /**

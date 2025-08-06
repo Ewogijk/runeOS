@@ -33,8 +33,8 @@ namespace Rune::SystemCall {
      */
     struct MemorySystemCallContext {
         KernelGuardian   * k_guard    = nullptr;
-        Memory::Subsystem* mem_subsys = nullptr;
-        App::Subsystem   * app_subsys = nullptr;
+        Memory::MemorySubsystem* mem_subsys = nullptr;
+        App::AppSubsystem   * app_subsys = nullptr;
     };
 
 

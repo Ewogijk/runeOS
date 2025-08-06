@@ -22,8 +22,8 @@
 #include <Ember/Enum.h>
 #include <Ember/VFSBits.h>
 
-#include <Hammer/Collection.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/Path.h>
 
 
 namespace Rune::VFS {

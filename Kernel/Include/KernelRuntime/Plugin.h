@@ -18,12 +18,11 @@
 #define RUNEOS_PLUGIN_H
 
 
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Subsystem.h>
 
-#include <LibK/Subsystem.h>
 
-
-namespace Rune::LibK {
+namespace Rune {
 
     /**
      * Information about the Kernel Extension like it's unique name, vendor and version information.

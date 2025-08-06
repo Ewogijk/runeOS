@@ -47,7 +47,7 @@ namespace Rune::SystemCall {
 
         switch (VFS::IOStatus io_status = vfs_ctx->vfs_subsys->get_node_info(k_node_path, k_node_info_buf)) {
             case VFS::IOStatus::FOUND: {
-                const auto u_node_info = LibK::memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
+                const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
                 // The node info will only contain the node name -> set it to the path the caller has provided
                 if (!vfs_ctx->k_guard
                             ->copy_byte_buffer_kernel_to_user(

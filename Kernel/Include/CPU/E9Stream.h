@@ -18,12 +18,12 @@
 #define RUNEOS_E9STREAM_H
 
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 
 namespace Rune::CPU {
 
-    class E9Stream : public LibK::TextStream {
+    class E9Stream : public TextStream {
     public:
         bool is_read_supported() override;
 

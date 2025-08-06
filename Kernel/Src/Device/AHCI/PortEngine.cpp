@@ -18,7 +18,7 @@
 
 #include <Device/AHCI/GPT.h>
 
-#include <Hammer/Math.h>
+#include <KernelRuntime/Math.h>
 
 
 namespace Rune::Device {
@@ -63,7 +63,7 @@ namespace Rune::Device {
     }
 
 
-    bool PortEngine::scan_device(volatile HBAPort* port, SharedPointer<LibK::Logger> logger) {
+    bool PortEngine::scan_device(volatile HBAPort* port, SharedPointer<Logger> logger) {
         _port   = port;
         _logger = move(logger);
         DeviceDetection          dev_detect(_port->SSTS.DET);
@@ -110,14 +110,14 @@ namespace Rune::Device {
             return false;
         }
 
-        LibK::PhysicalAddr p_clb;
-        if (!Memory::virtual_to_physical_address(LibK::memory_pointer_to_addr(_system_memory->CL), p_clb)) {
+        PhysicalAddr p_clb;
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL), p_clb)) {
             _logger->error(FILE, "Failed to get physical address of command list...");
             return false;
         }
 
-        LibK::PhysicalAddr p_fb;
-        if (!Memory::virtual_to_physical_address(LibK::memory_pointer_to_addr(_system_memory->RFIS), p_fb)) {
+        PhysicalAddr p_fb;
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS), p_fb)) {
             _logger->error(FILE, "Failed to get physical address of received FIS...");
             return false;
         }
@@ -269,8 +269,8 @@ namespace Rune::Device {
         if (!request.internal_buf)
             return false;
 
-        LibK::PhysicalAddr p_internal_buf;
-        if (!Memory::virtual_to_physical_address(LibK::memory_pointer_to_addr(request.internal_buf), p_internal_buf))
+        PhysicalAddr p_internal_buf;
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(request.internal_buf), p_internal_buf))
             return false;
 
         CommandTable& ct = _system_memory->CT[slot];

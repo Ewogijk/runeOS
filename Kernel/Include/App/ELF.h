@@ -18,7 +18,7 @@
 #define RUNEOS_ELF_H
 
 #include <Ember/Ember.h>
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
 
 #include <Ember/Enum.h>
 

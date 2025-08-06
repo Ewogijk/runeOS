@@ -18,7 +18,7 @@
 #define RUNEOS_PIC_H
 
 
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
 
 
 namespace Rune::CPU {

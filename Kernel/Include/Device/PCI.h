@@ -154,7 +154,7 @@ namespace Rune::Device {
         }
 
 
-        static void check_device(AHCIDriver& ahci_driver, SharedPointer<LibK::Logger> logger, U8 bus, U8 device) {
+        static void check_device(AHCIDriver& ahci_driver, SharedPointer<Logger> logger, U8 bus, U8 device) {
             PCIHeader header = read_header(bus, device, 0);
             if (header.vendor_id == 0xFFFF)
                 return;
@@ -228,7 +228,7 @@ namespace Rune::Device {
         }
 
 
-        static void discover_devices(AHCIDriver& ahci_driver, SharedPointer<LibK::Logger> logger) {
+        static void discover_devices(AHCIDriver& ahci_driver, SharedPointer<Logger> logger) {
             for (int bus = 0; bus < 255; bus++) {
                 for (int device = 0; device < 32; device++) {
                     check_device(ahci_driver, logger, bus, device);

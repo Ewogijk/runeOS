@@ -18,7 +18,7 @@
 #define RUNEOS_VOIDSTREAM_H
 
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 
 namespace Rune::App {
@@ -26,9 +26,9 @@ namespace Rune::App {
     /**
      * @brief A stream that does not allow reading nor writing, it is equivalent to linux /dev/null.
      */
-    class VoidStream : public LibK::TextStream {
+    class VoidStream : public TextStream {
     public:
-        using LibK::TextStream::write;
+        using TextStream::write;
 
 
         bool is_read_supported() override;

@@ -16,7 +16,7 @@
 
 #include <App/AppSubsystem.h>
 
-#include <LibK/Lat15-Terminus16.h>
+#include <KernelRuntime/Lat15-Terminus16.h>
 
 #include <App/TerminalStream.h>
 #include <App/VoidStream.h>
@@ -32,7 +32,7 @@ namespace Rune::App {
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 
 
-    int Subsystem::schedule_for_start(
+    int AppSubsystem::schedule_for_start(
         const SharedPointer<Info>& app,
         const CPU::Stack&          user_stack,
         CPU::StartInfo*             start_info,
@@ -65,7 +65,7 @@ namespace Rune::App {
     }
 
 
-    SharedPointer<LibK::TextStream> Subsystem::setup_std_stream(
+    SharedPointer<TextStream> AppSubsystem::setup_std_stream(
         const SharedPointer<Info>& app,
         StdStream                  std_stream,
         const Rune::String&        target
@@ -91,7 +91,7 @@ namespace Rune::App {
                     return { }; // NONE -> return nullptr
             }
         } else if (t == "void") {
-            return SharedPointer<LibK::TextStream>(new VoidStream());
+            return SharedPointer<TextStream>(new VoidStream());
         } else if (t == "file") {
             if (arg.is_empty())
                 return { }; // No file provided
@@ -127,7 +127,7 @@ namespace Rune::App {
                 // The opened file will be added to the active app but should be added to the app to be started
                 _active_app->node_table.remove(node->handle);
                 app->node_table.add_back(node->handle);
-                return SharedPointer<LibK::TextStream>(new VFS::FileStream(node));
+                return SharedPointer<TextStream>(new VFS::FileStream(node));
             }
         } else if (t == "pipe") {
             // TODO implement pipes
@@ -136,8 +136,8 @@ namespace Rune::App {
     }
 
 
-    App::Subsystem::Subsystem() :
-        LibK::Subsystem(),
+    App::AppSubsystem::AppSubsystem() :
+        Subsystem(),
         _memory_subsys(nullptr),
         _cpu_subsys(nullptr),
         _vfs_subsys(nullptr),
@@ -148,24 +148,24 @@ namespace Rune::App {
         _active_app(nullptr) { }
 
 
-    String Subsystem::get_name() const {
+    String AppSubsystem::get_name() const {
         return "App";
     }
 
 
-    bool Subsystem::start(
-        const LibK::BootLoaderInfo&    boot_info,
-        const LibK::SubsystemRegistry& k_subsys_reg
+    bool AppSubsystem::start(
+        const BootLoaderInfo&    boot_info,
+        const SubsystemRegistry& k_subsys_reg
     ) {
-        _memory_subsys = k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY);
-        _cpu_subsys    = k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
-        _vfs_subsys    = k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
-        _dev_subsys    = k_subsys_reg.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
+        _memory_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
+        _cpu_subsys    = k_subsys_reg.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+        _vfs_subsys    = k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
+        _dev_subsys    = k_subsys_reg.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         _frame_buffer  = boot_info.framebuffer;
 
         // Setup app table
-        LinkedList<LibK::Column<Info>> at_cols;
-        at_cols.add_back(LibK::Column<Info>::make_handle_column_table(26));
+        LinkedList<Column<Info>> at_cols;
+        at_cols.add_back(Column<Info>::make_handle_column_table(26));
         at_cols.add_back(
             {
                 "Version",
@@ -415,7 +415,7 @@ namespace Rune::App {
         kernel_app->handle  = _app_handle_counter.acquire_handle();
 
         // This is a dummy app that will be removed hence the standard IO streams are attached to nothing
-        kernel_app->std_out = SharedPointer<LibK::TextStream>(new VoidStream());
+        kernel_app->std_out = SharedPointer<TextStream>(new VoidStream());
         kernel_app->std_err = kernel_app->std_out;
         kernel_app->std_in  = kernel_app->std_in;
 
@@ -442,12 +442,12 @@ namespace Rune::App {
     }
 
 
-    void Subsystem::set_logger(SharedPointer<LibK::Logger> logger) {
+    void AppSubsystem::set_logger(SharedPointer<Logger> logger) {
         _logger = logger;
     }
 
 
-    LinkedList<Info*> Subsystem::get_app_table() const {
+    LinkedList<Info*> AppSubsystem::get_app_table() const {
         LinkedList<Info*> apps;
         for (auto& app_entry : _app_table)
             apps.add_back(app_entry.value->get());
@@ -455,12 +455,12 @@ namespace Rune::App {
     }
 
 
-    Info* Subsystem::get_active_app() const {
+    Info* AppSubsystem::get_active_app() const {
         return _active_app.get();
     }
 
 
-    void Subsystem::dump_app_table(const SharedPointer<LibK::TextStream>& stream) const {
+    void AppSubsystem::dump_app_table(const SharedPointer<TextStream>& stream) const {
         auto it = _app_table.begin();
         _app_table_fmt.dump(
             stream,
@@ -476,13 +476,13 @@ namespace Rune::App {
     }
 
 
-    LoadStatus Subsystem::start_os(const Path& os_exec, const Path& working_directory) {
+    LoadStatus AppSubsystem::start_os(const Path& os_exec, const Path& working_directory) {
         if (!_app_handle_counter.has_more_handles())
             return LoadStatus::LOAD_ERROR;
         ELFLoader         loader(_memory_subsys, _vfs_subsys, _logger);
         auto              app = SharedPointer<Info>(new Info());
         CPU::Stack        user_stack;
-        LibK::VirtualAddr start_info_addr;
+        VirtualAddr start_info_addr;
         _logger->info(FILE, "Loading OS: {}", os_exec.to_string());
         char*       dummy_args[1] = {
             nullptr
@@ -494,31 +494,31 @@ namespace Rune::App {
         }
 
         // Hook up the OS stdin/stderr to the terminal stream that renders on the display
-        app->std_out = SharedPointer<LibK::TextStream>(
+        app->std_out = SharedPointer<TextStream>(
             new TerminalStream(
                 _cpu_subsys,
                 &_frame_buffer,
-                &LibK::LAT15TERMINUS16,
-                LibK::Pixie::BLACK,
-                LibK::Pixie::VSCODE_WHITE
+                &LAT15TERMINUS16,
+                Pixie::BLACK,
+                Pixie::VSCODE_WHITE
             )
         );
         // Set the error stream also to the terminal stream, just print text in red
         app->std_err = app->std_out;
         // Hook up the stdin to the keyboard
-        app->std_in = SharedPointer<LibK::TextStream>(_dev_subsys->get_keyboard().get());
+        app->std_in = SharedPointer<TextStream>(_dev_subsys->get_keyboard().get());
 
         schedule_for_start(
             app,
             user_stack,
-            LibK::memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
+            memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
             move(working_directory)
         );
         return LoadStatus::RUNNING;
     }
 
 
-    StartStatus Subsystem::start_new_app(
+    StartStatus AppSubsystem::start_new_app(
         const Path&   executable,
         char**        argv,
         const Path&   working_directory,
@@ -531,7 +531,7 @@ namespace Rune::App {
         ELFLoader         loader(_memory_subsys, _vfs_subsys, _logger);
         auto              app = SharedPointer<Info>(new Info());
         CPU::Stack        user_stack;
-        LibK::VirtualAddr start_info_addr;
+        VirtualAddr start_info_addr;
         _logger->info(FILE, "Loading executable: {}", executable.to_string());
         LoadStatus load_status = loader.load(executable, argv, app, user_stack, start_info_addr, false);
         if (load_status != LoadStatus::LOADED) {
@@ -551,7 +551,7 @@ namespace Rune::App {
             return {LoadStatus::BAD_STDIO, -1};
         }
 
-        SharedPointer<LibK::TextStream> std_err;
+        SharedPointer<TextStream> std_err;
         if (stdout_target == stderr_target) {
             // Point stderr to stdout
             std_err = std_out;
@@ -569,14 +569,14 @@ namespace Rune::App {
         int app_id   = schedule_for_start(
             app,
             user_stack,
-            LibK::memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
+            memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
             move(working_directory)
         );
         return {LoadStatus::RUNNING, app_id};
     }
 
 
-    void Subsystem::exit_running_app(int exit_code) {
+    void AppSubsystem::exit_running_app(int exit_code) {
         _active_app->exit_code = exit_code;
 
         // Close std io streams
@@ -630,7 +630,7 @@ namespace Rune::App {
     }
 
 
-    int Subsystem::join(int handle) {
+    int AppSubsystem::join(int handle) {
         // Important: We need to keep a copy of the shared pointer here, so that the app info does not get freed
         //              when the final context switch from its main thread to the next thread happens after it has
         //              exited, otherwise the info gets freed and it is no longer possible to access its exit code.

@@ -81,7 +81,7 @@ namespace Rune::SystemCall {
 
     Ember::StatusCode set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
         const auto* t_ctx   = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
-        auto*       tcb_ptr = LibK::memory_addr_to_pointer<void>(tcb);
+        auto*       tcb_ptr = memory_addr_to_pointer<void>(tcb);
         if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(void*)))
             return Ember::Status::BAD_ARG;
         t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;

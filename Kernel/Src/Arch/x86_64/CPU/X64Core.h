@@ -173,10 +173,10 @@ namespace Rune::CPU {
      * @param nVAS   Virtual address space of the next thread.
      */
     CLINK void context_switch_ass(
-        LibK::VirtualAddr* c_stack,
-        LibK::PhysicalAddr c_vas,
-        LibK::VirtualAddr  n_stack,
-        LibK::PhysicalAddr n_vas
+        VirtualAddr* c_stack,
+        PhysicalAddr c_vas,
+        VirtualAddr  n_stack,
+        PhysicalAddr n_vas
     );
 
 
@@ -247,7 +247,7 @@ namespace Rune::CPU {
         LinkedList<InterruptVector> get_interrupt_vector_table() override;
 
 
-        void dump_core_state(const SharedPointer<LibK::TextStream>& stream) override;
+        void dump_core_state(const SharedPointer<TextStream>& stream) override;
 
 
         void switch_to_thread(Thread* c_thread, Thread* n_thread) override;
@@ -266,7 +266,7 @@ namespace Rune::CPU {
         //                                      x64 core specific API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        void dump_core_state(const SharedPointer<LibK::TextStream>& stream, const x86CoreState& state);
+        void dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state);
     };
 }
 

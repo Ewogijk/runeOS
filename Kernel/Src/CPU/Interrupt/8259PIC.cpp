@@ -16,7 +16,7 @@
 
 #include <CPU/Interrupt/8259PIC.h>
 
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Algorithm.h>
 
 #include <CPU/IO.h>
 

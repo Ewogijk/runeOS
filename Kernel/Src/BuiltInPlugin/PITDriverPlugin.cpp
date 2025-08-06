@@ -22,7 +22,7 @@
 
 
 namespace Rune::BuiltInPlugin {
-    LibK::PluginInfo PIT_INFO = {
+    PluginInfo PIT_INFO = {
             "PIT",
             "Ewogijk",
             {
@@ -34,13 +34,13 @@ namespace Rune::BuiltInPlugin {
     };
 
 
-    LibK::PluginInfo PITDriverPlugin::get_info() const {
+    PluginInfo PITDriverPlugin::get_info() const {
         return PIT_INFO;
     }
 
 
-    bool PITDriverPlugin::start(const LibK::SubsystemRegistry& ks_registry) {
-        auto* cs = ks_registry.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
+    bool PITDriverPlugin::start(const SubsystemRegistry& ks_registry) {
+        auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
         cs->install_timer_driver(UniquePointer<CPU::Timer>(new CPU::PIT()));
 
         return true;

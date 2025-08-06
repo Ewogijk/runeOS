@@ -18,12 +18,12 @@
 #define RUNEOS_GPT_H
 
 
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 
 namespace Rune::Device {
@@ -125,11 +125,11 @@ namespace Rune::Device {
     };
 
 
-    GPTHeader gpt_scan_sector(U8* sector_buf, U32 sector_size, const SharedPointer <LibK::Logger>& logger);
+    GPTHeader gpt_scan_sector(U8* sector_buf, U32 sector_size, const SharedPointer <Logger>& logger);
 
 
     GPTScanResult gpt_scan_device(
-            const SharedPointer <LibK::Logger>& logger,
+            const SharedPointer <Logger>& logger,
             Function<size_t(U8[], size_t, U64)>& sector_reader,
             size_t sector_size
     );

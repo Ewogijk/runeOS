@@ -18,13 +18,11 @@
 #define RUNEOS_STREAM_H
 
 
-#include <Hammer/String.h>
-#include <Hammer/Memory.h>
-
-#include <LibK/FrameBuffer.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/FrameBuffer.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -37,8 +35,6 @@ namespace Rune::LibK {
      *          streams are files, the keyboard, monitor, sockets, etc.
      */
     class Stream {
-        SharedPointer<Stream> _next;
-
     public:
 
         virtual ~Stream() = default;
@@ -227,7 +223,7 @@ namespace Rune::LibK {
 
         /**
          * @brief First format the string then write it to the stream.
-         * @param format Template string.
+         * @param fmt Template string.
          * @param args   Varargs of template arguments.
          * @return The number of characters written.
          */

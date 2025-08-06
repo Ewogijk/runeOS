@@ -18,18 +18,18 @@
 #define RUNEOS_KERNELGUARDIAN_H
 
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::SystemCall {
     class KernelGuardian {
-        LibK::VirtualAddr _kernel_memory_start;
+        VirtualAddr _kernel_memory_start;
 
     public:
         KernelGuardian();
 
 
-        void set_kernel_memory_start(LibK::VirtualAddr kernel_memory_start);
+        void set_kernel_memory_start(VirtualAddr kernel_memory_start);
 
 
         /**

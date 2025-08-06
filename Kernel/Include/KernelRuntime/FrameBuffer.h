@@ -21,7 +21,7 @@
 #include <Ember/Ember.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
 
     /**
      * @brief An in memory declaration of a bitmap font, glyphs are encoded in a byte array.
@@ -136,12 +136,12 @@ namespace Rune::LibK {
          *
          * @param frame_buffer Bootloader provided framebuffer.
          */
-        static void set_global(FrameBuffer frame_buffer);
+        static void set_global(const FrameBuffer& frame_buffer);
 
 
         /**
          * 
-         * @return The boot loader provided framebuffer.
+         * @return The bootloader provided framebuffer.
          */
         static FrameBuffer* get_global();
 
@@ -200,7 +200,7 @@ namespace Rune::LibK {
          * @param fg_color Foreground color.
          * @param ch ASCII code.
          */
-        void draw_glyph(BitMapFont* font, U32 x, U32 y, Pixel bg_color, Pixel fg_color, char ch) const;
+        void draw_glyph(const BitMapFont* font, U32 x, U32 y, Pixel bg_color, Pixel fg_color, char ch) const;
 
 
         void draw_line(Coord2D start, Coord2D end, Pixel color, double thickness) const;

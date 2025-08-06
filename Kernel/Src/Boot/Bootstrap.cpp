@@ -19,9 +19,9 @@
 #include <Boot/Boot.h>
 #include <Boot/limine.h>
 
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Algorithm.h>
 
-#include <LibK/FrameBuffer.h>
+#include <KernelRuntime/FrameBuffer.h>
 
 #include <Memory/Paging.h>
 
@@ -68,34 +68,34 @@ int Rune::kernel_bootstrap() {
 
 
     // Create the physical memory map
-    LibK::MemoryRegion regions[LibK::MemoryMap::LIMIT];
+    MemoryRegion regions[MemoryMap::LIMIT];
     size_t             regions_end         = 0;
     U32                page_frame_boundary = Memory::get_page_size();
 
     // Convert limine memory map to memory regions
     for (size_t i = 0; i < LIMINE_MEM_MAP.response->entry_count; i++) {
-        if (regions_end >= LibK::MemoryMap::LIMIT)
+        if (regions_end >= MemoryMap::LIMIT)
             while (true) CPU::halt();
 
 
         auto* l_mem_map_entry = LIMINE_MEM_MAP.response->entries[i];
-        LibK::MemoryRegionType t = LibK::MemoryRegionType::NONE;
+        MemoryRegionType t = MemoryRegionType::NONE;
         switch (l_mem_map_entry->type) {
             case LIMINE_MEMMAP_USABLE:
-                t = LibK::MemoryRegionType::USABLE;
+                t = MemoryRegionType::USABLE;
                 break;
             case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
-                t = LibK::MemoryRegionType::BOOTLOADER_RECLAIMABLE;
+                t = MemoryRegionType::BOOTLOADER_RECLAIMABLE;
                 break;
             case LIMINE_MEMMAP_RESERVED:
             case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
             case LIMINE_MEMMAP_ACPI_NVS:
             case LIMINE_MEMMAP_BAD_MEMORY:
             case LIMINE_MEMMAP_FRAMEBUFFER:
-                t = LibK::MemoryRegionType::RESERVED;
+                t = MemoryRegionType::RESERVED;
                 break;
             case LIMINE_MEMMAP_KERNEL_AND_MODULES:
-                t = LibK::MemoryRegionType::KERNEL_CODE;
+                t = MemoryRegionType::KERNEL_CODE;
         }
         regions[regions_end++] = {
                 l_mem_map_entry->base,
@@ -107,13 +107,13 @@ int Rune::kernel_bootstrap() {
 
     // Fix overlapping memory regions
     for (size_t i = 0; i < regions_end; i++) {
-        LibK::MemoryRegion& current = regions[i];
+        MemoryRegion& current = regions[i];
         if (current.size == 0) {
             // MemoryRegion size is zero -> Delete
             array_delete(regions, i, regions_end);
             i--;
         } else if (i < (regions_end - 1)) {
-            LibK::MemoryRegion& next = regions[i + 1];
+            MemoryRegion& next = regions[i + 1];
             if (current.memory_type == next.memory_type
                 && (uintptr_t) current.start + current.size >= (uintptr_t) next.start) {
                 // Same type and overlapping -> Merge!
@@ -124,10 +124,10 @@ int Rune::kernel_bootstrap() {
                        && (uintptr_t) current.start + current.size >= (uintptr_t) next.start) {
                 // Different type and overlapping
                 U64 overlap = (uintptr_t) current.start + current.size - (uintptr_t) next.start;
-                if (current.memory_type != LibK::MemoryRegionType::USABLE) {
+                if (current.memory_type != MemoryRegionType::USABLE) {
                     // Current region is reserved, bootloader reclaimable or entry code
                     // Ensure reserved regions and the entry code region do not overlap
-                    if (overlap > 0 && next.memory_type == LibK::MemoryRegionType::KERNEL_CODE)
+                    if (overlap > 0 && next.memory_type == MemoryRegionType::KERNEL_CODE)
                         while (true) CPU::halt();
 
                     if (overlap < next.size) {
@@ -152,35 +152,35 @@ int Rune::kernel_bootstrap() {
         }
     }
 
-    for (size_t i = regions_end; i < LibK::MemoryMap::LIMIT; i++) {
+    for (size_t i = regions_end; i < MemoryMap::LIMIT; i++) {
         regions[i] = {
                 0x0,
                 0x0,
-                LibK::MemoryRegionType::NONE
+                MemoryRegionType::NONE
         };
     }
 
     // Fix alignment
     for (size_t     i = 0; i < regions_end; i++) {
-        LibK::MemoryRegion& current = regions[i];
+        MemoryRegion& current = regions[i];
         // Ignore if last region is not aligned, because to be aligned the end of the region must overflow
         // which we do not want (e.g. 0xFFFFFFFF should be 0x0)
-        if (!LibK::memory_is_aligned(current.end(), page_frame_boundary) && i < (regions_end - 1)) {
-            LibK::MemoryRegion& next = regions[i + 1];
+        if (!memory_is_aligned(current.end(), page_frame_boundary) && i < (regions_end - 1)) {
+            MemoryRegion& next = regions[i + 1];
             if (current.end() != next.start) {
                 // Gap between regions
-                LibK::PhysicalAddr aligned_end = LibK::memory_align(
+                PhysicalAddr aligned_end = memory_align(
                         current.end(),
                         page_frame_boundary,
-                        current.memory_type != LibK::MemoryRegionType::USABLE
+                        current.memory_type != MemoryRegionType::USABLE
                 );
                 current.size = aligned_end - current.start;
             } else {
                 // Adjacent regions
-                LibK::PhysicalAddr aligned_end = LibK::memory_align(
+                PhysicalAddr aligned_end = memory_align(
                         current.end(),
                         page_frame_boundary,
-                        next.memory_type == LibK::MemoryRegionType::USABLE
+                        next.memory_type == MemoryRegionType::USABLE
                 );
                 U32                diff        = aligned_end - current.end();
                 current.size += diff;
@@ -189,19 +189,19 @@ int Rune::kernel_bootstrap() {
             }
         }
     }
-    LibK::MemoryMap p_map(regions);
+    MemoryMap p_map(regions);
 
     // Create framebuffer
     if (LIMINE_FRAME_BUFFERS.response == nullptr)
         while (true) CPU::halt();
 
-    LibK::FrameBuffer frame_buffer;
+    FrameBuffer frame_buffer;
     if (LIMINE_FRAME_BUFFERS.response->framebuffer_count == 0)
         while (true) CPU::halt();
 
     for (U64 i = 0; i < LIMINE_FRAME_BUFFERS.response->framebuffer_count; i++) {
         limine_framebuffer* fb = LIMINE_FRAME_BUFFERS.response->framebuffers[i];
-        auto addr             = (LibK::VirtualAddr) (uintptr_t)
+        auto addr             = (VirtualAddr) (uintptr_t)
                 fb->address;
         U64  width            = fb->width;
         U64  height           = fb->height;
@@ -211,7 +211,7 @@ int Rune::kernel_bootstrap() {
         U8   green_mask_shift = fb->green_mask_shift;
         U8   blue_mask_shift  = fb->blue_mask_shift;
 
-        frame_buffer = LibK::FrameBuffer(
+        frame_buffer = FrameBuffer(
                 reinterpret_cast<U8*>(addr),
                 width,
                 height,

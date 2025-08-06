@@ -29,17 +29,17 @@ namespace Rune::Memory {
 
     KernelSpaceEntryAllocResult VirtualMemoryManager::allocate_kernel_space_entries(
             const Memory::PageTable& base_pt,
-            LibK::VirtualAddr v_start,
-            const LibK::MemoryRegion& p_reg,
+            VirtualAddr v_start,
+            const MemoryRegion& p_reg,
             U16 flags,
-            LibK::MemoryRegionType claim_type,
-            LibK::MemoryMap* v_map,
+            MemoryRegionType claim_type,
+            MemoryMap* v_map,
             const char* region_name
     ) {
-        LibK::MemorySize      page_size   = get_page_size();
-        LibK::MemorySize      alloc_limit = 0;
+        MemorySize      page_size   = get_page_size();
+        MemorySize      alloc_limit = 0;
         PageTableAccess       alloc_pta;
-        for (LibK::MemorySize i           = 0; i < p_reg.size; i += page_size) {
+        for (MemorySize i           = 0; i < p_reg.size; i += page_size) {
             alloc_pta = allocate_page(base_pt, v_start + i, p_reg.start + i, flags, _pmm);
             if (alloc_pta.status != PageTableAccessStatus::OKAY) {
                 alloc_limit = i;
@@ -49,7 +49,7 @@ namespace Rune::Memory {
         PageTableAccess       free_pta;
         free_pta.status = PageTableAccessStatus::OKAY;
         if (alloc_limit > 0) {
-            for (LibK::MemorySize i = 0; i < alloc_limit; i += page_size) {
+            for (MemorySize i = 0; i < alloc_limit; i += page_size) {
                 free_pta = free_page(base_pt, v_start + i, _pmm);
                 if (free_pta.status != PageTableAccessStatus::OKAY)
                     break;
@@ -64,7 +64,7 @@ namespace Rune::Memory {
             };
         }
 
-        LibK::MemoryRegion r = {
+        MemoryRegion r = {
                 v_start,
                 p_reg.size,
                 claim_type
@@ -122,13 +122,13 @@ namespace Rune::Memory {
 
 
     VMMStartFailure VirtualMemoryManager::start(
-            LibK::MemoryMap* p_map,
-            LibK::MemoryMap* v_map,
+            MemoryMap* p_map,
+            MemoryMap* v_map,
             KernelSpaceLayout k_space_layout,
-            LibK::MemorySize heap_size
+            MemorySize heap_size
     ) {
         U16                p_flags = PageFlag::PRESENT | PageFlag::WRITE_ALLOWED;
-        LibK::PhysicalAddr base_pt_addr;
+        PhysicalAddr base_pt_addr;
         if (!_pmm->allocate(base_pt_addr)) {
             _start_fail = VMMStartFailure::BASE_PT_ALLOC_FAIL;
             return _start_fail;
@@ -136,23 +136,23 @@ namespace Rune::Memory {
         memset((void*) physical_to_virtual_address(base_pt_addr), 0, get_page_size()); // Also initializes user space
         auto base_pt = interp_as_base_page_table(base_pt_addr);
 
-        LibK::MemoryRegion kernel_code;
-        LibK::MemorySize   hhdm_size = 0x0;
+        MemoryRegion kernel_code;
+        MemorySize   hhdm_size = 0x0;
         for (auto& reg: *p_map) {
-            if (reg.memory_type == LibK::MemoryRegionType::KERNEL_CODE)
+            if (reg.memory_type == MemoryRegionType::KERNEL_CODE)
                 kernel_code = reg;
             if (reg.end() > hhdm_size)
                 hhdm_size   = reg.end();
         }
 
         // Create higher half direct map kernel space entries
-        LibK::MemoryRegion          hhdm  = { 0x0, hhdm_size };
+        MemoryRegion          hhdm  = { 0x0, hhdm_size };
         KernelSpaceEntryAllocResult ksear = allocate_kernel_space_entries(
                 base_pt,
                 k_space_layout.higher_half_direct_map,
                 hhdm,
                 p_flags,
-                LibK::MemoryRegionType::HHDM,
+                MemoryRegionType::HHDM,
                 v_map,
                 "Higher Half Direct Map"
         );
@@ -163,13 +163,13 @@ namespace Rune::Memory {
         }
 
         // Create PMM reserved kernel space entries
-        LibK::MemoryRegion pmm_bk = _pmm->get_memory_index_region();
+        MemoryRegion pmm_bk = _pmm->get_memory_index_region();
         ksear = allocate_kernel_space_entries(
                 base_pt,
                 k_space_layout.pmm_reserved,
                 pmm_bk,
                 p_flags,
-                LibK::MemoryRegionType::PMM_RESERVED,
+                MemoryRegionType::PMM_RESERVED,
                 v_map,
                 "Physical Memory Manager"
         );
@@ -180,10 +180,10 @@ namespace Rune::Memory {
         }
 
         // No page frame allocation because the heap grows dynamically
-        LibK::MemoryRegion kernel_heap = {
+        MemoryRegion kernel_heap = {
                 k_space_layout.kernel_heap,
                 heap_size,
-                LibK::MemoryRegionType::KERNEL_HEAP
+                MemoryRegionType::KERNEL_HEAP
         };
         if (!v_map->claim(kernel_heap, get_page_size())) {
             _start_fail = VMMStartFailure::KERNEL_HEAP_MAPPING_FAIL;
@@ -203,7 +203,7 @@ namespace Rune::Memory {
                 k_space_layout.kernel_code,
                 kernel_code,
                 p_flags,
-                LibK::MemoryRegionType::KERNEL_CODE,
+                MemoryRegionType::KERNEL_CODE,
                 v_map,
                 "Kernel Code"
         );
@@ -214,7 +214,7 @@ namespace Rune::Memory {
         }
 
         for (auto& reg: *v_map) {
-            if (reg.memory_type == LibK::MemoryRegionType::USERSPACE) {
+            if (reg.memory_type == MemoryRegionType::USERSPACE) {
                 _user_space_end = Memory::to_canonical_form(reg.end());
                 break;
             }
@@ -225,18 +225,18 @@ namespace Rune::Memory {
     }
 
 
-    void VirtualMemoryManager::set_logger(SharedPointer<LibK::Logger> logger) {
+    void VirtualMemoryManager::set_logger(SharedPointer<Logger> logger) {
         _logger = move(logger);
     }
 
 
-    LibK::VirtualAddr VirtualMemoryManager::get_user_space_end() const {
+    VirtualAddr VirtualMemoryManager::get_user_space_end() const {
         return _user_space_end;
     }
 
 
-    bool VirtualMemoryManager::allocate_virtual_address_space(LibK::PhysicalAddr& base_pt_addr) {
-        LibK::PhysicalAddr base_addr;
+    bool VirtualMemoryManager::allocate_virtual_address_space(PhysicalAddr& base_pt_addr) {
+        PhysicalAddr base_addr;
         if (!_pmm->allocate(base_addr)) {
             _logger->critical(FILE, "L0 page table allocation error.");
             return false;
@@ -260,12 +260,12 @@ namespace Rune::Memory {
     }
 
 
-    bool VirtualMemoryManager::free_virtual_address_space(LibK::PhysicalAddr base_pt_addr) {
+    bool VirtualMemoryManager::free_virtual_address_space(PhysicalAddr base_pt_addr) {
         return free_virtual_address_space_rec(interp_as_base_page_table(base_pt_addr).to_page_table_entry());
     }
 
 
-    void VirtualMemoryManager::load_virtual_address_space(LibK::PhysicalAddr base_pt_addr) {
+    void VirtualMemoryManager::load_virtual_address_space(PhysicalAddr base_pt_addr) {
         if (base_pt_addr != get_base_page_table_address()) {
             PageTable   new_base_pt    = interp_as_base_page_table(base_pt_addr);
             PageTable   loaded_base_pt = get_base_page_table();
@@ -278,8 +278,8 @@ namespace Rune::Memory {
     }
 
 
-    bool VirtualMemoryManager::allocate(LibK::VirtualAddr v_addr, U16 flags) {
-        LibK::PhysicalAddr pAddr;
+    bool VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags) {
+        PhysicalAddr pAddr;
         if (!_pmm->allocate(pAddr)) {
             _logger->warn(FILE, "Page allocation fail: Out of physical memory for page.");
             return false;
@@ -296,8 +296,8 @@ namespace Rune::Memory {
     }
 
 
-    bool VirtualMemoryManager::allocate(LibK::VirtualAddr v_addr, U16 flags, size_t pages) {
-        LibK::MemorySize page_size  = get_page_size();
+    bool VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags, size_t pages) {
+        MemorySize page_size  = get_page_size();
         size_t           alloc_fail = 0;
         for (size_t      i          = 0; i < pages; i++) {
             if (!allocate(v_addr + (i * page_size), flags)) {
@@ -325,7 +325,7 @@ namespace Rune::Memory {
     }
 
 
-    bool VirtualMemoryManager::free(LibK::VirtualAddr v_addr) {
+    bool VirtualMemoryManager::free(VirtualAddr v_addr) {
         PageTable       base_pt = get_base_page_table();
         PageTableAccess pta     = free_page(base_pt, v_addr, _pmm);
         if (pta.status == PageTableAccessStatus::FREE_ERROR) {
@@ -336,8 +336,8 @@ namespace Rune::Memory {
     }
 
 
-    bool VirtualMemoryManager::free(LibK::VirtualAddr v_addr, size_t pages) {
-        LibK::MemorySize page_size = get_page_size();
+    bool VirtualMemoryManager::free(VirtualAddr v_addr, size_t pages) {
+        MemorySize page_size = get_page_size();
         bool             all_free  = true;
         for (size_t      i         = 0; i < pages; i++) {
             if (!free(v_addr + (i * page_size))) {

@@ -38,10 +38,10 @@ namespace Rune::SystemCall {
      */
     struct AppSystemCallContext {
         KernelGuardian*    k_guard       = nullptr;
-        App::Subsystem*    app_subsys    = nullptr;
-        Device::Subsystem* device_subsys = nullptr;
-        CPU::Subsystem*    cpu_subsys    = nullptr;
-        VFS::Subsystem*    vfs_subsys    = nullptr;
+        App::AppSubsystem*    app_subsys    = nullptr;
+        Device::DeviceSubsystem* device_subsys = nullptr;
+        CPU::CPUSubsystem*    cpu_subsys    = nullptr;
+        VFS::VFSSubsystem*    vfs_subsys    = nullptr;
     };
 
 

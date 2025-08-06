@@ -18,7 +18,7 @@
 
 
 namespace Rune {
-    FancyLogFormatter::FancyLogFormatter(CPU::Subsystem* cpu_subsys, App::Subsystem* app_subsys)
+    FancyLogFormatter::FancyLogFormatter(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys)
             : _cpu_subsys(cpu_subsys),
               _app_subsys(app_subsys) {
 
@@ -26,7 +26,7 @@ namespace Rune {
 
 
     String FancyLogFormatter::format_log_message(
-            LibK::LogLevel log_level,
+            LogLevel log_level,
             const String& module,
             const String& log_msg_tmpl,
             Argument* arg_list,
@@ -35,6 +35,6 @@ namespace Rune {
         auto r_thread = _cpu_subsys->get_scheduler()->get_running_thread();
         App::Info* r_app = _app_subsys->get_active_app();
         return String::format("[{}] [{}] [{}] [{}] ", log_level.to_string(), module, r_app->name, r_thread->name) +
-               String::format(log_msg_tmpl, arg_list, arg_size);
+               String::format(log_msg_tmpl, static_cast<const Argument*>(arg_list), arg_size);
     }
 }

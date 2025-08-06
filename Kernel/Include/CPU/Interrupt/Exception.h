@@ -19,9 +19,9 @@
 
 
 #include <Ember/Enum.h>
-#include <Hammer/Utility.h>
+#include <KernelRuntime/Utility.h>
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 #include <CPU/CPU.h>
 
@@ -101,7 +101,7 @@ namespace Rune::CPU {
      *          exception has no installed handler.
      * @param panic_stream Output stream
      */
-    void exception_install_panic_stream(SharedPointer<LibK::TextStream> panic_stream);
+    void exception_install_panic_stream(SharedPointer<TextStream> panic_stream);
 
 
     /**

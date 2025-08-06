@@ -19,10 +19,10 @@
 
 
 #include <Ember/Enum.h>
-#include <Hammer/Utility.h>
+#include <KernelRuntime/Utility.h>
 
-#include <LibK/Logging.h>
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Logging.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::Memory {
@@ -50,31 +50,31 @@ namespace Rune::Memory {
 
 
     protected:
-        U64                _page_size;    // LibK::MemSize of a page frame
-        LibK::PhysicalAddr _mem_base;     // Address of the memory start
+        U64                _page_size;    // MemSize of a page frame
+        PhysicalAddr _mem_base;     // Address of the memory start
         U32                _mem_size;     // Memory size in page frames
-        LibK::MemoryMap* _mem_map;              // Memory map, required for memory protection
+        MemoryMap* _mem_map;              // Memory map, required for memory protection
         bool _init;
 
         PMMStartFailure _start_fail;
         U32             _largest_free_block;
 
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
 
 
-        [[nodiscard]] PageFrameIndex to_page_frame(LibK::PhysicalAddr addr) const;
+        [[nodiscard]] PageFrameIndex to_page_frame(PhysicalAddr addr) const;
 
 
-        [[nodiscard]] PageFrameIndex to_page_frame_round_up(LibK::PhysicalAddr addr) const;
+        [[nodiscard]] PageFrameIndex to_page_frame_round_up(PhysicalAddr addr) const;
 
 
-        [[nodiscard]] LibK::PhysicalAddr to_address(PageFrameIndex page_frame) const;
+        [[nodiscard]] PhysicalAddr to_address(PageFrameIndex page_frame) const;
 
 
-        virtual LibK::MemorySize compute_memory_index_size() = 0;
+        virtual MemorySize compute_memory_index_size() = 0;
 
 
-        virtual bool init0(LibK::VirtualAddr memory_index, LibK::PhysicalAddr p_memory_index) = 0;
+        virtual bool init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) = 0;
 
 
     public:
@@ -102,9 +102,9 @@ namespace Rune::Memory {
          * @return True if the each step of the initialization was successful.
          */
         [[nodiscard]] PMMStartFailure start(
-                LibK::MemoryMap* mem_map,
+                MemoryMap* mem_map,
                 U64 page_size,
-                LibK::VirtualAddr memory_index_offset
+                VirtualAddr memory_index_offset
         );
 
 
@@ -112,7 +112,7 @@ namespace Rune::Memory {
          *
          * @param logger
          */
-        void set_logger(SharedPointer<LibK::Logger> logger);
+        void set_logger(SharedPointer<Logger> logger);
 
 
         /**
@@ -125,7 +125,7 @@ namespace Rune::Memory {
          *
          * @return The managed physical memory region.
          */
-        LibK::MemoryRegion get_managed_memory() const;
+        MemoryRegion get_managed_memory() const;
 
 
         /**
@@ -134,14 +134,14 @@ namespace Rune::Memory {
          *
          * @return The physical memory region where the memory index is saved.
          */
-        [[nodiscard]] virtual LibK::MemoryRegion get_memory_index_region() const = 0;
+        [[nodiscard]] virtual MemoryRegion get_memory_index_region() const = 0;
 
 
         /**
          *
          * @return The virtual address where the memory index can be accessed.
          */
-        [[nodiscard]] virtual LibK::VirtualAddr get_memory_index() const = 0;
+        [[nodiscard]] virtual VirtualAddr get_memory_index() const = 0;
 
 
         /**
@@ -149,7 +149,7 @@ namespace Rune::Memory {
          *
          * @param memory_index Start address of the memory region where memory index can be accessed.
          */
-        virtual void relocate_memory_index(LibK::VirtualAddr memory_index) = 0;
+        virtual void relocate_memory_index(VirtualAddr memory_index) = 0;
 
 
         /**
@@ -167,7 +167,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if not enough physical memory is available.
          */
-        bool allocate(LibK::PhysicalAddr& p_addr);
+        bool allocate(PhysicalAddr& p_addr);
 
 
         /**
@@ -179,7 +179,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if not enough physical memory is available.
          */
-        virtual bool allocate(LibK::PhysicalAddr& pAddr, size_t frames) = 0;
+        virtual bool allocate(PhysicalAddr& pAddr, size_t frames) = 0;
 
 
         /**
@@ -189,7 +189,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if not enough physical memory is available.
          */
-        bool allocate_explicit(LibK::PhysicalAddr p_addr);
+        bool allocate_explicit(PhysicalAddr p_addr);
 
 
         /**
@@ -201,7 +201,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if not enough physical memory is available.
          */
-        virtual bool allocate_explicit(LibK::PhysicalAddr pAddr, size_t frames) = 0;
+        virtual bool allocate_explicit(PhysicalAddr pAddr, size_t frames) = 0;
 
 
         /**
@@ -211,7 +211,7 @@ namespace Rune::Memory {
          *
          * @return True if the free succeeded, false if not enough physical memory is available.
          */
-        bool free(LibK::PhysicalAddr p_addr);
+        bool free(PhysicalAddr p_addr);
 
 
         /**
@@ -221,7 +221,7 @@ namespace Rune::Memory {
          *
          * @return True if the free succeeded, false if not enough physical memory is available.
          */
-        virtual bool free(LibK::PhysicalAddr p_addr, size_t frames) = 0;
+        virtual bool free(PhysicalAddr p_addr, size_t frames) = 0;
 
 
         /**
@@ -247,10 +247,10 @@ namespace Rune::Memory {
          * @return Number regions read into the buffer.
          */
         virtual size_t read_page_frame_states(
-                LibK::MemoryRegion* buf,
+                MemoryRegion* buf,
                 size_t buf_size,
-                LibK::PhysicalAddr start,
-                LibK::PhysicalAddr end
+                PhysicalAddr start,
+                PhysicalAddr end
         ) = 0;
     };
 }

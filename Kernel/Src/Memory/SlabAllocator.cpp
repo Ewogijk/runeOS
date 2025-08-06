@@ -33,7 +33,7 @@ namespace Rune::Memory {
 //
 ////////////////////////////////////////////////////////////////////////
 
-    Slab* Slab::create_on_slab(size_t object_size, LibK::VirtualAddr page) {
+    Slab* Slab::create_on_slab(size_t object_size, VirtualAddr page) {
         size_t objects = (get_page_size() - sizeof(Slab)) / object_size;
         if (objects > MAX_OBJECT_COUNT)
             objects = MAX_OBJECT_COUNT;
@@ -48,7 +48,7 @@ namespace Rune::Memory {
             // don't care about wastage update
         }
 
-        auto* slab = LibK::memory_addr_to_pointer<Slab>(page + get_page_size() - sizeof(Slab));
+        auto* slab = memory_addr_to_pointer<Slab>(page + get_page_size() - sizeof(Slab));
         slab->next = nullptr;
         slab->prev = nullptr;
 
@@ -59,7 +59,7 @@ namespace Rune::Memory {
         slab->slab_size       = get_page_size();
 
         // Init free list
-        auto* free_list = LibK::memory_addr_to_pointer<U8>(page + get_page_size() - sizeof(Slab) - free_list_size);
+        auto* free_list = memory_addr_to_pointer<U8>(page + get_page_size() - sizeof(Slab) - free_list_size);
         slab->free_buf.free_object = 0;
         for (size_t i = 0; i < objects - 1; i++)
             free_list[i]       = i + 1;
@@ -76,7 +76,7 @@ namespace Rune::Memory {
             ObjectCache* object_buf_node_cache,
             ObjectBufNodeHashMap* object_buf_node_hashmap,
             size_t object_size,
-            LibK::VirtualAddr page,
+            VirtualAddr page,
             size_t slab_size
     ) {
         Slab* slab = (Slab*) slab_cache->allocate();
@@ -119,8 +119,8 @@ namespace Rune::Memory {
         if (allocated_count == object_count)
             return nullptr;
 
-        auto* obj       = LibK::memory_addr_to_pointer<void>(LibK::memory_pointer_to_addr(page) + free_buf.free_object * object_size);
-        auto* free_list = LibK::memory_addr_to_pointer<U8>(LibK::memory_pointer_to_addr(this) - object_count);
+        auto* obj       = memory_addr_to_pointer<void>(memory_pointer_to_addr(page) + free_buf.free_object * object_size);
+        auto* free_list = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
         free_buf.free_object = free_list[free_buf.free_object];
         allocated_count++;
         return obj;
@@ -144,8 +144,8 @@ namespace Rune::Memory {
         if (allocated_count == 0)
             return false;
 
-        size_t obj_idx = (LibK::memory_pointer_to_addr(obj) - LibK::memory_pointer_to_addr(page)) / object_size;
-        auto* free_list = LibK::memory_addr_to_pointer<U8>(LibK::memory_pointer_to_addr(this) - object_count);
+        size_t obj_idx = (memory_pointer_to_addr(obj) - memory_pointer_to_addr(page)) / object_size;
+        auto* free_list = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
         free_list[obj_idx] = free_buf.free_object;
         free_buf.free_object = obj_idx;
         allocated_count--;
@@ -231,18 +231,18 @@ namespace Rune::Memory {
 
 
     bool ObjectCache::grow() {
-        LibK::VirtualAddr page         = _free_page_list ? _free_page_list->mem_addr : _limit;
+        VirtualAddr page         = _free_page_list ? _free_page_list->mem_addr : _limit;
         size_t            aligned_size = _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
         size_t            slab_size    = aligned_size;
-        if (!LibK::memory_is_aligned(slab_size, Memory::get_page_size()))
-            slab_size = LibK::memory_align(aligned_size, Memory::get_page_size(), true);
+        if (!memory_is_aligned(slab_size, Memory::get_page_size()))
+            slab_size = memory_align(aligned_size, Memory::get_page_size(), true);
 
         if ((page + slab_size) >= _managed.end())
             return false;
 
         bool                   all_fine   = true;
-        LibK::VirtualAddr      last_alloc = 0x0;
-        for (LibK::VirtualAddr i          = page; i < page + slab_size; i += Memory::get_page_size()) {
+        VirtualAddr      last_alloc = 0x0;
+        for (VirtualAddr i          = page; i < page + slab_size; i += Memory::get_page_size()) {
             if (!_vmm->allocate(i, _page_flags)) {
                 all_fine   = false;
                 last_alloc = i;
@@ -250,7 +250,7 @@ namespace Rune::Memory {
             }
         }
         if (!all_fine) {
-            for (LibK::VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size())
+            for (VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size())
                 if (!_vmm->free(i))
                     break;
             return false;
@@ -303,7 +303,7 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemoryRegion ObjectCache::get_managed() const {
+    MemoryRegion ObjectCache::get_managed() const {
         return _managed;
     }
 
@@ -316,7 +316,7 @@ namespace Rune::Memory {
     int8_t ObjectCache::init(
             VirtualMemoryManager* vmm,
             ObjectCache* memory_node_cache,
-            LibK::MemoryRegion managed,
+            MemoryRegion managed,
             U16 page_flags,
             ObjectCache* object_buf_node_cache,
             ObjectBufNodeHashMap* object_buf_node_hash_map,
@@ -379,9 +379,9 @@ namespace Rune::Memory {
         size_t old_alloc_count  = 0;
         bool   slab_has_changed = false;
         if (_type == CacheType::ON_SLAB) {
-            auto page = LibK::memory_pointer_to_addr(obj) >> 12 << 12; //TODO add function to get page of address??
-            slab = LibK::memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
-            if (slab->page != LibK::memory_addr_to_pointer<void>(page))
+            auto page = memory_pointer_to_addr(obj) >> 12 << 12; //TODO add function to get page of address??
+            slab = memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
+            if (slab->page != memory_addr_to_pointer<void>(page))
                 return;
 
             old_alloc_count  = slab->allocated_count;
@@ -431,8 +431,8 @@ namespace Rune::Memory {
         else
             obj_count = _full_list->object_count;
 
-        LibK::VirtualAddr page = (_managed.start + (idx / obj_count) * Memory::get_page_size());
-        return LibK::memory_addr_to_pointer<void>(page + (idx % obj_count) * _object_size);
+        VirtualAddr page = (_managed.start + (idx / obj_count) * Memory::get_page_size());
+        return memory_addr_to_pointer<void>(page + (idx % obj_count) * _object_size);
     }
 
 
@@ -444,7 +444,7 @@ namespace Rune::Memory {
             _object_buf_node_hash_map->destroy(_object_buf_node_cache);
         }
 
-        for (LibK::VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size())
+        for (VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size())
             _vmm->free(addr);
 
         _vmm               = nullptr;
@@ -623,7 +623,7 @@ namespace Rune::Memory {
         if (force_off_slab && obj_size >= Memory::get_page_size() / 8)
             return -2;
 
-        LibK::MemoryRegion region = {
+        MemoryRegion region = {
                 _free_list ? _free_list->mem_addr : _limit,
                 CACHE_SIZE
         };
@@ -681,16 +681,16 @@ namespace Rune::Memory {
 
 
     HeapStartFailureCode SlabAllocator::start(
-            LibK::MemoryMap* v_map,
+            MemoryMap* v_map,
             VirtualMemoryManager* vmm
     ) {
         for (auto& reg: *v_map) {
-            if (reg.memory_type == LibK::MemoryRegionType::KERNEL_HEAP) {
+            if (reg.memory_type == MemoryRegionType::KERNEL_HEAP) {
                 _heap_memory = reg;
                 break;
             }
         }
-        if (_heap_memory.memory_type == LibK::MemoryRegionType::NONE) {
+        if (_heap_memory.memory_type == MemoryRegionType::NONE) {
             _start_failure_code = HeapStartFailureCode::HEAP_NOT_MAPPED;
             return _start_failure_code;
         }
@@ -809,8 +809,8 @@ namespace Rune::Memory {
 
 
     void SlabAllocator::free(void* obj) {
-        size_t cache_idx = (LibK::memory_align(
-                LibK::memory_pointer_to_addr(obj),
+        size_t cache_idx = (memory_align(
+                memory_pointer_to_addr(obj),
                 CACHE_SIZE,
                 false
         ) - _heap_memory.start) / CACHE_SIZE;
@@ -847,7 +847,7 @@ namespace Rune::Memory {
 
 
     void SlabAllocator::destroy_cache(Memory::ObjectCache* cache) {
-        LibK::VirtualAddr m_start = cache->get_managed().start;
+        VirtualAddr m_start = cache->get_managed().start;
         auto* mem_node = reinterpret_cast<MemoryNode*>(_memory_node_cache.allocate());
         if (!mem_node)
             return; // TODO log error

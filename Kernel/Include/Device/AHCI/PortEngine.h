@@ -20,7 +20,7 @@
 
 #include <Device/AHCI/Port.h>
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 #include <Memory/SlabAllocator.h>
 
@@ -38,7 +38,7 @@ namespace Rune::Device {
     };
 
     struct Request {
-        static constexpr LibK::MemorySize INTERNAL_BUF_SIZE = 8192;
+        static constexpr MemorySize INTERNAL_BUF_SIZE = 8192;
 
         void* internal_buf = nullptr;
         void* buf          = nullptr;
@@ -118,7 +118,7 @@ namespace Rune::Device {
         volatile HBAPort   * _port;
         Memory::ObjectCache* _internal_buf_cache;
         SystemMemory       * _system_memory;
-        SharedPointer <LibK::Logger> _logger;
+        SharedPointer <Logger> _logger;
 
         bool      _s64_a;
         Request   _request_table[SystemMemory::COMMAND_LIST_SIZE];
@@ -137,7 +137,7 @@ namespace Rune::Device {
         [[nodiscard]] bool is_active() const;
 
 
-        bool scan_device(volatile HBAPort* port, SharedPointer <LibK::Logger> logger);
+        bool scan_device(volatile HBAPort* port, SharedPointer <Logger> logger);
 
 
         bool start(

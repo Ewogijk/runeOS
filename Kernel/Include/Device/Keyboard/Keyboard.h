@@ -20,7 +20,7 @@
 
 #include <Ember/Ember.h>
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 
 namespace Rune::Device {
@@ -29,7 +29,7 @@ namespace Rune::Device {
      * @brief The virtual keyboard maps physical keyboard scancodes to virtual keycodes and provides them to the system
      *          as a stream.
      */
-    class VirtualKeyboard : public LibK::TextStream {
+    class VirtualKeyboard : public TextStream {
     public:
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -18,8 +18,8 @@
 #define RUNEOS_COLLECTION_H
 
 
-#include <Hammer/Utility.h>
-#include <Hammer/Memory.h>
+#include <KernelRuntime/CppLanguageSupport.h>
+#include <KernelRuntime/Utility.h>
 
 
 namespace Rune {

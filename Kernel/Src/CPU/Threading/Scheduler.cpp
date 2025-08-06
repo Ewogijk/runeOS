@@ -16,7 +16,7 @@
 
 #include <CPU/Threading/Scheduler.h>
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 #include <CPU/CPU.h>
 #include <CPU/Threading/Stack.h>
@@ -38,7 +38,7 @@ namespace Rune::CPU {
         auto* stack_bottom = new U8[Thread::KERNEL_STACK_SIZE];
         auto stack_top = setup_trampoline_kernel_stack(
                 (uintptr_t) stack_bottom + Thread::KERNEL_STACK_SIZE,
-                (LibK::VirtualAddr) (uintptr_t) _thread_enter
+                (VirtualAddr) (uintptr_t) _thread_enter
         );
         thread->kernel_stack_top    = stack_top;
         thread->kernel_stack_bottom = stack_bottom;
@@ -122,13 +122,13 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    void Scheduler::set_logger(SharedPointer<LibK::Logger> logger) {
+    void Scheduler::set_logger(SharedPointer<Logger> logger) {
         _logger = move(logger);
     }
 
 
     bool Scheduler::init(
-            LibK::PhysicalAddr base_pt_addr,
+            PhysicalAddr base_pt_addr,
             Register stack_top,
             const SharedPointer<Thread>& idle_thread,
             const SharedPointer<Thread>& thread_terminator,

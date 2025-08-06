@@ -18,14 +18,12 @@
 #define RUNEOS_RESOURCE_H
 
 
-#include <Ember/Ember.h>
-#include <Hammer/String.h>
-#include <Hammer/Memory.h>
-
-#include <LibK/Stream.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Stream.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
 
     /**
      * @brief The handle counter provides a subsystem with unique handles for it's resources.

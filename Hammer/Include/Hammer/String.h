@@ -217,7 +217,7 @@ namespace Rune {
      * @return Index of the last character that was placed in the output buffer. Zero has two meanings no character was
      *          actually placed or an error while parsing the format string happened.
      */
-    size_t interpolate(const char* fmt, char* buf, size_t buf_size, Argument* args, size_t arg_size);
+    size_t interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size);
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -26,7 +26,7 @@
 
 namespace Rune::BuiltInPlugin {
 
-    LibK::PluginInfo FAT_INFO = {
+    PluginInfo FAT_INFO = {
             "FAT",
             "Ewogijk",
             {
@@ -38,15 +38,15 @@ namespace Rune::BuiltInPlugin {
     };
 
 
-    LibK::PluginInfo FATDriverPlugin::get_info() const {
+    PluginInfo FATDriverPlugin::get_info() const {
         return FAT_INFO;
     }
 
 
-    bool FATDriverPlugin::start(const LibK::SubsystemRegistry& ks_registry) {
+    bool FATDriverPlugin::start(const SubsystemRegistry& ks_registry) {
 
-        auto* fs = ks_registry.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
-        auto* ds = ks_registry.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
+        auto* fs = ks_registry.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
+        auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         bool r = fs->install_driver(
                 UniquePointer<VFS::Driver>(
                         new VFS::FATDriver(

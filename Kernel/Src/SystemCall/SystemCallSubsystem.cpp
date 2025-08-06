@@ -30,28 +30,28 @@ namespace Rune::SystemCall {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    Subsystem::Subsystem() : LibK::Subsystem(), _k_guard(), _system_call_table_fmt() {
+    SystemCallSubsystem::SystemCallSubsystem() : Subsystem(), _k_guard(), _system_call_table_fmt() {
 
     }
 
 
-    String Subsystem::get_name() const {
+    String SystemCallSubsystem::get_name() const {
         return "SystemCall";
     }
 
 
-    void Subsystem::set_logger(SharedPointer<LibK::Logger> logger) {
+    void SystemCallSubsystem::set_logger(SharedPointer<Logger> logger) {
         if (!_logger)
             _logger = move(logger);
     }
 
 
-    bool Subsystem::start(const LibK::BootLoaderInfo& boot_info, const LibK::SubsystemRegistry& k_subsys_reg) {
+    bool SystemCallSubsystem::start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)
         SILENCE_UNUSED(k_subsys_reg)
         // Configure system call table formatter
-        LinkedList<LibK::Column<SystemCallInfo>> sct_cols;
-        sct_cols.add_back(LibK::Column<SystemCallInfo>::make_handle_column_table(26));
+        LinkedList<Column<SystemCallInfo>> sct_cols;
+        sct_cols.add_back(Column<SystemCallInfo>::make_handle_column_table(26));
         sct_cols.add_back(
                 {
                         "Requested",
@@ -63,7 +63,7 @@ namespace Rune::SystemCall {
         );
         _system_call_table_fmt.configure("System Call", sct_cols);
 
-        auto* mem_subsys = k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY);
+        auto* mem_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
         auto user_space_end = mem_subsys->get_virtual_memory_manager()->get_user_space_end();
         _logger->debug(
                 FILE,
@@ -99,12 +99,12 @@ namespace Rune::SystemCall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    LinkedList<SystemCallInfo> Subsystem::get_system_call_table() const {
+    LinkedList<SystemCallInfo> SystemCallSubsystem::get_system_call_table() const {
         return system_call_get_table();
     }
 
 
-    void Subsystem::dump_system_call_table(const SharedPointer<LibK::TextStream>& stream) const {
+    void SystemCallSubsystem::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
         LinkedList<SystemCallInfo> sys_call_table = system_call_get_table();
         auto                       it             = sys_call_table.begin();
         _system_call_table_fmt.dump(
@@ -120,12 +120,12 @@ namespace Rune::SystemCall {
     }
 
 
-    bool Subsystem::install_system_call(const Definition& system_call_definition) {
+    bool SystemCallSubsystem::install_system_call(const Definition& system_call_definition) {
         return system_call_install(system_call_definition);
     }
 
 
-    bool Subsystem::uninstall_system_call(U16 system_call_id) {
+    bool SystemCallSubsystem::uninstall_system_call(U16 system_call_id) {
         return system_call_uninstall(system_call_id);
     }
 }

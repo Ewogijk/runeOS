@@ -117,9 +117,9 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
         file.write(f'#ifndef RUNEOS_{font_name_cppified.upper()}_H \n')
         file.write(f'#define RUNEOS_{font_name_cppified.upper()}_H\n\n')
 
-        file.write('#include <LibK/FrameBuffer.h>\n\n')
+        file.write('#include <KRuntime/FrameBuffer.h>\n\n')
 
-        file.write('namespace Rune::LibK {\n')
+        file.write('namespace Rune {\n')
 
         # Glyphs to byte array
         file.write(f'    static uint8_t {font_name_cppified}_glyphs[{font.number_of_glyphs * font.glyph_size}] = {"{"}\n')

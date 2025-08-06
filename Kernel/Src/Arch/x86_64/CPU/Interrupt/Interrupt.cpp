@@ -98,7 +98,7 @@ namespace Rune::CPU {
 
 
     // The panic stream serves as output for debugging information when an exception has no installed handler
-    SharedPointer<LibK::TextStream> PANIC_STREAM;
+    SharedPointer<TextStream> PANIC_STREAM;
     ExceptionHandler* EXCEPTION_HANDLER_TABLE[EXCEPTION_COUNT];                         // ISR 0-31
     LinkedList<IRQContainer> IRQ_HANDLER_TABLE[IRQ_COUNT];              // ISR 32-255
     U64                                      RAISED_COUNT[EXCEPTION_COUNT + IRQ_COUNT]; // Number of times an ISR was raised
@@ -118,8 +118,8 @@ namespace Rune::CPU {
             if (!EXCEPTION_HANDLER_TABLE[vector]) {
                 if (PANIC_STREAM && PANIC_STREAM->is_write_supported()) {
                     // Dump the state of the current core
-                    PANIC_STREAM->set_background_color(LibK::Pixie::VSCODE_RED);
-                    PANIC_STREAM->set_foreground_color(LibK::Pixie::VSCODE_WHITE);
+                    PANIC_STREAM->set_background_color(Pixie::VSCODE_RED);
+                    PANIC_STREAM->set_foreground_color(Pixie::VSCODE_WHITE);
                     PANIC_STREAM->write("-------------------------------------------- Interrupt Context --------------------------------------------\n");
                     PANIC_STREAM->write_formatted(
                             "Unhandled exception {}: {}, Error code: {:0=#4x}\n",
@@ -206,7 +206,7 @@ namespace Rune::CPU {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    void exception_install_panic_stream(SharedPointer<LibK::TextStream> panic_stream) {
+    void exception_install_panic_stream(SharedPointer<TextStream> panic_stream) {
         PANIC_STREAM = move(panic_stream);
     }
 

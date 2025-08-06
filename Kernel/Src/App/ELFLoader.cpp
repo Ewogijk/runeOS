@@ -16,10 +16,10 @@
 
 #include <App/ELFLoader.h>
 
-#include <Hammer/Math.h>
-#include <Hammer/ByteOrder.h>
+#include <KernelRuntime/Math.h>
+#include <KernelRuntime/ByteOrder.h>
 
-#include <LibK/Assert.h>
+#include <KernelRuntime/Assert.h>
 
 #include <CPU/Threading/Stack.h>
 
@@ -171,8 +171,8 @@ namespace Rune::App {
                                       : BigEndian::to_U32((const U8*)&note_header[4]);
 
             // Note PH's are word aligned
-            const U16 name_desc_size = LibK::memory_align(name_size, 4, true)
-                + LibK::memory_align(desc_size, 4, true);
+            const U16 name_desc_size = memory_align(name_size, 4, true)
+                + memory_align(desc_size, 4, true);
             U8* name_desc_buffer[name_desc_size];
             if (!read_bytes(name_desc_buffer, name_desc_size)) {
                 _logger->error(FILE, "Failed to read note Name and Desc fields.");
@@ -200,14 +200,14 @@ namespace Rune::App {
     }
 
 
-    bool ELFLoader::allocate_segments(const ELF64File& elf64_file, LibK::VirtualAddr& heap_start) {
+    bool ELFLoader::allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start) {
         Memory::VirtualMemoryManager* vmm = _memory_subsys->get_virtual_memory_manager();
         for (size_t i = 0; i < elf64_file.program_headers.size(); i++) {
             const ELF64ProgramHeader* ph = elf64_file.program_headers[i];
             if (SegmentType(ph->type) != SegmentType::LOAD) continue;
 
-            const LibK::VirtualAddr v_start = LibK::memory_align(ph->virtual_address, Memory::get_page_size(), false);
-            LibK::VirtualAddr       v_end   = LibK::memory_align(
+            const VirtualAddr v_start = memory_align(ph->virtual_address, Memory::get_page_size(), false);
+            VirtualAddr       v_end   = memory_align(
                 ph->virtual_address + ph->memory_size,
                 Memory::get_page_size(),
                 true
@@ -236,7 +236,7 @@ namespace Rune::App {
                     const ELF64ProgramHeader* ph_old = elf64_file.program_headers[j];
                     if (SegmentType(ph_old->type) != SegmentType::LOAD) continue;
 
-                    const LibK::VirtualAddr v_start_old = LibK::memory_align(
+                    const VirtualAddr v_start_old = memory_align(
                         ph_old->virtual_address,
                         Memory::get_page_size(),
                         false
@@ -274,7 +274,7 @@ namespace Rune::App {
 
             // Load the segment
             size_t to_copy        = ph->file_size;
-            auto*  ph_dest        = LibK::memory_addr_to_pointer<U8>(ph->virtual_address);
+            auto*  ph_dest        = memory_addr_to_pointer<U8>(ph->virtual_address);
             size_t ph_dest_offset = 0;
             while (to_copy > 0) {
                 U8           b[BUF_SIZE];
@@ -290,8 +290,8 @@ namespace Rune::App {
                 memset(&ph_dest[ph_dest_offset], '\0', ph->memory_size - ph->file_size);
 
             // Set correct page flags
-            const LibK::VirtualAddr v_start = LibK::memory_align(ph->virtual_address, Memory::get_page_size(), false);
-            const LibK::VirtualAddr v_end   = LibK::memory_align(
+            const VirtualAddr v_start = memory_align(ph->virtual_address, Memory::get_page_size(), false);
+            const VirtualAddr v_end   = memory_align(
                 ph->virtual_address + ph->memory_size,
                 Memory::get_page_size(),
                 true
@@ -300,7 +300,7 @@ namespace Rune::App {
             if ((ph->flags & SegmentPermission(SegmentPermission::WRITE).to_value()) != 0)
                 flags |= Memory::PageFlag::WRITE_ALLOWED;
 
-            for (LibK::VirtualAddr v = v_start; v < v_end; v += Memory::get_page_size())
+            for (VirtualAddr v = v_start; v < v_end; v += Memory::get_page_size())
                 Memory::modify_page_flags(base_pt, v, flags, true);
         }
 
@@ -326,7 +326,7 @@ namespace Rune::App {
             tmp_args++;
         }
         const size_t argv_size           = (argc + 1) * sizeof(char*); // include null terminator
-        const size_t bootstrap_area_size = LibK::memory_align(
+        const size_t bootstrap_area_size = memory_align(
             start_info_size + argv_size + cla_area_size + ph_area_size,
             Memory::get_page_size(),
             true
@@ -335,7 +335,7 @@ namespace Rune::App {
         // Allocate the memory for the stack and bootstrap area
         auto*                   vmm                            = _memory_subsys->get_virtual_memory_manager();
         const size_t            stack_and_bootstrap_area_size  = stack_size + bootstrap_area_size;
-        const LibK::VirtualAddr stack_and_bootstrap_area_begin = Memory::to_canonical_form(
+        const VirtualAddr stack_and_bootstrap_area_begin = Memory::to_canonical_form(
             vmm->get_user_space_end() - stack_and_bootstrap_area_size
         );
         if (!vmm->allocate(
@@ -351,7 +351,7 @@ namespace Rune::App {
             );
             return nullptr;
         }
-        const LibK::VirtualAddr bootstrap_area_begin = stack_and_bootstrap_area_begin + stack_size;
+        const VirtualAddr bootstrap_area_begin = stack_and_bootstrap_area_begin + stack_size;
 
         // Setup argv and cla area
         auto** argv_area           = reinterpret_cast<char**>(bootstrap_area_begin + start_info_size);
@@ -390,9 +390,9 @@ namespace Rune::App {
 
 
     ELFLoader::ELFLoader(
-        Memory::Subsystem*          memory_subsys,
-        VFS::Subsystem*             vfs_subsys,
-        SharedPointer<LibK::Logger> logger
+        Memory::MemorySubsystem*          memory_subsys,
+        VFS::VFSSubsystem*             vfs_subsys,
+        SharedPointer<Logger> logger
     )
         : _buf_pos(0),
           _buf_limit(0),
@@ -401,9 +401,9 @@ namespace Rune::App {
           _vfs_subsys(vfs_subsys),
           _logger(move(logger)),
           _elf_file() {
-        LibK::assert(_memory_subsys, FILE, "_memory_subsys is null.");
-        LibK::assert(_vfs_subsys, FILE, "_vfs_subsys is null.");
-        LibK::assert(static_cast<bool>(_logger), FILE, "_logger is null.");
+        assert(_memory_subsys, FILE, "_memory_subsys is null.");
+        assert(_vfs_subsys, FILE, "_vfs_subsys is null.");
+        assert(static_cast<bool>(_logger), FILE, "_logger is null.");
     }
 
 
@@ -412,7 +412,7 @@ namespace Rune::App {
         char*                      args[],
         const SharedPointer<Info>& entry_out,
         CPU::Stack&                user_stack_out,
-        LibK::VirtualAddr&         start_info_addr_out,
+        VirtualAddr&         start_info_addr_out,
         bool                       keep_vas) {
         if (const VFS::IOStatus io_status = _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {
@@ -426,9 +426,9 @@ namespace Rune::App {
         // Create virtual address space
         // To load the new app we will temporarily load it's new address space and allocate the memory for its program
         // code and data, then afterward restore the VAS of the currently running app
-        const LibK::PhysicalAddr      curr_app_vas = Memory::get_base_page_table_address();
+        const PhysicalAddr      curr_app_vas = Memory::get_base_page_table_address();
         Memory::VirtualMemoryManager* vmm          = _memory_subsys->get_virtual_memory_manager();
-        LibK::PhysicalAddr            base_pt_addr;
+        PhysicalAddr            base_pt_addr;
         if (keep_vas) {
             base_pt_addr = curr_app_vas;
         } else {
@@ -439,7 +439,7 @@ namespace Rune::App {
             vmm->load_virtual_address_space(base_pt_addr);
         }
 
-        LibK::VirtualAddr heap_start = 0x0;
+        VirtualAddr heap_start = 0x0;
         if (!allocate_segments(elf64_file, heap_start)) {
             _logger->error(FILE, "Segment memory allocation failed.");
             return LoadStatus::MEMORY_ERROR;
@@ -450,14 +450,14 @@ namespace Rune::App {
             return LoadStatus::LOAD_ERROR;
         }
 
-        constexpr LibK::MemorySize stack_size = 16 * LibK::MemoryUnit::KiB;
+        constexpr MemorySize stack_size = 16 * MemoryUnit::KiB;
         auto* start_info = setup_bootstrap_area(elf64_file, args, stack_size);
         if (!start_info) {
             _logger->error(FILE, "Bootstrap area setup failed.");
             return LoadStatus::MEMORY_ERROR;
         }
         // The stack begins just above the bootstrap area
-        start_info_addr_out = LibK::memory_pointer_to_addr(start_info);
+        start_info_addr_out = memory_pointer_to_addr(start_info);
 
         // Fill in app entry information
         entry_out->location = executable;
@@ -470,7 +470,7 @@ namespace Rune::App {
         entry_out->heap_start              = heap_start; // The heap starts after the ELF segments
         entry_out->heap_limit              = heap_start;
 
-        user_stack_out.stack_bottom = LibK::memory_addr_to_pointer<void>(start_info_addr_out - stack_size);
+        user_stack_out.stack_bottom = memory_addr_to_pointer<void>(start_info_addr_out - stack_size);
         user_stack_out.stack_top    = CPU::setup_empty_stack(start_info_addr_out);
         user_stack_out.stack_size   = stack_size;
 

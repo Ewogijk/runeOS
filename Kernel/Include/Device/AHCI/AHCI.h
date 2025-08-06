@@ -18,7 +18,7 @@
 #define RUNEOS_AHCI_H
 
 
-#include <Hammer/Collection.h>
+#include <KernelRuntime/Collection.h>
 
 #include <Device/AHCI/HBAMemory.h>
 #include <Device/AHCI/PortEngine.h>
@@ -41,7 +41,7 @@ namespace Rune::Device {
         static constexpr U8 PORT_LIMIT          = 32;
 
         volatile HBAMemory* _hba;
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
         PortEngine                  _port_engine[PORT_LIMIT];
 
         Memory::SlabAllocator* _heap;
@@ -58,7 +58,7 @@ namespace Rune::Device {
 
 
     public:
-        AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer, SharedPointer<LibK::Logger> logger);
+        AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer, SharedPointer<Logger> logger);
 
 
         LinkedList<HardDrive> get_discovered_hard_drives();

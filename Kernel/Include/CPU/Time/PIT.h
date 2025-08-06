@@ -36,7 +36,7 @@ namespace Rune::CPU {
          */
         static constexpr U64 QUARTZ_FREQUENCY_HZ = 1193182;
 
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
         Scheduler* _scheduler;
         IRQHandler _irq_handler;
 
@@ -65,7 +65,7 @@ namespace Rune::CPU {
 
 
         bool start(
-                SharedPointer<LibK::Logger> logger,
+                SharedPointer<Logger> logger,
                 CPU::Scheduler* scheduler,
                 TimerMode mode,
                 U64 frequency,

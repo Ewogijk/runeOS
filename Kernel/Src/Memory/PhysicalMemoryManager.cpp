@@ -16,7 +16,7 @@
 
 #include <Memory/PhysicalMemoryManager.h>
 
-#include <Hammer/Math.h>
+#include <KernelRuntime/Math.h>
 
 
 namespace Rune::Memory {
@@ -27,11 +27,11 @@ namespace Rune::Memory {
 
 
     bool PhysicalMemoryManager::detect_memory_range() {
-        _mem_base = (LibK::PhysicalAddr) -1;
-        LibK::PhysicalAddr mem_end = 0;
+        _mem_base = (PhysicalAddr) -1;
+        PhysicalAddr mem_end = 0;
 
         for (auto& reg: *_mem_map) {
-            if (reg.memory_type == LibK::MemoryRegionType::NONE)
+            if (reg.memory_type == MemoryRegionType::NONE)
                 continue;
 
             if (reg.start < _mem_base)
@@ -48,17 +48,17 @@ namespace Rune::Memory {
     }
 
 
-    PageFrameIndex PhysicalMemoryManager::to_page_frame(LibK::PhysicalAddr addr) const {
+    PageFrameIndex PhysicalMemoryManager::to_page_frame(PhysicalAddr addr) const {
         return (addr - _mem_base) / _page_size;
     }
 
 
-    PageFrameIndex PhysicalMemoryManager::to_page_frame_round_up(LibK::PhysicalAddr addr) const {
+    PageFrameIndex PhysicalMemoryManager::to_page_frame_round_up(PhysicalAddr addr) const {
         return div_round_up((addr - _mem_base), _page_size);
     }
 
 
-    LibK::PhysicalAddr PhysicalMemoryManager::to_address(PageFrameIndex page_frame) const {
+    PhysicalAddr PhysicalMemoryManager::to_address(PageFrameIndex page_frame) const {
 
         return _mem_base + page_frame * _page_size;
     }
@@ -77,9 +77,9 @@ namespace Rune::Memory {
 
 
     PMMStartFailure PhysicalMemoryManager::start(
-            LibK::MemoryMap* mem_map,
+            MemoryMap* mem_map,
             U64 page_size,
-            LibK::VirtualAddr memory_index_offset
+            VirtualAddr memory_index_offset
 
     ) {
         _page_size = page_size;
@@ -89,17 +89,17 @@ namespace Rune::Memory {
             return _start_fail;
         }
 
-        LibK::MemorySize pmm_b_mem_req    = compute_memory_index_size();
-        auto             pmm_data_start_p = (LibK::PhysicalAddr) -1;
+        MemorySize pmm_b_mem_req    = compute_memory_index_size();
+        auto             pmm_data_start_p = (PhysicalAddr) -1;
         for (auto& reg: *_mem_map) {
-            if (reg.memory_type == LibK::MemoryRegionType::USABLE && reg.size >= pmm_b_mem_req) {
+            if (reg.memory_type == MemoryRegionType::USABLE && reg.size >= pmm_b_mem_req) {
                 pmm_data_start_p = reg.start;
                 break;
             }
             if (reg.size > _largest_free_block)
                 _largest_free_block = reg.size;
         }
-        if (pmm_data_start_p == (LibK::PhysicalAddr) -1) {
+        if (pmm_data_start_p == (PhysicalAddr) -1) {
             _start_fail = PMMStartFailure::OUT_OF_MEMORY;
             return _start_fail;
         }
@@ -113,11 +113,11 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemoryRegion PhysicalMemoryManager::get_managed_memory() const {
-        return LibK::MemoryRegion{
+    MemoryRegion PhysicalMemoryManager::get_managed_memory() const {
+        return MemoryRegion{
                 _mem_base,
                 _mem_base - 1 + _mem_size * _page_size, // will overflow because it will be max value of some type e.g. U32
-                LibK::MemoryRegionType::RESERVED
+                MemoryRegionType::RESERVED
         };
     }
 
@@ -129,7 +129,7 @@ namespace Rune::Memory {
                 _mem_base,
                 _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max value of some type e.g. U32
         );
-        LibK::MemoryRegion mem_idx = get_memory_index_region();
+        MemoryRegion mem_idx = get_memory_index_region();
         _logger->info(
                 FILE,
                 "Physical memory index region: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
@@ -141,22 +141,22 @@ namespace Rune::Memory {
     }
 
 
-    bool PhysicalMemoryManager::allocate(LibK::PhysicalAddr& p_addr) {
+    bool PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) {
         return allocate(p_addr, 1);
     }
 
 
-    bool PhysicalMemoryManager::allocate_explicit(LibK::PhysicalAddr p_addr) {
+    bool PhysicalMemoryManager::allocate_explicit(PhysicalAddr p_addr) {
         return allocate_explicit(p_addr, 1);
     }
 
 
-    bool PhysicalMemoryManager::free(LibK::PhysicalAddr p_addr) {
+    bool PhysicalMemoryManager::free(PhysicalAddr p_addr) {
         return free(p_addr, 1);
     }
 
 
-    void PhysicalMemoryManager::set_logger(SharedPointer<LibK::Logger> logger) {
+    void PhysicalMemoryManager::set_logger(SharedPointer<Logger> logger) {
         _logger = move(logger);
     }
 }

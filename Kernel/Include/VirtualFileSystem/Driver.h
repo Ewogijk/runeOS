@@ -19,13 +19,13 @@
 
 
 #include <Ember/Enum.h>
-#include <Hammer/String.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Path.h>
 
 #include <VirtualFileSystem/Node.h>
 #include <VirtualFileSystem/Status.h>
 #include <VirtualFileSystem/DirectoryStream.h>
-#include <Hammer/Memory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::VFS {
@@ -54,7 +54,7 @@ namespace Rune::VFS {
          *
          * @brief Create a new empty filesystem on the storage device.
          *
-         * @see VFS::Subsystem::format(const Lib::Path&, U16)
+         * @see VFS::VFSSubsystem::format(const Lib::Path&, U16)
          *
          * @param storage_dev ID of a storage device.
          *
@@ -71,7 +71,7 @@ namespace Rune::VFS {
           *
           * @brief Make the storage device known to this filesystem driver.
           *
-          * @see VFS::Subsystem::mount(const Lib::Path&, U16)
+          * @see VFS::VFSSubsystem::mount(const Lib::Path&, U16)
           *
           * @param storage_dev ID of a storage device.
           *
@@ -87,7 +87,7 @@ namespace Rune::VFS {
           *
           * @brief Remove the storage device from the known devices of this filesystem driver.
           *
-          * @see VFS::Subsystem::unmount(const Lib::Path&)
+          * @see VFS::VFSSubsystem::unmount(const Lib::Path&)
           *
           * @param storage_dev ID of a storage device.
           *
@@ -115,7 +115,7 @@ namespace Rune::VFS {
 
         /**
          * @brief Create a new file or directory on the storage device.
-         * @see VFS::Subsystem::create(const Lib::Path&, U8)
+         * @see VFS::VFSSubsystem::create(const Lib::Path&, U8)
          * @param storage_dev ID of a storage device.
          * @param path           A path relative to the mount point of the storage device.
          * @param attributes     Initial attributes of the file.
@@ -133,7 +133,7 @@ namespace Rune::VFS {
          * If the path is empty the root node of the filesystem shall be returned.
          *
          * @brief Try to find the node at the given path.
-         * @see VFS::Subsystem::open(const Lib::Path&, FileSystem::FileModeAttribute)
+         * @see VFS::VFSSubsystem::open(const Lib::Path&, FileSystem::FileModeAttribute)
          * @param storage_dev ID of a storage device.
          * @param path           A path relative to the mount point of the storage device.
          * @param fileMode       Mode in which the file will be accessed e.g. read, write, etc.
@@ -158,7 +158,7 @@ namespace Rune::VFS {
          * This operation will not create a node handle.
          *
          * @brief Search for the node with given path and get the node info if found.
-         * @see VFS::Subsystem::find_node(const Path& path, NodeInfo& out)
+         * @see VFS::VFSSubsystem::find_node(const Path& path, NodeInfo& out)
          * @param storage_dev Handle of a storage device.
          * @param path  Absolute path to a node.
          * @param out   If a node was found the info will be put in this object.
@@ -173,7 +173,7 @@ namespace Rune::VFS {
 
         /**
          * @brief Delete a file on the storage device.
-         * @see VFS::Subsystem::delete(const Lib::Path&)
+         * @see VFS::VFSSubsystem::delete(const Lib::Path&)
          * @param storage_dev ID of a storage device.
          * @param path        A path relative to the mount point of the storage device.
          * @return Deleted:             The node has been deleted.

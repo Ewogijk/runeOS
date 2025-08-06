@@ -18,25 +18,25 @@
 #define RUNEOS_SUBSYSTEM_H
 
 
-#include <Hammer/Collection.h>
 #include <Ember/Enum.h>
 
-#include <LibK/FrameBuffer.h>
-#include <LibK/KMemory.h>
-#include <LibK/Stream.h>
-#include <LibK/EventHook.h>
-#include <LibK/Resource.h>
-#include <LibK/Logging.h>
+
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/FrameBuffer.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/EventHook.h>
+#include <KernelRuntime/Resource.h>
+#include <KernelRuntime/Logging.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     /**
      * Information provided by the low level boot routine to the high level boot routine.
      */
     struct BootLoaderInfo {
         const char* boot_loader_name    = "";
         const char* boot_loader_version = "";
-        LibK::MemoryMap physical_memory_map    = { };
+        MemoryMap physical_memory_map    = { };
         FrameBuffer     framebuffer;
         PhysicalAddr    base_page_table_addr   = 0;
         U64             stack                  = 0;

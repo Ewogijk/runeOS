@@ -17,7 +17,7 @@
 #include <Memory/MemorySubsystem.h>
 
 
-#include <Hammer/Memory.h>
+#include <KernelRuntime/Memory.h>
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -25,7 +25,7 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-Rune::Memory::Subsystem* MEM_SUBSYS;
+Rune::Memory::MemorySubsystem* MEM_SUBSYS;
 
 
 void* operator new(size_t size) {
@@ -73,8 +73,8 @@ namespace Rune::Memory {
 //                                          Subsystem
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    Subsystem::Subsystem() :
-            LibK::Subsystem(),
+    MemorySubsystem::MemorySubsystem() :
+            Subsystem(),
             _p_map({ }),
             _v_map({ }),
             _pmm(),
@@ -84,14 +84,14 @@ namespace Rune::Memory {
     }
 
 
-    String Subsystem::get_name() const {
+    String MemorySubsystem::get_name() const {
         return "Memory";
     }
 
 
-    bool Subsystem::start(
-            const LibK::BootLoaderInfo& boot_info,
-            const LibK::SubsystemRegistry& k_subsys_reg
+    bool MemorySubsystem::start(
+            const BootLoaderInfo& boot_info,
+            const SubsystemRegistry& k_subsys_reg
     ) {
         SILENCE_UNUSED(k_subsys_reg)
         _p_map = boot_info.physical_memory_map;
@@ -108,7 +108,7 @@ namespace Rune::Memory {
                 &_p_map,
                 &_v_map,
                 k_space_layout,
-                128 * (LibK::MemorySize) LibK::MemoryUnit::MiB
+                128 * (MemorySize) MemoryUnit::MiB
         ) != VMMStartFailure::NONE)
             return false;
 
@@ -128,7 +128,7 @@ namespace Rune::Memory {
     }
 
 
-    void Subsystem::set_logger(SharedPointer<LibK::Logger> logger) {
+    void MemorySubsystem::set_logger(SharedPointer<Logger> logger) {
         if (!_logger) {
             _logger = logger;
             _pmm.set_logger(logger);
@@ -137,45 +137,45 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemoryMap& Subsystem::get_physical_memory_map() {
+    MemoryMap& MemorySubsystem::get_physical_memory_map() {
         return _p_map;
     }
 
 
-    LibK::MemoryMap& Subsystem::get_virtual_memory_map() {
+    MemoryMap& MemorySubsystem::get_virtual_memory_map() {
         return _v_map;
     }
 
 
-    PhysicalMemoryManager* Subsystem::get_physical_memory_manager() {
+    PhysicalMemoryManager* MemorySubsystem::get_physical_memory_manager() {
         return &_pmm;
     }
 
 
-    VirtualMemoryManager* Subsystem::get_virtual_memory_manager() {
+    VirtualMemoryManager* MemorySubsystem::get_virtual_memory_manager() {
         return &_vmm;
     }
 
 
-    SlabAllocator* Subsystem::get_heap() {
+    SlabAllocator* MemorySubsystem::get_heap() {
         return &_heap;
     }
 
 
-    void Subsystem::log_start_routine_phases() const {
+    void MemorySubsystem::log_start_routine_phases() const {
         _logger->debug(FILE, "The bootloader reclaimable memory has been claimed.");
 
-        LibK::MemoryRegion managed = _pmm.get_managed_memory();
+        MemoryRegion managed = _pmm.get_managed_memory();
         _logger->debug(
                 FILE,
                 "Detected physical memory range: {:0=#16x}-{:0=#16x}",
                 managed.start,
                 managed.end()
         );
-        LibK::MemoryRegion memIdx = _pmm.get_memory_index_region();
+        MemoryRegion memIdx = _pmm.get_memory_index_region();
         _logger->debug(
                 FILE,
-                "Physical memory index region: {:0=#16x}-{:0=#16x} (LibK::MemorySize: {} bytes)",
+                "Physical memory index region: {:0=#16x}-{:0=#16x} (MemorySize: {} bytes)",
                 memIdx.start,
                 memIdx.end(),
                 memIdx.size
@@ -191,7 +191,7 @@ namespace Rune::Memory {
         _logger->debug(FILE, "Bootstrap caches are initialized.");
         _logger->debug(
                 FILE,
-                "General purpose and DMA caches are initialized. LibK::MemorySize range: {}-{} bytes.",
+                "General purpose and DMA caches are initialized. MemorySize range: {}-{} bytes.",
                 _heap.get_min_cache_size(),
                 _heap.get_max_cache_size()
         );

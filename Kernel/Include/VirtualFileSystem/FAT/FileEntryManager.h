@@ -19,7 +19,7 @@
 
 
 #include <Ember/Enum.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/Path.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
 #include <VirtualFileSystem/FAT/VolumeManager.h>

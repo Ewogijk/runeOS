@@ -58,7 +58,7 @@ namespace Rune::CPU {
     }
 
 
-    Mutex::Mutex(Scheduler* scheduler, SharedPointer<LibK::Logger> logger, String name)
+    Mutex::Mutex(Scheduler* scheduler, SharedPointer<Logger> logger, String name)
             : _scheduler(scheduler),
               _logger(move(logger)),
               handle(0),

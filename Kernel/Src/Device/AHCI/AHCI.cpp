@@ -53,9 +53,9 @@ namespace Rune::Device {
         sys_mem->CommandSlots = (int8_t) ct_count;
 
         for (U32 j = 0; j < ct_count; j++) {
-            LibK::PhysicalAddr p_ctba;
+            PhysicalAddr p_ctba;
             if (!Memory::virtual_to_physical_address(
-                    LibK::memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
+                    memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
                     p_ctba
             )) {
                 _logger->error(
@@ -110,7 +110,7 @@ namespace Rune::Device {
     }
 
 
-    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer, SharedPointer<LibK::Logger> logger) :
+    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer, SharedPointer<Logger> logger) :
             _hba(nullptr),
             _logger(move(logger)),
             _port_engine(),

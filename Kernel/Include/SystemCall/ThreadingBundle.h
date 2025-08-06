@@ -33,8 +33,8 @@ namespace Rune::SystemCall {
      */
     struct ThreadingSystemCallContext {
         KernelGuardian* k_guard    = nullptr;
-        CPU::Subsystem* cpu_subsys = nullptr;
-        App::Subsystem* app_subsys = nullptr;
+        CPU::CPUSubsystem* cpu_subsys = nullptr;
+        App::AppSubsystem* app_subsys = nullptr;
     };
 
 

@@ -18,13 +18,14 @@
 #define RUNEOS_FILESTREAM_H
 
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/Memory.h>
 
 #include <VirtualFileSystem/Node.h>
 
 
 namespace Rune::VFS {
-    class FileStream : public LibK::TextStream {
+    class FileStream : public TextStream {
         static constexpr U16 BUF_SIZE = 512;
 
         SharedPointer<Node> _node;

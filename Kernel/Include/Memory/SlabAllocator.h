@@ -117,7 +117,7 @@ namespace Rune::Memory {
          * @param page
          * @return
          */
-        static Slab* create_on_slab(size_t object_size, LibK::VirtualAddr page);
+        static Slab* create_on_slab(size_t object_size, VirtualAddr page);
 
 
         /**
@@ -136,7 +136,7 @@ namespace Rune::Memory {
                 ObjectCache* object_buf_node_cache,
                 ObjectBufNodeHashMap* object_buf_node_hashmap,
                 size_t object_size,
-                LibK::VirtualAddr page,
+                VirtualAddr page,
                 size_t slab_size
         );
 
@@ -180,7 +180,7 @@ namespace Rune::Memory {
      */
     struct MemoryNode {
         MemoryNode* next;
-        LibK::VirtualAddr mem_addr;
+        VirtualAddr mem_addr;
     };
 
 
@@ -191,8 +191,8 @@ namespace Rune::Memory {
         // Memory management
         VirtualMemoryManager* _vmm;
         ObjectCache         * _memory_node_cache;
-        LibK::MemoryRegion _managed;
-        LibK::VirtualAddr  _limit;
+        MemoryRegion _managed;
+        VirtualAddr  _limit;
         U16                _page_flags;
         MemoryNode* _free_page_list;
 
@@ -220,7 +220,7 @@ namespace Rune::Memory {
         ObjectCache();
 
 
-        [[nodiscard]] LibK::MemoryRegion get_managed() const;
+        [[nodiscard]] MemoryRegion get_managed() const;
 
 
         [[nodiscard]] CacheType get_type() const;
@@ -229,7 +229,7 @@ namespace Rune::Memory {
         int8_t init(
                 VirtualMemoryManager* vmm,
                 ObjectCache* memory_node_cache,
-                LibK::MemoryRegion managed,
+                MemoryRegion managed,
                 U16 page_flags,
                 ObjectCache* object_buf_node_cache,
                 ObjectBufNodeHashMap* object_buf_node_hash_map,
@@ -322,7 +322,7 @@ namespace Rune::Memory {
         static constexpr U8               MIN_SIZE_POWER        = 4;
         static constexpr U8               STATIC_CACHE_COUNT    = 13;
         static constexpr U8               MIN_OBJ_SIZE          = 16;
-        static constexpr LibK::MemorySize CACHE_SIZE            = 2 * 1048576; // 2 MiB
+        static constexpr MemorySize CACHE_SIZE            = 2 * 1048576; // 2 MiB
         static constexpr U8               BOOTSTRAP_CACHE_COUNT = 6;
 
         ObjectCache _object_cache_cache;
@@ -336,8 +336,8 @@ namespace Rune::Memory {
         ObjectCache* _dma_cache[STATIC_CACHE_COUNT];
 
         VirtualMemoryManager* _vmm;
-        LibK::MemoryRegion _heap_memory;
-        LibK::VirtualAddr  _limit;
+        MemoryRegion _heap_memory;
+        VirtualAddr  _limit;
         MemoryNode* _free_list;
 
         HeapStartFailureCode _start_failure_code;
@@ -392,7 +392,7 @@ namespace Rune::Memory {
 
 
         [[nodiscard]] HeapStartFailureCode start(
-                LibK::MemoryMap* v_map,
+                MemoryMap* v_map,
                 VirtualMemoryManager* vmm
         );
 

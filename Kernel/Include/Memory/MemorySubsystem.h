@@ -18,7 +18,7 @@
 #define RUNEOS_MEMORYSUBSYSTEM_H
 
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 #include <Memory/BitMapAllocator.h>
 #include <Memory/VirtualMemoryManager.h>
@@ -31,9 +31,9 @@ namespace Rune::Memory {
      * The memory subsystem contains the physical and virtual memory managers, the kernel heap and physical and virtual
      * memory maps.
      */
-class Subsystem : public LibK::Subsystem {
-        LibK::MemoryMap _p_map;
-        LibK::MemoryMap _v_map;
+class MemorySubsystem : public Subsystem {
+        MemoryMap _p_map;
+        MemoryMap _v_map;
 
         BitMapAllocator      _pmm;
         VirtualMemoryManager _vmm;
@@ -43,19 +43,19 @@ class Subsystem : public LibK::Subsystem {
 
     public:
 
-        Subsystem();
+        MemorySubsystem();
 
 
-        explicit Subsystem(const BitMapAllocator& pmm);
+        explicit MemorySubsystem(const BitMapAllocator& pmm);
 
 
         [[nodiscard]] String get_name() const override;
 
 
-        bool start(const LibK::BootLoaderInfo& boot_info, const LibK::SubsystemRegistry& k_subsys_reg) override;
+        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
 
-        void set_logger(SharedPointer<LibK::Logger> logger) override;
+        void set_logger(SharedPointer<Logger> logger) override;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -67,14 +67,14 @@ class Subsystem : public LibK::Subsystem {
          *
          * @return Physical memory map of the RAM.
          */
-        LibK::MemoryMap& get_physical_memory_map();
+        MemoryMap& get_physical_memory_map();
 
 
         /**
          *
          * @return Virtual memory map of the RAM.
          */
-        LibK::MemoryMap& get_virtual_memory_map();
+        MemoryMap& get_virtual_memory_map();
 
 
         /**

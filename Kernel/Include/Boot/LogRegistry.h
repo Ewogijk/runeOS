@@ -7,7 +7,8 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
+ *  Unless required by applicabl    KRuntime,
+    Ember,e law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
@@ -18,21 +19,21 @@
 #define RUNEOS_LOGREGISTRY_H
 
 
-#include <Hammer/Collection.h>
+#include <KernelRuntime/Collection.h>
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 
 namespace Rune {
     class LogRegistry {
-        VFS::Subsystem* _vfs_subsystem;
+        VFS::VFSSubsystem* _vfs_subsystem;
         Path                         _system_directory;
-        SharedPointer<LibK::LogFormatter> _log_msg_fmt;
+        SharedPointer<LogFormatter> _log_msg_fmt;
 
-        LinkedList<SharedPointer<LibK::Logger>> _logger_registry;
-        SharedPointer<LibK::Logger>             _serial_logger;
+        LinkedList<SharedPointer<Logger>> _logger_registry;
+        SharedPointer<Logger>             _serial_logger;
         bool                                    _file_logging_available;
     public:
 
@@ -45,14 +46,14 @@ namespace Rune {
          * @param f_subsystem
          * @param system_directory
          */
-        void init(VFS::Subsystem* f_subsystem, const Path& system_directory);
+        void init(VFS::VFSSubsystem* f_subsystem, const Path& system_directory);
 
 
         /**
          * @brief Update the log formatter of all loggers.
          * @param log_formatter
          */
-        void update_log_formatter(const SharedPointer<LibK::LogFormatter>& log_formatter);
+        void update_log_formatter(const SharedPointer<LogFormatter>& log_formatter);
 
 
         /**
@@ -61,7 +62,7 @@ namespace Rune {
          * @param logFile
          * @return
          */
-        SharedPointer<LibK::Logger> build_logger(LibK::LogLevel lvl, const Path& path);
+        SharedPointer<Logger> build_logger(LogLevel lvl, const Path& path);
 
 
         /**
@@ -70,7 +71,7 @@ namespace Rune {
          * @param stream
          * @param log_level
          */
-        void enable_serial_logging(UniquePointer<LibK::TextStream> stream, LibK::LogLevel log_level);
+        void enable_serial_logging(UniquePointer<TextStream> stream, LogLevel log_level);
 
 
         /**

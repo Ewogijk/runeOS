@@ -19,7 +19,7 @@
 
 
 #include <Ember/Ember.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/Path.h>
 
 #include <VirtualFileSystem/DirectoryStream.h>
 

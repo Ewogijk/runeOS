@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FATDriver.h>
 
-#include <Hammer/Math.h>
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Math.h>
+#include <KernelRuntime/Algorithm.h>
 
 #include <Device/AHCI/AHCI.h>
 

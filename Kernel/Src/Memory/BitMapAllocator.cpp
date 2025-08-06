@@ -16,7 +16,7 @@
 
 #include <Memory/BitMapAllocator.h>
 
-#include <Hammer/Math.h>
+#include <KernelRuntime/Math.h>
 
 
 namespace Rune::Memory {
@@ -55,7 +55,7 @@ namespace Rune::Memory {
 
 
     bool BitMapAllocator::mark_memory_region(
-            LibK::PhysicalAddr base_bytes,
+            PhysicalAddr base_bytes,
             U64 size_bytes,
             bool in_use
     ) {
@@ -91,16 +91,16 @@ namespace Rune::Memory {
     }
 
 
-    int BitMapAllocator::is_reserved_or_bit_map_address(LibK::PhysicalAddr p_addr, size_t frames) {
-        LibK::PhysicalAddr end = p_addr + (frames * _page_size);
+    int BitMapAllocator::is_reserved_or_bit_map_address(PhysicalAddr p_addr, size_t frames) {
+        PhysicalAddr end = p_addr + (frames * _page_size);
         // Protect bit map from being freed
-        if (_init && _p_bitmap < end && p_addr < LibK::memory_align(_p_bitmap + _bitmap_size, _page_size, false))
+        if (_init && _p_bitmap < end && p_addr < memory_align(_p_bitmap + _bitmap_size, _page_size, false))
             return -1;
 
 
         // Protect reserved memory regions from being freed
         for (auto& region: *_mem_map) {
-            if (region.memory_type != LibK::MemoryRegionType::USABLE && region.contains(
+            if (region.memory_type != MemoryRegionType::USABLE && region.contains(
                     {
                             p_addr,
                             (U32) frames * _page_size
@@ -113,15 +113,15 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemorySize BitMapAllocator::compute_memory_index_size() {
+    MemorySize BitMapAllocator::compute_memory_index_size() {
         _bitmap_size = div_round_up(_mem_size, (U32) 8);
         return _bitmap_size;
     }
 
 
     bool BitMapAllocator::init0(
-            LibK::VirtualAddr memory_index,
-            LibK::PhysicalAddr p_memory_index
+            VirtualAddr memory_index,
+            PhysicalAddr p_memory_index
     ) {
         // Need to convert to uintptr_t to guarantee that physical address fits into pointer type
         _bitmap   = (U8*) (uintptr_t) memory_index;
@@ -132,7 +132,7 @@ namespace Rune::Memory {
             _bitmap[i] = 0xFF;
 
         for (auto& r: *_mem_map) {
-            if (r.memory_type == LibK::MemoryRegionType::USABLE) {
+            if (r.memory_type == MemoryRegionType::USABLE) {
                 if (!mark_memory_region(r.start, r.size, false))
                     return false;
             }
@@ -154,21 +154,21 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemoryRegion BitMapAllocator::get_memory_index_region() const {
-        return LibK::MemoryRegion{
-                (LibK::PhysicalAddr) (uintptr_t) _p_bitmap,
+    MemoryRegion BitMapAllocator::get_memory_index_region() const {
+        return MemoryRegion{
+                (PhysicalAddr) (uintptr_t) _p_bitmap,
                 _bitmap_size,
-                LibK::MemoryRegionType::RESERVED
+                MemoryRegionType::RESERVED
         };
     }
 
 
-    LibK::VirtualAddr BitMapAllocator::get_memory_index() const {
-        return (LibK::VirtualAddr) (uintptr_t) _bitmap;
+    VirtualAddr BitMapAllocator::get_memory_index() const {
+        return (VirtualAddr) (uintptr_t) _bitmap;
     }
 
 
-    void BitMapAllocator::relocate_memory_index(LibK::VirtualAddr memory_index) {
+    void BitMapAllocator::relocate_memory_index(VirtualAddr memory_index) {
         _bitmap = (U8*) (uintptr_t) memory_index;
     }
 
@@ -176,11 +176,11 @@ namespace Rune::Memory {
     bool BitMapAllocator::claim_boot_loader_reclaimable_memory() {
         bool success = true;
         for (auto& r: *_mem_map) {
-            if (r.memory_type == LibK::MemoryRegionType::BOOTLOADER_RECLAIMABLE) {
-                LibK::MemoryRegion c = {
+            if (r.memory_type == MemoryRegionType::BOOTLOADER_RECLAIMABLE) {
+                MemoryRegion c = {
                         r.start,
                         r.size,
-                        LibK::MemoryRegionType::USABLE
+                        MemoryRegionType::USABLE
                 };
                 if (!_mem_map->claim(c, _page_size)) {
                     _logger->warn(
@@ -206,7 +206,7 @@ namespace Rune::Memory {
     }
 
 
-    bool BitMapAllocator::allocate(LibK::PhysicalAddr& p_addr, size_t frames) {
+    bool BitMapAllocator::allocate(PhysicalAddr& p_addr, size_t frames) {
         PageFrameIndex base = find_free_region(frames);
         if (base == INVALID_PAGE) {
             _logger->warn(FILE, "Out of physical memory error.");
@@ -219,7 +219,7 @@ namespace Rune::Memory {
     }
 
 
-    bool BitMapAllocator::allocate_explicit(LibK::PhysicalAddr p_addr, size_t frames) {
+    bool BitMapAllocator::allocate_explicit(PhysicalAddr p_addr, size_t frames) {
         int errCode = is_reserved_or_bit_map_address(p_addr, frames);
         if (errCode < 0) {
             if (errCode == -1) {
@@ -247,7 +247,7 @@ namespace Rune::Memory {
     }
 
 
-    bool BitMapAllocator::free(LibK::PhysicalAddr p_addr, size_t frames) {
+    bool BitMapAllocator::free(PhysicalAddr p_addr, size_t frames) {
         int errCode = is_reserved_or_bit_map_address(p_addr, frames);
         if (errCode < 0) {
             if (errCode == -1) {
@@ -269,32 +269,32 @@ namespace Rune::Memory {
 
 
     size_t BitMapAllocator::read_page_frame_states(
-            LibK::MemoryRegion* buf,
+            MemoryRegion* buf,
             size_t buf_size,
-            LibK::PhysicalAddr start,
-            LibK::PhysicalAddr end
+            PhysicalAddr start,
+            PhysicalAddr end
     ) {
         if (start < _mem_base || end > _mem_base + _mem_size * _page_size)
             return 0;
 
-        if (!LibK::memory_is_aligned(start, _page_size))
-            start = LibK::memory_align(start, _page_size, false);
-        if (!LibK::memory_is_aligned(end, _page_size))
-            end   = min(LibK::memory_align(end, _page_size, true), _mem_base + _mem_size * _page_size);
+        if (!memory_is_aligned(start, _page_size))
+            start = memory_align(start, _page_size, false);
+        if (!memory_is_aligned(end, _page_size))
+            end   = min(memory_align(end, _page_size, true), _mem_base + _mem_size * _page_size);
 
         PageFrameIndex s = to_page_frame(start);
         PageFrameIndex e = to_page_frame(end);
 
-        LibK::PhysicalAddr     r_start = start;
-        LibK::MemorySize       r_size  = _page_size;
-        LibK::MemoryRegionType r_type  = is_free(s) ? LibK::MemoryRegionType::USABLE : LibK::MemoryRegionType::USED;
+        PhysicalAddr     r_start = start;
+        MemorySize       r_size  = _page_size;
+        MemoryRegionType r_type  = is_free(s) ? MemoryRegionType::USABLE : MemoryRegionType::USED;
         size_t                 buf_pos = 0;
 
         for (size_t i = s + 1; i < e; i++) {
             if (buf_pos >= buf_size)
                 break;
 
-            LibK::MemoryRegionType cType = is_free(i) ? LibK::MemoryRegionType::USABLE : LibK::MemoryRegionType::USED;
+            MemoryRegionType cType = is_free(i) ? MemoryRegionType::USABLE : MemoryRegionType::USED;
             if (r_type != cType) {
                 buf[buf_pos] = {
                         r_start,
