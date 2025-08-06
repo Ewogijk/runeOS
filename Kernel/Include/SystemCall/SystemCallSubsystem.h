@@ -18,7 +18,7 @@
 #define RUNEOS_SYSTEMCALLSUBSYSTEM_H
 
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 #include <CPU/CPU.h>
 
@@ -29,14 +29,14 @@
 namespace Rune::SystemCall {
 
 
-    class Subsystem : public LibK::Subsystem {
+    class SystemCallSubsystem : public Subsystem {
         KernelGuardian _k_guard;
 
-        LibK::TableFormatter<SystemCallInfo> _system_call_table_fmt;
+        TableFormatter<SystemCallInfo> _system_call_table_fmt;
 
     public:
 
-        Subsystem();
+        SystemCallSubsystem();
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -47,10 +47,10 @@ namespace Rune::SystemCall {
         [[nodiscard]] String get_name() const override;
 
 
-        bool start(const LibK::BootLoaderInfo& boot_info, const LibK::SubsystemRegistry& k_subsys_reg) override;
+        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
 
-        void set_logger(SharedPointer<LibK::Logger> logger) override;
+        void set_logger(SharedPointer<Logger> logger) override;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -68,7 +68,7 @@ namespace Rune::SystemCall {
          * @brief Dump the system call table to the stream.
          * @param stream
          */
-        void dump_system_call_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_system_call_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**

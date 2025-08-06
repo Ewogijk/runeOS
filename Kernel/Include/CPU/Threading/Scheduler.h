@@ -18,11 +18,11 @@
 #define RUNEOS_SCHEDULER_H
 
 
-#include <Hammer/Collection.h>
-#include <Hammer/Utility.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/Utility.h>
 
-#include <LibK/KMemory.h>
-#include <LibK/Logging.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Logging.h>
 
 #include <CPU/Threading/MultiLevelQueue.h>
 
@@ -42,7 +42,7 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
 
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
 
 
         SharedPointer<Thread> _running_thread;
@@ -187,7 +187,7 @@ namespace Rune::CPU {
          *
          * @param logger
          */
-        void set_logger(SharedPointer<LibK::Logger> logger);
+        void set_logger(SharedPointer<Logger> logger);
 
 
         /**
@@ -207,7 +207,7 @@ namespace Rune::CPU {
          * @return
          */
         bool init(
-                LibK::PhysicalAddr base_pt_addr,
+                PhysicalAddr base_pt_addr,
                 CPU::Register stack_top,
                 const SharedPointer<Thread>& idle_thread,
                 const SharedPointer<Thread>& thread_terminator,

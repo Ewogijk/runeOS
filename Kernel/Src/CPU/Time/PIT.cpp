@@ -66,7 +66,7 @@ namespace Rune::CPU {
 
 
     bool PIT::start(
-            SharedPointer<LibK::Logger> logger,
+            SharedPointer<Logger> logger,
             CPU::Scheduler* scheduler,
             TimerMode mode,
             U64 frequency,

@@ -56,9 +56,9 @@ namespace Rune::Memory {
      */
     class VirtualMemoryManager {
         PhysicalMemoryManager* _pmm;
-        SharedPointer<LibK::Logger> _logger;
+        SharedPointer<Logger> _logger;
 
-        LibK::VirtualAddr _user_space_end;
+        VirtualAddr _user_space_end;
 
         VMMStartFailure             _start_fail;
         KernelSpaceEntryAllocResult _ksear;
@@ -68,11 +68,11 @@ namespace Rune::Memory {
         // map
         KernelSpaceEntryAllocResult allocate_kernel_space_entries(
                 const Memory::PageTable& base_pt,
-                LibK::VirtualAddr v_start,
-                const LibK::MemoryRegion& p_reg,
+                VirtualAddr v_start,
+                const MemoryRegion& p_reg,
                 U16 flags,
-                LibK::MemoryRegionType claim_type,
-                LibK::MemoryMap* v_map,
+                MemoryRegionType claim_type,
+                MemoryMap* v_map,
                 const char* region_name
         );
 
@@ -119,10 +119,10 @@ namespace Rune::Memory {
          * @return True if the initial VAS got loaded else false.
          */
         [[nodiscard]] VMMStartFailure start(
-                LibK::MemoryMap* p_map,
-                LibK::MemoryMap* v_map,
+                MemoryMap* p_map,
+                MemoryMap* v_map,
                 KernelSpaceLayout k_space_layout,
-                LibK::MemorySize heap_size
+                MemorySize heap_size
         );
 
 
@@ -130,14 +130,14 @@ namespace Rune::Memory {
          *
          * @param logger
          */
-        void set_logger(SharedPointer<LibK::Logger> logger);
+        void set_logger(SharedPointer<Logger> logger);
 
 
         /**
          *
          * @return The last user space memory address.
          */
-        [[nodiscard]] LibK::VirtualAddr get_user_space_end() const;
+        [[nodiscard]] VirtualAddr get_user_space_end() const;
 
 
         /**
@@ -149,7 +149,7 @@ namespace Rune::Memory {
          *
          * @return True if the new virtual address space got created else false.
          */
-        bool allocate_virtual_address_space(LibK::PhysicalAddr& base_pt_addr);
+        bool allocate_virtual_address_space(PhysicalAddr& base_pt_addr);
 
 
         /**
@@ -159,7 +159,7 @@ namespace Rune::Memory {
          *
          * @return True if the user space of the virtual address space got freed else false.
          */
-        bool free_virtual_address_space(LibK::PhysicalAddr base_pt_addr);
+        bool free_virtual_address_space(PhysicalAddr base_pt_addr);
 
 
         /**
@@ -167,7 +167,7 @@ namespace Rune::Memory {
          *
          * @param base_pt_addr Physical address of the base page table.
          */
-        void load_virtual_address_space(LibK::PhysicalAddr base_pt_addr);
+        void load_virtual_address_space(PhysicalAddr base_pt_addr);
 
 
         /**
@@ -179,7 +179,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if the page is already allocated or out of physical memory.
          */
-        bool allocate(LibK::VirtualAddr v_addr, U16 flags);
+        bool allocate(VirtualAddr v_addr, U16 flags);
 
 
         /**
@@ -192,7 +192,7 @@ namespace Rune::Memory {
          *
          * @return True if the allocation succeeded, false if the page is already allocated or out of physical memory.
          */
-        bool allocate(LibK::VirtualAddr v_addr, U16 flags, size_t pages);
+        bool allocate(VirtualAddr v_addr, U16 flags, size_t pages);
 
 
         /**
@@ -204,7 +204,7 @@ namespace Rune::Memory {
          * @return True if the free succeeded, false if the virtual address is not mapped or the physical memory manager
          *          fails to free the associated page frame.
          */
-        bool free(LibK::VirtualAddr v_addr);
+        bool free(VirtualAddr v_addr);
 
 
         /**
@@ -217,7 +217,7 @@ namespace Rune::Memory {
          * @return True if the free succeeded, false if the virtual address is not mapped or the physical memory manager
          *          fails to free the associated page frame.
          */
-        bool free(LibK::VirtualAddr v_addr, size_t pages);
+        bool free(VirtualAddr v_addr, size_t pages);
     };
 }
 

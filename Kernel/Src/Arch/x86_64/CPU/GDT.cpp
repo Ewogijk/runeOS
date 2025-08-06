@@ -16,7 +16,7 @@
 
 #include "GDT.h"
 
-#include <Hammer/Memory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::CPU {

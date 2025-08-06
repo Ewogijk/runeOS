@@ -16,7 +16,6 @@
 
 #include <Boot/LogRegistry.h>
 
-
 #include <VirtualFileSystem/FileStream.h>
 
 
@@ -32,23 +31,23 @@ namespace Rune {
     }
 
 
-    void LogRegistry::init(VFS::Subsystem* f_subsystem, const Path& system_directory) {
+    void LogRegistry::init(VFS::VFSSubsystem* f_subsystem, const Path& system_directory) {
         _vfs_subsystem    = f_subsystem;
         _system_directory = move(system_directory);
-        _log_msg_fmt      = SharedPointer<LibK::LogFormatter>(new LibK::SimpleLogFormatter());
+        _log_msg_fmt      = SharedPointer<LogFormatter>(new SimpleLogFormatter());
     }
 
 
-    void LogRegistry::update_log_formatter(const SharedPointer<LibK::LogFormatter>& log_formatter) {
+    void LogRegistry::update_log_formatter(const SharedPointer<LogFormatter>& log_formatter) {
         _log_msg_fmt = move(log_formatter);
         for (auto& logger: _logger_registry)
-            ((LibK::SystemLogger*) logger.get())->update_log_formatter(_log_msg_fmt);
+            ((SystemLogger*) logger.get())->update_log_formatter(_log_msg_fmt);
     }
 
 
-    SharedPointer<LibK::Logger> LogRegistry::build_logger(LibK::LogLevel lvl, const Path& path) {
-        SharedPointer<LibK::Logger> logger(
-                new LibK::SystemLogger(
+    SharedPointer<Logger> LogRegistry::build_logger(LogLevel lvl, const Path& path) {
+        SharedPointer<Logger> logger(
+                new SystemLogger(
                         _log_msg_fmt,
                         lvl,
                         path.to_string()
@@ -56,7 +55,7 @@ namespace Rune {
         );
 
         if (_serial_logger)
-            ((LibK::SystemLogger*) logger.get())->set_serial_logger(_serial_logger);
+            ((SystemLogger*) logger.get())->set_serial_logger(_serial_logger);
 
         if (_file_logging_available) {
             SharedPointer<VFS::Node> node;
@@ -66,12 +65,12 @@ namespace Rune {
                     node
             );
             if (io_status == VFS::IOStatus::OPENED) {
-                ((LibK::SystemLogger*) logger.get())->set_file_logger(
-                        UniquePointer<LibK::Logger>(
-                                new LibK::TextStreamLogger(
+                ((SystemLogger*) logger.get())->set_file_logger(
+                        UniquePointer<Logger>(
+                                new TextStreamLogger(
                                         _log_msg_fmt,
                                         lvl,
-                                        UniquePointer<LibK::TextStream>(
+                                        UniquePointer<TextStream>(
                                                 new VFS::FileStream(node)
                                         )
                                 )
@@ -85,23 +84,23 @@ namespace Rune {
     }
 
 
-    void LogRegistry::enable_serial_logging(UniquePointer<LibK::TextStream> stream, LibK::LogLevel log_level) {
-        _serial_logger = SharedPointer<LibK::Logger>(
-                new LibK::TextStreamLogger(
+    void LogRegistry::enable_serial_logging(UniquePointer<TextStream> stream, LogLevel log_level) {
+        _serial_logger = SharedPointer<Logger>(
+                new TextStreamLogger(
                         _log_msg_fmt,
                         log_level,
                         move(stream)
                 )
         );
         for (auto& l: _logger_registry)
-            ((LibK::SystemLogger*) l.get())->set_serial_logger(_serial_logger);
+            ((SystemLogger*) l.get())->set_serial_logger(_serial_logger);
     }
 
 
     void LogRegistry::enable_file_logging() {
         _file_logging_available = true;
         for (auto& l: _logger_registry) {
-            Path     log_file = _system_directory / ((LibK::SystemLogger*) l.get())->get_log_file();
+            Path     log_file = _system_directory / ((SystemLogger*) l.get())->get_log_file();
             VFS::IOStatus st       = _vfs_subsystem->create(
                     log_file,
                     Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM
@@ -112,23 +111,23 @@ namespace Rune {
 
             SharedPointer<VFS::Node> node;
             VFS::IOStatus            io_status = _vfs_subsystem->open(
-                    _system_directory / ((LibK::SystemLogger*) l.get())->get_log_file(),
+                    _system_directory / ((SystemLogger*) l.get())->get_log_file(),
                     Ember::IOMode::WRITE,
                     node
             );
             if (io_status == VFS::IOStatus::OPENED) {
-                ((LibK::SystemLogger*) l.get())->set_file_logger(
-                        UniquePointer<LibK::Logger>(
-                                new LibK::TextStreamLogger(
+                ((SystemLogger*) l.get())->set_file_logger(
+                        UniquePointer<Logger>(
+                                new TextStreamLogger(
                                         _log_msg_fmt,
                                         l->get_log_level(),
-                                        UniquePointer<LibK::TextStream>(
+                                        UniquePointer<TextStream>(
                                                 new VFS::FileStream(node)
                                         )
                                 )
                         )
                 );
-                ((LibK::SystemLogger*) l.get())->flush(true);
+                ((SystemLogger*) l.get())->flush(true);
             }
         }
     }

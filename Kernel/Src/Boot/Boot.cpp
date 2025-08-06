@@ -19,11 +19,11 @@
 #include <Boot/LogRegistry.h>
 #include <Boot/FancyLogFormatter.h>
 
-#include <Hammer/String.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Path.h>
 
-#include <LibK/Logging.h>
-#include <LibK/KernelRuntimeEnv.h>
+#include <KernelRuntime/Logging.h>
+#include <KernelRuntime/CppLanguageSupport.h>
 
 #include <App/AppSubsystem.h>
 
@@ -57,9 +57,9 @@ namespace Rune {
 
 
     constexpr char const* BOOT_THREAD_NAME = "Boot";
-    LibK::LogLevel                  KERNEL_LOG_LEVEL = LibK::LogLevel::INFO;
-    LibK::Version                   KERNEL_VERSION   = { K_MAJOR, K_MINOR, K_PATCH, K_PRERELEASE };
-    SharedPointer<LibK::TextStream> PANIC_STREAM;
+    LogLevel                  KERNEL_LOG_LEVEL = LogLevel::INFO;
+    Version                   KERNEL_VERSION   = { K_MAJOR, K_MINOR, K_PATCH, K_PRERELEASE };
+    SharedPointer<TextStream> PANIC_STREAM;
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -70,20 +70,20 @@ namespace Rune {
     /**
      * Only the memory subsystem is statically allocated because other subsystems (may) need the kernel heap.
      */
-    Memory::Subsystem MEMORY_SUBSYSTEM = Memory::Subsystem();
+    Memory::MemorySubsystem MEMORY_SUBSYSTEM = Memory::MemorySubsystem();
 
     constexpr size_t SUBSYSTEM_COUNT = 6;
-    LibK::Subsystem* KERNEL_SUBSYSTEMS[SUBSYSTEM_COUNT] = { };
-    LibK::SubsystemRegistry K_SUBSYS_REG(KERNEL_SUBSYSTEMS, SUBSYSTEM_COUNT);
+    Subsystem* KERNEL_SUBSYSTEMS[SUBSYSTEM_COUNT] = { };
+    SubsystemRegistry K_SUBSYS_REG(KERNEL_SUBSYSTEMS, SUBSYSTEM_COUNT);
 
 
     constexpr char const* LOG_FILE_EXTENSION = ".log";
     LogRegistry                 LOG_REG;
-    SharedPointer<LibK::Logger> SYSTEM_LOGGER;
-    LibK::BootLoaderInfo        BOOT_INFO = { };
+    SharedPointer<Logger> SYSTEM_LOGGER;
+    BootLoaderInfo        BOOT_INFO = { };
 
     constexpr size_t BUILT_IN_PLUGIN_COUNT = 4;
-    LibK::Plugin* BUILT_IN_PLUGINS[BUILT_IN_PLUGIN_COUNT] = { };
+    Plugin* BUILT_IN_PLUGINS[BUILT_IN_PLUGIN_COUNT] = { };
 
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -107,7 +107,7 @@ namespace Rune {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    void start_kernel_subsystem(LibK::Subsystem* k_subsys) {
+    void start_kernel_subsystem(Subsystem* k_subsys) {
         if (!k_subsys->start(BOOT_INFO, K_SUBSYS_REG)) {
             SYSTEM_LOGGER->critical(FILE, "Subsystem start failure: {}", k_subsys->get_name());
             while (true) CPU::halt();
@@ -123,7 +123,7 @@ namespace Rune {
         BUILT_IN_PLUGINS[3] = new BuiltInPlugin::_8259PICDriverPlugin();
 
         for (auto plugin: BUILT_IN_PLUGINS) {
-            LibK::PluginInfo info = plugin->get_info();
+            PluginInfo info = plugin->get_info();
             if (!plugin->start(K_SUBSYS_REG)) {
                 SYSTEM_LOGGER->critical(
                         FILE,
@@ -145,7 +145,7 @@ namespace Rune {
     }
 
 
-    void turn_on_serial_logging(UniquePointer<LibK::TextStream> txt_stream) {
+    void turn_on_serial_logging(UniquePointer<TextStream> txt_stream) {
         LOG_REG.enable_serial_logging(move(txt_stream), KERNEL_LOG_LEVEL);
 
         SYSTEM_LOGGER->info(
@@ -177,12 +177,12 @@ namespace Rune {
         SILENCE_UNUSED(start_info)
 
         // Install the panic handler
-        PANIC_STREAM = SharedPointer<LibK::TextStream>(new CPU::E9Stream);
+        PANIC_STREAM = SharedPointer<TextStream>(new CPU::E9Stream);
         CPU::exception_install_panic_stream(PANIC_STREAM);
 
         // Start the other kernel subsystems
         for (size_t i = 2; i < SUBSYSTEM_COUNT; i++) {
-            LibK::Subsystem* k_subsys = KERNEL_SUBSYSTEMS[i];
+            Subsystem* k_subsys = KERNEL_SUBSYSTEMS[i];
             start_kernel_subsystem(k_subsys);
 #ifndef IS_QEMU_HOST
             if (i == 2) { // Device subsystem
@@ -194,14 +194,14 @@ namespace Rune {
         }
 
         // Switch to a more detailed log formatter
-        auto* cpu_subsys = K_SUBSYS_REG.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
-        auto* app_subsys = K_SUBSYS_REG.get_as<App::Subsystem>(LibK::KernelSubsystem::APP);
-        auto fancy_log_fmt = SharedPointer<LibK::LogFormatter>(new FancyLogFormatter(cpu_subsys, app_subsys));
+        auto* cpu_subsys = K_SUBSYS_REG.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+        auto* app_subsys = K_SUBSYS_REG.get_as<App::AppSubsystem>(KernelSubsystem::APP);
+        auto fancy_log_fmt = SharedPointer<LogFormatter>(new FancyLogFormatter(cpu_subsys, app_subsys));
         LOG_REG.update_log_formatter(fancy_log_fmt);
         SYSTEM_LOGGER->set_log_formatter(fancy_log_fmt);
 
         // Load the OS
-        auto* file_subsys = K_SUBSYS_REG.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
+        auto* file_subsys = K_SUBSYS_REG.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
         Path          os(OS);
         VFS::NodeInfo dummy;
         VFS::IOStatus st = file_subsys->get_node_info(os, dummy);
@@ -225,7 +225,7 @@ namespace Rune {
     }
 
 
-    void kernel_boot(LibK::BootLoaderInfo boot_loader_info) {
+    void kernel_boot(BootLoaderInfo boot_loader_info) {
         // Kernel boot Phase 1 is still running on the implicit Bootstrap Thread using the bootloader resources
         // Main goal here is to set up memory management, interrupts and scheduling asap
         BOOT_INFO = {
@@ -242,15 +242,15 @@ namespace Rune {
 
         // Allocate the kernel subsystems - We do this here because the log registry needs an allocated FILE subsystem
         KERNEL_SUBSYSTEMS[0] = &MEMORY_SUBSYSTEM;
-        KERNEL_SUBSYSTEMS[1] = new CPU::Subsystem();
-        KERNEL_SUBSYSTEMS[2] = new Device::Subsystem();
-        KERNEL_SUBSYSTEMS[3] = new VFS::Subsystem();
-        KERNEL_SUBSYSTEMS[4] = new App::Subsystem();
-        KERNEL_SUBSYSTEMS[5] = new SystemCall::Subsystem();
+        KERNEL_SUBSYSTEMS[1] = new CPU::CPUSubsystem();
+        KERNEL_SUBSYSTEMS[2] = new Device::DeviceSubsystem();
+        KERNEL_SUBSYSTEMS[3] = new VFS::VFSSubsystem();
+        KERNEL_SUBSYSTEMS[4] = new App::AppSubsystem();
+        KERNEL_SUBSYSTEMS[5] = new SystemCall::SystemCallSubsystem();
 
         // Setup logging
         LOG_REG.init(
-                K_SUBSYS_REG.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS),
+                K_SUBSYS_REG.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS),
                 Path("/System")
         );
         SYSTEM_LOGGER = LOG_REG.build_logger(
@@ -265,7 +265,7 @@ namespace Rune {
         );
 #ifdef IS_QEMU_HOST
         // Enable Serial logging via E9 port on Qemu
-        turn_on_serial_logging(UniquePointer<LibK::TextStream>(new CPU::E9Stream()));
+        turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));
 #endif
 
         init_kernel_runtime_env(
@@ -285,7 +285,7 @@ namespace Rune {
         }
         start_built_in_plugins();
 
-        auto* cpu_subsys = K_SUBSYS_REG.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
+        auto* cpu_subsys = K_SUBSYS_REG.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
         start_kernel_subsystem(cpu_subsys);
         cpu_subsys->get_scheduler()->lock();
         cpu_subsys->get_scheduler()->terminate(); // Schedule bootstrap termination after unlock

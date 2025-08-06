@@ -51,12 +51,12 @@ namespace Rune::Memory {
     }
 
 
-    LibK::VirtualAddr addr_prefix(LibK::VirtualAddr v_addr) {
+    VirtualAddr addr_prefix(VirtualAddr v_addr) {
         return v_addr & 0xFFFFF00000000000;
     }
 
 
-    PageTableAccess access_page_hierarchy(const PageTable& base_pt, LibK::VirtualAddr v_addr) {
+    PageTableAccess access_page_hierarchy(const PageTable& base_pt, VirtualAddr v_addr) {
         U8              shift = 39;
         PageTableAccess pta;
         PageTable       pt    = base_pt;
@@ -120,7 +120,7 @@ namespace Rune::Memory {
     }
 
 
-    LibK::PhysicalAddr PageTableEntry::get_address() const {
+    PhysicalAddr PageTableEntry::get_address() const {
         //   63        M M-1    12 11         0
         //  | ShiftLeft | Address | ShiftRight |
         // -> Shift by (ShiftLeft + ShiftRight) amount of bits to get address mask
@@ -200,8 +200,8 @@ namespace Rune::Memory {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    LibK::MemorySize get_page_size() {
-        return 4 * (LibK::MemorySize) LibK::MemoryUnit::KiB;
+    MemorySize get_page_size() {
+        return 4 * (MemorySize) MemoryUnit::KiB;
     }
 
 
@@ -215,7 +215,7 @@ namespace Rune::Memory {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    PageTable interp_as_base_page_table(LibK::PhysicalAddr p_addr) {
+    PageTable interp_as_base_page_table(PhysicalAddr p_addr) {
         return PageTable(p_addr, (NativePageTableEntry*) physical_to_virtual_address(p_addr), MAX_PT_LEVEL);
     }
 
@@ -230,7 +230,7 @@ namespace Rune::Memory {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    LibK::VirtualAddr to_canonical_form(LibK::VirtualAddr v_addr) {
+    VirtualAddr to_canonical_form(VirtualAddr v_addr) {
         if ((v_addr >> (VIRTUAL_ADDR_SIZE - 1) & 1) == 1)
             // Bit 47 is 1 -> apply sign extension
             v_addr = (((NativePageTableEntry) -1) >> VIRTUAL_ADDR_SIZE) << VIRTUAL_ADDR_SIZE | v_addr;
@@ -241,12 +241,12 @@ namespace Rune::Memory {
     }
 
 
-    LibK::VirtualAddr physical_to_virtual_address(LibK::PhysicalAddr p_addr) {
+    VirtualAddr physical_to_virtual_address(PhysicalAddr p_addr) {
         return to_canonical_form(p_addr + get_virtual_kernel_space_layout().higher_half_direct_map);
     }
 
 
-    bool virtual_to_physical_address(LibK::VirtualAddr v_addr, LibK::PhysicalAddr& p_addr_out) {
+    bool virtual_to_physical_address(VirtualAddr v_addr, PhysicalAddr& p_addr_out) {
         if (addr_prefix(v_addr) == get_virtual_kernel_space_layout().higher_half_direct_map) {
             // The virtual address starts with 0xFFFF80... -> We can make a fast translation
             // by subtracting the higher half direct map offset
@@ -277,8 +277,8 @@ namespace Rune::Memory {
 
     PageTableAccess allocate_page(
             const PageTable& base_pt,
-            LibK::VirtualAddr v_addr,
-            LibK::PhysicalAddr page_frame,
+            VirtualAddr v_addr,
+            PhysicalAddr page_frame,
             U16 flags,
             PhysicalMemoryManager* pmm
     ) {
@@ -308,7 +308,7 @@ namespace Rune::Memory {
             );
 
             bool         alloc;
-            LibK::PhysicalAddr pt_page_frame = 0;
+            PhysicalAddr pt_page_frame = 0;
             U16          pt_flags      = to_x86_64_flags(flags);
             if (i == 0) {
                 alloc         = true;
@@ -364,7 +364,7 @@ namespace Rune::Memory {
 
     PageTableAccess free_page(
             const PageTable& base_pt,
-            LibK::VirtualAddr v_addr,
+            VirtualAddr v_addr,
             PhysicalMemoryManager* pmm
     ) {
         PageTableAccess pta = access_page_hierarchy(base_pt, v_addr);
@@ -417,7 +417,7 @@ namespace Rune::Memory {
 
     PageTableAccess modify_page_flags(
             const PageTable& base_pt,
-            LibK::VirtualAddr v_addr,
+            VirtualAddr v_addr,
             U16 flags,
             bool set
     ) {
@@ -439,7 +439,7 @@ namespace Rune::Memory {
     }
 
 
-    PageTableAccess find_page(const PageTable& base_pt, LibK::VirtualAddr v_addr) {
+    PageTableAccess find_page(const PageTable& base_pt, VirtualAddr v_addr) {
         return access_page_hierarchy(base_pt, v_addr);
     }
 }

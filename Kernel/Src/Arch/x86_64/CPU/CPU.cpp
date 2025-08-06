@@ -18,7 +18,7 @@
 
 #include "X64Core.h"
 
-#include <Hammer/Collection.h>
+#include <KernelRuntime/Collection.h>
 
 
 namespace Rune::CPU {

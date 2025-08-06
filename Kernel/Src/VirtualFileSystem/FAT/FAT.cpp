@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FAT.h>
 
-#include <Hammer/Memory.h>
-#include <Hammer/Algorithm.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Algorithm.h>
 
 
 namespace Rune::VFS {

@@ -19,9 +19,9 @@
 
 
 #include <Ember/Enum.h>
-#include <Hammer/Memory.h>
+#include <KernelRuntime/Memory.h>
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 #include <Memory/PhysicalMemoryManager.h>
 
@@ -36,7 +36,7 @@ namespace Rune::Memory {
     /**
      * @brief A native page table entry (PTE) is simply the numerical entry in a page table.
      */
-    using NativePageTableEntry = LibK::VirtualAddr;
+    using NativePageTableEntry = VirtualAddr;
 
 
     /**
@@ -111,7 +111,7 @@ namespace Rune::Memory {
          * @return If the PTE points to a page frame, return its address else the address will point to another page
          *          table.
          */
-        [[nodiscard]] LibK::PhysicalAddr get_address() const;
+        [[nodiscard]] PhysicalAddr get_address() const;
 
 
         /**
@@ -214,13 +214,13 @@ namespace Rune::Memory {
      * Important note: This will invalidate all currently used pages! The new base page table must at least have the
      * kernel pages mapped, otherwise the system will crash immediately.
      */
-    CLINK void load_base_page_table(LibK::PhysicalAddr base_pt);
+    CLINK void load_base_page_table(PhysicalAddr base_pt);
 
 
     /**
      * @brief Flush the TLB entries given page.
      */
-    CLINK void invalidate_page(LibK::VirtualAddr page);
+    CLINK void invalidate_page(VirtualAddr page);
 
 
     /**
@@ -232,7 +232,7 @@ namespace Rune::Memory {
     /**
      * @return The size of a page in bytes.
      */
-    LibK::MemorySize get_page_size();
+    MemorySize get_page_size();
 
 
     /**
@@ -251,7 +251,7 @@ namespace Rune::Memory {
      *
      * @return The physical address of the base PT loaded in the CPU.
      */
-    CLINK LibK::PhysicalAddr get_base_page_table_address();
+    CLINK PhysicalAddr get_base_page_table_address();
 
 
     /**
@@ -260,7 +260,7 @@ namespace Rune::Memory {
      * @param p_addr Physical address of a base page table.
      * @return Base page table from the physical address.
      */
-    PageTable interp_as_base_page_table(LibK::PhysicalAddr p_addr);
+    PageTable interp_as_base_page_table(PhysicalAddr p_addr);
 
 
     /**
@@ -282,7 +282,7 @@ namespace Rune::Memory {
      * @param v_addr
      * @return The virtual address in canonical form.
      */
-    LibK::VirtualAddr to_canonical_form(LibK::VirtualAddr v_addr);
+    VirtualAddr to_canonical_form(VirtualAddr v_addr);
 
 
     /**
@@ -291,7 +291,7 @@ namespace Rune::Memory {
      *
      * @return The virtual address pointing to the physical address.
      */
-    LibK::VirtualAddr physical_to_virtual_address(LibK::PhysicalAddr p_addr);
+    VirtualAddr physical_to_virtual_address(PhysicalAddr p_addr);
 
 
     /**
@@ -302,7 +302,7 @@ namespace Rune::Memory {
      *
      * @return True if the physical address mapped to the virtual address has been found.
      */
-    bool virtual_to_physical_address(LibK::VirtualAddr v_addr, LibK::PhysicalAddr& p_addr_out);
+    bool virtual_to_physical_address(VirtualAddr v_addr, PhysicalAddr& p_addr_out);
 
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -377,7 +377,7 @@ namespace Rune::Memory {
         PageTableEntry        path[MAX_PATH_LENGTH]        = { };
         U8                    level                        = 0;
         bool                  pt_leak_map[MAX_PATH_LENGTH] = { false };
-        LibK::PhysicalAddr    physical_address             = 0;
+        PhysicalAddr    physical_address             = 0;
         PageTableEntry        pte_after                    = { 0 };
     };
 
@@ -406,8 +406,8 @@ namespace Rune::Memory {
      */
     PageTableAccess allocate_page(
             const PageTable& base_pt,
-            LibK::VirtualAddr v_addr,
-            LibK::PhysicalAddr page_frame,
+            VirtualAddr v_addr,
+            PhysicalAddr page_frame,
             U16 flags,
             PhysicalMemoryManager* pmm
     );
@@ -427,7 +427,7 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess free_page(const PageTable& base_pt, LibK::VirtualAddr v_addr, PhysicalMemoryManager* pmm);
+    PageTableAccess free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm);
 
 
     /**
@@ -440,7 +440,7 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess modify_page_flags(const PageTable& base_pt, LibK::VirtualAddr v_addr, U16 flags, bool set);
+    PageTableAccess modify_page_flags(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, bool set);
 
 
     /**
@@ -451,7 +451,7 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess find_page(const PageTable& base_pt, LibK::VirtualAddr v_addr);
+    PageTableAccess find_page(const PageTable& base_pt, VirtualAddr v_addr);
 }
 
 #endif //RUNEOS_PAGING_H

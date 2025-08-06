@@ -229,14 +229,14 @@ if not GetOption('clean'):
         'python3 $SOURCE $TARGET'
     )
     target_env.Command(
-        'Include/LibK/Lat15-Terminus16.h',
+        'Include/KRuntime/Lat15-Terminus16.h',
         'BuildTools/PSF2ToCPP.py',
         'python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf'
     )
     # Dunno how to make this only run when cli args change -> just run it everytime
     create_macro_def_json('BuildTools/MacroDefs.json')
     target_env.Command(
-        'Include/LibK/Build.h',
+        'Include/KRuntime/Build.h',
         ['BuildTools/GenerateBuildHeader.py', 'BuildTools/MacroDefs.json'],
         'python3 $SOURCE $TARGET BuildTools/MacroDefs.json'
     )
@@ -248,28 +248,23 @@ if not GetOption('clean'):
 
 build_dir = Path('Build') / f'{arch}-{build}'
 target_env.SConscript(
-    str(Path('..') / 'Hammer' / 'Src' / 'SConscript'),
-    variant_dir=str(build_dir / 'Hammer'),
-    duplicate=0
-)
-target_env.SConscript(
     str(Path('Src') / 'Ember' / 'SConscript'),
     variant_dir=str(build_dir / 'Ember'),
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'App' / 'SConscript'),
-    variant_dir=str(build_dir / 'App'),
+    str(Path('Src') / 'KernelRuntime' / 'SConscript'),
+    variant_dir=str(build_dir / 'KernelRuntime'),
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'Boot' / 'SConscript'),
-    variant_dir=str(build_dir / 'Boot'),
+    str(Path('Src') / 'Arch' / arch / 'SConscript'),
+    variant_dir=str(build_dir / 'Arch'),
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'BuiltInPlugin' / 'SConscript'),
-    variant_dir=str(build_dir / 'BuiltInPlugin'),
+    str(Path('Src') / 'Memory' / 'SConscript'),
+    variant_dir=str(build_dir / 'Memory'),
     duplicate=0
 )
 target_env.SConscript(
@@ -283,18 +278,13 @@ target_env.SConscript(
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'LibK' / 'SConscript'),
-    variant_dir=str(build_dir / 'LibK'),
+    str(Path('Src') / 'VirtualFileSystem' / 'SConscript'),
+    variant_dir=str(build_dir / 'VirtualFileSystem'),
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'Memory' / 'SConscript'),
-    variant_dir=str(build_dir / 'Memory'),
-    duplicate=0
-)
-target_env.SConscript(
-    str(Path('Src') / 'Arch' / arch / 'SConscript'),
-    variant_dir=str(build_dir / 'Arch'),
+    str(Path('Src') / 'App' / 'SConscript'),
+    variant_dir=str(build_dir / 'App'),
     duplicate=0
 )
 target_env.SConscript(
@@ -303,23 +293,27 @@ target_env.SConscript(
     duplicate=0
 )
 target_env.SConscript(
-    str(Path('Src') / 'VirtualFileSystem' / 'SConscript'),
-    variant_dir=str(build_dir / 'VirtualFileSystem'),
+    str(Path('Src') / 'Boot' / 'SConscript'),
+    variant_dir=str(build_dir / 'Boot'),
+    duplicate=0
+)
+target_env.SConscript(
+    str(Path('Src') / 'BuiltInPlugin' / 'SConscript'),
+    variant_dir=str(build_dir / 'BuiltInPlugin'),
     duplicate=0
 )
 
-Import('Hammer')
 Import('Ember')
-Import('App')
-Import('Boot')
-Import('BuiltInPlugin')
+Import('KernelRuntime')
+Import('Arch')
+Import('Memory')
 Import('CPU')
 Import('Device')
-Import('LibK')
-Import('Memory')
-Import('Arch')
-Import('SystemCall')
 Import('VirtualFileSystem')
+Import('App')
+Import('SystemCall')
+Import('BuiltInPlugin')
+Import('Boot')
 Import('crti')
 Import('crtn')
 objects = [
@@ -334,9 +328,8 @@ objects = [
     CPU,
     Memory,
     Arch,
-    LibK,
+    KernelRuntime,
     Ember,
-    Hammer,
     compiler / 'lib' / 'gcc' / 'x86_64-elf' / '13.2.0' / 'crtend.o',
     crtn
 ]

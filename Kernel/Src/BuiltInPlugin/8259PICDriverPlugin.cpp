@@ -22,7 +22,7 @@
 
 
 namespace Rune::BuiltInPlugin {
-    LibK::PluginInfo _8259_PIC_INFO = {
+    PluginInfo _8259_PIC_INFO = {
             "8259 PIC",
             "Ewogijk",
             {
@@ -34,13 +34,13 @@ namespace Rune::BuiltInPlugin {
     };
 
 
-    LibK::PluginInfo _8259PICDriverPlugin::get_info() const {
+    PluginInfo _8259PICDriverPlugin::get_info() const {
         return _8259_PIC_INFO;
     }
 
 
-    bool _8259PICDriverPlugin::start(const LibK::SubsystemRegistry &ks_registry) {
-        auto* cs = ks_registry.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
+    bool _8259PICDriverPlugin::start(const SubsystemRegistry &ks_registry) {
+        auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
         cs->install_pic_driver(UniquePointer<CPU::PICDriver>(new CPU::_8259PIC()));
 
         return true;

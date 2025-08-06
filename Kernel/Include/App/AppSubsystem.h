@@ -18,9 +18,9 @@
 #define RUNEOS_APPSUBSYSTEM_H
 
 
-#include <Hammer/Path.h>
+#include <KernelRuntime/Path.h>
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 #include <App/App.h>
 
@@ -61,16 +61,16 @@ namespace Rune::App {
      *  running apps that will be updated whenever an App is started or the last thread of an app is terminated.
      * </p>
      */
-    class Subsystem : public LibK::Subsystem {
-        Memory::Subsystem* _memory_subsys;
-        CPU::Subsystem   * _cpu_subsys;
-        VFS::Subsystem   * _vfs_subsys;
-        Device::Subsystem* _dev_subsys;
-        LibK::FrameBuffer _frame_buffer;
+    class AppSubsystem : public Subsystem {
+        Memory::MemorySubsystem* _memory_subsys;
+        CPU::CPUSubsystem   * _cpu_subsys;
+        VFS::VFSSubsystem   * _vfs_subsys;
+        Device::DeviceSubsystem* _dev_subsys;
+        FrameBuffer _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
-        LibK::TableFormatter<Info>        _app_table_fmt;
-        LibK::HandleCounter<U16>          _app_handle_counter;
+        TableFormatter<Info>        _app_table_fmt;
+        HandleCounter<U16>          _app_handle_counter;
 
         SharedPointer<Info> _active_app;
 
@@ -93,17 +93,17 @@ namespace Rune::App {
          * @param target     Stream target.
          * @return The standard stream or nullptr if setup failed.
          */
-        SharedPointer<LibK::TextStream> setup_std_stream(
+        SharedPointer<TextStream> setup_std_stream(
                 const SharedPointer<Info>& app,
                 StdStream std_stream,
                 const String& target
         );
 
     public:
-        Subsystem();
+        AppSubsystem();
 
 
-        ~Subsystem() override = default;
+        ~AppSubsystem() override = default;
 
 
         /**
@@ -113,10 +113,10 @@ namespace Rune::App {
         [[nodiscard]] String get_name() const override;
 
 
-        bool start(const LibK::BootLoaderInfo& evt_ctx, const LibK::SubsystemRegistry& k_subsys_reg) override;
+        bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
 
-        void set_logger(SharedPointer<LibK::Logger> logger) override;
+        void set_logger(SharedPointer<Logger> logger) override;
 
 
         /**
@@ -137,7 +137,7 @@ namespace Rune::App {
          * @brief Dump the app table to the stream.
          * @param stream
          */
-        void dump_app_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_app_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**

@@ -18,9 +18,9 @@
 #define RUNEOS_CPUSUBSYSTEM_H
 
 
-#include <Hammer/Utility.h>
+#include <KernelRuntime/Utility.h>
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 #include <CPU/CPU.h>
 #include <CPU/Interrupt/Interrupt.h>
@@ -65,7 +65,7 @@ namespace Rune::CPU {
     };
 
 
-    class Subsystem : public LibK::Subsystem {
+    class CPUSubsystem : public Subsystem {
         static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
         static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
         static constexpr char const* IDLE_THREAD_NAME       = "Idle";
@@ -86,12 +86,12 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
-        LibK::TableFormatter<Thread>        _thread_table_fmt;
-        LibK::HandleCounter<U16>            _thread_handle_counter;
+        TableFormatter<Thread>        _thread_table_fmt;
+        HandleCounter<U16>            _thread_handle_counter;
 
         HashMap<U16, SharedPointer<Mutex>> _mutex_table;
-        LibK::TableFormatter<Mutex>        _mutex_table_fmt;
-        LibK::HandleCounter<U16>           _mutex_handle_counter;
+        TableFormatter<Mutex>        _mutex_table_fmt;
+        HandleCounter<U16>           _mutex_handle_counter;
         Scheduler                          _scheduler;
 
 
@@ -105,7 +105,7 @@ namespace Rune::CPU {
         SharedPointer<Thread> create_thread(
                 const String& thread_name,
                 StartInfo* start_info,
-                LibK::PhysicalAddr base_pt_addr,
+                PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
                 Stack user_stack
         );
@@ -117,10 +117,10 @@ namespace Rune::CPU {
         //                                          Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        Subsystem();
+        CPUSubsystem();
 
 
-        ~Subsystem() override = default;
+        ~CPUSubsystem() override = default;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -131,10 +131,10 @@ namespace Rune::CPU {
         [[nodiscard]] String get_name() const override;
 
 
-        bool start(const LibK::BootLoaderInfo& evt_ctx, const LibK::SubsystemRegistry& k_subsys_reg) override;
+        bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
 
-        void set_logger(SharedPointer<LibK::Logger> logger) override;
+        void set_logger(SharedPointer<Logger> logger) override;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -213,7 +213,7 @@ namespace Rune::CPU {
          * @brief Dump the thread table to the stream.
          * @param logger
          */
-        void dump_thread_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_thread_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**
@@ -248,7 +248,7 @@ namespace Rune::CPU {
         U16 schedule_new_thread(
                 const String& thread_name,
                 StartInfo* start_info,
-                LibK::PhysicalAddr base_pt_addr,
+                PhysicalAddr base_pt_addr,
                 SchedulingPolicy policy,
                 Stack user_stack
         );
@@ -302,7 +302,7 @@ namespace Rune::CPU {
          * @param logger
          * @param logLvl
          */
-        void dump_mutex_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_mutex_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**

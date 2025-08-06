@@ -18,8 +18,8 @@
 #define RUNEOS_MULTILEVELQUEUE_H
 
 
-#include <Hammer/Memory.h>
-#include <Hammer/Collection.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Collection.h>
 
 
 #include <CPU/CPU.h>

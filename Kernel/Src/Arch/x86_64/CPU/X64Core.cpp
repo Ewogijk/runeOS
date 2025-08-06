@@ -147,8 +147,8 @@ namespace Rune::CPU {
         for (int i = 0; i < 256; i++) {
             GateDescriptor gd = idt_get()->entry[i];
 
-            auto handler_addr = ((LibK::VirtualAddr)gd.offset_high) << 32
-                | ((LibK::VirtualAddr)gd.offset_mid) << 16
+            auto handler_addr = ((VirtualAddr)gd.offset_high) << 32
+                | ((VirtualAddr)gd.offset_mid) << 16
                 | gd.offset_low;
 
             PrivilegeLevel pl = PrivilegeLevel::NONE;
@@ -172,7 +172,7 @@ namespace Rune::CPU {
     }
 
 
-    void X64Core::dump_core_state(const SharedPointer<LibK::TextStream>& stream) {
+    void X64Core::dump_core_state(const SharedPointer<TextStream>& stream) {
         x86CoreState state{ };
         read_state(&state);
         dump_core_state(stream, state);
@@ -243,7 +243,7 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    void X64Core::dump_core_state(const SharedPointer<LibK::TextStream>& stream, const x86CoreState& state) {
+    void X64Core::dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state) {
         stream->write_formatted(
             "-------------------------------------------- CPU{} Core Dump --------------------------------------------\n",
             _core_id

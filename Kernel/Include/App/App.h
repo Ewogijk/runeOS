@@ -20,12 +20,12 @@
 
 #include <limits.h>
 
-#include <Hammer/Memory.h>
-#include <Hammer/Collection.h>
-#include <Hammer/String.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Path.h>
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 
@@ -77,7 +77,7 @@ namespace Rune::App {
         /**
          * Versioning information about the app
          */
-        LibK::Version version;
+        Version version;
 
 
         /**
@@ -99,15 +99,15 @@ namespace Rune::App {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         U16                handle                  = 0;
-        LibK::PhysicalAddr base_page_table_address = 0x0;
-        LibK::VirtualAddr  entry                   = 0x0;
+        PhysicalAddr base_page_table_address = 0x0;
+        VirtualAddr  entry                   = 0x0;
 
 
         /**
          * @brief Application heap
          */
-        LibK::VirtualAddr heap_start = 0x0;
-        LibK::VirtualAddr heap_limit = 0x0;
+        VirtualAddr heap_start = 0x0;
+        VirtualAddr heap_limit = 0x0;
 
 
         /**
@@ -137,9 +137,9 @@ namespace Rune::App {
         /**
          * @brief stdio streams.
          */
-        SharedPointer<LibK::TextStream> std_in  = SharedPointer<LibK::TextStream>();
-        SharedPointer<LibK::TextStream> std_out = SharedPointer<LibK::TextStream>();
-        SharedPointer<LibK::TextStream> std_err = SharedPointer<LibK::TextStream>();
+        SharedPointer<TextStream> std_in  = SharedPointer<TextStream>();
+        SharedPointer<TextStream> std_out = SharedPointer<TextStream>();
+        SharedPointer<TextStream> std_err = SharedPointer<TextStream>();
 
 
         friend bool operator==(const Info& one, const Info& two);

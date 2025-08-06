@@ -30,17 +30,17 @@ namespace Rune::Memory {
     }
 
 
-    LibK::MemoryMap create_virtual_memory_map() {
+    MemoryMap create_virtual_memory_map() {
         return {
                 {
                         0x0,
                         0x0000800000000000,
-                        LibK::MemoryRegionType::USERSPACE
+                        MemoryRegionType::USERSPACE
                 },
                 {
                         0xFFFF800000000000,
                         0xFFFFFFFFFFFFFFFF - 0xFFFF800000000000,
-                        LibK::MemoryRegionType::USABLE
+                        MemoryRegionType::USABLE
                 }
         };
     }

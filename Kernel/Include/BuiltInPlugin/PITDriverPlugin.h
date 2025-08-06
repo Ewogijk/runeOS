@@ -18,12 +18,12 @@
 #define EWOGIJKOS_PITEXTENSION_H
 
 
-#include <LibK/Plugin.h>
+#include <KernelRuntime/Plugin.h>
 
 
 namespace Rune::BuiltInPlugin {
 
-    class PITDriverPlugin : public LibK::Plugin {
+    class PITDriverPlugin : public Plugin {
     public:
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -42,10 +42,10 @@ namespace Rune::BuiltInPlugin {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-        [[nodiscard]] LibK::PluginInfo get_info() const override;
+        [[nodiscard]] PluginInfo get_info() const override;
 
 
-        [[nodiscard]] bool start(const LibK::SubsystemRegistry &ks_registry) override;
+        [[nodiscard]] bool start(const SubsystemRegistry &ks_registry) override;
     };
 }
 

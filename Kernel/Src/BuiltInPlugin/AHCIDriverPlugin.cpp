@@ -25,7 +25,7 @@
 
 
 namespace Rune::BuiltInPlugin {
-    LibK::PluginInfo AHCI_INFO = {
+    PluginInfo AHCI_INFO = {
             "AHCI",
             "Ewogijk",
             {
@@ -37,15 +37,15 @@ namespace Rune::BuiltInPlugin {
     };
 
 
-    LibK::PluginInfo AHCIDriverPlugin::get_info() const {
+    PluginInfo AHCIDriverPlugin::get_info() const {
         return AHCI_INFO;
     }
 
 
-    bool AHCIDriverPlugin::start(const LibK::SubsystemRegistry& ks_registry) {
-        auto* ms = ks_registry.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY);
-        auto* cs = ks_registry.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
-        auto* ds = ks_registry.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
+    bool AHCIDriverPlugin::start(const SubsystemRegistry& ks_registry) {
+        auto* ms = ks_registry.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
+        auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+        auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         ds->set_ahci_driver(
                 UniquePointer(
                         new Device::AHCIDriver(

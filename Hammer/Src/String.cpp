@@ -318,7 +318,7 @@ namespace Rune {
     }
 
 
-    size_t interpolate(const char* fmt, char* buf, size_t buf_size, Argument* args, size_t arg_size) {
+    size_t interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size) {
         ParserState state            = ParserState::START;
         size_t      buf_pos          = 0;
         U8          auto_idx_listing = 0; // 0: tbd, 1: no, 2: yes

@@ -41,12 +41,12 @@ namespace Rune::SystemCall {
 
     Bundle make_app_bundle(
         KernelGuardian*                k_guard,
-        const LibK::SubsystemRegistry& k_subsys_reg
+        const SubsystemRegistry& k_subsys_reg
     ) {
-        auto* app_subsys    = k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP);
-        auto* device_subsys = k_subsys_reg.get_as<Device::Subsystem>(LibK::KernelSubsystem::DEVICE);
-        auto* cpu_subsys    = k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU);
-        auto* file_subsys   = k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS);
+        auto* app_subsys    = k_subsys_reg.get_as<App::AppSubsystem>(KernelSubsystem::APP);
+        auto* device_subsys = k_subsys_reg.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
+        auto* cpu_subsys    = k_subsys_reg.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+        auto* file_subsys   = k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
         APP_SYSCALL_CTX     = {
             k_guard,
             app_subsys,
@@ -145,12 +145,12 @@ namespace Rune::SystemCall {
 
     Bundle make_vfs_bundle(
         KernelGuardian*                k_guard,
-        const LibK::SubsystemRegistry& k_subsys_reg
+        const SubsystemRegistry& k_subsys_reg
     ) {
         VFS_SYSCALL_CTX = {
             k_guard,
-            k_subsys_reg.get_as<VFS::Subsystem>(LibK::KernelSubsystem::VFS),
-            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS),
+            k_subsys_reg.get_as<App::AppSubsystem>(KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
@@ -259,12 +259,12 @@ namespace Rune::SystemCall {
 
     Bundle make_memory_bundle(
         KernelGuardian*                k_guard,
-        const LibK::SubsystemRegistry& k_subsys_reg
+        const SubsystemRegistry& k_subsys_reg
     ) {
         MM_SYSCALL_CTX = {
             k_guard,
-            k_subsys_reg.get_as<Memory::Subsystem>(LibK::KernelSubsystem::MEMORY),
-            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY),
+            k_subsys_reg.get_as<App::AppSubsystem>(KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
@@ -309,12 +309,12 @@ namespace Rune::SystemCall {
 
     Bundle make_threading_bundle(
         KernelGuardian*                k_guard,
-        const LibK::SubsystemRegistry& k_subsys_reg
+        const SubsystemRegistry& k_subsys_reg
     ) {
         T_SYSCALL_CTX = {
             k_guard,
-            k_subsys_reg.get_as<CPU::Subsystem>(LibK::KernelSubsystem::CPU),
-            k_subsys_reg.get_as<App::Subsystem>(LibK::KernelSubsystem::APP)
+            k_subsys_reg.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU),
+            k_subsys_reg.get_as<App::AppSubsystem>(KernelSubsystem::APP)
         };
 
         LinkedList<Definition> defs;
@@ -375,7 +375,7 @@ namespace Rune::SystemCall {
 
     LinkedList<Bundle> system_call_get_native_bundles(
         KernelGuardian*                k_guard,
-        const LibK::SubsystemRegistry& k_subsys_reg
+        const SubsystemRegistry& k_subsys_reg
     ) {
         LinkedList<Bundle> bundles;
         bundles.add_back(make_app_bundle(k_guard, k_subsys_reg));

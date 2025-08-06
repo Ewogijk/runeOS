@@ -18,13 +18,13 @@
 #define RUNEOS_FILESUBSYSTEM_H
 
 
-#include <Hammer/String.h>
-#include <Hammer/Collection.h>
-#include <Hammer/Path.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/Path.h>
 
-#include <LibK/Subsystem.h>
-#include <LibK/Stream.h>
-#include <LibK/Resource.h>
+#include <KernelRuntime/Subsystem.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/Resource.h>
 
 #include <VirtualFileSystem/Status.h>
 #include <VirtualFileSystem/Driver.h>
@@ -138,29 +138,29 @@ namespace Rune::VFS {
      *  pointers to the node, thus must make sure that those pointers are deleted at some point.
      * </p>
      */
-    class Subsystem : public LibK::Subsystem {
+    class VFSSubsystem : public Subsystem {
     private:
         // All registered file system drivers
         HashMap<String, UniquePointer<Driver>> _driver_table;
 
         // All mount points and their devices
         HashMap<Path, MountPointInfo>        _mount_point_table;
-        LibK::TableFormatter<MountPointInfo> _mount_point_table_fmt;
+        TableFormatter<MountPointInfo> _mount_point_table_fmt;
 
         // Counts all open node handles that point to a single path
         HashMap<Path, NodeRefCount>        _node_ref_table;
-        LibK::TableFormatter<NodeRefCount> _node_ref_table_fmt;
+        TableFormatter<NodeRefCount> _node_ref_table_fmt;
 
         // All currently opened nodes
         HashMap<U16, SharedPointer<Node>> _node_table;
-        LibK::TableFormatter<Node>        _node_table_fmt;
-        LibK::HandleCounter<U16>          _node_handle_counter;
+        TableFormatter<Node>        _node_table_fmt;
+        HandleCounter<U16>          _node_handle_counter;
 
 
         // All currently opened directory streams
         HashMap<U16, SharedPointer<DirectoryStream>> _dir_stream_table;
-        LibK::TableFormatter<DirectoryStream>        _dir_stream_table_fmt;
-        LibK::HandleCounter<U16>                     _dir_stream_handle_counter;
+        TableFormatter<DirectoryStream>        _dir_stream_table_fmt;
+        HandleCounter<U16>                     _dir_stream_handle_counter;
 
 
         [[nodiscard]] MountPointInfo resolve(const Path& path) const;
@@ -170,10 +170,10 @@ namespace Rune::VFS {
 
 
     public:
-        explicit Subsystem();
+        explicit VFSSubsystem();
 
 
-        ~Subsystem() override = default;
+        ~VFSSubsystem() override = default;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      KernelSubsystem Overrides
@@ -183,10 +183,10 @@ namespace Rune::VFS {
         [[nodiscard]] String get_name() const override;
 
 
-        bool start(const LibK::BootLoaderInfo& boot_info, const LibK::SubsystemRegistry& k_subsys_reg) override;
+        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
 
-        void set_logger(SharedPointer<LibK::Logger> logger) override;
+        void set_logger(SharedPointer<Logger> logger) override;
 
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -237,14 +237,14 @@ namespace Rune::VFS {
          * @brief Dump the node table to the stream.
          * @stream
          */
-        void dump_node_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_node_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**
          * @brief Dump the node ref table to the stream.
          * @stream
          */
-        void dump_node_ref_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_node_ref_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**
@@ -271,7 +271,7 @@ namespace Rune::VFS {
          * @brief Dump the directory stream table to the stream.
          * @stream
          */
-        void dump_directory_stream_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_directory_stream_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**
@@ -298,7 +298,7 @@ namespace Rune::VFS {
          * @brief Dump the mount point table to the stream.
          * @param stream
          */
-        void dump_mount_point_table(const SharedPointer<LibK::TextStream>& stream) const;
+        void dump_mount_point_table(const SharedPointer<TextStream>& stream) const;
 
 
         /**

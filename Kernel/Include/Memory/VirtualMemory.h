@@ -18,15 +18,15 @@
 #define RUNEOS_VIRTUALMEMORY_H
 
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::Memory {
     struct KernelSpaceLayout {
-        LibK::VirtualAddr higher_half_direct_map = 0x0;
-        LibK::VirtualAddr pmm_reserved           = 0x0;
-        LibK::VirtualAddr kernel_heap            = 0x0;
-        LibK::VirtualAddr kernel_code            = 0x0;
+        VirtualAddr higher_half_direct_map = 0x0;
+        VirtualAddr pmm_reserved           = 0x0;
+        VirtualAddr kernel_heap            = 0x0;
+        VirtualAddr kernel_code            = 0x0;
     };
 
 
@@ -42,7 +42,7 @@ namespace Rune::Memory {
      *
      * @return The layout of the computer's virtual memory.
      */
-    LibK::MemoryMap create_virtual_memory_map();
+    MemoryMap create_virtual_memory_map();
 }
 
 #endif //RUNEOS_VIRTUALMEMORY_H

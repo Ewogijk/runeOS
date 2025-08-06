@@ -77,7 +77,7 @@ namespace Rune {
         T* _ptr;
 
 
-        void swap(UniquePointer<T>& other) {
+        void swap(UniquePointer<T>& other) noexcept {
             T* temp = _ptr;
             _ptr = other._ptr;
             other._ptr = temp;
@@ -172,7 +172,7 @@ namespace Rune {
         }
 
 
-        void swap(SharedPointer<T>& other) {
+        void swap(SharedPointer<T>& other) noexcept {
             RefControlBlock<T>* temp = _refs;
             _refs = other._refs;
             other._refs = temp;

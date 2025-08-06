@@ -18,12 +18,12 @@
 #define RUNEOS_TERMINALSTREAM_H
 
 
-#include <Hammer/Collection.h>
-#include <Hammer/String.h>
+#include <KernelRuntime/Collection.h>
+#include <KernelRuntime/String.h>
 #include <Ember/Enum.h>
 
-#include <LibK/Stream.h>
-#include <LibK/FrameBuffer.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/FrameBuffer.h>
 
 #include <CPU/CPUSubsystem.h>
 
@@ -47,8 +47,8 @@ namespace Rune::App {
      */
     struct StyledText {
         String      text     = "";
-        LibK::Pixel bg_color = { };
-        LibK::Pixel fg_color = { };
+        Pixel bg_color = { };
+        Pixel fg_color = { };
     };
 
 
@@ -77,7 +77,7 @@ namespace Rune::App {
          * @param bg_color
          * @param fg_color
          */
-        void style_raw_text(LibK::Pixel bg_color, LibK::Pixel fg_color);
+        void style_raw_text(Pixel bg_color, Pixel fg_color);
 
 
         /**
@@ -132,19 +132,19 @@ namespace Rune::App {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-        LibK::FrameBuffer* frame_buffer = nullptr;          // Framebuffer of the monitor
-        LibK::BitMapFont * font         = nullptr;          // Font for glyph rendering
+        FrameBuffer* frame_buffer = nullptr;          // Framebuffer of the monitor
+        BitMapFont * font         = nullptr;          // Font for glyph rendering
 
         int screen_width  = 0;                              // Number of glyphs that fit in a row
         int screen_height = 0;                              // Number of glyphs that fit in a column
 
         // Will be used when attributes are reset
-        LibK::Pixel default_bg_color = { };
-        LibK::Pixel default_fg_color = { };
+        Pixel default_bg_color = { };
+        Pixel default_fg_color = { };
 
         // Foreground and background colors for rendering
-        LibK::Pixel bg_color = { };
-        LibK::Pixel fg_color = { };
+        Pixel bg_color = { };
+        Pixel fg_color = { };
 
         // The view port describes the first line that is rendered on the display and is essentially an offset into
         // the scroll back buffer. The view port is limited by the "_screen_height" property therefore it is not defined
@@ -200,7 +200,7 @@ namespace Rune::App {
      * @brief A terminal emulator that renders bitmap fonts to the framebuffer of a monitor thus providing an text
      *          output for applications.
      */
-    class TerminalStream : public LibK::TextStream {
+    class TerminalStream : public TextStream {
         // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger than the limit the oldest
         // text lines must be discarded
         static constexpr U8 SCROLL_BACK_BUFFER_LIMIT = 128;
@@ -208,7 +208,7 @@ namespace Rune::App {
         // The amount of time in millis the cursor render thread sleeps before redrawing the cursor aka the blink speed
         static constexpr U16 CURSOR_BLINK_FREQ = 500;
 
-        CPU::Subsystem* _cpu_subsys;
+        CPU::CPUSubsystem* _cpu_subsys;
         TerminalState _state;
 
         U16    _render_thread_ID;
@@ -270,11 +270,11 @@ namespace Rune::App {
 
 
         // Draw the char at the requested position without modifying the cursor position
-        void draw_char(char ch, U16 x, U16 y, LibK::Pixel bg_color, LibK::Pixel fg_color) const;
+        void draw_char(char ch, U16 x, U16 y, Pixel bg_color, Pixel fg_color) const;
 
 
         // Draw the cursor
-        void draw_cursor(const LibK::Pixel& color) const;
+        void draw_cursor(const Pixel& color) const;
 
 
         // If the cursor is rendered, clear it at its current position. Call this before moving the cursor.
@@ -333,11 +333,11 @@ namespace Rune::App {
 
     public:
         TerminalStream(
-                CPU::Subsystem* cpu_subsys,
-                LibK::FrameBuffer* frame_buffer,
-                LibK::BitMapFont* font,
-                LibK::Pixel def_bg_color,
-                LibK::Pixel def_fg_color
+                CPU::CPUSubsystem* cpu_subsys,
+                FrameBuffer* frame_buffer,
+                BitMapFont* font,
+                Pixel def_bg_color,
+                Pixel def_fg_color
         );
 
 

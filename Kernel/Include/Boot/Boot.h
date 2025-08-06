@@ -18,7 +18,7 @@
 #define RUNEOS_BOOT_H
 
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 
 namespace Rune {
@@ -36,7 +36,7 @@ namespace Rune {
      *
      * @param boot_loader_info Information provided by the boot loader.
      */
-    void kernel_boot(LibK::BootLoaderInfo boot_loader_info);
+    void kernel_boot(BootLoaderInfo boot_loader_info);
 }
 
 #endif //RUNEOS_BOOT_H

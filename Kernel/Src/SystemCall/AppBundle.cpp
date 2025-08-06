@@ -60,9 +60,9 @@ namespace Rune::SystemCall {
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(msg), msg_size, k_buf_msg))
             return Ember::Status::BAD_ARG;
         const String                          k_msg(k_buf_msg);
-        const SharedPointer<LibK::TextStream> std_err = app_syscall_ctx->app_subsys->get_active_app()->std_err;
+        const SharedPointer<TextStream> std_err = app_syscall_ctx->app_subsys->get_active_app()->std_err;
 
-        std_err->set_foreground_color(LibK::Pixie::VSCODE_RED);
+        std_err->set_foreground_color(Pixie::VSCODE_RED);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
             app_syscall_ctx->app_subsys->get_active_app()->std_err->write((U8*)k_buf_msg, k_msg.size())
         );

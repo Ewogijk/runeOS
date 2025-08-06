@@ -16,9 +16,9 @@
 
 #include <Device/AHCI/GPT.h>
 
-#include <Hammer/ByteOrder.h>
+#include <KernelRuntime/ByteOrder.h>
 
-#include <LibK/KMemory.h>
+#include <KernelRuntime/Memory.h>
 
 
 namespace Rune::Device {
@@ -145,7 +145,7 @@ namespace Rune::Device {
 
 
     GPTScanResult gpt_scan_device(
-            const SharedPointer<LibK::Logger>& logger,
+            const SharedPointer<Logger>& logger,
             Function<size_t(U8[], size_t, U64)>& sector_reader,
             size_t sector_size
     ) {
@@ -161,8 +161,8 @@ namespace Rune::Device {
 
         // Read whole partition table
         size_t buf_size = header.size_of_partition_entry * header.number_of_partition_entries;
-        if (!LibK::memory_is_aligned(buf_size, sector_size))
-            buf_size = LibK::memory_align(buf_size, sector_size, true);
+        if (!memory_is_aligned(buf_size, sector_size))
+            buf_size = memory_align(buf_size, sector_size, true);
         U8  partition_table_buf[buf_size];
         U32 b_pos = 0;
         U64 c_lba = header.partition_entry_lba;

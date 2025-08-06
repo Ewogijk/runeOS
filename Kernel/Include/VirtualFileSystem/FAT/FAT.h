@@ -19,7 +19,7 @@
 
 
 #include <Ember/Ember.h>
-#include <Hammer/String.h>
+#include <KernelRuntime/String.h>
 
 #include <Ember/Enum.h>
 

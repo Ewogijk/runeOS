@@ -20,8 +20,8 @@
 
 #include <Ember/Ember.h>
 
-#include <Hammer/String.h>
-#include <Hammer/Utility.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Utility.h>
 
 
 namespace Rune::SystemCall {

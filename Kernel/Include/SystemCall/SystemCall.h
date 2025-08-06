@@ -20,7 +20,7 @@
 
 #include <Ember/Ember.h>
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 #include <SystemCall/Definition.h>
 #include <SystemCall/KernelGuardian.h>
@@ -43,7 +43,7 @@ namespace Rune::SystemCall {
      *
      * @return True: The kernel is ready to handle system calls, False: System calls cannot be used.
      */
-    bool system_call_init(SharedPointer<LibK::Logger> logger, KernelGuardian* k_guard);
+    bool system_call_init(SharedPointer<Logger> logger, KernelGuardian* k_guard);
 
 
     /**

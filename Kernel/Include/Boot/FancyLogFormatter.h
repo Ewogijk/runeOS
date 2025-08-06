@@ -18,7 +18,7 @@
 #define RUNEOS_FANCYLOGFORMATTER_H
 
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 #include <CPU/CPUSubsystem.h>
 
@@ -26,16 +26,16 @@
 
 
 namespace Rune {
-    class FancyLogFormatter : public LibK::LogFormatter {
-        CPU::Subsystem* _cpu_subsys;
-        App::Subsystem* _app_subsys;
+    class FancyLogFormatter : public LogFormatter {
+        CPU::CPUSubsystem* _cpu_subsys;
+        App::AppSubsystem* _app_subsys;
     public:
 
-        FancyLogFormatter(CPU::Subsystem* cpu_subsys, App::Subsystem* app_subsys);
+        FancyLogFormatter(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys);
 
 
         String format_log_message(
-                LibK::LogLevel log_level,
+                LogLevel log_level,
                 const String& module,
                 const String& log_msg_tmpl,
                 Argument* arg_list,

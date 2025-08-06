@@ -39,9 +39,9 @@ namespace Rune::App {
         U16                  _buf_limit;
         U8                   _file_buf[BUF_SIZE];
 
-        Memory::Subsystem*          _memory_subsys;
-        VFS::Subsystem*             _vfs_subsys;
-        SharedPointer<LibK::Logger> _logger;
+        Memory::MemorySubsystem*          _memory_subsys;
+        VFS::VFSSubsystem*             _vfs_subsys;
+        SharedPointer<Logger> _logger;
 
         // Open ELF file
         SharedPointer<VFS::Node> _elf_file;
@@ -62,7 +62,7 @@ namespace Rune::App {
         LoadStatus load_elf_file(ELF64File& elf_file);
 
 
-        bool allocate_segments(const ELF64File& elf64_file, LibK::VirtualAddr& heap_start);
+        bool allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start);
 
 
         bool load_segments(const ELF64File& elf_file);
@@ -76,9 +76,9 @@ namespace Rune::App {
 
     public:
         ELFLoader(
-            Memory::Subsystem*          memory_subsys,
-            VFS::Subsystem*             vfs_subsys,
-            SharedPointer<LibK::Logger> logger
+            Memory::MemorySubsystem*          memory_subsys,
+            VFS::VFSSubsystem*             vfs_subsys,
+            SharedPointer<Logger> logger
         );
 
 
@@ -124,7 +124,7 @@ namespace Rune::App {
             char*                      args[],
             const SharedPointer<Info>& entry_out,
             CPU::Stack&                user_stack_out,
-            LibK::VirtualAddr&         start_info_addr_out,
+            VirtualAddr&         start_info_addr_out,
             bool                       keep_vas);
     };
 }

@@ -18,7 +18,7 @@
 #define RUNEOS_TIMER_H
 
 
-#include <Hammer/Collection.h>
+#include <KernelRuntime/Collection.h>
 
 
 #include <CPU/Threading/Scheduler.h>
@@ -137,7 +137,7 @@ namespace Rune::CPU {
          *          False: The timer could not be started, no sleeping and preemptive multithreading is possible.
          */
         virtual bool start(
-                SharedPointer<LibK::Logger> logger,
+                SharedPointer<Logger> logger,
                 CPU::Scheduler* scheduler,
                 TimerMode mode,
                 U64 frequency,

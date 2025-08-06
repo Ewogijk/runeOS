@@ -27,8 +27,8 @@ namespace Rune::Memory {
      */
     class BitMapAllocator : public PhysicalMemoryManager {
         U8* _bitmap;               // Base address where the bitmap is accessed.
-        LibK::PhysicalAddr _p_bitmap;    // Base address where the bitmap is stored.
-        uint32_t           _bitmap_size;     // LibK::MemorySize of the bitmap in bytes.
+        PhysicalAddr _p_bitmap;    // Base address where the bitmap is stored.
+        uint32_t           _bitmap_size;     // MemorySize of the bitmap in bytes.
 
         bool is_free(uint32_t page_frame);
 
@@ -39,20 +39,20 @@ namespace Rune::Memory {
         bool mark_memory_block(uint32_t base, uint32_t size, bool in_use);
 
 
-        bool mark_memory_region(LibK::PhysicalAddr base_bytes, U64 size_bytes, bool in_use);
+        bool mark_memory_region(PhysicalAddr base_bytes, U64 size_bytes, bool in_use);
 
 
         uint32_t find_free_region(size_t frames);
 
 
-        int is_reserved_or_bit_map_address(LibK::PhysicalAddr p_addr, size_t frames);
+        int is_reserved_or_bit_map_address(PhysicalAddr p_addr, size_t frames);
 
 
     protected:
-        LibK::MemorySize compute_memory_index_size() override;
+        MemorySize compute_memory_index_size() override;
 
 
-        bool init0(LibK::VirtualAddr memory_index, LibK::PhysicalAddr p_memory_index) override;
+        bool init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) override;
 
 
     public:
@@ -71,32 +71,32 @@ namespace Rune::Memory {
         using PhysicalMemoryManager::free;
 
 
-        [[nodiscard]] LibK::MemoryRegion get_memory_index_region() const override;
+        [[nodiscard]] MemoryRegion get_memory_index_region() const override;
 
 
-        [[nodiscard]] LibK::VirtualAddr get_memory_index() const override;
+        [[nodiscard]] VirtualAddr get_memory_index() const override;
 
 
-        void relocate_memory_index(LibK::VirtualAddr memory_index) override;
+        void relocate_memory_index(VirtualAddr memory_index) override;
 
 
         bool claim_boot_loader_reclaimable_memory() override;
 
 
-        bool allocate(LibK::PhysicalAddr& p_addr, size_t frames) override;
+        bool allocate(PhysicalAddr& p_addr, size_t frames) override;
 
 
-        bool allocate_explicit(LibK::PhysicalAddr p_addr, size_t frames) override;
+        bool allocate_explicit(PhysicalAddr p_addr, size_t frames) override;
 
 
-        bool free(LibK::PhysicalAddr p_addr, size_t frames) override;
+        bool free(PhysicalAddr p_addr, size_t frames) override;
 
 
         size_t read_page_frame_states(
-                LibK::MemoryRegion* buf,
+                MemoryRegion* buf,
                 size_t buf_size,
-                LibK::PhysicalAddr start,
-                LibK::PhysicalAddr end
+                PhysicalAddr start,
+                PhysicalAddr end
         ) override;
     };
 }

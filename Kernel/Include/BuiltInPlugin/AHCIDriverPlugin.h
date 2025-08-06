@@ -18,14 +18,14 @@
 #define RUNEOS_AHCIDRIVERPLUGIN_H
 
 
-#include <LibK/Plugin.h>
+#include <KernelRuntime/Plugin.h>
 
 
 namespace Rune::BuiltInPlugin {
     /**
      * Adds an AHCI driver to the kernel.
      */
-    class AHCIDriverPlugin : public LibK::Plugin {
+    class AHCIDriverPlugin : public Plugin {
     public:
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -41,10 +41,10 @@ namespace Rune::BuiltInPlugin {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-        [[nodiscard]] LibK::PluginInfo get_info() const override;
+        [[nodiscard]] PluginInfo get_info() const override;
 
 
-        [[nodiscard]] bool start(const LibK::SubsystemRegistry& ks_registry) override;
+        [[nodiscard]] bool start(const SubsystemRegistry& ks_registry) override;
     };
 }
 

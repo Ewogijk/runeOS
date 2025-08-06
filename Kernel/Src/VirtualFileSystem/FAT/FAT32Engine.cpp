@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FAT32Engine.h>
 
-#include <Hammer/Math.h>
-#include <Hammer/Memory.h>
+#include <KernelRuntime/Math.h>
+#include <KernelRuntime/Memory.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
 

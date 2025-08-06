@@ -18,18 +18,18 @@
 
 
 namespace Rune::CPU {
-    LibK::VirtualAddr setup_empty_stack(LibK::VirtualAddr stack_top) {
+    VirtualAddr setup_empty_stack(VirtualAddr stack_top) {
         auto* s_top = reinterpret_cast<U64*>(stack_top);
         // Push the null frame marking the end of the stack
         *(--s_top) = 0;
 
-        return LibK::memory_pointer_to_addr(s_top);
+        return memory_pointer_to_addr(s_top);
     }
 
 
-    LibK::VirtualAddr setup_trampoline_kernel_stack(
-            LibK::VirtualAddr stack_top,
-            LibK::VirtualAddr thread_enter
+    VirtualAddr setup_trampoline_kernel_stack(
+            VirtualAddr stack_top,
+            VirtualAddr thread_enter
     ) {
         // Set up the stack so that the CPU jumps to the thread_enter function on context switch with a null frame at
         // the bottom.
@@ -77,6 +77,6 @@ namespace Rune::CPU {
         for (int i = 0; i < 32; i++)
             *(--s_top) = 0;
 
-        return LibK::memory_pointer_to_addr(s_top);
+        return memory_pointer_to_addr(s_top);
     }
 }

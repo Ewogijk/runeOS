@@ -16,7 +16,7 @@
 
 #include <VirtualFileSystem/FAT/FATNode.h>
 
-#include <Hammer/Math.h>
+#include <KernelRuntime/Math.h>
 
 #include <VirtualFileSystem/FAT/FATDirectoryIterator.h>
 

@@ -34,8 +34,8 @@ namespace Rune::SystemCall {
      */
     struct VFSSystemCallContext {
         KernelGuardian* k_guard    = nullptr;
-        VFS::Subsystem* vfs_subsys = nullptr;
-        App::Subsystem* app_subsys = nullptr;
+        VFS::VFSSubsystem* vfs_subsys = nullptr;
+        App::AppSubsystem* app_subsys = nullptr;
     };
 
 
