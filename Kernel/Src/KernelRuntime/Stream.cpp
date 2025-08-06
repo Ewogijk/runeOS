@@ -14,19 +14,19 @@
  *  limitations under the License.
  */
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/Stream.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Stream
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 
-    size_t Stream::read(U8* buffer, size_t offset, size_t size) {
+    size_t Stream::read(U8* buffer, const size_t offset, const size_t size) {
         size_t bytes_read = 0;
         while (bytes_read < size) {
-            int byte = read();
+            const int byte = read();
             if (byte < 0)
                 break;
             buffer[offset + bytes_read] = byte;
@@ -36,12 +36,12 @@ namespace Rune::LibK {
     }
 
 
-    size_t Stream::read(U8* buffer, size_t size) {
+    size_t Stream::read(U8* buffer, const size_t size) {
         return read(buffer, 0, size);
     }
 
 
-    size_t Stream::write(U8* buffer, size_t offset, size_t size) {
+    size_t Stream::write(U8* buffer, const size_t offset, const size_t size) {
         size_t bytes_written = 0;
         while (bytes_written < size) {
             if (!write(buffer[offset + bytes_written]))
@@ -52,7 +52,7 @@ namespace Rune::LibK {
     }
 
 
-    size_t Stream::write(U8* buffer, size_t size) {
+    size_t Stream::write(U8* buffer, const size_t size) {
         return write(buffer, 0, size);
     }
 
@@ -75,7 +75,7 @@ namespace Rune::LibK {
     size_t TextStream::write(const String& msg) {
         size_t chars_written = 0;
         for (auto& ch: msg) {
-            if (!write((U8) ch))
+            if (!write(static_cast<U8>(ch)))
                 break;
             chars_written++;
         }
@@ -84,7 +84,7 @@ namespace Rune::LibK {
 
 
     size_t TextStream::write_line(const String& msg) {
-        size_t chars_written = write(msg);
+        const size_t chars_written = write(msg);
         if (chars_written == msg.size())
             write('\n');
         return chars_written + 1;
@@ -93,26 +93,26 @@ namespace Rune::LibK {
 
     size_t TextStream::write_formatted(const String& format, Argument* arg_list, size_t arg_size) {
         interpolate(format.to_cstr(), _formatted_buf, BUF_SIZE, arg_list, arg_size);
-        size_t out = write(_formatted_buf);
+        const size_t out = write(_formatted_buf);
         clear_buf();
         return out;
     }
 
 
     void TextStream::set_background_color(const Pixel& color) {
-        String ansi_bg_selector = String::format("\033[48;2;{};{};{}m", color.red, color.green, color.blue);
+        const String ansi_bg_selector = String::format("\033[48;2;{};{};{}m", color.red, color.green, color.blue);
         write(ansi_bg_selector);
     }
 
 
-    void TextStream::set_foreground_color(const LibK::Pixel& color) {
-        String ansi_bg_selector = String::format("\033[38;2;{};{};{}m", color.red, color.green, color.blue);
+    void TextStream::set_foreground_color(const Pixel& color) {
+        const String ansi_bg_selector = String::format("\033[38;2;{};{};{}m", color.red, color.green, color.blue);
         write(ansi_bg_selector);
     }
 
 
     void TextStream::reset_style() {
-        String ansi_reset_attr = "\033[0m";
+        const String ansi_reset_attr = "\033[0m";
         write(ansi_reset_attr);
     }
 }

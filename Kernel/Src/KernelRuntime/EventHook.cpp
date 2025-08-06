@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-#include <LibK/EventHook.h>
+#include <KernelRuntime/EventHook.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) {
         return a.handle == b.handle;
     }

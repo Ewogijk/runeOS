@@ -1,33 +1,241 @@
-/*
- *  Copyright 2025 Ewogijk
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 
-#ifndef RUNEOS_KMEMORY_H
-#define RUNEOS_KMEMORY_H
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef RUNEOS_MEMORY_H
+#define RUNEOS_MEMORY_H
 
 
 #include <Ember/Ember.h>
-#include <Hammer/Memory.h>
 #include <Ember/Enum.h>
 
-#include <LibK/Stream.h>
-#include <LibK/Build.h>
+#include <KernelRuntime/Build.h>
+#include <KernelRuntime/Stream.h>
 
 
-namespace Rune::LibK {
-#ifdef IS_64_BIT
+namespace Rune {
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          Smart Pointer
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    /**
+     * Simple std::unique_ptr implementation.
+     */
+    template<typename T>
+    class UniquePointer {
+        T* _ptr;
+
+
+        void swap(UniquePointer<T>& other) noexcept {
+            T* temp = _ptr;
+            _ptr = other._ptr;
+            other._ptr = temp;
+        }
+
+
+    public:
+        UniquePointer() : _ptr(nullptr) {
+
+        }
+
+
+        explicit UniquePointer(T* ptr) : _ptr(ptr) {
+
+        }
+
+
+        ~UniquePointer() {
+            delete _ptr;
+        }
+
+
+        UniquePointer(const UniquePointer<T>& o) = delete;
+
+
+        UniquePointer& operator=(const UniquePointer<T>& o) = delete;
+
+
+        UniquePointer(UniquePointer<T>&& o) noexcept: _ptr(nullptr) {
+            swap(o);
+        }
+
+
+        UniquePointer& operator=(UniquePointer<T>&& o) noexcept {
+            swap(o);
+            return *this;
+        }
+
+
+        T* get() const {
+            return _ptr;
+        }
+
+
+        explicit operator bool() const {
+            return _ptr;
+        }
+
+
+        [[nodiscard]] T& operator*() const {
+            return *_ptr;
+        }
+
+
+        T* operator->() const {
+            return _ptr;
+        }
+
+
+        bool operator==(const UniquePointer<T>& o) const {
+            return _ptr == o._ptr;
+        }
+
+
+        bool operator!=(const UniquePointer<T>& o) const {
+            return _ptr != o._ptr;
+        }
+    };
+
+
+    template<typename T>
+    struct RefControlBlock {
+        T* ptr = nullptr;
+        size_t strong_ref_count = 0;
+    };
+
+
+    /**
+     * Simple std::shared_ptr implementation.
+     */
+    template<typename T>
+    class SharedPointer {
+        RefControlBlock<T>* _refs;
+
+
+        void init(T* ptr) {
+            if (!ptr)
+                return;
+            _refs = new RefControlBlock<T>;
+            _refs->ptr = ptr;
+            ++_refs->strong_ref_count;
+        }
+
+
+        void swap(SharedPointer<T>& other) noexcept {
+            RefControlBlock<T>* temp = _refs;
+            _refs = other._refs;
+            other._refs = temp;
+        }
+
+
+    public:
+        SharedPointer() : _refs(nullptr) {
+            init(nullptr);
+        }
+
+
+        explicit SharedPointer(T* ptr) : _refs(nullptr) {
+            init(ptr);
+        }
+
+
+        ~SharedPointer() {
+            if (!_refs)
+                return;
+            --_refs->strong_ref_count;
+            if (_refs->strong_ref_count == 0) {
+                delete _refs->ptr;
+                delete _refs;
+            }
+        }
+
+
+        SharedPointer(const SharedPointer<T>& o) noexcept: _refs(o._refs) {
+            if (_refs) ++_refs->strong_ref_count;
+        }
+
+
+        SharedPointer& operator=(const SharedPointer<T>& o) noexcept {
+            if (this == &o)
+                return *this;
+
+            if (_refs == o._refs) // Same ref control block
+                return *this;
+
+            // Different pointer -> Decrement current pointer ref count
+            if (_refs) {
+                --_refs->strong_ref_count;
+                if (_refs->strong_ref_count == 0) {
+                    delete _refs->ptr;
+                    delete _refs;
+                }
+            }
+            _refs = o._refs;
+            if (_refs) ++_refs->strong_ref_count;
+            return *this;
+        }
+
+
+        SharedPointer(SharedPointer<T>&& o) noexcept: _refs(o._refs) {
+            o._refs = nullptr;
+        }
+
+
+        SharedPointer& operator=(SharedPointer<T>&& o) noexcept {
+            SharedPointer<T> tmp(move(o));
+            swap(tmp);
+            return *this;
+        }
+
+
+        T* get() const {
+            return _refs ? _refs->ptr : nullptr;
+        }
+
+
+        size_t get_ref_count() {
+            return _refs ? _refs->strong_ref_count : 0;
+        }
+
+
+        explicit operator bool() const {
+            return _refs;
+        }
+
+
+        [[nodiscard]] T& operator*() const {
+            return *_refs->ptr;
+        }
+
+
+        T* operator->() const {
+            return _refs ? _refs->ptr : nullptr;
+        }
+
+
+        bool operator==(const SharedPointer<T>& o) const {
+            return _refs ? _refs->ptr == o._refs->ptr : _refs == o._refs;
+        }
+
+
+        bool operator!=(const SharedPointer<T>& o) const {
+            return _refs ? _refs->ptr != o._refs->ptr : _refs != o._refs;
+        }
+    };
+
+
+    #ifdef IS_64_BIT
     // A memory address e.g. 0x7328FAD123
     using MemoryAddr = U64;
 
@@ -118,7 +326,7 @@ namespace Rune::LibK {
      */
     template<typename T>
     T* memory_addr_to_pointer(VirtualAddr v_addr) {
-        return (T*) (uintptr_t) v_addr;
+        return reinterpret_cast<T*>(v_addr);
     }
 
 
@@ -131,7 +339,7 @@ namespace Rune::LibK {
      */
     template<typename T>
     MemoryAddr memory_pointer_to_addr(T* pointer) {
-        return (MemoryAddr) (uintptr_t) pointer;
+        return reinterpret_cast<uintptr_t>(pointer);
     }
 
 
@@ -170,7 +378,7 @@ namespace Rune::LibK {
         [[nodiscard]] MemoryFloatSize size_in(MemoryUnit unit) const;
 
 
-        [[nodiscard]] bool contains(MemoryRegion other) const;
+        [[nodiscard]] bool contains(const MemoryRegion& other) const;
 
 
         bool operator==(const MemoryRegion& b) const;
@@ -296,10 +504,10 @@ namespace Rune::LibK {
          *  Print the memory map to the text output.
          *
          * @param out       Text output.
-         * @param perRegion Memory region sizes will be converted to this memory unit.
-         * @param forMap    Memory map statistics will be converted to this memory unit.
+         * @param region_unit Memory region sizes will be converted to this memory unit.
+         * @param map_unit    Memory map statistics will be converted to this memory unit.
          */
-        void dump(TextStream* out, MemoryUnit region_unit, MemoryUnit map_unit);
+        void dump(TextStream* out, MemoryUnit region_unit, MemoryUnit map_unit) const;
 
 
         const MemoryRegion& operator[](size_t index) const;
@@ -312,4 +520,4 @@ namespace Rune::LibK {
     };
 }
 
-#endif //RUNEOS_KMEMORY_H
+#endif //RUNEOS_MEMORY_H

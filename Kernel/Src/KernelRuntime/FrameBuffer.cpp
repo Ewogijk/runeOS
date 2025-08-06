@@ -14,15 +14,14 @@
  *  limitations under the License.
  */
 
-#include <LibK/FrameBuffer.h>
+#include <KernelRuntime/FrameBuffer.h>
 
-#include <Hammer/Memory.h>
-#include <Hammer/Utility.h>
-#include <Hammer/Math.h>
+#include <KernelRuntime/CppLanguageSupport.h>
+#include <KernelRuntime/Algorithm.h>
+#include <KernelRuntime/Math.h>
 
 
-namespace Rune::LibK {
-
+namespace Rune {
     bool Pixel::operator==(const Pixel& o) const {
         return red == o.red && green == o.green && blue == o.blue && alpha == o.alpha;
     }
@@ -43,20 +42,18 @@ namespace Rune::LibK {
                                  _bpp(0),
                                  _red_shift(0),
                                  _green_shift(0),
-                                 _blue_shift(0) {
-
-    }
+                                 _blue_shift(0) { }
 
 
     FrameBuffer::FrameBuffer(
-            U8* address,
-            U64 width,
-            U64 height,
-            U64 pitch,
-            U16 bpp,
-            U8 red_shift,
-            U8 green_shift,
-            U8 blue_shift
+        U8*       address,
+        const U64 width,
+        const U64 height,
+        const U64 pitch,
+        const U16 bpp,
+        const U8  red_shift,
+        const U8  green_shift,
+        const U8  blue_shift
     ) : _address(address),
         _width(width),
         _height(height),
@@ -69,7 +66,7 @@ namespace Rune::LibK {
     }
 
 
-    void FrameBuffer::set_global(FrameBuffer frame_buffer) {
+    void FrameBuffer::set_global(const FrameBuffer& frame_buffer) {
         if (_instance._address == nullptr) {
             _instance = frame_buffer;
         }
@@ -121,41 +118,48 @@ namespace Rune::LibK {
 
 
     void FrameBuffer::draw_glyph(
-            BitMapFont* font,
-            U32 x,
-            U32 y,
-            Pixel bg_color,
-            Pixel fg_color,
-            char ch
+        const BitMapFont* font,
+        const U32         x,
+        const U32         y,
+        const Pixel       bg_color,
+        const Pixel       fg_color,
+        const char        ch
     ) const {
         // Look up the bitmap of the glyph to render
-        U8       glyph[font->glyph_size];
-        for (U32 i         = 0; i < font->glyph_size; i++) {
-            glyph[i] = font->glyphs[((U8) ch * font->glyph_size) + i];
+        U8 glyph[font->glyph_size];
+        for (U32 i = 0; i < font->glyph_size; i++) {
+            glyph[i] = font->glyphs[(static_cast<U8>(ch) * font->glyph_size) + i];
         }
-        U8       row_width = font->pixel_width / 8;
+        U8 row_width = font->pixel_width / 8;
         if (font->pixel_width - row_width * 8 > 0)
             row_width++;
-
 
         U8 bg_c[4];
         to_raw_pixel(bg_color, bg_c);
         U8 fg_c[4];
         to_raw_pixel(fg_color, fg_c);
 
-        U64 fb_x_reset = x * _bytes_per_pixel;
-        U64 fb_x_off   = fb_x_reset;
-        U64 fb_y_off   = (y * _pitch);
+        const U64 fb_x_reset = x * _bytes_per_pixel;
+        U64       fb_x_off   = fb_x_reset;
+        U64       fb_y_off   = (y * _pitch);
 
         for (U64 fy = 0; fy < font->glyph_size; fy += row_width) {
-            U8       row_pos = fy;
-            for (U64 fx      = 0; fx < font->pixel_width; fx++) {
+            U8 row_pos = fy;
+            for (U64 fx = 0; fx < font->pixel_width; fx++) {
                 if (fx > 0 && fx % BITS_PER_TYPE == 0)
                     row_pos++;
                 if (((glyph[row_pos] >> (BITS_PER_TYPE - 1 - fx)) & 0x1) == 1)
-                    memcpy((void*) ((uintptr_t) _address + fb_y_off + fb_x_off), (void*) fg_c, 4);
+                    memcpy(
+                        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off + fb_x_off),
+                        fg_c,
+                        4
+                    );
                 else
-                    memcpy((void*) ((uintptr_t) _address + fb_y_off + fb_x_off), (void*) bg_c, 4);
+                    memcpy(
+                        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off + fb_x_off),
+                        bg_c,
+                        4
+                    );
                 fb_x_off += _bytes_per_pixel;
             }
 
@@ -165,15 +169,14 @@ namespace Rune::LibK {
     }
 
 
-    double sqrt(double num) {
+    double sqrt(const double num) {
         if (num < 0)
             return -1.0;
 
-        double   left  = 0;
-        double   right = num + 1;
-        for (int i     = 0; i < 20; i++) {
-            double middle = (left + right) / 2;
-            if (middle * middle < num) {
+        double left  = 0;
+        double right = num + 1;
+        for (int i = 0; i < 20; i++) {
+            if (const double middle = (left + right) / 2; middle * middle < num) {
                 left = middle;
             } else {
                 right = middle;
@@ -183,37 +186,37 @@ namespace Rune::LibK {
     }
 
 
-    void FrameBuffer::draw_perpendicular(
-            int x0,
-            int y0,
-            int dx,
-            int dy,
-            int threshold,
-            int e_diag,
-            int e_square,
-            int e_init,
-            double width,
-            int w_init,
-            bool sy,
-            U8* raw_pixel
-    ) const {
+    auto FrameBuffer::draw_perpendicular(
+        const int    x0,
+        const int    y0,
+        const int    dx,
+        const int    dy,
+        const int    threshold,
+        const int    e_diag,
+        const int    e_square,
+        const int    e_init,
+        const double width,
+        const int    w_init,
+        const bool   sy,
+        U8*          raw_pixel
+    ) const -> void {
         // These values somehow define the width of the perpendicular line, but I have no clue what's going on
-        double w_threshold = 2 * width * sqrt(dx * dx + dy * dy);
-        int    tk          = dx + dy - w_init;
-        int    x           = x0;
-        int    y           = y0;
-        int    error       = e_init;
+        const double w_threshold = 2 * width * sqrt(dx * dx + dy * dy);
+        int          tk          = dx + dy - w_init;
+        int          x           = x0;
+        int          y           = y0;
+        int          error       = e_init;
 
         // Draw the perpendicular to the left up/down
         while (tk <= w_threshold) {
-            memcpy((void*) ((uintptr_t) _address + y + x), (void*) raw_pixel, 4);
+            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), raw_pixel, 4);
             if (error > threshold) {
                 x -= _bytes_per_pixel;
                 error += e_diag;
                 tk = tk + 2 * dy;
             }
             error += e_square;
-            y  = sy ? y + (int) _pitch : y - (int) _pitch;
+            y  = sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
             tk = tk + 2 * dx;
         }
 
@@ -224,20 +227,20 @@ namespace Rune::LibK {
 
         // Draw the perpendicular to the right up/down
         while (tk <= w_threshold) {
-            memcpy((void*) ((uintptr_t) _address + y + x), (void*) raw_pixel, 4);
+            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), raw_pixel, 4);
             if (error > threshold) {
                 x += _bytes_per_pixel;
                 error += e_diag;
                 tk += 2 * dy;
             }
             error += e_square;
-            y = !sy ? y + (int) _pitch : y - (int) _pitch;
+            y = !sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
             tk += 2 * dx;
         }
     }
 
 
-    void FrameBuffer::draw_line(Coord2D start, Coord2D end, Pixel color, double thickness) const {
+    void FrameBuffer::draw_line(Coord2D start, Coord2D end, const Pixel color, const double thickness) const {
         if (thickness <= 0)
             // Negative thickness is garbage and if thickness=0 -> Line is invisible
             return;
@@ -261,13 +264,18 @@ namespace Rune::LibK {
             //      |               ||             |||
             //      |               ||             |||
             // For even thickness we draw one line more to the left
-            double f_t_half = floor(thickness / 2);
-            U32    x_start  = (start.x >= (U32) f_t_half ? (start.x - (U32) f_t_half) : 0) * _bytes_per_pixel;
-            U32    x_end    = (start.x + (U32) ceil(thickness / 2)) * _bytes_per_pixel;
+            const double f_t_half = floor(thickness / 2);
+            const U32    x_start  = (start.x >= static_cast<U32>(f_t_half) ? (start.x - static_cast<U32>(f_t_half)) : 0)
+                * _bytes_per_pixel;
+            const U32 x_end = (start.x + static_cast<U32>(ceil(thickness / 2))) * _bytes_per_pixel;
 
             for (U32 x = x_start; x < x_end; x += _bytes_per_pixel)
                 for (U32 y = start.y * _pitch; y < end.y * _pitch; y += _pitch)
-                    memcpy((void*) ((uintptr_t) _address + y + x), (void*) raw_color, _bytes_per_pixel);
+                    memcpy(
+                        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
+                        raw_color,
+                        _bytes_per_pixel
+                    );
         } else if (start.y == end.y) {
             // Horizontal line -> Can simplify the loop
             if (start.x > end.x)
@@ -283,12 +291,17 @@ namespace Rune::LibK {
             //                ---
             // thickness=3  c ---
             //                ---
-            double   f_t_half = floor(thickness / 2);
-            U32      y_start  = (start.y >= (U32) f_t_half ? (start.y - (U32) f_t_half) : 0) * _pitch;
-            U32      y_end    = (start.y + (U32) ceil(thickness / 2)) * _pitch;
-            for (U32 y        = y_start; y < y_end; y += _pitch)
+            const double f_t_half = floor(thickness / 2);
+            const U32    y_start  = (start.y >= static_cast<U32>(f_t_half) ? (start.y - static_cast<U32>(f_t_half)) : 0)
+                * _pitch;
+            const U32 y_end = (start.y + static_cast<U32>(ceil(thickness / 2))) * _pitch;
+            for (U32 y = y_start; y < y_end; y += _pitch)
                 for (U32 x = start.x * _bytes_per_pixel; x < end.x * _bytes_per_pixel; x += _bytes_per_pixel)
-                    memcpy((void*) ((uintptr_t) _address + y + x), (void*) raw_color, _bytes_per_pixel);
+                    memcpy(
+                        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
+                        raw_color,
+                        _bytes_per_pixel
+                    );
         } else {
             // Draw line in any other direction using the line equation
             // Basic Bresenham allows us to only draw in quadrant 0 in increasing order of y (y grows down) and x coords
@@ -302,7 +315,7 @@ namespace Rune::LibK {
                 // if we draw from right to left or left to right -> Swap! So we have easier math, this means
                 // essentially we allow drawing in quadrant 3
                 swap(start, end);
-            int  dx = (int) end.x - (int) start.x;
+            const int  dx = static_cast<int>(end.x) - static_cast<int>(start.x);
             int  dy;
             bool sy;
             // We keep track of the sign of dy, this allows to not only draw from top to bottom but also the other way
@@ -310,10 +323,10 @@ namespace Rune::LibK {
             // Swapping will mess things up, so we have to live with harder math, the bright side is we can draw in
             // quadrant 1 and 3 now!
             if (end.y > start.y) {
-                dy = (int) end.y - (int) start.y;
+                dy = static_cast<int>(end.y) - static_cast<int>(start.y);
                 sy = true;
             } else {
-                dy = (int) start.y - (int) end.y;
+                dy = static_cast<int>(start.y) - static_cast<int>(end.y);
                 sy = false;
             }
             // We assume the pixel is in the center of a square
@@ -326,19 +339,19 @@ namespace Rune::LibK {
             // if error=0.5 than we intersect the pixel center, error=0.9 means the line goes above the pixel center
             // We can utilize this to time the y increments, since if error>=1.0 the line is on the next row in the
             // display
-            int      p_error   = 0;         // Error for the perpendiculars
-            int      error     = 0;         // Error for the center line
-            int      y         = (int) start.y * (int) _pitch;
-            int      x         = (int) start.x * (int) _bytes_per_pixel;
+            int p_error = 0; // Error for the perpendiculars
+            int error   = 0; // Error for the center line
+            int y       = static_cast<int>(start.y) * static_cast<int>(_pitch);
+            int x       = static_cast<int>(start.x) * static_cast<int>(_bytes_per_pixel);
             // We essentially solve the line equation y=mx+b -> we could increment the error by m and be done, but this
             // is slower because it uses floating point arithmetic
             // Using this threshold, e_diag and e_square values we make it integer arithmetic only which is better but
             // more complex and I don't know what's going on
-            int      threshold = dx - 2 * dy;
-            int      e_diag    = -2 * dx;
-            int      e_square  = 2 * dy;
-            for (int i         = 0; i < dx; i++) {
-                memcpy((void*) ((uintptr_t) _address + y + x), (void*) raw_color, 4);
+            const int threshold = dx - 2 * dy;
+            const int e_diag    = -2 * dx;
+            const int e_square  = 2 * dy;
+            for (int i = 0; i < dx; i++) {
+                memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), (void*)raw_color, 4);
                 // To make diagonal lines thicker we will draw perpendicular lines to the left and right of the center
                 // line, this will be done whenever a pixel of the center line is drawn:
                 //
@@ -351,21 +364,21 @@ namespace Rune::LibK {
                 //           x
                 //      kinda perpendicular line
                 draw_perpendicular(
-                        x,
-                        y,
-                        dx,
-                        dy,
-                        threshold,
-                        e_diag,
-                        e_square,
-                        p_error,
-                        thickness,
-                        error,
-                        sy,
-                        raw_color
+                    x,
+                    y,
+                    dx,
+                    dy,
+                    threshold,
+                    e_diag,
+                    e_square,
+                    p_error,
+                    thickness,
+                    error,
+                    sy,
+                    raw_color
                 );
                 if (error > threshold) {
-                    y = sy ? y + (int) _pitch : y - (int) _pitch;
+                    y = sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
                     error += e_diag;
                     if (p_error > threshold) {
                         // When we do not draw the additional perpendicular line, the final line will have gaps
@@ -380,18 +393,18 @@ namespace Rune::LibK {
                         //           x
                         //           x
                         draw_perpendicular(
-                                x,
-                                y,
-                                dx,
-                                dy,
-                                threshold,
-                                e_diag,
-                                e_square,
-                                p_error + e_diag + e_square,
-                                thickness,
-                                error,
-                                sy,
-                                raw_color
+                            x,
+                            y,
+                            dx,
+                            dy,
+                            threshold,
+                            e_diag,
+                            e_square,
+                            p_error + e_diag + e_square,
+                            thickness,
+                            error,
+                            sy,
+                            raw_color
                         );
                         p_error += e_diag;
                     }

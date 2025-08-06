@@ -18,14 +18,14 @@
 #define RUNEOS_LOGGING_H
 
 
-#include <Hammer/String.h>
 #include <Ember/Enum.h>
-#include <Hammer/Memory.h>
 
-#include <LibK/Stream.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Stream.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     /**
      * The severity of a log message.
      * <p>
@@ -130,9 +130,9 @@ namespace Rune::LibK {
          * </p>
          *
          * @param log_level Log level of the message.
-         * @param module   Name of the module that logged the message.
-         * @param fmt      The message as a format string.
-         * @param args     Arguments for the format string.
+         * @param module    Name of the module that logged the message.
+         * @param fmt       The message as a format string.
+         * @param arg_list  Arguments for the format string.
          * @param arg_size  Number of arguments.
          */
         virtual void log(

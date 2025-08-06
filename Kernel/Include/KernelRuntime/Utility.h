@@ -12,15 +12,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- */
+*/
+
 
 #ifndef RUNEOS_UTILITY_H
 #define RUNEOS_UTILITY_H
 
+#include <stddef.h>
 
-#include <Ember/Ember.h>
-#include <Hammer/Memory.h>
-
+#include <KernelRuntime/CppLanguageSupport.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

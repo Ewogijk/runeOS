@@ -21,9 +21,9 @@
 #ifndef RUNEOS_LAT15TERMINUS16_H 
 #define RUNEOS_LAT15TERMINUS16_H
 
-#include <LibK/FrameBuffer.h>
+#include <KernelRuntime/FrameBuffer.h>
 
-namespace Rune::LibK {
+namespace Rune {
     static uint8_t LAT15TERMINUS16_glyphs[2048] = {
             // Glyph 0
             0x00,         // 00000000

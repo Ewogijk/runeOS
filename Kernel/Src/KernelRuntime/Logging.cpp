@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-#include <LibK/Logging.h>
+#include <KernelRuntime/Logging.h>
 
 
-#include <Hammer/Utility.h>
+#include <KernelRuntime/Utility.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     DEFINE_ENUM(LogLevel, LOG_LEVELS, 0x0)
 
 
@@ -67,7 +67,7 @@ namespace Rune::LibK {
             size_t arg_size
     ) {
         return String::format("[{}] [{}] ", log_level.to_string(), module)
-               + String::format(log_msg_tmpl, arg_list, arg_size);
+               + String::format(log_msg_tmpl, static_cast<const Argument*>(arg_list), arg_size);
     }
 
 
@@ -77,16 +77,16 @@ namespace Rune::LibK {
 
 
     TextStreamLogger::TextStreamLogger(
-            SharedPointer<LibK::LogFormatter> log_msg_fmt,
-            LibK::LogLevel log_level,
-            UniquePointer<LibK::TextStream> txt_stream
+            SharedPointer<LogFormatter> log_msg_fmt,
+            LogLevel log_level,
+            UniquePointer<TextStream> txt_stream
     ) : Logger(move(log_msg_fmt), log_level), _txt_stream(move(txt_stream)) {
         SILENCE_UNUSED(_log_msg_fmt)
     }
 
 
     void TextStreamLogger::log(
-            LibK::LogLevel log_level,
+            LogLevel log_level,
             const String& module,
             const String& fmt,
             Argument* arg_list,

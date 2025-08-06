@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-#include <LibK/Subsystem.h>
+#include <KernelRuntime/Subsystem.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Version
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

@@ -19,13 +19,13 @@
 
 
 #include <Ember/Ember.h>
-#include <Hammer/String.h>
 
-#include <LibK/Stream.h>
-#include <LibK/Resource.h>
+#include <KernelRuntime/String.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/Resource.h>
 
 
-namespace Rune::LibK {
+namespace Rune {
 
     /**
      * @brief An event handler is installed on an event hook and whenever this event occurs it will be called with
