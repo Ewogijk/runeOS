@@ -6,6 +6,7 @@ CMakeLists.txt
 # Build files
 cmake-build-*/**
 Kernel/BuildTools/*.json
+Kernel/BuildVariables.py
 OS/BuildTools/*.json
 **/Build/
 Install
