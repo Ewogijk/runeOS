@@ -411,7 +411,7 @@ namespace Rune::App {
         auto kernel_app     = SharedPointer<Info>(new Info());
         kernel_app->name    = "KApp";
         kernel_app->vendor  = "Ewogijk";
-        kernel_app->version = {K_MAJOR, K_MINOR, K_PATCH, K_PRERELEASE};
+        kernel_app->version = {MAJOR, MINOR, PATCH, PRERELEASE};
         kernel_app->handle  = _app_handle_counter.acquire_handle();
 
         // This is a dummy app that will be removed hence the standard IO streams are attached to nothing

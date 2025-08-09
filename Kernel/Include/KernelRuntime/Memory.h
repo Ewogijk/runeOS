@@ -235,7 +235,7 @@ namespace Rune {
     };
 
 
-    #ifdef IS_64_BIT
+#ifdef BIT64
     // A memory address e.g. 0x7328FAD123
     using MemoryAddr = U64;
 

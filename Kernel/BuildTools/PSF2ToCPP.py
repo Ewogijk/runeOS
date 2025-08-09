@@ -117,7 +117,7 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
         file.write(f'#ifndef RUNEOS_{font_name_cppified.upper()}_H \n')
         file.write(f'#define RUNEOS_{font_name_cppified.upper()}_H\n\n')
 
-        file.write('#include <KRuntime/FrameBuffer.h>\n\n')
+        file.write('#include <KernelRuntime/FrameBuffer.h>\n\n')
 
         file.write('namespace Rune {\n')
 

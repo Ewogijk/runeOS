@@ -27,7 +27,7 @@
 
 namespace Rune::CPU {
     // Size of a register
-#ifdef IS_64_BIT
+#ifdef BIT64
     using Register = U64;
 #else
     using Register = U32;
