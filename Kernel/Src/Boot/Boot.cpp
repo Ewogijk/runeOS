@@ -21,9 +21,9 @@
 
 #include <KernelRuntime/String.h>
 #include <KernelRuntime/Path.h>
-
 #include <KernelRuntime/Logging.h>
 #include <KernelRuntime/CppLanguageSupport.h>
+#include <KernelRuntime/Build.h>
 
 #include <App/AppSubsystem.h>
 
@@ -58,7 +58,7 @@ namespace Rune {
 
     constexpr char const* BOOT_THREAD_NAME = "Boot";
     LogLevel                  KERNEL_LOG_LEVEL = LogLevel::INFO;
-    Version                   KERNEL_VERSION   = { K_MAJOR, K_MINOR, K_PATCH, K_PRERELEASE };
+    Version                   KERNEL_VERSION   = { MAJOR, MINOR, PATCH, PRERELEASE };
     SharedPointer<TextStream> PANIC_STREAM;
 
 
@@ -184,7 +184,7 @@ namespace Rune {
         for (size_t i = 2; i < SUBSYSTEM_COUNT; i++) {
             Subsystem* k_subsys = KERNEL_SUBSYSTEMS[i];
             start_kernel_subsystem(k_subsys);
-#ifndef IS_QEMU_HOST
+#ifndef _HOST
             if (i == 2) { // Device subsystem
                 //TODO Set Logging via UART driver
             }
@@ -263,7 +263,7 @@ namespace Rune {
                         Path(MEMORY_SUBSYSTEM.get_name()) / (MEMORY_SUBSYSTEM.get_name() + LOG_FILE_EXTENSION)
                 )
         );
-#ifdef IS_QEMU_HOST
+#ifdef QEMU_HOST
         // Enable Serial logging via E9 port on Qemu
         turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));
 #endif
