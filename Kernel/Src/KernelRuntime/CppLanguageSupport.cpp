@@ -36,9 +36,9 @@ void* memset(void* dest, const int ch, const size_t count) {
 }
 
 
-void* memcpy(void* dest, void* src, const size_t count) {
+void* memcpy(void* dest, const void* src, const size_t count) {
     auto*       d = static_cast<unsigned char*>(dest);
-    const auto* s = static_cast<unsigned char*>(src);
+    const auto* s = static_cast<const unsigned char*>(src);
 
     for (size_t i = 0; i < count; i++)
         d[i]      = s[i];
@@ -47,10 +47,10 @@ void* memcpy(void* dest, void* src, const size_t count) {
 }
 
 
-void* memmove(void* dest, void* src, const size_t count) {
+void* memmove(void* dest, const void* src, const size_t count) {
     const uintptr_t sourceEnd = reinterpret_cast<uintptr_t>(src) + count;
     auto*           d         = static_cast<unsigned char*>(dest);
-    const auto*     s         = static_cast<unsigned char*>(src);
+    const auto*     s         = static_cast<const unsigned char*>(src);
     if (reinterpret_cast<uintptr_t>(dest) <= sourceEnd && sourceEnd <= reinterpret_cast<uintptr_t>(dest) + count) {
         // Source overlaps from left -> Copy from end
         //     dddddd
