@@ -65,28 +65,28 @@ vars.Add(
 )
 vars.Add(
     (
-        'gcc',
-        'The path to the gcc executable of the kernel cross compiler..',
+        'c',
+        'The path to the c kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'gpp',
-        'The path to the g++ executable of the kernel cross compiler..',
+        'cpp',
+        'The path to the cpp kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'crtbegin',
+        'crt_begin',
         'The path to the crtbegin.o file of the kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'crtend',
+        'crt_end',
         'The path to the crtend.o file of the kernel cross compiler.',
         ''
     )
@@ -102,8 +102,8 @@ Help(vars.GenerateHelpText(target_env))
 arch = target_env['arch']
 build = target_env['build']
 
-target_env['CXX'] = target_env['gpp']
-target_env['CPPPATH'] = target_env['gpp']
+target_env['CXX'] = target_env['cpp']
+target_env['CPPPATH'] = target_env['cpp']
 
 # Include directoriesx
 target_env['CPPPATH'] = [
@@ -195,7 +195,6 @@ if not GetOption('clean'):
     # Provide the python scripts as source so the code gen is always triggered when the scripts are updated
     #                           OR
     # Obviously the generated source file is missing
-    print("CODE GEN STUFF")
     target_env.Command(
         f'Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc',
         'BuildTools/GenerateISRStubsAssembly.py',
@@ -296,7 +295,7 @@ Import('crti')
 Import('crtn')
 objects = [
     crti,
-    target_env['crtbegin'],
+    target_env['crt_begin'],
     Boot,
     BuiltInPlugin,
     SystemCall,
@@ -308,7 +307,7 @@ objects = [
     Arch,
     KernelRuntime,
     Ember,
-    target_env['crtend'],
+    target_env['crt_end'],
     crtn
 ]
 
