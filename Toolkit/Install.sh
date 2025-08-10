@@ -55,10 +55,10 @@ cp Ressource/OVMF_CODE.fd ${install_directory}/bin
 cp Ressource/OVMF_VARS.fd ${install_directory}/bin
 cp $rune_os_image ${install_directory}/bin
 cp Ressource/requirements.txt $install_directory
-cp Ressource/StartRuneOS.py $install_directory
+cp Ressource/Start.py $install_directory
 
 if [ "$build" = "dev" ]; then
-    cp Ressource/DebugRuneOS.py $install_directory
+    cp Ressource/Debug.py $install_directory
     cp $kernel_elf ${install_directory}/bin
     cp $os_elf ${install_directory}/bin
 fi
