@@ -28,13 +28,13 @@
 #define MAJOR 0
 
 // The kernel minor version
-#define MINOR 1
+#define MINOR 0
 
 // The kernel patch version
 #define PATCH 0
 
 // The kernel patch version
-#define PRERELEASE "alpha"
+#define PRERELEASE "dummy"
 
 // The absolute path to the OS executable
 #define OS "/System/OS/runeOS.app"
