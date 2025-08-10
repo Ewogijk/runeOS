@@ -84,14 +84,10 @@ class Setting(Enum):
     """Keys of the settings in 'rune-toolkit-settings.json'"""
     # User defined settings
     PROJECT_ROOT = auto(),
-    COMPILER_ROOT = auto(),
     INSTALLATION_ROOT = auto(),
-    JOBS = auto(),
     # Cross target settings
     ARCH = auto(),
     BUILD = auto(),
-    HOST_COMPILER = auto(),
-    BARE_METAL_COMPILER = auto(),
     OS_LOCATION = auto(),
     RUNE_PARTITION_TYPE_GUID = auto(),
     KERNEL_PARTITION_UNIQUE_GUID = auto(),
@@ -107,8 +103,6 @@ class Setting(Enum):
     IMAGE_NAME = auto(),
     IMAGE_SIZE = auto(),
     APP_LOCATION = auto(),
-    # 'build-bare-metal-compiler' settings
-    COMPILER_TARGET = auto()
 
     def to_json_key(self) -> str:
         """
@@ -160,14 +154,6 @@ def configure_toolkit() -> None:
         f'\'{project_root}\': Not a directory.'
     )
 
-    print('The \'compiler-root\' is the directory where compiler builds will be installed and compilers searched for'
-          'compilation.')
-    compiler_root = Path(input('Where is your \'compiler-root\'? '))
-    assert_condition(
-        compiler_root.exists() and compiler_root.is_dir(),
-        f'\'{compiler_root}\': Not a directory.'
-    )
-
     print('The \'installation-root\' is the directory where the OS builds will be installed.')
     installation_root = Path(input('Where is your \'installation-root\'? '))
     assert_condition(
@@ -185,13 +171,9 @@ def configure_toolkit() -> None:
     config = {
         # User defined settings
         Setting.PROJECT_ROOT.to_json_key(): str(project_root),
-        Setting.COMPILER_ROOT.to_json_key(): str(compiler_root),
         Setting.INSTALLATION_ROOT.to_json_key(): str(installation_root),
-        Setting.JOBS.to_json_key(): jobs,
         # Cross target settings
         Setting.ARCH.to_json_key(): 'x86_64',
-        Setting.HOST_COMPILER.to_json_key(): 'gcc-13.2.0',
-        Setting.BARE_METAL_COMPILER.to_json_key(): 'gcc-13.2.0-x86_64-elf-baremetal',
         Setting.BUILD.to_json_key(): 'dev',
         Setting.OS_LOCATION.to_json_key(): '/System/OS/runeOS.app',
         Setting.RUNE_PARTITION_TYPE_GUID.to_json_key(): '8fa4455d-2d55-45ba-8bca-cbcedf48bdf6',
@@ -208,8 +190,6 @@ def configure_toolkit() -> None:
         Setting.IMAGE_NAME.to_json_key(): 'runeOS.image',
         Setting.IMAGE_SIZE.to_json_key(): '128',
         Setting.APP_LOCATION.to_json_key(): '/Apps',
-        # 'build-bare-metal-compiler' settings
-        Setting.COMPILER_TARGET.to_json_key(): "x86_64-elf"
     }
 
     with open(RUNE_TOOLKIT_CONFIG, 'w') as f:
@@ -275,9 +255,9 @@ def build_kernel(h: bool) -> None:
             Setting.KERNEL_VERSION,
             Setting.OS_LOCATION,
             Setting.QEMU_BUILD,
-            Setting.RUNE_PARTITION_TYPE_GUID,
-            Setting.KERNEL_PARTITION_UNIQUE_GUID,
-            Setting.OS_PARTITION_UNIQUE_GUID
+            # Setting.RUNE_PARTITION_TYPE_GUID,
+            # Setting.KERNEL_PARTITION_UNIQUE_GUID,
+            # Setting.OS_PARTITION_UNIQUE_GUID
         ],
         Setting.BARE_METAL_COMPILER,
         False,
@@ -410,66 +390,6 @@ def build_app(app: str, h: bool):
             )
             target_found = True
     assert_condition(target_found, f'Application not found: {app}')
-
-
-@cli.command('build-host-compiler')
-@click.option('-H', is_flag=True)
-def build_host_compiler(h: bool):
-    """
-    Build the host-compiler that builds the cross-compiler. First the Binutils and GCC sources are downloaded, then
-    build and installed. Use the "-H" option to get more info about the build parameters.
-    """
-    print_banner()
-    if h:
-        print('Build the host-compiler that builds the cross-compiler.')
-        print('First the Binutils and GCC sources are downloaded, then build and installed.')
-        print()
-        print('Build parameters:')
-        print('    Installation directory: Absolute path to the directory where the host-compiler will be installed.')
-        print('    Jobs: Number of jobs make is allowed to run.')
-        return
-    load_config()
-    cmd = [
-        './BuildHostCompiler.sh',
-        str(Path(SETTINGS[Setting.COMPILER_ROOT.to_json_key()]) / SETTINGS[Setting.HOST_COMPILER.to_json_key()]),
-        SETTINGS[Setting.JOBS.to_json_key()]
-    ]
-    exec_shell_cmd(cmd, '.', 'build-host-compiler')
-
-
-@cli.command('build-bare-metal-compiler')
-@click.option('-H', is_flag=True)
-def build_bare_metal_compiler(h: bool):
-    """
-    Build the bare-metal cross-compiler without any standard library that builds the kernel, OS and application. First
-    the Binutils and GCC sources are downloaded, then build and installed. Use the "-H" option to get more info about
-    the build parameters.
-    """
-    print_banner()
-    if h:
-        print('Build the bare-metal cross-compiler without any standard library that builds the kernel and OS.')
-        print('First the Binutils and GCC sources are downloaded, then build and installed.')
-        print()
-        print('Build parameters:')
-        print('    Installation directory: Absolute path to the directory where the host-compiler will be installed.')
-        print('    Host Compiler: Absolute path to the host compiler that will be used to compile the cross-compiler. '
-              'If the path equals \'sys\', the system compiler will be used.')
-        print('    Target: Target architecture of the cross-compiler.')
-        print('    Jobs: Number of jobs make is allowed to run.')
-        return
-    load_config()
-    host_compiler = Path(SETTINGS[Setting.COMPILER_ROOT.to_json_key()]) / SETTINGS[Setting.HOST_COMPILER.to_json_key()]
-    if not host_compiler.exists():
-        host_compiler = 'sys'
-
-    cmd = [
-        './BuildBareMetalCompiler.sh',
-        str(Path(SETTINGS[Setting.COMPILER_ROOT.to_json_key()]) / SETTINGS[Setting.BARE_METAL_COMPILER.to_json_key()]),
-        str(host_compiler),
-        SETTINGS[Setting.COMPILER_TARGET.to_json_key()],
-        SETTINGS[Setting.JOBS.to_json_key()]
-    ]
-    exec_shell_cmd(cmd, '.', 'build-bare-metal-compiler')
 
 
 @cli.command('clean-kernel')
