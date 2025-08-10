@@ -17,4 +17,4 @@ Install
 # Toolkit files
 **/*.image
 Toolkit/tmp
-Toolkit/rune-toolkit-settings.json
+Toolkit/settings.json
