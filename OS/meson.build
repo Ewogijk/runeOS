@@ -1,18 +1,5 @@
 project('runeOS', 'cpp')
 
-# Generate the build info passed to the OS
-conf_data = configuration_data()
-conf_data.set('MAJOR', get_option('major'))
-conf_data.set('MINOR', get_option('minor'))
-conf_data.set('PATCH', get_option('patch'))
-conf_data.set('PRERELEASE', '"' + get_option('prerelease')  + '"')
-configure_file(
-        input: 'Build.h.in',
-        output: 'Build.h',
-        configuration: conf_data
-)
-
-
 includes = include_directories('Include')
 sources = files(
     'Src/Shell/Action.cpp',
