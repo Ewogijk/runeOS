@@ -29,6 +29,7 @@ import click
 
 
 RUNE_TK_VERSION = '0.1.0'
+RUNE_KERNEL_ELF = 'runeKernel.elf'
 
 
 @click.group(help="""
@@ -73,7 +74,7 @@ def assert_target_build(elf: Path, target: str) -> None:
 ##############################################################################################################
 
 
-RUNE_TOOLKIT_CONFIG = Path('rune-toolkit-settings.json')
+RUNE_TOOLKIT_CONFIG = Path('settings.json')
 """Name of the settings file."""
 
 SETTINGS = {}
@@ -86,16 +87,16 @@ class Setting(Enum):
     PROJECT_ROOT = auto(),
     INSTALLATION_ROOT = auto(),
     # Cross target settings
-    ARCH = auto(),
     BUILD = auto(),
-    OS_LOCATION = auto(),
-    RUNE_PARTITION_TYPE_GUID = auto(),
-    KERNEL_PARTITION_UNIQUE_GUID = auto(),
-    OS_PARTITION_UNIQUE_GUID = auto(),
+    ARCH = auto(),
+    OS_EXECUTABLE = auto(),
     # 'build-kernel' settings
-    KERNEL_ELF_NAME = auto(),
     KERNEL_VERSION = auto(),
     QEMU_BUILD = auto(),
+    C = auto(),
+    CPP = auto(),
+    CRT_BEGIN = auto(),
+    CRT_END = auto(),
     # 'build-os' settings
     OS_ELF_NAME = auto(),
     OS_VERSION = auto(),
@@ -139,103 +140,89 @@ def load_config() -> None:
         )
 
 
-@cli.command('configure-toolkit')
-def configure_toolkit() -> None:
+@cli.command('configure')
+def configure() -> None:
     """
     Interactive command line to create the initial 'rune-toolkit-config.json'.
     """
     print_banner()
 
-    print('The \'project-root\' is the root directory of git repository on your system. It will be used to find the '
-          'kernel, OS and app ELF binaries.')
-    project_root = Path(input('Where is your \'project-root\'? '))
-    assert_condition(
-        project_root.exists() and project_root.is_dir(),
-        f'\'{project_root}\': Not a directory.'
-    )
-
     print('The \'installation-root\' is the directory where the OS builds will be installed.')
-    installation_root = Path(input('Where is your \'installation-root\'? '))
+    installation_root = Path(input('Where is your \'installation-root\'? ')).resolve()
     assert_condition(
         installation_root.exists() and installation_root.is_dir(),
         f'\'{installation_root}\': Not a directory.'
     )
 
-    print('\'jobs\' is the number of parallel jobs make is allowed to run aka the number that is passed to \'-j\'.')
-    jobs = input('How many jobs is make allowed to run in parallel? ')
+    print('The \'freestanding-cross-compiler-root\' is the path to the installation directory of the freestanding '
+          'cross-compiler from the runeToolchain.')
+    freestanding_compiler = Path(input('Where is your \'freestanding-cross-compiler-root\'? ')).resolve()
     assert_condition(
-        jobs.isdigit(),
-        f'\'{jobs}\': Not a number.'
+        freestanding_compiler.exists() and freestanding_compiler.is_dir(),
+        f'\'{freestanding_compiler}\': Not a directory.'
     )
+    print()
 
     config = {
         # User defined settings
-        Setting.PROJECT_ROOT.to_json_key(): str(project_root),
+        Setting.PROJECT_ROOT.to_json_key(): str(Path('..').resolve()),
         Setting.INSTALLATION_ROOT.to_json_key(): str(installation_root),
         # Cross target settings
-        Setting.ARCH.to_json_key(): 'x86_64',
         Setting.BUILD.to_json_key(): 'dev',
-        Setting.OS_LOCATION.to_json_key(): '/System/OS/runeOS.app',
-        Setting.RUNE_PARTITION_TYPE_GUID.to_json_key(): '8fa4455d-2d55-45ba-8bca-cbcedf48bdf6',
-        Setting.KERNEL_PARTITION_UNIQUE_GUID.to_json_key(): '4d3f0533-902a-4642-b125-728c910c1f79',
-        Setting.OS_PARTITION_UNIQUE_GUID.to_json_key(): '7574b273-9503-4d83-8617-678d4c2d30c0',
+        Setting.ARCH.to_json_key(): 'x86_64',
+        Setting.OS_EXECUTABLE.to_json_key(): '/System/OS/runeOS.app',
         # 'build-kernel' settings
-        Setting.KERNEL_ELF_NAME.to_json_key(): 'runeKernel.elf',
         Setting.KERNEL_VERSION.to_json_key(): '0.1.0-alpha',
         Setting.QEMU_BUILD.to_json_key(): 'yes',
+        Setting.C.to_json_key(): str(freestanding_compiler / 'bin' / 'x86_64-elf-gcc'),
+        Setting.CPP.to_json_key(): str(freestanding_compiler / 'bin' / 'x86_64-elf-g++'),
+        Setting.CRT_BEGIN.to_json_key(): str(
+            freestanding_compiler / 'lib' / 'gcc' / 'x86_64-elf' / '13.2.0' / 'crtbegin.o'
+        ),
+        Setting.CRT_END.to_json_key(): str(
+            freestanding_compiler / 'lib' / 'gcc' / 'x86_64-elf' / '13.2.0' / 'crtend.o'
+        ),
         # 'build-os' settings
         Setting.OS_ELF_NAME.to_json_key(): 'runeOS.app',
         Setting.OS_VERSION.to_json_key(): '0.1.0-alpha',
         # 'build-image' settings
         Setting.IMAGE_NAME.to_json_key(): 'runeOS.image',
-        Setting.IMAGE_SIZE.to_json_key(): '128',
+        Setting.IMAGE_SIZE.to_json_key(): '256',
         Setting.APP_LOCATION.to_json_key(): '/Apps',
     }
 
+    print('Initial runeToolkit settings are:')
+    print()
+    for key, value in config.items():
+        print(f'{key} = {value}')
+    print()
+
     with open(RUNE_TOOLKIT_CONFIG, 'w') as f:
         json.dump(config, f, indent=4)
-    print(
-        f'\'{RUNE_TOOLKIT_CONFIG}\' was created with selected values. Other settings have been set to default values.')
+    print(f'Saved to \'{RUNE_TOOLKIT_CONFIG}\'.')
 
 
 ##############################################################################################################
-#                                               Build
+#                                            Kernel Build
 ##############################################################################################################
 
 
-def exec_scons(scons_struct_dir: str,
-               settings: List[Setting],
-               compiler: Setting,
-               is_clean: bool,
-               print_doc: bool,
-               target: str) -> None:
+def write_build_variables_py(out_file: Path, settings: List[Setting]) -> None:
     """
-    Start the SCons build.
+    Create the BuildVariables.py file at the provided path with the given variables.
 
-    :param scons_struct_dir: Directory of the SConstruct file.
-    :param settings:         Configuration keys for the build specific options.
-    :param compiler:         Name of the compiler.
-    :param is_clean:         True: Append -c so the project to trigger a clean, False: Do not clean.
-    :param print_doc:        True: Print the help menu instead of build/clean, False: Do a build/clean.
-    :param target:           Target.
-    :return:
+    The BuildVariables.py provides as the name suggests the build variables required for the SCons toolchain to build
+    the kernel sources.
+    :return: -
     """
-    compiler = Path(SETTINGS[Setting.COMPILER_ROOT.to_json_key()]) / SETTINGS[compiler.to_json_key()]
-    assert_condition(
-        compiler.exists() and compiler.is_dir(),
-        f'\'{compiler}\': Run \'./runeToolkit.py build-bare-metal-compiler\' first to build the cross-compiler.'
-    )
-
-    cmd = ['scons']
-    if is_clean:
-        cmd.append('-c')
-    for config in settings:
-        cmd.append(f'{config.to_scons_key()}={SETTINGS[config.to_json_key()]}')
-    cmd.append(f'compiler={compiler}')
-    if print_doc:
-        cmd.append('-h')
-    exec_shell_cmd(cmd, scons_struct_dir, target)
-
+    with open(out_file, 'w') as file:
+        file.writelines([
+            '#',
+            '# This file was automatically generated by runeToolkit.',
+            '#'
+        ])
+        for setting in settings:
+            file.write(f'{setting.to_scons_key()} = \'{SETTINGS[setting.to_json_key()]}\'\n')
 
 @cli.command('build-kernel')
 @click.option('-H', is_flag=True)
@@ -246,48 +233,58 @@ def build_kernel(h: bool) -> None:
     """
     print_banner()
     load_config()
-    exec_scons(
-        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'),
+    write_build_variables_py(
+        Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel' / 'BuildVariables.py',
         [
             Setting.BUILD,
             Setting.ARCH,
-            Setting.KERNEL_ELF_NAME,
             Setting.KERNEL_VERSION,
-            Setting.OS_LOCATION,
+            Setting.OS_EXECUTABLE,
             Setting.QEMU_BUILD,
-            # Setting.RUNE_PARTITION_TYPE_GUID,
-            # Setting.KERNEL_PARTITION_UNIQUE_GUID,
-            # Setting.OS_PARTITION_UNIQUE_GUID
-        ],
-        Setting.BARE_METAL_COMPILER,
-        False,
-        h,
-        'build-kernel'
+            Setting.C,
+            Setting.CPP,
+            Setting.CRT_BEGIN,
+            Setting.CRT_END,
+        ]
     )
+    cmd = ['scons']
+    if h:
+        cmd.append('-h')
+    exec_shell_cmd(cmd, str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'), 'build-kernel')
 
 
-@cli.command('build-os')
+@cli.command('clean-kernel')
 @click.option('-H', is_flag=True)
-def build_os(h: bool) -> None:
+def clean_kernel(h: bool):
     """
-    Passes the build parameters in "build-os.json" to the build system and builds the OS ELF. Use the "-H" option to
-    get more info about the build parameters.
+    Delete all build files of the kernel.
     """
     print_banner()
     load_config()
-    exec_scons(
-        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'OS'),
+    kernel_directory = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'
+    write_build_variables_py(
+        kernel_directory,
         [
             Setting.BUILD,
             Setting.ARCH,
-            Setting.OS_ELF_NAME,
-            Setting.OS_VERSION
-        ],
-        Setting.BARE_METAL_COMPILER,
-        False,
-        h,
-        'build-os'
+            Setting.KERNEL_VERSION,
+            Setting.OS_EXECUTABLE,
+            Setting.QEMU_BUILD,
+            Setting.C,
+            Setting.CPP,
+            Setting.CRT_BEGIN,
+            Setting.CRT_END,
+        ]
     )
+    cmd = ['scons', '-c']
+    if h:
+        cmd.append('-h')
+    exec_shell_cmd(cmd, str(kernel_directory), 'clean-kernel')
+
+
+##############################################################################################################
+#                                               Image Build
+##############################################################################################################
 
 
 @cli.command('build-image')
@@ -308,7 +305,7 @@ def build_image(h: bool) -> None:
         print('    image-file: Absolute path to the output file of the runeOS image.')
         print('    kernel-elf: Absolute path to the Kernel ELF file.')
         print('    os-elf: Absolute path to the OS ELF file.')
-        print('    image-size: Size of the runeOS Image, minimum requirements: 128MB')
+        print('    image-size: Size of the runeOS Image, minimum requirements: 256MB')
         print('    os-location: Absolute path on the image where the OS ELF will be saved.')
         print('    rune-kernel-partition-type-guid: GPT partition type GUID of partitions created by the '
               'runeToolkit.')
@@ -326,7 +323,7 @@ def build_image(h: bool) -> None:
                   / 'Kernel'
                   / 'Build'
                   / f'{SETTINGS[Setting.ARCH.to_json_key()]}-{SETTINGS[Setting.BUILD.to_json_key()]}'
-                  / SETTINGS[Setting.KERNEL_ELF_NAME.to_json_key()])
+                  / RUNE_KERNEL_ELF)
     assert_target_build(kernel_elf, 'build-kernel')
 
     os_elf = (project_root
@@ -349,98 +346,17 @@ def build_image(h: bool) -> None:
                 f'build-app {app_proj}'
             )
         app_list.append(str(app_elf))
-
-    image_maker_cmd = [
+    build_image_cmd = [
         './BuildImage.sh',
         SETTINGS[Setting.IMAGE_NAME.to_json_key()],
         str(kernel_elf),
         str(os_elf),
         SETTINGS[Setting.IMAGE_SIZE.to_json_key()],
-        str(Path(SETTINGS[Setting.OS_LOCATION.to_json_key()]).parent),
-        SETTINGS[Setting.RUNE_PARTITION_TYPE_GUID.to_json_key()],
-        SETTINGS[Setting.KERNEL_PARTITION_UNIQUE_GUID.to_json_key()],
-        SETTINGS[Setting.OS_PARTITION_UNIQUE_GUID.to_json_key()],
+        str(Path(SETTINGS[Setting.OS_EXECUTABLE.to_json_key()]).parent),
         ','.join(app_list),
         SETTINGS[Setting.APP_LOCATION.to_json_key()]
     ]
-    exec_shell_cmd(image_maker_cmd, '.', 'build-image')
-
-
-@cli.command('build-app')
-@click.argument('app', type=str)
-@click.option('-H', is_flag=True)
-def build_app(app: str, h: bool):
-    """
-    Passes the build parameters to the build system and builds the application. Use the "-H" option to get more info
-    about the build parameters.
-    """
-    print_banner()
-    load_config()
-    app_dir = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'App'
-    target_found = False
-    for app_proj in app_dir.iterdir():
-        if app_proj.name == app:
-            exec_scons(
-                str(app_dir / app),
-                [Setting.BUILD],
-                Setting.BARE_METAL_COMPILER,
-                False,
-                h,
-                f'build-app {app}'
-            )
-            target_found = True
-    assert_condition(target_found, f'Application not found: {app}')
-
-
-@cli.command('clean-kernel')
-@click.option('-H', is_flag=True)
-def clean_kernel(h: bool):
-    """
-    Delete all build files of the kernel.
-    """
-    print_banner()
-    load_config()
-    exec_scons(
-        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'),
-        [
-            Setting.BUILD,
-            Setting.ARCH,
-            Setting.KERNEL_ELF_NAME,
-            Setting.KERNEL_VERSION,
-            Setting.OS_LOCATION,
-            Setting.QEMU_BUILD,
-            Setting.RUNE_PARTITION_TYPE_GUID,
-            Setting.KERNEL_PARTITION_UNIQUE_GUID,
-            Setting.OS_PARTITION_UNIQUE_GUID
-        ],
-        Setting.BARE_METAL_COMPILER,
-        True,
-        h,
-        'build-kernel'
-    )
-
-
-@cli.command('clean-os')
-@click.option('-H', is_flag=True)
-def clean_os(h: bool):
-    """
-    Delete all build files of the OS.
-    """
-    print_banner()
-    load_config()
-    exec_scons(
-        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'OS'),
-        [
-            Setting.BUILD,
-            Setting.ARCH,
-            Setting.OS_ELF_NAME,
-            Setting.OS_VERSION
-        ],
-        Setting.BARE_METAL_COMPILER,
-        True,
-        h,
-        'build-os'
-    )
+    exec_shell_cmd(build_image_cmd, '.', 'build-image')
 
 
 @cli.command('clean-image')
@@ -464,29 +380,9 @@ def clean_image(h: bool):
         print(f'{rune_os_image} not found! No cleaning needed.')
 
 
-@cli.command('clean-app')
-@click.argument('app', type=str)
-@click.option('-H', is_flag=True)
-def clean_app(app: str, h: bool):
-    """
-    Delete all build files of an application.
-    """
-    print_banner()
-    load_config()
-    app_dir = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'App'
-    target_found = False
-    for app_proj in app_dir.iterdir():
-        if app_proj.name == app:
-            exec_scons(
-                str(app_dir / app),
-                [Setting.BUILD],
-                Setting.BARE_METAL_COMPILER,
-                True,
-                h,
-                f'build-app {app}'
-            )
-            target_found = True
-    assert_condition(target_found, f'Application not found: {app}')
+##############################################################################################################
+#                                           Installation
+##############################################################################################################
 
 
 @cli.command('install')
@@ -519,7 +415,7 @@ def install(h: bool):
                   / 'Kernel'
                   / 'Build'
                   / f'{SETTINGS[Setting.ARCH.to_json_key()]}-{SETTINGS[Setting.BUILD.to_json_key()]}'
-                  / SETTINGS[Setting.KERNEL_ELF_NAME.to_json_key()])
+                  / RUNE_KERNEL_ELF)
     assert_target_build(kernel_elf, 'build-kernel')
 
     os_elf = (project_root
@@ -537,6 +433,111 @@ def install(h: bool):
         SETTINGS[Setting.BUILD.to_json_key()]
     ]
     exec_shell_cmd(installer_cmd, '.', 'install')
+
+
+##############################################################################################################
+#                                               Build
+##############################################################################################################
+
+@cli.command('build-os')
+@click.option('-H', is_flag=True)
+def build_os(h: bool) -> None:
+    """
+    Passes the build parameters in "build-os.json" to the build system and builds the OS ELF. Use the "-H" option to
+    get more info about the build parameters.
+    """
+    print_banner()
+    load_config()
+    exec_scons(
+        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'OS'),
+        [
+            Setting.BUILD,
+            Setting.ARCH,
+            Setting.OS_ELF_NAME,
+            Setting.OS_VERSION
+        ],
+        Setting.BARE_METAL_COMPILER,
+        False,
+        h,
+        'build-os'
+    )
+
+
+@cli.command('build-app')
+@click.argument('app', type=str)
+@click.option('-H', is_flag=True)
+def build_app(app: str, h: bool):
+    """
+    Passes the build parameters to the build system and builds the application. Use the "-H" option to get more info
+    about the build parameters.
+    """
+    print_banner()
+    load_config()
+    app_dir = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'App'
+    target_found = False
+    for app_proj in app_dir.iterdir():
+        if app_proj.name == app:
+            exec_scons(
+                str(app_dir / app),
+                [Setting.BUILD],
+                Setting.BARE_METAL_COMPILER,
+                False,
+                h,
+                f'build-app {app}'
+            )
+            target_found = True
+    assert_condition(target_found, f'Application not found: {app}')
+
+
+@cli.command('clean-os')
+@click.option('-H', is_flag=True)
+def clean_os(h: bool):
+    """
+    Delete all build files of the OS.
+    """
+    print_banner()
+    load_config()
+    exec_scons(
+        str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'OS'),
+        [
+            Setting.BUILD,
+            Setting.ARCH,
+            Setting.OS_ELF_NAME,
+            Setting.OS_VERSION
+        ],
+        Setting.BARE_METAL_COMPILER,
+        True,
+        h,
+        'build-os'
+    )
+
+
+
+
+
+@cli.command('clean-app')
+@click.argument('app', type=str)
+@click.option('-H', is_flag=True)
+def clean_app(app: str, h: bool):
+    """
+    Delete all build files of an application.
+    """
+    print_banner()
+    load_config()
+    app_dir = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'App'
+    target_found = False
+    for app_proj in app_dir.iterdir():
+        if app_proj.name == app:
+            exec_scons(
+                str(app_dir / app),
+                [Setting.BUILD],
+                Setting.BARE_METAL_COMPILER,
+                True,
+                h,
+                f'build-app {app}'
+            )
+            target_found = True
+    assert_condition(target_found, f'Application not found: {app}')
 
 
 if __name__ == '__main__':
