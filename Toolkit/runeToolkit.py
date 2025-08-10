@@ -168,7 +168,7 @@ def configure() -> None:
         Setting.PROJECT_ROOT.to_json_key(): str(Path('..').resolve()),
         Setting.INSTALLATION_ROOT.to_json_key(): str(installation_root),
         # Cross target settings
-        Setting.BUILD.to_json_key(): 'dev',
+        Setting.BUILD.to_json_key(): 'debug',
         Setting.ARCH.to_json_key(): 'x86_64',
         Setting.OS_EXECUTABLE.to_json_key(): '/System/OS/runeOS.app',
         # 'build-kernel' settings
@@ -224,6 +224,7 @@ def write_build_variables_py(out_file: Path, settings: List[Setting]) -> None:
         for setting in settings:
             file.write(f'{setting.to_scons_key()} = \'{SETTINGS[setting.to_json_key()]}\'\n')
 
+
 @cli.command('build-kernel')
 @click.option('-H', is_flag=True)
 def build_kernel(h: bool) -> None:
@@ -233,8 +234,9 @@ def build_kernel(h: bool) -> None:
     """
     print_banner()
     load_config()
+    kernel_directory = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'
     write_build_variables_py(
-        Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel' / 'BuildVariables.py',
+         kernel_directory / 'BuildVariables.py',
         [
             Setting.BUILD,
             Setting.ARCH,
@@ -250,7 +252,7 @@ def build_kernel(h: bool) -> None:
     cmd = ['scons']
     if h:
         cmd.append('-h')
-    exec_shell_cmd(cmd, str(Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'), 'build-kernel')
+    exec_shell_cmd(cmd, str(kernel_directory), 'build-kernel')
 
 
 @cli.command('clean-kernel')
@@ -263,7 +265,7 @@ def clean_kernel(h: bool):
     load_config()
     kernel_directory = Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()]) / 'Kernel'
     write_build_variables_py(
-        kernel_directory,
+        kernel_directory / 'BuildVariables.py',
         [
             Setting.BUILD,
             Setting.ARCH,
@@ -347,7 +349,7 @@ def build_image(h: bool) -> None:
             )
         app_list.append(str(app_elf))
     build_image_cmd = [
-        './BuildImage.sh',
+        'Scripts/BuildImage.sh',
         SETTINGS[Setting.IMAGE_NAME.to_json_key()],
         str(kernel_elf),
         str(os_elf),
@@ -372,6 +374,7 @@ def clean_image(h: bool):
     load_config()
     rune_os_image = (Path(SETTINGS[Setting.PROJECT_ROOT.to_json_key()])
                      / 'Toolkit'
+                     / 'Scripts'
                      / SETTINGS[Setting.IMAGE_NAME.to_json_key()])
     if rune_os_image.exists():
         print(f'> rm {rune_os_image}')
@@ -425,7 +428,7 @@ def install(h: bool):
     assert_target_build(os_elf, 'build-os')
 
     installer_cmd = [
-        './Install.sh',
+        'Scripts/Install.sh',
         str(Path(SETTINGS[Setting.INSTALLATION_ROOT.to_json_key()]) / SETTINGS[Setting.BUILD.to_json_key()]),
         str(rune_os_image),
         str(kernel_elf),
@@ -510,9 +513,6 @@ def clean_os(h: bool):
         h,
         'build-os'
     )
-
-
-
 
 
 @cli.command('clean-app')

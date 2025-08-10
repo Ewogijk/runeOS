@@ -30,8 +30,8 @@ vars.Add(
     EnumVariable(
         'build',
         'The build type determines if compiler optimizations are used, release builds are optimized.',
-        'dev',
-        allowed_values=['dev', 'release']
+        'debug',
+        allowed_values=['debug', 'release']
     )
 )
 vars.Add(

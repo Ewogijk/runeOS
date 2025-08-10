@@ -29,8 +29,8 @@ kernel_elf=$3
 os_elf=$4
 build=$5
 
-if [ "$build" != "dev" ] && [ "$build" != "release" ]; then
-  echo "Error - Unknown build type: ${build}, Expected one of: [dev, release]"
+if [ "$build" != "debug" ] && [ "$build" != "release" ]; then
+  echo "Error - Unknown build type: ${build}, Expected one of: [debug, release]"
   exit 1
 fi
 
@@ -57,7 +57,7 @@ cp $rune_os_image ${install_directory}/bin
 cp Ressource/requirements.txt $install_directory
 cp Ressource/Start.py $install_directory
 
-if [ "$build" = "dev" ]; then
+if [ "$build" = "debug" ]; then
     cp Ressource/Debug.py $install_directory
     cp $kernel_elf ${install_directory}/bin
     cp $os_elf ${install_directory}/bin
