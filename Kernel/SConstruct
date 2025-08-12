@@ -43,20 +43,6 @@ vars.Add(
     )
 )
 vars.Add(
-    (
-        'version',
-        'The version of this kernel build.',
-        '0.0.0-dummy'
-    )
-)
-vars.Add(
-    (
-        'os_executable',
-        'The absolute path to the OS build on the target machines filesystem.',
-        ''
-    )
-)
-vars.Add(
     BoolVariable(
         'qemu_build',
         'Enables additional qemu specific debugging features in the kernel.',
@@ -167,25 +153,14 @@ Export('target_env')
 ######################################################################################################
 
 
-def create_macro_def_json(out_file: str):
-    parts = target_env['version'].split('-')
-    kernel_prerelease = parts[1] if len(parts) > 1 else ''
-    parts = parts[0].split('.')
-    kernel_major = parts[0] if len(parts) > 0 else 0
-    kernel_minor = parts[1] if len(parts) > 1 else 0
-    kernel_patch = parts[2] if len(parts) > 2 else 0
-    macro_defs = [
-        ['Architecture the kernel was build for.', f'ARCH {arch}'],
-        ['The kernel major version', f'MAJOR {kernel_major}'],
-        ['The kernel minor version', f'MINOR {kernel_minor}'],
-        ['The kernel patch version', f'PATCH {kernel_patch}'],
-        ['The kernel patch version', f'PRERELEASE "{kernel_prerelease}"'],
-        ['The absolute path to the OS executable', f'OS "{target_env["os_executable"]}"'],
-    ]
+def create_build_h_replacements(out_file: str):
+    macro_defs = {
+        '$ARCH' : f'#define ARCH {arch} // Target architecture of the kernel.',
+    }
     if '64' in arch:
-        macro_defs.append(['Activate 64-bit related features in the entry e.g. 64-bit memory addresses', 'BIT64'])
+        macro_defs['$BIT'] = '#define BIT64 //Activate 64-bit related features'
     if target_env['qemu_build']:
-        macro_defs.append(['Determines serial logging behavior.', 'QEMU_HOST'])
+        macro_defs['$QEMU'] = '#define QEMU_HOST // Enable Qemu related debugging features.'
     with open(out_file, 'w') as f:
         json.dump(macro_defs, f, indent=4)
 
@@ -211,11 +186,11 @@ if not GetOption('clean'):
         'python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf'
     )
     # Dunno how to make this only run when cli args change -> just run it everytime
-    create_macro_def_json('BuildTools/MacroDefs.json')
+    create_build_h_replacements('BuildTools/BuildHReplacements.json')
     target_env.Command(
         'Include/KernelRuntime/Build.h',
-        ['BuildTools/GenerateBuildHeader.py', 'BuildTools/MacroDefs.json'],
-        'python3 $SOURCE $TARGET BuildTools/MacroDefs.json'
+        ['BuildTools/GenerateBuildHeader.py', 'BuildTools/BuildHReplacements.json'],
+        'python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json'
     )
 
 ######################################################################################################
