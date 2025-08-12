@@ -30,8 +30,8 @@ vars.Add(
     EnumVariable(
         'build',
         'The build type determines if compiler optimizations are used, release builds are optimized.',
-        'dev',
-        allowed_values=['dev', 'release']
+        'debug',
+        allowed_values=['debug', 'release']
     )
 )
 vars.Add(
@@ -43,20 +43,6 @@ vars.Add(
     )
 )
 vars.Add(
-    (
-        'version',
-        'The version of this kernel build.',
-        '0.0.0-dummy'
-    )
-)
-vars.Add(
-    (
-        'os_executable',
-        'The absolute path to the OS build on the target machines filesystem.',
-        ''
-    )
-)
-vars.Add(
     BoolVariable(
         'qemu_build',
         'Enables additional qemu specific debugging features in the kernel.',
@@ -65,28 +51,28 @@ vars.Add(
 )
 vars.Add(
     (
-        'gcc',
-        'The path to the gcc executable of the kernel cross compiler..',
+        'c',
+        'The path to the c kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'gpp',
-        'The path to the g++ executable of the kernel cross compiler..',
+        'cpp',
+        'The path to the cpp kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'crtbegin',
+        'crt_begin',
         'The path to the crtbegin.o file of the kernel cross compiler.',
         ''
     )
 )
 vars.Add(
     (
-        'crtend',
+        'crt_end',
         'The path to the crtend.o file of the kernel cross compiler.',
         ''
     )
@@ -102,8 +88,8 @@ Help(vars.GenerateHelpText(target_env))
 arch = target_env['arch']
 build = target_env['build']
 
-target_env['CXX'] = target_env['gpp']
-target_env['CPPPATH'] = target_env['gpp']
+target_env['CXX'] = target_env['cpp']
+target_env['CPPPATH'] = target_env['cpp']
 
 # Include directoriesx
 target_env['CPPPATH'] = [
@@ -167,25 +153,14 @@ Export('target_env')
 ######################################################################################################
 
 
-def create_macro_def_json(out_file: str):
-    parts = target_env['version'].split('-')
-    kernel_prerelease = parts[1] if len(parts) > 1 else ''
-    parts = parts[0].split('.')
-    kernel_major = parts[0] if len(parts) > 0 else 0
-    kernel_minor = parts[1] if len(parts) > 1 else 0
-    kernel_patch = parts[2] if len(parts) > 2 else 0
-    macro_defs = [
-        ['Architecture the kernel was build for.', f'ARCH {arch}'],
-        ['The kernel major version', f'MAJOR {kernel_major}'],
-        ['The kernel minor version', f'MINOR {kernel_minor}'],
-        ['The kernel patch version', f'PATCH {kernel_patch}'],
-        ['The kernel patch version', f'PRERELEASE "{kernel_prerelease}"'],
-        ['The absolute path to the OS executable', f'OS "{target_env["os_executable"]}"'],
-    ]
+def create_build_h_replacements(out_file: str):
+    macro_defs = {
+        '$ARCH' : f'#define ARCH {arch} // Target architecture of the kernel.',
+    }
     if '64' in arch:
-        macro_defs.append(['Activate 64-bit related features in the entry e.g. 64-bit memory addresses', 'BIT64'])
+        macro_defs['$BIT'] = '#define BIT64 //Activate 64-bit related features'
     if target_env['qemu_build']:
-        macro_defs.append(['Determines serial logging behavior.', 'QEMU_HOST'])
+        macro_defs['$QEMU'] = '#define QEMU_HOST // Enable Qemu related debugging features.'
     with open(out_file, 'w') as f:
         json.dump(macro_defs, f, indent=4)
 
@@ -195,7 +170,6 @@ if not GetOption('clean'):
     # Provide the python scripts as source so the code gen is always triggered when the scripts are updated
     #                           OR
     # Obviously the generated source file is missing
-    print("CODE GEN STUFF")
     target_env.Command(
         f'Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc',
         'BuildTools/GenerateISRStubsAssembly.py',
@@ -212,11 +186,11 @@ if not GetOption('clean'):
         'python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf'
     )
     # Dunno how to make this only run when cli args change -> just run it everytime
-    create_macro_def_json('BuildTools/MacroDefs.json')
+    create_build_h_replacements('BuildTools/BuildHReplacements.json')
     target_env.Command(
         'Include/KernelRuntime/Build.h',
-        ['BuildTools/GenerateBuildHeader.py', 'BuildTools/MacroDefs.json'],
-        'python3 $SOURCE $TARGET BuildTools/MacroDefs.json'
+        ['BuildTools/GenerateBuildHeader.py', 'BuildTools/BuildHReplacements.json'],
+        'python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json'
     )
 
 ######################################################################################################
@@ -296,7 +270,7 @@ Import('crti')
 Import('crtn')
 objects = [
     crti,
-    target_env['crtbegin'],
+    target_env['crt_begin'],
     Boot,
     BuiltInPlugin,
     SystemCall,
@@ -308,7 +282,7 @@ objects = [
     Arch,
     KernelRuntime,
     Ember,
-    target_env['crtend'],
+    target_env['crt_end'],
     crtn
 ]
 

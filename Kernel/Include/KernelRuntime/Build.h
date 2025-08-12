@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -21,28 +22,15 @@
 #ifndef RUNEOS_BUILD_INFO_H
 #define RUNEOS_BUILD_INFO_H
 
-// Architecture the kernel was build for.
-#define ARCH x86_64
 
-// The kernel major version
-#define MAJOR 0
+#define MAJOR 0                     // The kernel major version
+#define MINOR 0                     // The kernel minor version
+#define PATCH 0                     // The kernel patch version
+#define PRERELEASE "dummy"          // The kernel prerelease version
+#define OS "/System/OS/runeOS.app"  // The absolute path to the OS executable
+#define ARCH x86_64 // Target architecture of the kernel.
+#define BIT64 //Activate 64-bit related features
+#define QEMU_HOST // Enable Qemu related debugging features.
 
-// The kernel minor version
-#define MINOR 1
-
-// The kernel patch version
-#define PATCH 0
-
-// The kernel patch version
-#define PRERELEASE "alpha"
-
-// The absolute path to the OS executable
-#define OS "/System/OS/runeOS.app"
-
-// Activate 64-bit related features in the entry e.g. 64-bit memory addresses
-#define BIT64
-
-// Determines serial logging behavior.
-#define QEMU_HOST
 
 #endif //RUNEOS_BUILD_INFO_H

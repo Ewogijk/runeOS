@@ -18,15 +18,15 @@
 #define RUNEOS_BUILD_H
 
 // The OS major version
-#mesondefine MAJOR
+#define MAJOR 0
 
 // The OS minor version
-#mesondefine MINOR
+#define MINOR 1
 
 // The OS patch version
-#mesondefine PATCH
+#define PATCH 0
 
 // The OS prerelease version
-#mesondefine PRERELEASE
+#define PRERELEASE "alpha"
 
 #endif //RUNEOS_BUILD_H
