@@ -3,30 +3,17 @@
 Thank you for considering to contribute to runeOS!
 
 
+## Setting up your Development Local Environment
 
-There are many ways you can contribute and the following sections will give you some ideas on how to get involved with 
-the project.
+You want to fix a bug or develop a new feature? This section will help you set up your local development environment 
+and make your first build.
 
-Contributors are expected to follow the [Code of Conduct](CONTRIBUTING.md).
-
-
-## Bug Reports
-
-## Feature Requests
-
-## Local Development Environment
-
-You want to fix a bug or develop a new feature?  This section will help you set up your local development environment and
-make your first build.
-
-### Dependencies
-
-Before anything else you will need to get the dependencies to build and run the OS.
+### Getting the Dependencies
 
 First, install the required system packages:
 
 ```shell
-  sudo apt install nasm, ninja-build, qemu-system-x86, dosfstools, gdb
+sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 ```
 
 - NASM: The Netwide Assembler is an assembler for the x86 architecture.
@@ -49,6 +36,7 @@ Lastly, head over to the [runeToolchain]() project and install the latest releas
 cross-compilers, a freestanding cross-compiler to build the kernel and a hosted cross-compiler with C/C++ standard 
 library to compile userspace applications.
 
+
 ### Building with Brokkr
 
 Brokkr is the build system of runeOS that creates bootable OS images and the recommended way of building. It is not a
@@ -59,30 +47,25 @@ Building with Brokkr requires only two steps, first the build directory must be 
 run:
 
 ```shell
-    ./Brokkr configure x86_64 debug path/to/your/freestanding-compiler 256
+./Brokkr configure x86_64 debug path/to/your/freestanding-compiler 256
 ```
 
 This tells Brokkr that it should make a 'debug' build for the 'x86_64' architecture using the freestanding 
 cross-compiler installed in 'path/to/your/freestanding-compiler' and
 that the OS image should be 256MB. 
 
-> 
-> Following step requires sudo privileges to format the OS image and mount it to copy files over. If you feel 
-> uncomfortable running Brokkr with those privileges, take a look at the 'Manual Build' section first to verify what
-> Brokkr does under hood.
-> 
-
-Now Brokkr is ready to build the OS:
+Now Brokkr is ready to build the OS. This will require sudo privileges to format and mount the OS image. If you are 
+interested, take a look at the 'Manual Build' section to get a better idea what Brokkr does under the hood.
 
 ```shell
 ./Brokkr.py build x86_64 debug
 ```
 
-If Brokkr did not report any errors, you should notice more files have been installed in build directory.
+If Brokkr did not report any errors, you should notice more files have been installed in the build directory. Congrats 
+you just made your first OS build!
 
-Congrats you just made your first OS build!
 
-### Manual Build
+### Building Manually
 
 It is highly recommended to use Brokkr to build the bootable OS image, as building manually is a lengthy and error-prone
 process.
@@ -106,7 +89,7 @@ crt_end = 'path/to/your/freestanding-compiler/crtend.o'
 Run `scons -h` to get a description of each build variable and fill in the placeholders. Then, build the kernel running:
 
 ```shell
-   scons
+scons
 ```
 
 In the `Build/<arch>-<build>` directory you should now find the `runeKernel.elf` file.
@@ -116,16 +99,16 @@ In the `Build/<arch>-<build>` directory you should now find the `runeKernel.elf`
 The OS is build with Meson which provides excellent cross-compiler support. Before trying to build ensure that the 
 hosted cross-compiler binaries have been added to your `PATH` environment variable.
 
-Go to the `OS/` directory. If the `Build` directory is missing, otherwise skip this step, run:
+Go to the `OS/` directory. If the `Build` directory is missing run:
 
 ```shell
-   meson setup cross-file x86_64-rune.txt Build
+meson setup --cross-file x86_64-rune.txt Build
 ```
 
-To build the OS:
+To build run:
 
 ```shell
-   cd Build && meson compile
+cd Build && meson compile
 ```
 
 Now you should find the `runeOS.app` file in the `Build/` directory.
@@ -136,47 +119,45 @@ At this point you should have a `runeKernel.elf` and `runeOS.app`. There are two
 easy way is running the `Build-Image.sh` script in the `Brokkr/` directory:
 
 ```shell
-   ./Build-Image.sh path/to/runeKernel.elf path/to/runeOS.app your-image-size
+Scripts/Build-Image.sh path/to/runeKernel.elf path/to/runeOS.app your-image-size
 ```
 
-The script requires sudo privileges to use 'mkfs.fat', 'losetup' and 'mount' commands. If you do not want to run it with 
-those privileges, it is possible to manually create the image. Print the scripts help menu (no sudo privileges 
-required): 
+The script requires sudo privileges to use 'mkfs.fat', 'losetup' and 'mount' commands. 
+
+Alternatively, the help menu of the script documents the steps to create the image in a reproducible manner, so you can 
+create the image with tooling of your choice: 
 
 ```shell
-   ./Build-Image.sh -h
+Scripts/Build-Image.sh -h
 ```
-
-The help menu documents the steps the script will take in a reproducible manner, so you can create the image with 
-tooling of your choice.
 
 No matter how you created the bootable image, you should now have a bootable image, lets call it `runeOS.image`.
 
 #### App Build and Installation
 
-You should have a `runeOS.image` at this point that can be plugged into Qemu, but runeOS on its own does not provide many 
+You should have a `runeOS.image` at this point. You could run it with Qemu but runeOS on its own does not provide many 
 features. The `App` directory contains a collection of basic software that you will likely recognize by name. This 
 section explains how to compile and install them on your `runeOS.image`.
 
 All applications are build in the same way with Meson, so this process is explained once with the `cat` application as 
-example. In the `App/cat` directory, if the `Build` directory is missing, otherwise skip this step, run:
+example. In the `App/cat` directory, if the `Build` directory is missing run:
 
 ```shell
-   meson setup cross-file x86_64-rune.txt Build
+meson setup cross-file x86_64-rune.txt Build
 ```
 
-To build the application:
+To build run:
 
 ```shell
-   cd Build && meson compile
+cd Build && meson compile
 ```
 
 Now in `Build/` you should find the `cat.app` file. It needs to be copied over to the `/Apps` directory on the `Data` 
-partition of your `runeOS.image`. This can either be done manually or the `Brokkr/Scripts/Install-App.sh` build script
-can do it automatically:
+partition of your `runeOS.image`. This can either be done manually or the `Install-App.sh` build script can do it 
+automatically. In the `Brokkr/` directory run:
 
 ```shell
-   ./Install-App.sh path/to/your/runeOS.image path/to/your/cat.app
+Scripts/Install-App.sh path/to/your/runeOS.image path/to/your/cat.app
 ```
 
 Again, the script requires sudo privileges to use the 'mount' and 'losetup' commands.
@@ -187,41 +168,10 @@ to install.
 #### Build Installation
 
 If you have downloaded the latest release, you will have noticed it contains a `Start.py` file and more. To install your
-`runeOS.image` alongside this script and other configuration files, in `Brokkr/Scripts` run:
+`runeOS.image` alongside this script and other configuration files, in `Brokkr/` run:
 
 ```shell
-   ./Install.sh your-build path/to/your/install-directory path/to/your/runeOS.image path/to/your/runeKernel.elf path/to/your/runeOS.app
+Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS.image path/to/your/runeKernel.elf path/to/your/runeOS.app
 ```
 
-Now you have a runeOS installation similar to the latest release.
-#### Conclusion
-
-Congrats, you have successfully built and installed runeOS manually! 
-
-Now you know why Brokkr has been developed, to ease the process of building and installing the OS. 
-
-In fact Brokkr 
-simply runs the same scripts you have just used in the very same order. If you take a look at the `build.settings` file
-in a Brokkr build directory, you should recognize most of the settings.
-
-
-runeToolchain Deps
-- sudo apt install build-essential
-- sudo apt install bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo
-- pip install --user meson
-- sudo apt install ninja-build
-
-1. Install runeToolchain
-2. Add runeToolchain to PATH
-
-
-BUG wrong stack alignment 
-   -> need 16byte
-   -> FIX: compile with '-mincoming-stack-boundary=3'
-
-## Styleguide
-
-### Git Commit Message Styleguide
-### Semantic Versioning
-### C++ Styleguide
-### Python Styleguide
+Congrats, you have successfully built and installed runeOS manually!
