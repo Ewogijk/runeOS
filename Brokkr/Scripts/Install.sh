@@ -17,18 +17,30 @@
 #
 
 help() {
-  echo Usage "./Install.sh [-h] <build> <install-directory> <rune-os-image> <kernel-elf> <os-elf>"
+  echo Usage "./Install.sh [-h] BUILD INSTALL_DIRECTORY RUNE_OS_IMAGE KERNEL_ELF OS_ELF"
   echo
-  echo Install the \'rune-os-image\' alongside a start script that configures qemu in the
-  echo \'install-directory\'. If \'build\'==debug, also install a debug script and the kernel and OS executables that
-  echo configures GDB for command line kernel/OS debugging.
+  echo Install the RUNE_OS_IMAGE alongside a start script in the INSTALL_DIRECTORY. If BUILD==debug, also install
+  echo a debug script for command line debugging of the Kernel/OS with GDB and the kernel and OS executables.
+  echo
+  echo Directory layout:
+  echo "    INSTALL_DIRECTORY/Start.py         : OS start script for Qemu configuration (from 'Brokkr/Resource')"
+  echo "    INSTALL_DIRECTORY/requirements.txt : Python dependencies of Start.py/Debug.py (from 'Brokkr/Resource')"
+  echo "    INSTALL_DIRECTORY/bin/OVMF_CODE.fd : UEFI binaries (from 'Brokkr/Resource')"
+  echo "    INSTALL_DIRECTORY/bin/OVMF_VARS.fd : UEFI variables (from 'Brokkr/Resource')"
+  echo "    INSTALL_DIRECTORY/bin/RUNE_OS_IMAGE: RuneOS Image"
+  echo If BUILD==debug:
+  echo "    INSTALL_DIRECTORY/Debug.py      : Helper script to configure and run GDB (from 'Brokkr/Resource')"
+  echo "    INSTALL_DIRECTORY/bin/KERNEL_ELF: Kernel ELF executable."
+  echo "    INSTALL_DIRECTORY/bin/OS_ELF    : OS ELF executable"
+  echo
+  echo
   echo
   echo Arguments:
-  echo "    build             - Build type, one of [debug, release]."
-  echo "    install-directory - Directory where the build is installed."
-  echo "    rune-os-image     - runeOS image."
-  echo "    kernel-elf        - The kernel executable."
-  echo "    os-elf            - The OS executable."
+  echo "    BUILD             - Build type. (debug|release)"
+  echo "    INSTALL_DIRECTORY - Installation directory of the build files."
+  echo "    RUNE_OS_IMAGE     - runeOS image."
+  echo "    KERNEL_ELF        - The kernel executable."
+  echo "    OS_ELF            - The OS executable."
   echo Options:
   echo "    -h - Print this help text"
 }

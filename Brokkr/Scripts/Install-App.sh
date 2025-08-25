@@ -17,9 +17,9 @@
 #
 
 help() {
-  echo Usage "./Install-App.sh [-h] <rune-os-image> <app-elf>"
+  echo Usage "./Install-App.sh [-h] RUNE_OS_IMAGE APP_ELF"
   echo
-  echo Install the \'app-elf\' in the /Apps directory on the \'rune-os-image\'.
+  echo Install the APP_ELF in the '/Apps' directory on the RUNE_OS_IMAGE.
   echo
   echo The script requires sudo permissions!
   echo
@@ -27,7 +27,7 @@ help() {
   echo "    1. Try to setup the as block device '/dev/loop7'."
   echo "    2. Mount the data partition at a mount point in the current directory."
   echo "    3. Create the /Apps directory if needed and copy the 'app-elf' there."
-  echo "    4. Unmount the data partition, delete the used block device and delete the temporary mount point."
+  echo "    4. Unmount the data partition, delete '/dev/loop7' and delete the temporary mount point."
   echo
   echo
   echo
