@@ -29,7 +29,7 @@ vars = Variables('BuildVariables.py')
 vars.Add(
     EnumVariable(
         'build',
-        'The build type determines if compiler optimizations are used, release builds are optimized.',
+        'The build type determines if compiler optimizations are used, release builds have compiler optimizations.',
         'debug',
         allowed_values=['debug', 'release']
     )
@@ -37,7 +37,7 @@ vars.Add(
 vars.Add(
     EnumVariable(
         'arch',
-        'The CPU architecture the kernel will be build on.',
+        'The CPU architecture the kernel will be build for.',
         'x86_64',
         allowed_values=['x86_64']
     )
@@ -52,29 +52,29 @@ vars.Add(
 vars.Add(
     (
         'c',
-        'The path to the c kernel cross compiler.',
-        ''
+        'The absolute path to the c cross compiler e.g. x86_64-elf-gcc.',
+        '/path/to/your/cross-compiler/bin/x86_64-elf-gcc'
     )
 )
 vars.Add(
     (
         'cpp',
-        'The path to the cpp kernel cross compiler.',
-        ''
+        'The absolute path to the cpp cross compiler e.g. x86_64-elf-g++.',
+        '/path/to/your/cross-compiler/bin/x86_64-elf-g++'
     )
 )
 vars.Add(
     (
         'crt_begin',
-        'The path to the crtbegin.o file of the kernel cross compiler.',
-        ''
+        'The absolute path to the crtbegin.o file of the cross compiler.',
+        '/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtbegin.o'
     )
 )
 vars.Add(
     (
         'crt_end',
-        'The path to the crtend.o file of the kernel cross compiler.',
-        ''
+        'The absolute path to the crtend.o file of the cross compiler.',
+        '/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtend.o'
     )
 )
 
