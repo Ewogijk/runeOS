@@ -14,9 +14,8 @@ applies:
 2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - To see if the issue has already been
    reported. If it was and the issue is still open, comment on the existing issue rather than creating a new one.
 
-In the issue tracker, select the **Bug Report** template and fill it out to your best abilities. Try to answer as many
-questions as you can and be as detailed as possible, this way you will provide us with all the information needed to
-reproduce and fix your issue without needing to ask additional questions.
+Fill out the [Bug Report](.github/ISSUE_TEMPLATE/🐛-bug-report.md) template as detailed possible. This way you provide us with all 
+the information needed to reproduce and fix your issue without needing to ask additional questions.
 
 
 ## Setting up your Development Local Environment
