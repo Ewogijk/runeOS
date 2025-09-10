@@ -70,8 +70,13 @@ This tells Brokkr that it should make a 'debug' build for the 'x86_64' architect
 cross-compiler installed in 'path/to/your/freestanding-compiler' and
 that the OS image should be 256MB. 
 
-Now Brokkr is ready to build the OS. This will require sudo privileges to format and mount the OS image. If you are 
-interested, take a look at the 'Manual Build' section to get a better idea what Brokkr does under the hood.
+> 
+> Following step requires sudo privileges to format the OS image and mount it to copy files over. If you feel 
+> uncomfortable running Brokkr with those privileges, take a look at the 'Manual Build' section first to verify what
+> Brokkr does under hood.
+> 
+
+Now Brokkr is ready to build the OS:
 
 ```shell
 ./Brokkr.py build x86_64 debug
@@ -138,10 +143,9 @@ easy way is running the `Build-Image.sh` script in the `Brokkr/` directory:
 Scripts/Build-Image.sh path/to/runeKernel.elf path/to/runeOS.app your-image-size
 ```
 
-The script requires sudo privileges to use 'mkfs.fat', 'losetup' and 'mount' commands. 
-
-Alternatively, the help menu of the script documents the steps to create the image in a reproducible manner, so you can 
-create the image with tooling of your choice: 
+The script requires sudo privileges to use 'mkfs.fat', 'losetup' and 'mount' commands. If you do not want to run it with 
+those privileges, it is possible to manually create the image. Print the scripts help menu (no sudo privileges 
+required): 
 
 ```shell
 Scripts/Build-Image.sh -h
@@ -169,8 +173,8 @@ cd Build && meson compile
 ```
 
 Now in `Build/` you should find the `cat.app` file. It needs to be copied over to the `/Apps` directory on the `Data` 
-partition of your `runeOS.image`. This can either be done manually or the `Install-App.sh` build script can do it 
-automatically. In the `Brokkr/` directory run:
+partition of your `runeOS.image`. This can either be done manually or the `Brokkr/Scripts/Install-App.sh` build script
+can do it automatically:
 
 ```shell
 Scripts/Install-App.sh path/to/your/runeOS.image path/to/your/cat.app
@@ -190,4 +194,35 @@ If you have downloaded the latest release, you will have noticed it contains a `
 Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS.image path/to/your/runeKernel.elf path/to/your/runeOS.app
 ```
 
+Now you have a runeOS installation similar to the latest release.
+#### Conclusion
+
 Congrats, you have successfully built and installed runeOS manually!
+
+Now you know why Brokkr has been developed, to ease the process of building and installing the OS. 
+
+In fact Brokkr 
+simply runs the same scripts you have just used in the very same order. If you take a look at the `build.settings` file
+in a Brokkr build directory, you should recognize most of the settings.
+
+
+runeToolchain Deps
+- sudo apt install build-essential
+- sudo apt install bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo
+- pip install --user meson
+- sudo apt install ninja-build
+
+1. Install runeToolchain
+2. Add runeToolchain to PATH
+
+
+BUG wrong stack alignment 
+   -> need 16byte
+   -> FIX: compile with '-mincoming-stack-boundary=3'
+
+## Styleguide
+
+### Git Commit Message Styleguide
+### Semantic Versioning
+### C++ Styleguide
+### Python Styleguide
