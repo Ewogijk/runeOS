@@ -2,6 +2,22 @@
 
 Thank you for considering to contribute to runeOS!
 
+## Reporting Bugs
+
+You have found a bug and want to report it? This section will introduce our guidelines for bug reports, by following
+them you help us to understand your report and reproduce the bug.
+
+Before submitting the bug report, please check the following list. You may not need to report the issue if anything
+applies:
+
+1. **Update to the latest release** - We may have already fixed your bug.
+2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - To see if the issue has already been
+   reported. If it was and the issue is still open, comment on the existing issue rather than creating a new one.
+
+In the issue tracker, select the **Bug Report** template and fill it out to your best abilities. Try to answer as many
+questions as you can and be as detailed as possible, this way you will provide us with all the information needed to
+reproduce and fix your issue without needing to ask additional questions.
+
 
 ## Setting up your Development Local Environment
 
