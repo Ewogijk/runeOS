@@ -1,6 +1,17 @@
 # Contributing to runeOS
 
-Thank you for considering to contribute to runeOS!
+First of, Welcome and thanks for taking the time to contribute to runeOS!
+
+Please take a moment to review this document before starting to contribute. It is mostly a collection of guidelines that
+intend to make working on the project easier for everyone. Feel free to propose changes to the document in a pull 
+request.
+
+
+### Table of Contents
+
+- [Reporting Bugs](#reporting-bugs)
+- [Requesting Features](#requesting-features)
+- [Setting up your Local Development Environment](#setting-up-your-local-development-environment)
 
 ## Reporting Bugs
 
@@ -18,7 +29,7 @@ points apply.
 
 ### Submitting a Bug Report
 
-To report a bug fill out the [Bug Report](.github/ISSUE_TEMPLATE/🐛-bug-report.md) template. Explain your problem as 
+To report a bug fill out the [Bug Report](https://github.com/Ewogijk/runeOS/issues/new/choose) template. Explain your problem as 
 detailed as possible to help us track down your issue:
 
 - **Use a clear and descriptive title**
@@ -28,6 +39,7 @@ detailed as possible to help us track down your issue:
 - **Describe what behavior you expected**
 - **Specify your environment** - Which runeOS release did you use? What is your Qemu version?
 - **Add screenshots or code snippets**
+
 
 ## Requesting Features
 
@@ -45,21 +57,23 @@ Please check out the following before you submit your feature request, it may sa
 
 ### Submitting a Feature Request
 
-To request a feature fill out the [Feature Request](.github/ISSUE_TEMPLATE/%E2%9C%A8-feature-request.md) template. 
+To request a feature fill out the [Feature Request](https://github.com/Ewogijk/runeOS/issues/new/choose) template. 
 Explain what your feature does and why you think it is important: 
 
 - **Use a clear and descriptive title**
 - **Describe the feature or enhancement** - What problem does it solve? How does your solution look like? Why is it 
     useful for the project?
 
-## Setting up your Development Local Environment
+## Setting up your Local Development Environment
 
 You want to fix a bug or develop a new feature? This section will help you set up your local development environment 
-and make your first build.
+and make your first build. Before going further, you fork the repo and get the code. If you are new to GitHub check out 
+the [First Contributions](https://github.com/firstcontributions/first-contributions), it is a great repository to learn 
+about pull requests which includes forking repositories.
 
 ### Getting the Dependencies
 
-First, install the required system packages:
+First of you will have to get the necessary tools to build the OS. Begin with installing the required system packages:
 
 ```shell
 sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
@@ -71,7 +85,7 @@ sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 - dosfstools: Tooling to create FAT formatted disk images.
 - GDB: The GNU debugger.
 
-Then install the python dependencies, it is recommended to install in a [venv](https://docs.python.org/3/library/venv.html):
+Then install the python dependencies, it is recommended use a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
 pip install scons click meson
@@ -228,6 +242,7 @@ Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS
 ```
 
 Now you have a runeOS installation similar to the latest release.
+
 #### Conclusion
 
 Congrats, you have successfully built and installed runeOS manually!
