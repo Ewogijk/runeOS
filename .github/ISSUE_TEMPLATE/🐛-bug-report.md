@@ -2,7 +2,7 @@
 name: "\U0001F41B Bug Report"
 about: Report a bug in the Kernel or OS. Please check the issue tracker first, it
   is possible someone else already reported your issue.
-title: Please use a clear and descriptive title
+title: ''
 labels: bug
 assignees: ''
 
