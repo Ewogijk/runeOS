@@ -17,11 +17,11 @@
 #
 
 help() {
-  echo Usage "./Build-Image.sh [-h] <kernel-elf> <os-elf> <image-size>"
+  echo Usage "./Build-Image.sh [-h] KERNEL_ELF OS_ELF IMAGE_SIZE"
   echo
-  echo Create the runeOS.image file with the requested \'image-size\' in the directory of the script. The image will
-  echo contain two FAT32 formatted GPT partitions, the kernel partition with the bootloader and kernel elf and the data
-  echo partition with the OS elf.
+  echo Create the runeOS.image file with the requested IMAGE_SIZE in the directory of the script. The image will
+  echo contain two FAT32 formatted GPT partitions, the kernel partition with the bootloader and KERNEL_ELF and the data
+  echo partition with the OS_ELF.
   echo
   echo The script requires sudo permissions!
   echo
@@ -32,9 +32,9 @@ help() {
   echo "    4. Create the data partition directly after the kernel partition."
   echo "    5. Mount both partitions at mount points in the current directory."
   echo "    6. FAT32 format both partitions."
-  echo "    7. Copy the limine bootloader config and EFI application and the kernel executable to the kernel partition."
+  echo "    7. Copy the limine bootloader config and EFI application from 'Brokkr/Resource' and the kernel executable to the kernel partition."
   echo "    8. Copy the os executable to the data partition."
-  echo "    9. Unmount the partitions, delete the used block device and delete the temporary mount points."
+  echo "    9. Unmount the partitions, delete the 'dev/loop7' and delete the temporary mount points."
   echo
   echo The GPT partitions will be created with the following properties and directory layout:
   echo
@@ -45,7 +45,7 @@ help() {
   echo "    Size:                  >=64MB"
   echo "    Name:                  Kernel"
   echo Directory layout:
-  echo "    runeKernel.elf:       The kernel executable."
+  echo "    runeKernel.elf:       KERNEL_ELF."
   echo "    limine.conf:          limine bootloader configuration."
   echo "    EFI/BOOT/BOOTX64.EFI: limine bootloader EFI application."
   echo
@@ -56,15 +56,15 @@ help() {
   echo "    Size:                  >=192MB"
   echo "    Name:                  Data"
   echo Directory layout:
-  echo "    /System/OS/runeOS.app: OS executable, the kernel expects it to be at this location."
+  echo "    /System/OS/runeOS.app: OS_ELF, the kernel expects it to be at this location."
   echo "    /Apps                : Contains applications that can be run as shell external commands, it needs to exist."
   echo
   echo
   echo
   echo Arguments:
-  echo "    kernel-elf - The kernel executable."
-  echo "    os-elf     - The OS executable."
-  echo "    image-size - Size of the image in MB. Minimum size: 256MB."
+  echo "    KERNEL_ELF - The kernel executable."
+  echo "    OS_ELF     - The OS executable."
+  echo "    IMAGE_SIZE - Size of the image in MB. Minimum size: 256MB."
   echo Options:
   echo "    -h - Print this help text"
 }
