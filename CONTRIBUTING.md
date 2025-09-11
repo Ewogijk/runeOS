@@ -5,18 +5,52 @@ Thank you for considering to contribute to runeOS!
 ## Reporting Bugs
 
 You have found a bug and want to report it? This section will introduce our guidelines for bug reports, by following
-them you help us to understand your report and reproduce the bug.
+them you help us to better understand your report and thus fixing your bug.
 
-Before submitting the bug report, please check the following list. You may not need to report the issue if anything
-applies:
+### Before Submitting
+
+Please check the following guidelines before submitting, you may not need to create an issue if any of the following 
+points apply.
 
 1. **Update to the latest release** - We may have already fixed your bug.
 2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - To see if the issue has already been
-   reported. If it was and the issue is still open, comment on the existing issue rather than creating a new one.
+      reported. If it was and the issue is still open, comment on the existing issue rather than creating a new one.
 
-Fill out the [Bug Report](.github/ISSUE_TEMPLATE/🐛-bug-report.md) template as detailed possible. This way you provide us with all 
-the information needed to reproduce and fix your issue without needing to ask additional questions.
+### Submitting a Bug Report
 
+To report a bug fill out the [Bug Report](.github/ISSUE_TEMPLATE/🐛-bug-report.md) template. Explain your problem as 
+detailed as possible to help us track down your issue:
+
+- **Use a clear and descriptive title**
+- **Describe the steps to reproduce** - Be as detailed as possible. Explain not only what but also how you did 
+    something. Provide the arguments you used for functions and commands.
+- **Explain the behavior after performing the steps**
+- **Describe what behavior you expected**
+- **Specify your environment** - Which runeOS release did you use? What is your Qemu version?
+- **Add screenshots or code snippets**
+
+## Requesting Features
+
+You are wishing for a feature that does not exist? Or you want to make improvements to an existing feature? You are 
+welcome to make a feature request!
+
+### Before Submitting
+
+Please check out the following before you submit your feature request, it may save you the effort create the request:
+ 
+1. **Make sure your feature is not already implemented** - If your feature is already implemented, check if your 
+      suggestion adds anything to the implementation. If yes, feel free to create an issue.
+2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - Your might have already been requested. If
+      that is the case, comment on the existing issue rather than creating a new one.
+
+### Submitting a Feature Request
+
+To request a feature fill out the [Feature Request](.github/ISSUE_TEMPLATE/%E2%9C%A8-feature-request.md) template. 
+Explain what your feature does and why you think it is important: 
+
+- **Use a clear and descriptive title**
+- **Describe the feature or enhancement** - What problem does it solve? How does your solution look like? Why is it 
+    useful for the project?
 
 ## Setting up your Development Local Environment
 
@@ -203,25 +237,3 @@ Now you know why Brokkr has been developed, to ease the process of building and 
 In fact Brokkr 
 simply runs the same scripts you have just used in the very same order. If you take a look at the `build.settings` file
 in a Brokkr build directory, you should recognize most of the settings.
-
-
-runeToolchain Deps
-- sudo apt install build-essential
-- sudo apt install bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo
-- pip install --user meson
-- sudo apt install ninja-build
-
-1. Install runeToolchain
-2. Add runeToolchain to PATH
-
-
-BUG wrong stack alignment 
-   -> need 16byte
-   -> FIX: compile with '-mincoming-stack-boundary=3'
-
-## Styleguide
-
-### Git Commit Message Styleguide
-### Semantic Versioning
-### C++ Styleguide
-### Python Styleguide
