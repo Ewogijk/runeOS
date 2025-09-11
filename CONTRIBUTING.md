@@ -1,10 +1,9 @@
 # Contributing to runeOS
 
-First of, Welcome and thanks for taking the time to contribute to runeOS!
+Welcome and thanks for taking the time to contribute to runeOS!
 
 Please take a moment to review this document before starting to contribute. It is mostly a collection of guidelines that
-intend to make working on the project easier for everyone. Feel free to propose changes to the document in a pull 
-request.
+intend to make working on the project easier for everyone.
 
 
 ### Table of Contents
@@ -38,22 +37,22 @@ detailed as possible to help us track down your issue:
 - **Explain the behavior after performing the steps**
 - **Describe what behavior you expected**
 - **Specify your environment** - Which runeOS release did you use? What is your Qemu version?
-- **Add screenshots or code snippets**
+- **Add screenshots or code snippets** if suitable
 
 
 ## Requesting Features
 
-You are wishing for a feature that does not exist? Or you want to make improvements to an existing feature? You are 
-welcome to make a feature request!
+You want a new feature for the OS? Or you want to make improvements to an existing feature? You are welcome to make a 
+feature request!
 
 ### Before Submitting
 
-Please check out the following before you submit your feature request, it may save you the effort create the request:
+Please check out the following guidelines before you submit your feature request to avoid creating duplicate requests:
  
 1. **Make sure your feature is not already implemented** - If your feature is already implemented, check if your 
       suggestion adds anything to the implementation. If yes, feel free to create an issue.
-2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - Your might have already been requested. If
-      that is the case, comment on the existing issue rather than creating a new one.
+2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - Your feature might have already been requested. If that is the case, comment on 
+     the existing issue rather than creating a new one.
 
 ### Submitting a Feature Request
 
@@ -136,7 +135,7 @@ you just made your first OS build!
 ### Building Manually
 
 It is highly recommended to use Brokkr to build the bootable OS image, as building manually is a lengthy and error-prone
-process.
+process and Brokkr will automatically perform the steps described in the following sections in the same order for you.
 
 #### Kernel Build
 
@@ -241,14 +240,4 @@ If you have downloaded the latest release, you will have noticed it contains a `
 Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS.image path/to/your/runeKernel.elf path/to/your/runeOS.app
 ```
 
-Now you have a runeOS installation similar to the latest release.
-
-#### Conclusion
-
-Congrats, you have successfully built and installed runeOS manually!
-
-Now you know why Brokkr has been developed, to ease the process of building and installing the OS. 
-
-In fact Brokkr 
-simply runs the same scripts you have just used in the very same order. If you take a look at the `build.settings` file
-in a Brokkr build directory, you should recognize most of the settings.
+Congrats, you have just manually built and installed runeOS!
