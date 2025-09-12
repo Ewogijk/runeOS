@@ -17,7 +17,6 @@
 #ifndef RUNEOS_NODE_H
 #define RUNEOS_NODE_H
 
-
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 #include <Ember/VFSBits.h>
@@ -25,14 +24,13 @@
 #include <KernelRuntime/Collection.h>
 #include <KernelRuntime/Path.h>
 
-
 namespace Rune::VFS {
-#define NODE_IO_STATUSES(X)             \
-    X(NodeIOStatus, OKAY, 0x1)          \
-    X(NodeIOStatus, BAD_ARGS, 0x2)      \
-    X(NodeIOStatus, NOT_ALLOWED, 0x3)   \
-    X(NodeIOStatus, NOT_SUPPORTED, 0x4) \
-    X(NodeIOStatus, DEV_ERROR, 0x5)     \
+#define NODE_IO_STATUSES(X)                                                                                            \
+    X(NodeIOStatus, OKAY, 0x1)                                                                                         \
+    X(NodeIOStatus, BAD_ARGS, 0x2)                                                                                     \
+    X(NodeIOStatus, NOT_ALLOWED, 0x3)                                                                                  \
+    X(NodeIOStatus, NOT_SUPPORTED, 0x4)                                                                                \
+    X(NodeIOStatus, DEV_ERROR, 0x5)                                                                                    \
     X(NodeIOStatus, CLOSED, 0x6)
 
     /**
@@ -47,8 +45,7 @@ namespace Rune::VFS {
      *  <li>StorageDeviceError: Error on the underlying storage device.</li>
      * </ul>
      */
-    DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) //NOLINT
-
+    DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) // NOLINT
 
     /**
      * @brief A node IO status and the number of bytes read, written or seeked on the storage device.
@@ -57,7 +54,6 @@ namespace Rune::VFS {
         NodeIOStatus status     = NodeIOStatus::NONE;
         size_t       byte_count = 0;
     };
-
 
     /**
      * @brief General information about a node.
@@ -68,7 +64,6 @@ namespace Rune::VFS {
         U8     attributes = 0;
     };
 
-
     /**
      * @brief A virtual representation of a file or directory. Files can be read from or written to and directories
      *        provide an overview of their contents.
@@ -77,51 +72,48 @@ namespace Rune::VFS {
         // Call back to the subsystem that will remove this node from the node table.
         Function<void()> _on_close;
 
-    protected:
+      protected:
         bool _closed;
 
-    public:
+      public:
         // Required for the "Lib::Column::MakeHandleNameColumn" function.
-        U16 handle{ };
+        U16 handle{};
         /**
          * @brief The name of the node e.g. MyFile.txt or MyDirectory. That is this value does not contain any path
          *          elements. If this node is the root node of a filesystem the name can be empty.
          */
         String name;
 
-
         explicit Node(Function<void()> on_close);
 
-
         virtual ~Node() = default;
-
 
         /**
          * @brief True: The node is open. False: The node has been closed.
          */
-        [[nodiscard]] bool is_closed() const;
-
+        [[nodiscard]]
+        bool is_closed() const;
 
         /**
          * @brief
          * @return Absolute path to the node.
          */
-        [[nodiscard]] virtual Path get_node_path() const = 0;
-
+        [[nodiscard]]
+        virtual Path get_node_path() const = 0;
 
         /**
          * @brief
          * @return The node IO mode that was requested when the node was opened.
          */
-        [[nodiscard]] virtual Ember::IOMode get_io_mode() const = 0;
-
+        [[nodiscard]]
+        virtual Ember::IOMode get_io_mode() const = 0;
 
         /**
          * @brief
          * @return Files: The size of the content in bytes, Directories: Always zero.
          */
-        [[nodiscard]] virtual size_t get_size() const = 0;
-
+        [[nodiscard]]
+        virtual size_t get_size() const = 0;
 
         /**
          * <p>
@@ -131,8 +123,8 @@ namespace Rune::VFS {
          * @brief
          * @return Files: True: More bytes can be read, False: Not, Directories: Always false.
          */
-        [[nodiscard]] virtual bool has_more() const = 0;
-
+        [[nodiscard]]
+        virtual bool has_more() const = 0;
 
         /**
          * A node supports reading when following conditions are met:
@@ -159,7 +151,6 @@ namespace Rune::VFS {
          *          StorageDevError:    An IO error happened.
          */
         virtual NodeIOResult read(void* buf, size_t buf_size) = 0;
-
 
         /**
          * A node supports writing when following conditions are met:
@@ -188,7 +179,6 @@ namespace Rune::VFS {
          */
         virtual NodeIOResult write(void* buf, size_t buf_size) = 0;
 
-
         /**
          * A node supports seeking  when following conditions are met:
          * <ol>
@@ -212,8 +202,7 @@ namespace Rune::VFS {
          */
         virtual NodeIOResult seek(Ember::SeekMode seek_mode, int offset) = 0;
 
-
-        //TODO implement creation, modification and last access date/time support
+        // TODO implement creation, modification and last access date/time support
 
         /**
          * <p>
@@ -224,8 +213,8 @@ namespace Rune::VFS {
          * @param n_attr The node attribute to check.
          * @return True: The node attribute is set, False: It is not or the node is closed.
          */
-        [[nodiscard]] virtual bool has_attribute(Ember::NodeAttribute n_attr) const = 0;
-
+        [[nodiscard]]
+        virtual bool has_attribute(Ember::NodeAttribute n_attr) const = 0;
 
         /**
          * Note: The "File" and "Directory" attributes cannot be changed.
@@ -241,13 +230,12 @@ namespace Rune::VFS {
          */
         virtual bool set_attribute(Ember::NodeAttribute n_attr, bool val) = 0;
 
-
         /**
          * @brief Remove the node from the node table. If this is the last node pointing to the node path and it was
          *          requested to delete the file, it will also be physically deleted.
          */
         void close();
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_NODE_H
+#endif // RUNEOS_NODE_H

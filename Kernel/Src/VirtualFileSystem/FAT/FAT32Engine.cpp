@@ -21,16 +21,12 @@
 
 #include <VirtualFileSystem/FAT/FAT.h>
 
-
 namespace Rune::VFS {
-    String FAT32Engine::get_name() const {
-        return "FAT32";
-    }
-
+    String FAT32Engine::get_name() const { return "FAT32"; }
 
     bool FAT32Engine::make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) {
-        auto* br32 = (BootRecord32*) buf;
-        br32->BPB.jmpboot[1] = 0x5A; // first byte after the boot record
+        auto* br32                      = (BootRecord32*) buf;
+        br32->BPB.jmpboot[1]            = 0x5A; // first byte after the boot record
         br32->BPB.bytes_per_sector      = sector_size;
         br32->BPB.sectors_per_cluster   = 1;
         br32->BPB.reserved_sector_count = 32;
@@ -47,8 +43,7 @@ namespace Rune::VFS {
         // Extended BIOS parameter block
         U32 non_reserved_sector_count = sector_count - (br32->BPB.reserved_sector_count);
         // Total non reserved clusters / Cluster count per FAT sector
-        U32 fat_size                  = div_round_up((non_reserved_sector_count / br32->BPB.sectors_per_cluster),
-                                                     (sector_size / 4));
+        U32 fat_size = div_round_up((non_reserved_sector_count / br32->BPB.sectors_per_cluster), (sector_size / 4));
         // Exclude clusters used by the FAT tables
         fat_size -= div_round_up(fat_size, sector_size) * br32->BPB.sectors_per_cluster * br32->BPB.fat_count;
 
@@ -68,61 +63,38 @@ namespace Rune::VFS {
         return true;
     }
 
-
-    bool FAT32Engine::can_mount(U32 total_clusters) {
-        return total_clusters >= FAT_16_MAX_CLUSTERS;
-    }
-
+    bool FAT32Engine::can_mount(U32 total_clusters) { return total_clusters >= FAT_16_MAX_CLUSTERS; }
 
     U16 FAT32Engine::get_backup_boot_record_sector(BIOSParameterBlock* bpb) {
         return ((BootRecord32*) bpb)->EBPB.backup_bs_sector;
     }
 
-
     U32 FAT32Engine::get_root_directory_cluster(BIOSParameterBlock* bpb) {
         return ((BootRecord32*) bpb)->EBPB.root_cluster;
     }
 
+    U32 FAT32Engine::get_max_cluster_count() { return 0x0FFFFFF0; }
 
-    U32 FAT32Engine::get_max_cluster_count() {
-        return 0x0FFFFFF0;
-    }
+    U32 FAT32Engine::fat_get_size(BIOSParameterBlock* bpb) { return ((BootRecord32*) bpb)->EBPB.fat_size_32; }
 
+    U32 FAT32Engine::fat_get_eof_marker() { return 0xFFFFFFFF; }
 
-    U32 FAT32Engine::fat_get_size(BIOSParameterBlock* bpb) {
-        return ((BootRecord32*) bpb)->EBPB.fat_size_32;
-    }
+    U32 FAT32Engine::fat_offset(U32 cluster) { return cluster * 4; }
 
-
-    U32 FAT32Engine::fat_get_eof_marker() {
-        return 0xFFFFFFFF;
-    }
-
-
-    U32 FAT32Engine::fat_offset(U32 cluster) {
-        return cluster * 4;
-    }
-
-
-    U32 FAT32Engine::fat_get_entry(U8* fat, U32 entry_offset) {
-        return (*((U32*) &fat[entry_offset])) & 0x0FFFFFFF;
-    }
-
+    U32 FAT32Engine::fat_get_entry(U8* fat, U32 entry_offset) { return (*((U32*) &fat[entry_offset])) & 0x0FFFFFFF; }
 
     void FAT32Engine::fat_set_entry(U8* fat, U32 entry_offset, U32 new_entry) {
-        new_entry = ((*((U32*) &fat[entry_offset])) & 0xF0000000) | (new_entry & 0x0FFFFFFF);
+        new_entry                    = ((*((U32*) &fat[entry_offset])) & 0xF0000000) | (new_entry & 0x0FFFFFFF);
         *((U32*) &fat[entry_offset]) = new_entry;
     }
 
-
     U32 FAT32Engine::fat_find_free_cluster(U8* fat, U32 fat_sector_idx) {
-        U16 cluster_count = 256; // Number of sectors in two consecutive FAT clusters
-        auto* fat32 = (U32*) fat;
+        U16   cluster_count = 256; // Number of sectors in two consecutive FAT clusters
+        auto* fat32         = (U32*) fat;
         // For the first FAT sector: Skip the first two entries -> they are reserved
         for (U16 i = fat_sector_idx == 0 ? 2 : 0; i < cluster_count; i++) {
-            if (fat32[i] == 0)
-                return fat_sector_idx * (cluster_count / 2) + i;
+            if (fat32[i] == 0) return fat_sector_idx * (cluster_count / 2) + i;
         }
         return get_max_cluster_count() + 1;
     }
-}
+} // namespace Rune::VFS

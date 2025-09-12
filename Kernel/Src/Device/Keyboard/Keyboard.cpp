@@ -16,35 +16,23 @@
 
 #include <Device/Keyboard/Keyboard.h>
 
-
 namespace Rune::Device {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          KeyStream
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    bool VirtualKeyboard::is_read_supported() { return true; }
 
-    bool VirtualKeyboard::is_read_supported() {
-        return true;
-    }
-
-
-    bool VirtualKeyboard::is_write_supported() {
-        return false;
-    }
-
+    bool VirtualKeyboard::is_write_supported() { return false; }
 
     bool VirtualKeyboard::write(U8 value) {
         SILENCE_UNUSED(value)
         return false;
     }
 
-
     void VirtualKeyboard::close() {
         // The keyboard is not a managed resource
     }
 
-
-    bool VirtualKeyboard::is_ansi_supported() {
-        return false;
-    }
-}
+    bool VirtualKeyboard::is_ansi_supported() { return false; }
+} // namespace Rune::Device

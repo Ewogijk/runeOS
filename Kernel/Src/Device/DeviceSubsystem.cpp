@@ -18,25 +18,12 @@
 
 #include <Device/PCI.h>
 
-
 namespace Rune::Device {
-    DeviceSubsystem::DeviceSubsystem() :
-            Subsystem(),
-            _ahci_driver(nullptr),
-            _keyboard(new PS2Keyboard()) {
+    DeviceSubsystem::DeviceSubsystem() : Subsystem(), _ahci_driver(nullptr), _keyboard(new PS2Keyboard()) {}
 
-    }
+    String DeviceSubsystem::get_name() const { return "Device"; }
 
-
-    String DeviceSubsystem::get_name() const {
-        return "Device";
-    }
-
-
-    bool DeviceSubsystem::start(
-            const BootLoaderInfo& boot_info,
-            const SubsystemRegistry& k_subsys_reg
-    ) {
+    bool DeviceSubsystem::start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)
         SILENCE_UNUSED(k_subsys_reg)
         PCI::discover_devices(*_ahci_driver, _logger);
@@ -45,24 +32,15 @@ namespace Rune::Device {
         return true;
     }
 
-
     void DeviceSubsystem::set_logger(SharedPointer<Logger> logger) {
-        if (!_logger)
-            _logger = logger;
+        if (!_logger) _logger = logger;
     }
-
 
     void DeviceSubsystem::set_ahci_driver(UniquePointer<Device::AHCIDriver> ahci_driver) {
         _ahci_driver = move(ahci_driver);
     }
 
+    AHCIDriver& DeviceSubsystem::get_ahic_driver() { return *_ahci_driver; }
 
-    AHCIDriver& DeviceSubsystem::get_ahic_driver() {
-        return *_ahci_driver;
-    }
-
-
-    SharedPointer<VirtualKeyboard> DeviceSubsystem::get_keyboard() {
-        return _keyboard;
-    }
-}
+    SharedPointer<VirtualKeyboard> DeviceSubsystem::get_keyboard() { return _keyboard; }
+} // namespace Rune::Device

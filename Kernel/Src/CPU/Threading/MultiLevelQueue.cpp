@@ -16,47 +16,34 @@
 
 #include <CPU/Threading/MultiLevelQueue.h>
 
-
 namespace Rune::CPU {
     MultiLevelQueue::MultiLevelQueue(SchedulingPolicy policy, MultiLevelQueue* lower_policy_queue)
-            : _policy(policy),
-              _lower_policy_queue(lower_policy_queue) {
-
-    }
-
+        : _policy(policy),
+          _lower_policy_queue(lower_policy_queue) {}
 
     LinkedList<Thread*> MultiLevelQueue::get_queued_threads() {
         LinkedList<Thread*> l;
-        auto* c_thread_q = this;
+        auto*               c_thread_q = this;
         while (c_thread_q != nullptr) {
-            for (auto& t: c_thread_q->_threads)
+            for (auto& t : c_thread_q->_threads)
                 l.add_back(t.get());
             c_thread_q = c_thread_q->_lower_policy_queue;
         }
         return l;
     }
 
+    SchedulingPolicy MultiLevelQueue::get_policy() { return _policy; }
 
-    SchedulingPolicy MultiLevelQueue::get_policy() {
-        return _policy;
-    }
-
-
-    MultiLevelQueue* MultiLevelQueue::get_lower_policy_queue() {
-        return _lower_policy_queue;
-    }
-
+    MultiLevelQueue* MultiLevelQueue::get_lower_policy_queue() { return _lower_policy_queue; }
 
     Thread* MultiLevelQueue::peek() {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
-            if (!c_thread_q->_threads.is_empty())
-                return (*c_thread_q->_threads.head()).get();
+            if (!c_thread_q->_threads.is_empty()) return (*c_thread_q->_threads.head()).get();
             c_thread_q = c_thread_q->_lower_policy_queue;
         }
         return nullptr;
     }
-
 
     bool MultiLevelQueue::enqueue(SharedPointer<Thread> t) {
         auto* c_thread_q = this;
@@ -69,7 +56,6 @@ namespace Rune::CPU {
         }
         return false;
     }
-
 
     SharedPointer<Thread> MultiLevelQueue::dequeue() {
         auto* c_thread_q = this;
@@ -84,12 +70,11 @@ namespace Rune::CPU {
         return SharedPointer<Thread>(nullptr);
     }
 
-
     SharedPointer<Thread> MultiLevelQueue::remove(int thread_id) {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             SharedPointer<Thread> to_delete(nullptr);
-            for (auto& t: c_thread_q->_threads) {
+            for (auto& t : c_thread_q->_threads) {
                 if (t->handle == thread_id) {
                     to_delete = t;
                     break;
@@ -104,4 +89,4 @@ namespace Rune::CPU {
         }
         return SharedPointer<Thread>(nullptr);
     }
-}
+} // namespace Rune::CPU

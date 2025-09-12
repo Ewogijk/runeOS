@@ -17,11 +17,9 @@
 #ifndef RUNEOS_PS2KEYBOARD_H
 #define RUNEOS_PS2KEYBOARD_H
 
-
 #include <Device/Keyboard/Keyboard.h>
 
 #include <CPU/Interrupt/IRQ.h>
-
 
 namespace Rune::Device {
     /**
@@ -30,24 +28,21 @@ namespace Rune::Device {
     class PS2Keyboard : public VirtualKeyboard {
         U16 _key_code_cache[256];
         U8  _start;
-        U8         _end;
+        U8  _end;
 
         bool _wait_key_e0;
 
-
         CPU::IRQHandler _irq_handler;
-    public:
-        PS2Keyboard();
 
+      public:
+        PS2Keyboard();
 
         bool start() override;
 
-
         int read() override;
-
 
         void flush() override;
     };
-}
+} // namespace Rune::Device
 
-#endif //RUNEOS_PS2KEYBOARD_H
+#endif // RUNEOS_PS2KEYBOARD_H

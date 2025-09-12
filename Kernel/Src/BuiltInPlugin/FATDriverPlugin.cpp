@@ -20,41 +20,25 @@
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 
-#include <VirtualFileSystem/FAT/FATDriver.h>
 #include <VirtualFileSystem/FAT/FAT32Engine.h>
-
+#include <VirtualFileSystem/FAT/FATDriver.h>
 
 namespace Rune::BuiltInPlugin {
 
     PluginInfo FAT_INFO = {
-            "FAT",
-            "Ewogijk",
-            {
-                    1,
-                    0,
-                    0,
-                    ""
-            }
+        "FAT",
+        "Ewogijk",
+        {1, 0, 0, ""}
     };
 
-
-    PluginInfo FATDriverPlugin::get_info() const {
-        return FAT_INFO;
-    }
-
+    PluginInfo FATDriverPlugin::get_info() const { return FAT_INFO; }
 
     bool FATDriverPlugin::start(const SubsystemRegistry& ks_registry) {
 
         auto* fs = ks_registry.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
         auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
-        bool r = fs->install_driver(
-                UniquePointer<VFS::Driver>(
-                        new VFS::FATDriver(
-                                SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()),
-                                ds->get_ahic_driver()
-                        )
-                )
-        );
+        bool  r  = fs->install_driver(UniquePointer<VFS::Driver>(
+            new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()), ds->get_ahic_driver())));
         return r;
     }
-}
+} // namespace Rune::BuiltInPlugin

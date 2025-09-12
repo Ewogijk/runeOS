@@ -16,33 +16,16 @@
 
 #include <Memory/VirtualMemory.h>
 
-
 namespace Rune::Memory {
 
-
     KernelSpaceLayout get_virtual_kernel_space_layout() {
-        return {
-                0xFFFF800000000000,
-                0xFFFF900000000000,
-                0xFFFFA00000000000,
-                0xFFFFFFFF80000000
-        };
+        return {0xFFFF800000000000, 0xFFFF900000000000, 0xFFFFA00000000000, 0xFFFFFFFF80000000};
     }
-
 
     MemoryMap create_virtual_memory_map() {
         return {
-                {
-                        0x0,
-                        0x0000800000000000,
-                        MemoryRegionType::USERSPACE
-                },
-                {
-                        0xFFFF800000000000,
-                        0xFFFFFFFFFFFFFFFF - 0xFFFF800000000000,
-                        MemoryRegionType::USABLE
-                }
+            {               0x0,                      0x0000800000000000, MemoryRegionType::USERSPACE},
+            {0xFFFF800000000000, 0xFFFFFFFFFFFFFFFF - 0xFFFF800000000000,    MemoryRegionType::USABLE}
         };
     }
-}
-
+} // namespace Rune::Memory

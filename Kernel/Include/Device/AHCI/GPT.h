@@ -17,14 +17,12 @@
 #ifndef RUNEOS_GPT_H
 #define RUNEOS_GPT_H
 
-
 #include <KernelRuntime/String.h>
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
 #include <KernelRuntime/Logging.h>
-
 
 namespace Rune::Device {
     /**
@@ -35,14 +33,12 @@ namespace Rune::Device {
 
         U8 buf[SIZE];
 
-
         /**
          * @brief Print string representation the GUID
          * @return
          */
         String to_string();
     };
-
 
     /**
      *
@@ -51,22 +47,21 @@ namespace Rune::Device {
      * @brief The GPT header contains information about all partitions on a drive.
      */
     struct GPTHeader {
-        U64  signature                    = 0;
-        U32  revision                     = 0;
-        U32  header_size                  = 0;
-        U32  header_crc_32                = 0;
-        U8   reserved[4]                  = { };
-        U64  my_lba                       = 0;
-        U64  alternate_lba                = 0;
-        U64  first_usable_lba             = 0;   // Little-endian
-        U64  last_usable_lba              = 0;   // Little-endian
+        U64  signature        = 0;
+        U32  revision         = 0;
+        U32  header_size      = 0;
+        U32  header_crc_32    = 0;
+        U8   reserved[4]      = {};
+        U64  my_lba           = 0;
+        U64  alternate_lba    = 0;
+        U64  first_usable_lba = 0; // Little-endian
+        U64  last_usable_lba  = 0; // Little-endian
         GUID disk_guid;
-        U64  partition_entry_lba          = 0;   // Little-endian
+        U64  partition_entry_lba          = 0; // Little-endian
         U32  number_of_partition_entries  = 0;
         U32  size_of_partition_entry      = 0;
         U32  partition_entry_array_crc_32 = 0;
     };
-
 
     /**
      * Source: <a href="https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html#gpt-partition-entry-array">
@@ -76,11 +71,10 @@ namespace Rune::Device {
     struct GPTPartitionTableEntry {
         GUID partition_type_guid;
         GUID unique_partition_guid;
-        U64  starting_lba = 0;    // Little-endian
-        U64  ending_lba   = 0;    // Inclusive, Little-endian
+        U64  starting_lba = 0; // Little-endian
+        U64  ending_lba   = 0; // Inclusive, Little-endian
         U64  attributes   = 0;
-        U16  name_buf[36] = { };  // UTF-16LE
-
+        U16  name_buf[36] = {}; // UTF-16LE
 
         /**
          * @brief Note: Only ASCII characters are supported.
@@ -89,14 +83,12 @@ namespace Rune::Device {
         String get_name();
     };
 
-
-#define GPT_SCAN_STATUSES(X)                            \
-    X(GPTScanStatus, DETECTED, 0x1)                     \
-    X(GPTScanStatus, NOT_DETECTED, 0x2)                 \
-    X(GPTScanStatus, CORRUPT_HEADER, 0x3)               \
-    X(GPTScanStatus, CORRUPT_PARTITION_TABLE, 0x4)      \
-    X(GPTScanStatus, STORAGE_DEV_ERROR, 0x5)            \
-
+#define GPT_SCAN_STATUSES(X)                                                                                           \
+    X(GPTScanStatus, DETECTED, 0x1)                                                                                    \
+    X(GPTScanStatus, NOT_DETECTED, 0x2)                                                                                \
+    X(GPTScanStatus, CORRUPT_HEADER, 0x3)                                                                              \
+    X(GPTScanStatus, CORRUPT_PARTITION_TABLE, 0x4)                                                                     \
+    X(GPTScanStatus, STORAGE_DEV_ERROR, 0x5)
 
     /**
      * <ul>
@@ -109,8 +101,7 @@ namespace Rune::Device {
      *
      * @brief Final status after a drive was scanned for a GPT.
      */
-    DECLARE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0) //NOLINT
-
+    DECLARE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0) // NOLINT
 
     /**
      * If Status == GPTScanStatus::Detected the Header and PartitionTable variables contain valid data else they
@@ -124,15 +115,11 @@ namespace Rune::Device {
         LinkedList<GPTPartitionTableEntry> partition_table;
     };
 
+    GPTHeader gpt_scan_sector(U8* sector_buf, U32 sector_size, const SharedPointer<Logger>& logger);
 
-    GPTHeader gpt_scan_sector(U8* sector_buf, U32 sector_size, const SharedPointer <Logger>& logger);
+    GPTScanResult gpt_scan_device(const SharedPointer<Logger>&         logger,
+                                  Function<size_t(U8[], size_t, U64)>& sector_reader,
+                                  size_t                               sector_size);
+} // namespace Rune::Device
 
-
-    GPTScanResult gpt_scan_device(
-            const SharedPointer <Logger>& logger,
-            Function<size_t(U8[], size_t, U64)>& sector_reader,
-            size_t sector_size
-    );
-}
-
-#endif //RUNEOS_GPT_H
+#endif // RUNEOS_GPT_H

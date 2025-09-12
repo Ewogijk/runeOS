@@ -17,18 +17,14 @@
 #ifndef RUNEOS_BYTEORDER_H
 #define RUNEOS_BYTEORDER_H
 
-
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-
 namespace Rune {
 
-#define BYTE_ORDERS(X)               \
-    X(ByteOrder, LITTLE_ENDIAN, 1)   \
-    X(ByteOrder, BIG_ENDIAN, 2)      \
-
-
+#define BYTE_ORDERS(X)                                                                                                 \
+    X(ByteOrder, LITTLE_ENDIAN, 1)                                                                                     \
+    X(ByteOrder, BIG_ENDIAN, 2)
 
     DECLARE_TYPED_ENUM(ByteOrder, U8, BYTE_ORDERS, 0) // NOLINT
 
@@ -36,7 +32,7 @@ namespace Rune {
      * Little endian conversions.
      */
     class LittleEndian {
-    public:
+      public:
         /**
          * Interpret the next two bytes in the buf as little endian encoded unsigned 16 bit integer.
          *
@@ -45,7 +41,6 @@ namespace Rune {
          * @return Little endian encoded unsigned 16 bit integer.
          */
         static U16 to_U16(const U8* buf);
-
 
         /**
          * Interpret the next four bytes in the buf as little endian encoded unsigned 32 bit integer.
@@ -56,7 +51,6 @@ namespace Rune {
          */
         static U32 to_U32(const U8* buf);
 
-
         /**
          * Interpret the next eight bytes in the buf as little endian encoded unsigned 64 bit integer.
          *
@@ -66,7 +60,6 @@ namespace Rune {
          */
         static U64 to_U64(const U8* buf);
 
-
         /**
          * Set the next two values in the buf to the little endian encoded bytes of the unsigned 16 bit integer value.
          *
@@ -75,7 +68,6 @@ namespace Rune {
          */
         static void to_bytes(U16 num, U8* buf);
 
-
         /**
          * Set the next four values in the buf to the little endian encoded bytes of the unsigned 32 bit integer value.
          *
@@ -83,7 +75,6 @@ namespace Rune {
          * @param buf
          */
         static void to_bytes(U32 num, U8* buf);
-
 
         /**
          * Set the next eight values in the buf to the little endian encoded bytes of the unsigned 64 bit integer value.
@@ -94,12 +85,11 @@ namespace Rune {
         static void to_bytes(U64 num, U8* buf);
     };
 
-
     /**
      * Big endian conversions.
      */
     class BigEndian {
-    public:
+      public:
         /**
          * Interpret the next two bytes in the buf as big endian encoded unsigned 16 bit integer.
          *
@@ -108,7 +98,6 @@ namespace Rune {
          * @return Big endian encoded unsigned 16 bit integer.
          */
         static U16 to_U16(const U8* buf);
-
 
         /**
          * Interpret the next four bytes in the buf as big endian encoded unsigned 32 bit integer.
@@ -119,7 +108,6 @@ namespace Rune {
          */
         static U32 to_U32(const U8* buf);
 
-
         /**
          * Interpret the next eight bytes in the buf as big endian encoded unsigned 64 bit integer.
          *
@@ -129,7 +117,6 @@ namespace Rune {
          */
         static U64 to_U64(const U8* buf);
 
-
         /**
          * Set the next two values in the buf to the big endian encoded bytes of the unsigned 16 bit integer value.
          *
@@ -137,7 +124,6 @@ namespace Rune {
          * @param buf
          */
         static void to_bytes(U16 num, U8* buf);
-
 
         /**
          * Set the next four values in the buf to the big endian encoded bytes of the unsigned 32 bit integer value.
@@ -147,7 +133,6 @@ namespace Rune {
          */
         static void to_bytes(U32 num, U8* buf);
 
-
         /**
          * Set the next eight values in the buf to the big endian encoded bytes of the unsigned 64 bit integer value.
          *
@@ -156,6 +141,6 @@ namespace Rune {
          */
         static void to_bytes(U64 num, U8* buf);
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_BYTEORDER_H
+#endif // RUNEOS_BYTEORDER_H

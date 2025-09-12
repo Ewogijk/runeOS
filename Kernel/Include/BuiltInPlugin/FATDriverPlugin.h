@@ -17,9 +17,7 @@
 #ifndef RUNEOS_FATDRIVERPLUGIN_H
 #define RUNEOS_FATDRIVERPLUGIN_H
 
-
 #include <KernelRuntime/Plugin.h>
-
 
 namespace Rune::BuiltInPlugin {
 
@@ -27,29 +25,25 @@ namespace Rune::BuiltInPlugin {
      * Adds FAT drivers to the kernel.
      */
     class FATDriverPlugin : public Plugin {
-    public:
-
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         FATDriverPlugin() = default;
 
-
         ~FATDriverPlugin() override = default;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Kernel Extension Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+        [[nodiscard]]
+        PluginInfo get_info() const override;
 
-        [[nodiscard]] PluginInfo get_info() const override;
-
-
-        [[nodiscard]] bool start(const SubsystemRegistry &ks_registry) override;
+        [[nodiscard]]
+        bool start(const SubsystemRegistry& ks_registry) override;
     };
-}
+} // namespace Rune::BuiltInPlugin
 
-#endif //RUNEOS_FATDRIVERPLUGIN_H
+#endif // RUNEOS_FATDRIVERPLUGIN_H

@@ -17,28 +17,22 @@
 #ifndef RUNEOS_STREAM_H
 #define RUNEOS_STREAM_H
 
-
-#include <KernelRuntime/String.h>
 #include <KernelRuntime/FrameBuffer.h>
-
+#include <KernelRuntime/String.h>
 
 namespace Rune {
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Stream API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief A Stream is an abstraction of any source of bytes that can be read from, written to or both. Examples for
      *          streams are files, the keyboard, monitor, sockets, etc.
      */
     class Stream {
-    public:
-
+      public:
         virtual ~Stream() = default;
-
 
         /**
          * @brief
@@ -46,13 +40,11 @@ namespace Rune {
          */
         virtual bool is_read_supported() = 0;
 
-
         /**
          * @brief Read a single byte from the stream.
          * @return -1: The stream has no byte left, Else: A byte from the stream.
          */
         virtual int read() = 0;
-
 
         /**
          * @brief Read at most size bytes at the given offset into the buffer.
@@ -63,7 +55,6 @@ namespace Rune {
          */
         size_t read(U8 buffer[], size_t offset, size_t size);
 
-
         /**
          * @brief Read at most size bytes to the beginning of the buffer.
          * @param buffer
@@ -72,13 +63,11 @@ namespace Rune {
          */
         size_t read(U8 buffer[], size_t size);
 
-
         /**
          * @brief
          * @return True: The stream supports writing, False: It does not.
          */
         virtual bool is_write_supported() = 0;
-
 
         /**
          * @brief Write a single byte to the stream.
@@ -86,7 +75,6 @@ namespace Rune {
          * @return True: The byte was written, False: It was not.
          */
         virtual bool write(U8 value) = 0;
-
 
         /**
          * @brief Write size number of bytes from the offset in the buffer to the stream.
@@ -97,7 +85,6 @@ namespace Rune {
          */
         size_t write(U8 buffer[], size_t offset, size_t size);
 
-
         /**
          * @brief Write size number of bytes from the beginning of the buffer to the stream.
          * @param buffer
@@ -106,12 +93,10 @@ namespace Rune {
          */
         size_t write(U8 buffer[], size_t size);
 
-
         /**
          * @brief If the stream supports buffering, write any bytes in the buffer immediately to the stream.
          */
         virtual void flush() = 0;
-
 
         /**
          * @brief free any resources associated with the stream. After a stream has been closed it is no longer possible
@@ -120,11 +105,9 @@ namespace Rune {
         virtual void close() = 0;
     };
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Text Stream API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * <p>
@@ -148,52 +131,39 @@ namespace Rune {
         /**
          * @brief Formatted strings are temporarily stored in this buffer.
          */
-        char                    _formatted_buf[BUF_SIZE];
-
+        char _formatted_buf[BUF_SIZE];
 
         /**
          * @brief Zero out _formattedBuf.
          */
         void clear_buf();
 
-
-    public:
+      public:
         using Stream::write;
-
 
         explicit TextStream();
 
-
         ~TextStream() override = default;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Stream API Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         bool is_read_supported() override = 0;
-
 
         int read() override = 0;
 
-
         bool is_write_supported() override = 0;
-
 
         bool write(U8 value) override = 0;
 
-
         void flush() override = 0;
 
-
         void close() override = 0;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Stream API Extension
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief Write the string to the stream.
@@ -202,14 +172,12 @@ namespace Rune {
          */
         size_t write(const String& msg);
 
-
         /**
          * @brief Write the string followed by a new line character to the stream.
          * @param msg
          * @return The number of characters written.
          */
         size_t write_line(const String& msg);
-
 
         /**
          * @brief First format the string then write it to the stream.
@@ -220,33 +188,28 @@ namespace Rune {
          */
         size_t write_formatted(const String& format, Argument* arg_list, size_t arg_size);
 
-
         /**
          * @brief First format the string then write it to the stream.
          * @param fmt Template string.
          * @param args   Varargs of template arguments.
          * @return The number of characters written.
          */
-        template<typename... Args>
-        size_t write_formatted(const String& fmt, Args... args) {
-            Argument arg_array[] = { args... };
+        template <typename... Args> size_t write_formatted(const String& fmt, Args... args) {
+            Argument arg_array[] = {args...};
             interpolate(fmt.to_cstr(), _formatted_buf, BUF_SIZE, arg_array, sizeof...(Args));
             size_t out = write(_formatted_buf);
             clear_buf();
             return out;
         }
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          ANSI Support
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief True: This text stream supports ANSI escape codes, False: It does not.
          */
         virtual bool is_ansi_supported() = 0;
-
 
         /**
          * @brief Set the background color.
@@ -254,19 +217,17 @@ namespace Rune {
          */
         void set_background_color(const Pixel& color);
 
-
         /**
          * @brief Set the foreground color, that is the color of the glyphs.
          * @param color
          */
         void set_foreground_color(const Pixel& color);
 
-
         /**
          * @brief Reset all style attributes to their default values.
          */
         void reset_style();
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_STREAM_H
+#endif // RUNEOS_STREAM_H

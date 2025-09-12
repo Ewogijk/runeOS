@@ -17,7 +17,6 @@
 #ifndef RUNEOS_EXCEPTION_H
 #define RUNEOS_EXCEPTION_H
 
-
 #include <Ember/Enum.h>
 #include <KernelRuntime/Utility.h>
 
@@ -25,16 +24,14 @@
 
 #include <CPU/CPU.h>
 
-
 namespace Rune::CPU {
     /**
      * The interrupt frame contains interrupt related information and the CPU state when the interrupt occurred.
      */
     struct InterruptContext {
-        Register error_code;                                // Error code pushed by CPU
-        Register vector;                                    // Interrupt ID
+        Register error_code; // Error code pushed by CPU
+        Register vector;     // Interrupt ID
     };
-
 
     /**
      * @brief A exception handler tries to recover the kernel from exception raised by the CPU. It either succeeds and
@@ -42,20 +39,15 @@ namespace Rune::CPU {
      */
     using ExceptionHandler = Function<void(InterruptContext*, const char*)>;
 
-
     /**
      * @brief Different types of exceptions e.g. page fault, etc.
      * <ul>
      *  <li>PageFault: Indicates all kinds of errors related to accessing a virtual memory address.</li>
      * </ul>
      */
-#define EXCEPTION_TYPES(X)                      \
-             X(ExceptionType, PageFault, 0x1)   \
+#define EXCEPTION_TYPES(X) X(ExceptionType, PageFault, 0x1)
 
-
-
-    DECLARE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0)  // NOLINT
-
+    DECLARE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0) // NOLINT
 
     /**
      * @brief An entry in the exception table containing general info about an exception.
@@ -82,13 +74,11 @@ namespace Rune::CPU {
         bool handled = false;
     };
 
-
     /**
      * @brief
      * @return
      */
     LinkedList<ExceptionTableEntry> exception_get_table();
-
 
     /**
      * Panic handling involves two steps:
@@ -103,7 +93,6 @@ namespace Rune::CPU {
      */
     void exception_install_panic_stream(SharedPointer<TextStream> panic_stream);
 
-
     /**
      * @brief Tries to install an exception handler for a exception.
      *
@@ -116,6 +105,6 @@ namespace Rune::CPU {
      *          requested exception, this exception handler was not installed.
      */
     bool exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler);
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_EXCEPTION_H
+#endif // RUNEOS_EXCEPTION_H

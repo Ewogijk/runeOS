@@ -17,10 +17,8 @@
 #ifndef RUNEOS_PLUGIN_H
 #define RUNEOS_PLUGIN_H
 
-
 #include <KernelRuntime/String.h>
 #include <KernelRuntime/Subsystem.h>
-
 
 namespace Rune {
 
@@ -41,39 +39,36 @@ namespace Rune {
         /**
          * @brief The version of the kernel extension.
          */
-        Version version = { 0, 0, 0, "" };
+        Version version = {0, 0, 0, ""};
     };
-
 
     /**
      * Adds additional functionality to a Kernel Subsystem. E.g. A device driver or basically any software component.
      */
     class Plugin {
 
-    public:
+      public:
         virtual ~Plugin() = default;
-
 
         /**
          *
          * @return Info about the kernel extension e.g. its name or vendor.
          */
-        [[nodiscard]] virtual PluginInfo get_info() const = 0;
-
+        [[nodiscard]]
+        virtual PluginInfo get_info() const = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * Start the Kernel Extension.
          *
          * @return True: The extension has started, False: If not.
          */
-        [[nodiscard]] virtual bool start(const SubsystemRegistry &ks_registry) = 0;
+        [[nodiscard]]
+        virtual bool start(const SubsystemRegistry& ks_registry) = 0;
     };
-}
+} // namespace Rune
 
-
-#endif //RUNEOS_PLUGIN_H
+#endif // RUNEOS_PLUGIN_H

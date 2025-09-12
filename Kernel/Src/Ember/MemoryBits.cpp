@@ -12,9 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-
 #include <Ember/MemoryBits.h>
-
 
 namespace Ember {
     DEFINE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)

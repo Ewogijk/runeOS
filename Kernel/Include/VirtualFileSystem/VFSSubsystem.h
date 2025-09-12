@@ -17,23 +17,21 @@
 #ifndef RUNEOS_FILESUBSYSTEM_H
 #define RUNEOS_FILESUBSYSTEM_H
 
-
-#include <KernelRuntime/String.h>
 #include <KernelRuntime/Collection.h>
 #include <KernelRuntime/Path.h>
+#include <KernelRuntime/String.h>
 
-#include <KernelRuntime/Subsystem.h>
-#include <KernelRuntime/Stream.h>
 #include <KernelRuntime/Resource.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/Subsystem.h>
 
-#include <VirtualFileSystem/Status.h>
+#include <VirtualFileSystem/DirectoryStream.h>
 #include <VirtualFileSystem/Driver.h>
 #include <VirtualFileSystem/Node.h>
-#include <VirtualFileSystem/DirectoryStream.h>
+#include <VirtualFileSystem/Status.h>
 
-#include <VirtualFileSystem/FAT/FATDriver.h>
 #include <VirtualFileSystem/FAT/FAT32Engine.h>
-
+#include <VirtualFileSystem/FAT/FATDriver.h>
 
 namespace Rune::VFS {
 
@@ -48,16 +46,13 @@ namespace Rune::VFS {
      *      directory stream, U16*.</li>
      * </ul>
      */
-#define VFS_EVENT_HOOKS(X)                              \
-             X(EventHook, NODE_OPENED, 0x1)             \
-             X(EventHook, NODE_CLOSED, 0x2)             \
-             X(EventHook, DIRECTORY_STREAM_OPENED, 0x3) \
-             X(EventHook, DIRECTORY_STREAM_CLOSED, 0x4) \
+#define VFS_EVENT_HOOKS(X)                                                                                             \
+    X(EventHook, NODE_OPENED, 0x1)                                                                                     \
+    X(EventHook, NODE_CLOSED, 0x2)                                                                                     \
+    X(EventHook, DIRECTORY_STREAM_OPENED, 0x3)                                                                         \
+    X(EventHook, DIRECTORY_STREAM_CLOSED, 0x4)
 
-
-
-    DECLARE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0)  // NOLINT
-
+    DECLARE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
     /**
      * @brief Mapping of a mount point (path) to a driver name and storage device ID.
@@ -68,7 +63,6 @@ namespace Rune::VFS {
         U16    storage_device;
     };
 
-
     /**
      * @brief Counts all open node handles that point to the same path and if the node should be deleted when
      *          the last file handles is closed.
@@ -78,7 +72,6 @@ namespace Rune::VFS {
         U16  ref_count   = 0;
         bool delete_this = false;
     };
-
 
     /**
      * @brief The Virtual Filesystem Subsystem (VFSS) is the main entry point to access files/directories (Nodes) on
@@ -139,39 +132,35 @@ namespace Rune::VFS {
      * </p>
      */
     class VFSSubsystem : public Subsystem {
-    private:
+      private:
         // All registered file system drivers
         HashMap<String, UniquePointer<Driver>> _driver_table;
 
         // All mount points and their devices
-        HashMap<Path, MountPointInfo>        _mount_point_table;
+        HashMap<Path, MountPointInfo>  _mount_point_table;
         TableFormatter<MountPointInfo> _mount_point_table_fmt;
 
         // Counts all open node handles that point to a single path
-        HashMap<Path, NodeRefCount>        _node_ref_table;
+        HashMap<Path, NodeRefCount>  _node_ref_table;
         TableFormatter<NodeRefCount> _node_ref_table_fmt;
 
         // All currently opened nodes
         HashMap<U16, SharedPointer<Node>> _node_table;
-        TableFormatter<Node>        _node_table_fmt;
-        HandleCounter<U16>          _node_handle_counter;
-
+        TableFormatter<Node>              _node_table_fmt;
+        HandleCounter<U16>                _node_handle_counter;
 
         // All currently opened directory streams
         HashMap<U16, SharedPointer<DirectoryStream>> _dir_stream_table;
-        TableFormatter<DirectoryStream>        _dir_stream_table_fmt;
-        HandleCounter<U16>                     _dir_stream_handle_counter;
+        TableFormatter<DirectoryStream>              _dir_stream_table_fmt;
+        HandleCounter<U16>                           _dir_stream_handle_counter;
 
-
-        [[nodiscard]] MountPointInfo resolve(const Path& path) const;
-
+        [[nodiscard]]
+        MountPointInfo resolve(const Path& path) const;
 
         bool create_system_directory(const Path& path);
 
-
-    public:
+      public:
         explicit VFSSubsystem();
-
 
         ~VFSSubsystem() override = default;
 
@@ -179,27 +168,23 @@ namespace Rune::VFS {
         //                                      KernelSubsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Filesystem Driver Registration
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          *
          * @return A list of the names of all registered filesystem drivers.
          */
-        [[nodiscard]] LinkedList<String> get_driver_table() const;
-
+        [[nodiscard]]
+        LinkedList<String> get_driver_table() const;
 
         /**
          * Add a new filesystem driver.
@@ -210,7 +195,6 @@ namespace Rune::VFS {
          */
         bool install_driver(UniquePointer<Driver> driver);
 
-
         /**
          * Remove the filesystem driver.
          *
@@ -220,18 +204,16 @@ namespace Rune::VFS {
          */
         bool uninstall_driver(UniquePointer<Driver> driver);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Node Table Access
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief
          * @return The node table with all currently open nodes.
          */
-        [[nodiscard]] LinkedList<Node*> get_node_table() const;
-
+        [[nodiscard]]
+        LinkedList<Node*> get_node_table() const;
 
         /**
          * @brief Dump the node table to the stream.
@@ -239,33 +221,30 @@ namespace Rune::VFS {
          */
         void dump_node_table(const SharedPointer<TextStream>& stream) const;
 
-
         /**
          * @brief Dump the node ref table to the stream.
          * @stream
          */
         void dump_node_ref_table(const SharedPointer<TextStream>& stream) const;
 
-
         /**
          * @brief Get a node from the node table.
          * @param handle Node handle.
          * @return The node if the node handle is present else a nullptr.
          */
-        [[nodiscard]] SharedPointer<Node> find_node(U16 handle) const;
-
+        [[nodiscard]]
+        SharedPointer<Node> find_node(U16 handle) const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Directory Stream Table Access
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          * @brief
          * @return The directory stream table with all currently open directory streams.
          */
-        [[nodiscard]] LinkedList<DirectoryStream*> get_directory_stream_table() const;
-
+        [[nodiscard]]
+        LinkedList<DirectoryStream*> get_directory_stream_table() const;
 
         /**
          * @brief Dump the directory stream table to the stream.
@@ -273,33 +252,30 @@ namespace Rune::VFS {
          */
         void dump_directory_stream_table(const SharedPointer<TextStream>& stream) const;
 
-
         /**
          * @brief Get a directory stream from the directory stream table.
          * @param handle Directory stream handle.
          * @return The directory stream if the directory stream handle is present else a nullptr.
          */
-        [[nodiscard]] SharedPointer<DirectoryStream> find_directory_stream(U16 handle) const;
-
+        [[nodiscard]]
+        SharedPointer<DirectoryStream> find_directory_stream(U16 handle) const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Mounting and Formatting
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          *
          * @return A list of all mount points.
          */
-        [[nodiscard]] LinkedList<MountPointInfo> get_mount_point_table() const;
-
+        [[nodiscard]]
+        LinkedList<MountPointInfo> get_mount_point_table() const;
 
         /**
          * @brief Dump the mount point table to the stream.
          * @param stream
          */
         void dump_mount_point_table(const SharedPointer<TextStream>& stream) const;
-
 
         /**
          * Try to format the storage device with the given ID with the filesystem implemented by the requested driver.
@@ -317,8 +293,8 @@ namespace Rune::VFS {
          *                        specific to the file system implementation, check the logs.
          *          DEV_ERROR:    An IO error happened.
          */
-        [[nodiscard]] FormatStatus format(const String& driver_name, uint16_t storage_device) const;
-
+        [[nodiscard]]
+        FormatStatus format(const String& driver_name, uint16_t storage_device) const;
 
         /**
          * Try to mount the storage with the given ID to the mount point.
@@ -348,7 +324,6 @@ namespace Rune::VFS {
          */
         MountStatus mount(const Path& mount_point, U16 storage_device_id);
 
-
         /**
          * Try to unmount the given mount point.
          *
@@ -367,11 +342,9 @@ namespace Rune::VFS {
          */
         MountStatus unmount(const Path& mount_point);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Filesystem Access
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief Check if the absolute path contains any illegal characters.
@@ -393,8 +366,8 @@ namespace Rune::VFS {
          * @return True: The path does not contain any illegal character, False: The path contains at least one illegal
          *          character.
          */
-        [[nodiscard]] bool is_valid_file_path(const Path& path) const;
-
+        [[nodiscard]]
+        bool is_valid_file_path(const Path& path) const;
 
         /**
          * This operation will not create a node handle.
@@ -409,7 +382,6 @@ namespace Rune::VFS {
          *          DEV_ERROR:   An IO error happened.
          */
         IOStatus get_node_info(const Path& path, NodeInfo& out);
-
 
         /**
          * Try to create a file/directory at the path with the given attributes. Either the FileAttribute::Directory or
@@ -433,7 +405,6 @@ namespace Rune::VFS {
          */
         IOStatus create(const Path& path, U8 attributes);
 
-
         /**
          * @brief Try to open the file/directory at the requested path. If the path is found the node will be added to
          *          the node table and a pointer to it is placed in "out".
@@ -455,8 +426,8 @@ namespace Rune::VFS {
          *          DEV_ERROR:      An IO error happened.
          *
          */
-        [[nodiscard]] IOStatus open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out);
-
+        [[nodiscard]]
+        IOStatus open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out);
 
         /**
          * Try to delete the file/directory at the given path. Note that deleting a file does not close the file.
@@ -484,7 +455,6 @@ namespace Rune::VFS {
          */
         IOStatus delete_node(const Path& path);
 
-
         /**
          * @brief Try to open a stream over the content of the directory.
          *
@@ -503,6 +473,6 @@ namespace Rune::VFS {
          */
         IOStatus open_directory_stream(const Path& path, SharedPointer<DirectoryStream>& out);
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FILESUBSYSTEM_H
+#endif // RUNEOS_FILESUBSYSTEM_H

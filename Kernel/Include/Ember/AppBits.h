@@ -17,7 +17,6 @@
 
 #include <Ember/Ember.h>
 
-
 namespace Ember {
     /**
      * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of keys. Each key is
@@ -42,12 +41,11 @@ namespace Ember {
     class VirtualKey {
         U16 _key_code;
 
-    public:
+      public:
         static constexpr U16    NONE_KEY_CODE = 0x8000;
         static const VirtualKey NONE;
         static constexpr U8     MAX_ROWS = 8;
         static constexpr U8     MAX_COLS = 32;
-
 
         /**
          * Create virtual key code in the given row and col that has been released or pressed.
@@ -59,7 +57,6 @@ namespace Ember {
          */
         static VirtualKey build(U8 row, U8 col, bool released);
 
-
         /**
          * Create virtual key code in the given row and col that has been pressed.
          *
@@ -68,7 +65,6 @@ namespace Ember {
          * @return A virtual key code.
          */
         static VirtualKey build_pressed(U8 row, U8 col);
-
 
         /**
          * Create virtual key code in the given row and col that has been released.
@@ -79,60 +75,56 @@ namespace Ember {
          */
         static VirtualKey build_released(U8 row, U8 col);
 
-
         VirtualKey();
 
-
         explicit VirtualKey(U16 key_code);
-
 
         /**
          *
          * @return The integer representation of the key code.
          */
-        [[nodiscard]] U16 get_key_code() const;
-
+        [[nodiscard]]
+        U16 get_key_code() const;
 
         /**
          *
          * @return Row position of the pressed key.
          */
-        [[nodiscard]] U8 get_row() const;
-
+        [[nodiscard]]
+        U8 get_row() const;
 
         /**
          *
          * @return Column position of the pressed key.
          */
-        [[nodiscard]] U8 get_col() const;
-
+        [[nodiscard]]
+        U8 get_col() const;
 
         /**
          *
          * @return True if the key is currently pressed.
          */
-        [[nodiscard]] bool is_pressed() const;
-
+        [[nodiscard]]
+        bool is_pressed() const;
 
         /**
          *
          * @return True if the key has been released.
          */
-        [[nodiscard]] bool is_released() const;
-
+        [[nodiscard]]
+        bool is_released() const;
 
         /**
          *
          * @return True if this virtual key code represents a "null" key.
          */
-        [[nodiscard]] bool is_none() const;
-
+        [[nodiscard]]
+        bool is_none() const;
 
         friend bool operator==(const VirtualKey& one, const VirtualKey& two);
 
-
         friend bool operator!=(const VirtualKey& one, const VirtualKey& two);
     };
-}
+} // namespace Ember
 
-#endif //EMBER_APP_H
+#endif // EMBER_APP_H

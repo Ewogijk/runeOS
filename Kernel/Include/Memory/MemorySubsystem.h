@@ -17,13 +17,11 @@
 #ifndef RUNEOS_MEMORYSUBSYSTEM_H
 #define RUNEOS_MEMORYSUBSYSTEM_H
 
-
 #include <KernelRuntime/Subsystem.h>
 
 #include <Memory/BitMapAllocator.h>
-#include <Memory/VirtualMemoryManager.h>
 #include <Memory/SlabAllocator.h>
-
+#include <Memory/VirtualMemoryManager.h>
 
 namespace Rune::Memory {
 
@@ -31,7 +29,7 @@ namespace Rune::Memory {
      * The memory subsystem contains the physical and virtual memory managers, the kernel heap and physical and virtual
      * memory maps.
      */
-class MemorySubsystem : public Subsystem {
+    class MemorySubsystem : public Subsystem {
         MemoryMap _p_map;
         MemoryMap _v_map;
 
@@ -41,27 +39,21 @@ class MemorySubsystem : public Subsystem {
 
         bool _boot_loader_mem_claim_failed;
 
-    public:
-
+      public:
         MemorySubsystem();
-
 
         explicit MemorySubsystem(const BitMapAllocator& pmm);
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Memory Subsystem Specific Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          *
@@ -69,13 +61,11 @@ class MemorySubsystem : public Subsystem {
          */
         MemoryMap& get_physical_memory_map();
 
-
         /**
          *
          * @return Virtual memory map of the RAM.
          */
         MemoryMap& get_virtual_memory_map();
-
 
         /**
          *
@@ -83,20 +73,17 @@ class MemorySubsystem : public Subsystem {
          */
         PhysicalMemoryManager* get_physical_memory_manager();
 
-
         /**
          *
          * @return Virtual memory manager.
          */
         VirtualMemoryManager* get_virtual_memory_manager();
 
-
         /**
          *
          * @return
          */
         SlabAllocator* get_heap();
-
 
         /**
          * Log the intermediate steps of the start routine.
@@ -108,7 +95,6 @@ class MemorySubsystem : public Subsystem {
          */
         void log_start_routine_phases() const;
     };
-}
+} // namespace Rune::Memory
 
-
-#endif //RUNEOS_MEMORYSUBSYSTEM_H
+#endif // RUNEOS_MEMORYSUBSYSTEM_H

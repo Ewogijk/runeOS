@@ -25,18 +25,16 @@
 
 #include <App/AppSubsystem.h>
 
-
 namespace Rune::SystemCall {
 
     /**
      * @brief The context for all threading related system calls.
      */
     struct ThreadingSystemCallContext {
-        KernelGuardian* k_guard    = nullptr;
+        KernelGuardian*    k_guard    = nullptr;
         CPU::CPUSubsystem* cpu_subsys = nullptr;
         App::AppSubsystem* app_subsys = nullptr;
     };
-
 
     /**
      * If the mutex_name is an empty string then the kernel will choose a name for it.
@@ -50,7 +48,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode mutex_create(void* sys_call_ctx, U64 mutex_name);
 
-
     /**
      * If the mutex is already locked the system call will block the calling thread until the mutex is unlocked.
      *
@@ -62,7 +59,6 @@ namespace Rune::SystemCall {
      *          UNKNOWN_ID:  No mutex with the requested ID was found.
      */
     Ember::StatusCode mutex_lock(void* sys_call_ctx, U64 ID);
-
 
     /**
      * If the mutex is not locked by the calling thread then this system call will do nothing.
@@ -76,7 +72,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode mutex_unlock(void* sys_call_ctx, U64 ID);
 
-
     /**
      * @brief Free all resources associated with the requested mutex.
      * @param sys_call_ctx A pointer to the thread management context.
@@ -87,14 +82,12 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode mutex_free(void* sys_call_ctx, U64 ID);
 
-
     /**
      * @brief Get the ID of the currently running thread.
      * @param sys_call_ctx A pointer to the thread management context.
      * @return Success: The thread ID.
      */
     Ember::StatusCode get_thread_ID(void* sys_call_ctx);
-
 
     /**
      * @brief Set the current thread's thread control block.
@@ -104,6 +97,6 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The tcb buffer is null or in kernel memory.
      */
     Ember::StatusCode set_thread_control_block(void* sys_call_ctx, U64 tcb);
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_THREADMANAGEMENT_H
+#endif // RUNEOS_THREADMANAGEMENT_H

@@ -17,20 +17,18 @@
 #ifndef RUNEOS_CPUSUBSYSTEM_H
 #define RUNEOS_CPUSUBSYSTEM_H
 
-
 #include <KernelRuntime/Utility.h>
 
 #include <KernelRuntime/Subsystem.h>
 
 #include <CPU/CPU.h>
-#include <CPU/Interrupt/Interrupt.h>
 #include <CPU/Interrupt/IRQ.h>
+#include <CPU/Interrupt/Interrupt.h>
 
-#include <CPU/Threading/Scheduler.h>
 #include <CPU/Threading/Mutex.h>
+#include <CPU/Threading/Scheduler.h>
 
 #include <CPU/Time/PIT.h>
-
 
 namespace Rune::CPU {
 
@@ -46,15 +44,12 @@ namespace Rune::CPU {
      *                      scheduled.</li>
      * </ul>
      */
-#define CPU_EVENT_HOOKS(X)                          \
-             X(EventHook, THREAD_CREATED, 0x1)      \
-             X(EventHook, THREAD_TERMINATED, 0x2)   \
-             X(EventHook, CONTEXT_SWITCH, 0x3)      \
+#define CPU_EVENT_HOOKS(X)                                                                                             \
+    X(EventHook, THREAD_CREATED, 0x1)                                                                                  \
+    X(EventHook, THREAD_TERMINATED, 0x2)                                                                               \
+    X(EventHook, CONTEXT_SWITCH, 0x3)
 
-
-
-    DECLARE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)  // NOLINT
-
+    DECLARE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0) // NOLINT
 
     /**
      * @brief Event context of the "ThreadTerminated" event hook.
@@ -64,36 +59,33 @@ namespace Rune::CPU {
         Thread* next_scheduled = nullptr;
     };
 
-
     class CPUSubsystem : public Subsystem {
         static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
         static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
         static constexpr char const* IDLE_THREAD_NAME       = "Idle";
-        static char* DUMMY_ARGS[1];
-        static StartInfo TERMINATOR_THREAD_START_INFO;
-        static StartInfo IDLE_THREAD_START_INFO;
+        static char*                 DUMMY_ARGS[1];
+        static StartInfo             TERMINATOR_THREAD_START_INFO;
+        static StartInfo             IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         LinkedList<UniquePointer<PICDriver>> _pic_driver_table;
-        PICDriver* _active_pic;
-
+        PICDriver*                           _active_pic;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
-        TableFormatter<Thread>        _thread_table_fmt;
-        HandleCounter<U16>            _thread_handle_counter;
+        TableFormatter<Thread>              _thread_table_fmt;
+        HandleCounter<U16>                  _thread_handle_counter;
 
         HashMap<U16, SharedPointer<Mutex>> _mutex_table;
-        TableFormatter<Mutex>        _mutex_table_fmt;
-        HandleCounter<U16>           _mutex_handle_counter;
+        TableFormatter<Mutex>              _mutex_table_fmt;
+        HandleCounter<U16>                 _mutex_handle_counter;
         Scheduler                          _scheduler;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Time Properties
@@ -101,46 +93,35 @@ namespace Rune::CPU {
 
         UniquePointer<Timer> _timer;
 
+        SharedPointer<Thread> create_thread(const String&    thread_name,
+                                            StartInfo*       start_info,
+                                            PhysicalAddr     base_pt_addr,
+                                            SchedulingPolicy policy,
+                                            Stack            user_stack);
 
-        SharedPointer<Thread> create_thread(
-                const String& thread_name,
-                StartInfo* start_info,
-                PhysicalAddr base_pt_addr,
-                SchedulingPolicy policy,
-                Stack user_stack
-        );
-
-
-    public:
-
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         CPUSubsystem();
 
-
         ~CPUSubsystem() override = default;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Kernel Subsystem Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief
@@ -148,13 +129,11 @@ namespace Rune::CPU {
          */
         PICDriver* get_active_pic();
 
-
         /**
          * @brief The PIC driver table contains all installed PIC drivers.
          * @return A list of installed PIC drivers.
          */
         LinkedList<PICDriver*> get_pic_driver_table();
-
 
         /**
          * @brief Install a driver PIC driver that will be responsible for IRQ handling.
@@ -168,7 +147,6 @@ namespace Rune::CPU {
          */
         bool install_pic_driver(UniquePointer<PICDriver> driver);
 
-
         /**
          * @brief Install the IRQ handler for a device on the specified IRQ line.
          * @param irq_line   Requested IRQ.
@@ -179,7 +157,6 @@ namespace Rune::CPU {
          */
         bool install_irq_handler(U8 irq_line, U16 dev_handle, const String& dev_name, const IRQHandler& handler);
 
-
         /**
          * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
          * @param irq_line
@@ -188,11 +165,9 @@ namespace Rune::CPU {
          */
         bool uninstall_irq_handler(U8 irq_line, U16 dev_handle);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      High Level Threading API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief Get the scheduler itself, which gives access to the Low Level Threading API.
@@ -201,13 +176,11 @@ namespace Rune::CPU {
          */
         Scheduler* get_scheduler();
 
-
         /**
          * @brief A list of all threads in the system.
          * @return The thread table.
          */
         LinkedList<Thread*> get_thread_table();
-
 
         /**
          * @brief Dump the thread table to the stream.
@@ -215,14 +188,12 @@ namespace Rune::CPU {
          */
         void dump_thread_table(const SharedPointer<TextStream>& stream) const;
 
-
         /**
          * @brief Get a thread with the given ID.
          * @param id ID of a thread.
          * @return Pointer to the thread with the requested ID or a null pointer if not found.
          */
         Thread* find_thread(int handle);
-
 
         /**
          * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue it to be scheduled
@@ -245,14 +216,11 @@ namespace Rune::CPU {
          *
          * @return The ID if the scheduled thread, 0 if the thread could not be created or scheduled.
          */
-        U16 schedule_new_thread(
-                const String& thread_name,
-                StartInfo* start_info,
-                PhysicalAddr base_pt_addr,
-                SchedulingPolicy policy,
-                Stack user_stack
-        );
-
+        U16 schedule_new_thread(const String&    thread_name,
+                                StartInfo*       start_info,
+                                PhysicalAddr     base_pt_addr,
+                                SchedulingPolicy policy,
+                                Stack            user_stack);
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the running thread. The
@@ -276,18 +244,15 @@ namespace Rune::CPU {
          */
         bool terminate_thread(int handle);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Mutex API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief A list of all currently acquired mutexes.
          * @return The mutex table.
          */
         LinkedList<Mutex*> get_mutex_table();
-
 
         /**
          * @brief Try to find the mutex with the given handle.
@@ -296,14 +261,12 @@ namespace Rune::CPU {
          */
         SharedPointer<Mutex> find_mutex(U16 mutex_handle);
 
-
         /**
          * @brief Dump the mutex table to the stream.
          * @param logger
          * @param logLvl
          */
         void dump_mutex_table(const SharedPointer<TextStream>& stream) const;
-
 
         /**
          * @brief Create a new mutex instance with the given name and add it to the mutex table.
@@ -315,7 +278,6 @@ namespace Rune::CPU {
          */
         SharedPointer<Mutex> create_mutex(String name);
 
-
         /**
          * @brief Free the memory of the mutex with the given handle.
          *
@@ -326,11 +288,9 @@ namespace Rune::CPU {
          */
         bool release_mutex(U16 mutex_handle);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Time Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * A driver for a timer.
@@ -339,14 +299,12 @@ namespace Rune::CPU {
          */
         void install_timer_driver(UniquePointer<Timer> driver);
 
-
         /**
          *
          * @return
          */
         Timer* get_system_timer();
     };
-
 
     /**
      * @brief Mark the currently running thread as terminated which will immediately trigger a context switch to the
@@ -357,6 +315,6 @@ namespace Rune::CPU {
      */
     void thread_exit(int exit_code);
 
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_CPUSUBSYSTEM_H
+#endif // RUNEOS_CPUSUBSYSTEM_H

@@ -18,40 +18,25 @@
 
 #include <CPU/IO.h>
 
-
 namespace Rune::CPU {
-    bool E9Stream::is_read_supported() {
-        return false;
-    }
+    bool E9Stream::is_read_supported() { return false; }
 
+    int E9Stream::read() { return -1; }
 
-    int E9Stream::read() {
-        return -1;
-    }
-
-
-    bool E9Stream::is_write_supported() {
-        return true;
-    }
-
+    bool E9Stream::is_write_supported() { return true; }
 
     bool E9Stream::write(U8 value) {
         out_b(0xE9, value);
         return true;
     }
 
-
     void E9Stream::flush() {
         // No buffering supported
     }
-
 
     void E9Stream::close() {
         // Unmanaged resource
     }
 
-
-    bool E9Stream::is_ansi_supported() {
-        return true;
-    }
-}
+    bool E9Stream::is_ansi_supported() { return true; }
+} // namespace Rune::CPU

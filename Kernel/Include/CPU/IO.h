@@ -17,9 +17,7 @@
 #ifndef RUNEOS_IO_H
 #define RUNEOS_IO_H
 
-
 #include <Ember/Ember.h>
-
 
 namespace Rune::CPU {
     /**
@@ -30,14 +28,12 @@ namespace Rune::CPU {
      */
     CLINK void out_b(U16 port, U8 value);
 
-
     /**
      * Receive a byte from a port.
      *
      * @param port Port number.
      */
     CLINK U8 in_b(U16 port);
-
 
     /**
      * Send a word through a port.
@@ -47,14 +43,12 @@ namespace Rune::CPU {
      */
     CLINK void out_w(U16 port, U16 value);
 
-
     /**
      * Receive a word from a port.
      *
      * @param port Port number.
      */
     CLINK U16 in_w(U16 port);
-
 
     /**
      * Send a double word through a port.
@@ -64,7 +58,6 @@ namespace Rune::CPU {
      */
     CLINK void out_dw(U16 port, U32 value);
 
-
     /**
      * Receive a double word from a port.
      *
@@ -72,11 +65,10 @@ namespace Rune::CPU {
      */
     CLINK U32 in_dw(U16 port);
 
-
     /**
      * Wait for an unspecified amount of time.
      */
     CLINK void io_wait();
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_IO_H
+#endif // RUNEOS_IO_H

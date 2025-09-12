@@ -17,9 +17,7 @@
 #ifndef RUNEOS_VIRTUALMEMORY_H
 #define RUNEOS_VIRTUALMEMORY_H
 
-
 #include <KernelRuntime/Memory.h>
-
 
 namespace Rune::Memory {
     struct KernelSpaceLayout {
@@ -29,7 +27,6 @@ namespace Rune::Memory {
         VirtualAddr kernel_code            = 0x0;
     };
 
-
     /**
      *
      * @return The starting addresses of the virtual kernel regions. The exact size of each regions is defined by the
@@ -37,12 +34,11 @@ namespace Rune::Memory {
      */
     KernelSpaceLayout get_virtual_kernel_space_layout();
 
-
     /**
      *
      * @return The layout of the computer's virtual memory.
      */
     MemoryMap create_virtual_memory_map();
-}
+} // namespace Rune::Memory
 
-#endif //RUNEOS_VIRTUALMEMORY_H
+#endif // RUNEOS_VIRTUALMEMORY_H

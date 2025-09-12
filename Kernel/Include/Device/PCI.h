@@ -17,36 +17,34 @@
 #ifndef RUNEOS_PCI_H
 #define RUNEOS_PCI_H
 
-
 #include <CPU/IO.h>
 
 #include <Memory/Paging.h>
 
 #include <Device/AHCI/AHCI.h>
 
-
 namespace Rune::Device {
     union CommandRegister {
         U16 AsUInt16 = 0;
         struct {
-            U16 io_space: 1;
-            U16 memory_space: 1;
-            U16 bus_master: 1;
-            U16 special_cycles: 1;
-            U16 memory_write_and_invalidate_enable: 1;
-            U16 vga_palette_snoop: 1;
-            U16 parity_error_response: 1;
-            U16 reserved_0: 1;
-            U16 serr_enable: 1;
-            U16 fast_back_to_back_enable: 1;
-            U16 interrupt_disable: 1;
-            U16 reserved_1: 5;
+            U16 io_space                           : 1;
+            U16 memory_space                       : 1;
+            U16 bus_master                         : 1;
+            U16 special_cycles                     : 1;
+            U16 memory_write_and_invalidate_enable : 1;
+            U16 vga_palette_snoop                  : 1;
+            U16 parity_error_response              : 1;
+            U16 reserved_0                         : 1;
+            U16 serr_enable                        : 1;
+            U16 fast_back_to_back_enable           : 1;
+            U16 interrupt_disable                  : 1;
+            U16 reserved_1                         : 5;
         };
     };
 
     struct PCIHeader {
-        U16             vendor_id             = 0;
-        U16             device_id             = 0;
+        U16             vendor_id = 0;
+        U16             device_id = 0;
         CommandRegister command;
         U16             status                = 0;
         U8              revision_id           = 0;
@@ -81,22 +79,20 @@ namespace Rune::Device {
         U8        max_latency;
     };
 
-
     class PCI {
         static constexpr U16 PCI_CONFIG = 0xCF8;
         static constexpr U16 PCI_DATA   = 0xCFC;
-    public:
+
+      public:
         static U8 read_byte(U8 bus, U8 device, U8 func, U8 offset) {
             CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_b(PCI_DATA + (offset & 0x03));
         }
 
-
         static void write_byte(U8 bus, U8 device, U8 func, U8 offset, U8 value) {
             CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             CPU::out_b(PCI_DATA + (offset & 0x03), value);
         }
-
 
         static U16 read_word(U8 bus, U8 device, U8 func, U8 offset) {
             if ((offset & 0x03) > 2) {
@@ -105,7 +101,6 @@ namespace Rune::Device {
             CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_w(PCI_DATA + (offset & 0x03));
         }
-
 
         static void write_word(U8 bus, U8 device, U8 func, U8 offset, U16 value) {
             if ((offset & 0x03) > 2) {
@@ -116,7 +111,6 @@ namespace Rune::Device {
             CPU::out_w(PCI_DATA + (offset & 0x03), value);
         }
 
-
         static U32 read_dword(U8 bus, U8 device, U8 func, U8 offset) {
             if ((offset & 0x03) > 0) {
                 return (read_word(bus, device, func, offset + 2) << 16) | read_word(bus, device, func, offset);
@@ -124,7 +118,6 @@ namespace Rune::Device {
             CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_dw(PCI_DATA + (offset & 0x03));
         }
-
 
         static void write_dword(U8 bus, U8 device, U8 func, U8 offset, U32 value) {
             if ((offset & 0x03) > 2) {
@@ -135,98 +128,91 @@ namespace Rune::Device {
             CPU::out_dw(PCI_DATA + (offset & 0x03), value);
         }
 
-
         static PCIHeader read_header(U8 bus, U8 device, U8 func) {
             return {
-                    read_word(bus, device, func, 0x00),
-                    read_word(bus, device, func, 0x02),
-                    read_word(bus, device, func, 0x04),
-                    read_word(bus, device, func, 0x06),
-                    read_byte(bus, device, func, 0x08),
-                    read_byte(bus, device, func, 0x09),
-                    read_byte(bus, device, func, 0x0A),
-                    read_byte(bus, device, func, 0x0B),
-                    read_byte(bus, device, func, 0x0C),
-                    read_byte(bus, device, func, 0x0D),
-                    read_byte(bus, device, func, 0x0E),
-                    read_byte(bus, device, func, 0x0F),
+                read_word(bus, device, func, 0x00),
+                read_word(bus, device, func, 0x02),
+                read_word(bus, device, func, 0x04),
+                read_word(bus, device, func, 0x06),
+                read_byte(bus, device, func, 0x08),
+                read_byte(bus, device, func, 0x09),
+                read_byte(bus, device, func, 0x0A),
+                read_byte(bus, device, func, 0x0B),
+                read_byte(bus, device, func, 0x0C),
+                read_byte(bus, device, func, 0x0D),
+                read_byte(bus, device, func, 0x0E),
+                read_byte(bus, device, func, 0x0F),
             };
         }
 
-
         static void check_device(AHCIDriver& ahci_driver, SharedPointer<Logger> logger, U8 bus, U8 device) {
             PCIHeader header = read_header(bus, device, 0);
-            if (header.vendor_id == 0xFFFF)
-                return;
+            if (header.vendor_id == 0xFFFF) return;
 
-            logger->debug(
-                    "PCI",
-                    "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub Class: {:#x} - Programming Interface: {:#x}",
-                    bus,
-                    device,
-                    0,
-                    header.vendor_id,
-                    header.device_id,
-                    header.base_class_code,
-                    header.sub_class_code,
-                    header.programming_interface
-            );
+            logger->debug("PCI",
+                          "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub Class: {:#x} "
+                          "- Programming Interface: {:#x}",
+                          bus,
+                          device,
+                          0,
+                          header.vendor_id,
+                          header.device_id,
+                          header.base_class_code,
+                          header.sub_class_code,
+                          header.programming_interface);
 
-            if (header.base_class_code == 0x1
-                && header.sub_class_code == 0x6
-                && header.vendor_id == 0x8086
+            if (header.base_class_code == 0x1 && header.sub_class_code == 0x6 && header.vendor_id == 0x8086
                 && header.device_id == 0x2922) {
                 write_word(bus, device, 0, 0x04, header.command.AsUInt16 | 0x4); // Enable DMA
                 PCIHeaderType0 ahci_header = {
-                        read_header(bus, device, 0),
-                        read_dword(bus, device, 0, 0x10),
-                        read_dword(bus, device, 0, 0x14),
-                        read_dword(bus, device, 0, 0x18),
-                        read_dword(bus, device, 0, 0x1C),
-                        read_dword(bus, device, 0, 0x20),
-                        read_dword(bus, device, 0, 0x24),
-                        read_dword(bus, device, 0, 0x28),
-                        read_word(bus, device, 0, 0x2C),
-                        read_word(bus, device, 0, 0x2E),
-                        read_dword(bus, device, 0, 0x30),
-                        read_byte(bus, device, 0, 0x34),
-                        0,
-                        0,
-                        0,
-                        read_byte(bus, device, 0, 0x3C),
-                        read_byte(bus, device, 0, 0x3D),
-                        read_byte(bus, device, 0, 0x3E),
-                        read_byte(bus, device, 0, 0x3F),
+                    read_header(bus, device, 0),
+                    read_dword(bus, device, 0, 0x10),
+                    read_dword(bus, device, 0, 0x14),
+                    read_dword(bus, device, 0, 0x18),
+                    read_dword(bus, device, 0, 0x1C),
+                    read_dword(bus, device, 0, 0x20),
+                    read_dword(bus, device, 0, 0x24),
+                    read_dword(bus, device, 0, 0x28),
+                    read_word(bus, device, 0, 0x2C),
+                    read_word(bus, device, 0, 0x2E),
+                    read_dword(bus, device, 0, 0x30),
+                    read_byte(bus, device, 0, 0x34),
+                    0,
+                    0,
+                    0,
+                    read_byte(bus, device, 0, 0x3C),
+                    read_byte(bus, device, 0, 0x3D),
+                    read_byte(bus, device, 0, 0x3E),
+                    read_byte(bus, device, 0, 0x3F),
                 };
-                volatile auto* hba = reinterpret_cast<HBAMemory*>(Memory::physical_to_virtual_address(ahci_header.bar_5));
+                volatile auto* hba =
+                    reinterpret_cast<HBAMemory*>(Memory::physical_to_virtual_address(ahci_header.bar_5));
                 if (!ahci_driver.start(hba)) {
                     logger->error("PCI", "Failed to init AHCI");
-                    while (true);
+                    while (true)
+                        ;
                 }
             }
 
             if ((header.header_type & 0x80) != 0) {
                 for (U8 func = 1; func < 8; func++) {
                     header = read_header(bus, device, 0);
-                    if (header.vendor_id == 0xFFFF)
-                        continue;
+                    if (header.vendor_id == 0xFFFF) continue;
 
-                    logger->debug(
-                            "PCI",
-                            "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub Class: {:#x} - Programming Interface: {:#x}",
-                            bus,
-                            device,
-                            func,
-                            header.vendor_id,
-                            header.device_id,
-                            header.base_class_code,
-                            header.sub_class_code,
-                            header.programming_interface
-                    );
+                    logger->debug("PCI",
+                                  "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub "
+                                  "Class: {:#x} - Programming Interface: {:#x}",
+                                  bus,
+                                  device,
+                                  func,
+                                  header.vendor_id,
+                                  header.device_id,
+                                  header.base_class_code,
+                                  header.sub_class_code,
+                                  header.programming_interface);
                 }
             }
         }
-
 
         static void discover_devices(AHCIDriver& ahci_driver, SharedPointer<Logger> logger) {
             for (int bus = 0; bus < 255; bus++) {
@@ -236,6 +222,6 @@ namespace Rune::Device {
             }
         }
     };
-}
+} // namespace Rune::Device
 
-#endif //RUNEOS_PCI_H
+#endif // RUNEOS_PCI_H

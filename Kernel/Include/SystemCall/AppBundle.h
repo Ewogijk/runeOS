@@ -17,8 +17,6 @@
 #ifndef RUNEOS_APPMANAGEMENT_H
 #define RUNEOS_APPMANAGEMENT_H
 
-
-#include <Ember/Ember.h>
 #include <Ember/Ember.h>
 
 #include <App/AppSubsystem.h>
@@ -31,19 +29,17 @@
 
 #include <SystemCall/KernelGuardian.h>
 
-
 namespace Rune::SystemCall {
     /**
      * @brief The context for all app management system calls.
      */
     struct AppSystemCallContext {
-        KernelGuardian*    k_guard       = nullptr;
-        App::AppSubsystem*    app_subsys    = nullptr;
+        KernelGuardian*          k_guard       = nullptr;
+        App::AppSubsystem*       app_subsys    = nullptr;
         Device::DeviceSubsystem* device_subsys = nullptr;
-        CPU::CPUSubsystem*    cpu_subsys    = nullptr;
-        VFS::VFSSubsystem*    vfs_subsys    = nullptr;
+        CPU::CPUSubsystem*       cpu_subsys    = nullptr;
+        VFS::VFSSubsystem*       vfs_subsys    = nullptr;
     };
-
 
     /**
      * @brief Wait until a key is available in the virtual keyboard buffer and write the keycode to given buffer.
@@ -54,7 +50,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode read_stdin(void* sys_call_ctx, U64 key_code_out);
 
-
     /**
      * @brief Write at most msg_size characters of the msg to the stdout stream of the running app.
      * @param sys_call_ctx A pointer to the app system call context.
@@ -64,7 +59,6 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
     Ember::StatusCode write_stdout(void* sys_call_ctx, U64 msg, U64 msg_size);
-
 
     /**
      * @brief Write at most msg_size characters of the msg to the stderr stream of the running app.
@@ -78,7 +72,6 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
     Ember::StatusCode write_stderr(void* sys_call_ctx, U64 msg, U64 msg_size);
-
 
     /**
      * @brief Get the ID of the currently running application.
@@ -103,8 +96,8 @@ namespace Rune::SystemCall {
      * </p>
      *
      * @param sys_call_ctx  A pointer to the app system call context.
-     * @param app_path      A path to the executable, either absolute or relative to the working directory of the calling
-     *                       app.
+     * @param app_path      A path to the executable, either absolute or relative to the working directory of the
+     * calling app.
      * @param argv          Pointer to the command line arguments, a null terminated array of c strings.
      * @param working_dir   The working directory of the app that will be started, either absolute or relative to the
      *                       working directory of the calling app.
@@ -117,16 +110,13 @@ namespace Rune::SystemCall {
      *          NODE_NOT_FOUND: The path to the application or the working directory does not exist.<br>
      *          FAULT:          The app could not be started.
      */
-    Ember::StatusCode app_start(
-        void* sys_call_ctx,
-        U64   app_path,
-        U64   argv,
-        U64   working_dir,
-        U64   stdin_target,
-        U64   stdout_target,
-        U64   stderr_target
-    );
-
+    Ember::StatusCode app_start(void* sys_call_ctx,
+                                U64   app_path,
+                                U64   argv,
+                                U64   working_dir,
+                                U64   stdin_target,
+                                U64   stdout_target,
+                                U64   stderr_target);
 
     /**
      * @brief Exit the currently running app with the given exit code.
@@ -138,7 +128,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode app_exit(void* sys_call_ctx, U64 exit_code);
 
-
     /**
      * @brief Wait until the application with the requested ID has exited.
      * @param sys_call_ctx A pointer to the app system call context.
@@ -147,7 +136,6 @@ namespace Rune::SystemCall {
      *          Else:  The exit code of the application.
      */
     Ember::StatusCode app_join(void* sys_call_ctx, U64 ID);
-
 
     /**
      * @brief Get the current working directory of the active app and copy it to the char buffer.
@@ -158,7 +146,6 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit the working directory.
      */
     Ember::StatusCode app_current_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
-
 
     /**
      * @brief Change the working directory of the active app to the requested working directory.
@@ -172,6 +159,6 @@ namespace Rune::SystemCall {
      *          IO:             An IO error happened.
      */
     Ember::StatusCode app_change_directory(void* sys_call_ctx, U64 wd);
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_APPMANAGEMENT_H
+#endif // RUNEOS_APPMANAGEMENT_H

@@ -17,12 +17,10 @@
 #ifndef RUNEOS_BUNDLE_H
 #define RUNEOS_BUNDLE_H
 
-
 #include <KernelRuntime/Subsystem.h>
 
 #include <SystemCall/Definition.h>
 #include <SystemCall/KernelGuardian.h>
-
 
 namespace Rune::SystemCall {
 
@@ -36,17 +34,13 @@ namespace Rune::SystemCall {
         LinkedList<Definition> system_call_definitions = LinkedList<Definition>();
     };
 
-
     /**
      * @brief Get the list of all natively supported system call bundles.
      * @param k_guard      Kernel guardian.
      * @param k_subsys_reg Kernel subsystem registry.
      * @return System call bundles.
      */
-    LinkedList<Bundle> system_call_get_native_bundles(
-            KernelGuardian* k_guard,
-            const SubsystemRegistry& k_subsys_reg
-    );
-}
+    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian* k_guard, const SubsystemRegistry& k_subsys_reg);
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_BUNDLE_H
+#endif // RUNEOS_BUNDLE_H

@@ -20,7 +20,6 @@
 
 #include <KernelRuntime/Collection.h>
 
-
 namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Core API
@@ -33,27 +32,14 @@ namespace Rune::CPU {
     X64Core           BOOTSTRAP_CORE = X64Core(0);
     LinkedList<Core*> CORES;
 
-
-    bool init_bootstrap_core() {
-        return BOOTSTRAP_CORE.init();
-    }
-
+    bool init_bootstrap_core() { return BOOTSTRAP_CORE.init(); }
 
     bool init_other_cores() {
         CORES.add_back(&BOOTSTRAP_CORE);
         return true;
     }
 
+    Core* current_core() { return &BOOTSTRAP_CORE; }
 
-    Core* current_core() {
-        return &BOOTSTRAP_CORE;
-    }
-
-
-    LinkedList<Core*> get_core_table() {
-        return CORES;
-    }
-}
-
-
-
+    LinkedList<Core*> get_core_table() { return CORES; }
+} // namespace Rune::CPU

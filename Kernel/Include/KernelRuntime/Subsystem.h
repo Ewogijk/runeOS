@@ -17,32 +17,28 @@
 #ifndef RUNEOS_SUBSYSTEM_H
 #define RUNEOS_SUBSYSTEM_H
 
-
 #include <Ember/Enum.h>
 
-
 #include <KernelRuntime/Collection.h>
-#include <KernelRuntime/FrameBuffer.h>
-#include <KernelRuntime/Memory.h>
 #include <KernelRuntime/EventHook.h>
-#include <KernelRuntime/Resource.h>
+#include <KernelRuntime/FrameBuffer.h>
 #include <KernelRuntime/Logging.h>
-
+#include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Resource.h>
 
 namespace Rune {
     /**
      * Information provided by the low level boot routine to the high level boot routine.
      */
     struct BootLoaderInfo {
-        const char* boot_loader_name    = "";
-        const char* boot_loader_version = "";
-        MemoryMap physical_memory_map    = { };
-        FrameBuffer     framebuffer;
-        PhysicalAddr    base_page_table_addr   = 0;
-        U64             stack                  = 0;
-        U8              physical_address_width = 0;
+        const char*  boot_loader_name    = "";
+        const char*  boot_loader_version = "";
+        MemoryMap    physical_memory_map = {};
+        FrameBuffer  framebuffer;
+        PhysicalAddr base_page_table_addr   = 0;
+        U64          stack                  = 0;
+        U8           physical_address_width = 0;
     };
-
 
     /**
      * @brief A version compliant to the <a href="https://semver.org/">semantic versioning</a> scheme.
@@ -53,47 +49,40 @@ namespace Rune {
         U16    patch       = 0;
         String pre_release = "";
 
-
-        [[nodiscard]] String to_string() const;
+        [[nodiscard]]
+        String to_string() const;
     };
-
 
     /**
      * A bigger part of the Kernel e.g. the Memory Management or Virtual FileSystem.
      */
     class Subsystem;
 
-
     /**
      * All kernel subsystems.
      */
-#define K_SUBSYSTEMS(X)                      \
-        X(KernelSubsystem, MEMORY, 0x1)     \
-        X(KernelSubsystem, CPU, 0x2)        \
-        X(KernelSubsystem, DEVICE, 0x3)     \
-        X(KernelSubsystem, VFS, 0x4)        \
-        X(KernelSubsystem, APP, 0x5)        \
-        X(KernelSubsystem, SYSTEMCALL, 0x6) \
+#define K_SUBSYSTEMS(X)                                                                                                \
+    X(KernelSubsystem, MEMORY, 0x1)                                                                                    \
+    X(KernelSubsystem, CPU, 0x2)                                                                                       \
+    X(KernelSubsystem, DEVICE, 0x3)                                                                                    \
+    X(KernelSubsystem, VFS, 0x4)                                                                                       \
+    X(KernelSubsystem, APP, 0x5)                                                                                       \
+    X(KernelSubsystem, SYSTEMCALL, 0x6)
 
-
-
-    DECLARE_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0) //NOLINT
-
+    DECLARE_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0) // NOLINT
 
     class SubsystemRegistry {
         Subsystem** _k_subsys_registry; // Array of KernelSubsystem pointers
-        size_t _k_subsys_count;
+        size_t      _k_subsys_count;
 
-    public:
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //
         // Constructors&Destructors
         //
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         explicit SubsystemRegistry(Subsystem** k_subsys_registry, size_t k_subsys_count);
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //
@@ -101,13 +90,12 @@ namespace Rune {
         //
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          *
          * @return Number of kernel subsystems in the registry.
          */
-        [[nodiscard]] size_t size() const;
-
+        [[nodiscard]]
+        size_t size() const;
 
         /**
          *
@@ -117,27 +105,23 @@ namespace Rune {
          */
         Subsystem* operator[](size_t index) const;
 
-
         /**
          *
          * @tparam T
          * @param k_subsys
          * @return
          */
-        template<typename T>
-        T* get_as(KernelSubsystem k_subsys) const {
+        template <typename T> T* get_as(KernelSubsystem k_subsys) const {
             return (T*) _k_subsys_registry[k_subsys.to_value() - 1];
         }
     };
 
-
     class Subsystem {
-    protected:
-        SharedPointer<Logger>      _logger;
+      protected:
+        SharedPointer<Logger> _logger;
 
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;
         HandleCounter<U16>                                  _event_hook_handle_counter;
-
 
         /**
          * @brief Fire an event for the given evtHook with the evtContext.
@@ -146,32 +130,28 @@ namespace Rune {
          */
         void fire(const String& evt_hook, void* evt_context);
 
-
-    public:
+      public:
         explicit Subsystem();
 
-
         virtual ~Subsystem() = default;
-
 
         /**
          *
          * @return Unique Kernel Subsystem name.
          */
-        [[nodiscard]] virtual String get_name() const = 0;
-
+        [[nodiscard]]
+        virtual String get_name() const = 0;
 
         /**
          *
          * @return Logger instance.
          */
-        [[nodiscard]] SharedPointer<Logger> get_logger() const;
-
+        [[nodiscard]]
+        SharedPointer<Logger> get_logger() const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                              Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief Start the Kernel SubSystem and all already registered Kernel Extensions.
@@ -193,14 +173,12 @@ namespace Rune {
          */
         virtual bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) = 0;
 
-
         /**
          * Set the logger if no logger instance has been set yet.
          *
          * @param logger
          */
         virtual void set_logger(SharedPointer<Logger> logger) = 0;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hook API
@@ -211,7 +189,6 @@ namespace Rune {
          * @return The event hook table.
          */
         LinkedList<EventHookTableEntry> get_event_hook_table();
-
 
         /**
          * @brief Try to install the given event handler on the requested event hook.
@@ -224,12 +201,8 @@ namespace Rune {
          * @return ID > 0: The event handler will now receive events, ID == -1: The event handler was not installed
          *          because the requested event hook is not supported.
          */
-        U16 install_event_handler(
-                const String& event_hook,
-                const String& evt_handler_name,
-                const EventHandler& handler
-        );
-
+        U16
+        install_event_handler(const String& event_hook, const String& evt_handler_name, const EventHandler& handler);
 
         /**
          * @brief Try to uninstall the event handler with the given evtHandlerID from an event hook.
@@ -240,6 +213,6 @@ namespace Rune {
          */
         bool uninstall_event_handler(const String& event_hook, U16 evt_handler_id);
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_SUBSYSTEM_H
+#endif // RUNEOS_SUBSYSTEM_H

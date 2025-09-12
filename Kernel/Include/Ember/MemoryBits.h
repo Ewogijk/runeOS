@@ -26,13 +26,12 @@ namespace Ember {
      *  <li>WRITE: The pages will be readable and writable.</li>
      * </ul>
      */
-#define PAGE_PROTECTIONS(X)             \
-         X(PageProtection, READ, 0x1)   \
-         X(PageProtection, WRITE, 0x2)
-
+#define PAGE_PROTECTIONS(X)                                                                                            \
+    X(PageProtection, READ, 0x1)                                                                                       \
+    X(PageProtection, WRITE, 0x2)
 
     DECLARE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0) // NOLINT
 
-}
+} // namespace Ember
 
-#endif //EMBER_MEMORYBITS_H
+#endif // EMBER_MEMORYBITS_H

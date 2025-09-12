@@ -18,27 +18,24 @@
 #ifndef RUNEOS_LOGREGISTRY_H
 #define RUNEOS_LOGREGISTRY_H
 
-
 #include <KernelRuntime/Collection.h>
 
 #include <KernelRuntime/Logging.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 
-
 namespace Rune {
     class LogRegistry {
-        VFS::VFSSubsystem* _vfs_subsystem;
-        Path                         _system_directory;
+        VFS::VFSSubsystem*          _vfs_subsystem;
+        Path                        _system_directory;
         SharedPointer<LogFormatter> _log_msg_fmt;
 
         LinkedList<SharedPointer<Logger>> _logger_registry;
         SharedPointer<Logger>             _serial_logger;
-        bool                                    _file_logging_available;
-    public:
+        bool                              _file_logging_available;
 
+      public:
         explicit LogRegistry();
-
 
         /**
          * Set the file subsystem and the system directory.
@@ -48,13 +45,11 @@ namespace Rune {
          */
         void init(VFS::VFSSubsystem* f_subsystem, const Path& system_directory);
 
-
         /**
          * @brief Update the log formatter of all loggers.
          * @param log_formatter
          */
         void update_log_formatter(const SharedPointer<LogFormatter>& log_formatter);
-
 
         /**
          *
@@ -64,7 +59,6 @@ namespace Rune {
          */
         SharedPointer<Logger> build_logger(LogLevel lvl, const Path& path);
 
-
         /**
          * Enable serial logging for all already registered loggers and future loggers.
          *
@@ -73,13 +67,12 @@ namespace Rune {
          */
         void enable_serial_logging(UniquePointer<TextStream> stream, LogLevel log_level);
 
-
         /**
          * Enable file logging for all already registered loggers and future loggers.
          */
         void enable_file_logging();
     };
 
-} // EwogijkOS
+} // namespace Rune
 
-#endif //RUNEOS_LOGREGISTRY_H
+#endif // RUNEOS_LOGREGISTRY_H

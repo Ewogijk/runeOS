@@ -17,13 +17,11 @@
 #ifndef RUNEOS_EVENTHOOK_H
 #define RUNEOS_EVENTHOOK_H
 
-
 #include <Ember/Ember.h>
 
-#include <KernelRuntime/String.h>
-#include <KernelRuntime/Stream.h>
 #include <KernelRuntime/Resource.h>
-
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/String.h>
 
 namespace Rune {
 
@@ -32,7 +30,6 @@ namespace Rune {
      *          some event context that is defined by the subsystem.
      */
     using EventHandler = Function<void(void*)>;
-
 
     /**
      * @brief General information about an event handler.
@@ -43,7 +40,6 @@ namespace Rune {
         U64    notified = 0;
     };
 
-
     /**
      * @brief A entry in the event handler table for an event hook.
      */
@@ -53,13 +49,10 @@ namespace Rune {
         U64          notified = 0;
         EventHandler handler  = [](void* evt_ctx) { SILENCE_UNUSED(evt_ctx) };
 
-
         friend bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b);
-
 
         friend bool operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b);
     };
-
 
     /**
      * @brief An entry in the event hook table with the stats of all installed event handlers.
@@ -69,15 +62,12 @@ namespace Rune {
         LinkedList<EventHandlerStats>     event_handler_table;
         TableFormatter<EventHandlerStats> formatter;
 
-
         void dump(const SharedPointer<TextStream>& stream) const;
-
 
         friend bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b);
 
-
         friend bool operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b);
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_EVENTHOOK_H
+#endif // RUNEOS_EVENTHOOK_H

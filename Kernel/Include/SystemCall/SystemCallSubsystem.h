@@ -17,52 +17,43 @@
 #ifndef RUNEOS_SYSTEMCALLSUBSYSTEM_H
 #define RUNEOS_SYSTEMCALLSUBSYSTEM_H
 
-
 #include <KernelRuntime/Subsystem.h>
 
 #include <CPU/CPU.h>
 
-#include <SystemCall/SystemCall.h>
 #include <SystemCall/KernelGuardian.h>
-
+#include <SystemCall/SystemCall.h>
 
 namespace Rune::SystemCall {
-
 
     class SystemCallSubsystem : public Subsystem {
         KernelGuardian _k_guard;
 
         TableFormatter<SystemCallInfo> _system_call_table_fmt;
 
-    public:
-
+      public:
         SystemCallSubsystem();
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Kernel Subsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          System Call API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          * @brief Lightweight wrapper around the "SystemCallGetTable" function.
          */
-        [[nodiscard]] LinkedList<SystemCallInfo> get_system_call_table() const;
-
+        [[nodiscard]]
+        LinkedList<SystemCallInfo> get_system_call_table() const;
 
         /**
          * @brief Dump the system call table to the stream.
@@ -70,18 +61,16 @@ namespace Rune::SystemCall {
          */
         void dump_system_call_table(const SharedPointer<TextStream>& stream) const;
 
-
         /**
          * @brief Lightweight wrapper around the "SystemCallInstall" function.
          */
         bool install_system_call(const Definition& system_call_definition);
-
 
         /**
          * @brief Lightweight wrapper around the "SystemCallUninstall" function.
          */
         bool uninstall_system_call(U16 system_call_id);
     };
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_SYSTEMCALLSUBSYSTEM_H
+#endif // RUNEOS_SYSTEMCALLSUBSYSTEM_H

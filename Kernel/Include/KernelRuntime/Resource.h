@@ -17,11 +17,9 @@
 #ifndef RUNEOS_RESOURCE_H
 #define RUNEOS_RESOURCE_H
 
-
-#include <KernelRuntime/String.h>
 #include <KernelRuntime/Memory.h>
 #include <KernelRuntime/Stream.h>
-
+#include <KernelRuntime/String.h>
 
 namespace Rune {
 
@@ -37,32 +35,26 @@ namespace Rune {
      * </p>
      * @tparam Counter
      */
-    template<typename Handle>
-    class HandleCounter {
+    template <typename Handle> class HandleCounter {
         Handle _counter;
-    public:
-        explicit HandleCounter() : _counter(0) {
 
-        }
-
+      public:
+        explicit HandleCounter() : _counter(0) {}
 
         /**
          * @brief Check if the handle counter has free resource handles.
          * @return True: The handle counter has free handless, False: All handles have been used.
          */
-        [[nodiscard]] bool has_more_handles() const {
+        [[nodiscard]]
+        bool has_more_handles() const {
             return _counter < _counter + 1;
         }
-
 
         /**
          * @brief Get the next unused handle and increment the counter.
          * @return An unused handle;
          */
-        Handle acquire_handle() {
-            return ++_counter;
-        }
-
+        Handle acquire_handle() { return ++_counter; }
 
         /**
          * The counter will not be decrement when it is zero, to prevent an underflow.
@@ -70,22 +62,18 @@ namespace Rune {
          * @brief Decrement the previously incremented counter, thus making the last acquired handle usable again.
          */
         void release_last_acquired() {
-            if (_counter > 0)
-                _counter--;
+            if (_counter > 0) _counter--;
         }
     };
-
 
     /**
      * @brief Defines the header and width of a column. Furthermore the ValueYeeter is a function that returns the
      *          string representation of the value that should be displayed in the column for a given resource.
      */
-    template<class Resource>
-    struct Column {
-        String                 header = "";
+    template <class Resource> struct Column {
+        String                      header = "";
         size_t                      width  = 0;
         Function<String(Resource*)> value_yeeter;
-
 
         /**
          * @brief Make a column named "Handle-Name" and width 56 that displays the Handle and Name properties of a
@@ -100,38 +88,28 @@ namespace Rune {
          * @return The column
          */
         static Column make_handle_column_table(size_t col_width) {
-            return {
-                    "Handle-Name",
-                    col_width,
-                    [](Resource* app) {
+            return {"Handle-Name", col_width, [](Resource* app) {
                         return String::format("{}-{}", app->handle, app->name);
-                    }
-            };
+                    }};
         }
     };
-
 
     /**
      * @brief The table formatter formats information about system resources in a tabular format. The columns are
      *          defined by the subsystems.
      */
-    template<class Resource>
-    class TableFormatter {
+    template <class Resource> class TableFormatter {
         String                       _name;
         LinkedList<Column<Resource>> _table_columns;
         size_t                       _table_width;
 
-
-        [[nodiscard]] String make_str_template(char fill, char align, size_t width) const {
+        [[nodiscard]]
+        String make_str_template(char fill, char align, size_t width) const {
             return String::format(":{}{}{}", fill, align, width);
         }
 
-
-    public:
-        TableFormatter() : _name(""), _table_columns(), _table_width(0) {
-
-        }
-
+      public:
+        TableFormatter() : _name(""), _table_columns(), _table_width(0) {}
 
         /**
          * @brief Configure the table formatter with a table header and column definitions.
@@ -141,15 +119,14 @@ namespace Rune {
         void configure(const String& name, const LinkedList<Column<Resource>>& table_columns) {
 
             if (_table_columns.size() == 0) {
-                _name         = name;
+                _name          = name;
                 _table_columns = move(table_columns);
 
                 _table_width = 2 * (_table_columns.size() - 1); // Number of spaces in between columns
-                for (auto& c: _table_columns)
+                for (auto& c : _table_columns)
                     _table_width += c.width;
             }
         }
-
 
         /**
          * @brief Write the formatted table with information about each resource returned by the iterator to the given
@@ -158,21 +135,17 @@ namespace Rune {
          * @param iterator
          */
         void dump(const SharedPointer<TextStream>& stream, const Function<Resource*()>& iterator) const {
-            if (!stream->is_write_supported())
-                return;
+            if (!stream->is_write_supported()) return;
 
             // Write a divider with the resource table name
-            stream->write_formatted(
-                    String("{") + make_str_template('-', '^', _table_width) + "}\n",
-                    String::format(" {} Table ", _name)
-            );
+            stream->write_formatted(String("{") + make_str_template('-', '^', _table_width) + "}\n",
+                                    String::format(" {} Table ", _name));
 
             // Write the column header names
             for (size_t i = 0; i < _table_columns.size(); i++) {
                 auto* tc = _table_columns[i];
                 stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}", tc->header);
-                if (i < _table_columns.size() - 1)
-                    stream->write("  ");
+                if (i < _table_columns.size() - 1) stream->write("  ");
             }
             stream->write('\n');
 
@@ -186,18 +159,15 @@ namespace Rune {
             while (curr) {
                 for (size_t i = 0; i < _table_columns.size(); i++) {
                     auto* tc = _table_columns[i];
-                    stream->write_formatted(
-                            String("{") + make_str_template(' ', '<', tc->width) + "}",
-                            tc->value_yeeter(curr)
-                    );
-                    if (i < _table_columns.size() - 1)
-                        stream->write("  ");
+                    stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}",
+                                            tc->value_yeeter(curr));
+                    if (i < _table_columns.size() - 1) stream->write("  ");
                 }
                 stream->write('\n');
                 curr = iterator();
             }
         }
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_RESOURCE_H
+#endif // RUNEOS_RESOURCE_H

@@ -17,9 +17,7 @@
 #ifndef RUNEOS_FRAMEBUFFER_H
 #define RUNEOS_FRAMEBUFFER_H
 
-
 #include <Ember/Ember.h>
-
 
 namespace Rune {
 
@@ -28,13 +26,12 @@ namespace Rune {
      */
     struct BitMapFont {
         const char* name;
-        U32 number_of_glyphs;
-        U32 glyph_size;
-        U32 pixel_height;
-        U32 pixel_width;
-        U8* glyphs;
+        U32         number_of_glyphs;
+        U32         glyph_size;
+        U32         pixel_height;
+        U32         pixel_width;
+        U8*         glyphs;
     };
-
 
     /**
      * @brief An RGBA pixel.
@@ -45,13 +42,10 @@ namespace Rune {
         U8 blue  = 0;
         U8 alpha = 0;
 
-
         bool operator==(const Pixel& o) const;
-
 
         bool operator!=(const Pixel& o) const;
     };
-
 
     /**
      * @brief 2D position in the frame buffer.
@@ -61,25 +55,22 @@ namespace Rune {
         U32 y;
     };
 
-
     /**
      * @brief Common pixel colors.
      */
     namespace Pixie {
-        constexpr Pixel BLACK = { 0, 0, 0, 0 };
-        constexpr Pixel WHITE = { 255, 255, 255, 0 };
-        constexpr Pixel RED   = { 255, 0, 0, 0 };
-        constexpr Pixel GREEN = { 0, 255, 0, 0 };
-        constexpr Pixel BLUE  = { 0, 0, 255, 0 };
+        constexpr Pixel BLACK = {0, 0, 0, 0};
+        constexpr Pixel WHITE = {255, 255, 255, 0};
+        constexpr Pixel RED   = {255, 0, 0, 0};
+        constexpr Pixel GREEN = {0, 255, 0, 0};
+        constexpr Pixel BLUE  = {0, 0, 255, 0};
 
-
-        constexpr Pixel VSCODE_CYAN   = { 17, 168, 205, 0 };
-        constexpr Pixel VSCODE_BLUE   = { 36, 114, 200, 0 };
-        constexpr Pixel VSCODE_YELLOW = { 229, 229, 16, 0 };
-        constexpr Pixel VSCODE_WHITE  = { 229, 229, 229, 0 };
-        constexpr Pixel VSCODE_RED    = { 205, 49, 49, 0 };
-    }
-
+        constexpr Pixel VSCODE_CYAN   = {17, 168, 205, 0};
+        constexpr Pixel VSCODE_BLUE   = {36, 114, 200, 0};
+        constexpr Pixel VSCODE_YELLOW = {229, 229, 16, 0};
+        constexpr Pixel VSCODE_WHITE  = {229, 229, 229, 0};
+        constexpr Pixel VSCODE_RED    = {205, 49, 49, 0};
+    } // namespace Pixie
 
     /**
      * @brief A frame buffer implementation which provides basic glyph rendering.
@@ -87,7 +78,7 @@ namespace Rune {
     class FrameBuffer {
         static constexpr U8 BITS_PER_TYPE = 8;
 
-        U8* _address = nullptr;
+        U8* _address         = nullptr;
         U64 _width           = 0;
         U64 _height          = 0;
         U64 _pitch           = 0;
@@ -99,87 +90,78 @@ namespace Rune {
 
         static FrameBuffer _instance;
 
-        void draw_perpendicular(
-                int x0,
-                int y0,
-                int threshold,
-                int e_diag,
-                int e_square,
-                int dx,
-                int dy,
-                int e_init,
-                double width,
-                int w_init,
-                bool sy,
-                U8* raw_pixel
-                ) const;
+        void draw_perpendicular(int    x0,
+                                int    y0,
+                                int    threshold,
+                                int    e_diag,
+                                int    e_square,
+                                int    dx,
+                                int    dy,
+                                int    e_init,
+                                double width,
+                                int    w_init,
+                                bool   sy,
+                                U8*    raw_pixel) const;
 
-
-    public:
+      public:
         FrameBuffer();
 
-
-        FrameBuffer(
-                U8* address,
-                U64 width,
-                U64 height,
-                U64 pitch,
-                U16 bpp,
-                U8 red_shift,
-                U8 green_shift,
-                U8 blue_shift
-        );
-
+        FrameBuffer(U8* address,
+                    U64 width,
+                    U64 height,
+                    U64 pitch,
+                    U16 bpp,
+                    U8  red_shift,
+                    U8  green_shift,
+                    U8  blue_shift);
 
         /**
-         * Set the framebuffer for global access by other kernel modules. 
+         * Set the framebuffer for global access by other kernel modules.
          *
          * @param frame_buffer Bootloader provided framebuffer.
          */
         static void set_global(const FrameBuffer& frame_buffer);
 
-
         /**
-         * 
+         *
          * @return The bootloader provided framebuffer.
          */
         static FrameBuffer* get_global();
 
-
         /**
-         * 
+         *
          * @return Pointer to the framebuffer.
          */
-        [[nodiscard]] U8* get_address() const;
-
+        [[nodiscard]]
+        U8* get_address() const;
 
         /**
-         * 
+         *
          * @return Number of pixels in a line.
          */
-        [[nodiscard]] U64 get_width() const;
-
+        [[nodiscard]]
+        U64 get_width() const;
 
         /**
-         * 
+         *
          * @return Number of pixels in a column.
          */
-        [[nodiscard]] U64 get_height() const;
-
+        [[nodiscard]]
+        U64 get_height() const;
 
         /**
-         * 
+         *
          * @return Number of bytes in a line.
          */
-        [[nodiscard]] U64 get_pitch() const;
-
+        [[nodiscard]]
+        U64 get_pitch() const;
 
         /**
-         * 
+         *
          * @return Number of bits in a pixel.
          */
-        [[nodiscard]] U16 get_bits_per_pixel() const;
-
+        [[nodiscard]]
+        U16 get_bits_per_pixel() const;
 
         /**
          * Convert the pixel to it's physical layout in memory, e.g. rgb or rbg.
@@ -188,7 +170,6 @@ namespace Rune {
          * @param raw_pixel_out Output buffer for the physical pixel.
          */
         void to_raw_pixel(const Pixel& pixel, U8 raw_pixel_out[4]) const;
-
 
         /**
          * Draw the bitmap font glyph of a character.
@@ -202,9 +183,8 @@ namespace Rune {
          */
         void draw_glyph(const BitMapFont* font, U32 x, U32 y, Pixel bg_color, Pixel fg_color, char ch) const;
 
-
         void draw_line(Coord2D start, Coord2D end, Pixel color, double thickness) const;
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_FRAMEBUFFER_H
+#endif // RUNEOS_FRAMEBUFFER_H

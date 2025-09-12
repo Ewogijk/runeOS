@@ -17,9 +17,7 @@
 #ifndef RUNEOS_PIC_H
 #define RUNEOS_PIC_H
 
-
 #include <KernelRuntime/String.h>
-
 
 namespace Rune::CPU {
 
@@ -27,10 +25,8 @@ namespace Rune::CPU {
      * The PIC driver initializes PIC devices that forwards IRQs to the CPU.
      */
     class PICDriver {
-    public:
-
+      public:
         virtual ~PICDriver() = default;
-
 
         /**
          *
@@ -38,13 +34,11 @@ namespace Rune::CPU {
          */
         virtual String get_name() = 0;
 
-
         /**
          * @brief The offset into the interrupt vector table where the first IRQ line starts.
          * @return The IRQ line offset.
          */
         virtual U8 get_irq_line_offset() = 0;
-
 
         /**
          * @brief Check if an IRQ on the line has been raised.
@@ -56,14 +50,12 @@ namespace Rune::CPU {
          */
         virtual bool is_irq_requested(U8 irq_line) = 0;
 
-
         /**
          * @brief Check if an IRQ on the line was forwarded to the CPU and is currently being serviced by it.
          * @param irq_line
          * @return True: An IRQ is currently being handle by the CPU, False: The IRQ is ot handled by the CPU.
          */
         virtual bool is_irq_serviced(U8 irq_line) = 0;
-
 
         /**
          * @brief Check if IRQs on the line are masked, if an IRQ is masked it will be ignored by the PIC.
@@ -72,14 +64,12 @@ namespace Rune::CPU {
          */
         virtual bool is_irq_masked(U8 irq_line) = 0;
 
-
         /**
          * @brief Initialize the PIC device with all IRQs being masked initially.
          * @return True: The PIC is ready service IRQs, False: The PIC device could not be initialized, IRQs are not
          *          available.
          */
         virtual bool start() = 0;
-
 
         /**
          * mask a requested irq line so that no IRQs will be send anymore until they are unmasked.
@@ -88,7 +78,6 @@ namespace Rune::CPU {
          */
         virtual void mask(U8 irq_line) = 0;
 
-
         /**
          * Unmask a requested irq line so that IRQs will be send until they are masked.
          *
@@ -96,12 +85,10 @@ namespace Rune::CPU {
          */
         virtual void clear_mask(U8 irq_line) = 0;
 
-
         /**
          * mask all irq lines.
          */
         virtual void mask_all() = 0;
-
 
         /**
          * Send an end of interrupt signal to the PIC.
@@ -109,8 +96,7 @@ namespace Rune::CPU {
          * @param irq_line IRQ line.
          */
         virtual void send_end_of_interrupt(U8 irq_line) = 0;
-
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_PIC_H
+#endif // RUNEOS_PIC_H

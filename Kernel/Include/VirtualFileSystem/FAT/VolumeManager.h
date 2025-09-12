@@ -17,12 +17,10 @@
 #ifndef RUNEOS_VOLUMEMANAGER_H
 #define RUNEOS_VOLUMEMANAGER_H
 
-
 #include <Device/AHCI/AHCI.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
 #include <VirtualFileSystem/FAT/FATEngine.h>
-
 
 namespace Rune::VFS {
 
@@ -31,8 +29,7 @@ namespace Rune::VFS {
      */
     class VolumeManager {
         SharedPointer<FATEngine> _fat_engine;
-        Device::AHCIDriver       & _ahci_driver;
-
+        Device::AHCIDriver&      _ahci_driver;
 
         /**
          *
@@ -43,22 +40,19 @@ namespace Rune::VFS {
          */
         size_t data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const;
 
-
-    public:
-
+      public:
         explicit VolumeManager(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver);
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          FAT Region Manipulation
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          *
          * @return The FAT EOF marker.
          */
-        [[nodiscard]] U32 fat_get_eof_marker() const;
-
+        [[nodiscard]]
+        U32 fat_get_eof_marker() const;
 
         /**
          * Read the FAT entry of a cluster.
@@ -69,8 +63,8 @@ namespace Rune::VFS {
          *
          * @return FAT entry for the given cluster.
          */
-        [[nodiscard]] U32 fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const;
-
+        [[nodiscard]]
+        U32 fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const;
 
         /**
          * Update the FAT entry of a cluster.
@@ -84,7 +78,6 @@ namespace Rune::VFS {
          */
         bool fat_write(U16 storage_dev, BIOSParameterBlock* bpb, size_t cluster, U32 fat_value);
 
-
         /**
          * Search the FAT for a free cluster. The first free encountered cluster will be returned.
          *
@@ -95,18 +88,16 @@ namespace Rune::VFS {
          */
         U32 fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Data Region Manipulation
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          *
          * @return Maximum number of cluster a storage can have.
          */
-        [[nodiscard]] U32 get_max_cluster_count() const;
-
+        [[nodiscard]]
+        U32 get_max_cluster_count() const;
 
         /**
          * Read a single data cluster, that is a cluster after the reserved and FAT parts of the storage.
@@ -120,7 +111,6 @@ namespace Rune::VFS {
          */
         bool data_cluster_read(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster) const;
 
-
         /**
          * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of the storage.
          *
@@ -133,6 +123,6 @@ namespace Rune::VFS {
          */
         bool data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster);
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_VOLUMEMANAGER_H
+#endif // RUNEOS_VOLUMEMANAGER_H

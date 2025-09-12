@@ -17,53 +17,44 @@
 #ifndef RUNEOS_MUTEX_H
 #define RUNEOS_MUTEX_H
 
-
 #include <CPU/Threading/Scheduler.h>
-
 
 namespace Rune::CPU {
     /**
      * A recursive mutex implementation.
      */
     class Mutex {
-        Scheduler* _scheduler;
+        Scheduler*            _scheduler;
         SharedPointer<Logger> _logger;
-
 
         SharedPointer<Thread>             _owner;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
-
         void transfer_ownership();
 
-
-    public:
-
+      public:
         // Per requirement of the "Column::make_handle_column_table" these properties must be publicly accessible
         U16    handle;
         String name;
 
-
         // Per definition of the "ResourceTable" a default constructor must be provided
         Mutex();
 
-
         Mutex(Scheduler* scheduler, SharedPointer<Logger> logger, String name);
-
 
         /**
          * @brief The thread that is currently locking the mutex.
          * @return Owner thread of the mutex or nullptr if the mutex is not locked.
          */
-        [[nodiscard]] Thread* get_owner() const;
-
+        [[nodiscard]]
+        Thread* get_owner() const;
 
         /**
          * @brief All threads that are waiting for the mutex to be unlocked.
          * @return A copy of the mutexes wait queue.
          */
-        [[nodiscard]] LinkedList<Thread*> get_waiting_threads() const;
-
+        [[nodiscard]]
+        LinkedList<Thread*> get_waiting_threads() const;
 
         /**
          * @brief Try to lock the mutex.
@@ -74,13 +65,11 @@ namespace Rune::CPU {
          */
         void lock();
 
-
         /**
          * Unlock the mutex if the calling thread is the owner of the mutex then ownership will be transferred to the
          * next thread in the waiting queue and the thread is woken up. Otherwise nothing will happen.
          */
         void unlock();
-
 
         /**
          * @brief Search for a thread with the given ID in the waiting queue and remove it if found.
@@ -99,6 +88,6 @@ namespace Rune::CPU {
          */
         bool remove_waiting_thread(int t_id);
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_MUTEX_H
+#endif // RUNEOS_MUTEX_H

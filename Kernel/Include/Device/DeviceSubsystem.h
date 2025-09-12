@@ -17,7 +17,6 @@
 #ifndef RUNEOS_DEVICESUBSYSTEM_H
 #define RUNEOS_DEVICESUBSYSTEM_H
 
-
 #include <KernelRuntime/Subsystem.h>
 
 #include <Memory/MemorySubsystem.h>
@@ -27,16 +26,13 @@
 #include <Device/AHCI/AHCI.h>
 #include <Device/Keyboard/PS2Keyboard.h>
 
-
 namespace Rune::Device {
     class DeviceSubsystem : public Subsystem {
         UniquePointer<AHCIDriver>      _ahci_driver;
         SharedPointer<VirtualKeyboard> _keyboard;
 
-    public:
-
+      public:
         explicit DeviceSubsystem();
-
 
         ~DeviceSubsystem() override = default;
 
@@ -44,15 +40,12 @@ namespace Rune::Device {
         //                                      KernelSubsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Device specific functions
@@ -60,13 +53,10 @@ namespace Rune::Device {
 
         void set_ahci_driver(UniquePointer<AHCIDriver> ahci_driver);
 
-
         AHCIDriver& get_ahic_driver();
-
 
         SharedPointer<VirtualKeyboard> get_keyboard();
     };
-}
+} // namespace Rune::Device
 
-
-#endif //RUNEOS_DEVICESUBSYSTEM_H
+#endif // RUNEOS_DEVICESUBSYSTEM_H

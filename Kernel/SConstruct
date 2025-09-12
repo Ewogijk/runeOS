@@ -110,6 +110,7 @@ target_env['CXXFLAGS'] = [
     '-mno-red-zone',
     '-fno-use-cxa-atexit',  # Do not call destructors for global objects
     '-g',
+    '-mincoming-stack-boundary=3',
 ]
 
 # Linker flags

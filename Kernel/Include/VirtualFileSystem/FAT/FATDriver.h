@@ -17,15 +17,13 @@
 #ifndef RUNEOS_FATDRIVER_H
 #define RUNEOS_FATDRIVER_H
 
-
 #include <Device/AHCI/AHCI.h>
 
 #include <VirtualFileSystem/Driver.h>
 
-#include <VirtualFileSystem/FAT/FileEntryManager.h>
-#include <VirtualFileSystem/FAT/FATEngine.h>
 #include <VirtualFileSystem/FAT/FAT.h>
-
+#include <VirtualFileSystem/FAT/FATEngine.h>
+#include <VirtualFileSystem/FAT/FileEntryManager.h>
 
 namespace Rune::VFS {
 
@@ -36,105 +34,64 @@ namespace Rune::VFS {
         VolumeManager    _volume_manager;
         FileEntryManager _file_entry_manager;
 
-
         Device::AHCIDriver& _ahci_driver;
 
-
-        [[nodiscard]] SharedPointer<StorageDevRef> find_storage_dev_ref(U16 storage_dev) const;
-
+        [[nodiscard]]
+        SharedPointer<StorageDevRef> find_storage_dev_ref(U16 storage_dev) const;
 
         static U8 node_attributes_to_fat_file_attributes(U8 node_attr);
 
+        [[nodiscard]]
+        IOStatus exists(const SharedPointer<StorageDevRef>& md, const Path& path) const;
 
-        [[nodiscard]] IOStatus exists(
-                const SharedPointer<StorageDevRef>& md,
-                const Path& path
-        ) const;
+        IOStatus make_long_file_name_entries(const SharedPointer<StorageDevRef>& md,
+                                             const Path&                         path,
+                                             LinkedList<LocationAwareFileEntry>& out);
 
+        IOStatus create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
 
-        IOStatus make_long_file_name_entries(
-                const SharedPointer<StorageDevRef>& md,
-                const Path& path,
-                LinkedList<LocationAwareFileEntry>& out
-        );
+        IOStatus create_directory(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
 
+        IOStatus delete_file(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& file);
 
-        IOStatus create_file(
-                const SharedPointer<StorageDevRef>& md,
-                const Path& path,
-                U8 attributes
-        );
+        IOStatus
+        delete_directory(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& dir, const Path& path);
 
-
-        IOStatus create_directory(
-                const SharedPointer<StorageDevRef>& md,
-                const Path& path,
-                U8 attributes
-        );
-
-
-        IOStatus delete_file(
-                const SharedPointer<StorageDevRef>& md,
-                LocationAwareFileEntry& file
-        );
-
-
-        IOStatus delete_directory(
-                const SharedPointer<StorageDevRef>& md,
-                LocationAwareFileEntry& dir,
-                const Path& path
-        );
-
-
-    public:
+      public:
         explicit FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver);
-
 
         ~FATDriver() override = default;
 
-
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         FormatStatus format(U16 storage_dev) override;
 
-
         MountStatus mount(U16 storage_dev) override;
-
 
         MountStatus unmount(U16 storage_dev) override;
 
-
-        [[nodiscard]] bool is_valid_file_path(const Path& path) const override;
-
-
+        [[nodiscard]]
+        bool is_valid_file_path(const Path& path) const override;
 
         IOStatus create(U16 storage_dev, const Path& path, U8 attributes) override;
 
-
-        IOStatus open(
-                U16 storage_dev,
-                const Path& mount_point,
-                const Path& path,
-                Ember::IOMode node_io_mode,
-                Function<void()> on_close,
-                SharedPointer<Node>& out
-        ) override;
-
+        IOStatus open(U16                  storage_dev,
+                      const Path&          mount_point,
+                      const Path&          path,
+                      Ember::IOMode        node_io_mode,
+                      Function<void()>     on_close,
+                      SharedPointer<Node>& out) override;
 
         IOStatus find_node(U16 storage_dev, const Path& path, NodeInfo& out) override;
 
-
         IOStatus delete_node(U16 storage_dev, const Path& path) override;
 
-
-        IOStatus open_directory_stream(
-                U16 storage_dev,
-                const Path& path,
-                const Function<void()>& on_close,
-                SharedPointer<DirectoryStream>& out
-        ) override;
+        IOStatus open_directory_stream(U16                             storage_dev,
+                                       const Path&                     path,
+                                       const Function<void()>&         on_close,
+                                       SharedPointer<DirectoryStream>& out) override;
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FATDRIVER_H
+#endif // RUNEOS_FATDRIVER_H

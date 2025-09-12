@@ -17,7 +17,6 @@
 #ifndef RUNEOS_MEMORYMANAGEMENT_H
 #define RUNEOS_MEMORYMANAGEMENT_H
 
-
 #include <Ember/Ember.h>
 
 #include <SystemCall/KernelGuardian.h>
@@ -26,17 +25,15 @@
 
 #include <App/AppSubsystem.h>
 
-
 namespace Rune::SystemCall {
     /**
      * @brief The context for all memory management system calls.
      */
     struct MemorySystemCallContext {
-        KernelGuardian   * k_guard    = nullptr;
+        KernelGuardian*          k_guard    = nullptr;
         Memory::MemorySubsystem* mem_subsys = nullptr;
-        App::AppSubsystem   * app_subsys = nullptr;
+        App::AppSubsystem*       app_subsys = nullptr;
     };
-
 
     /**
      * @brief Gets the size of a virtual page in bytes.
@@ -44,7 +41,6 @@ namespace Rune::SystemCall {
      * @return Page size.
      */
     Ember::StatusCode memory_get_page_size(const void* sys_call_ctx);
-
 
     /**
      * If v_addr is zero then the location of the memory region will be chosen by the kernel. When v_addr is >0 then the
@@ -68,7 +64,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection);
 
-
     /**
      * If v_addr is not page aligned it will be aligned to a page boundary.
      *
@@ -81,6 +76,6 @@ namespace Rune::SystemCall {
      *          FAULT:   The memory free failed.
      */
     Ember::StatusCode memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages);
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_MEMORYMANAGEMENT_H
+#endif // RUNEOS_MEMORYMANAGEMENT_H

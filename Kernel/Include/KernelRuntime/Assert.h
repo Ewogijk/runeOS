@@ -15,10 +15,9 @@
 #ifndef RUNEOS_ASSERT_H
 #define RUNEOS_ASSERT_H
 
-
-#include <KernelRuntime/String.h>
-#include <KernelRuntime/Stream.h>
 #include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Stream.h>
+#include <KernelRuntime/String.h>
 
 namespace Rune {
     /**
@@ -26,7 +25,6 @@ namespace Rune {
      * @param stream Text stream for assertion error messages.
      */
     void assert_configure(const SharedPointer<TextStream>& stream);
-
 
     /**
      * Assert that the condition is true, if not log given message and go into an endless loop.
@@ -36,13 +34,12 @@ namespace Rune {
      */
     void assert(bool condition, const String& file, const String& message);
 
-
     /**
      * Assert that the condition is true, if not go into an endless loop.
      * @param condition Condition that must be true.
      * @param file      Name of the source file.
      */
     void assert(bool condition, const String& file);
-}
+} // namespace Rune
 
-#endif //RUNEOS_ASSERT_H
+#endif // RUNEOS_ASSERT_H

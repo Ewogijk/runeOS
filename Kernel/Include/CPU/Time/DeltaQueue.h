@@ -17,19 +17,16 @@
 #ifndef RUNEOS_DELTAQUEUE_H
 #define RUNEOS_DELTAQUEUE_H
 
-
 #include <CPU/CPU.h>
-
 
 namespace Rune::CPU {
 
     struct DQNode {
         SharedPointer<Thread> sleeping_thread = SharedPointer<Thread>(nullptr);
-        DQNode* prev = nullptr;
-        DQNode* next = nullptr;
-        U64 wake_time = 0;
+        DQNode*               prev            = nullptr;
+        DQNode*               next            = nullptr;
+        U64                   wake_time       = 0;
     };
-
 
     /**
      * Delta queue implementation that sorts threads by their wake time. Threads with earlier wake time than others will
@@ -39,29 +36,24 @@ namespace Rune::CPU {
         DQNode* _first;
         DQNode* _last;
 
-    public:
-
+      public:
         explicit DeltaQueue();
 
-
-        [[nodiscard]] DQNode* first() const;
-
+        [[nodiscard]]
+        DQNode* first() const;
 
         // Decrement the wake time of the first thread in the queue.
         void update_wake_time(U64 time_decrement);
 
-
         // Sort the thread into the queue according to the given wake time.
         void enqueue(const SharedPointer<Thread>& thread, U64 wake_time);
-
 
         // Dequeue the first thread if it has a wake time of zero.
         SharedPointer<Thread> dequeue();
 
-
         // Remove a waiting thread at any position from the queue.
         bool remove_waiting_thread(int t_id);
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_DELTAQUEUE_H
+#endif // RUNEOS_DELTAQUEUE_H

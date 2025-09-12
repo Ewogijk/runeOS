@@ -17,10 +17,8 @@
 #ifndef RUNEOS_PATH_H
 #define RUNEOS_PATH_H
 
-
 #include <KernelRuntime/Collection.h>
 #include <KernelRuntime/String.h>
-
 
 namespace Rune {
 
@@ -32,7 +30,7 @@ namespace Rune {
 
         String _path;
 
-    public:
+      public:
         /**
          * @brief The root directory is "/".
          */
@@ -43,12 +41,9 @@ namespace Rune {
          */
         static Path DOT;
 
-
         Path();
 
-
         explicit Path(const String& path);
-
 
         /**
          * @brief Get the path separator.
@@ -56,92 +51,90 @@ namespace Rune {
          */
         static char get_path_separator();
 
-
         /**
          *
          * @return The name of the file with file extension.
          */
-        [[nodiscard]] String get_file_name() const;
-
+        [[nodiscard]]
+        String get_file_name() const;
 
         /**
          *
          * @return The name of the file without the file extension.
          */
-        [[nodiscard]] String get_file_name_without_extension() const;
-
+        [[nodiscard]]
+        String get_file_name_without_extension() const;
 
         /**
          *
          * @return The file extension without the dot.
          */
-        [[nodiscard]] String get_file_extension() const;
+        [[nodiscard]]
+        String get_file_extension() const;
 
-
-         /**
-          * The most top level parent of each absolute path is "/" and of an relative path is "." denoting the current
-          * directory which is the working directory.
-          *
-          * <p>
-          *  The parent of "/" will always return "/" itself, the parent of "." is again "." and lastly given an empty
-          *  path "" it is assumed that "." is its parent.
-          * </p>
-          *
-          * @brief Get the parent of the path.
-          * @return The parent of the path e.g. for /a/b the parent is /a.
-          */
-        [[nodiscard]] Path get_parent() const;
-
+        /**
+         * The most top level parent of each absolute path is "/" and of an relative path is "." denoting the current
+         * directory which is the working directory.
+         *
+         * <p>
+         *  The parent of "/" will always return "/" itself, the parent of "." is again "." and lastly given an empty
+         *  path "" it is assumed that "." is its parent.
+         * </p>
+         *
+         * @brief Get the parent of the path.
+         * @return The parent of the path e.g. for /a/b the parent is /a.
+         */
+        [[nodiscard]]
+        Path get_parent() const;
 
         /**
          *
          * @return True if this path is the root directory, meaning "/".
          */
-        [[nodiscard]] bool is_root() const;
-
+        [[nodiscard]]
+        bool is_root() const;
 
         /**
          *
          * @return True if the path is absolute, e.g. /a/b.
          */
-        [[nodiscard]] bool is_absolute() const;
-
+        [[nodiscard]]
+        bool is_absolute() const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         // Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         /**
          * Try to get the common parts of this path and the given path. E.g. for /a/b/c and /a/b/d
          * the common path is /a/b.
          *
-         * @param path 
+         * @param path
          *
          * @return Common path of this and the other path.
          */
-        [[nodiscard]] Path common_path(const Path& path) const;
-
+        [[nodiscard]]
+        Path common_path(const Path& path) const;
 
         /**
          * A new path describing this path relative to the given path. The new path is still an absolute path assuming
          * the given path is the root path of another filesystem. E.g. /a/b/c/d relative to /a/b results in the path
          * /c/d.
-         * 
+         *
          * @param path
-         * 
+         *
          * @return This path relative to the given path.
          */
-        [[nodiscard]] Path relative_to(const Path& path) const;
-
+        [[nodiscard]]
+        Path relative_to(const Path& path) const;
 
         /**
          * split this path along the unix path seperator.
-         * 
+         *
          * @return List of path components.
          */
-        [[nodiscard]] LinkedList <String> split() const;
-
+        [[nodiscard]]
+        LinkedList<String> split() const;
 
         /**
          * append the given part to this path. E.g. /a append with b will give the path /a/b.
@@ -155,8 +148,8 @@ namespace Rune {
          *
          * @return A new path with the part appended.
          */
-        [[nodiscard]] Path append(const String& part) const;
-
+        [[nodiscard]]
+        Path append(const String& part) const;
 
         /**
          * Dot and dotdot entries are also expanded.
@@ -165,14 +158,14 @@ namespace Rune {
          * @param working_dir Current working directory.
          * @return An absolute path.
          */
-        [[nodiscard]] Path resolve(const Path& working_dir) const;
-
+        [[nodiscard]]
+        Path resolve(const Path& working_dir) const;
 
         /**
          * @return This path as a string.
          */
-        [[nodiscard]] String to_string() const;
-
+        [[nodiscard]]
+        String to_string() const;
 
         /**
          * @see append(constString&) const
@@ -183,7 +176,6 @@ namespace Rune {
          */
         Path operator/(const String& part) const;
 
-
         /**
          * @see append(constString&) const
          *
@@ -192,7 +184,6 @@ namespace Rune {
          * @return
          */
         Path operator/(String&& part) const;
-
 
         /**
          * @see append(constString&) const
@@ -203,7 +194,6 @@ namespace Rune {
          */
         Path operator/(const Path& part) const;
 
-
         /**
          * @see append(constString&) const
          *
@@ -212,7 +202,6 @@ namespace Rune {
          * @return
          */
         Path& operator/=(const String& part);
-
 
         /**
          * @see append(constString&) const
@@ -223,7 +212,6 @@ namespace Rune {
          */
         Path& operator/=(String&& part);
 
-
         /**
          * @see append(constString&) const
          *
@@ -233,7 +221,6 @@ namespace Rune {
          */
         Path& operator/=(const Path& part);
 
-
         /**
          *
          * @param a
@@ -242,7 +229,6 @@ namespace Rune {
          * @return True: The path string of the two paths is equal. False: Not.
          */
         friend bool operator==(const Path& a, const Path& b);
-
 
         /**
          *
@@ -254,21 +240,15 @@ namespace Rune {
         friend bool operator!=(const Path& a, const Path& b);
     };
 
-    template<>
-    struct Hash<Path> {
+    template <> struct Hash<Path> {
         Hash<String> str_hash;
-
 
         Hash& operator=(Hash&& o) = default;
 
-
         Hash& operator=(const Hash& o) = default;
 
-
-        size_t operator()(const Path& key) const {
-            return str_hash(key.to_string());
-        }
+        size_t operator()(const Path& key) const { return str_hash(key.to_string()); }
     };
-}
+} // namespace Rune
 
-#endif //RUNEOS_PATH_H
+#endif // RUNEOS_PATH_H

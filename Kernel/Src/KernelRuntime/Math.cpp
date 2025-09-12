@@ -16,22 +16,18 @@
 
 #include <KernelRuntime/Math.h>
 
-
 namespace Rune {
     double floor(const double num) {
-        if (num <= LONG_LONG_MIN || LONG_LONG_MAX <= num || num != num)
-            return num;
+        if (num <= LONG_LONG_MIN || LONG_LONG_MAX <= num || num != num) return num;
         const auto ll = static_cast<long long>(num);
         const auto d  = static_cast<double>(ll);
         return d >= 0 ? d : d - 1;
     }
 
-
     double ceil(const double num) {
-        if (num <= LONG_LONG_MIN || LONG_LONG_MAX <= num || num != num)
-            return num;
+        if (num <= LONG_LONG_MIN || LONG_LONG_MAX <= num || num != num) return num;
         const auto ll = static_cast<long long>(num);
         const auto d  = static_cast<double>(ll);
         return (d >= 0 && num != d) ? d + 1 : d;
     }
-}
+} // namespace Rune

@@ -16,8 +16,8 @@
 #ifndef EMBER_VFSBITS_H
 #define EMBER_VFSBITS_H
 
-#include <Ember/Enum.h>
 #include <Ember/Ember.h>
+#include <Ember/Enum.h>
 
 namespace Ember {
 
@@ -32,15 +32,14 @@ namespace Ember {
      *  <li>File:      The VFS node represents a file.</li>
      * <ul>
      */
-#define NODE_ATTRIBUTES(X)              \
-    X(NodeAttribute, READONLY, 0x01)    \
-    X(NodeAttribute, HIDDEN, 0x02)      \
-    X(NodeAttribute, SYSTEM, 0x04)      \
-    X(NodeAttribute, DIRECTORY, 0x08)   \
+#define NODE_ATTRIBUTES(X)                                                                                             \
+    X(NodeAttribute, READONLY, 0x01)                                                                                   \
+    X(NodeAttribute, HIDDEN, 0x02)                                                                                     \
+    X(NodeAttribute, SYSTEM, 0x04)                                                                                     \
+    X(NodeAttribute, DIRECTORY, 0x08)                                                                                  \
     X(NodeAttribute, FILE, 0x10)
 
-    DECLARE_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) //NOLINT
-
+    DECLARE_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) // NOLINT
 
     /**
      * @brief The mode of operation for a node.
@@ -50,13 +49,12 @@ namespace Ember {
      *  <li>append: Read and write allowed, start at end of node</li>
      * </ul>
      */
-#define IO_MODES(X)         \
-    X(IOMode, READ, 0x1)    \
-    X(IOMode, WRITE, 0x2)   \
+#define IO_MODES(X)                                                                                                    \
+    X(IOMode, READ, 0x1)                                                                                               \
+    X(IOMode, WRITE, 0x2)                                                                                              \
     X(IOMode, APPEND, 0x3)
 
-    DECLARE_ENUM(IOMode, IO_MODES, 0x0) //NOLINT
-
+    DECLARE_ENUM(IOMode, IO_MODES, 0x0) // NOLINT
 
     /**
      * @brief Seek modes describe how the new cursor position will be calculated.
@@ -66,37 +64,36 @@ namespace Ember {
      *  <li>END: From the end of the file -> cursor = file_size + offset</li>
      * </ul>
      */
-#define SEEK_MODE(X)           \
-    X(SeekMode, BEGIN, 0x1)    \
-    X(SeekMode, CURSOR, 0x2)   \
+#define SEEK_MODE(X)                                                                                                   \
+    X(SeekMode, BEGIN, 0x1)                                                                                            \
+    X(SeekMode, CURSOR, 0x2)                                                                                           \
     X(SeekMode, END, 0x3)
 
     DECLARE_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT
-
 
     /**
      * @brief General information about a node.
      */
     struct NodeInfo {
-        char   node_path[STRING_SIZE_LIMIT] = { };
-        size_t size           = 0;
-        U8     attributes     = 0;
+        char   node_path[STRING_SIZE_LIMIT] = {};
+        size_t size                         = 0;
+        U8     attributes                   = 0;
 
+        [[nodiscard]]
+        bool is_readonly() const;
 
-        [[nodiscard]] bool is_readonly() const;
+        [[nodiscard]]
+        bool is_hidden() const;
 
+        [[nodiscard]]
+        bool is_system_node() const;
 
-        [[nodiscard]] bool is_hidden() const;
+        [[nodiscard]]
+        bool is_directory() const;
 
-
-        [[nodiscard]] bool is_system_node() const;
-
-
-        [[nodiscard]] bool is_directory() const;
-
-
-        [[nodiscard]] bool is_file() const;
+        [[nodiscard]]
+        bool is_file() const;
     };
-}
+} // namespace Ember
 
-#endif //EMBER_VFSBITS_H
+#endif // EMBER_VFSBITS_H

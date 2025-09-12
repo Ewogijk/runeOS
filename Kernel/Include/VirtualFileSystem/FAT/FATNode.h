@@ -17,23 +17,21 @@
 #ifndef RUNEOS_FATNODE_H
 #define RUNEOS_FATNODE_H
 
-
 #include <KernelRuntime/Path.h>
 
 #include <VirtualFileSystem/Node.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
-#include <VirtualFileSystem/FAT/VolumeManager.h>
 #include <VirtualFileSystem/FAT/FileEntryManager.h>
-
+#include <VirtualFileSystem/FAT/VolumeManager.h>
 
 namespace Rune::VFS {
     class FATNode : public Node {
-        Path                   _path;
-        Ember::IOMode             _node_io_mode;
-        LocationAwareFileEntry _file_entry;
-        VolumeManager   & _volume_manager;
-        FileEntryManager& _file_entry_manager;
+        Path                         _path;
+        Ember::IOMode                _node_io_mode;
+        LocationAwareFileEntry       _file_entry;
+        VolumeManager&               _volume_manager;
+        FileEntryManager&            _file_entry_manager;
         SharedPointer<StorageDevRef> _mounted_storage;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -46,54 +44,45 @@ namespace Rune::VFS {
         // Byte inside the current cluster the cursor is pointing at
         U32 _cluster_offset;
 
-
         void init_file_cursor();
 
+        [[nodiscard]]
+        U32 processed_bytes() const;
 
-        [[nodiscard]] U32 processed_bytes() const;
-
-
-    public:
-        FATNode(
-                Function<void()> on_close,
-                Path path,
-                Ember::IOMode node_io_mode,
-                LocationAwareFileEntry file_entry,
-                VolumeManager& volume_manager,
-                FileEntryManager& file_entry_manager,
-                SharedPointer<StorageDevRef> mounted_storage
-        );
-
+      public:
+        FATNode(Function<void()>             on_close,
+                Path                         path,
+                Ember::IOMode                node_io_mode,
+                LocationAwareFileEntry       file_entry,
+                VolumeManager&               volume_manager,
+                FileEntryManager&            file_entry_manager,
+                SharedPointer<StorageDevRef> mounted_storage);
 
         ~FATNode() override = default;
 
+        [[nodiscard]]
+        Path get_node_path() const override;
 
-        [[nodiscard]] Path get_node_path() const override;
+        [[nodiscard]]
+        Ember::IOMode get_io_mode() const override;
 
+        [[nodiscard]]
+        size_t get_size() const override;
 
-        [[nodiscard]] Ember::IOMode get_io_mode() const override;
-
-
-        [[nodiscard]] size_t get_size() const override;
-
-
-        [[nodiscard]] bool has_more() const override;
-
+        [[nodiscard]]
+        bool has_more() const override;
 
         NodeIOResult read(void* buf, size_t buf_size) override;
 
-
         NodeIOResult write(void* buf, size_t buf_size) override;
-
 
         NodeIOResult seek(Ember::SeekMode seek_mode, int offset) override;
 
-
-        [[nodiscard]] bool has_attribute(Ember::NodeAttribute f_attr) const override;
-
+        [[nodiscard]]
+        bool has_attribute(Ember::NodeAttribute f_attr) const override;
 
         bool set_attribute(Ember::NodeAttribute n_attr, bool val) override;
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FATNODE_H
+#endif // RUNEOS_FATNODE_H
