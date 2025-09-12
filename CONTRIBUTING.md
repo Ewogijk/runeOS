@@ -94,6 +94,12 @@ sudo ./llvm.sh 19
 sudo apt install clang-format-19
 ```
 
+`clang-tidy` does the linting, get the latest release from their GitHub repo:
+```shell
+sudo wget -qO /usr/local/bin/clang-tidy https://github.com/cpp-linter/clang-tools-static-binaries/releases/latest/download/clang-tidy-20_linux-amd64
+sudo chmod a+x /usr/local/bin/clang-tidy
+```
+
 Then install the python dependencies, it is recommended use a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
@@ -270,3 +276,11 @@ Naming conventions are not covered by clang-format, please adhere to the followi
 - Public member variables/Parameters/Local variables: snake_case
 - Private member variables: _snake_case - Note the leading underscore e.g. _my_private_variable
 - Global constants/Macros: SCREAMING_SNAKE_CASE
+
+A linter ensures high quality by pointing out common errors, we use `clang-tidy` to do that. Run it with the following
+command:
+```shell
+clang-tidy SRC_FILE -- -std=c++20 -IKERNEL_HEADERS -ISTD_LIB_HEADERS
+```
+
+Provide the `KERNEL_HEADERS` and `STD_LIB_HEADERS` so clang-tidy is able to find the includes in your `SRC_FILE`.
