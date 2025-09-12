@@ -17,13 +17,11 @@
 #ifndef RUNEOS_CPU_H
 #define RUNEOS_CPU_H
 
-
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 #include <KernelRuntime/String.h>
 
 #include <KernelRuntime/Memory.h>
-
 
 namespace Rune::CPU {
     // Size of a register
@@ -38,7 +36,6 @@ namespace Rune::CPU {
     //
     // Defined here because they are needed by the "Core" class
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     struct StartInfo;
 
@@ -59,16 +56,14 @@ namespace Rune::CPU {
      *  <li>Terminated: The thread has finished execution and but it's resources are not freed yet.</li>
      * </ul>
      */
-#define THREAD_STATES(X)                       \
-            X(ThreadState, READY, 0x1)         \
-            X(ThreadState, RUNNING, 0x2)       \
-            X(ThreadState, SLEEPING, 0x3)      \
-            X(ThreadState, WAITING, 0x4)       \
-            X(ThreadState, TERMINATED, 0x5)
-
+#define THREAD_STATES(X)                                                                                               \
+    X(ThreadState, READY, 0x1)                                                                                         \
+    X(ThreadState, RUNNING, 0x2)                                                                                       \
+    X(ThreadState, SLEEPING, 0x3)                                                                                      \
+    X(ThreadState, WAITING, 0x4)                                                                                       \
+    X(ThreadState, TERMINATED, 0x5)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
-
 
     /**
      * @brief The scheduling policy describes the priority of a group of threads.
@@ -78,24 +73,21 @@ namespace Rune::CPU {
      *  <li>Background: Lowest priority.</li>
      * </ul>
      */
-#define SCHEDULING_POLICIES(X)                      \
-            X(SchedulingPolicy, LOW_LATENCY, 0x1)   \
-            X(SchedulingPolicy, NORMAL, 0x2)        \
-            X(SchedulingPolicy, BACKGROUND, 0x3)
-
+#define SCHEDULING_POLICIES(X)                                                                                         \
+    X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                                              \
+    X(SchedulingPolicy, NORMAL, 0x2)                                                                                   \
+    X(SchedulingPolicy, BACKGROUND, 0x3)
 
     DECLARE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0) // NOLINT
-
 
     /**
      * @brief A thread stack.
      */
     struct Stack {
-        void*             stack_bottom = nullptr; // First allocated stack page
+        void*       stack_bottom = nullptr; // First allocated stack page
         VirtualAddr stack_top    = 0x0;     // Stack pointer
         MemorySize  stack_size   = 0x0;     // Maximum stack size
     };
-
 
     /**
      * @brief The thread arguments, dynamic linker information and other useful information.
@@ -154,7 +146,6 @@ namespace Rune::CPU {
         void* random;
     };
 
-
     /**
      * The thread struct contains general information about a running thread.
      */
@@ -172,7 +163,7 @@ namespace Rune::CPU {
 
         // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or syscall
         // It is dynamically allocated on the kernel heap and has a preconfigured fixed size
-        U8*               kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
+        U8*         kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
         VirtualAddr kernel_stack_top    = 0x0;
 
         // The user mode stack contains application data, is managed by an application.
@@ -208,28 +199,23 @@ namespace Rune::CPU {
          */
         void* thread_control_block = nullptr;
 
-
         friend bool operator==(const Thread& one, const Thread& two);
-
 
         friend bool operator!=(const Thread& one, const Thread& two);
     };
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Core API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     /**
-    * @brief Technical specs of the CPU.
-    */
+     * @brief Technical specs of the CPU.
+     */
     struct TechSpec {
         const String vendor = "";
         const String family = "";
         const String model  = "";
     };
-
 
     /**
      * @brief Architectural details of the CPU.
@@ -237,7 +223,6 @@ namespace Rune::CPU {
     struct ArchSpec {
         U8 physical_address_width = 0;
     };
-
 
     /**
      * @brief A privilege level defines the currently executing code can do on the computer.
@@ -248,32 +233,28 @@ namespace Rune::CPU {
      * </ul>
      *
      */
-#define PRIVILEGE_LEVELS(X)             \
-         X(PrivilegeLevel, KERNEL, 0x1) \
-         X(PrivilegeLevel, USER, 0x2)
-
+#define PRIVILEGE_LEVELS(X)                                                                                            \
+    X(PrivilegeLevel, KERNEL, 0x1)                                                                                     \
+    X(PrivilegeLevel, USER, 0x2)
 
     DECLARE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0) // NOLINT
-
 
     /**
      * @brief General information about an entry in the interrupt vector table of the processor.
      */
     struct InterruptVector {
-        const U8                vector = 0;   // The ID of the interrupt vector
-        const VirtualAddr handler_addr; // Virtual address of the function handling this interrupt vector
-        const PrivilegeLevel    level;        // The privilege level at which this interrupt can be manually triggered
-        const bool              active;       // True: The interrupt handler is used, False: It is unused.
+        const U8             vector = 0;   // The ID of the interrupt vector
+        const VirtualAddr    handler_addr; // Virtual address of the function handling this interrupt vector
+        const PrivilegeLevel level;        // The privilege level at which this interrupt can be manually triggered
+        const bool           active;       // True: The interrupt handler is used, False: It is unused.
     };
-
 
     /**
      * @brief A single core on the CPU.
      */
     class Core {
-    public:
+      public:
         virtual ~Core() = default;
-
 
         /**
          * @brief Setup CPU specific data structures for this core.
@@ -281,13 +262,11 @@ namespace Rune::CPU {
          */
         virtual bool init() = 0;
 
-
         /**
          * @brief Get the unique ID of this CPU core.
          * @return The core ID.
          */
         virtual U8 get_id() = 0;
-
 
         /**
          * @brief Get technical specs of the CPU like the model, etc.
@@ -295,13 +274,11 @@ namespace Rune::CPU {
          */
         virtual TechSpec get_tech_spec() = 0;
 
-
         /**
          * @brief Get the architectural specs of the CPU like the physical address width, etc.
          * @return
          */
         virtual ArchSpec get_arch_details() = 0;
-
 
         /**
          * @brief
@@ -309,13 +286,11 @@ namespace Rune::CPU {
          */
         virtual PrivilegeLevel get_current_privilege_level() = 0;
 
-
         /**
          * @brief Get the interrupt vector table of the core.
          * @return The interrupt vector table.
          */
         virtual LinkedList<InterruptVector> get_interrupt_vector_table() = 0;
-
 
         /**
          * @brief Write the current values of general purpose registers and CPU specific structures to the logger.
@@ -323,14 +298,12 @@ namespace Rune::CPU {
          */
         virtual void dump_core_state(const SharedPointer<TextStream>& stream) = 0;
 
-
         /**
          * @brief Make a context switch from the current thread to the next thread.
          * @param c_thread Currently running thread.
          * @param n_thread Next thread to be scheduled.
          */
         virtual void switch_to_thread(Thread* c_thread, Thread* n_thread) = 0;
-
 
         /**
          * @brief Execute the thread main in kernel mode.
@@ -342,7 +315,6 @@ namespace Rune::CPU {
          */
         virtual void execute_in_kernel_mode(Thread* t, Register thread_exit) = 0;
 
-
         /**
          * @brief Execute the thread main in user mode.
          *
@@ -353,14 +325,12 @@ namespace Rune::CPU {
          */
         virtual void execute_in_user_mode(Thread* t) = 0;
 
-
         /**
          * Update the TLS struct of the running thread.
          * @param tls_ptr Pointer to a TSL struct.
          */
         virtual void update_thread_local_storage(void* tls_ptr) = 0;
     };
-
 
     /**
      * @brief Initialize the bootstrap core, that is the CPU core that is initially running when the device was powered
@@ -373,7 +343,6 @@ namespace Rune::CPU {
      */
     bool init_bootstrap_core();
 
-
     /**
      * @brief Try to detect and then initialize all other CPU cores on the device.
      * @return True: All other CPU cores have been initialized and are running. False: At least one CPU core could not
@@ -381,13 +350,11 @@ namespace Rune::CPU {
      */
     bool init_other_cores();
 
-
     /**
      * @brief The CPU core that is currently running the calling code.
      * @return
      */
     Core* current_core();
-
 
     /**
      * @brief The core table contains all other detected CPU cores including the bootstrap core.
@@ -395,23 +362,19 @@ namespace Rune::CPU {
      */
     LinkedList<Core*> get_core_table();
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Assembly Stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @return The current value of the stack pointer.
      */
     CLINK Register get_stack_pointer();
 
-
     /**
      * halt the CPU until an interrupt occurs.
      */
     CLINK void halt();
-
 
     /**
      * @brief Get the virtual address that was responsible for a page fault.
@@ -420,6 +383,6 @@ namespace Rune::CPU {
      *              address is undefined.
      */
     CLINK Register get_page_fault_address();
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_CPU_H
+#endif // RUNEOS_CPU_H

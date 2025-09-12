@@ -17,14 +17,12 @@
 #ifndef RUNEOS_PIT_H
 #define RUNEOS_PIT_H
 
-
 #include <CPU/IO.h>
 
 #include <CPU/Interrupt/IRQ.h>
 
-#include <CPU/Time/Timer.h>
 #include <CPU/Time/DeltaQueue.h>
-
+#include <CPU/Time/Timer.h>
 
 namespace Rune::CPU {
     /**
@@ -37,48 +35,43 @@ namespace Rune::CPU {
         static constexpr U64 QUARTZ_FREQUENCY_HZ = 1193182;
 
         SharedPointer<Logger> _logger;
-        Scheduler* _scheduler;
-        IRQHandler _irq_handler;
+        Scheduler*            _scheduler;
+        IRQHandler            _irq_handler;
 
         DeltaQueue _sleeping_threads;
-        U64        _count;              // Ticks since boot
+        U64        _count; // Ticks since boot
 
         // Remaining time in nanoseconds the thread can run before being preempted
         U32 _quantum_remaining;
 
         // Time in nanoseconds between two IRQs
         U64 _time_between_irq;
-    public:
-        PIT();
 
+      public:
+        PIT();
 
         ~PIT() override = default;
 
+        [[nodiscard]]
+        String get_name() const override;
 
-        [[nodiscard]] String get_name() const override;
+        [[nodiscard]]
+        U64 get_time_since_start() const override;
 
+        [[nodiscard]]
+        LinkedList<SleepingThread> get_sleeping_threads() const override;
 
-        [[nodiscard]] U64 get_time_since_start() const override;
-
-
-        [[nodiscard]] LinkedList<SleepingThread> get_sleeping_threads() const override;
-
-
-        bool start(
-                SharedPointer<Logger> logger,
-                CPU::Scheduler* scheduler,
-                TimerMode mode,
-                U64 frequency,
-                U64 quantum
-        ) override;
-
+        bool start(SharedPointer<Logger> logger,
+                   CPU::Scheduler*       scheduler,
+                   TimerMode             mode,
+                   U64                   frequency,
+                   U64                   quantum) override;
 
         bool remove_sleeping_thread(int t_id) override;
-
 
         void sleep_until(U64 wake_time_nanos) override;
     };
 
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_PIT_H
+#endif // RUNEOS_PIT_H

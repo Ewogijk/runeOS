@@ -16,7 +16,6 @@
 
 #include <App/ELF.h>
 
-
 namespace Rune::App {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Common Definitions
@@ -24,19 +23,13 @@ namespace Rune::App {
 
     DEFINE_TYPED_ENUM(Class, U8, CLASSES, 0)
 
-
     DEFINE_TYPED_ENUM(ObjectFileType, U16, OBJECT_FILE_TYPES, 0)
-
 
     DEFINE_TYPED_ENUM(SectionType, U32, SECTION_TYPES, 0)
 
-
     DEFINE_TYPED_ENUM(SectionAttribute, U32, SECTION_ATTRIBUTES, 0)
-
 
     DEFINE_TYPED_ENUM(SegmentType, U32, SEGMENT_TYPES, 0)
 
-
     DEFINE_TYPED_ENUM(SegmentPermission, U32, SEGMENT_PERMISSIONS, 0)
-}
-
+} // namespace Rune::App

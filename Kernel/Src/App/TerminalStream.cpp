@@ -24,7 +24,6 @@
 
 #include <CPU/E9Stream.h>
 
-
 namespace Rune::App {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -32,23 +31,21 @@ namespace Rune::App {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     int render_cursor(CPU::StartInfo* start_info) {
-        if (start_info->argc != 1)
-            return -1;
+        if (start_info->argc != 1) return -1;
         uintptr_t ptr = 0;
-        if (!parse_int<uintptr_t>(start_info->argv[0], 16, ptr))
-            return -1;
-        auto* state = (TerminalState*) ptr;
+        if (!parse_int<uintptr_t>(start_info->argv[0], 16, ptr)) return -1;
+        auto*  state     = (TerminalState*) ptr;
         double thickness = 1.0;
         while (state->keep_rendering_cursor) {
             state->mutex->lock();
             if (!state->timeout_cursor_renderer) {
                 int screen_line = state->cursor_sbb.line - state->viewport;
                 if (0 <= screen_line && screen_line < state->screen_height && !state->scroll_back_buffer.is_empty()) {
-                    U32         x       = (U32) state->cursor_sbb.column * state->font->pixel_width;
-                    U32         y_start = (U32) screen_line * state->font->pixel_height;
-                    U32         y_end   = y_start + state->font->pixel_height;
+                    U32   x       = (U32) state->cursor_sbb.column * state->font->pixel_width;
+                    U32   y_start = (U32) screen_line * state->font->pixel_height;
+                    U32   y_end   = y_start + state->font->pixel_height;
                     Pixel c       = state->is_cursor_rendered ? state->default_bg_color : state->default_fg_color;
-                    state->frame_buffer->draw_line({ x, y_start }, { x, y_end }, c, thickness);
+                    state->frame_buffer->draw_line({x, y_start}, {x, y_end}, c, thickness);
                     state->is_cursor_rendered = !state->is_cursor_rendered;
                 }
             } else {
@@ -60,52 +57,43 @@ namespace Rune::App {
         return 0;
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          TextLine
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-    TextLine::TextLine() : styled_text(), line_size(0) {
-        styled_text.add_back({ });
-    }
-
+    TextLine::TextLine() : styled_text(), line_size(0) { styled_text.add_back({}); }
 
     void TextLine::append_char(char ch) {
-        if (styled_text.is_empty())
-            styled_text.add_back({ });
+        if (styled_text.is_empty()) styled_text.add_back({});
         styled_text.tail()->text += ch;
         line_size++;
     }
 
-
     void TextLine::style_raw_text(Pixel bg_color, Pixel fg_color) {
-        if (styled_text.tail()->text.is_empty())
-            return;
+        if (styled_text.tail()->text.is_empty()) return;
         styled_text.tail()->bg_color = bg_color;
         styled_text.tail()->fg_color = fg_color;
-        styled_text.add_back({ });
+        styled_text.add_back({});
     }
-
 
     void TextLine::erase(size_t off, size_t len) {
         if (off == 0) {
             if (len == line_size) {
                 // whole line was erased -> just clear the line buffer
                 clear();
-                append_char('\n');  // Add \n so the empty line is rendered
+                append_char('\n'); // Add \n so the empty line is rendered
                 return;
             } else {
                 // start of line until cursor was erased -> pad the start of the line with spaces
                 size_t line_offset = 0;
-                for (auto& st: styled_text) {
+                for (auto& st : styled_text) {
                     if (line_offset > len)
                         // All erased strings are replaced with spaces
                         break;
 
-                    size_t      num_spaces = min(st.text.size(), len - line_offset);
-                    String      spaces;
-                    for (size_t i          = 0; i < num_spaces; i++)
+                    size_t num_spaces = min(st.text.size(), len - line_offset);
+                    String spaces;
+                    for (size_t i = 0; i < num_spaces; i++)
                         spaces += ' ';
 
                     if (num_spaces < st.text.size())
@@ -120,13 +108,13 @@ namespace Rune::App {
             // cursor until end of line was erased
             LinkedList<size_t> indices_to_remove;
             size_t             line_offset = 0;
-            for (size_t        i           = 0; i < styled_text.size(); i++) {
-                auto* st = styled_text[i];
+            for (size_t i = 0; i < styled_text.size(); i++) {
+                auto*  st       = styled_text[i];
                 size_t txt_size = st->text.size();
                 if (line_offset < off + len && off < line_offset + txt_size) {
                     if (line_offset < off) {
                         // Only part of the text is erased -> Keep the beginning
-                        st->text = st->text.substring(0, off - line_offset);
+                        st->text   = st->text.substring(0, off - line_offset);
                         line_size -= txt_size - off + line_offset;
                     } else {
                         indices_to_remove.add_back(i);
@@ -135,35 +123,30 @@ namespace Rune::App {
                 }
                 line_offset += txt_size;
             }
-            for (auto& index: indices_to_remove)
+            for (auto& index : indices_to_remove)
                 styled_text.remove_at(index);
         }
     }
 
-
     void TextLine::clear() {
         styled_text.clear();
         line_size = 0;
-        styled_text.add_back({ });
+        styled_text.add_back({});
     }
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Text Buffering Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     TextLine* TerminalStream::scroll_back_buffer_get_last_line() {
-        if (_state.scroll_back_buffer.is_empty())
-            _state.scroll_back_buffer.add_back({ });
+        if (_state.scroll_back_buffer.is_empty()) _state.scroll_back_buffer.add_back({});
         return _state.scroll_back_buffer.tail();
     }
-
 
     void TerminalStream::scroll_back_buffer_append_new_line() {
         if (_state.scroll_back_buffer.is_empty()) {
             // The scroll back buffer is empty -> Add the first line
-            _state.scroll_back_buffer.add_back({ });
+            _state.scroll_back_buffer.add_back({});
             return;
         }
         // Ditch the oldest entries to make space
@@ -172,19 +155,16 @@ namespace Rune::App {
 
         // The newest lines are at the back, this makes the scroll back buffer chronologically ordered
         _state.scroll_back_buffer.tail()->style_raw_text(_state.bg_color, _state.fg_color);
-        _state.scroll_back_buffer.add_back({ });
+        _state.scroll_back_buffer.add_back({});
     }
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Render Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     void TerminalStream::scroll_back(int lines) {
         _state.mutex->lock();
-        if (lines == 0)
-            return;
+        if (lines == 0) return;
 
         U64 terminal_line_pixels = _state.frame_buffer->get_pitch() * _state.font->pixel_height;
         int render_line_begin    = 0;
@@ -199,40 +179,32 @@ namespace Rune::App {
             // | line 2 |
             // | line 3 | <-- view port end - The end of the viewport is not allowed to go past this line
             // ----------
-            int new_viewport = min(
-                    _state.viewport + lines,
-                    (int) _state.scroll_back_buffer.size() - _state.screen_height
-            );
-            int scroll_dist  = abs(new_viewport - _state.viewport);
+            int new_viewport =
+                min(_state.viewport + lines, (int) _state.scroll_back_buffer.size() - _state.screen_height);
+            int scroll_dist = abs(new_viewport - _state.viewport);
             _state.viewport = new_viewport;
 
             if (scroll_dist >= _state.screen_height) {
                 // Scrolled past the whole current screen -> Just clear the whole screen
-                memset(
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                        0,
-                        _state.screen_height * terminal_line_pixels
-                );
+                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                       0,
+                       _state.screen_height * terminal_line_pixels);
             } else {
                 // Move the rendered lines by "lines" lines up
                 // "first line"             "second line"
                 // "second line"    --->    "third line"
                 // "third line"             "third line"
-                memcpy(
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address() + terminal_line_pixels * scroll_dist),
-                        (_state.screen_height - scroll_dist) * terminal_line_pixels
-                );
+                memcpy((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                       (void*) ((uintptr_t) _state.frame_buffer->get_address() + terminal_line_pixels * scroll_dist),
+                       (_state.screen_height - scroll_dist) * terminal_line_pixels);
                 // Clear the last "lines" lines
                 // "second line"            "second line"
                 // "third line"     --->    "third line"
                 // "third line"
-                memset(
-                        (void*) ((uintptr_t) _state.frame_buffer
-                                                   ->get_address() + (_state.screen_height - scroll_dist) * terminal_line_pixels),
-                        0,
-                        scroll_dist * terminal_line_pixels
-                );
+                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()
+                                + (_state.screen_height - scroll_dist) * terminal_line_pixels),
+                       0,
+                       scroll_dist * terminal_line_pixels);
             }
 
             // Render the last "scroll_dist" lines in the scroll back buffer
@@ -240,46 +212,38 @@ namespace Rune::App {
             // "second line"   --->     "second line"
             //                          "some buffered line"
             render_line_begin = scroll_dist < _state.screen_height
-                                ? _state.viewport + (_state.screen_height - scroll_dist)
-                                : _state.viewport;
+                                    ? _state.viewport + (_state.screen_height - scroll_dist)
+                                    : _state.viewport;
             render_line_end   = min(_state.viewport + _state.screen_height, (int) _state.scroll_back_buffer.size());
         } else {
             // Scroll up
             if (_state.viewport == 0)
                 // We are already scrolled up to the beginning of the scroll back buffer
                 return;
-            lines *= -1;    // The math is based on the positive value of lines
-            int new_viewport = _state.viewport >= lines ? _state.viewport - lines : 0;
-            int scroll_dist  = abs(new_viewport - _state.viewport);
-            _state.viewport = new_viewport;
+            lines            *= -1; // The math is based on the positive value of lines
+            int new_viewport  = _state.viewport >= lines ? _state.viewport - lines : 0;
+            int scroll_dist   = abs(new_viewport - _state.viewport);
+            _state.viewport   = new_viewport;
 
             if (scroll_dist >= _state.screen_height) {
                 // Scrolled past the whole current screen -> Just clear the whole screen
-                memset(
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                        0,
-                        _state.screen_height * terminal_line_pixels
-                );
+                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                       0,
+                       _state.screen_height * terminal_line_pixels);
             } else {
                 // Scrolled past a portion of the screen
                 // Move the rendered lines by "lines" lines down
                 // "first line"             "second line"
                 // "second line"    --->    "first line"
                 // "third line"             "second line"
-                memmove(
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address() + terminal_line_pixels * scroll_dist),
+                memmove((void*) ((uintptr_t) _state.frame_buffer->get_address() + terminal_line_pixels * scroll_dist),
                         (void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                        (_state.screen_height - scroll_dist) * terminal_line_pixels
-                );
+                        (_state.screen_height - scroll_dist) * terminal_line_pixels);
                 // Clear the first "lines" lines
                 // "second line"
                 // "first line"    --->     "first line"
                 // "second line"            "second line"
-                memset(
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                        0,
-                        scroll_dist * terminal_line_pixels
-                );
+                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()), 0, scroll_dist * terminal_line_pixels);
             }
 
             // Render the first "scroll_dist" lines in the scroll back buffer
@@ -294,7 +258,7 @@ namespace Rune::App {
         for (int i = render_line_begin; i < render_line_end; i++) {
             size_t y = i - _state.viewport;
             size_t x = 0;
-            for (auto& st: _state.scroll_back_buffer[i]->styled_text) {
+            for (auto& st : _state.scroll_back_buffer[i]->styled_text) {
                 for (size_t xx = 0; xx < st.text.size(); xx++)
                     draw_char(st.text[xx], x + xx, y, st.bg_color, st.fg_color);
                 x += st.text.size();
@@ -303,18 +267,15 @@ namespace Rune::App {
         _state.mutex->unlock();
     }
 
-
     void TerminalStream::draw_char(char ch) {
         _state.mutex->lock();
         start_cursor_movement();
-        _state.frame_buffer->draw_glyph(
-                _state.font,
-                _state.cursor_sbb.column * _state.font->pixel_width,
-                (_state.cursor_sbb.line - _state.viewport) * _state.font->pixel_height,
-                _state.bg_color,
-                _state.fg_color,
-                ch
-        );
+        _state.frame_buffer->draw_glyph(_state.font,
+                                        _state.cursor_sbb.column * _state.font->pixel_width,
+                                        (_state.cursor_sbb.line - _state.viewport) * _state.font->pixel_height,
+                                        _state.bg_color,
+                                        _state.fg_color,
+                                        ch);
         _state.cursor_sbb.column++;
         if (_state.cursor_sbb.column >= _state.screen_width) {
             _state.cursor_sbb.column = 0;
@@ -324,20 +285,16 @@ namespace Rune::App {
         _state.mutex->unlock();
     }
 
-
     void TerminalStream::draw_char(char ch, U16 x, U16 y, Pixel bg_color, Pixel fg_color) const {
         _state.mutex->lock();
-        _state.frame_buffer->draw_glyph(
-                _state.font,
-                x * _state.font->pixel_width,
-                y * _state.font->pixel_height,
-                bg_color,
-                fg_color,
-                ch
-        );
+        _state.frame_buffer->draw_glyph(_state.font,
+                                        x * _state.font->pixel_width,
+                                        y * _state.font->pixel_height,
+                                        bg_color,
+                                        fg_color,
+                                        ch);
         _state.mutex->unlock();
     }
-
 
     void TerminalStream::draw_cursor(const Pixel& color) const {
         // The cursor will be drawn in the first column of the glyph is, this is fine for most glyphs as they are padded
@@ -354,16 +311,14 @@ namespace Rune::App {
         U32 y_start   = (U32) (_state.cursor_sbb.line - _state.viewport) * _state.font->pixel_height;
         U32 y_end     = y_start + _state.font->pixel_height;
         int thickness = 1.0;
-        _state.frame_buffer->draw_line({ x, y_start }, { x, y_end }, color, thickness);
+        _state.frame_buffer->draw_line({x, y_start}, {x, y_end}, color, thickness);
     }
-
 
     void TerminalStream::start_cursor_movement() {
         if (_state.is_cursor_rendered)
             // Clear the cursor at the current location
             draw_cursor(_state.default_bg_color);
     }
-
 
     void TerminalStream::end_cursor_movement() {
         // Draw it at the new position
@@ -372,58 +327,44 @@ namespace Rune::App {
         _state.timeout_cursor_renderer = true;
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Cursor Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     bool TerminalStream::is_cursor_visible() const {
         int screen_line = _state.cursor_sbb.line - _state.viewport;
         return 0 <= screen_line && screen_line < _state.screen_height;
     }
 
-
     void TerminalStream::scroll_to_cursor() {
         if (!is_cursor_visible()) {
             int scroll_direction = _state.cursor_sbb.line >= _state.viewport ? 1 : -1;
             int scroll_dist      = scroll_direction >= 0
-                                   ? _state.cursor_sbb.line - (_state.viewport + _state.screen_height) + 1
-                                   : _state.viewport - _state.cursor_sbb.line;
+                                       ? _state.cursor_sbb.line - (_state.viewport + _state.screen_height) + 1
+                                       : _state.viewport - _state.cursor_sbb.line;
             scroll_back(scroll_direction * scroll_dist);
         }
     }
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          ANSI Interpreter Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     bool TerminalStream::is_csi_command_selector(char ch) {
-        return ch == 'A'
-               || ch == 'B'
-               || ch == 'C'
-               || ch == 'D'
-               || ch == 'H'
-               || ch == 'J'
-               || ch == 'K'
-               || ch == 'S'
-               || ch == 'T'
-               || ch == 'm';
+        return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'H' || ch == 'J' || ch == 'K' || ch == 'S'
+               || ch == 'T' || ch == 'm';
     }
 
-
     U8 TerminalStream::parse_csi_arg() {
-        int val           = 0;
-        int power_ten[]   = { 100, 10, 1 };
+        int val         = 0;
+        int power_ten[] = {100, 10, 1};
         // _digit_buf_offset is filled from left to right, we parse from right to left
         // If the number has three digits then "digit * powerTen[pos]" is its actual numerical value
         // but if the number has less then we need "digit * powerTen[pos + diffToPTen]" where diffToPTen
         // is the index offset to get the correct power of ten
         // e.g. [3, 8, 0] aka the decimal value of 38 -> we need to add diffToPen=1 to pos to get the correct
         // power of ten for the digits
-        U8  diff_to_p_ten = DIGIT_BUF_SIZE - _digit_buf_offset;
+        U8 diff_to_p_ten = DIGIT_BUF_SIZE - _digit_buf_offset;
 
         // pos  = DIGIT_BUF_SIZE - 1 - diffToPTen
         //      = DIGIT_BUF_SIZE - 1 - (DIGIT_BUF_SIZE - _digit_buf_offset)
@@ -432,19 +373,17 @@ namespace Rune::App {
         //      = _digit_buf_offset - 1
         int pos = _digit_buf_offset - 1;
         while (pos >= 0) {
-            U8 digit = _digit_buf[pos] > 0 ? ((int) _digit_buf[pos] - 0x30) : 0;
-            val += digit * power_ten[pos + diff_to_p_ten];
+            U8 digit  = _digit_buf[pos] > 0 ? ((int) _digit_buf[pos] - 0x30) : 0;
+            val      += digit * power_ten[pos + diff_to_p_ten];
             pos--;
         }
         // Only bytes allowed here!
-        if (val > 255)
-            val = 255;
+        if (val > 255) val = 255;
 
         memset(_digit_buf, 0, DIGIT_BUF_SIZE);
         _digit_buf_offset = 0;
         return val;
     }
-
 
     void TerminalStream::exec_csi_command() {
         _state.mutex->lock();
@@ -454,10 +393,10 @@ namespace Rune::App {
                 scroll_back_buffer_get_last_line()->style_raw_text(_state.bg_color, _state.fg_color);
                 if (_csi_argv[0] == 38 && _csi_argv[1] == 2) {
                     // Change foreground color
-                    _state.fg_color = { _csi_argv[2], _csi_argv[3], _csi_argv[4] };
+                    _state.fg_color = {_csi_argv[2], _csi_argv[3], _csi_argv[4]};
                 } else if (_csi_argv[0] == 48 && _csi_argv[1] == 2) {
                     // Change background color
-                    _state.bg_color = { _csi_argv[2], _csi_argv[3], _csi_argv[4] };
+                    _state.bg_color = {_csi_argv[2], _csi_argv[3], _csi_argv[4]};
                 } else if (_csi_argv[0] == 0) {
                     // Reset all render settings
                     _state.fg_color = _state.default_fg_color;
@@ -466,8 +405,7 @@ namespace Rune::App {
                 break;
             case 'A': {
                 int steps = _csi_argv[0];
-                if (steps == 0)
-                    steps = 1;
+                if (steps == 0) steps = 1;
 
                 scroll_to_cursor();
                 start_cursor_movement();
@@ -480,34 +418,31 @@ namespace Rune::App {
             }
             case 'B': {
                 int steps = _csi_argv[0];
-                if (steps == 0)
-                    steps = 1;
+                if (steps == 0) steps = 1;
 
                 scroll_to_cursor();
                 start_cursor_movement();
                 int screen_line = _state.cursor_sbb.line - _state.viewport;
-                _state.cursor_sbb.line = (steps < (_state.screen_height - screen_line)
-                                          ? screen_line + steps
-                                          : _state.screen_height - 1) + _state.viewport;
+                _state.cursor_sbb.line =
+                    (steps < (_state.screen_height - screen_line) ? screen_line + steps : _state.screen_height - 1)
+                    + _state.viewport;
                 end_cursor_movement();
                 break;
             }
             case 'C': {
                 int steps = _csi_argv[0];
-                if (steps == 0)
-                    steps = 1;
+                if (steps == 0) steps = 1;
 
                 start_cursor_movement();
                 _state.cursor_sbb.column = steps < (_state.screen_width - _state.cursor_sbb.column)
-                                           ? _state.cursor_sbb.column + steps
-                                           : _state.screen_width - 1;
+                                               ? _state.cursor_sbb.column + steps
+                                               : _state.screen_width - 1;
                 end_cursor_movement();
                 break;
             }
             case 'D': {
                 int steps = _csi_argv[0];
-                if (steps == 0)
-                    steps = 1;
+                if (steps == 0) steps = 1;
 
                 start_cursor_movement();
                 _state.cursor_sbb.column = _state.cursor_sbb.column >= steps ? _state.cursor_sbb.column - steps : 0;
@@ -516,14 +451,14 @@ namespace Rune::App {
             }
             case 'H': {
                 start_cursor_movement();
-                int row                        = _csi_argc < 2 ? 0 : (_csi_argv[1] - 1);   // Arg starts from 1
+                int row = _csi_argc < 2 ? 0 : (_csi_argv[1] - 1); // Arg starts from 1
                 if (row < 0)
                     row = 0;
                 else if (row >= _state.screen_height)
                     row = _state.screen_height - 1;
                 _state.cursor_sbb.line = row + _state.viewport;
 
-                int col = _csi_argc < 1 ? 0 : (_csi_argv[0] - 1);   // Arg starts from 1
+                int col = _csi_argc < 1 ? 0 : (_csi_argv[0] - 1); // Arg starts from 1
                 if (col < 0)
                     col = 0;
                 else if (col >= _state.screen_width)
@@ -533,24 +468,22 @@ namespace Rune::App {
                 break;
             }
             case 'J': {
-                if (_state.scroll_back_buffer.is_empty())
-                    break;
+                if (_state.scroll_back_buffer.is_empty()) break;
 
-                U8     del_op                   = _csi_argv[0];
-                size_t scroll_back_buffer_start = 0;
-                size_t scroll_back_buffer_end   = 0;
-                size_t x_start                  = 0;
-                size_t x_end                    = 0;
-                bool   clear_scroll_back_buffer = false;
-                TextLine* cursor_line = _state.scroll_back_buffer[_state.cursor_sbb.line];
+                U8        del_op                   = _csi_argv[0];
+                size_t    scroll_back_buffer_start = 0;
+                size_t    scroll_back_buffer_end   = 0;
+                size_t    x_start                  = 0;
+                size_t    x_end                    = 0;
+                bool      clear_scroll_back_buffer = false;
+                TextLine* cursor_line              = _state.scroll_back_buffer[_state.cursor_sbb.line];
                 if (del_op == 0) {
                     // Clear from cursor to end of display
                     scroll_back_buffer_start = _state.cursor_sbb.line + 1;
-                    scroll_back_buffer_end   = min((int) _state.scroll_back_buffer.size(),
-                                                   _state.viewport + _state.screen_height
-                    );
-                    x_start                  = _state.cursor_sbb.column;
-                    x_end                    = cursor_line->line_size;
+                    scroll_back_buffer_end =
+                        min((int) _state.scroll_back_buffer.size(), _state.viewport + _state.screen_height);
+                    x_start = _state.cursor_sbb.column;
+                    x_end   = cursor_line->line_size;
                 } else if (del_op == 1) {
                     // Clear from start of display to cursor
                     scroll_back_buffer_start = _state.viewport;
@@ -560,15 +493,13 @@ namespace Rune::App {
                 } else if (del_op == 2) {
                     // Clear whole screen
                     scroll_back_buffer_start = _state.viewport;
-                    scroll_back_buffer_end   = min((int) _state.scroll_back_buffer.size(),
-                                                   _state.viewport + _state.screen_height
-                    );
+                    scroll_back_buffer_end =
+                        min((int) _state.scroll_back_buffer.size(), _state.viewport + _state.screen_height);
                 } else if (del_op == 3) {
                     // Clear whole screen and clear the scroll back buffer
                     scroll_back_buffer_start = _state.viewport;
-                    scroll_back_buffer_end   = min((int) _state.scroll_back_buffer.size(),
-                                                   _state.viewport + _state.screen_height
-                    );
+                    scroll_back_buffer_end =
+                        min((int) _state.scroll_back_buffer.size(), _state.viewport + _state.screen_height);
                     clear_scroll_back_buffer = true;
                 }
 
@@ -582,7 +513,7 @@ namespace Rune::App {
                         text_line->append_char('\n');
                     }
                 }
-                for (size_t x        = x_start; x < x_end; x++)
+                for (size_t x = x_start; x < x_end; x++)
                     draw_char(' ', x, _state.cursor_sbb.line - _state.viewport, _state.bg_color, _state.fg_color);
 
                 if (clear_scroll_back_buffer)
@@ -595,12 +526,11 @@ namespace Rune::App {
                 break;
             }
             case 'K': {
-                if (_state.scroll_back_buffer.is_empty())
-                    break;
+                if (_state.scroll_back_buffer.is_empty()) break;
 
-                U8     del_op  = _csi_argv[0];
-                size_t x_start = 0;
-                size_t x_end   = 0;
+                U8        del_op    = _csi_argv[0];
+                size_t    x_start   = 0;
+                size_t    x_end     = 0;
                 TextLine* text_line = _state.scroll_back_buffer[_state.cursor_sbb.line];
                 if (del_op == 0) {
                     x_start = _state.cursor_sbb.column;
@@ -619,16 +549,14 @@ namespace Rune::App {
                 break;
             }
             case 'S': {
-                U8 scroll_amount  = _csi_argv[0];
-                if (scroll_amount == 0)
-                    scroll_amount = 1;
+                U8 scroll_amount = _csi_argv[0];
+                if (scroll_amount == 0) scroll_amount = 1;
                 scroll_back(-scroll_amount);
                 break;
             }
             case 'T': {
-                U8 scroll_amount  = _csi_argv[0];
-                if (scroll_amount == 0)
-                    scroll_amount = 1;
+                U8 scroll_amount = _csi_argv[0];
+                if (scroll_amount == 0) scroll_amount = 1;
                 scroll_back(scroll_amount);
                 break;
             }
@@ -643,7 +571,6 @@ namespace Rune::App {
         _csi_cmd_selector = '\0';
         _state.mutex->unlock();
     }
-
 
     bool TerminalStream::interpret_char(char ch) {
         switch (_interpreter_state) {
@@ -665,8 +592,8 @@ namespace Rune::App {
                             ret = true;
                             break;
                         case '\t': {
-                            int      spaces = TAB_STOP - (_state.cursor_sbb.column % TAB_STOP);
-                            for (int i      = 0; i < spaces; i++) {
+                            int spaces = TAB_STOP - (_state.cursor_sbb.column % TAB_STOP);
+                            for (int i = 0; i < spaces; i++) {
                                 scroll_back_buffer_get_last_line()->append_char(' ');
                                 draw_char(' ');
                             }
@@ -678,8 +605,7 @@ namespace Rune::App {
                             scroll_back_buffer_append_new_line();
                             _state.cursor_sbb.line++;
                             _state.cursor_sbb.column = 0;
-                            if (_state.cursor_sbb.line - _state.viewport == _state.screen_height)
-                                scroll_back(1);
+                            if (_state.cursor_sbb.line - _state.viewport == _state.screen_height) scroll_back(1);
                             end_cursor_movement();
                             ret = true;
                             break;
@@ -690,8 +616,7 @@ namespace Rune::App {
                             end_cursor_movement();
                             ret = true;
                             break;
-                        default:
-                            break;
+                        default: break;
                     }
                     _state.mutex->unlock();
                     return ret;
@@ -720,8 +645,7 @@ namespace Rune::App {
                 } else if (ch == ';' || is_csi_command_selector(ch)) {
                     // Either end of an argument or end of the CSI command
                     // Convert string to U8
-                    if (_csi_argc < CSI_ARGV_BUF_SIZE)
-                        _csi_argv[_csi_argc++] = parse_csi_arg();
+                    if (_csi_argc < CSI_ARGV_BUF_SIZE) _csi_argv[_csi_argc++] = parse_csi_arg();
 
                     if (is_csi_command_selector(ch)) {
                         // Exec it aka modify the render settings
@@ -742,25 +666,23 @@ namespace Rune::App {
         }
     }
 
-
-    TerminalStream::TerminalStream(
-            CPU::CPUSubsystem* cpu_subsys,
-            FrameBuffer* frame_buffer,
-            BitMapFont* font,
-            Pixel def_bg_color,
-            Pixel def_fg_color
-    ) : _cpu_subsys(cpu_subsys),
-        _state(),
-        _render_thread_ID(0),
-        _render_thread_arg(""),
-        _render_thread_argv(),
-        _initialized(false),
-        _interpreter_state(ANSIInterpreterState::CHARACTER),
-        _csi_argv(),
-        _csi_argc(0),
-        _csi_cmd_selector('\0'),
-        _digit_buf(),
-        _digit_buf_offset(0) {
+    TerminalStream::TerminalStream(CPU::CPUSubsystem* cpu_subsys,
+                                   FrameBuffer*       frame_buffer,
+                                   BitMapFont*        font,
+                                   Pixel              def_bg_color,
+                                   Pixel              def_fg_color)
+        : _cpu_subsys(cpu_subsys),
+          _state(),
+          _render_thread_ID(0),
+          _render_thread_arg(""),
+          _render_thread_argv(),
+          _initialized(false),
+          _interpreter_state(ANSIInterpreterState::CHARACTER),
+          _csi_argv(),
+          _csi_argc(0),
+          _csi_cmd_selector('\0'),
+          _digit_buf(),
+          _digit_buf_offset(0) {
 
         _state.frame_buffer         = frame_buffer;
         _state.font                 = font;
@@ -777,47 +699,32 @@ namespace Rune::App {
 
         // The arguments to the cursor render thread have to be maintained until the thread actually is running
         // else they are stack allocated and gone after the constructor is finished and then boom
-        _render_thread_arg = int_to_string((uintptr_t) &_state, 16);
-        _render_thread_argv[0] = (char*) _render_thread_arg.to_cstr();
-        _render_thread_argv[1] = nullptr;
+        _render_thread_arg             = int_to_string((uintptr_t) &_state, 16);
+        _render_thread_argv[0]         = (char*) _render_thread_arg.to_cstr();
+        _render_thread_argv[1]         = nullptr;
         _render_thread_start_info.argc = 1;
         _render_thread_start_info.argv = _render_thread_argv;
         _render_thread_start_info.main = &render_cursor;
-        if (_state.mutex)
-            _initialized = true;
+        if (_state.mutex) _initialized = true;
     }
 
+    bool TerminalStream::is_read_supported() { return false; }
 
-    bool TerminalStream::is_read_supported() {
-        return false;
-    }
+    int TerminalStream::read() { return -1; }
 
-
-    int TerminalStream::read() {
-        return -1;
-    }
-
-
-    bool TerminalStream::is_write_supported() {
-        return true;
-    }
-
+    bool TerminalStream::is_write_supported() { return true; }
 
     bool TerminalStream::write(U8 value) {
-        if (!_initialized)
-            return false;
+        if (!_initialized) return false;
 
         if (_render_thread_ID == 0) {
             _cpu_subsys->get_scheduler()->lock();
-            _render_thread_ID = _cpu_subsys->schedule_new_thread(
-                    "Terminal-Cursor Render Thread",
-                    &_render_thread_start_info,
-                    Memory::get_base_page_table_address(),
-                    CPU::SchedulingPolicy::LOW_LATENCY,
-                    { nullptr, 0x0, 0x0 }
-            );
-            if (_render_thread_ID == 0)
-                _initialized      = false;
+            _render_thread_ID = _cpu_subsys->schedule_new_thread("Terminal-Cursor Render Thread",
+                                                                 &_render_thread_start_info,
+                                                                 Memory::get_base_page_table_address(),
+                                                                 CPU::SchedulingPolicy::LOW_LATENCY,
+                                                                 {nullptr, 0x0, 0x0});
+            if (_render_thread_ID == 0) _initialized = false;
             _cpu_subsys->get_scheduler()->unlock();
         }
 
@@ -829,18 +736,13 @@ namespace Rune::App {
         return true;
     }
 
-
     void TerminalStream::flush() {
         // No buffering is used
     }
-
 
     void TerminalStream::close() {
         // No resources to free
     }
 
-
-    bool TerminalStream::is_ansi_supported() {
-        return true;
-    }
-}
+    bool TerminalStream::is_ansi_supported() { return true; }
+} // namespace Rune::App

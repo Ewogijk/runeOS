@@ -17,7 +17,6 @@
 #ifndef RUNEOS_PAGING_H
 #define RUNEOS_PAGING_H
 
-
 #include <Ember/Enum.h>
 #include <KernelRuntime/Memory.h>
 
@@ -25,19 +24,16 @@
 
 #include <Memory/PhysicalMemoryManager.h>
 
-
 namespace Rune::Memory {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Page Table Entry
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     /**
      * @brief A native page table entry (PTE) is simply the numerical entry in a page table.
      */
     using NativePageTableEntry = VirtualAddr;
-
 
     /**
      * @brief A page table entry (PTE) acts as an architecture independent interface to the architecture dependant
@@ -63,97 +59,93 @@ namespace Rune::Memory {
         NativePageTableEntry native_entry = 0x0;
         U8                   level        = 0xFF;
 
-
         /**
          *
          * @return True if the PTE is used else false.
          */
-        [[nodiscard]] bool is_present() const;
-
+        [[nodiscard]]
+        bool is_present() const;
 
         /**
          *
          * @return True if the PTE has been accessed else false.
          */
-        [[nodiscard]] bool is_accessed() const;
-
+        [[nodiscard]]
+        bool is_accessed() const;
 
         /**
          *
          * @return True if the PTE has been changed else false.
          */
-        [[nodiscard]] bool is_dirty() const;
-
+        [[nodiscard]]
+        bool is_dirty() const;
 
         /**
          *
          * @return True if data can be written to the PTE else false.
          */
-        [[nodiscard]] bool is_write_allowed() const;
-
+        [[nodiscard]]
+        bool is_write_allowed() const;
 
         /**
          *
          * @return True if the PTE can be accessed by a userspace process else false.
          */
-        [[nodiscard]] bool is_user_mode_access_allowed() const;
-
+        [[nodiscard]]
+        bool is_user_mode_access_allowed() const;
 
         /**
          * @brief
          * @return True: The PTE points to a page frame, False: The PTE points to a page table.
          */
-        [[nodiscard]] bool is_pointing_to_page_frame() const;
-
+        [[nodiscard]]
+        bool is_pointing_to_page_frame() const;
 
         /**
          *
          * @return If the PTE points to a page frame, return its address else the address will point to another page
          *          table.
          */
-        [[nodiscard]] PhysicalAddr get_address() const;
-
+        [[nodiscard]]
+        PhysicalAddr get_address() const;
 
         /**
          * @brief
          * @return The native flags.
          */
-        [[nodiscard]] U16 get_flags() const;
+        [[nodiscard]]
+        U16 get_flags() const;
     };
-
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Page Table
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief A page table (PT) exposes an architecture independent way of iterating and accessing the page table
      *          hierarchy.
      */
     class PageTable {
-        NativePageTableEntry _npte;
+        NativePageTableEntry  _npte;
         NativePageTableEntry* _pt;
-        U8 _level;
+        U8                    _level;
 
-    public:
+      public:
         explicit PageTable(NativePageTableEntry n_pte, NativePageTableEntry* pt, U8 level);
-
 
         /**
          * @brief
          * @return Number of entries in the page table.
          */
-        [[nodiscard]] static U16 get_size();
-
+        [[nodiscard]]
+        static U16 get_size();
 
         /**
          * @brief
          * @return True: This is a base page table, False: Nope.
          */
-        [[nodiscard]] bool is_base_page_table() const;
-
+        [[nodiscard]]
+        bool is_base_page_table() const;
 
         /**
          * @brief The native page table entry as found in the PT that references this page table.
@@ -161,38 +153,38 @@ namespace Rune::Memory {
          * In case of the Base PT, all flags in NPTE will be zero.
          * @return The NPTE of this PT.
          */
-        [[nodiscard]] NativePageTableEntry get_native_page_table_entry() const;
-
+        [[nodiscard]]
+        NativePageTableEntry get_native_page_table_entry() const;
 
         /**
          * @brief A level of 0xFF indicates an invalid PTE
          * @return The level in the page table hierarchy.
          */
-        [[nodiscard]] U8 get_level() const;
-
+        [[nodiscard]]
+        U8 get_level() const;
 
         /**
          * @brief
          * @return Convert the page table to a page table entry.
          */
-        [[nodiscard]] PageTableEntry to_page_table_entry() const;
-
+        [[nodiscard]]
+        PageTableEntry to_page_table_entry() const;
 
         /**
          * @brief Get the page table entry at idx.
          * @param idx
          * @return A page table entry.
          */
-        [[nodiscard]] PageTableEntry operator[](U16 idx) const;
-
+        [[nodiscard]]
+        PageTableEntry operator[](U16 idx) const;
 
         /**
          * @brief Interpret the PTE at idx as PT.
          * @param idx
          * @return A PTE interpreted as PT.
          */
-        [[nodiscard]] PageTable entry_as_page_table(U16 idx) const;
-
+        [[nodiscard]]
+        PageTable entry_as_page_table(U16 idx) const;
 
         /**
          * @brief Update the PTE at idx with the new native PTE value.
@@ -202,11 +194,9 @@ namespace Rune::Memory {
         void update(size_t idx, NativePageTableEntry n_pte);
     };
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Paging Configuration
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief Load a new base page table for the CPU.
@@ -216,24 +206,20 @@ namespace Rune::Memory {
      */
     CLINK void load_base_page_table(PhysicalAddr base_pt);
 
-
     /**
      * @brief Flush the TLB entries given page.
      */
     CLINK void invalidate_page(VirtualAddr page);
-
 
     /**
      * @brief Flush all entries in the TLB.
      */
     CLINK void flush_tlb();
 
-
     /**
      * @return The size of a page in bytes.
      */
     MemorySize get_page_size();
-
 
     /**
      * @brief
@@ -241,18 +227,15 @@ namespace Rune::Memory {
      */
     void init_paging(U8 physical_address_width);
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Page Table Hierarchy Access
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      *
      * @return The physical address of the base PT loaded in the CPU.
      */
     CLINK PhysicalAddr get_base_page_table_address();
-
 
     /**
      * @brief Interpret the given physical address as the base page table for another virtual address space that is
@@ -262,7 +245,6 @@ namespace Rune::Memory {
      */
     PageTable interp_as_base_page_table(PhysicalAddr p_addr);
 
-
     /**
      * Get the currently used base page table which is the entry point to the page table hierarchy, thus is never
      * referenced by another page table.
@@ -271,11 +253,9 @@ namespace Rune::Memory {
      */
     PageTable get_base_page_table();
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Virtual Address Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief If the given virtual address is not in canonical form, convert it to its canonical form.
@@ -284,7 +264,6 @@ namespace Rune::Memory {
      */
     VirtualAddr to_canonical_form(VirtualAddr v_addr);
 
-
     /**
      *
      * @param p_addr Physical Address.
@@ -292,7 +271,6 @@ namespace Rune::Memory {
      * @return The virtual address pointing to the physical address.
      */
     VirtualAddr physical_to_virtual_address(PhysicalAddr p_addr);
-
 
     /**
      *
@@ -304,28 +282,23 @@ namespace Rune::Memory {
      */
     bool virtual_to_physical_address(VirtualAddr v_addr, PhysicalAddr& p_addr_out);
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Page Table Hierarchy Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     /**
      * A page flag represents a property of a page table entry.
      */
-#define PAGE_FLAGS(X)                   \
-    X(PageFlag, PRESENT, 0x01)          \
-    X(PageFlag, WRITE_ALLOWED, 0x02)    \
-    X(PageFlag, USER_MODE_ACCESS, 0x04) \
-    X(PageFlag, WRITE_THROUGH, 0x08)    \
-    X(PageFlag, CACHE_DISABLE, 0x10)    \
-    X(PageFlag, ACCESSED, 0x20)         \
-    X(PageFlag, DIRTY, 0x40)            \
+#define PAGE_FLAGS(X)                                                                                                  \
+    X(PageFlag, PRESENT, 0x01)                                                                                         \
+    X(PageFlag, WRITE_ALLOWED, 0x02)                                                                                   \
+    X(PageFlag, USER_MODE_ACCESS, 0x04)                                                                                \
+    X(PageFlag, WRITE_THROUGH, 0x08)                                                                                   \
+    X(PageFlag, CACHE_DISABLE, 0x10)                                                                                   \
+    X(PageFlag, ACCESSED, 0x20)                                                                                        \
+    X(PageFlag, DIRTY, 0x40)
 
-
-
-    DECLARE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0) //NOLINT
-
+    DECLARE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0) // NOLINT
 
     /**
      * A status code describing the outcome of accessing the page table structures.
@@ -336,16 +309,13 @@ namespace Rune::Memory {
      *  <li>PAGE_TABLE_ENTRY_MISSING: The entry of an intermediate page table is missing.</li>
      * </ol>
      */
-#define PAGE_TABLE_ACCESS_STATUSES(X)                       \
-    X(PageTableAccessStatus, OKAY, 0x1)                     \
-    X(PageTableAccessStatus, ALLOC_ERROR, 0x2)              \
-    X(PageTableAccessStatus, FREE_ERROR, 0x3)               \
-    X(PageTableAccessStatus, PAGE_TABLE_ENTRY_MISSING, 0x4) \
+#define PAGE_TABLE_ACCESS_STATUSES(X)                                                                                  \
+    X(PageTableAccessStatus, OKAY, 0x1)                                                                                \
+    X(PageTableAccessStatus, ALLOC_ERROR, 0x2)                                                                         \
+    X(PageTableAccessStatus, FREE_ERROR, 0x3)                                                                          \
+    X(PageTableAccessStatus, PAGE_TABLE_ENTRY_MISSING, 0x4)
 
-
-
-    DECLARE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) //NOLINT
-
+    DECLARE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) // NOLINT
 
     /**
      * @brief Describes the outcome of accessing the page table hierarchy and performing an operation (e.g allocation).
@@ -374,13 +344,12 @@ namespace Rune::Memory {
         static constexpr U8 MAX_PATH_LENGTH = 5;
 
         PageTableAccessStatus status                       = PageTableAccessStatus::NONE;
-        PageTableEntry        path[MAX_PATH_LENGTH]        = { };
+        PageTableEntry        path[MAX_PATH_LENGTH]        = {};
         U8                    level                        = 0;
-        bool                  pt_leak_map[MAX_PATH_LENGTH] = { false };
-        PhysicalAddr    physical_address             = 0;
-        PageTableEntry        pte_after                    = { 0 };
+        bool                  pt_leak_map[MAX_PATH_LENGTH] = {false};
+        PhysicalAddr          physical_address             = 0;
+        PageTableEntry        pte_after                    = {0};
     };
-
 
     /**
      * allocate a page mapping the vAddr to the pAddr in the virtual address space defined by the basePT using the given
@@ -404,14 +373,11 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess allocate_page(
-            const PageTable& base_pt,
-            VirtualAddr v_addr,
-            PhysicalAddr page_frame,
-            U16 flags,
-            PhysicalMemoryManager* pmm
-    );
-
+    PageTableAccess allocate_page(const PageTable&       base_pt,
+                                  VirtualAddr            v_addr,
+                                  PhysicalAddr           page_frame,
+                                  U16                    flags,
+                                  PhysicalMemoryManager* pmm);
 
     /**
      * free the page of the given vAddr and free the associated page frame using the physical memory manager.
@@ -429,7 +395,6 @@ namespace Rune::Memory {
      */
     PageTableAccess free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm);
 
-
     /**
      * Modify the flags of the page for a virtual address.
      *
@@ -442,7 +407,6 @@ namespace Rune::Memory {
      */
     PageTableAccess modify_page_flags(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, bool set);
 
-
     /**
      * Try to find the page for the given virtual address.
      *
@@ -452,6 +416,6 @@ namespace Rune::Memory {
      * @return Result of the page table access.
      */
     PageTableAccess find_page(const PageTable& base_pt, VirtualAddr v_addr);
-}
+} // namespace Rune::Memory
 
-#endif //RUNEOS_PAGING_H
+#endif // RUNEOS_PAGING_H

@@ -17,12 +17,9 @@
 #ifndef RUNEOS_TIMER_H
 #define RUNEOS_TIMER_H
 
-
 #include <KernelRuntime/Collection.h>
 
-
 #include <CPU/Threading/Scheduler.h>
-
 
 namespace Rune::CPU {
 
@@ -34,85 +31,79 @@ namespace Rune::CPU {
      *                  is set by software.</li>
      * </ul>
      */
-#define TIMER_MODES(X)                      \
-             X(TimerMode, PERIODIC, 0x1)    \
-             X(TimerMode, ONE_SHOT, 0x2)    \
+#define TIMER_MODES(X)                                                                                                 \
+    X(TimerMode, PERIODIC, 0x1)                                                                                        \
+    X(TimerMode, ONE_SHOT, 0x2)
 
-
-
-    DECLARE_ENUM(TimerMode, TIMER_MODES, 0x0)  // NOLINT
-
+    DECLARE_ENUM(TimerMode, TIMER_MODES, 0x0) // NOLINT
 
     /**
      * @brief A thread an it's wake time in nanoseconds.
      */
     struct SleepingThread {
-        Thread* sleeper = nullptr;
-        U64 wake_time = 0;
+        Thread* sleeper   = nullptr;
+        U64     wake_time = 0;
     };
-
 
     /**
      * A configurable timer that can generate interrupts at a specified frequency.
      */
     class Timer {
-    protected:
+      protected:
         TimerMode _mode;
 
         // In order to avoid using floating point values we measure everything in hertz e.g. 1MHz -> 1000000Hz
-        U64       _freq_hz;
+        U64 _freq_hz;
 
         // Time in nanoseconds a thread can run before being preempted
-        U64        _quantum;
+        U64 _quantum;
 
-    public:
+      public:
         explicit Timer();
 
-
         virtual ~Timer() = default;
-
 
         /**
          * @brief
          * @return The name of the timer device.
          */
-        [[nodiscard]] virtual String get_name() const = 0;
-
+        [[nodiscard]]
+        virtual String get_name() const = 0;
 
         /**
          * @brief
          * @return The configured frequency in Hz.
          */
-        [[nodiscard]] U64 get_frequency() const;
-
+        [[nodiscard]]
+        U64 get_frequency() const;
 
         /**
          * @brief
          * @return The current mode of operation.
          */
-        [[nodiscard]] TimerMode get_mode() const;
-
+        [[nodiscard]]
+        TimerMode get_mode() const;
 
         /**
          * @brief
          * @return The quantum each thread gets before being preempted.
          */
-        [[nodiscard]] U64 get_quantum() const;
-
+        [[nodiscard]]
+        U64 get_quantum() const;
 
         /**
          *
          * @return The time since the timer was started in nanoseconds.
          */
-        [[nodiscard]] virtual U64 get_time_since_start() const = 0;
-
+        [[nodiscard]]
+        virtual U64 get_time_since_start() const = 0;
 
         /**
          * @brief Get all threads that have been put to sleep by this timer.
          * @return A list of sleeping threads.
          */
-        [[nodiscard]] virtual LinkedList<SleepingThread> get_sleeping_threads() const = 0;
-
+        [[nodiscard]]
+        virtual LinkedList<SleepingThread> get_sleeping_threads() const = 0;
 
         /**
          * @brief Start the timer and thus enabling preemptive multithreading and sleeping for threads.
@@ -136,14 +127,8 @@ namespace Rune::CPU {
          * @return True: The timer is started, thread sleep and preemptive multithreading is now working.
          *          False: The timer could not be started, no sleeping and preemptive multithreading is possible.
          */
-        virtual bool start(
-                SharedPointer<Logger> logger,
-                CPU::Scheduler* scheduler,
-                TimerMode mode,
-                U64 frequency,
-                U64 quantum
-        ) = 0;
-
+        virtual bool
+        start(SharedPointer<Logger> logger, CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) = 0;
 
         /**
          * @brief Search for a thread with requested ID in the wait queue and remove it if found.
@@ -151,7 +136,6 @@ namespace Rune::CPU {
          * @return True: The thread is removed, False: It is not.
          */
         virtual bool remove_sleeping_thread(int t_id) = 0;
-
 
         /**
          * @brief Put the currently running thread to sleep and wake it at the specified wake time. If the wake time is
@@ -164,7 +148,6 @@ namespace Rune::CPU {
          */
         virtual void sleep_until(U64 wake_time_nanos) = 0;
 
-
         /**
          * @brief Put the currently running thread to sleep and wake it in the specified amount of nanoseconds.
          *
@@ -174,7 +157,6 @@ namespace Rune::CPU {
          * @param time_nanos
          */
         void sleep_nano(U64 time_nanos);
-
 
         /**
          * @brief Put the currently running thread to sleep and wake it in the specified amount of micro seconds.
@@ -186,7 +168,6 @@ namespace Rune::CPU {
          */
         void sleep_micro(U64 time_micros);
 
-
         /**
          * @brief Put the currently running thread to sleep and wake it in the specified amount of milli seconds.
          *
@@ -196,7 +177,6 @@ namespace Rune::CPU {
          * @param time_millis
          */
         void sleep_milli(U64 time_millis);
-
 
         /**
          * @brief Put the currently running thread to sleep and wake it in the specified amount of seconds.
@@ -208,6 +188,6 @@ namespace Rune::CPU {
          */
         void sleep_second(U64 time_seconds);
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_TIMER_H
+#endif // RUNEOS_TIMER_H

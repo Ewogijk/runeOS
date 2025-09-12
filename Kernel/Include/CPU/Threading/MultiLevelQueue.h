@@ -17,13 +17,10 @@
 #ifndef RUNEOS_MULTILEVELQUEUE_H
 #define RUNEOS_MULTILEVELQUEUE_H
 
-
-#include <KernelRuntime/Memory.h>
 #include <KernelRuntime/Collection.h>
-
+#include <KernelRuntime/Memory.h>
 
 #include <CPU/CPU.h>
-
 
 namespace Rune::CPU {
     /**
@@ -32,11 +29,10 @@ namespace Rune::CPU {
     class MultiLevelQueue {
         LinkedList<SharedPointer<Thread>> _threads;
         SchedulingPolicy                  _policy;
-        MultiLevelQueue* _lower_policy_queue;
+        MultiLevelQueue*                  _lower_policy_queue;
 
-    public:
+      public:
         explicit MultiLevelQueue(SchedulingPolicy policy, MultiLevelQueue* lower_policy_queue);
-
 
         /**
          * @brief Get a list of all enqueued threads across all policy levels..
@@ -44,20 +40,17 @@ namespace Rune::CPU {
          */
         LinkedList<Thread*> get_queued_threads();
 
-
         /**
          *
          * @return Scheduling policy of the queue.
          */
         SchedulingPolicy get_policy();
 
-
         /**
          *
          * @return Queue of the next lower priority policy.
          */
         MultiLevelQueue* get_lower_policy_queue();
-
 
         /**
          * Search through all queues starting from the queue with the highest scheduling policy priority and return the
@@ -66,7 +59,6 @@ namespace Rune::CPU {
          * @return The next thread in line or a null pointer if all queues are empty.
          */
         Thread* peek();
-
 
         /**
          * Try to enqueue the thread in the queue with the same scheduling policy
@@ -77,7 +69,6 @@ namespace Rune::CPU {
          */
         bool enqueue(SharedPointer<Thread> t);
 
-
         /**
          * Search through all queues starting from the queue with the highest scheduling policy priority and dequeue the
          * first available thread.
@@ -86,7 +77,6 @@ namespace Rune::CPU {
          */
         SharedPointer<Thread> dequeue();
 
-
         /**
          * @brief Search in all queues for a thread with the given ID and remove it if found.
          * @param thread_id ID of a thread.
@@ -94,6 +84,6 @@ namespace Rune::CPU {
          */
         SharedPointer<Thread> remove(int thread_id);
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_MULTILEVELQUEUE_H
+#endif // RUNEOS_MULTILEVELQUEUE_H

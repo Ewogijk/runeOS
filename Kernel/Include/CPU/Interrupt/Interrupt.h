@@ -17,9 +17,7 @@
 #ifndef RUNEOS_INTERRUPT_H
 #define RUNEOS_INTERRUPT_H
 
-
 #include <Ember/Ember.h>
-
 
 namespace Rune::CPU {
 
@@ -32,7 +30,6 @@ namespace Rune::CPU {
     //              Same applies to Exception.h and IRQ.h
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     /**
      * @brief Load and initialize the interrupt vector table (IVT) and any additional infrastructure required for the
      *          IVT to work. All interrupts will be initially disabled.
@@ -42,17 +39,15 @@ namespace Rune::CPU {
      */
     void interrupt_load_vector_table();
 
-
     /**
      * @brief Enable all interrupts in the system.
      */
     CLINK void interrupt_enable();
 
-
     /**
      * @brief Disable all interrupts in the system.
      */
     CLINK void interrupt_disable();
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_INTERRUPT_H
+#endif // RUNEOS_INTERRUPT_H

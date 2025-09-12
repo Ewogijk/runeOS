@@ -17,7 +17,6 @@
 #ifndef RUNEOS_ELFLOADER_H
 #define RUNEOS_ELFLOADER_H
 
-
 #include <App/App.h>
 #include <App/ELF.h>
 
@@ -26,7 +25,6 @@
 #include <CPU/CPU.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
-
 
 namespace Rune::App {
     /**
@@ -39,48 +37,32 @@ namespace Rune::App {
         U16                  _buf_limit;
         U8                   _file_buf[BUF_SIZE];
 
-        Memory::MemorySubsystem*          _memory_subsys;
-        VFS::VFSSubsystem*             _vfs_subsys;
-        SharedPointer<Logger> _logger;
+        Memory::MemorySubsystem* _memory_subsys;
+        VFS::VFSSubsystem*       _vfs_subsys;
+        SharedPointer<Logger>    _logger;
 
         // Open ELF file
         SharedPointer<VFS::Node> _elf_file;
 
-
         // Read the next bytes in the buffer.
         bool get_next_buffer();
-
 
         // Move the requested amount of bytes from the file buffer to the given buffer
         size_t read_bytes(void* buf, U16 buf_size);
 
-
         // Skip the requested amount of bytes from the file start.
         bool seek(U64 byte_count);
 
-
         LoadStatus load_elf_file(ELF64File& elf_file);
-
 
         bool allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start);
 
-
         bool load_segments(const ELF64File& elf_file);
 
+        CPU::StartInfo* setup_bootstrap_area(const ELF64File& elf_file, char* args[], size_t stack_size);
 
-        CPU::StartInfo* setup_bootstrap_area(
-            const ELF64File& elf_file,
-            char*            args[],
-            size_t           stack_size);
-
-
-    public:
-        ELFLoader(
-            Memory::MemorySubsystem*          memory_subsys,
-            VFS::VFSSubsystem*             vfs_subsys,
-            SharedPointer<Logger> logger
-        );
-
+      public:
+        ELFLoader(Memory::MemorySubsystem* memory_subsys, VFS::VFSSubsystem* vfs_subsys, SharedPointer<Logger> logger);
 
         /**
          * Try to parse and verify the given executable file, load it's segments into memory and fill the app table
@@ -115,19 +97,17 @@ namespace Rune::App {
          * @param start_info_addr_out Virtual address of the start info struct.
          * @param keep_vas            True: Do not allocate a new VAS for the executable but load it into the current
          *                              VAS, this essentially deactivates steps 3 and 7.<br>
-         *                   False: Allocate a new VAS for the executable.
+         *                            False: Allocate a new VAS for the executable.
          *
          * @return The final status of the ELF loading.
          */
-        LoadStatus load(
-            const Path&                executable,
-            char*                      args[],
-            const SharedPointer<Info>& entry_out,
-            CPU::Stack&                user_stack_out,
-            VirtualAddr&         start_info_addr_out,
-            bool                       keep_vas);
+        LoadStatus load(const Path&                executable,
+                        char*                      args[],
+                        const SharedPointer<Info>& entry_out,
+                        CPU::Stack&                user_stack_out,
+                        VirtualAddr&               start_info_addr_out,
+                        bool                       keep_vas);
     };
-}
+} // namespace Rune::App
 
-
-#endif //RUNEOS_ELFLOADER_H
+#endif // RUNEOS_ELFLOADER_H

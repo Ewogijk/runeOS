@@ -17,11 +17,9 @@
 #ifndef RUNEOS_KEYBOARD_H
 #define RUNEOS_KEYBOARD_H
 
-
 #include <Ember/Ember.h>
 
 #include <KernelRuntime/Stream.h>
-
 
 namespace Rune::Device {
 
@@ -30,12 +28,10 @@ namespace Rune::Device {
      *          as a stream.
      */
     class VirtualKeyboard : public TextStream {
-    public:
-
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Virtual Keyboard API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief
@@ -43,14 +39,11 @@ namespace Rune::Device {
          */
         virtual bool start() = 0;
 
-
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Stream functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         bool is_read_supported() override;
-
 
         /**
          * @brief Read a single virtual key press from the buffer.
@@ -58,24 +51,19 @@ namespace Rune::Device {
          */
         int read() override = 0;
 
-
         bool is_write_supported() override;
 
-
         bool write(U8 value) override;
-
 
         /**
          * @brief Flush a virtual keys in the buffer.
          */
         void flush() override = 0;
 
-
         void close() override;
-
 
         bool is_ansi_supported() override;
     };
-}
+} // namespace Rune::Device
 
-#endif //RUNEOS_KEYBOARD_H
+#endif // RUNEOS_KEYBOARD_H

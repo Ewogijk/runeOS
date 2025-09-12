@@ -17,12 +17,10 @@
 #ifndef RUNEOS_FILESTREAM_H
 #define RUNEOS_FILESTREAM_H
 
-
-#include <KernelRuntime/Stream.h>
 #include <KernelRuntime/Memory.h>
+#include <KernelRuntime/Stream.h>
 
 #include <VirtualFileSystem/Node.h>
-
 
 namespace Rune::VFS {
     class FileStream : public TextStream {
@@ -38,34 +36,26 @@ namespace Rune::VFS {
 
         bool _can_write;
 
-    public:
+      public:
         explicit FileStream(SharedPointer<Node> node);
-
 
         bool is_read_supported() override;
 
-
         int read() override;
-
 
         bool is_write_supported() override;
 
-
         bool write(U8 value) override;
 
-
         void flush() override;
-
 
         /**
          * @brief Call close on the underlying file node.
          */
         void close() override;
 
-
         bool is_ansi_supported() override;
-
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FILESTREAM_H
+#endif // RUNEOS_FILESTREAM_H

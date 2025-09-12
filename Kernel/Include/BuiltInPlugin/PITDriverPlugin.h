@@ -17,36 +17,30 @@
 #ifndef EWOGIJKOS_PITEXTENSION_H
 #define EWOGIJKOS_PITEXTENSION_H
 
-
 #include <KernelRuntime/Plugin.h>
-
 
 namespace Rune::BuiltInPlugin {
 
     class PITDriverPlugin : public Plugin {
-    public:
-
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         PITDriverPlugin() = default;
 
-
         ~PITDriverPlugin() override = default;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Kernel Extension Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+        [[nodiscard]]
+        PluginInfo get_info() const override;
 
-        [[nodiscard]] PluginInfo get_info() const override;
-
-
-        [[nodiscard]] bool start(const SubsystemRegistry &ks_registry) override;
+        [[nodiscard]]
+        bool start(const SubsystemRegistry& ks_registry) override;
     };
-}
+} // namespace Rune::BuiltInPlugin
 
-#endif //EWOGIJKOS_PITEXTENSION_H
+#endif // EWOGIJKOS_PITEXTENSION_H

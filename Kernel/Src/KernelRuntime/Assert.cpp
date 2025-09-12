@@ -14,27 +14,25 @@
 
 #include <KernelRuntime/Assert.h>
 
-
 namespace Rune {
     auto err_stream = SharedPointer<TextStream>();
-
 
     void assert_configure(const SharedPointer<TextStream>& stream) {
         if (err_stream) return;
         err_stream = stream;
     }
 
-
     void assert(const bool condition, const String& file, const String& message) {
         if (condition) return;
         if (err_stream) err_stream->write(file + " - " + message);
-        while (true);
+        while (true)
+            ;
     }
-
 
     void assert(const bool condition, const String& file) {
         if (condition) return;
         if (err_stream) err_stream->write(file + " - Assertion failed!");
-        while (true);
+        while (true)
+            ;
     }
-}
+} // namespace Rune

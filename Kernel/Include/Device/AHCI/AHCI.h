@@ -17,12 +17,10 @@
 #ifndef RUNEOS_AHCI_H
 #define RUNEOS_AHCI_H
 
-
 #include <KernelRuntime/Collection.h>
 
 #include <Device/AHCI/HBAMemory.h>
 #include <Device/AHCI/PortEngine.h>
-
 
 namespace Rune::Device {
     /**
@@ -35,55 +33,43 @@ namespace Rune::Device {
         U8 partition_table_index = 0;
     };
 
-
     class AHCIDriver {
         static constexpr U8 LOGICAL_DRIVE_LIMIT = 255;
         static constexpr U8 PORT_LIMIT          = 32;
 
-        volatile HBAMemory* _hba;
+        volatile HBAMemory*   _hba;
         SharedPointer<Logger> _logger;
-        PortEngine                  _port_engine[PORT_LIMIT];
+        PortEngine            _port_engine[PORT_LIMIT];
 
         Memory::SlabAllocator* _heap;
-        CPU::Timer           * _timer;
+        CPU::Timer*            _timer;
 
         LogicalDrive _logical_drive_table[LOGICAL_DRIVE_LIMIT];
         size_t       _logical_drive_count;
 
-
         SystemMemory* alloc_system_memory(U32 ct_count);
-
 
         LogicalDrive resolve_logical_drive(U8 logicalDrive);
 
-
-    public:
+      public:
         AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer, SharedPointer<Logger> logger);
-
 
         LinkedList<HardDrive> get_discovered_hard_drives();
 
-
         LinkedList<Partition> get_logical_drives();
-
 
         HardDrive get_hard_drive_info(U8 hard_drive);
 
-
         bool start(volatile HBAMemory* hba);
-
 
         bool stop();
 
-
         size_t send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2dFIS);
-
 
         size_t read(U8 hard_drive, void* buf, size_t buf_size, size_t lba);
 
-
         size_t write(U8 hard_drive, void* buf, size_t buf_size, size_t lba);
     };
-}
+} // namespace Rune::Device
 
-#endif //RUNEOS_AHCI_H
+#endif // RUNEOS_AHCI_H

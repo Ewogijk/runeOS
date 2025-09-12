@@ -16,13 +16,10 @@
 
 #include <VirtualFileSystem/Status.h>
 
-
 namespace Rune::VFS {
     DEFINE_ENUM(FormatStatus, FORMAT_STATUSES, 0x0)
 
-
     DEFINE_ENUM(MountStatus, MOUNT_STATUSES, 0x0)
 
-
     DEFINE_ENUM(IOStatus, IO_STATUSES, 0x0)
-}
+} // namespace Rune::VFS

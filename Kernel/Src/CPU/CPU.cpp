@@ -16,7 +16,6 @@
 
 #include <CPU/CPU.h>
 
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Arch independent implementations
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -24,20 +23,11 @@
 namespace Rune::CPU {
     DEFINE_ENUM(ThreadState, THREAD_STATES, 0x0)
 
-
     DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
 
+    bool operator==(const Thread& one, const Thread& two) { return one.handle == two.handle; }
 
-
-    bool operator==(const Thread& one, const Thread& two) {
-        return one.handle == two.handle;
-    }
-
-
-    bool operator!=(const Thread& one, const Thread& two) {
-        return one.handle != two.handle;
-    }
-
+    bool operator!=(const Thread& one, const Thread& two) { return one.handle != two.handle; }
 
     DEFINE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)
-}
+} // namespace Rune::CPU

@@ -12,41 +12,30 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-
 #include <KernelRuntime/Memory.h>
 
 #include <KernelRuntime/Algorithm.h>
 
-
 namespace Rune {
     DEFINE_TYPED_ENUM(MemoryUnit, MemorySize, MEMORY_UNITS, 0x0)
-
 
     MemoryFloatSize memory_bytes_in(const MemorySize bytes, const MemoryUnit unit) {
         return static_cast<MemoryFloatSize>(bytes) / static_cast<MemorySize>(unit);
     }
 
-
-    bool memory_is_aligned(const MemoryAddr mem_addr, const MemoryAddr boundary) {
-        return mem_addr % boundary == 0;
-    }
-
+    bool memory_is_aligned(const MemoryAddr mem_addr, const MemoryAddr boundary) { return mem_addr % boundary == 0; }
 
     MemoryAddr memory_align(const MemoryAddr mem_addr, const MemoryAddr page_boundary, const bool round_up) {
         U64 pages = mem_addr / page_boundary;
-        if (round_up)
-            pages++;
+        if (round_up) pages++;
         return pages * page_boundary;
     }
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Memory Region
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     DEFINE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0)
-
 
     MemoryAddr MemoryRegion::end() const {
         constexpr auto max = static_cast<MemoryAddr>(-1);
@@ -57,43 +46,26 @@ namespace Rune {
         return start > (max - size) ? max : start + size;
     }
 
+    MemoryFloatSize MemoryRegion::size_in(const MemoryUnit unit) const { return memory_bytes_in(size, unit); }
 
-    MemoryFloatSize MemoryRegion::size_in(const MemoryUnit unit) const {
-        return memory_bytes_in(size, unit);
-    }
-
-
-    bool MemoryRegion::contains(const MemoryRegion& other) const {
-        return start < other.end() && other.start < end();
-    }
-
+    bool MemoryRegion::contains(const MemoryRegion& other) const { return start < other.end() && other.start < end(); }
 
     bool MemoryRegion::operator==(const MemoryRegion& b) const {
         return this->start == b.start && this->size == b.size && this->memory_type == b.memory_type;
     }
 
-
-    bool MemoryRegion::operator!=(const MemoryRegion& b) const {
-        return !(*this == b);
-    }
-
+    bool MemoryRegion::operator!=(const MemoryRegion& b) const { return !(*this == b); }
 
     bool MemoryRegion::operator<=(const MemoryRegion& o) const {
-        if (start == o.start)
-            return size <= o.size;
+        if (start == o.start) return size <= o.size;
         return start < o.start;
     }
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Memory Map
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-    MemoryMap::MemoryMap(MemoryRegion regions[LIMIT]) :
-        _free_mem(0),
-        _reserved_mem(0),
-        _num_regions(0) {
+    MemoryMap::MemoryMap(MemoryRegion regions[LIMIT]) : _free_mem(0), _reserved_mem(0), _num_regions(0) {
         for (U8 i = 0; i < LIMIT; i++) {
             if (regions[i].memory_type != MemoryRegionType::NONE) {
                 _map[i] = regions[i];
@@ -110,10 +82,7 @@ namespace Rune {
         }
     }
 
-
-    MemoryMap::MemoryMap(const std::initializer_list<MemoryRegion> regions) :
-        _free_mem(0),
-        _reserved_mem(0) {
+    MemoryMap::MemoryMap(const std::initializer_list<MemoryRegion> regions) : _free_mem(0), _reserved_mem(0) {
         size_t i = 0;
         for (auto& r : regions) {
             if (r.memory_type != MemoryRegionType::NONE) {
@@ -131,45 +100,29 @@ namespace Rune {
         _num_regions = i;
     }
 
+    size_t MemoryMap::size() const { return _num_regions; }
 
-    size_t MemoryMap::size() const {
-        return _num_regions;
-    }
-
-
-    MemorySize MemoryMap::get_free_memory() const {
-        return _free_mem;
-    }
-
+    MemorySize MemoryMap::get_free_memory() const { return _free_mem; }
 
     MemoryFloatSize MemoryMap::get_free_memory_in(const MemoryUnit unit) const {
         return memory_bytes_in(_free_mem, unit);
     }
 
-
-    MemorySize MemoryMap::get_reserved_memory() const {
-        return _reserved_mem;
-    }
-
+    MemorySize MemoryMap::get_reserved_memory() const { return _reserved_mem; }
 
     MemoryFloatSize MemoryMap::get_reserved_memory_in(const MemoryUnit unit) const {
         return memory_bytes_in(_reserved_mem, unit);
     }
 
-
-    MemorySize MemoryMap::get_total_memory() const {
-        return _free_mem + _reserved_mem;
-    }
-
+    MemorySize MemoryMap::get_total_memory() const { return _free_mem + _reserved_mem; }
 
     MemoryFloatSize MemoryMap::get_total_memory_in(const MemoryUnit unit) const {
         return get_free_memory_in(unit) + get_reserved_memory_in(unit);
     }
 
-
     bool MemoryMap::claim(MemoryRegion& claimant, const U32 boundary) {
         const size_t num_regs_before = _num_regions;
-        bool   claimed         = false;
+        bool         claimed         = false;
         for (auto& r : _map) {
             if (r.start <= claimant.start && claimant.end() <= r.end()) {
                 if (r.start == claimant.start && r.size == claimant.size) {
@@ -185,7 +138,7 @@ namespace Rune {
 
                     if (r.start == claimant.start) {
                         r.start += claimant.size;
-                        r.size -= claimant.size;
+                        r.size  -= claimant.size;
                     } else if (r.end() == claimant.end()) {
                         r.size -= claimant.size;
                     } else {
@@ -197,12 +150,8 @@ namespace Rune {
 
                         MemorySize right_part_size = r.size - claimant.size - (claimant.start - r.start);
 
-                        r.size -= claimant.size + right_part_size;
-                        _map[_num_regions++] = {
-                            claimant.end(),
-                            right_part_size,
-                            MemoryRegionType::USABLE
-                        };
+                        r.size               -= claimant.size + right_part_size;
+                        _map[_num_regions++]  = {claimant.end(), right_part_size, MemoryRegionType::USABLE};
                     }
                     _map[_num_regions++] = claimant;
                     claimed              = true;
@@ -210,14 +159,13 @@ namespace Rune {
                 break;
             }
         }
-        if (!claimed)
-            return false;
+        if (!claimed) return false;
 
         if (claimant.memory_type == MemoryRegionType::USABLE) {
-            _free_mem += claimant.size;
+            _free_mem     += claimant.size;
             _reserved_mem -= claimant.size;
         } else {
-            _free_mem -= claimant.size;
+            _free_mem     -= claimant.size;
             _reserved_mem += claimant.size;
         }
 
@@ -227,25 +175,20 @@ namespace Rune {
         return true;
     }
 
-
     void MemoryMap::merge() {
         for (size_t i = 0; i < _num_regions - 1; i++) {
             auto& curr = _map[i];
-            if (auto& [start, size, memory_type] = _map[i + 1]; curr.memory_type == memory_type && curr.end() == start) {
+            if (auto& [start, size, memory_type] = _map[i + 1];
+                curr.memory_type == memory_type && curr.end() == start) {
                 curr.size += size;
                 array_delete(_map, i + 1, _num_regions);
                 i--;
             }
         }
         for (size_t i = _num_regions; i < MemoryMap::LIMIT; i++) {
-            _map[i] = {
-                0x0,
-                0x0,
-                MemoryRegionType::NONE
-            };
+            _map[i] = {0x0, 0x0, MemoryRegionType::NONE};
         }
     }
-
 
     void MemoryMap::dump(TextStream* out, const MemoryUnit region_unit, const MemoryUnit map_unit) const {
         const auto region_unit_str = region_unit.to_string();
@@ -253,43 +196,28 @@ namespace Rune {
         out->write_line("-------------------------- Memory Map --------------------------");
         for (const auto& region : *this) {
             if (region.memory_type != MemoryRegionType::NONE) {
-                out->write_formatted(
-                    "Mem: {:0=#16x} - {:0=#16x}, Size: {:<9.3} {}, MemoryRegionType: {}\n",
-                    region.start,
-                    region.end(),
-                    region.size_in(region_unit),
-                    region_unit_str,
-                    region.memory_type.to_string()
-                );
+                out->write_formatted("Mem: {:0=#16x} - {:0=#16x}, Size: {:<9.3} {}, MemoryRegionType: {}\n",
+                                     region.start,
+                                     region.end(),
+                                     region.size_in(region_unit),
+                                     region_unit_str,
+                                     region.memory_type.to_string());
             }
         }
-        out->write_formatted(
-            "{:.3}/{:.3} {} RAM available\n",
-            get_free_memory_in(map_unit),
-            get_total_memory_in(map_unit),
-            unit_str
-        );
+        out->write_formatted("{:.3}/{:.3} {} RAM available\n",
+                             get_free_memory_in(map_unit),
+                             get_total_memory_in(map_unit),
+                             unit_str);
 
-        out->write_formatted(
-            "{:.3}/{:.3} {} RAM reserved\n",
-            get_reserved_memory_in(map_unit),
-            get_total_memory_in(map_unit),
-            unit_str
-        );
+        out->write_formatted("{:.3}/{:.3} {} RAM reserved\n",
+                             get_reserved_memory_in(map_unit),
+                             get_total_memory_in(map_unit),
+                             unit_str);
     }
 
+    const MemoryRegion& MemoryMap::operator[](const size_t index) const { return _map[index]; }
 
-    const MemoryRegion& MemoryMap::operator[](const size_t index) const {
-        return _map[index];
-    }
+    const MemoryRegion* MemoryMap::begin() const { return &_map[0]; }
 
-
-    const MemoryRegion* MemoryMap::begin() const {
-        return &_map[0];
-    }
-
-
-    const MemoryRegion* MemoryMap::end() const {
-        return &_map[_num_regions];
-    }
-}
+    const MemoryRegion* MemoryMap::end() const { return &_map[_num_regions]; }
+} // namespace Rune

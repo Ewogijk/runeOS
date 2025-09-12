@@ -17,11 +17,9 @@
 #ifndef RUNEOS_IRQ_H
 #define RUNEOS_IRQ_H
 
-
 #include <Ember/Enum.h>
 
 #include <CPU/Interrupt/PIC.h>
-
 
 namespace Rune::CPU {
     /**
@@ -32,27 +30,22 @@ namespace Rune::CPU {
      * </ul>
      *
      */
-#define IRQ_STATES(X)                 \
-         X(IRQState, PENDING, 0x1)    \
-         X(IRQState, HANDLED, 0x2)    \
+#define IRQ_STATES(X)                                                                                                  \
+    X(IRQState, PENDING, 0x1)                                                                                          \
+    X(IRQState, HANDLED, 0x2)
 
-
-
-    DECLARE_ENUM(IRQState, IRQ_STATES, 0x0)  // NOLINT
-
+    DECLARE_ENUM(IRQState, IRQ_STATES, 0x0) // NOLINT
 
     using IRQHandler = Function<IRQState()>;
-
 
     /**
      * @brief General information about an installed IRQ handler.
      */
     struct IRQTableEntry {
-        U16    device_handle = 0;     // Unique device ID
-        String device_name   = "";    // Name of the device using this IRQ
-        U64    handled       = 0;     // Number of times the IRQ was handled by the IRQ handler
+        U16    device_handle = 0;  // Unique device ID
+        String device_name   = ""; // Name of the device using this IRQ
+        U64    handled       = 0;  // Number of times the IRQ was handled by the IRQ handler
     };
-
 
     /**
      * @brief A IRQ table for a specific IRQ line contains some general information about the IRQ line
@@ -60,11 +53,10 @@ namespace Rune::CPU {
      */
     struct IRQTable {
         U8                        irq_line     = 0;
-        U64                       raised       = 0;       // Number of times the IRQ was raised
-        U64                       left_pending = 0;       // Number of times the IRQ could not be handled
+        U64                       raised       = 0; // Number of times the IRQ was raised
+        U64                       left_pending = 0; // Number of times the IRQ could not be handled
         LinkedList<IRQTableEntry> entry        = LinkedList<IRQTableEntry>();
     };
-
 
     /**
      * @brief Try to detect a PIC device on the system and initialize it, so that it immediately will be able to forward
@@ -77,7 +69,6 @@ namespace Rune::CPU {
      */
     int irq_init(const LinkedList<PICDriver*>& pic_drivers);
 
-
     /**
      * @brief Get the highest possible IRQ line.
      *
@@ -87,7 +78,6 @@ namespace Rune::CPU {
      */
     U8 irq_get_line_limit();
 
-
     /**
      * @brief Get the IRQ table for an IRQ line which contains general information about an IRQ and all
      *          installed IRQ handlers.
@@ -95,7 +85,6 @@ namespace Rune::CPU {
      * @return IRQ table of an IRQ line.
      */
     IRQTable irq_get_table_for(U8 irq_line);
-
 
     /**
      * @brief Install the IRQ handler for a device on the specified IRQ line.
@@ -107,7 +96,6 @@ namespace Rune::CPU {
      */
     bool irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler);
 
-
     /**
      * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
      * @param irq_line
@@ -116,13 +104,12 @@ namespace Rune::CPU {
      */
     bool irq_uninstall_handler(U8 irq_line, U16 dev_handle);
 
-
     /**
      * @brief Send an "End of Interrupt" signal through the PIC driver.
      * @return True: The EOI was sent, False: It was not send because IRQ are not initialized or no IRQ is
      *          currently pending.
      */
     bool irq_send_eoi();
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_IRQ_H
+#endif // RUNEOS_IRQ_H

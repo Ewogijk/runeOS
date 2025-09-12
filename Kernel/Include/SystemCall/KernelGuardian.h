@@ -17,20 +17,16 @@
 #ifndef RUNEOS_KERNELGUARDIAN_H
 #define RUNEOS_KERNELGUARDIAN_H
 
-
 #include <KernelRuntime/Memory.h>
-
 
 namespace Rune::SystemCall {
     class KernelGuardian {
         VirtualAddr _kernel_memory_start;
 
-    public:
+      public:
         KernelGuardian();
 
-
         void set_kernel_memory_start(VirtualAddr kernel_memory_start);
-
 
         /**
          * @brief Verify that the user buffer is not null and check that it does not intersect with kernel memory.
@@ -40,7 +36,6 @@ namespace Rune::SystemCall {
          * @return True: The user mode buffer has passed the checks, False: The user mode buffer is bad.
          */
         bool verify_user_buffer(void* user_buf, size_t user_buf_size) const;
-
 
         /**
          * @brief Verify the user and kernel memory buffer and then copy the content of the user memory buffer to the
@@ -66,7 +61,6 @@ namespace Rune::SystemCall {
          */
         bool copy_byte_buffer_user_to_kernel(void* user_buf, size_t user_buf_size, void* kernel_buf) const;
 
-
         /**
          * @brief Verify the user and kernel memory buffer and then copy the content of the kernel memory buffer to the
          *          user memory buffer. It is assumed that the user and kernel buffer are the same size.
@@ -85,7 +79,6 @@ namespace Rune::SystemCall {
          *          does intersect with kernel memory, no memory was copied to the kernel buffer.
          */
         bool copy_byte_buffer_kernel_to_user(void* kernel_buf, void* user_buf, size_t user_buf_size) const;
-
 
         /**
          * @brief Verify that the c string is null terminated and copy it into the kernel_str buffer.
@@ -107,6 +100,6 @@ namespace Rune::SystemCall {
          */
         bool copy_string_user_to_kernel(const char* user_str, int max_size, const char* kernel_str) const;
     };
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_KERNELGUARDIAN_H
+#endif // RUNEOS_KERNELGUARDIAN_H

@@ -16,10 +16,8 @@
 
 #include <Device/AHCI/FIS.h>
 
-
 namespace Rune::Device {
     DEFINE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0)
 
-
     DEFINE_TYPED_ENUM(H2DCommand, U8, H2D_COMMANDS, 0x0)
-}
+} // namespace Rune::Device

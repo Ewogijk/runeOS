@@ -16,18 +16,12 @@
 
 #include <Device/AHCI/Port.h>
 
-
 namespace Rune::Device {
     DEFINE_TYPED_ENUM(SATADeviceType, U32, SATA_DEVICE_TYPES, 0x0)
 
-
     DEFINE_TYPED_ENUM(InterfacePowerManagement, U8, INTERFACE_POWER_MANAGEMENT_TYPES, 0x10)
-
 
     DEFINE_TYPED_ENUM(InterfaceSpeed, U8, INTERFACE_SPEED_TYPES, 0x4)
 
-
     DEFINE_TYPED_ENUM(DeviceDetection, U8, DEVICE_DETECTION_VALUES, 0x8)
-}
-
-
+} // namespace Rune::Device

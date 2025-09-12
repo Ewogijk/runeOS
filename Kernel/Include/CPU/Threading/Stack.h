@@ -17,9 +17,7 @@
 #ifndef RUNEOS_STACK_H
 #define RUNEOS_STACK_H
 
-
 #include <KernelRuntime/Memory.h>
-
 
 namespace Rune::CPU {
 
@@ -29,7 +27,6 @@ namespace Rune::CPU {
      * @return The new top of the stack.
      */
     VirtualAddr setup_empty_stack(VirtualAddr stack_top);
-
 
     /**
      * @brief Setup the kernel stack so that it returns to the provided thread_enter function with the per ABI
@@ -41,11 +38,8 @@ namespace Rune::CPU {
      * @param thread_enter Virtual address of the Thread Enter function that prepares a thread for execution.
      * @return The new top of the kernel stack.
      */
-    VirtualAddr setup_trampoline_kernel_stack(
-            VirtualAddr stack_top,
-            VirtualAddr thread_enter
-    );
+    VirtualAddr setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter);
 
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_STACK_H
+#endif // RUNEOS_STACK_H

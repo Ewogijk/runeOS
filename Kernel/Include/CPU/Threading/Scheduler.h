@@ -17,15 +17,13 @@
 #ifndef RUNEOS_SCHEDULER_H
 #define RUNEOS_SCHEDULER_H
 
-
 #include <KernelRuntime/Collection.h>
 #include <KernelRuntime/Utility.h>
 
-#include <KernelRuntime/Memory.h>
 #include <KernelRuntime/Logging.h>
+#include <KernelRuntime/Memory.h>
 
 #include <CPU/Threading/MultiLevelQueue.h>
-
 
 namespace Rune::CPU {
     /**
@@ -41,12 +39,10 @@ namespace Rune::CPU {
     class Scheduler {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
-
         SharedPointer<Logger> _logger;
 
-
         SharedPointer<Thread> _running_thread;
-        MultiLevelQueue* _ready_threads;
+        MultiLevelQueue*      _ready_threads;
 
         /**
          * @brief Whenever this thread contains at least one thread, the thread terminator will be scheduled.
@@ -75,16 +71,13 @@ namespace Rune::CPU {
         SharedPointer<Thread>   _thread_terminator;
         Function<void(Thread*)> _on_context_switch;
 
-
-        void (* _thread_enter)();
-
+        void (*_thread_enter)();
 
         /**
          * @brief allocate the kernel stacks for the given stack.
          * @param thread
          */
         void setup_kernel_stack(const SharedPointer<Thread>& thread);
-
 
         /**
          * @brief Search for the next thread that should be scheduled.
@@ -97,23 +90,18 @@ namespace Rune::CPU {
          */
         SharedPointer<Thread> next_scheduled_thread();
 
-
-    public:
-
+      public:
         Scheduler();
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * @brief The ready queue contains all threads that are waiting to be scheduled.
          * @return The ready queue.
          */
         MultiLevelQueue* get_ready_queue();
-
 
         /**
          * @brief Get all threads that have been marked as terminated that still need to have their memory freed.
@@ -122,15 +110,13 @@ namespace Rune::CPU {
          *
          * @return A list of terminated threads.
          */
-        LinkedList <SharedPointer<Thread>>* get_terminated_threads();
-
+        LinkedList<SharedPointer<Thread>>* get_terminated_threads();
 
         /**
          * @brief Get the thread that currently has CPU time, meaning the thread that can execute code.
          * @return The running thread.
          */
         SharedPointer<Thread> get_running_thread();
-
 
         /**
          * @brief The idle thread will always be scheduled when there is no other ready thread available.
@@ -141,7 +127,6 @@ namespace Rune::CPU {
          * @return The idle thread.
          */
         SharedPointer<Thread> get_idle_thread();
-
 
         /**
          * @brief The thread terminator is responsible for freeing the memory allocated for another thread that has
@@ -154,20 +139,18 @@ namespace Rune::CPU {
          */
         SharedPointer<Thread> get_thread_terminator();
 
-
         /**
          * @brief Whenever this function returns true the scheduler can be preempted by e.g. a timer, otherwise a timer
          *          must not attempt to call the schedule() function.
          * @return True: Calling schedule() as part of preemption is allowed, False: It is not allowed to call
          *          schedule() as part of preemption.
          */
-        [[nodiscard]] bool is_preemption_allowed() const;
-
+        [[nodiscard]]
+        bool is_preemption_allowed() const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          *
@@ -177,18 +160,15 @@ namespace Rune::CPU {
          */
         void set_on_context_switch(Function<void(Thread*)> on_context_switch);
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          General Stuff
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          *
          * @param logger
          */
         void set_logger(SharedPointer<Logger> logger);
-
 
         /**
          * @brief Initialize the scheduler by creating the system threads, after initialization finished successfully
@@ -206,19 +186,15 @@ namespace Rune::CPU {
          * @param stack_top   Top of the bootstrap stack.
          * @return
          */
-        bool init(
-                PhysicalAddr base_pt_addr,
-                CPU::Register stack_top,
-                const SharedPointer<Thread>& idle_thread,
-                const SharedPointer<Thread>& thread_terminator,
-                void (* thread_enter)()
-        );
-
+        bool init(PhysicalAddr                 base_pt_addr,
+                  CPU::Register                stack_top,
+                  const SharedPointer<Thread>& idle_thread,
+                  const SharedPointer<Thread>& thread_terminator,
+                  void                         (*thread_enter)());
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Actual Scheduling
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
         /**
          * Disable interrupts and postpone context switches until the scheduler is unlocked. Two separate locks are used
@@ -226,13 +202,11 @@ namespace Rune::CPU {
          */
         void lock();
 
-
         /**
          * Release both locks once. If the last interrupt disable lock is released, interrupts are enabled. If the
          * last postpone context switches lock is released, a context switch is triggered.
          */
         void unlock();
-
 
         /**
          * @brief Setup the kernel stack of the newly created thread and put it into the ready queue.
@@ -245,7 +219,6 @@ namespace Rune::CPU {
          *          or could not be put into the ready queue.
          */
         bool schedule_new_thread(const SharedPointer<Thread>& thread);
-
 
         /**
          * @brief Put the thread in the "Ready" state and place it in the ready queue. The thread will be executed
@@ -264,7 +237,6 @@ namespace Rune::CPU {
          *          null or it is the currently running thread.
          */
         bool schedule(const SharedPointer<Thread>& thread);
-
 
         /**
          * @brief Trigger a context switch to continue execution of the next ready thread if context switches are
@@ -289,7 +261,6 @@ namespace Rune::CPU {
          */
         void execute_next_thread();
 
-
         /**
          * @brief Mark the given thread as terminated and put it into the terminated threads queue. If the thread is the
          *          currently running thread a context switch will be initiated.
@@ -306,13 +277,12 @@ namespace Rune::CPU {
          */
         void terminate(const SharedPointer<Thread>& thread);
 
-
         /**
          * @brief terminate the currently running thread, this is basically a call to terminate(get_running_thread()).
          *          See terminate(SharedPointer<Thread> thread) for the details.
          */
         void terminate();
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_SCHEDULER_H
+#endif // RUNEOS_SCHEDULER_H

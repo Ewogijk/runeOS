@@ -16,255 +16,185 @@
 
 #include <SystemCall/Definition.h>
 
-
 namespace Rune::SystemCall {
-    Definition define6(
-        const Ember::ResourceID ID,
-        const String&             name,
-        const Function<S64(
-            void*,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument)>& handler,
-        void*                            context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1),
-                    forward<Ember::SystemCallArgument>(arg2),
-                    forward<Ember::SystemCallArgument>(arg3),
-                    forward<Ember::SystemCallArgument>(arg4),
-                    forward<Ember::SystemCallArgument>(arg5),
-                    forward<Ember::SystemCallArgument>(arg6)
-                );
-            },
-            context
-        };
+    Definition define6(const Ember::ResourceID                         ID,
+                       const String&                                   name,
+                       const Function<S64(void*,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument)>& handler,
+                       void*                                           context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4),
+                                   forward<Ember::SystemCallArgument>(arg5),
+                                   forward<Ember::SystemCallArgument>(arg6));
+                },
+                context};
     }
 
-
-    Definition define5(
-        Ember::ResourceID ID,
-        const String&       name,
-        const Function<S64(
-            void*,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument)>& handler,
-        void*                            context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg6)
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1),
-                    forward<Ember::SystemCallArgument>(arg2),
-                    forward<Ember::SystemCallArgument>(arg3),
-                    forward<Ember::SystemCallArgument>(arg4),
-                    forward<Ember::SystemCallArgument>(arg5)
-                );
-            },
-            context
-        };
+    Definition define5(Ember::ResourceID                               ID,
+                       const String&                                   name,
+                       const Function<S64(void*,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument)>& handler,
+                       void*                                           context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4),
+                                   forward<Ember::SystemCallArgument>(arg5));
+                },
+                context};
     }
 
-
-    Definition define4(
-        Ember::ResourceID ID,
-        const String&       name,
-        const Function<S64(
-            void*,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument)>& handler,
-        void*                            context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg5)
-                SILENCE_UNUSED(arg6)
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1),
-                    forward<Ember::SystemCallArgument>(arg2),
-                    forward<Ember::SystemCallArgument>(arg3),
-                    forward<Ember::SystemCallArgument>(arg4)
-                );
-            },
-            context
-        };
+    Definition define4(Ember::ResourceID                               ID,
+                       const String&                                   name,
+                       const Function<S64(void*,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument)>& handler,
+                       void*                                           context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4));
+                },
+                context};
     }
 
-
-    Definition define3(
-        Ember::ResourceID ID,
-        const String&       name,
-        const Function<S64(
-            void*,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument,
-            Ember::SystemCallArgument)>& handler,
-        void*                            context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg4)
-                SILENCE_UNUSED(arg5)
-                SILENCE_UNUSED(arg6)
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1),
-                    forward<Ember::SystemCallArgument>(arg2),
-                    forward<Ember::SystemCallArgument>(arg3)
-                );
-            },
-            context
-        };
+    Definition
+    define3(Ember::ResourceID ID,
+            const String&     name,
+            const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument, Ember::SystemCallArgument)>&
+                  handler,
+            void* context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3));
+                },
+                context};
     }
 
-
-    Definition define2(
-        Ember::ResourceID                                                               ID,
-        const String&                                                                     name,
-        const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
-        void*                                                                             context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg3)
-                SILENCE_UNUSED(arg4)
-                SILENCE_UNUSED(arg5)
-                SILENCE_UNUSED(arg6)
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1),
-                    forward<Ember::SystemCallArgument>(arg2)
-                );
-            },
-            context
-        };
+    Definition define2(Ember::ResourceID                                                                 ID,
+                       const String&                                                                     name,
+                       const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
+                       void*                                                                             context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2));
+                },
+                context};
     }
 
-
-    Definition define1(
-        Ember::ResourceID                                    ID,
-        const String&                                          name,
-        const Function<S64(void*, Ember::SystemCallArgument)>& handler,
-        void*                                                  context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg2)
-                SILENCE_UNUSED(arg3)
-                SILENCE_UNUSED(arg4)
-                SILENCE_UNUSED(arg5)
-                SILENCE_UNUSED(arg6)
-                return handler(
-                    forward<void*>(sys_call_ctx),
-                    forward<Ember::SystemCallArgument>(arg1)
-                );
-            },
-            context
-        };
+    Definition define1(Ember::ResourceID                                      ID,
+                       const String&                                          name,
+                       const Function<S64(void*, Ember::SystemCallArgument)>& handler,
+                       void*                                                  context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx), forward<Ember::SystemCallArgument>(arg1));
+                },
+                context};
     }
 
-
-    Definition define0(
-        Ember::ResourceID  ID,
-        const String&        name,
-        Function<S64(void*)> handler,
-        void*                context
-    ) {
-        return {
-            ID,
-            name,
-            [handler](
-            void*                     sys_call_ctx,
-            Ember::SystemCallArgument arg1,
-            Ember::SystemCallArgument arg2,
-            Ember::SystemCallArgument arg3,
-            Ember::SystemCallArgument arg4,
-            Ember::SystemCallArgument arg5,
-            Ember::SystemCallArgument arg6
-        ) {
-                SILENCE_UNUSED(arg1)
-                SILENCE_UNUSED(arg2)
-                SILENCE_UNUSED(arg3)
-                SILENCE_UNUSED(arg4)
-                SILENCE_UNUSED(arg5)
-                SILENCE_UNUSED(arg6)
-                return handler(forward<void*>(sys_call_ctx));
-            },
-            context
-        };
+    Definition define0(Ember::ResourceID ID, const String& name, Function<S64(void*)> handler, void* context) {
+        return {ID,
+                name,
+                [handler](void*                     sys_call_ctx,
+                          Ember::SystemCallArgument arg1,
+                          Ember::SystemCallArgument arg2,
+                          Ember::SystemCallArgument arg3,
+                          Ember::SystemCallArgument arg4,
+                          Ember::SystemCallArgument arg5,
+                          Ember::SystemCallArgument arg6) {
+                    SILENCE_UNUSED(arg1)
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx));
+                },
+                context};
     }
-}
+} // namespace Rune::SystemCall

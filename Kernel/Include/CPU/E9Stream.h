@@ -17,34 +17,26 @@
 #ifndef RUNEOS_E9STREAM_H
 #define RUNEOS_E9STREAM_H
 
-
 #include <KernelRuntime/Stream.h>
-
 
 namespace Rune::CPU {
 
     class E9Stream : public TextStream {
-    public:
+      public:
         bool is_read_supported() override;
-
 
         int read() override;
 
-
         bool is_write_supported() override;
-
 
         bool write(U8 value) override;
 
-
         void flush() override;
-
 
         void close() override;
 
-
         bool is_ansi_supported() override;
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_E9STREAM_H
+#endif // RUNEOS_E9STREAM_H

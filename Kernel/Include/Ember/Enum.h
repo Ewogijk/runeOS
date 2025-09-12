@@ -17,9 +17,7 @@
 #ifndef EMBER_ENUM_H
 #define EMBER_ENUM_H
 
-
 #include <stddef.h>
-
 
 /**
  * @brief
@@ -28,27 +26,28 @@
  */
 size_t e_strlen(const char* str);
 
-
 int e_memcmp(const void* lhs, const void* rhs, size_t count);
-
 
 #define ENUM_VALUE(ClassName, Name, Value) Name = Value,
 
-#define ENUM_TO_STRING(ClassName, Name, Value) if (_value == ClassName::Name) return #Name;
+#define ENUM_TO_STRING(ClassName, Name, Value)                                                                         \
+    if (_value == ClassName::Name) return #Name;
 
-#define ENUM_FROM_STRING(ClassName, Name, Value) if (e_memcmp(str, #Name, e_strlen(str)) == 0) return ClassName::Name;
+#define ENUM_FROM_STRING(ClassName, Name, Value)                                                                       \
+    if (e_memcmp(str, #Name, e_strlen(str)) == 0) return ClassName::Name;
 
-#define ENUM_CONSTRUCT_FROM_STRING(ClassName, Name, Value) if (e_memcmp(str, #Name, e_strlen(str)) == 0) _value = ClassName::Name;
+#define ENUM_CONSTRUCT_FROM_STRING(ClassName, Name, Value)                                                             \
+    if (e_memcmp(str, #Name, e_strlen(str)) == 0) _value = ClassName::Name;
 
-#define ENUM_FROM_VALUE(ClassName, Name, Value)  if (value == Value) return ClassName::Name;
+#define ENUM_FROM_VALUE(ClassName, Name, Value)                                                                        \
+    if (value == Value) return ClassName::Name;
 
-#define ENUM_CONSTRUCT_FROM_VALUE(ClassName, Name, Value)  if (value == Value) _value = ClassName::Name;
-
+#define ENUM_CONSTRUCT_FROM_VALUE(ClassName, Name, Value)                                                              \
+    if (value == Value) _value = ClassName::Name;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Typed Enum
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
 /**
  * Preprocessor macro black magic that automatically declares a class with a nested typed enum class and conversion
@@ -96,77 +95,51 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
  *  DEFINE_TYPED_ENUM(Fruit, U8, FRUITS, 0)
  * </p>
  */
-#define DECLARE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)                \
-class ClassName {                                                                   \
-public:                                                                             \
-    enum _E : EnumType {                                                            \
-        NONE = NoneValue,                                                           \
-        EnumDefs(ENUM_VALUE)                                                        \
-    };                                                                              \
-                                                                                    \
-                                                                                    \
-    ClassName() = default;                                                          \
-                                                                                    \
-                                                                                    \
-    explicit ClassName(const char* str);                                            \
-                                                                                    \
-                                                                                    \
-    explicit ClassName(EnumType value);                                             \
-                                                                                    \
-                                                                                    \
-    constexpr ClassName(_E value) : _value(value)  { }                              \
-                                                                                    \
-                                                                                    \
-    constexpr operator _E() const { return _value; }                                \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] const char* to_string() const;                                    \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] EnumType to_value() const;                                        \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] static ClassName from_string(const char* str);                    \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] static ClassName from_value(EnumType value);                      \
-                                                                                    \
-private:                                                                            \
-    _E _value = _E::NONE;                                                           \
-};
+#define DECLARE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)                                                   \
+    class ClassName {                                                                                                  \
+      public:                                                                                                          \
+        enum _E : EnumType { NONE = NoneValue, EnumDefs(ENUM_VALUE) };                                                 \
+                                                                                                                       \
+        ClassName() = default;                                                                                         \
+                                                                                                                       \
+        explicit ClassName(const char* str);                                                                           \
+                                                                                                                       \
+        explicit ClassName(EnumType value);                                                                            \
+                                                                                                                       \
+        constexpr ClassName(_E value) : _value(value) {}                                                               \
+                                                                                                                       \
+        constexpr operator _E() const { return _value; }                                                               \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        const char* to_string() const;                                                                                 \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        EnumType to_value() const;                                                                                     \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        static ClassName from_string(const char* str);                                                                 \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        static ClassName from_value(EnumType value);                                                                   \
+                                                                                                                       \
+      private:                                                                                                         \
+        _E _value = _E::NONE;                                                                                          \
+    };
 
-
-#define DEFINE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)     \
-ClassName::ClassName(const char* str) {                                 \
-    EnumDefs(ENUM_CONSTRUCT_FROM_STRING)                                \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName::ClassName(EnumType value) {                                  \
-    EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                 \
-}                                                                       \
-                                                                        \
-                                                                        \
-const char* ClassName::to_string() const {                              \
-    EnumDefs(ENUM_TO_STRING)                                            \
-    return "NONE";                                                      \
-}                                                                       \
-                                                                        \
-EnumType ClassName::to_value() const {                                  \
-    return (EnumType) _value;                                           \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName ClassName::from_string(const char* str) {                     \
-    EnumDefs(ENUM_FROM_STRING)                                          \
-    return ClassName::NONE;                                             \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName ClassName::from_value(EnumType value) {                       \
-    EnumDefs(ENUM_FROM_VALUE)                                           \
-    return ClassName::NONE;                                             \
-}
+#define DEFINE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)                                                    \
+    ClassName::ClassName(const char* str){EnumDefs(ENUM_CONSTRUCT_FROM_STRING)}                                        \
+                                                                                                                       \
+    ClassName::ClassName(EnumType value) {                                                                             \
+        EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                                            \
+    }                                                                                                                  \
+                                                                                                                       \
+    const char* ClassName::to_string() const { EnumDefs(ENUM_TO_STRING) return "NONE"; }                               \
+                                                                                                                       \
+    EnumType ClassName::to_value() const { return (EnumType) _value; }                                                 \
+                                                                                                                       \
+    ClassName ClassName::from_string(const char* str) { EnumDefs(ENUM_FROM_STRING) return ClassName::NONE; }           \
+                                                                                                                       \
+    ClassName ClassName::from_value(EnumType value) { EnumDefs(ENUM_FROM_VALUE) return ClassName::NONE; }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Enum
@@ -219,57 +192,40 @@ ClassName ClassName::from_value(EnumType value) {                       \
  *  DEFINE_ENUM(Fruit, FRUITS, 0)
  * </p>
  */
-#define DECLARE_ENUM(ClassName, EnumDefs, NoneValue)                                \
-class ClassName {                                                                   \
-public:                                                                             \
-    enum _E {                                                                       \
-        NONE = NoneValue,                                                           \
-        EnumDefs(ENUM_VALUE)                                                        \
-    };                                                                              \
-                                                                                    \
-                                                                                    \
-    ClassName() = default;                                                          \
-                                                                                    \
-                                                                                    \
-    ClassName(const char* str);                                                     \
-                                                                                    \
-                                                                                    \
-    ClassName(size_t value);                                                        \
-                                                                                    \
-                                                                                    \
-    constexpr ClassName(_E value) : _value(value)  { }                              \
-                                                                                    \
-                                                                                    \
-    constexpr operator _E() const { return _value; }                                \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] const char* to_string() const;                                    \
-                                                                                    \
-                                                                                    \
-    [[nodiscard]] size_t to_value() const;                                          \
-                                                                                    \
-private:                                                                            \
-    _E _value = _E::NONE;                                                           \
-};
+#define DECLARE_ENUM(ClassName, EnumDefs, NoneValue)                                                                   \
+    class ClassName {                                                                                                  \
+      public:                                                                                                          \
+        enum _E { NONE = NoneValue, EnumDefs(ENUM_VALUE) };                                                            \
+                                                                                                                       \
+        ClassName() = default;                                                                                         \
+                                                                                                                       \
+        ClassName(const char* str);                                                                                    \
+                                                                                                                       \
+        ClassName(size_t value);                                                                                       \
+                                                                                                                       \
+        constexpr ClassName(_E value) : _value(value) {}                                                               \
+                                                                                                                       \
+        constexpr operator _E() const { return _value; }                                                               \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        const char* to_string() const;                                                                                 \
+                                                                                                                       \
+        [[nodiscard]]                                                                                                  \
+        size_t to_value() const;                                                                                       \
+                                                                                                                       \
+      private:                                                                                                         \
+        _E _value = _E::NONE;                                                                                          \
+    };
 
-#define DEFINE_ENUM(ClassName, EnumDefs, NoneValue)                     \
-ClassName::ClassName(const char* str) {                                 \
-    EnumDefs(ENUM_CONSTRUCT_FROM_STRING)                                \
-}                                                                       \
-                                                                        \
-                                                                        \
-ClassName::ClassName(size_t value) {                                    \
-    EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                 \
-}                                                                       \
-                                                                        \
-                                                                        \
-const char* ClassName::to_string() const {                              \
-    EnumDefs(ENUM_TO_STRING)                                            \
-    return "NONE";                                                      \
-}                                                                       \
-                                                                        \
-size_t ClassName::to_value() const {                                    \
-    return (size_t) _value;                                             \
-}
+#define DEFINE_ENUM(ClassName, EnumDefs, NoneValue)                                                                    \
+    ClassName::ClassName(const char* str){EnumDefs(ENUM_CONSTRUCT_FROM_STRING)}                                        \
+                                                                                                                       \
+    ClassName::ClassName(size_t value) {                                                                               \
+        EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                                            \
+    }                                                                                                                  \
+                                                                                                                       \
+    const char* ClassName::to_string() const { EnumDefs(ENUM_TO_STRING) return "NONE"; }                               \
+                                                                                                                       \
+    size_t ClassName::to_value() const { return (size_t) _value; }
 
-#endif //EMBER_ENUM_H
+#endif // EMBER_ENUM_H

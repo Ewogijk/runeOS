@@ -17,25 +17,22 @@
 #ifndef RUNEOS_FATENGINE_H
 #define RUNEOS_FATENGINE_H
 
-
 #include <VirtualFileSystem/FAT/FAT.h>
-
 
 namespace Rune::VFS {
 
     class FATEngine {
-    public:
+      public:
         virtual ~FATEngine() = default;
 
-
-        [[nodiscard]] virtual String get_name() const = 0;
+        [[nodiscard]]
+        virtual String get_name() const = 0;
 
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
         // BootRecord functions                                                         //
         //                                                                              //
         //////////////////////////////////////////////////////////////////////////////////
-
 
         /**
          * Create a new boot record for a storage device and write it to the buffer which must have the size of a
@@ -49,7 +46,6 @@ namespace Rune::VFS {
          */
         virtual bool make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) = 0;
 
-
         /**
          *
          * @param total_clusters Total clusters on a storage device.
@@ -57,7 +53,6 @@ namespace Rune::VFS {
          * @return True: The storage can be mounted by the FAT driver
          */
         virtual bool can_mount(U32 total_clusters) = 0;
-
 
         /**
          *
@@ -67,7 +62,6 @@ namespace Rune::VFS {
          */
         virtual U16 get_backup_boot_record_sector(BIOSParameterBlock* bpb) = 0;
 
-
         /**
          *
          * @param bpb
@@ -76,20 +70,17 @@ namespace Rune::VFS {
          */
         virtual uint32_t get_root_directory_cluster(BIOSParameterBlock* bpb) = 0;
 
-
         /**
          *
          * @return The maximum number of clusters a storage device can have.
          */
         virtual uint32_t get_max_cluster_count() = 0;
 
-
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
         // FAT functions                                                                //
         //                                                                              //
         //////////////////////////////////////////////////////////////////////////////////
-
 
         /**
          *
@@ -99,13 +90,11 @@ namespace Rune::VFS {
          */
         virtual uint32_t fat_get_size(BIOSParameterBlock* bpb) = 0;
 
-
         /**
          *
          * @return The EOF marker in the FAT.
          */
         virtual uint32_t fat_get_eof_marker() = 0;
-
 
         /**
          *
@@ -116,7 +105,6 @@ namespace Rune::VFS {
          */
         virtual uint32_t fat_offset(uint32_t cluster) = 0;
 
-
         /**
          *
          * @param fat          A buffer for two FAT sectors.
@@ -126,7 +114,6 @@ namespace Rune::VFS {
          */
         virtual uint32_t fat_get_entry(U8* fat, uint32_t entry_offset) = 0;
 
-
         /**
          * Set the FAT entry at the given offset in the FAT buffer to the new value.
          *
@@ -135,7 +122,6 @@ namespace Rune::VFS {
          * @param new_entry    New FAT entry.
          */
         virtual void fat_set_entry(U8* fat, uint32_t entry_offset, uint32_t new_entry) = 0;
-
 
         /**
          * Try to find a free cluster in the given FAT buffer.
@@ -147,8 +133,7 @@ namespace Rune::VFS {
          * @return A free cluster or MaxClusterCount() + 1 if no free cluster was found.
          */
         virtual uint32_t fat_find_free_cluster(U8* fat, uint32_t fat_sector_idx) = 0;
-
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FATENGINE_H
+#endif // RUNEOS_FATENGINE_H

@@ -16,42 +16,26 @@
 
 #include <KernelRuntime/ByteOrder.h>
 
-
 namespace Rune {
     DEFINE_TYPED_ENUM(ByteOrder, U8, BYTE_ORDERS, 0)
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          Little Endian
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//                                          Little Endian
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    U16 LittleEndian::to_U16(const U8* buf) { return buf[1] << 8 | buf[0]; }
 
-    U16 LittleEndian::to_U16(const U8* buf) {
-        return buf[1] << 8 | buf[0];
-    }
-
-
-    U32 LittleEndian::to_U32(const U8* buf) {
-        return buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0];
-    }
-
+    U32 LittleEndian::to_U32(const U8* buf) { return buf[3] << 24 | buf[2] << 16 | buf[1] << 8 | buf[0]; }
 
     U64 LittleEndian::to_U64(const U8* buf) {
-        return (U64) buf[7] << 56
-               | (U64) buf[6] << 48
-               | (U64) buf[5] << 40
-               | (U64) buf[4] << 32
-               | (U64) buf[3] << 24
-               | (U64) buf[2] << 16
-               | (U64) buf[1] << 8
-               | (U64) buf[0];
+        return (U64) buf[7] << 56 | (U64) buf[6] << 48 | (U64) buf[5] << 40 | (U64) buf[4] << 32 | (U64) buf[3] << 24
+               | (U64) buf[2] << 16 | (U64) buf[1] << 8 | (U64) buf[0];
     }
-
 
     void LittleEndian::to_bytes(U16 num, U8* buf) {
         buf[0] = num & 0xFF;
         buf[1] = (num >> 8) & 0xFF;
     }
-
 
     void LittleEndian::to_bytes(U32 num, U8* buf) {
         buf[0] = num & 0xFF;
@@ -59,7 +43,6 @@ namespace Rune {
         buf[2] = (num >> 16) & 0xFF;
         buf[3] = (num >> 24) & 0xFF;
     }
-
 
     void LittleEndian::to_bytes(U64 num, U8* buf) {
         buf[0] = num & 0xFF;
@@ -72,38 +55,23 @@ namespace Rune {
         buf[7] = (num >> 56) & 0xFF;
     }
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          Big Endian
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//                                          Big Endian
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    U16 BigEndian::to_U16(const U8* buf) { return buf[0] << 8 | buf[1]; }
 
-    U16 BigEndian::to_U16(const U8* buf) {
-        return buf[0] << 8 | buf[1];
-    }
-
-
-    U32 BigEndian::to_U32(const U8* buf) {
-        return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
-    }
-
+    U32 BigEndian::to_U32(const U8* buf) { return buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]; }
 
     U64 BigEndian::to_U64(const U8* buf) {
-        return (U64) buf[0] << 56
-               | (U64) buf[1] << 48
-               | (U64) buf[2] << 40
-               | (U64) buf[3] << 32
-               | (U64) buf[4] << 24
-               | (U64) buf[5] << 16
-               | (U64) buf[6] << 8
-               | (U64) buf[7];
+        return (U64) buf[0] << 56 | (U64) buf[1] << 48 | (U64) buf[2] << 40 | (U64) buf[3] << 32 | (U64) buf[4] << 24
+               | (U64) buf[5] << 16 | (U64) buf[6] << 8 | (U64) buf[7];
     }
-
 
     void BigEndian::to_bytes(U16 num, U8* buf) {
         buf[0] = (num >> 8) & 0xFF;
         buf[1] = num & 0xFF;
     }
-
 
     void BigEndian::to_bytes(U32 num, U8* buf) {
         buf[0] = (num >> 24) & 0xFF;
@@ -111,7 +79,6 @@ namespace Rune {
         buf[2] = (num >> 8) & 0xFF;
         buf[3] = num & 0xFF;
     }
-
 
     void BigEndian::to_bytes(U64 num, U8* buf) {
         buf[0] = (num >> 56) & 0xFF;
@@ -124,4 +91,4 @@ namespace Rune {
         buf[7] = num & 0xFF;
     }
 
-}
+} // namespace Rune

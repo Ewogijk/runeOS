@@ -20,24 +20,14 @@
 
 #include <CPU/Time/PIT.h>
 
-
 namespace Rune::BuiltInPlugin {
     PluginInfo PIT_INFO = {
-            "PIT",
-            "Ewogijk",
-            {
-                    1,
-                    0,
-                    0,
-                    ""
-            }
+        "PIT",
+        "Ewogijk",
+        {1, 0, 0, ""}
     };
 
-
-    PluginInfo PITDriverPlugin::get_info() const {
-        return PIT_INFO;
-    }
-
+    PluginInfo PITDriverPlugin::get_info() const { return PIT_INFO; }
 
     bool PITDriverPlugin::start(const SubsystemRegistry& ks_registry) {
         auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
@@ -45,4 +35,4 @@ namespace Rune::BuiltInPlugin {
 
         return true;
     }
-}
+} // namespace Rune::BuiltInPlugin

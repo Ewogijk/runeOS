@@ -18,10 +18,8 @@
 
 #include <KernelRuntime/Memory.h>
 
-
 namespace Rune::CPU {
     DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
-
 
     void init_gdt(GlobalDescriptorTable* gdt, TaskStateSegment64* tss) {
         //////////////////////////////////
@@ -175,14 +173,14 @@ namespace Rune::CPU {
         ssd->limit_flags.db          = 0;
         ssd->limit_flags.granularity = 0;
 
-        gdt->entry[0] = null_descriptor;  // Offset 0 * 8 = 0x00
-        gdt->entry[1] = kernel_code;      // Offset 1 * 8 = 0x08
-        gdt->entry[2] = kernel_data;      // Offset 2 * 8 = 0x10
-        gdt->entry[3] = user_data;        // Offset 3 * 8 = 0x18
-        gdt->entry[4] = user_code;        // Offset 4 * 8 = 0x20
+        gdt->entry[0] = null_descriptor; // Offset 0 * 8 = 0x00
+        gdt->entry[1] = kernel_code;     // Offset 1 * 8 = 0x08
+        gdt->entry[2] = kernel_data;     // Offset 2 * 8 = 0x10
+        gdt->entry[3] = user_data;       // Offset 3 * 8 = 0x18
+        gdt->entry[4] = user_code;       // Offset 4 * 8 = 0x20
         // TSS SystemSegmentDescriptor      Offset 5 * 8 = 0x28
 
         // Zero out TSS
         memset(tss, 0, sizeof(TaskStateSegment64));
     }
-}
+} // namespace Rune::CPU

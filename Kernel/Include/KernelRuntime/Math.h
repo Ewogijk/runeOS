@@ -20,34 +20,17 @@
 #include <limits.h>
 
 namespace Rune {
-    template<typename TNum>
-    TNum div_round_up(TNum num, TNum divisor) {
-        return (num + divisor - 1) / divisor;
-    }
+    template <typename TNum> TNum div_round_up(TNum num, TNum divisor) { return (num + divisor - 1) / divisor; }
 
+    template <typename TNum> TNum min(TNum a, TNum b) { return a < b ? a : b; }
 
-    template<typename TNum>
-    TNum min(TNum a, TNum b) {
-        return a < b ? a : b;
-    }
+    template <typename TNum> TNum max(TNum a, TNum b) { return a > b ? a : b; }
 
-
-    template<typename TNum>
-    TNum max(TNum a, TNum b) {
-        return a > b ? a : b;
-    }
-
-
-    template<typename TNum>
-    TNum abs(TNum a) {
-        return a >= 0 ? a : -a;
-    }
-
+    template <typename TNum> TNum abs(TNum a) { return a >= 0 ? a : -a; }
 
     double floor(double num);
 
-
     double ceil(double num);
-}
+} // namespace Rune
 
-#endif //RUNEOS_MATH_H
+#endif // RUNEOS_MATH_H

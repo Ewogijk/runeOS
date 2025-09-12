@@ -17,14 +17,12 @@
 #ifndef RUNEOS_SYSTEMCALL_H
 #define RUNEOS_SYSTEMCALL_H
 
-
 #include <Ember/Ember.h>
 
 #include <KernelRuntime/Logging.h>
 
 #include <SystemCall/Definition.h>
 #include <SystemCall/KernelGuardian.h>
-
 
 namespace Rune::SystemCall {
     /**
@@ -36,7 +34,6 @@ namespace Rune::SystemCall {
         U64    requested = 0;
     };
 
-
     /**
      * @brief Initialize the system call infrastructure, upon successful initialization the kernel can handle system
      *          calls from user mode applications.
@@ -45,7 +42,6 @@ namespace Rune::SystemCall {
      */
     bool system_call_init(SharedPointer<Logger> logger, KernelGuardian* k_guard);
 
-
     /**
      * @brief Get all installed system calls.
      *
@@ -53,8 +49,7 @@ namespace Rune::SystemCall {
      *
      * @return A list of all installed system calls.
      */
-    LinkedList <SystemCallInfo> system_call_get_table();
-
+    LinkedList<SystemCallInfo> system_call_get_table();
 
     /**
      * @brief Try to install the system call definition.
@@ -71,7 +66,6 @@ namespace Rune::SystemCall {
      */
     bool system_call_install(const Definition& sys_call_def);
 
-
     /**
      * @brief Try to uninstall the system call with the given ID.
      * @param system_call_id ID of the system call.
@@ -79,6 +73,6 @@ namespace Rune::SystemCall {
      *          invalid (systemCallID >= SystemCallLimit).
      */
     bool system_call_uninstall(U16 system_call_id);
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_SYSTEMCALL_H
+#endif // RUNEOS_SYSTEMCALL_H

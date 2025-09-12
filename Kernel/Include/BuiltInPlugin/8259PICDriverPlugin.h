@@ -17,36 +17,30 @@
 #ifndef RUNEOS_8259PICDRIVERPLUGIN_H
 #define RUNEOS_8259PICDRIVERPLUGIN_H
 
-
 #include <KernelRuntime/Plugin.h>
-
 
 namespace Rune::BuiltInPlugin {
 
     class _8259PICDriverPlugin : public Plugin {
-    public:
-
+      public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         _8259PICDriverPlugin() = default;
 
-
         ~_8259PICDriverPlugin() override = default;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Kernel Extension Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+        [[nodiscard]]
+        PluginInfo get_info() const override;
 
-        [[nodiscard]] PluginInfo get_info() const override;
-
-
-        [[nodiscard]] bool start(const SubsystemRegistry &ks_registry) override;
+        [[nodiscard]]
+        bool start(const SubsystemRegistry& ks_registry) override;
     };
-}
+} // namespace Rune::BuiltInPlugin
 
-#endif //RUNEOS_8259PICDRIVERPLUGIN_H
+#endif // RUNEOS_8259PICDRIVERPLUGIN_H

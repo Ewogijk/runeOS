@@ -12,9 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-
 #include <Ember/SystemCallID.h>
-
 
 namespace Ember {
     DEFINE_TYPED_ENUM(Memory, U16, MEMORY_SYSCALLS, 0x0)
@@ -24,4 +22,4 @@ namespace Ember {
     DEFINE_TYPED_ENUM(VFS, U16, VFS_SYSCALLS, 0x0)
 
     DEFINE_TYPED_ENUM(App, U16, APP_SYSCALLS, 0x0)
-}
+} // namespace Ember

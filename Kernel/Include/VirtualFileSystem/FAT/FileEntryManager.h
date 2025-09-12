@@ -17,44 +17,35 @@
 #ifndef RUNEOS_FILEENTRYMANAGER_H
 #define RUNEOS_FILEENTRYMANAGER_H
 
-
 #include <Ember/Enum.h>
 #include <KernelRuntime/Path.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
-#include <VirtualFileSystem/FAT/VolumeManager.h>
 #include <VirtualFileSystem/FAT/FATDirectoryIterator.h>
-
+#include <VirtualFileSystem/FAT/VolumeManager.h>
 
 namespace Rune::VFS {
 
-#define VOLUME_ACCESS_STATUSES(X)           \
-    X(VolumeAccessStatus, OKAY, 0x1)        \
-    X(VolumeAccessStatus, NOT_FOUND, 0x2)   \
-    X(VolumeAccessStatus, BAD_PATH, 0x3)    \
-    X(VolumeAccessStatus, DEV_ERROR, 0x4)   \
+#define VOLUME_ACCESS_STATUSES(X)                                                                                      \
+    X(VolumeAccessStatus, OKAY, 0x1)                                                                                   \
+    X(VolumeAccessStatus, NOT_FOUND, 0x2)                                                                              \
+    X(VolumeAccessStatus, BAD_PATH, 0x3)                                                                               \
+    X(VolumeAccessStatus, DEV_ERROR, 0x4)
 
-
-
-    DECLARE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0) //NOLINT
-
+    DECLARE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0) // NOLINT
 
     /**
      * High level search and manipulations of FAT file entries.
      */
     class FileEntryManager {
         SharedPointer<FATEngine> _fat_engine;
-        Device::AHCIDriver& _ahci_driver;
-        VolumeManager     & _volume_manager;
+        Device::AHCIDriver&      _ahci_driver;
+        VolumeManager&           _volume_manager;
 
-    public:
-
-        explicit FileEntryManager(
-                SharedPointer<FATEngine> fat_engine,
-                Device::AHCIDriver& ahci_driver,
-                VolumeManager& volume_manager
-        );
-
+      public:
+        explicit FileEntryManager(SharedPointer<FATEngine> fat_engine,
+                                  Device::AHCIDriver&      ahci_driver,
+                                  VolumeManager&           volume_manager);
 
         /**
          * Search for the file entry at the given path.
@@ -67,13 +58,8 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        VolumeAccessStatus search(
-                U16 storage_dev,
-                BIOSParameterBlock* bpb,
-                const Path& path,
-                LocationAwareFileEntry& out
-        ) const;
-
+        VolumeAccessStatus
+        search(U16 storage_dev, BIOSParameterBlock* bpb, const Path& path, LocationAwareFileEntry& out) const;
 
         /**
          * Search for the file entry at the given path, check if it is a directory. If yes a coherent range with
@@ -93,14 +79,11 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        VolumeAccessStatus find_empty_file_entries(
-                U16 storage_dev,
-                BIOSParameterBlock* bpb,
-                const Path& path,
-                U16 range,
-                LinkedList<LocationAwareFileEntry>& out
-        );
-
+        VolumeAccessStatus find_empty_file_entries(U16                                 storage_dev,
+                                                   BIOSParameterBlock*                 bpb,
+                                                   const Path&                         path,
+                                                   U16                                 range,
+                                                   LinkedList<LocationAwareFileEntry>& out);
 
         /**
          * Get the file entry from the storage device that the given entry points to and update it with the content
@@ -115,7 +98,6 @@ namespace Rune::VFS {
          */
         bool update(U16 storage_dev, BIOSParameterBlock* bpb, const LocationAwareFileEntry& entry);
 
-
         /**
          * allocate a new cluster for the given file.
          *
@@ -126,13 +108,9 @@ namespace Rune::VFS {
          *
          * @return Index of the allocated cluster. 0 if no free cluster was found.
          */
-        U32 allocate_cluster(
-                U16 storage_dev,
-                BIOSParameterBlock* bpb,
-                LocationAwareFileEntry& file,
-                U32 last_file_cluster
-        );
+        U32
+        allocate_cluster(U16 storage_dev, BIOSParameterBlock* bpb, LocationAwareFileEntry& file, U32 last_file_cluster);
     };
-}
+} // namespace Rune::VFS
 
-#endif //RUNEOS_FILEENTRYMANAGER_H
+#endif // RUNEOS_FILEENTRYMANAGER_H

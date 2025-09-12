@@ -17,55 +17,47 @@
 #ifndef RUNEOS_FIS_H
 #define RUNEOS_FIS_H
 
-
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-
 namespace Rune::Device {
-#define FIS_TYPES(X)                \
-    X(FISType, DMA_SETUP, 0x41)     \
-    X(FISType, PIO_SETUP, 0x5F)     \
-    X(FISType, REG_H2D, 0x27)       \
-    X(FISType, REG_D2H, 0x34)       \
-    X(FISType, SET_D_BITS, 0xA1)    \
+#define FIS_TYPES(X)                                                                                                   \
+    X(FISType, DMA_SETUP, 0x41)                                                                                        \
+    X(FISType, PIO_SETUP, 0x5F)                                                                                        \
+    X(FISType, REG_H2D, 0x27)                                                                                          \
+    X(FISType, REG_D2H, 0x34)                                                                                          \
+    X(FISType, SET_D_BITS, 0xA1)
 
+    DECLARE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0) // NOLINT
 
+#define H2D_COMMANDS(X)                                                                                                \
+    X(H2DCommand, IDENTIFY_DEVICE, 0xEC)                                                                               \
+    X(H2DCommand, READ_DMA_EXTENDED, 0x25)                                                                             \
+    X(H2DCommand, WRITE_DMA_EXTENDED, 0x35)
 
-    DECLARE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0) //NOLINT
-
-
-#define H2D_COMMANDS(X)                     \
-    X(H2DCommand, IDENTIFY_DEVICE, 0xEC)    \
-    X(H2DCommand, READ_DMA_EXTENDED, 0x25)  \
-    X(H2DCommand, WRITE_DMA_EXTENDED, 0x35) \
-
-
-
-    DECLARE_TYPED_ENUM(H2DCommand, U8, H2D_COMMANDS, 0x0) //NOLINT
-
+    DECLARE_TYPED_ENUM(H2DCommand, U8, H2D_COMMANDS, 0x0) // NOLINT
 
     /**
      * Handle data transfers between host and a SATA device.
      */
     struct DMASetupFIS {
-        U8 FISType;            // 0x41
+        U8 FISType; // 0x41
 
-        U8 PMPort: 4;
-        U8 Reserved0: 1;
-        U8 Direction: 1;        // 1: Transmitter -> Receiver, 0: Receiver -> Transmitter
-        U8 Interrupt: 1;        // 1: Generate Interrupt on finish
-        U8 AutoActivate: 1;
+        U8 PMPort       : 4;
+        U8 Reserved0    : 1;
+        U8 Direction    : 1; // 1: Transmitter -> Receiver, 0: Receiver -> Transmitter
+        U8 Interrupt    : 1; // 1: Generate Interrupt on finish
+        U8 AutoActivate : 1;
 
         U8 Reserved1[2];
 
-        U32 DMABufferID;       // Physical Address
+        U32 DMABufferID; // Physical Address
         U32 DMABufferIDUpper;
 
         U32 Reserved2;
 
-        U32 DMABufferOffset;   // Bits0-1 = 0
-        U32 DMATransferCount;  // Number of bytes to read/write, Bit0 = 0
+        U32 DMABufferOffset;  // Bits0-1 = 0
+        U32 DMATransferCount; // Number of bytes to read/write, Bit0 = 0
 
         U32 Reserved3;
     };
@@ -74,36 +66,35 @@ namespace Rune::Device {
      * Handle data transfers using PIO mode (via CPU ports).
      */
     struct PIOSetupFIS {
-        U8 FISType;            // 0x5F
+        U8 FISType; // 0x5F
 
-        U8 PMPort: 4;
-        U8 Reserved0: 1;
-        U8 Direction: 1;        // 1: Device -> Host, 0: Host -> Device
-        U8 Interrupt: 1;
-        U8 Reserved1: 1;
+        U8 PMPort    : 4;
+        U8 Reserved0 : 1;
+        U8 Direction : 1; // 1: Device -> Host, 0: Host -> Device
+        U8 Interrupt : 1;
+        U8 Reserved1 : 1;
 
-        U8 Status;             // Status on start
-        U8 Error;              // Error on finish
+        U8 Status; // Status on start
+        U8 Error;  // Error on finish
 
-        U8 LBALow;             // Content of the LBA register of the command block
+        U8 LBALow; // Content of the LBA register of the command block
         U8 LBAMid;
         U8 LBAHigh;
-        U8 Device;             // Content of the device register of the command block
+        U8 Device; // Content of the device register of the command block
 
-        U8 LBALowS;            // Content of the LBA register of the shadow register block
+        U8 LBALowS; // Content of the LBA register of the shadow register block
         U8 LBAMidS;
         U8 LBAHighS;
         U8 Reserved2;
 
-        U8 Count;              // Content of the count register of the command block
-        U8 CountS;             // Content of the count register of the shadow register block
+        U8 Count;  // Content of the count register of the command block
+        U8 CountS; // Content of the count register of the shadow register block
         U8 Reserved3;
-        U8 EStatus;            // Value of the status register on finish
+        U8 EStatus; // Value of the status register on finish
 
-        U16 TransferCount;     // Number of bytes to read/write in Data FIS, Bit0 = 0
+        U16 TransferCount; // Number of bytes to read/write in Data FIS, Bit0 = 0
         U16 Reserved4;
     };
-
 
     /**
      * Sent a command to a device.
@@ -114,11 +105,11 @@ namespace Rune::Device {
         union {
             U8 AsUInt8 = 0;
             struct {
-                U8 PMPort: 4;
-                U8 Reserved0: 3;
-                U8 C: 1;
+                U8 PMPort    : 4;
+                U8 Reserved0 : 3;
+                U8 C         : 1;
             };
-        }  DW0B1;
+        } DW0B1;
 
         U8 Command  = 0;
         U8 Features = 0;
@@ -143,14 +134,12 @@ namespace Rune::Device {
         U8 Auxiliary2 = 0;
         U8 Auxiliary3 = 0;
 
-
         static RegisterHost2DeviceFIS IdentifyDevice() {
             RegisterHost2DeviceFIS fis;
             fis.DW0B1.C = 1;
             fis.Command = H2DCommand::IDENTIFY_DEVICE;
             return fis;
         }
-
 
         static RegisterHost2DeviceFIS ReadDMAExtended(size_t lba, U16 sectors) {
             RegisterHost2DeviceFIS fis;
@@ -167,7 +156,6 @@ namespace Rune::Device {
             fis.CountE   = (sectors >> 8) & 0xFF;
             return fis;
         }
-
 
         static RegisterHost2DeviceFIS WriteDMAExtended(size_t lba, U16 sectors) {
             RegisterHost2DeviceFIS fis;
@@ -186,33 +174,32 @@ namespace Rune::Device {
         }
     };
 
-
     /**
      * What do i get from the device???
      */
     struct RegisterDevice2HostFIS {
-        U8 FISType;            // 0x34
+        U8 FISType; // 0x34
 
-        U8 PMPort: 4;
-        U8 Reserved0: 2;
-        U8 Interrupt: 1;
-        U8 Reserved1: 1;
+        U8 PMPort    : 4;
+        U8 Reserved0 : 2;
+        U8 Interrupt : 1;
+        U8 Reserved1 : 1;
 
-        U8 Status;             // Status on start
-        U8 Error;              // Error on finish
+        U8 Status; // Status on start
+        U8 Error;  // Error on finish
 
-        U8 LBALow;             // Content of the LBA register of the command block
+        U8 LBALow; // Content of the LBA register of the command block
         U8 LBAMid;
         U8 LBAHigh;
-        U8 Device;             // Content of the device register of the command block
+        U8 Device; // Content of the device register of the command block
 
-        U8 LBALowS;            // Content of the LBA register of the shadow register block
+        U8 LBALowS; // Content of the LBA register of the shadow register block
         U8 LBAMidS;
         U8 LBAHighS;
         U8 Reserved2;
 
-        U8 Count;              // Content of the count register of the command block
-        U8 CountS;             // Content of the count register of the shadow register block
+        U8 Count;  // Content of the count register of the command block
+        U8 CountS; // Content of the count register of the shadow register block
         U8 Reserved3[6];
     };
 
@@ -220,22 +207,22 @@ namespace Rune::Device {
      * Set bits in a mystery register.
      */
     struct SetDeviceBitsFIS {
-        U8 FISType;            // 0xA1
+        U8 FISType; // 0xA1
 
-        U8 PMPort: 4;
-        U8 Reserved0: 2;
-        U8 Interrupt: 1;
-        U8 Notification: 1;
+        U8 PMPort       : 4;
+        U8 Reserved0    : 2;
+        U8 Interrupt    : 1;
+        U8 Notification : 1;
 
-        U8 StatusLow: 3;        // New value for bits 0,1,2 of the shadow register block
-        U8 Reserved1: 1;
-        U8 StatusHigh: 3;       // New value for bits 4,5,6 of the shadow register block
-        U8 Reserved2: 1;
+        U8 StatusLow  : 3; // New value for bits 0,1,2 of the shadow register block
+        U8 Reserved1  : 1;
+        U8 StatusHigh : 3; // New value for bits 4,5,6 of the shadow register block
+        U8 Reserved2  : 1;
 
-        U8 Error;              // Error of the error register of shadow register block
+        U8 Error; // Error of the error register of shadow register block
 
         U8 ProtocolSpecific[4];
     };
-}
+} // namespace Rune::Device
 
-#endif //RUNEOS_FIS_H
+#endif // RUNEOS_FIS_H

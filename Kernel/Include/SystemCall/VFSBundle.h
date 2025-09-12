@@ -17,8 +17,6 @@
 #ifndef RUNEOS_VFS_H
 #define RUNEOS_VFS_H
 
-
-#include <Ember/Ember.h>
 #include <Ember/Ember.h>
 
 #include <App/AppSubsystem.h>
@@ -27,17 +25,15 @@
 
 #include <SystemCall/KernelGuardian.h>
 
-
 namespace Rune::SystemCall {
     /**
      * @brief The context for all virtual file system related system calls.
      */
     struct VFSSystemCallContext {
-        KernelGuardian* k_guard    = nullptr;
+        KernelGuardian*    k_guard    = nullptr;
         VFS::VFSSubsystem* vfs_subsys = nullptr;
         App::AppSubsystem* app_subsys = nullptr;
     };
-
 
     /**
      * @brief Search for a node at given path and return the node info for it.
@@ -51,7 +47,6 @@ namespace Rune::SystemCall {
      *          IO_ERROR:          IO error.
      */
     Ember::StatusCode vfs_get_node_info(void* sys_call_ctx, U64 node_path, U64 node_info_out);
-
 
     /**
      * Note: Creating a node does not open it.
@@ -67,7 +62,6 @@ namespace Rune::SystemCall {
      *          IO_ERROR:    An IO error happened.
      */
     Ember::StatusCode vfs_create(void* sys_call_ctx, U64 node_path, U64 node_attr);
-
 
     /**
      * @brief Search for a node with the given path and try to open it in the requested node IO mode.
@@ -85,7 +79,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_open(void* sys_call_ctx, U64 node_path, U64 io_mode);
 
-
     /**
      * Note: Deleting a node does not open it.
      *
@@ -100,7 +93,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_delete(void* sys_call_ctx, U64 node_path);
 
-
     /**
      * @brief Try to close the node identified by the given node ID.
      * @param sys_call_ctx A pointer to the VFS context.
@@ -110,7 +102,6 @@ namespace Rune::SystemCall {
      *          UNKNOWN_ID: No node with the given ID was found.
      */
     Ember::StatusCode vfs_close(void* sys_call_ctx, U64 ID);
-
 
     /**
      * @brief Try to read u_buf_size bytes into uBuf from the node referenced by the ID.
@@ -128,7 +119,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_read(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size);
 
-
     /**
      * @brief Try to write uBufSize bytes in the uBuf to the file referenced by the ID.
      * @param sys_call_ctx A pointer to the VFS context.
@@ -145,7 +135,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_write(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size);
 
-
     /**
      * @brief Try to skip 'offset' bytes in a file depending on the requested 'seek_mode'.
      * @param sys_call_ctx A pointer to the VFS context.
@@ -161,7 +150,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_seek(void* sys_call_ctx, U64 ID, U64 seek_mode, U64 offset);
 
-
     /**
      * @brief Try to open a stream over the content of a directory.
      * @param sys_call_ctx A pointer to the VFS context.
@@ -175,7 +163,6 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_directory_stream_open(void* sys_call_ctx, U64 dir_path);
 
-
     /**
      * @brief Try to get the next directory node.
      * @param sys_call_ctx  A pointer to the VFS context.
@@ -183,12 +170,11 @@ namespace Rune::SystemCall {
      * @param node_info_ptr A pointer to a VFSNodeInfo struct.
      * @return DIRECTORY_STREAM_HAS_MORE: The directory contains at least one more node info.<br>
      *          DIRECTORY_STREAM_EOD:     The directory has no more node infos left.<br>
-     *          BAD_ARG:                  The ID is invalid, the node info buffer is null or intersects kernel memory.<br>
-     *          UNKNOWN_ID:               No directory stream with the requested ID exists.<br>
-     *          IO_ERROR:                 An IO error occurred while getting the next node info.
+     *          BAD_ARG:                  The ID is invalid, the node info buffer is null or intersects kernel
+     * memory.<br> UNKNOWN_ID:               No directory stream with the requested ID exists.<br> IO_ERROR: An IO error
+     * occurred while getting the next node info.
      */
     Ember::StatusCode vfs_directory_stream_next(void* sys_call_ctx, U64 dir_stream_ID, U64 node_info_ptr);
-
 
     /**
      * @brief Try to close the directory stream with the given ID.
@@ -199,6 +185,6 @@ namespace Rune::SystemCall {
      *          UNKNOWN_ID:  No directory stream with the requested ID exists.
      */
     Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, U64 dir_stream_ID);
-}
+} // namespace Rune::SystemCall
 
-#endif //RUNEOS_VFS_H
+#endif // RUNEOS_VFS_H

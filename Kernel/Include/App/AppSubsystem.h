@@ -17,7 +17,6 @@
 #ifndef RUNEOS_APPSUBSYSTEM_H
 #define RUNEOS_APPSUBSYSTEM_H
 
-
 #include <KernelRuntime/Path.h>
 
 #include <KernelRuntime/Subsystem.h>
@@ -32,7 +31,6 @@
 
 #include <Device/DeviceSubsystem.h>
 
-
 namespace Rune::App {
 
     /**
@@ -43,15 +41,12 @@ namespace Rune::App {
      *  <li>ERR: stderr</li>
      * </ul>
      */
-#define STD_STREAMS(X)              \
-             X(StdStream, IN, 0x1)  \
-             X(StdStream, OUT, 0x2) \
-             X(StdStream, ERR, 0x3) \
+#define STD_STREAMS(X)                                                                                                 \
+    X(StdStream, IN, 0x1)                                                                                              \
+    X(StdStream, OUT, 0x2)                                                                                             \
+    X(StdStream, ERR, 0x3)
 
-
-
-    DECLARE_ENUM(StdStream, STD_STREAMS, 0x0)  // NOLINT
-
+    DECLARE_ENUM(StdStream, STD_STREAMS, 0x0) // NOLINT
 
     /**
      * The App subsystem is responsible for starting and managing Apps.
@@ -63,29 +58,25 @@ namespace Rune::App {
      */
     class AppSubsystem : public Subsystem {
         Memory::MemorySubsystem* _memory_subsys;
-        CPU::CPUSubsystem   * _cpu_subsys;
-        VFS::VFSSubsystem   * _vfs_subsys;
+        CPU::CPUSubsystem*       _cpu_subsys;
+        VFS::VFSSubsystem*       _vfs_subsys;
         Device::DeviceSubsystem* _dev_subsys;
-        FrameBuffer _frame_buffer;
+        FrameBuffer              _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
-        TableFormatter<Info>        _app_table_fmt;
-        HandleCounter<U16>          _app_handle_counter;
+        TableFormatter<Info>              _app_table_fmt;
+        HandleCounter<U16>                _app_handle_counter;
 
         SharedPointer<Info> _active_app;
-
 
         /**
          * @brief Set the ID and working directory in the entry and schedule it's main thread for execution.
          * @return The assigned ID of the app.
          */
-        int schedule_for_start(
-            const SharedPointer<Info>& app,
-            const CPU::Stack&          user_stack,
-            CPU::StartInfo*             start_info,
-            const Path&                working_directory
-        );
-
+        int schedule_for_start(const SharedPointer<Info>& app,
+                               const CPU::Stack&          user_stack,
+                               CPU::StartInfo*            start_info,
+                               const Path&                working_directory);
 
         /**
          * @brief Setup a standard stream of the application.
@@ -93,52 +84,44 @@ namespace Rune::App {
          * @param target     Stream target.
          * @return The standard stream or nullptr if setup failed.
          */
-        SharedPointer<TextStream> setup_std_stream(
-                const SharedPointer<Info>& app,
-                StdStream std_stream,
-                const String& target
-        );
+        SharedPointer<TextStream>
+        setup_std_stream(const SharedPointer<Info>& app, StdStream std_stream, const String& target);
 
-    public:
+      public:
         AppSubsystem();
 
-
         ~AppSubsystem() override = default;
-
 
         /**
          *
          * @return Unique Kernel SubSystem name.
          */
-        [[nodiscard]] String get_name() const override;
-
+        [[nodiscard]]
+        String get_name() const override;
 
         bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
-
         void set_logger(SharedPointer<Logger> logger) override;
-
 
         /**
          *
          * @return A list with all running apps.
          */
-        [[nodiscard]] LinkedList<Info*> get_app_table() const;
-
+        [[nodiscard]]
+        LinkedList<Info*> get_app_table() const;
 
         /**
          *
          * @return The app that is currently executing code.
          */
-        [[nodiscard]] Info* get_active_app() const;
-
+        [[nodiscard]]
+        Info* get_active_app() const;
 
         /**
          * @brief Dump the app table to the stream.
          * @param stream
          */
         void dump_app_table(const SharedPointer<TextStream>& stream) const;
-
 
         /**
          * @brief Load the OS and then schedule it's main thread.
@@ -148,7 +131,6 @@ namespace Rune::App {
          *          loaded app.
          */
         LoadStatus start_os(const Path& os_exec, const Path& working_directory);
-
 
         /**
          * <p>
@@ -183,15 +165,12 @@ namespace Rune::App {
          * @return The final start status of the app. If (LoadStatus == Loaded) then ID will contain the assigned app
          *          ID, otherwise the app ID is -1 and LoadStatus contains the error that happened.
          */
-        StartStatus start_new_app(
-                const Path& executable,
-                char* argv[],
-                const Path& working_directory,
-                const String& stdin_target,
-                const String& stdout_target,
-                const String& stderr_target
-        );
-
+        StartStatus start_new_app(const Path&   executable,
+                                  char*         argv[],
+                                  const Path&   working_directory,
+                                  const String& stdin_target,
+                                  const String& stdout_target,
+                                  const String& stderr_target);
 
         /**
          * @brief free all app resources and exit the main thread with the provided exit code.
@@ -202,7 +181,6 @@ namespace Rune::App {
          *                  error.
          */
         void exit_running_app(int exit_code);
-
 
         /**
          * @brief Make the calling thread wait for an app with the given handle wait until it has exited. If no app with
@@ -216,6 +194,6 @@ namespace Rune::App {
          */
         int join(int handle);
     };
-}
+} // namespace Rune::App
 
-#endif //RUNEOS_APPSUBSYSTEM_H
+#endif // RUNEOS_APPSUBSYSTEM_H

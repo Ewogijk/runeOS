@@ -17,12 +17,9 @@
 #ifndef RUNEOS_BOOTSTRAP_H
 #define RUNEOS_BOOTSTRAP_H
 
-
 #include <Ember/Ember.h>
 
-
 namespace Rune {
-
 
     CLINK void call_global_constructors();
 
@@ -30,6 +27,6 @@ namespace Rune {
      * @brief Kernel entry point for the boot loader.
      */
     CLINK int kernel_bootstrap();
-}
+} // namespace Rune
 
-#endif //RUNEOS_BOOTSTRAP_H
+#endif // RUNEOS_BOOTSTRAP_H

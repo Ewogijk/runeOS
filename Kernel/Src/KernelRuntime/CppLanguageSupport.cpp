@@ -14,38 +14,31 @@
 
 #include <KernelRuntime/CppLanguageSupport.h>
 
+void (*ON_CXA_PURE_VIRTUAL)() = [] {};
 
-void (* ON_CXA_PURE_VIRTUAL)() = [] { };
-
-
-void (* ON_STACK_GUARD_FAIL)() = [] { };
-
+void (*ON_STACK_GUARD_FAIL)() = [] {};
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                              C/C++ Compiler expects these to be defined
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-
 void* memset(void* dest, const int ch, const size_t count) {
     auto* d = static_cast<unsigned char*>(dest);
 
     for (size_t i = 0; i < count; i++)
-        d[i]      = ch;
+        d[i] = ch;
     return dest;
 }
-
 
 void* memcpy(void* dest, const void* src, const size_t count) {
     auto*       d = static_cast<unsigned char*>(dest);
     const auto* s = static_cast<const unsigned char*>(src);
 
     for (size_t i = 0; i < count; i++)
-        d[i]      = s[i];
+        d[i] = s[i];
 
     return dest;
 }
-
 
 void* memmove(void* dest, const void* src, const size_t count) {
     const uintptr_t sourceEnd = reinterpret_cast<uintptr_t>(src) + count;
@@ -56,7 +49,7 @@ void* memmove(void* dest, const void* src, const size_t count) {
         //     dddddd
         //  ssssss
         for (size_t i = count; i > 0; i--)
-            d[i - 1]  = s[i - 1];
+            d[i - 1] = s[i - 1];
     } else {
         // Source overlaps from right or no overlap -> Copy from start
         //    ssssss
@@ -65,11 +58,10 @@ void* memmove(void* dest, const void* src, const size_t count) {
         // ssssss
         //        dddddd
         for (size_t i = 0; i < count; i++)
-            d[i]      = s[i];
+            d[i] = s[i];
     }
     return dest;
 }
-
 
 int memcmp(const void* lhs, const void* rhs, const size_t count) {
     const auto* l = static_cast<const unsigned char*>(lhs);
@@ -84,22 +76,16 @@ int memcmp(const void* lhs, const void* rhs, const size_t count) {
     return 0;
 }
 
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 // Will be called when there is no implementation of a pure virtual function
 // (should not happen because compiler cries)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-CLINK void __cxa_pure_virtual() {
-    ON_CXA_PURE_VIRTUAL();
-}
-
+CLINK void __cxa_pure_virtual() { ON_CXA_PURE_VIRTUAL(); }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                      Stack smash protection
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
 // TODO __stack_chk_guard should be a randomly generated value
 #if UINT32_MAX == UINTPTR_MAX
@@ -110,15 +96,12 @@ CLINK void __cxa_pure_virtual() {
 
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
 
-CLINK void __stack_chk_fail(void) {
-    ON_STACK_GUARD_FAIL();
-}
+CLINK void __stack_chk_fail(void) { ON_STACK_GUARD_FAIL(); }
 
 namespace Rune {
 
-
-    void init_kernel_runtime_env(void(* on_cxa_pure_virtual)(), void(* on_stack_guard_fail)()) {
+    void init_kernel_runtime_env(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)()) {
         ON_CXA_PURE_VIRTUAL = on_cxa_pure_virtual;
         ON_STACK_GUARD_FAIL = on_stack_guard_fail;
     }
-}
+} // namespace Rune
