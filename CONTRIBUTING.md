@@ -84,6 +84,16 @@ sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 - dosfstools: Tooling to create FAT formatted disk images.
 - GDB: The GNU debugger.
 
+Our code formatter is `clang-format`, unfortunately the apt package of it is outdated. Run the following to get the
+clang-format version compatible with the `.clang-format` config:
+
+```shell
+wget https://apt.llvm.org/llvm.sh
+chmod +x llvm.sh
+sudo ./llvm.sh 19
+sudo apt install clang-format-19
+```
+
 Then install the python dependencies, it is recommended use a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
@@ -241,3 +251,22 @@ Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS
 ```
 
 Congrats, you have just manually built and installed runeOS!
+
+
+## Styleguide
+
+### C/C++
+
+Our code formatter for C/C++ is `clang-format`, use it with the `.clang-format` config file in the project root 
+directory.
+
+The following command will recursively format all .h/.cpp files in `SRC_DIR` with clang-format:
+```shell
+find SRC_DIR -name '*.h' -or -name '*.cpp' | xargs clang-format-19 -i
+```
+
+Naming conventions are not covered by clang-format, please adhere to the following guidelines:
+- Classes/Structs/Enums/Namespaces: PascalCase
+- Public member variables/Parameters/Local variables: snake_case
+- Private member variables: _snake_case - Note the leading underscore e.g. _my_private_variable
+- Global constants/Macros: SCREAMING_SNAKE_CASE
