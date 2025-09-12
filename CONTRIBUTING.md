@@ -1,6 +1,6 @@
 # Contributing to runeOS
 
-Welcome and thanks for taking the time to contribute to runeOS!
+:tada: Welcome and thanks for taking the time to contribute to runeOS! :tada:
 
 Please take a moment to review this document before starting to contribute. It is mostly a collection of guidelines that
 intend to make working on the project easier for everyone.
@@ -11,6 +11,12 @@ intend to make working on the project easier for everyone.
 - [Reporting Bugs](#reporting-bugs)
 - [Requesting Features](#requesting-features)
 - [Setting up your Local Development Environment](#setting-up-your-local-development-environment)
+  - [Getting the Dependencies](#getting-the-dependencies)
+  - [Building with Brokkr](#building-with-brokkr)
+  - [Building Manually](#building-manually)
+- [Styleguide](#styleguide)
+  - [Commit Message Style](#commit-message-style)
+  - [C/C++](#cc)
 
 ## Reporting Bugs
 
@@ -260,6 +266,26 @@ Congrats, you have just manually built and installed runeOS!
 
 
 ## Styleguide
+
+### Commit Message Style
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style:
+- Use imperative, present tense
+- Limit the first line to 50 characters or less
+- Start your commit message with a [gitmoji](https://gitmoji.dev/) when you are...
+  - :bug: `:bug:` - fixing a bug.
+  - :sparkles:: `:sparkles:` - implementing a new feature or enhancement.
+  - :memo:: `:memo:` - writing or updating documentation.
+  - :fire:: `:fire:` - removing code or files.
+  - :recycle:: `:recycle:` - refactoring code.
+
+An example commit message could look like this:
+```
+✨: Add a feature
+
+This feature solves this problem by doing this and that...
+
+```
 
 ### C/C++
 
