@@ -19,7 +19,7 @@ extern "C" {
 
 #ifdef __GNUC__
 #define LIMINE_DEPRECATED __attribute__((__deprecated__))
-#define LIMINE_DEPRECATED_IGNORE_START                                                                                 \
+#define LIMINE_DEPRECATED_IGNORE_START                                                             \
     _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
 #define LIMINE_DEPRECATED_IGNORE_END _Pragma("GCC diagnostic pop")
 #else
@@ -28,7 +28,8 @@ extern "C" {
 #define LIMINE_DEPRECATED_IGNORE_END
 #endif
 
-#define LIMINE_BASE_REVISION(N) uint64_t limine_base_revision[3] = {0xf9562b2d5c95a6c8, 0x6a7b384944536bdc, (N)};
+#define LIMINE_BASE_REVISION(N)                                                                    \
+    uint64_t limine_base_revision[3] = {0xf9562b2d5c95a6c8, 0x6a7b384944536bdc, (N)};
 
 #define LIMINE_BASE_REVISION_SUPPORTED (limine_base_revision[2] == 0)
 
@@ -197,7 +198,8 @@ LIMINE_DEPRECATED_IGNORE_START
 struct LIMINE_DEPRECATED limine_terminal;
 
 typedef void (*limine_terminal_write)(struct limine_terminal*, const char*, uint64_t);
-typedef void (*limine_terminal_callback)(struct limine_terminal*, uint64_t, uint64_t, uint64_t, uint64_t);
+typedef void (
+    *limine_terminal_callback)(struct limine_terminal*, uint64_t, uint64_t, uint64_t, uint64_t);
 
 struct LIMINE_DEPRECATED limine_terminal {
     uint64_t columns;
@@ -478,7 +480,8 @@ struct limine_smbios_request {
 
 /* EFI system table */
 
-#define LIMINE_EFI_SYSTEM_TABLE_REQUEST {LIMINE_COMMON_MAGIC, 0x5ceba5163eaaf6d6, 0x0a6981610cf65fcc}
+#define LIMINE_EFI_SYSTEM_TABLE_REQUEST                                                            \
+    {LIMINE_COMMON_MAGIC, 0x5ceba5163eaaf6d6, 0x0a6981610cf65fcc}
 
 struct limine_efi_system_table_response {
     uint64_t revision;

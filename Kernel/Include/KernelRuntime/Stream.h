@@ -27,8 +27,8 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * @brief A Stream is an abstraction of any source of bytes that can be read from, written to or both. Examples for
-     *          streams are files, the keyboard, monitor, sockets, etc.
+     * @brief A Stream is an abstraction of any source of bytes that can be read from, written to or
+     * both. Examples for streams are files, the keyboard, monitor, sockets, etc.
      */
     class Stream {
       public:
@@ -94,13 +94,14 @@ namespace Rune {
         size_t write(U8 buffer[], size_t size);
 
         /**
-         * @brief If the stream supports buffering, write any bytes in the buffer immediately to the stream.
+         * @brief If the stream supports buffering, write any bytes in the buffer immediately to the
+         * stream.
          */
         virtual void flush() = 0;
 
         /**
-         * @brief free any resources associated with the stream. After a stream has been closed it is no longer possible
-         *          to read or write any bytes.
+         * @brief free any resources associated with the stream. After a stream has been closed it
+         * is no longer possible to read or write any bytes.
          */
         virtual void close() = 0;
     };
@@ -111,9 +112,9 @@ namespace Rune {
 
     /**
      * <p>
-     *  Note that while the TextStream interface supports writing ANSI "Select Graphic Rendition (SGR)" commands, the
-     *  TextStream implementation may not implement ANSI parsing. In this case the ANSI escape codes will be directly
-     *  sent to the destination.
+     *  Note that while the TextStream interface supports writing ANSI "Select Graphic Rendition
+     * (SGR)" commands, the TextStream implementation may not implement ANSI parsing. In this case
+     * the ANSI escape codes will be directly sent to the destination.
      * </p>
      * <p>
      *  The text stream supports the following SGR commands:
@@ -124,7 +125,8 @@ namespace Rune {
      *  </ol>
      * </p>
      *
-     * @brief A TextStream is an extension of the Stream API that allows formatted and styled output to a stream.
+     * @brief A TextStream is an extension of the Stream API that allows formatted and styled output
+     * to a stream.
      */
     class TextStream : public Stream {
         static constexpr size_t BUF_SIZE = 256;

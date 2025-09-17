@@ -25,12 +25,12 @@
 #include <KernelRuntime/Path.h>
 
 namespace Rune::VFS {
-#define NODE_IO_STATUSES(X)                                                                                            \
-    X(NodeIOStatus, OKAY, 0x1)                                                                                         \
-    X(NodeIOStatus, BAD_ARGS, 0x2)                                                                                     \
-    X(NodeIOStatus, NOT_ALLOWED, 0x3)                                                                                  \
-    X(NodeIOStatus, NOT_SUPPORTED, 0x4)                                                                                \
-    X(NodeIOStatus, DEV_ERROR, 0x5)                                                                                    \
+#define NODE_IO_STATUSES(X)                                                                        \
+    X(NodeIOStatus, OKAY, 0x1)                                                                     \
+    X(NodeIOStatus, BAD_ARGS, 0x2)                                                                 \
+    X(NodeIOStatus, NOT_ALLOWED, 0x3)                                                              \
+    X(NodeIOStatus, NOT_SUPPORTED, 0x4)                                                            \
+    X(NodeIOStatus, DEV_ERROR, 0x5)                                                                \
     X(NodeIOStatus, CLOSED, 0x6)
 
     /**
@@ -39,16 +39,17 @@ namespace Rune::VFS {
      * <ul>
      *  <li>Okay:               The operation was finished without errors.</li>
      *  <li>BadBuffer:          A buffer points to null.</li>
-     *  <li>NotAllowed:         The operation is not allowed in the current context, e.g. node write on a node in read
-     *                          mode.</li>
-     *  <li>NotSupported:       The operation is not supported, e.g. node read on a directory</li>
-     *  <li>StorageDeviceError: Error on the underlying storage device.</li>
+     *  <li>NotAllowed:         The operation is not allowed in the current context, e.g. node write
+     * on a node in read mode.</li> <li>NotSupported:       The operation is not supported, e.g.
+     * node read on a directory</li> <li>StorageDeviceError: Error on the underlying storage
+     * device.</li>
      * </ul>
      */
     DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) // NOLINT
 
     /**
-     * @brief A node IO status and the number of bytes read, written or seeked on the storage device.
+     * @brief A node IO status and the number of bytes read, written or seeked on the storage
+     * device.
      */
     struct NodeIOResult {
         NodeIOStatus status     = NodeIOStatus::NONE;
@@ -65,8 +66,8 @@ namespace Rune::VFS {
     };
 
     /**
-     * @brief A virtual representation of a file or directory. Files can be read from or written to and directories
-     *        provide an overview of their contents.
+     * @brief A virtual representation of a file or directory. Files can be read from or written to
+     * and directories provide an overview of their contents.
      */
     class Node {
         // Call back to the subsystem that will remove this node from the node table.
@@ -79,8 +80,9 @@ namespace Rune::VFS {
         // Required for the "Lib::Column::MakeHandleNameColumn" function.
         U16 handle{};
         /**
-         * @brief The name of the node e.g. MyFile.txt or MyDirectory. That is this value does not contain any path
-         *          elements. If this node is the root node of a filesystem the name can be empty.
+         * @brief The name of the node e.g. MyFile.txt or MyDirectory. That is this value does not
+         * contain any path elements. If this node is the root node of a filesystem the name can be
+         * empty.
          */
         String name;
 
@@ -139,16 +141,15 @@ namespace Rune::VFS {
          *  { NodeIOStatus::Closed, 0 }.
          * </p>
          *
-         * @brief Read at most requested amount of bytes starting from the current position of the file cursor into the
-         *          buffer.
+         * @brief Read at most requested amount of bytes starting from the current position of the
+         * file cursor into the buffer.
          * @param buf      Pointer to a buffer.
          * @param buf_size Size of the buffer.
-         * @return Okay:                At most bufSize bytes from the file have been put in the buffer, the exact
-         *                              amount can be checked in the result.
-         *          NotSupported:       The node is a directory, reading is not supported.
-         *          BadArgs:            The buf is null.
-         *          Closed:             The node has been closed, no more content can be read.
-         *          StorageDevError:    An IO error happened.
+         * @return Okay:                At most bufSize bytes from the file have been put in the
+         * buffer, the exact amount can be checked in the result. NotSupported:       The node is a
+         * directory, reading is not supported. BadArgs:            The buf is null. Closed: The
+         * node has been closed, no more content can be read. StorageDevError:    An IO error
+         * happened.
          */
         virtual NodeIOResult read(void* buf, size_t buf_size) = 0;
 
@@ -165,16 +166,15 @@ namespace Rune::VFS {
          *  { NodeIOStatus::Closed, 0 }.
          * </p>
          *
-         * @brief Write the bytes in the buffer to the file starting from the current position of the file cursor.
+         * @brief Write the bytes in the buffer to the file starting from the current position of
+         * the file cursor.
          * @param buf      Pointer to a buffer.
          * @param buf_size Size of the buffer.
-         * @return Okay:                At most bufSize bytes from the buffer have been written to the file, the exact
-         *                              amount can be checked in the result.
-         *          NotSupported:       The node is a directory, writing is not supported.
-         *          NotAllowed:         The file is in read mode, use NodeIOMode::Write or NodeIOMode::append to write
-         *                              files.
-         *          BadArgs:            The buf is null.
-         *          Closed:             The node has been closed, no more content can be written.
+         * @return Okay:                At most bufSize bytes from the buffer have been written to
+         * the file, the exact amount can be checked in the result. NotSupported:       The node is
+         * a directory, writing is not supported. NotAllowed:         The file is in read mode, use
+         * NodeIOMode::Write or NodeIOMode::append to write files. BadArgs:            The buf is
+         * null. Closed:             The node has been closed, no more content can be written.
          *          StorageDevError:    An IO error happened.
          */
         virtual NodeIOResult write(void* buf, size_t buf_size) = 0;
@@ -187,18 +187,18 @@ namespace Rune::VFS {
          * </ol>
          *
          * <p>
-         *  If the node is closed, a call to this function must not change the file cursor position and return
-         *  { NodeIOStatus::Closed, 0 }.
+         *  If the node is closed, a call to this function must not change the file cursor position
+         * and return { NodeIOStatus::Closed, 0 }.
          * </p>
          *
-         * @brief Move the file cursor to the requested byte position counting from the start of the file.
+         * @brief Move the file cursor to the requested byte position counting from the start of the
+         * file.
          * @param seek_mode The seek mode describes how the cursor position will be calculated.
          * @param offset    Byte position as counted from the start of the file.
-         * @return Okay:                The file cursor was moved according to the requested seek mode.
-         *          NotSupported:       The node is a directory, seeking is not supported.
-         *          BadArgs:            The new cursor position would be <0 or >get_size().
-         *          Closed:             The node has been closed, no more seeking allowed.
-         *          StorageDevError:    An IO error happened.
+         * @return Okay:                The file cursor was moved according to the requested seek
+         * mode. NotSupported:       The node is a directory, seeking is not supported. BadArgs: The
+         * new cursor position would be <0 or >get_size(). Closed:             The node has been
+         * closed, no more seeking allowed. StorageDevError:    An IO error happened.
          */
         virtual NodeIOResult seek(Ember::SeekMode seek_mode, int offset) = 0;
 
@@ -220,7 +220,8 @@ namespace Rune::VFS {
          * Note: The "File" and "Directory" attributes cannot be changed.
          *
          * <p>
-         *  If the node is closed, a call to this function must not change any attribute and always return false.
+         *  If the node is closed, a call to this function must not change any attribute and always
+         * return false.
          * </p>
          *
          * @brief Set the requested node attribute to the requested value.
@@ -231,8 +232,8 @@ namespace Rune::VFS {
         virtual bool set_attribute(Ember::NodeAttribute n_attr, bool val) = 0;
 
         /**
-         * @brief Remove the node from the node table. If this is the last node pointing to the node path and it was
-         *          requested to delete the file, it will also be physically deleted.
+         * @brief Remove the node from the node table. If this is the last node pointing to the node
+         * path and it was requested to delete the file, it will also be physically deleted.
          */
         void close();
     };

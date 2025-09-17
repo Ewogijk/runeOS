@@ -56,8 +56,9 @@ namespace Rune::App {
         return app->handle;
     }
 
-    SharedPointer<TextStream>
-    AppSubsystem::setup_std_stream(const SharedPointer<Info>& app, StdStream std_stream, const Rune::String& target) {
+    SharedPointer<TextStream> AppSubsystem::setup_std_stream(const SharedPointer<Info>& app,
+                                                             StdStream                  std_stream,
+                                                             const Rune::String&        target) {
         LinkedList<String> t_split = target.split(':');
         if (t_split.is_empty() || t_split.size() > 2) return {};
         String t = *t_split[0];
@@ -82,10 +83,10 @@ namespace Rune::App {
                 if (std_stream == StdStream::IN) return {}; // Not supported
 
                 SharedPointer<VFS::Node> node;
-                VFS::IOStatus            st =
-                    _vfs_subsys->open(maybe_path,
-                                      std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
-                                      node);
+                VFS::IOStatus            st = _vfs_subsys->open(
+                    maybe_path,
+                    std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
+                    node);
                 if (st == VFS::IOStatus::NOT_FOUND) {
                     // File not found -> Create it
                     st = _vfs_subsys->create(maybe_path, (int) Ember::NodeAttribute::FILE);
@@ -93,14 +94,16 @@ namespace Rune::App {
 
                     // Try to open it again
                     st = _vfs_subsys->open(maybe_path,
-                                           std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
+                                           std_stream == StdStream::IN ? Ember::IOMode::READ
+                                                                       : Ember::IOMode::WRITE,
                                            node);
                 }
                 if (st != VFS::IOStatus::OPENED)
                     // Cannot open file, even after possibly creating it
                     return {};
 
-                // The opened file will be added to the active app but should be added to the app to be started
+                // The opened file will be added to the active app but should be added to the app to
+                // be started
                 _active_app->node_table.remove(node->handle);
                 app->node_table.add_back(node->handle);
                 return SharedPointer<TextStream>(new VFS::FileStream(node));
@@ -124,7 +127,8 @@ namespace Rune::App {
 
     String AppSubsystem::get_name() const { return "App"; }
 
-    bool AppSubsystem::start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) {
+    bool AppSubsystem::start(const BootLoaderInfo&    boot_info,
+                             const SubsystemRegistry& k_subsys_reg) {
         _memory_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
         _cpu_subsys    = k_subsys_reg.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
         _vfs_subsys    = k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
@@ -165,12 +169,13 @@ namespace Rune::App {
 
         // Register event hooks
         _logger->debug(FILE, "Registering eventhooks...");
-        _cpu_subsys->install_event_handler(CPU::EventHook(CPU::EventHook::THREAD_CREATED).to_string(),
-                                           "App Thread Table Manager - ThreadCreated",
-                                           [this](void* evt_ctx) {
-                                               auto t        = (CPU::Thread*) evt_ctx;
-                                               t->app_handle = _active_app->handle;
-                                           });
+        _cpu_subsys->install_event_handler(
+            CPU::EventHook(CPU::EventHook::THREAD_CREATED).to_string(),
+            "App Thread Table Manager - ThreadCreated",
+            [this](void* evt_ctx) {
+                auto t        = (CPU::Thread*) evt_ctx;
+                t->app_handle = _active_app->handle;
+            });
         _cpu_subsys->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_TERMINATED).to_string(),
             "App Thread Table Manager - ThreadTerminated",
@@ -189,10 +194,16 @@ namespace Rune::App {
 
                 // Finish app clean up -> Free base page table and app info struct
                 if (finished_app) {
-                    _logger->trace(FILE, R"(Terminating app: "{}-{}"!)", finished_app->handle, finished_app->name);
+                    _logger->trace(FILE,
+                                   R"(Terminating app: "{}-{}"!)",
+                                   finished_app->handle,
+                                   finished_app->name);
 
-                    Memory::PhysicalMemoryManager* pmm = _memory_subsys->get_physical_memory_manager();
-                    _logger->trace(FILE, "Freeing base page table at {:0=#16x}", finished_app->base_page_table_address);
+                    Memory::PhysicalMemoryManager* pmm =
+                        _memory_subsys->get_physical_memory_manager();
+                    _logger->trace(FILE,
+                                   "Freeing base page table at {:0=#16x}",
+                                   finished_app->base_page_table_address);
                     if (!pmm->free(finished_app->base_page_table_address))
                         _logger->warn(FILE,
                                       R"(Failed to free base page table of "{}-{}.")",
@@ -200,15 +211,16 @@ namespace Rune::App {
                                       finished_app->name);
 
                     _app_table.remove(finished_app->handle);
-                    // We currently have two refs to the finished app: 1. finishedApp and 2. _active_app
-                    // Both will be freed when this event handler finishes
+                    // We currently have two refs to the finished app: 1. finishedApp and 2.
+                    // _active_app Both will be freed when this event handler finishes
                     if (finished_app.get_ref_count() > 2) {
-                        _logger->warn(FILE,
-                                      R"(>> Memory Leak << - "{}-{}" has {} references but expected 2.
+                        _logger->warn(
+                            FILE,
+                            R"(>> Memory Leak << - "{}-{}" has {} references but expected 2.
                                     App info struct will not be freed.)",
-                                      finished_app->handle,
-                                      finished_app->name,
-                                      finished_app.get_ref_count());
+                            finished_app->handle,
+                            finished_app->name,
+                            finished_app.get_ref_count());
                     }
                 }
 
@@ -226,63 +238,65 @@ namespace Rune::App {
                     _active_app = next_active;
                 }
             });
-        _cpu_subsys->install_event_handler(CPU::EventHook(CPU::EventHook::CONTEXT_SWITCH).to_string(),
-                                           "App Thread Table Manager - ContextSwitch",
-                                           [this](void* evt_ctx) {
-                                               auto* next = (CPU::Thread*) evt_ctx;
-                                               // Switch the active app if the next thead belongs to another app
-                                               if (next->app_handle != _active_app->handle) {
-                                                   for (auto& app_entry : _app_table) {
-                                                       auto& app = *app_entry.value;
-                                                       if (app->handle == next->app_handle) {
-                                                           _logger->trace(
-                                                               FILE,
-                                                               R"(Switching running app: "{}-{}" -> "{}-{}")",
-                                                               _active_app->handle,
-                                                               _active_app->name,
-                                                               app->handle,
-                                                               app->name);
-                                                           _active_app = app;
-                                                           break;
-                                                       }
-                                                   }
-                                               }
-                                           });
+        _cpu_subsys->install_event_handler(
+            CPU::EventHook(CPU::EventHook::CONTEXT_SWITCH).to_string(),
+            "App Thread Table Manager - ContextSwitch",
+            [this](void* evt_ctx) {
+                auto* next = (CPU::Thread*) evt_ctx;
+                // Switch the active app if the next thead belongs to another app
+                if (next->app_handle != _active_app->handle) {
+                    for (auto& app_entry : _app_table) {
+                        auto& app = *app_entry.value;
+                        if (app->handle == next->app_handle) {
+                            _logger->trace(FILE,
+                                           R"(Switching running app: "{}-{}" -> "{}-{}")",
+                                           _active_app->handle,
+                                           _active_app->name,
+                                           app->handle,
+                                           app->name);
+                            _active_app = app;
+                            break;
+                        }
+                    }
+                }
+            });
 
-        _vfs_subsys->install_event_handler(VFS::EventHook(VFS::EventHook::NODE_OPENED).to_string(),
-                                           "App Node Table Manager - On Open",
-                                           [this](void* evt_ctx) {
-                                               U16 handle = *((U16*) evt_ctx);
-                                               _logger->trace(FILE,
-                                                              R"(Add node handle {} to node table of app "{}-{}".)",
-                                                              handle,
-                                                              _active_app->handle,
-                                                              _active_app->name);
-                                               _active_app->node_table.add_back(handle);
-                                           });
-        _vfs_subsys->install_event_handler(VFS::EventHook(VFS::EventHook::NODE_CLOSED).to_string(),
-                                           "App Node Table Manager - On Close",
-                                           [this](void* evt_ctx) {
-                                               U16 handle = *((U16*) evt_ctx);
-                                               _logger->trace(
-                                                   FILE,
-                                                   R"(Remove node handle {} from the node table of app "{}-{}".)",
-                                                   handle,
-                                                   _active_app->handle,
-                                                   _active_app->name);
-                                               _active_app->node_table.remove(handle);
-                                           });
+        _vfs_subsys->install_event_handler(
+            VFS::EventHook(VFS::EventHook::NODE_OPENED).to_string(),
+            "App Node Table Manager - On Open",
+            [this](void* evt_ctx) {
+                U16 handle = *((U16*) evt_ctx);
+                _logger->trace(FILE,
+                               R"(Add node handle {} to node table of app "{}-{}".)",
+                               handle,
+                               _active_app->handle,
+                               _active_app->name);
+                _active_app->node_table.add_back(handle);
+            });
+        _vfs_subsys->install_event_handler(
+            VFS::EventHook(VFS::EventHook::NODE_CLOSED).to_string(),
+            "App Node Table Manager - On Close",
+            [this](void* evt_ctx) {
+                U16 handle = *((U16*) evt_ctx);
+                _logger->trace(FILE,
+                               R"(Remove node handle {} from the node table of app "{}-{}".)",
+                               handle,
+                               _active_app->handle,
+                               _active_app->name);
+                _active_app->node_table.remove(handle);
+            });
 
         _vfs_subsys->install_event_handler(
             VFS::EventHook(VFS::EventHook::DIRECTORY_STREAM_OPENED).to_string(),
             "App Directory Stream Table Manager - On Open",
             [this](void* evt_ctx) {
                 U16 handle = *((U16*) evt_ctx);
-                _logger->trace(FILE,
-                               R"(Add directory stream handle {} to directory stream table of app "{}-{}".)",
-                               handle,
-                               _active_app->handle,
-                               _active_app->name);
+                _logger->trace(
+                    FILE,
+                    R"(Add directory stream handle {} to directory stream table of app "{}-{}".)",
+                    handle,
+                    _active_app->handle,
+                    _active_app->name);
                 _active_app->directory_stream_table.add_back(handle);
             });
         _vfs_subsys->install_event_handler(
@@ -290,23 +304,25 @@ namespace Rune::App {
             "App Directory Stream Table Manager - On Close",
             [this](void* evt_ctx) {
                 U16 handle = *((U16*) evt_ctx);
-                _logger->trace(FILE,
-                               R"(Remove directory stream handle {} from the directory stream table of app "{}-{}".)",
-                               handle,
-                               _active_app->handle,
-                               _active_app->name);
+                _logger->trace(
+                    FILE,
+                    R"(Remove directory stream handle {} from the directory stream table of app "{}-{}".)",
+                    handle,
+                    _active_app->handle,
+                    _active_app->name);
                 _active_app->directory_stream_table.remove(handle);
             });
 
-        // A dummy app that belongs to the kernel itself, which owns the kernel logs files and all threads running at
-        // this moment (idle, terminator and boot)
+        // A dummy app that belongs to the kernel itself, which owns the kernel logs files and all
+        // threads running at this moment (idle, terminator and boot)
         auto kernel_app     = SharedPointer<Info>(new Info());
         kernel_app->name    = "KApp";
         kernel_app->vendor  = "Ewogijk";
         kernel_app->version = {MAJOR, MINOR, PATCH, PRERELEASE};
         kernel_app->handle  = _app_handle_counter.acquire_handle();
 
-        // This is a dummy app that will be removed hence the standard IO streams are attached to nothing
+        // This is a dummy app that will be removed hence the standard IO streams are attached to
+        // nothing
         kernel_app->std_out = SharedPointer<TextStream>(new VoidStream());
         kernel_app->std_err = kernel_app->std_out;
         kernel_app->std_in  = kernel_app->std_in;
@@ -362,15 +378,19 @@ namespace Rune::App {
         VirtualAddr start_info_addr;
         _logger->info(FILE, "Loading OS: {}", os_exec.to_string());
         char*      dummy_args[1] = {nullptr};
-        LoadStatus load_status   = loader.load(os_exec, dummy_args, app, user_stack, start_info_addr, true);
+        LoadStatus load_status =
+            loader.load(os_exec, dummy_args, app, user_stack, start_info_addr, true);
         if (load_status != LoadStatus::LOADED) {
             _logger->warn(FILE, "Failed to load OS. Status: {}", load_status.to_string());
             return load_status;
         }
 
         // Hook up the OS stdin/stderr to the terminal stream that renders on the display
-        app->std_out = SharedPointer<TextStream>(
-            new TerminalStream(_cpu_subsys, &_frame_buffer, &LAT15TERMINUS16, Pixie::BLACK, Pixie::VSCODE_WHITE));
+        app->std_out = SharedPointer<TextStream>(new TerminalStream(_cpu_subsys,
+                                                                    &_frame_buffer,
+                                                                    &LAT15TERMINUS16,
+                                                                    Pixie::BLACK,
+                                                                    Pixie::VSCODE_WHITE));
         // Set the error stream also to the terminal stream, just print text in red
         app->std_err = app->std_out;
         // Hook up the stdin to the keyboard
@@ -395,7 +415,8 @@ namespace Rune::App {
         CPU::Stack  user_stack;
         VirtualAddr start_info_addr;
         _logger->info(FILE, "Loading executable: {}", executable.to_string());
-        LoadStatus load_status = loader.load(executable, argv, app, user_stack, start_info_addr, false);
+        LoadStatus load_status =
+            loader.load(executable, argv, app, user_stack, start_info_addr, false);
         if (load_status != LoadStatus::LOADED) {
             _logger->warn(FILE, "Failed to load executable. Status: {}", load_status.to_string());
             return {load_status, -1};
@@ -403,13 +424,19 @@ namespace Rune::App {
 
         auto std_in = setup_std_stream(app, StdStream::IN, stdin_target);
         if (!std_in) {
-            _logger->warn(FILE, "{}: Unknown stdin target. Got: {}", executable.to_string(), stdin_target);
+            _logger->warn(FILE,
+                          "{}: Unknown stdin target. Got: {}",
+                          executable.to_string(),
+                          stdin_target);
             return {LoadStatus::BAD_STDIO, -1};
         }
 
         auto std_out = setup_std_stream(app, StdStream::OUT, stdout_target);
         if (!std_out) {
-            _logger->warn(FILE, "{}: Unknown std_out target. Got: {}", executable.to_string(), stdout_target);
+            _logger->warn(FILE,
+                          "{}: Unknown std_out target. Got: {}",
+                          executable.to_string(),
+                          stdout_target);
             return {LoadStatus::BAD_STDIO, -1};
         }
 
@@ -421,7 +448,10 @@ namespace Rune::App {
             // Open new stream for stderr
             std_err = setup_std_stream(app, StdStream::ERR, stderr_target);
             if (!std_err) {
-                _logger->warn(FILE, "{}: Unknown std_err target. Got: {}", executable.to_string(), stderr_target);
+                _logger->warn(FILE,
+                              "{}: Unknown std_err target. Got: {}",
+                              executable.to_string(),
+                              stderr_target);
                 return {LoadStatus::BAD_STDIO, -1};
             }
         }
@@ -487,9 +517,11 @@ namespace Rune::App {
     }
 
     int AppSubsystem::join(int handle) {
-        // Important: We need to keep a copy of the shared pointer here, so that the app info does not get freed
-        //              when the final context switch from its main thread to the next thread happens after it has
-        //              exited, otherwise the info gets freed and it is no longer possible to access its exit code.
+        // Important: We need to keep a copy of the shared pointer here, so that the app info does
+        // not get freed
+        //              when the final context switch from its main thread to the next thread
+        //              happens after it has exited, otherwise the info gets freed and it is no
+        //              longer possible to access its exit code.
         SharedPointer<Info> app;
         for (auto& app_entry : _app_table) {
             auto& a = *app_entry.value;
@@ -513,11 +545,11 @@ namespace Rune::App {
         r_t->state       = CPU::ThreadState::WAITING;
         app->joining_thread_table.add_back(r_t);
         scheduler->execute_next_thread();
-        // The "unlock" call will trigger a context switch to whatever next thread will be run and this thread
-        // will wait until it is scheduled again in the "exit_running_app" function.
+        // The "unlock" call will trigger a context switch to whatever next thread will be run and
+        // this thread will wait until it is scheduled again in the "exit_running_app" function.
         scheduler->unlock();
-        // The application has exited here, meaning this thread was rescheduled in "exit_running_app" at some point
-        // thus the exit_code of the app is now set
+        // The application has exited here, meaning this thread was rescheduled in
+        // "exit_running_app" at some point thus the exit_code of the app is now set
         return app->exit_code;
     }
 } // namespace Rune::App

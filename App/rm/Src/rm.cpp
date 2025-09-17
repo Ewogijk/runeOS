@@ -16,9 +16,8 @@
 
 #include <Forge/VFS.h>
 
-#include <string>
 #include <iostream>
-
+#include <string>
 
 struct CLIArgs {
     std::string node_path = "";
@@ -27,24 +26,18 @@ struct CLIArgs {
     bool recursive = false;
 };
 
-
 bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
     bool node_path_seen = false;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0)
-            continue;
+        if (arg.size() == 0) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
-                    case 'h':
-                        args_out.help = true;
-                        break;
-                    case 'r':
-                        args_out.recursive = true;
-                        break;
-                    default: {
+                    case 'h': args_out.help = true; break;
+                    case 'r': args_out.recursive = true; break;
+                    default:  {
                         std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
@@ -59,16 +52,16 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
             node_path_seen     = true;
         }
     }
-    if (!node_path_seen && !args_out.help)
-        std::cerr << "Missing node argument" << std::endl;
+    if (!node_path_seen && !args_out.help) std::cerr << "Missing node argument" << std::endl;
     return node_path_seen || args_out.help;
 }
 
-
 bool delete_node(const std::string& node_path) {
-    if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str()); ret < Ember::Status::OKAY) {
+    if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str());
+        ret < Ember::Status::OKAY) {
         if (ret == Ember::Status::NODE_IN_USE)
-            std::cerr << "'" << node_path << "': Cannot delete, node is used by another app." << std::endl;
+            std::cerr << "'" << node_path << "': Cannot delete, node is used by another app."
+                      << std::endl;
         else
             std::cerr << "'" << node_path << "': IO error." << std::endl;
         return false;
@@ -76,16 +69,13 @@ bool delete_node(const std::string& node_path) {
     return true;
 }
 
-
 void close_dir_stream(const S64 dir_stream_ID) {
-    if (dir_stream_ID <= 0)
-        return; // Invalid stream ID
+    if (dir_stream_ID <= 0) return; // Invalid stream ID
     Forge::vfs_directory_stream_close(dir_stream_ID);
     // Both possible return values are fine, no need for error handling
     //   Ember::Status::OKAY -> Stream was closed
     //   Ember::Status::UNKNOWN_ID -> No stream with the ID was found
 }
-
 
 bool delete_dir(const std::string& directory_path) {
     const S64 dir_stream_ID = Forge::vfs_directory_stream_open(directory_path.c_str());
@@ -139,11 +129,9 @@ bool delete_dir(const std::string& directory_path) {
     return true;
 }
 
-
 CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
-    if (!parse_cli_args(argc, argv, args))
-        return -1;
+    if (!parse_cli_args(argc, argv, args)) return -1;
 
     if (args.help) {
         std::cout << "rm [file|directory] [options]" << std::endl;
@@ -164,16 +152,14 @@ CLINK int main(const int argc, char* argv[]) {
             case Ember::Status::BAD_ARG: // Intermediate path element is a file
                 std::cerr << "'" << args.node_path << "': Bad path." << std::endl;
                 break;
-            default:
-                std::cerr << "'" << args.node_path << "': IO error." << std::endl;
+            default: std::cerr << "'" << args.node_path << "': IO error." << std::endl;
         }
         return -1;
     }
 
     if (node_info.is_file()) {
         // Node is a file -> Can just delete it
-        if (!delete_node(args.node_path))
-            return -1;
+        if (!delete_node(args.node_path)) return -1;
     } else {
         const S64 dir_stream_ID = Forge::vfs_directory_stream_open(args.node_path.c_str());
         if (dir_stream_ID < 0) {
@@ -183,15 +169,15 @@ CLINK int main(const int argc, char* argv[]) {
             return -1;
         }
         size_t            nodes_in_dir = 0;
-        Ember::StatusCode next         = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
-        std::string       node_path    = node_info.node_path;
+        Ember::StatusCode next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
+        std::string       node_path = node_info.node_path;
         while (next > Ember::Status::DIRECTORY_STREAM_EOD) {
-            if (node_path != "." && node_path != "..")
-                nodes_in_dir++;
+            if (node_path != "." && node_path != "..") nodes_in_dir++;
             next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
             node_path = node_info.node_path;
         }
-        if (node_path != "." && node_path != ".." && (node_info.is_directory() || node_info.is_file()))
+        if (node_path != "." && node_path != ".."
+            && (node_info.is_directory() || node_info.is_file()))
             nodes_in_dir++;
 
         if (nodes_in_dir == 0) {
@@ -202,8 +188,9 @@ CLINK int main(const int argc, char* argv[]) {
         } else {
             if (!args.recursive) {
                 std::cerr << "'" << args.node_path
-                    << "': Cannot delete, directory is not empty. Use '-r' to delete the directory and its content."
-                    << std::endl;
+                          << "': Cannot delete, directory is not empty. Use '-r' to delete the "
+                             "directory and its content."
+                          << std::endl;
                 close_dir_stream(dir_stream_ID);
                 return -1;
             }

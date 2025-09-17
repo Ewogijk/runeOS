@@ -52,8 +52,9 @@ namespace Rune::Device {
 
         for (U32 j = 0; j < ct_count; j++) {
             PhysicalAddr p_ctba;
-            if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
-                                                     p_ctba)) {
+            if (!Memory::virtual_to_physical_address(
+                    memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
+                    p_ctba)) {
                 _logger->error(FILE, "Failed hook command table {} into system memory!", j);
                 _heap->free(sys_mem->CL);
                 _heap->free(sys_mem->RFIS);
@@ -92,7 +93,9 @@ namespace Rune::Device {
         return ld;
     }
 
-    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer, SharedPointer<Logger> logger)
+    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap,
+                           CPU::Timer*            timer,
+                           SharedPointer<Logger>  logger)
         : _hba(nullptr),
           _logger(move(logger)),
           _port_engine(),
@@ -113,8 +116,9 @@ namespace Rune::Device {
         LinkedList<Partition> p_list;
         for (size_t i = 0; i < _logical_drive_count; i++) {
             LogicalDrive ld = _logical_drive_table[i];
-            p_list.add_back(
-                *_port_engine[ld.port_index].get_hard_drive_info().partition_table[ld.partition_table_index]);
+            p_list.add_back(*_port_engine[ld.port_index]
+                                 .get_hard_drive_info()
+                                 .partition_table[ld.partition_table_index]);
         }
         return p_list;
     }
@@ -161,10 +165,10 @@ namespace Rune::Device {
 
             if (!(pi >> i & 1)) continue;
 
-            _logger->debug(
-                FILE,
-                "------------------------------------- Scanning Port {} -------------------------------------",
-                i);
+            _logger->debug(FILE,
+                           "------------------------------------- Scanning Port {} "
+                           "-------------------------------------",
+                           i);
             if (!_port_engine[i].scan_device(&_hba->Port[i], _logger)) continue;
 
             if (!_port_engine[i].stop()) {
@@ -174,7 +178,9 @@ namespace Rune::Device {
 
             SystemMemory* system_memory = alloc_system_memory(command_slots);
             if (!_port_engine[i].start(system_memory, s64_a, _heap, _timer)) {
-                _logger->error(FILE, "Failed to start port {}. Freeing allocated system memory...", i);
+                _logger->error(FILE,
+                               "Failed to start port {}. Freeing allocated system memory...",
+                               i);
                 _heap->free(system_memory->CL);
                 _heap->free(system_memory->CT);
                 _heap->free(system_memory->RFIS);
@@ -205,9 +211,14 @@ namespace Rune::Device {
         return false;
     }
 
-    size_t AHCIDriver::send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2d_fis) {
+    size_t AHCIDriver::send_ata_command(U8                     hard_drive,
+                                        void*                  buf,
+                                        size_t                 buf_size,
+                                        RegisterHost2DeviceFIS h2d_fis) {
         if (!_port_engine[hard_drive].is_active()) {
-            _logger->warn(FILE, "Cannot send ATA command. No hard drive on port {} detected.", hard_drive);
+            _logger->warn(FILE,
+                          "Cannot send ATA command. No hard drive on port {} detected.",
+                          hard_drive);
             return false;
         }
         return _port_engine[hard_drive].send_ata_command(buf, buf_size, h2d_fis);
@@ -219,17 +230,21 @@ namespace Rune::Device {
         U8 port_idx              = ld.port_index;
         U8 partition_table_index = ld.partition_table_index;
         if (!_port_engine[port_idx].is_active()) {
-            _logger->warn(FILE, "Cannot read from device. No hard drive on port {} detected.", port_idx);
+            _logger->warn(FILE,
+                          "Cannot read from device. No hard drive on port {} detected.",
+                          port_idx);
             return 0;
         }
-        Partition* p     = _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
-        U64        t_lba = p->start_lba + lba;
+        Partition* p =
+            _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
+        U64 t_lba = p->start_lba + lba;
         if (t_lba > p->end_lba) {
-            _logger->warn(FILE,
-                          "Cannot read from device. LBA not in partition range. Range: {}-{}, LBA: {}",
-                          p->start_lba,
-                          p->end_lba,
-                          t_lba);
+            _logger->warn(
+                FILE,
+                "Cannot read from device. LBA not in partition range. Range: {}-{}, LBA: {}",
+                p->start_lba,
+                p->end_lba,
+                t_lba);
             return 0;
         }
         return _port_engine[port_idx].read(buf, buf_size, t_lba);
@@ -241,17 +256,21 @@ namespace Rune::Device {
         U8 port_idx              = ld.port_index;
         U8 partition_table_index = ld.partition_table_index;
         if (!_port_engine[port_idx].is_active()) {
-            _logger->warn(FILE, "Cannot write to device. No hard drive on port {} detected.", port_idx);
+            _logger->warn(FILE,
+                          "Cannot write to device. No hard drive on port {} detected.",
+                          port_idx);
             return 0;
         }
-        Partition* p    = _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
-        U64        tLba = p->start_lba + lba;
+        Partition* p =
+            _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
+        U64 tLba = p->start_lba + lba;
         if (tLba > p->end_lba) {
-            _logger->warn(FILE,
-                          "Cannot write to device. LBA not in partition range. Range: {}-{}, LBA: {}",
-                          p->start_lba,
-                          p->end_lba,
-                          tLba);
+            _logger->warn(
+                FILE,
+                "Cannot write to device. LBA not in partition range. Range: {}-{}, LBA: {}",
+                p->start_lba,
+                p->end_lba,
+                tLba);
             return 0;
         }
         return _port_engine[port_idx].write(buf, buf_size, tLba);

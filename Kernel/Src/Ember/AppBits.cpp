@@ -25,9 +25,13 @@ namespace Ember {
         return VirtualKey(key_code);
     }
 
-    auto VirtualKey::build_pressed(const U8 row, const U8 col) -> VirtualKey { return build(row, col, false); }
+    auto VirtualKey::build_pressed(const U8 row, const U8 col) -> VirtualKey {
+        return build(row, col, false);
+    }
 
-    VirtualKey VirtualKey::build_released(const U8 row, const U8 col) { return build(row, col, true); }
+    VirtualKey VirtualKey::build_released(const U8 row, const U8 col) {
+        return build(row, col, true);
+    }
 
     VirtualKey::VirtualKey() : _key_code(0x8000) {}
 

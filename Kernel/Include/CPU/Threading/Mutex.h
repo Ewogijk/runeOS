@@ -33,7 +33,8 @@ namespace Rune::CPU {
         void transfer_ownership();
 
       public:
-        // Per requirement of the "Column::make_handle_column_table" these properties must be publicly accessible
+        // Per requirement of the "Column::make_handle_column_table" these properties must be
+        // publicly accessible
         U16    handle;
         String name;
 
@@ -59,15 +60,16 @@ namespace Rune::CPU {
         /**
          * @brief Try to lock the mutex.
          *
-         * If it is not locked yet then the running thread will acquire the mutex. If the mutex is already locked then
-         * all threads other then the owner of the lock will put into a wait queue, while the owner of the thread  is
-         * allowed to lock the mutex multiple times.
+         * If it is not locked yet then the running thread will acquire the mutex. If the mutex is
+         * already locked then all threads other then the owner of the lock will put into a wait
+         * queue, while the owner of the thread  is allowed to lock the mutex multiple times.
          */
         void lock();
 
         /**
-         * Unlock the mutex if the calling thread is the owner of the mutex then ownership will be transferred to the
-         * next thread in the waiting queue and the thread is woken up. Otherwise nothing will happen.
+         * Unlock the mutex if the calling thread is the owner of the mutex then ownership will be
+         * transferred to the next thread in the waiting queue and the thread is woken up. Otherwise
+         * nothing will happen.
          */
         void unlock();
 
@@ -75,16 +77,17 @@ namespace Rune::CPU {
          * @brief Search for a thread with the given ID in the waiting queue and remove it if found.
          *
          * <p>
-         *  If the thread was the owner of the mutex, then ownership will be transferred to the next thread in the queue
-         *  and the thread will be scheduled. If the thread was the only owner of the mutex then it will simply be
-         *  unlocked.
+         *  If the thread was the owner of the mutex, then ownership will be transferred to the next
+         * thread in the queue and the thread will be scheduled. If the thread was the only owner of
+         * the mutex then it will simply be unlocked.
          * </p>
          * <p>
-         *  If the thread was not the owner of the mutex but simply waiting in the queue, then it will just be removed
-         *  from the queue without any ownership transfer.
+         *  If the thread was not the owner of the mutex but simply waiting in the queue, then it
+         * will just be removed from the queue without any ownership transfer.
          * </p>
          * @param t_id
-         * @return True: The thread got removed from the wait queue., False: No thread with the requested ID was found.
+         * @return True: The thread got removed from the wait queue., False: No thread with the
+         * requested ID was found.
          */
         bool remove_waiting_thread(int t_id);
     };

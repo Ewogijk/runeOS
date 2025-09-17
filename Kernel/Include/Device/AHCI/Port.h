@@ -22,35 +22,38 @@
 #include <Device/AHCI/FIS.h>
 
 namespace Rune::Device {
-#define SATA_DEVICE_TYPES(X)                                                                                           \
-    X(SATADeviceType, ATA, 0x00000101)                                                                                 \
-    X(SATADeviceType, ATAPI, 0xEB140101)                                                                               \
-    X(SATADeviceType, SEMB, 0xC33C0101)                                                                                \
+#define SATA_DEVICE_TYPES(X)                                                                       \
+    X(SATADeviceType, ATA, 0x00000101)                                                             \
+    X(SATADeviceType, ATAPI, 0xEB140101)                                                           \
+    X(SATADeviceType, SEMB, 0xC33C0101)                                                            \
     X(SATADeviceType, PM, 0x96690101)
 
     DECLARE_TYPED_ENUM(SATADeviceType, U32, SATA_DEVICE_TYPES, 0x0) // NOLINT
 
-#define INTERFACE_POWER_MANAGEMENT_TYPES(X)                                                                            \
-    X(InterfacePowerManagement, DEVICE_ABSENT, 0x0)                                                                    \
-    X(InterfacePowerManagement, IPM_ACTIVE, 0x1)                                                                       \
-    X(InterfacePowerManagement, IPM_PARTIAL, 0x2)                                                                      \
-    X(InterfacePowerManagement, IPM_SLUMBER, 0x6)                                                                      \
+#define INTERFACE_POWER_MANAGEMENT_TYPES(X)                                                        \
+    X(InterfacePowerManagement, DEVICE_ABSENT, 0x0)                                                \
+    X(InterfacePowerManagement, IPM_ACTIVE, 0x1)                                                   \
+    X(InterfacePowerManagement, IPM_PARTIAL, 0x2)                                                  \
+    X(InterfacePowerManagement, IPM_SLUMBER, 0x6)                                                  \
     X(InterfacePowerManagement, DEVICE_SLEEP, 0x8)
 
-    DECLARE_TYPED_ENUM(InterfacePowerManagement, U8, INTERFACE_POWER_MANAGEMENT_TYPES, 0x10) // NOLINT
+    DECLARE_TYPED_ENUM(InterfacePowerManagement,
+                       U8,
+                       INTERFACE_POWER_MANAGEMENT_TYPES,
+                       0x10) // NOLINT
 
-#define INTERFACE_SPEED_TYPES(X)                                                                                       \
-    X(InterfaceSpeed, DEVICE_ABSENT, 0x0)                                                                              \
-    X(InterfaceSpeed, GEN1_1DOT5Gbps, 0x1)                                                                             \
-    X(InterfaceSpeed, GEN2_3GBPS, 0x2)                                                                                 \
+#define INTERFACE_SPEED_TYPES(X)                                                                   \
+    X(InterfaceSpeed, DEVICE_ABSENT, 0x0)                                                          \
+    X(InterfaceSpeed, GEN1_1DOT5Gbps, 0x1)                                                         \
+    X(InterfaceSpeed, GEN2_3GBPS, 0x2)                                                             \
     X(InterfaceSpeed, GEN3_6GBPS, 0x3)
 
     DECLARE_TYPED_ENUM(InterfaceSpeed, U8, INTERFACE_SPEED_TYPES, 0x4) // NOLINT
 
-#define DEVICE_DETECTION_VALUES(X)                                                                                     \
-    X(DeviceDetection, DEVICE_ABSENT, 0x0)                                                                             \
-    X(DeviceDetection, DEVICE_DETECTED, 0x1)                                                                           \
-    X(DeviceDetection, DEVICE_ACTIVE, 0x3)                                                                             \
+#define DEVICE_DETECTION_VALUES(X)                                                                 \
+    X(DeviceDetection, DEVICE_ABSENT, 0x0)                                                         \
+    X(DeviceDetection, DEVICE_DETECTED, 0x1)                                                       \
+    X(DeviceDetection, DEVICE_ACTIVE, 0x3)                                                         \
     X(DeviceDetection, DEVICE_INACTIVE, 0x4)
 
     DECLARE_TYPED_ENUM(DeviceDetection, U8, DEVICE_DETECTION_VALUES, 0x8) // NOLINT
@@ -298,13 +301,15 @@ namespace Rune::Device {
         uint32_t B         : 1; // BIST
         uint32_t C         : 1; // Clear
         uint32_t Reserved0 : 1;
-        uint32_t PMP       : 4;  // Port Multiplier Port
-        uint32_t PRDTL     : 16; // Physical Region Descriptor Table Length, in entries where each entry is 4 DW
+        uint32_t PMP       : 4; // Port Multiplier Port
+        uint32_t PRDTL : 16; // Physical Region Descriptor Table Length, in entries where each entry
+                             // is 4 DW
 
         uint32_t PRDBC; // Physical Region Descriptor Byte Count, number of bytes transferred
 
-        CommandTableBaseAddress CTBA;  // Command Table Descriptor Base Address, physical, 128 byte aligned
-        uint32_t                CTBAU; // Upper 32 Bits
+        CommandTableBaseAddress
+                 CTBA;  // Command Table Descriptor Base Address, physical, 128 byte aligned
+        uint32_t CTBAU; // Upper 32 Bits
 
         uint32_t Reserved1[4];
     };

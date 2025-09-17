@@ -16,55 +16,48 @@
 
 #include <Shell/AST.h>
 
-#include <Forge/VFS.h>
 #include <Forge/App.h>
+#include <Forge/VFS.h>
 
-#include <utility>
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 #include <Shell/Path.h>
 #include <Shell/Utility.h>
-
 
 namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Input
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    Input::Input(std::unique_ptr<ASTNode> cs_evd_or_ev) : _cs_evd_or_ev(std::move(cs_evd_or_ev)) {}
 
-    Input::Input(std::unique_ptr<ASTNode> cs_evd_or_ev) : _cs_evd_or_ev(std::move(cs_evd_or_ev)) { }
-
-
-    std::string Input::get_text() {
-        return _cs_evd_or_ev->get_text();
-    }
-
+    std::string Input::get_text() { return _cs_evd_or_ev->get_text(); }
 
     std::string Input::evaluate(Environment& shell_env) {
         return _cs_evd_or_ev->evaluate(shell_env);
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CommandSequence
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     /**
-     * @brief Check that the file with file_name is an executable and the file requested in a command has the same name.
+     * @brief Check that the file with file_name is an executable and the file requested in a
+     * command has the same name.
      * @param file_name     Name of a file on the filesystem.
      * @param target_file Name of a file requested
      * @return
      */
     bool is_target_application(const Path& file_name, const Path& target_file) {
-        // As long as the app executable on the filesystem has the ".app" extension we know it is executable, therefore
-        // it is okay if the ".app" extension is omitted in the shell input
+        // As long as the app executable on the filesystem has the ".app" extension we know it is
+        // executable, therefore it is okay if the ".app" extension is omitted in the shell input
         // E.g. "MyApp.app" on the filesystem will match with "MyApp.app" or "MyApp"
         return file_name.get_file_extension() == "app"
-            && file_name.get_file_name_without_extension() == target_file.get_file_name_without_extension();
+               && file_name.get_file_name_without_extension()
+                      == target_file.get_file_name_without_extension();
     }
-
 
     /**
      * @brief Search in the dir for a file that has the same name as the given target_file.
@@ -73,7 +66,8 @@ namespace Rune::Shell {
      * @return
      */
     Path find_target_app(const Path& dir, const Path& target_file) {
-        if (const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(dir.to_string().c_str());
+        if (const Ember::ResourceID dir_stream_ID =
+                Forge::vfs_directory_stream_open(dir.to_string().c_str());
             dir_stream_ID > Ember::Status::OKAY) {
             // Search for the app
             Ember::NodeInfo   node_info;
@@ -82,7 +76,8 @@ namespace Rune::Shell {
             while (ret > Ember::Status::DIRECTORY_STREAM_EOD) {
                 if (node_info.is_file()) {
                     // Only check if the node is a file
-                    if (Path node_path(node_info.node_path); is_target_application(node_path, target_file)) {
+                    if (Path node_path(node_info.node_path);
+                        is_target_application(node_path, target_file)) {
                         found = true;
                         break;
                     }
@@ -96,21 +91,17 @@ namespace Rune::Shell {
                 found = is_target_application(Path(node_info.node_path), target_file);
             }
 
-            if (found)
-                return dir / node_info.node_path;
+            if (found) return dir / node_info.node_path;
         }
         return Path("");
     }
 
-
-    CommandSequence::CommandSequence(
-        std::unique_ptr<ASTNode>              command,
-        std::vector<std::unique_ptr<ASTNode>> arguments_or_flags,
-        Path                                  redirect_file
-    ) : _command(std::move(command)),
-        _arguments_or_flags(std::move(arguments_or_flags)),
-        _redirect_file(std::move(redirect_file)) { }
-
+    CommandSequence::CommandSequence(std::unique_ptr<ASTNode>              command,
+                                     std::vector<std::unique_ptr<ASTNode>> arguments_or_flags,
+                                     Path                                  redirect_file)
+        : _command(std::move(command)),
+          _arguments_or_flags(std::move(arguments_or_flags)),
+          _redirect_file(std::move(redirect_file)) {}
 
     std::string CommandSequence::get_text() {
         std::string cs = _command->get_text();
@@ -119,20 +110,20 @@ namespace Rune::Shell {
         return cs;
     }
 
-
     std::string CommandSequence::evaluate(Environment& shell_env) {
-        const std::string cmd                                  = _command->evaluate(shell_env);
-        const auto        args                                 = std::unique_ptr<char>(new char[ARGV_LIMIT]);
-        char*             argv[_arguments_or_flags.size() + 1] = { };
+        const std::string cmd  = _command->evaluate(shell_env);
+        const auto        args = std::unique_ptr<char>(new char[ARGV_LIMIT]);
+        char*             argv[_arguments_or_flags.size() + 1] = {};
         int               argv_idx                             = 0;
         int               pos                                  = 0;
         for (const auto& aof : _arguments_or_flags) {
             std::string aof_str = aof->evaluate(shell_env);
-            memcpy(&args.get()[pos], (void*)aof_str.c_str(), aof_str.size() + 1);
-            argv[argv_idx++] = &args.get()[pos];
-            pos += static_cast<int>(aof_str.size()) + 1;
+            memcpy(&args.get()[pos], (void*) aof_str.c_str(), aof_str.size() + 1);
+            argv[argv_idx++]  = &args.get()[pos];
+            pos              += static_cast<int>(aof_str.size()) + 1;
             if (pos >= ARGV_LIMIT) {
-                std::cerr << "Too many arguments. Max size: " << ARGV_LIMIT << ", Is: " << pos << std::endl;
+                std::cerr << "Too many arguments. Max size: " << ARGV_LIMIT << ", Is: " << pos
+                          << std::endl;
                 return "";
             }
         }
@@ -141,12 +132,12 @@ namespace Rune::Shell {
         if (const auto maybe_builtin = shell_env.command_table.find(cmd);
             maybe_builtin == shell_env.command_table.end()) {
             const Path wd = shell_env.working_directory;
-            const Path cmd_file(cmd);                           // User provided app path e.g. a/b/app
+            const Path cmd_file(cmd); // User provided app path e.g. a/b/app
             const Path cmd_file_name(cmd_file.get_file_name()); // Name of the application e.g. app
-            Path       cmd_file_dir = cmd_file.get_parent();    // Directory of the application e.g. a/b
+            Path cmd_file_dir = cmd_file.get_parent(); // Directory of the application e.g. a/b
             if (cmd_file_dir.to_string() == ".")
-                // cmd_file is an app name without any path -> make cmd_file_dir an empty string, so we can concatenate
-                // without any consequence
+                // cmd_file is an app name without any path -> make cmd_file_dir an empty string, so
+                // we can concatenate without any consequence
                 cmd_file_dir = Path("");
 
             Path target_app("");
@@ -160,15 +151,15 @@ namespace Rune::Shell {
                     // Search through the directories in $PATH
                     auto path = shell_env.env_var_table.find("PATH");
                     if (path == shell_env.env_var_table.end()) {
-                        std::cerr << "\"Missing environment variable: \"" << Environment::PATH << "\"" << std::endl;
+                        std::cerr << "\"Missing environment variable: \"" << Environment::PATH
+                                  << "\"" << std::endl;
                         return "";
                     }
 
                     const std::vector<std::string> path_vars = str_split(path->second, ':');
                     for (auto& dir : path_vars) {
                         target_app = find_target_app(Path(dir) / cmd_file_dir, cmd_file_name);
-                        if (target_app != Path(""))
-                            break;
+                        if (target_app != Path("")) break;
                     }
                 }
             }
@@ -177,18 +168,17 @@ namespace Rune::Shell {
                 std::cerr << "Unknown command: \"" << cmd << "\"" << std::endl;
                 return "";
             }
-            const std::string redirect = _redirect_file == Path("") ? "inherit" : "file:" + _redirect_file.to_string();
-            const Ember::ResourceID app_ID = Forge::app_start(
-                target_app.to_string().c_str(),
-                const_cast<const char**>(argv),
-                wd.to_string().c_str(),
-                "inherit",
-                redirect.c_str(),
-                redirect.c_str()
-            );
+            const std::string redirect =
+                _redirect_file == Path("") ? "inherit" : "file:" + _redirect_file.to_string();
+            const Ember::ResourceID app_ID = Forge::app_start(target_app.to_string().c_str(),
+                                                              const_cast<const char**>(argv),
+                                                              wd.to_string().c_str(),
+                                                              "inherit",
+                                                              redirect.c_str(),
+                                                              redirect.c_str());
             if (app_ID < Ember::Status::OKAY) {
                 std::cerr << "Failed to start app \"" << target_app.to_string()
-                    << "\". Reason: " << app_ID << std::endl;
+                          << "\". Reason: " << app_ID << std::endl;
                 return "";
             }
             Forge::app_join(app_ID);
@@ -199,16 +189,14 @@ namespace Rune::Shell {
         return "";
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          EnvVarDecl
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-    EnvVarDecl::EnvVarDecl(std::unique_ptr<ASTNode> env_var, std::vector<std::unique_ptr<ASTNode>> value)
+    EnvVarDecl::EnvVarDecl(std::unique_ptr<ASTNode>              env_var,
+                           std::vector<std::unique_ptr<ASTNode>> value)
         : _env_var(std::move(env_var)),
-          _value(std::move(value)) { }
-
+          _value(std::move(value)) {}
 
     std::string EnvVarDecl::get_text() {
         std::string v;
@@ -216,7 +204,6 @@ namespace Rune::Shell {
             v += vv->get_text();
         return _env_var->get_text() + "=" + v;
     }
-
 
     std::string EnvVarDecl::evaluate(Environment& shell_env) {
         const std::string new_env_var = _env_var->get_text();
@@ -227,19 +214,13 @@ namespace Rune::Shell {
         return "";
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          EnvVar
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    EnvVar::EnvVar(std::unique_ptr<ASTNode> env_var) : _env_var(std::move(env_var)) {}
 
-    EnvVar::EnvVar(std::unique_ptr<ASTNode> env_var) : _env_var(std::move(env_var)) { }
-
-
-    std::string EnvVar::get_text() {
-        return _env_var->get_text();
-    }
-
+    std::string EnvVar::get_text() { return _env_var->get_text(); }
 
     std::string EnvVar::evaluate(Environment& shell_env) {
         const std::string env_var = _env_var->get_text();
@@ -251,14 +232,12 @@ namespace Rune::Shell {
         return var->second;
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          ShellString
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-    ShellString::ShellString(std::vector<std::unique_ptr<ASTNode>> content) : _content(std::move(content)) { }
-
+    ShellString::ShellString(std::vector<std::unique_ptr<ASTNode>> content)
+        : _content(std::move(content)) {}
 
     std::string ShellString::get_text() {
         std::string text;
@@ -267,7 +246,6 @@ namespace Rune::Shell {
         return text;
     }
 
-
     std::string ShellString::evaluate(Shell::Environment& shell_env) {
         std::string value("");
         for (const auto& ele : _content)
@@ -275,22 +253,16 @@ namespace Rune::Shell {
         return value;
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          IdentifierOrPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    IdentifierOrPath::IdentifierOrPath(const std::string& value) : _value(value) {}
 
-    IdentifierOrPath::IdentifierOrPath(const std::string& value) : _value(value) { }
-
-
-    std::string IdentifierOrPath::get_text() {
-        return _value;
-    }
-
+    std::string IdentifierOrPath::get_text() { return _value; }
 
     std::string IdentifierOrPath::evaluate(Environment& shell_env) {
         SILENCE_UNUSED(shell_env)
         return _value;
     }
-}
+} // namespace Rune::Shell

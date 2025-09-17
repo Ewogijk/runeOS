@@ -21,18 +21,18 @@
 #include <Ember/Enum.h>
 
 namespace Rune::Device {
-#define FIS_TYPES(X)                                                                                                   \
-    X(FISType, DMA_SETUP, 0x41)                                                                                        \
-    X(FISType, PIO_SETUP, 0x5F)                                                                                        \
-    X(FISType, REG_H2D, 0x27)                                                                                          \
-    X(FISType, REG_D2H, 0x34)                                                                                          \
+#define FIS_TYPES(X)                                                                               \
+    X(FISType, DMA_SETUP, 0x41)                                                                    \
+    X(FISType, PIO_SETUP, 0x5F)                                                                    \
+    X(FISType, REG_H2D, 0x27)                                                                      \
+    X(FISType, REG_D2H, 0x34)                                                                      \
     X(FISType, SET_D_BITS, 0xA1)
 
     DECLARE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0) // NOLINT
 
-#define H2D_COMMANDS(X)                                                                                                \
-    X(H2DCommand, IDENTIFY_DEVICE, 0xEC)                                                                               \
-    X(H2DCommand, READ_DMA_EXTENDED, 0x25)                                                                             \
+#define H2D_COMMANDS(X)                                                                            \
+    X(H2DCommand, IDENTIFY_DEVICE, 0xEC)                                                           \
+    X(H2DCommand, READ_DMA_EXTENDED, 0x25)                                                         \
     X(H2DCommand, WRITE_DMA_EXTENDED, 0x35)
 
     DECLARE_TYPED_ENUM(H2DCommand, U8, H2D_COMMANDS, 0x0) // NOLINT

@@ -26,8 +26,8 @@
 namespace Rune {
 
     /**
-     * @brief An event handler is installed on an event hook and whenever this event occurs it will be called with
-     *          some event context that is defined by the subsystem.
+     * @brief An event handler is installed on an event hook and whenever this event occurs it will
+     * be called with some event context that is defined by the subsystem.
      */
     using EventHandler = Function<void(void*)>;
 

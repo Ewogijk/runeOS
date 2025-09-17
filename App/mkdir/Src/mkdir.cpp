@@ -16,30 +16,25 @@
 
 #include <Forge/VFS.h>
 
-#include <string>
 #include <iostream>
-
+#include <string>
 
 struct CLIArgs {
     std::string node_path;
     bool        help = false;
 };
 
-
 bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
     bool node_path_seen = false;
     for (int i = 1; i < argc; i++) {
-        std::string arg  = argv[i];
-        if (arg.size() == 0)
-            continue;
+        std::string arg = argv[i];
+        if (arg.size() == 0) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
-                    case 'h':
-                        args_out.help = true;
-                        break;
-                    default: {
+                    case 'h': args_out.help = true; break;
+                    default:  {
                         std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
@@ -51,19 +46,16 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
                 return false;
             }
             args_out.node_path = arg;
-            node_path_seen = true;
+            node_path_seen     = true;
         }
     }
-    if (!node_path_seen && !args_out.help)
-        std::cerr << "Missing node argument." << std::endl;
+    if (!node_path_seen && !args_out.help) std::cerr << "Missing node argument." << std::endl;
     return node_path_seen || args_out.help;
 }
 
-
 int main(const int argc, char* argv[]) {
     CLIArgs args;
-    if (!parse_cli_args(argc, argv, args))
-        return -1;
+    if (!parse_cli_args(argc, argv, args)) return -1;
 
     if (args.help) {
         std::cout << "mkdir [node] [options]" << std::endl;
@@ -73,7 +65,8 @@ int main(const int argc, char* argv[]) {
         return 0;
     }
 
-    if (const Ember::StatusCode ret = Forge::vfs_create(args.node_path.c_str(), Ember::NodeAttribute::DIRECTORY);
+    if (const Ember::StatusCode ret =
+            Forge::vfs_create(args.node_path.c_str(), Ember::NodeAttribute::DIRECTORY);
         ret < Ember::Status::OKAY) {
         switch (ret) {
             case Ember::Status::BAD_ARG:
@@ -82,9 +75,7 @@ int main(const int argc, char* argv[]) {
             case Ember::Status::NODE_EXISTS:
                 std::cerr << "'" << args.node_path << "' - Node exists." << std::endl;
                 break;
-            default:
-                std::cerr << "'" << args.node_path << "' - IO error." << std::endl;
-                break;
+            default: std::cerr << "'" << args.node_path << "' - IO error." << std::endl; break;
         }
     }
     return 0;

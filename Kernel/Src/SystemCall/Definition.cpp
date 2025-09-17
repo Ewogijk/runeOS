@@ -104,12 +104,13 @@ namespace Rune::SystemCall {
                 context};
     }
 
-    Definition
-    define3(Ember::ResourceID ID,
-            const String&     name,
-            const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument, Ember::SystemCallArgument)>&
-                  handler,
-            void* context) {
+    Definition define3(Ember::ResourceID                               ID,
+                       const String&                                   name,
+                       const Function<S64(void*,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument,
+                                          Ember::SystemCallArgument)>& handler,
+                       void*                                           context) {
         return {ID,
                 name,
                 [handler](void*                     sys_call_ctx,
@@ -130,10 +131,11 @@ namespace Rune::SystemCall {
                 context};
     }
 
-    Definition define2(Ember::ResourceID                                                                 ID,
-                       const String&                                                                     name,
-                       const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
-                       void*                                                                             context) {
+    Definition define2(
+        Ember::ResourceID                                                                 ID,
+        const String&                                                                     name,
+        const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
+        void*                                                                             context) {
         return {ID,
                 name,
                 [handler](void*                     sys_call_ctx,
@@ -172,12 +174,14 @@ namespace Rune::SystemCall {
                     SILENCE_UNUSED(arg4)
                     SILENCE_UNUSED(arg5)
                     SILENCE_UNUSED(arg6)
-                    return handler(forward<void*>(sys_call_ctx), forward<Ember::SystemCallArgument>(arg1));
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1));
                 },
                 context};
     }
 
-    Definition define0(Ember::ResourceID ID, const String& name, Function<S64(void*)> handler, void* context) {
+    Definition
+    define0(Ember::ResourceID ID, const String& name, Function<S64(void*)> handler, void* context) {
         return {ID,
                 name,
                 [handler](void*                     sys_call_ctx,

@@ -29,8 +29,8 @@ namespace Rune::CPU {
     };
 
     /**
-     * Delta queue implementation that sorts threads by their wake time. Threads with earlier wake time than others will
-     * be put before threads that are woken at a later time.
+     * Delta queue implementation that sorts threads by their wake time. Threads with earlier wake
+     * time than others will be put before threads that are woken at a later time.
      */
     class DeltaQueue {
         DQNode* _first;

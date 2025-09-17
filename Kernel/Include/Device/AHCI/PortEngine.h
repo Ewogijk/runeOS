@@ -53,19 +53,61 @@ namespace Rune::Device {
     };
 
     // runeOS PartitionType GUID: 8fa4455d-2d55-45ba-8bca-cbcedf48bdf6
-    constexpr U8 PARTITION_TYPE_GUID[16] =
-        {0x5d, 0x45, 0xa4, 0x8f, 0x55, 0x2d, 0xba, 0x45, 0x8b, 0xca, 0xcb, 0xce, 0xdf, 0x48, 0xbd, 0xf6};
+    constexpr U8 PARTITION_TYPE_GUID[16] = {0x5d,
+                                            0x45,
+                                            0xa4,
+                                            0x8f,
+                                            0x55,
+                                            0x2d,
+                                            0xba,
+                                            0x45,
+                                            0x8b,
+                                            0xca,
+                                            0xcb,
+                                            0xce,
+                                            0xdf,
+                                            0x48,
+                                            0xbd,
+                                            0xf6};
 
     // Kernel Partition GUID: 4d3f0533-902a-4642-b125-728c910c1f79
-    constexpr U8 KERNEL_PARTITION_GUID[16] =
-        {0x33, 0x05, 0x3f, 0x4d, 0x2a, 0x90, 0x42, 0x46, 0xb1, 0x25, 0x72, 0x8c, 0x91, 0x0c, 0x1f, 0x79};
+    constexpr U8 KERNEL_PARTITION_GUID[16] = {0x33,
+                                              0x05,
+                                              0x3f,
+                                              0x4d,
+                                              0x2a,
+                                              0x90,
+                                              0x42,
+                                              0x46,
+                                              0xb1,
+                                              0x25,
+                                              0x72,
+                                              0x8c,
+                                              0x91,
+                                              0x0c,
+                                              0x1f,
+                                              0x79};
 
     // Data Partition GUID: 7574b273-9503-4d83-8617-678d4c2d30c0
-    constexpr U8 DATA_PARTITION_GUID[16] =
-        {0x73, 0xb2, 0x74, 0x75, 0x03, 0x95, 0x83, 0x4d, 0x86, 0x17, 0x67, 0x8d, 0x4c, 0x2d, 0x30, 0xc0};
+    constexpr U8 DATA_PARTITION_GUID[16] = {0x73,
+                                            0xb2,
+                                            0x74,
+                                            0x75,
+                                            0x03,
+                                            0x95,
+                                            0x83,
+                                            0x4d,
+                                            0x86,
+                                            0x17,
+                                            0x67,
+                                            0x8d,
+                                            0x4c,
+                                            0x2d,
+                                            0x30,
+                                            0xc0};
 
-#define PARTITION_TYPES(X)                                                                                             \
-    X(PartitionType, KERNEL, 0x1)                                                                                      \
+#define PARTITION_TYPES(X)                                                                         \
+    X(PartitionType, KERNEL, 0x1)                                                                  \
     X(PartitionType, DATA, 0x2)
 
     DECLARE_ENUM(PartitionType, PARTITION_TYPES, 0x0) // NOLINT
@@ -116,7 +158,10 @@ namespace Rune::Device {
 
         bool scan_device(volatile HBAPort* port, SharedPointer<Logger> logger);
 
-        bool start(SystemMemory* system_memory, bool s_64a, Memory::SlabAllocator* heap, CPU::Timer* timer);
+        bool start(SystemMemory*          system_memory,
+                   bool                   s_64a,
+                   Memory::SlabAllocator* heap,
+                   CPU::Timer*            timer);
 
         bool stop();
 

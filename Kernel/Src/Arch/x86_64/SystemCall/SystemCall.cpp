@@ -35,9 +35,9 @@ namespace Rune::SystemCall {
     SharedPointer<Logger>                           LOGGER;
 
     /**
-     * @brief On "syscall" the CPU will jump to this assembly stub. It loads the kernel stack and calls
-     *          system_call_dispatch. Upon return from system_call_dispatch, it will switch back to the user stack
-     *          and call "o64 sysret".
+     * @brief On "syscall" the CPU will jump to this assembly stub. It loads the kernel stack and
+     * calls system_call_dispatch. Upon return from system_call_dispatch, it will switch back to the
+     * user stack and call "o64 sysret".
      */
     CLINK void system_call_accept();
 
@@ -51,10 +51,18 @@ namespace Rune::SystemCall {
         Ember::StatusCode ret     = -1;
         auto              handler = SYSTEM_CALL_HANDLER_TABLE.find(ID);
         if (handler != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace(FILE, R"(Handling system call request: "{}-{}"!)", ID, handler->value->info.name);
+            LOGGER->trace(FILE,
+                          R"(Handling system call request: "{}-{}"!)",
+                          ID,
+                          handler->value->info.name);
             handler->value->info.requested++;
-            ret = handler->value
-                      ->sys_call_handler(forward<void*>(handler->value->context), arg1, arg2, arg3, arg4, arg5, arg6);
+            ret = handler->value->sys_call_handler(forward<void*>(handler->value->context),
+                                                   arg1,
+                                                   arg2,
+                                                   arg3,
+                                                   arg4,
+                                                   arg5,
+                                                   arg6);
         } else {
             LOGGER->warn(FILE, "No system call with ID {} installed!", ID);
         }
@@ -69,10 +77,10 @@ namespace Rune::SystemCall {
         LOGGER                    = move(logger);
         K_GUARD                   = kGuard;
         SYSTEM_CALL_HANDLER_TABLE = HashMap<U16, SystemCallContainer>();
-        // Init the model specific registers for sysret/syscall, they act as caches for important values
-        // CS/SS selectors
-        // syscall: CS = STAR[47:32], SS = STAR[63:48] + 8, RPL bits 48:49 are 00 as syscall goes to CPL=0
-        // sysret:  CS = STAR[63:48] + 16, SS = STAR[63:48] + 8, RPL bits 48:49 are 11 as sysret goes to CPL=3
+        // Init the model specific registers for sysret/syscall, they act as caches for important
+        // values CS/SS selectors syscall: CS = STAR[47:32], SS = STAR[63:48] + 8, RPL bits 48:49
+        // are 00 as syscall goes to CPL=0 sysret:  CS = STAR[63:48] + 16, SS = STAR[63:48] + 8, RPL
+        // bits 48:49 are 11 as sysret goes to CPL=3
         CPU::write_msr(CPU::ModelSpecificRegister::STAR, 0x0013000800000000);
 
         // Contains the address of the system call handler
@@ -101,10 +109,15 @@ namespace Rune::SystemCall {
 
     bool system_call_install(const Definition& sys_call_def) {
         if (SYSTEM_CALL_HANDLER_TABLE.find(sys_call_def.ID) != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->warn(FILE, "Cannot install system call {}. It is already installed...", sys_call_def.ID);
+            LOGGER->warn(FILE,
+                         "Cannot install system call {}. It is already installed...",
+                         sys_call_def.ID);
             return false;
         }
-        LOGGER->trace(FILE, R"(Installing system call "{}-{}".)", sys_call_def.ID, sys_call_def.name);
+        LOGGER->trace(FILE,
+                      R"(Installing system call "{}-{}".)",
+                      sys_call_def.ID,
+                      sys_call_def.name);
         SYSTEM_CALL_HANDLER_TABLE.put(sys_call_def.ID,
                                       {
                                       {sys_call_def.ID, sys_call_def.name, 0},
@@ -116,7 +129,9 @@ namespace Rune::SystemCall {
 
     bool system_call_uninstall(U16 system_call_handle) {
         if (SYSTEM_CALL_HANDLER_TABLE.find(system_call_handle) == SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace(FILE, "System call {} is not installed. No need to uninstall...", system_call_handle);
+            LOGGER->trace(FILE,
+                          "System call {} is not installed. No need to uninstall...",
+                          system_call_handle);
             return false;
         }
 

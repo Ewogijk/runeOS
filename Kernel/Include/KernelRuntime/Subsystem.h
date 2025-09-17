@@ -41,7 +41,8 @@ namespace Rune {
     };
 
     /**
-     * @brief A version compliant to the <a href="https://semver.org/">semantic versioning</a> scheme.
+     * @brief A version compliant to the <a href="https://semver.org/">semantic versioning</a>
+     * scheme.
      */
     struct Version {
         U16    major       = 0;
@@ -61,12 +62,12 @@ namespace Rune {
     /**
      * All kernel subsystems.
      */
-#define K_SUBSYSTEMS(X)                                                                                                \
-    X(KernelSubsystem, MEMORY, 0x1)                                                                                    \
-    X(KernelSubsystem, CPU, 0x2)                                                                                       \
-    X(KernelSubsystem, DEVICE, 0x3)                                                                                    \
-    X(KernelSubsystem, VFS, 0x4)                                                                                       \
-    X(KernelSubsystem, APP, 0x5)                                                                                       \
+#define K_SUBSYSTEMS(X)                                                                            \
+    X(KernelSubsystem, MEMORY, 0x1)                                                                \
+    X(KernelSubsystem, CPU, 0x2)                                                                   \
+    X(KernelSubsystem, DEVICE, 0x3)                                                                \
+    X(KernelSubsystem, VFS, 0x4)                                                                   \
+    X(KernelSubsystem, APP, 0x5)                                                                   \
     X(KernelSubsystem, SYSTEMCALL, 0x6)
 
     DECLARE_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0) // NOLINT
@@ -161,8 +162,8 @@ namespace Rune {
          *  <ol>
          *      <li>All supported event hooks are added to the event hook table.</li>
          *      <li>The implementation specific Kernel Subsystem start routine.</li>
-         *      <li>Start of all Kernel Extensions that are not running yet. This step succeeds if all Kernel
-         *      Extensions start successfully.</li>
+         *      <li>Start of all Kernel Extensions that are not running yet. This step succeeds if
+         * all Kernel Extensions start successfully.</li>
          *  </ol>
          * </p>
          *
@@ -171,7 +172,8 @@ namespace Rune {
          *
          * @return True: The subsystem has started, False: It has not.
          */
-        virtual bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) = 0;
+        virtual bool start(const BootLoaderInfo&    boot_info,
+                           const SubsystemRegistry& k_subsys_reg) = 0;
 
         /**
          * Set the logger if no logger instance has been set yet.
@@ -185,7 +187,8 @@ namespace Rune {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
-         * @brief The event hook table lists all event hooks and with their currently installed event handlers.
+         * @brief The event hook table lists all event hooks and with their currently installed
+         * event handlers.
          * @return The event hook table.
          */
         LinkedList<EventHookTableEntry> get_event_hook_table();
@@ -193,23 +196,24 @@ namespace Rune {
         /**
          * @brief Try to install the given event handler on the requested event hook.
          *
-         * If the event handler got successfully installed the assigned ID (< 0) will be returned if the installation
-         * failed -1 is returned.
+         * If the event handler got successfully installed the assigned ID (< 0) will be returned if
+         * the installation failed -1 is returned.
          *
          * @param event_hook
          * @param handler
-         * @return ID > 0: The event handler will now receive events, ID == -1: The event handler was not installed
-         *          because the requested event hook is not supported.
+         * @return ID > 0: The event handler will now receive events, ID == -1: The event handler
+         * was not installed because the requested event hook is not supported.
          */
-        U16
-        install_event_handler(const String& event_hook, const String& evt_handler_name, const EventHandler& handler);
+        U16 install_event_handler(const String&       event_hook,
+                                  const String&       evt_handler_name,
+                                  const EventHandler& handler);
 
         /**
          * @brief Try to uninstall the event handler with the given evtHandlerID from an event hook.
          * @param event_hook
          * @param evt_handler_id
-         * @return True: The event handler will no longer receive events, False: The event handler was not installed
-         *          on this event hook or the event hook is not supported.
+         * @return True: The event handler will no longer receive events, False: The event handler
+         * was not installed on this event hook or the event hook is not supported.
          */
         bool uninstall_event_handler(const String& event_hook, U16 evt_handler_id);
     };

@@ -42,7 +42,8 @@ namespace Rune::SystemCall {
     };
 
     /**
-     * @brief Wait until a key is available in the virtual keyboard buffer and write the keycode to given buffer.
+     * @brief Wait until a key is available in the virtual keyboard buffer and write the keycode to
+     * given buffer.
      * @param sys_call_ctx A pointer to the app system call context.
      * @param key_code_out A pointer to a keycode buffer, U16*.
      * @return OKAY:     A key code is returned in the given key buffer.<br>
@@ -84,31 +85,30 @@ namespace Rune::SystemCall {
      * @brief Start an application with the given arguments.
      *
      * <p>
-     *  The standard stream targets define the source of the stdin and destinations of the stdout/stderr streams.
-     *  One of the following targets can be chosen:
-     *  <ul>
-     *      <li>void - Connect the standard stream to the void stream.</li>
-     *      <li>inherit - Connect the stdin/stdout/stderr to the std streams of the calling app.</li>
-     *      <li>file:"path"- Only stdout/stderr: Redirect to the specified file, if it does not exist it will be
-     *              created.</li>
-     *      <li>pipe:"handle": Connect the standard stream to the requested pipe.</li>
+     *  The standard stream targets define the source of the stdin and destinations of the
+     * stdout/stderr streams. One of the following targets can be chosen: <ul> <li>void - Connect
+     * the standard stream to the void stream.</li> <li>inherit - Connect the stdin/stdout/stderr to
+     * the std streams of the calling app.</li> <li>file:"path"- Only stdout/stderr: Redirect to the
+     * specified file, if it does not exist it will be created.</li> <li>pipe:"handle": Connect the
+     * standard stream to the requested pipe.</li>
      *  </ul>
      * </p>
      *
      * @param sys_call_ctx  A pointer to the app system call context.
-     * @param app_path      A path to the executable, either absolute or relative to the working directory of the
-     * calling app.
-     * @param argv          Pointer to the command line arguments, a null terminated array of c strings.
-     * @param working_dir   The working directory of the app that will be started, either absolute or relative to the
-     *                       working directory of the calling app.
+     * @param app_path      A path to the executable, either absolute or relative to the working
+     * directory of the calling app.
+     * @param argv          Pointer to the command line arguments, a null terminated array of c
+     * strings.
+     * @param working_dir   The working directory of the app that will be started, either absolute
+     * or relative to the working directory of the calling app.
      * @param stdin_target  stdin stream target.
      * @param stdout_target stdout stream target.
      * @param stderr_target stderr stream target.
      * @return >0:              The app has been started, the returned value is the assigned ID.<br>
-     *          BAD_ARG:        One of the arguments is null, intersects kernel memory, exceeds the string size
-     *                          limit or the number of arguments in argv exceeds the argument count limit.<br>
-     *          NODE_NOT_FOUND: The path to the application or the working directory does not exist.<br>
-     *          FAULT:          The app could not be started.
+     *          BAD_ARG:        One of the arguments is null, intersects kernel memory, exceeds the
+     * string size limit or the number of arguments in argv exceeds the argument count limit.<br>
+     *          NODE_NOT_FOUND: The path to the application or the working directory does not
+     * exist.<br> FAULT:          The app could not be started.
      */
     Ember::StatusCode app_start(void* sys_call_ctx,
                                 U64   app_path,
@@ -121,10 +121,10 @@ namespace Rune::SystemCall {
     /**
      * @brief Exit the currently running app with the given exit code.
      * @param sys_call_ctx A pointer to the app system call context.
-     * @param exit_code    Exit code of the apps main thread. >=0 indicates successful app exit and <0 indicates an
-     *                     error.
-     * @return OKAY: For the sake of the ABI but this function will never exit anyway and there is no app that can use
-     *               the return value.
+     * @param exit_code    Exit code of the apps main thread. >=0 indicates successful app exit and
+     * <0 indicates an error.
+     * @return OKAY: For the sake of the ABI but this function will never exit anyway and there is
+     * no app that can use the return value.
      */
     Ember::StatusCode app_exit(void* sys_call_ctx, U64 exit_code);
 
@@ -143,7 +143,8 @@ namespace Rune::SystemCall {
      * @param wd_out       Pointer to a char buffer.
      * @param wd_out_size  Size of the buffer.
      * @return OKAY:     The working directory has been copied to the given buffer.<br>
-     *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit the working directory.
+     *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit
+     * the working directory.
      */
     Ember::StatusCode app_current_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
 
@@ -152,9 +153,8 @@ namespace Rune::SystemCall {
      * @param sys_call_ctx A pointer to the app system call context.
      * @param wd           A pointer to a c string containing the new working directory.
      * @return OKAY:            The working directory of the active app has been changed.<br>
-     *          BAD_ARG:        The working directory is null, intersects kernel memory or contains illegal
-     *                          characters.<br>
-     *          NODE_NOT_FOUND: The working directory does not exist.<br>
+     *          BAD_ARG:        The working directory is null, intersects kernel memory or contains
+     * illegal characters.<br> NODE_NOT_FOUND: The working directory does not exist.<br>
      *          NODE_IS_FILE:   The node is not a directory.<br>
      *          IO:             An IO error happened.
      */

@@ -35,8 +35,8 @@ namespace Rune::SystemCall {
     };
 
     /**
-     * @brief Initialize the system call infrastructure, upon successful initialization the kernel can handle system
-     *          calls from user mode applications.
+     * @brief Initialize the system call infrastructure, upon successful initialization the kernel
+     * can handle system calls from user mode applications.
      *
      * @return True: The kernel is ready to handle system calls, False: System calls cannot be used.
      */
@@ -57,20 +57,21 @@ namespace Rune::SystemCall {
      * The installation will fail, if another system call with the same ID is already installed.
      *
      * <p>
-     *  Note: While the name must no be unique, ideally it should be unique so it is easier to identify.
+     *  Note: While the name must no be unique, ideally it should be unique so it is easier to
+     * identify.
      * </p>
      *
      * @param sys_call_def
-     * @return True: The system call is installed, False: The requested system call is already in use, the handler
-     *          was not installed.
+     * @return True: The system call is installed, False: The requested system call is already in
+     * use, the handler was not installed.
      */
     bool system_call_install(const Definition& sys_call_def);
 
     /**
      * @brief Try to uninstall the system call with the given ID.
      * @param system_call_id ID of the system call.
-     * @return True: The system call was uninstalled, False: No system call with the ID was installed or the ID is
-     *          invalid (systemCallID >= SystemCallLimit).
+     * @return True: The system call was uninstalled, False: No system call with the ID was
+     * installed or the ID is invalid (systemCallID >= SystemCallLimit).
      */
     bool system_call_uninstall(U16 system_call_id);
 } // namespace Rune::SystemCall

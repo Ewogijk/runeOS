@@ -31,7 +31,9 @@ namespace Rune::SystemCall {
         }
         U16   key_code        = key.get_key_code();
         auto* key_code_buffer = reinterpret_cast<U16*>(key_code_out);
-        return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) &key_code, (void*) key_code_buffer, 2)
+        return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) &key_code,
+                                                                         (void*) key_code_buffer,
+                                                                         2)
                    ? 0
                    : Ember::Status::BAD_ARG;
     }
@@ -40,13 +42,15 @@ namespace Rune::SystemCall {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
         const char* k_buf_msg = new char[msg_size + 1];
-        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(msg),
-                                                                  msg_size,
-                                                                  k_buf_msg))
+        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(
+                reinterpret_cast<const char*>(msg),
+                msg_size,
+                k_buf_msg))
             return Ember::Status::BAD_ARG;
         const String            k_msg(k_buf_msg);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_subsys->get_active_app()->std_out->write((U8*) k_buf_msg, k_msg.size()));
+            app_syscall_ctx->app_subsys->get_active_app()->std_out->write((U8*) k_buf_msg,
+                                                                          k_msg.size()));
         delete[] k_buf_msg;
         return byte_out;
     }
@@ -55,16 +59,19 @@ namespace Rune::SystemCall {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
         const char* k_buf_msg = new char[msg_size + 1];
-        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(msg),
-                                                                  msg_size,
-                                                                  k_buf_msg))
+        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(
+                reinterpret_cast<const char*>(msg),
+                msg_size,
+                k_buf_msg))
             return Ember::Status::BAD_ARG;
         const String                    k_msg(k_buf_msg);
-        const SharedPointer<TextStream> std_err = app_syscall_ctx->app_subsys->get_active_app()->std_err;
+        const SharedPointer<TextStream> std_err =
+            app_syscall_ctx->app_subsys->get_active_app()->std_err;
 
         std_err->set_foreground_color(Pixie::VSCODE_RED);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_subsys->get_active_app()->std_err->write((U8*) k_buf_msg, k_msg.size()));
+            app_syscall_ctx->app_subsys->get_active_app()->std_err->write((U8*) k_buf_msg,
+                                                                          k_msg.size()));
         std_err->reset_style();
         delete[] k_buf_msg;
         return byte_out;
@@ -82,13 +89,13 @@ namespace Rune::SystemCall {
                                 const U64 stdin_target,
                                 const U64 stdout_target,
                                 const U64 stderr_target) {
-        const auto* app_syscall_ctx                     = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        auto*       u_app_path                          = reinterpret_cast<const char*>(app_path);
-        auto*       u_app_argv                          = reinterpret_cast<const char**>(argv);
-        auto*       u_app_wd                            = reinterpret_cast<const char*>(working_dir);
-        auto*       u_stdin_target                      = reinterpret_cast<const char*>(stdin_target);
-        auto*       u_stdout_target                     = reinterpret_cast<const char*>(stdout_target);
-        auto*       u_stderr_target                     = reinterpret_cast<const char*>(stderr_target);
+        const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
+        auto*       u_app_path      = reinterpret_cast<const char*>(app_path);
+        auto*       u_app_argv      = reinterpret_cast<const char**>(argv);
+        auto*       u_app_wd        = reinterpret_cast<const char*>(working_dir);
+        auto*       u_stdin_target  = reinterpret_cast<const char*>(stdin_target);
+        auto*       u_stdout_target = reinterpret_cast<const char*>(stdout_target);
+        auto*       u_stderr_target = reinterpret_cast<const char*>(stderr_target);
         char        k_str_buf[Ember::STRING_SIZE_LIMIT] = {};
 
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_app_path, -1, k_str_buf))
@@ -121,9 +128,11 @@ namespace Rune::SystemCall {
         memset(k_app_argv, '\0', Ember::ARG_COUNT_LIMIT);
 
         // We will just copy over the maximum amount of arguments uAppArgv can have
-        // This will likely be way more than we need, but we really don't want to access user memory before it is
-        // copied over to kernel memory
-        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_app_argv, sizeof(k_app_argv), k_app_argv))
+        // This will likely be way more than we need, but we really don't want to access user memory
+        // before it is copied over to kernel memory
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_app_argv,
+                                                                       sizeof(k_app_argv),
+                                                                       k_app_argv))
             return Ember::Status::BAD_ARG;
 
         int    argc     = 0;
@@ -137,9 +146,9 @@ namespace Rune::SystemCall {
         // (Ember::ARG_COUNT_LIMIT - 2) arguments
         if (argc >= Ember::ARG_COUNT_LIMIT - 2) return Ember::Status::BAD_ARG; // Too many arguments
 
-        // The app args are still in user memory (we only copied the pointers to them over to kernel)
-        // The array will hold the copies of the actual strings, which can hold the maximum number of allowed arguments
-        // that have the maximum allowed size of a user memory string.
+        // The app args are still in user memory (we only copied the pointers to them over to
+        // kernel) The array will hold the copies of the actual strings, which can hold the maximum
+        // number of allowed arguments that have the maximum allowed size of a user memory string.
         char   k_app_args[Ember::ARG_COUNT_LIMIT * Ember::STRING_SIZE_LIMIT];
         size_t k_app_args_offset = 0;
         U8     i                 = 0;
@@ -159,7 +168,8 @@ namespace Rune::SystemCall {
             String arg_tmp(k_str_buf);
             memcpy(&k_app_args[k_app_args_offset], (void*) arg_tmp.to_cstr(), arg_tmp.size() + 1);
 
-            // The pointer to the c string still points to the user land string -> Update it to the kernel land string
+            // The pointer to the c string still points to the user land string -> Update it to the
+            // kernel land string
             memset(k_str_buf, '\0', Ember::STRING_SIZE_LIMIT);
             k_app_argv[i]      = &k_app_args[k_app_args_offset];
             k_app_args_offset += arg_tmp.size() + 1;
@@ -168,13 +178,15 @@ namespace Rune::SystemCall {
 
         VFS::NodeInfo dummy;
         if (!k_app_path.is_absolute())
-            k_app_path = k_app_path.resolve(app_syscall_ctx->app_subsys->get_active_app()->working_directory);
+            k_app_path = k_app_path.resolve(
+                app_syscall_ctx->app_subsys->get_active_app()->working_directory);
         if (app_syscall_ctx->vfs_subsys->get_node_info(k_app_path, dummy) != VFS::IOStatus::FOUND)
             // Path to the app executable does not exist
             return Ember::Status::NODE_NOT_FOUND;
 
         if (!k_app_wd.is_absolute())
-            k_app_wd = k_app_wd.resolve(app_syscall_ctx->app_subsys->get_active_app()->working_directory);
+            k_app_wd =
+                k_app_wd.resolve(app_syscall_ctx->app_subsys->get_active_app()->working_directory);
         if (app_syscall_ctx->vfs_subsys->get_node_info(k_app_wd, dummy) != VFS::IOStatus::FOUND)
             // Path to the app working directory does not exist
             return Ember::Status::NODE_NOT_FOUND;
@@ -204,22 +216,26 @@ namespace Rune::SystemCall {
         return app_exit_code == INT_MAX ? Ember::Status::UNKNOWN_ID : app_exit_code;
     }
 
-    Ember::StatusCode app_current_directory(void* sys_call_ctx, const U64 wd_out, const U64 wd_out_size) {
+    Ember::StatusCode
+    app_current_directory(void* sys_call_ctx, const U64 wd_out, const U64 wd_out_size) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         auto*       u_wd_out        = reinterpret_cast<char*>(wd_out);
         const auto  b_size          = static_cast<size_t>(wd_out_size);
 
-        const auto wd = app_syscall_ctx->app_subsys->get_active_app()->working_directory.to_string();
+        const auto wd =
+            app_syscall_ctx->app_subsys->get_active_app()->working_directory.to_string();
         if (b_size < wd.size() + 1) return Ember::Status::BAD_ARG;
 
-        if (!app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) wd.to_cstr(), u_wd_out, wd.size() + 1))
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) wd.to_cstr(),
+                                                                       u_wd_out,
+                                                                       wd.size() + 1))
             return Ember::Status::BAD_ARG;
         return Ember::Status::OKAY;
     }
 
     Ember::StatusCode app_change_directory(void* sys_call_ctx, const U64 wd) {
-        const auto* app_syscall_ctx                 = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        auto*       u_str                           = reinterpret_cast<const char*>(wd);
+        const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
+        auto*       u_str           = reinterpret_cast<const char*>(wd);
         char        k_str[Ember::STRING_SIZE_LIMIT] = {};
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_str, -1, k_str)) {
             return Ember::Status::BAD_ARG;
@@ -229,12 +245,14 @@ namespace Rune::SystemCall {
         Path       path(k_str);
         if (!path.is_absolute()) path = path.resolve(app->working_directory);
         if (path == app->working_directory)
-            // The resolved path is the current working directory (e.g. path==".") -> No need to do anything
+            // The resolved path is the current working directory (e.g. path==".") -> No need to do
+            // anything
             return Ember::Status::OKAY;
         if (!app_syscall_ctx->vfs_subsys->is_valid_file_path(path)) return Ember::Status::BAD_ARG;
 
         SharedPointer<VFS::Node> node;
-        switch (VFS::IOStatus st = app_syscall_ctx->vfs_subsys->open(path, Ember::IOMode::READ, node)) {
+        switch (VFS::IOStatus st =
+                    app_syscall_ctx->vfs_subsys->open(path, Ember::IOMode::READ, node)) {
             case VFS::IOStatus::OPENED:
                 if (node->has_attribute(Ember::NodeAttribute::FILE)) {
                     // Not a directory

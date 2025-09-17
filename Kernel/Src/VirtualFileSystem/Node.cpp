@@ -19,7 +19,11 @@
 namespace Rune::VFS {
     DEFINE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0)
 
-    Node::Node(Function<void()> on_close) : _on_close(move(on_close)), _closed(false), handle(0), name("") {}
+    Node::Node(Function<void()> on_close)
+        : _on_close(move(on_close)),
+          _closed(false),
+          handle(0),
+          name("") {}
 
     bool Node::is_closed() const { return _closed; }
 

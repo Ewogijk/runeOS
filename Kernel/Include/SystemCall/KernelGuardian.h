@@ -29,76 +29,93 @@ namespace Rune::SystemCall {
         void set_kernel_memory_start(VirtualAddr kernel_memory_start);
 
         /**
-         * @brief Verify that the user buffer is not null and check that it does not intersect with kernel memory.
+         * @brief Verify that the user buffer is not null and check that it does not intersect with
+         * kernel memory.
          *
          * @param user_buf      Pointer to a byte buffer in user mode memory.
          * @param user_buf_size Size of the user mode buffer.
-         * @return True: The user mode buffer has passed the checks, False: The user mode buffer is bad.
+         * @return True: The user mode buffer has passed the checks, False: The user mode buffer is
+         * bad.
          */
         bool verify_user_buffer(void* user_buf, size_t user_buf_size) const;
 
         /**
-         * @brief Verify the user and kernel memory buffer and then copy the content of the user memory buffer to the
-         *          kernel memory buffer.
+         * @brief Verify the user and kernel memory buffer and then copy the content of the user
+         * memory buffer to the kernel memory buffer.
          *
          * <p>
-         *  Buffer verification includes the usual null check but it is also checked that the user memory buffer does
-         *  not intersect with kernel memory.
+         *  Buffer verification includes the usual null check but it is also checked that the user
+         * memory buffer does not intersect with kernel memory.
          * </p>
          * <p>
-         *  Furthermore the content of the user memory buffer is copied to the kernel memory buffer, this is important
-         *  so that other user mode threads cannot modify the user memory buffer while the system call is running and
-         *  therefore manipulate the kernel in some way or simply crash it.
+         *  Furthermore the content of the user memory buffer is copied to the kernel memory buffer,
+         * this is important so that other user mode threads cannot modify the user memory buffer
+         * while the system call is running and therefore manipulate the kernel in some way or
+         * simply crash it.
          * </p>
          * <p>
-         *  It is assumed that userBufSize==kernelBufSize, the caller must ensure that this is the case.
+         *  It is assumed that userBufSize==kernelBufSize, the caller must ensure that this is the
+         * case.
          * </p>
          * @param user_buf      Pointer to a buffer in user mode memory.
          * @param user_buf_size Size of the user memory buffer.
          * @param kernel_buf    Pointer to buffer in kernel mode memory.
-         * @return True: The user memory is copied to the kernel buffer, False: The user or kernel buffer are null
-         *          pointers or does intersect with kernel memory, no memory was copied to the kernel buffer.
+         * @return True: The user memory is copied to the kernel buffer, False: The user or kernel
+         * buffer are null pointers or does intersect with kernel memory, no memory was copied to
+         * the kernel buffer.
          */
-        bool copy_byte_buffer_user_to_kernel(void* user_buf, size_t user_buf_size, void* kernel_buf) const;
+        bool copy_byte_buffer_user_to_kernel(void*  user_buf,
+                                             size_t user_buf_size,
+                                             void*  kernel_buf) const;
 
         /**
-         * @brief Verify the user and kernel memory buffer and then copy the content of the kernel memory buffer to the
-         *          user memory buffer. It is assumed that the user and kernel buffer are the same size.
+         * @brief Verify the user and kernel memory buffer and then copy the content of the kernel
+         * memory buffer to the user memory buffer. It is assumed that the user and kernel buffer
+         * are the same size.
          *
          * <p>
-         *  Buffer verification includes the usual null check but it is also checked that the user memory buffer does
-         *  not intersect with kernel memory.
+         *  Buffer verification includes the usual null check but it is also checked that the user
+         * memory buffer does not intersect with kernel memory.
          * </p>
          * <p>
-         *  It is assumed that userBufSize==kernelBufSize, the caller must ensure that this is the case.
+         *  It is assumed that userBufSize==kernelBufSize, the caller must ensure that this is the
+         * case.
          * </p>
          * @param kernel_buf    Pointer to some a buffer in kernel mode memory.
          * @param user_buf      Pointer to some buffer in user mode memory.
          * @param user_buf_size Size of the user memory buffer.
-         * @return True: The kernel memory is copied to the user buffer, False: The user buffer is a null pointer or
-         *          does intersect with kernel memory, no memory was copied to the kernel buffer.
+         * @return True: The kernel memory is copied to the user buffer, False: The user buffer is a
+         * null pointer or does intersect with kernel memory, no memory was copied to the kernel
+         * buffer.
          */
-        bool copy_byte_buffer_kernel_to_user(void* kernel_buf, void* user_buf, size_t user_buf_size) const;
+        bool copy_byte_buffer_kernel_to_user(void*  kernel_buf,
+                                             void*  user_buf,
+                                             size_t user_buf_size) const;
 
         /**
-         * @brief Verify that the c string is null terminated and copy it into the kernel_str buffer.
+         * @brief Verify that the c string is null terminated and copy it into the kernel_str
+         * buffer.
          *
          * <p>
-         *  If (max_size >= 0) it is additionally checked that the c string has at most max_size bytes.
+         *  If (max_size >= 0) it is additionally checked that the c string has at most max_size
+         * bytes.
          * </p>
          * <p>
          *  It is assumed that the kernel_str buffer has enough space to fit the whole string
-         *  (including the null terminator). That is it has a size of at least (UserStringLimit + 1) or if
-         *  (max_size >= 0) at least (max_size + 1).
+         *  (including the null terminator). That is it has a size of at least (UserStringLimit + 1)
+         * or if (max_size >= 0) at least (max_size + 1).
          * </p>
          * @param user_str   A c string buffer in user mode memory.
-         * @param max_size   The expected size of the user mode string, set to -1 to disable the size check.
+         * @param max_size   The expected size of the user mode string, set to -1 to disable the
+         * size check.
          * @param kernel_str A c string buffer in kernel mode memory.
-         * @return True: The user mode string is null terminated and has a valid size, it got copied to the kernel_str.
-         *          False: The user mode string is not null terminated or has an invalid size, it was not copied to
-         *                 kernel_str.
+         * @return True: The user mode string is null terminated and has a valid size, it got copied
+         * to the kernel_str. False: The user mode string is not null terminated or has an invalid
+         * size, it was not copied to kernel_str.
          */
-        bool copy_string_user_to_kernel(const char* user_str, int max_size, const char* kernel_str) const;
+        bool copy_string_user_to_kernel(const char* user_str,
+                                        int         max_size,
+                                        const char* kernel_str) const;
     };
 } // namespace Rune::SystemCall
 

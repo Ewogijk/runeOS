@@ -2331,7 +2331,8 @@ namespace Rune {
 
     };
 
-    static BitMapFont LAT15TERMINUS16 = {"Lat15-Terminus16", 128, 16, 16, 8, LAT15TERMINUS16_glyphs};
+    static BitMapFont LAT15TERMINUS16 =
+        {"Lat15-Terminus16", 128, 16, 16, 8, LAT15TERMINUS16_glyphs};
 } // namespace Rune
 
 #endif // RUNEOS_LAT15TERMINUS16_H

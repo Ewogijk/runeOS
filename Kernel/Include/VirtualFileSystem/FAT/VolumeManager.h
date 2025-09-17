@@ -41,7 +41,8 @@ namespace Rune::VFS {
         size_t data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const;
 
       public:
-        explicit VolumeManager(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver);
+        explicit VolumeManager(SharedPointer<FATEngine> fat_engine,
+                               Device::AHCIDriver&      ahci_driver);
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          FAT Region Manipulation
@@ -84,7 +85,8 @@ namespace Rune::VFS {
          * @param storage_dev
          * @param bpb
          *
-         * @return The next free cluster in the FAT. 0 if no cluster is free or a storage error happened.
+         * @return The next free cluster in the FAT. 0 if no cluster is free or a storage error
+         * happened.
          */
         U32 fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb);
 
@@ -100,7 +102,8 @@ namespace Rune::VFS {
         U32 get_max_cluster_count() const;
 
         /**
-         * Read a single data cluster, that is a cluster after the reserved and FAT parts of the storage.
+         * Read a single data cluster, that is a cluster after the reserved and FAT parts of the
+         * storage.
          *
          * @param storage_dev
          * @param bpb
@@ -109,10 +112,14 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was read. False: It was not.
          */
-        bool data_cluster_read(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster) const;
+        bool data_cluster_read(U16                 storage_dev,
+                               BIOSParameterBlock* bpb,
+                               void*               buf,
+                               size_t              cluster) const;
 
         /**
-         * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of the storage.
+         * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of
+         * the storage.
          *
          * @param storage_dev
          * @param bpb
@@ -121,7 +128,8 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was written. False: It was not.
          */
-        bool data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster);
+        bool
+        data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster);
     };
 } // namespace Rune::VFS
 

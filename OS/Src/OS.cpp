@@ -24,21 +24,19 @@
 
 #include <iostream>
 
-
 namespace Rune {
     int main(const int argc, char* argv[]) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
 
-        constexpr char wd[128] = { };
+        constexpr char wd[128] = {};
         if (const Ember::StatusCode ret = Forge::app_current_directory(wd, 128); ret != 0)
             // Failed to get the working directory
             Forge::app_exit(-1);
 
         Shell::Interpreter interpreter;
 
-        if (!interpreter.setup_environment(wd))
-            return -1;
+        if (!interpreter.setup_environment(wd)) return -1;
 
         std::cout << "Welcome to runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
         if (!std::string(PRERELEASE).empty())
@@ -47,9 +45,10 @@ namespace Rune {
             std::cout << std::endl;
         std::cout << std::endl;
 
-        std::cout << "Use the 'help' command to get more information about the shell." << std::endl << std::endl;
+        std::cout << "Use the 'help' command to get more information about the shell." << std::endl
+                  << std::endl;
 
         interpreter.run();
         return 0;
     }
-}
+} // namespace Rune

@@ -50,7 +50,9 @@ namespace Rune {
      * @param array     Array to be sorted.
      * @param arr_size   Size of the array.
      */
-    template <typename T> void sort(T array[], const size_t arr_size) { quick_sort(array, 0, arr_size - 1); }
+    template <typename T> void sort(T array[], const size_t arr_size) {
+        quick_sort(array, 0, arr_size - 1);
+    }
 
     /**
      * Delete the requested number of elements starting from the given idx from the array.

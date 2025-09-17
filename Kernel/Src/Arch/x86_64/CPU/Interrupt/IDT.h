@@ -20,7 +20,6 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-
 namespace Rune::CPU {
 
     /**
@@ -30,13 +29,11 @@ namespace Rune::CPU {
      *  <li>TrapGate: Interrupts are enabled.</li>
      * </ul>
      */
-#define GATE_TYPES(X)                        \
-         X(GateType, INTERRUPT_GATE, 0xE)    \
-         X(GateType, TRAP_GATE, 0xF)         \
+#define GATE_TYPES(X)                                                                              \
+    X(GateType, INTERRUPT_GATE, 0xE)                                                               \
+    X(GateType, TRAP_GATE, 0xF)
 
-
-
-    DECLARE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)  // NOLINT
+    DECLARE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0) // NOLINT
 
     /**
      * @brief Gate descriptor IST.
@@ -44,11 +41,10 @@ namespace Rune::CPU {
     union GateDescriptorIST {
         U8 AsUInt8 = 0;
         struct {
-            U8 ist: 3;
-            U8 reserved_0: 5;
+            U8 ist        : 3;
+            U8 reserved_0 : 5;
         };
     } PACKED;
-
 
     /**
      * @brief Gate descriptor flags.
@@ -56,13 +52,12 @@ namespace Rune::CPU {
     union GateDescriptorFlags {
         U8 AsUInt8 = 0;
         struct {
-            U8 type: 4;
-            U8 zero: 1;
-            U8 dpl: 2;
-            U8 p: 1;
+            U8 type : 4;
+            U8 zero : 1;
+            U8 dpl  : 2;
+            U8 p    : 1;
         };
     } PACKED;
-
 
     /**
      * @brief 64-bit IDT gate descriptor defined in
@@ -78,16 +73,14 @@ namespace Rune::CPU {
         U32                 reserved_1;
     } PACKED;
 
-
     /**
      * @brief Interrupt descriptor table as defined in
      *          "AMD64 Architecture Programmer's Manual Volume 2, Page 88, Chapter 4.6.6"
      */
     struct InterruptDescriptorTable {
-        U16 limit = 0;
+        U16             limit = 0;
         GateDescriptor* entry = nullptr;
     } PACKED;
-
 
     /**
      * @brief Get the globally defined IDT for all CPU cores.
@@ -95,12 +88,10 @@ namespace Rune::CPU {
      */
     InterruptDescriptorTable* idt_get();
 
-
     /**
      * @brief Load the IDT into the IDT register.
      */
     void idt_load();
-
 
     /**
      * @brief Update a gate descriptor in the IDT.
@@ -112,7 +103,13 @@ namespace Rune::CPU {
      * @param dpl              Privilege level from which the interrupt can be called from software.
      * @param present          True: The entry is used by the CPU, False: It is deactivated.
      */
-    void idt_set(U8 vector, void* handler, U16 segment_selector, U8 ist, GateType gt, U8 dpl, bool present);
-}
+    void idt_set(U8       vector,
+                 void*    handler,
+                 U16      segment_selector,
+                 U8       ist,
+                 GateType gt,
+                 U8       dpl,
+                 bool     present);
+} // namespace Rune::CPU
 
-#endif //RUNEOS_IDT_H
+#endif // RUNEOS_IDT_H

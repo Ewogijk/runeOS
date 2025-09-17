@@ -40,7 +40,8 @@ namespace Rune::Memory {
     }
 
     bool BitMapAllocator::mark_memory_block(U32 base, U32 size, bool in_use) {
-        if (base < to_page_frame(_mem_base) || (base + size) > to_page_frame(_mem_base) + _mem_size) return false;
+        if (base < to_page_frame(_mem_base) || (base + size) > to_page_frame(_mem_base) + _mem_size)
+            return false;
 
         for (U32 i = base; i < (base + size); i++)
             mark(i, in_use);
@@ -80,7 +81,9 @@ namespace Rune::Memory {
     int BitMapAllocator::is_reserved_or_bit_map_address(PhysicalAddr p_addr, size_t frames) {
         PhysicalAddr end = p_addr + (frames * _page_size);
         // Protect bit map from being freed
-        if (_init && _p_bitmap < end && p_addr < memory_align(_p_bitmap + _bitmap_size, _page_size, false)) return -1;
+        if (_init && _p_bitmap < end
+            && p_addr < memory_align(_p_bitmap + _bitmap_size, _page_size, false))
+            return -1;
 
         // Protect reserved memory regions from being freed
         for (auto& region : *_mem_map) {
@@ -117,15 +120,25 @@ namespace Rune::Memory {
         return bkr_marked;
     }
 
-    BitMapAllocator::BitMapAllocator() : PhysicalMemoryManager(), _bitmap(nullptr), _p_bitmap(0), _bitmap_size(0) {}
+    BitMapAllocator::BitMapAllocator()
+        : PhysicalMemoryManager(),
+          _bitmap(nullptr),
+          _p_bitmap(0),
+          _bitmap_size(0) {}
 
     MemoryRegion BitMapAllocator::get_memory_index_region() const {
-        return MemoryRegion{(PhysicalAddr) (uintptr_t) _p_bitmap, _bitmap_size, MemoryRegionType::RESERVED};
+        return MemoryRegion{(PhysicalAddr) (uintptr_t) _p_bitmap,
+                            _bitmap_size,
+                            MemoryRegionType::RESERVED};
     }
 
-    VirtualAddr BitMapAllocator::get_memory_index() const { return (VirtualAddr) (uintptr_t) _bitmap; }
+    VirtualAddr BitMapAllocator::get_memory_index() const {
+        return (VirtualAddr) (uintptr_t) _bitmap;
+    }
 
-    void BitMapAllocator::relocate_memory_index(VirtualAddr memory_index) { _bitmap = (U8*) (uintptr_t) memory_index; }
+    void BitMapAllocator::relocate_memory_index(VirtualAddr memory_index) {
+        _bitmap = (U8*) (uintptr_t) memory_index;
+    }
 
     bool BitMapAllocator::claim_boot_loader_reclaimable_memory() {
         bool success = true;
@@ -134,14 +147,16 @@ namespace Rune::Memory {
                 MemoryRegion c = {r.start, r.size, MemoryRegionType::USABLE};
                 if (!_mem_map->claim(c, _page_size)) {
                     _logger->warn(FILE,
-                                  "Failed to claim bootloader reclaimable memory region {:0=#16x} - {:0=#16x}.",
+                                  "Failed to claim bootloader reclaimable memory region {:0=#16x} "
+                                  "- {:0=#16x}.",
                                   r.start,
                                   r.end());
                     success = false;
                 }
                 if (!mark_memory_region(r.start, r.size, false)) {
                     _logger->warn(FILE,
-                                  "Failed to mark bootloader reclaimable memory region as unused {:0=#16x} - {:0=#16x}",
+                                  "Failed to mark bootloader reclaimable memory region as unused "
+                                  "{:0=#16x} - {:0=#16x}",
                                   r.start,
                                   r.end());
                     success = false;
@@ -209,8 +224,10 @@ namespace Rune::Memory {
         return true;
     }
 
-    size_t
-    BitMapAllocator::read_page_frame_states(MemoryRegion* buf, size_t buf_size, PhysicalAddr start, PhysicalAddr end) {
+    size_t BitMapAllocator::read_page_frame_states(MemoryRegion* buf,
+                                                   size_t        buf_size,
+                                                   PhysicalAddr  start,
+                                                   PhysicalAddr  end) {
         if (start < _mem_base || end > _mem_base + _mem_size * _page_size) return 0;
 
         if (!memory_is_aligned(start, _page_size)) start = memory_align(start, _page_size, false);

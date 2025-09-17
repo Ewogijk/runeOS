@@ -22,8 +22,9 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     String Version::to_string() const {
-        return pre_release.is_empty() ? String::format("{}.{}.{}", major, minor, patch)
-                                      : String::format("{}.{}.{}-{}", major, minor, patch, pre_release);
+        return pre_release.is_empty()
+                   ? String::format("{}.{}.{}", major, minor, patch)
+                   : String::format("{}.{}.{}-{}", major, minor, patch, pre_release);
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -68,9 +69,12 @@ namespace Rune {
 
             LinkedList<Column<EventHandlerStats>> evt_h_cols;
             evt_h_cols.add_back(Column<EventHandlerStats>::make_handle_column_table(56));
-            evt_h_cols.add_back(
-                {"Notified", 10, [](EventHandlerStats* stats) { return String::format("{}", stats->notified); }});
-            evt_hook_tbl_e.formatter.configure(String::format("{} Event Hook", evt_hook_tbl_e.event_hook), evt_h_cols);
+            evt_h_cols.add_back({"Notified", 10, [](EventHandlerStats* stats) {
+                                     return String::format("{}", stats->notified);
+                                 }});
+            evt_hook_tbl_e.formatter.configure(
+                String::format("{} Event Hook", evt_hook_tbl_e.event_hook),
+                evt_h_cols);
 
             for (auto& ee : *e.value) {
                 evt_hook_tbl_e.event_handler_table.add_back({ee.handle, ee.name, ee.notified});

@@ -79,26 +79,32 @@ namespace Rune::Device {
         U8        max_latency;
     };
 
+
+
     class PCI {
         static constexpr U16 PCI_CONFIG = 0xCF8;
         static constexpr U16 PCI_DATA   = 0xCFC;
 
       public:
         static U8 read_byte(U8 bus, U8 device, U8 func, U8 offset) {
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_b(PCI_DATA + (offset & 0x03));
         }
 
         static void write_byte(U8 bus, U8 device, U8 func, U8 offset, U8 value) {
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             CPU::out_b(PCI_DATA + (offset & 0x03), value);
         }
 
         static U16 read_word(U8 bus, U8 device, U8 func, U8 offset) {
             if ((offset & 0x03) > 2) {
-                return (read_byte(bus, device, func, offset + 1) << 8) | read_byte(bus, device, func, offset);
+                return (read_byte(bus, device, func, offset + 1) << 8)
+                       | read_byte(bus, device, func, offset);
             }
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_w(PCI_DATA + (offset & 0x03));
         }
 
@@ -107,15 +113,18 @@ namespace Rune::Device {
                 write_byte(bus, device, func, offset, (U8) value);
                 write_byte(bus, device, func, offset + 1, (U8) value >> 8);
             }
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             CPU::out_w(PCI_DATA + (offset & 0x03), value);
         }
 
         static U32 read_dword(U8 bus, U8 device, U8 func, U8 offset) {
             if ((offset & 0x03) > 0) {
-                return (read_word(bus, device, func, offset + 2) << 16) | read_word(bus, device, func, offset);
+                return (read_word(bus, device, func, offset + 2) << 16)
+                       | read_word(bus, device, func, offset);
             }
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_dw(PCI_DATA + (offset & 0x03));
         }
 
@@ -124,7 +133,8 @@ namespace Rune::Device {
                 write_word(bus, device, func, offset, (uint16_t) value);
                 write_word(bus, device, func, offset + 2, (uint16_t) value >> 16);
             }
-            CPU::out_dw(PCI_CONFIG, (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
+            CPU::out_dw(PCI_CONFIG,
+                        (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             CPU::out_dw(PCI_DATA + (offset & 0x03), value);
         }
 
@@ -145,12 +155,14 @@ namespace Rune::Device {
             };
         }
 
-        static void check_device(AHCIDriver& ahci_driver, SharedPointer<Logger> logger, U8 bus, U8 device) {
+        static void
+        check_device(AHCIDriver& ahci_driver, SharedPointer<Logger> logger, U8 bus, U8 device) {
             PCIHeader header = read_header(bus, device, 0);
             if (header.vendor_id == 0xFFFF) return;
 
             logger->debug("PCI",
-                          "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub Class: {:#x} "
+                          "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: "
+                          "{:#x} - Sub Class: {:#x} "
                           "- Programming Interface: {:#x}",
                           bus,
                           device,
@@ -161,8 +173,8 @@ namespace Rune::Device {
                           header.sub_class_code,
                           header.programming_interface);
 
-            if (header.base_class_code == 0x1 && header.sub_class_code == 0x6 && header.vendor_id == 0x8086
-                && header.device_id == 0x2922) {
+            if (header.base_class_code == 0x1 && header.sub_class_code == 0x6
+                && header.vendor_id == 0x8086 && header.device_id == 0x2922) {
                 write_word(bus, device, 0, 0x04, header.command.AsUInt16 | 0x4); // Enable DMA
                 PCIHeaderType0 ahci_header = {
                     read_header(bus, device, 0),
@@ -185,8 +197,8 @@ namespace Rune::Device {
                     read_byte(bus, device, 0, 0x3E),
                     read_byte(bus, device, 0, 0x3F),
                 };
-                volatile auto* hba =
-                    reinterpret_cast<HBAMemory*>(Memory::physical_to_virtual_address(ahci_header.bar_5));
+                volatile auto* hba = reinterpret_cast<HBAMemory*>(
+                    Memory::physical_to_virtual_address(ahci_header.bar_5));
                 if (!ahci_driver.start(hba)) {
                     logger->error("PCI", "Failed to init AHCI");
                     while (true)
@@ -200,7 +212,8 @@ namespace Rune::Device {
                     if (header.vendor_id == 0xFFFF) continue;
 
                     logger->debug("PCI",
-                                  "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: {:#x} - Sub "
+                                  "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class "
+                                  "Code: {:#x} - Sub "
                                   "Class: {:#x} - Programming Interface: {:#x}",
                                   bus,
                                   device,

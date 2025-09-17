@@ -48,14 +48,17 @@ namespace Rune::VFS {
                                              const Path&                         path,
                                              LinkedList<LocationAwareFileEntry>& out);
 
-        IOStatus create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
+        IOStatus
+        create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
 
-        IOStatus create_directory(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
+        IOStatus
+        create_directory(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
 
         IOStatus delete_file(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& file);
 
-        IOStatus
-        delete_directory(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& dir, const Path& path);
+        IOStatus delete_directory(const SharedPointer<StorageDevRef>& md,
+                                  LocationAwareFileEntry&             dir,
+                                  const Path&                         path);
 
       public:
         explicit FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver);

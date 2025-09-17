@@ -17,9 +17,8 @@
 #ifndef RUNEOS_OS_H
 #define RUNEOS_OS_H
 
-
 namespace Rune {
     extern "C" int main(int argc, char* argv[]);
 }
 
-#endif //RUNEOS_OS_H
+#endif // RUNEOS_OS_H

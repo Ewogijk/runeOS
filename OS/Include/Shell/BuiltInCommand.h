@@ -17,9 +17,7 @@
 #ifndef RUNEOS_BUILTINCOMMAND_H
 #define RUNEOS_BUILTINCOMMAND_H
 
-
 #include <Shell/AST.h>
-
 
 namespace Rune::Shell {
     /**
@@ -40,7 +38,6 @@ namespace Rune::Shell {
      */
     int pwd(int argc, char* argv[], const Environment& shell_env);
 
-
     /**
      * @brief Clear the terminal screen.
      * @param argc
@@ -59,12 +56,11 @@ namespace Rune::Shell {
      */
     int help(int argc, char* argv[], const Environment& shell_env);
 
-
     /**
      * @brief Add all built-in shell commands to the command table of the shell env.
      * @param shell_env
      */
     void register_builtin_commands(Environment& shell_env);
-}
+} // namespace Rune::Shell
 
-#endif //RUNEOS_BUILTINCOMMAND_H
+#endif // RUNEOS_BUILTINCOMMAND_H

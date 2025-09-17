@@ -57,12 +57,22 @@ namespace Rune::SystemCall {
                               Ember::App(Ember::App::WRITE_STDERR).to_string(),
                               &write_stderr,
                               &APP_SYSCALL_CTX));
-        defs.add_back(
-            define0(Ember::App::GET_ID, Ember::App(Ember::App::GET_ID).to_string(), &get_ID, &APP_SYSCALL_CTX));
-        defs.add_back(
-            define6(Ember::App::START, Ember::App(Ember::App::START).to_string(), &app_start, &APP_SYSCALL_CTX));
-        defs.add_back(define1(Ember::App::EXIT, Ember::App(Ember::App::EXIT).to_string(), &app_exit, &APP_SYSCALL_CTX));
-        defs.add_back(define1(Ember::App::JOIN, Ember::App(Ember::App::JOIN).to_string(), &app_join, &APP_SYSCALL_CTX));
+        defs.add_back(define0(Ember::App::GET_ID,
+                              Ember::App(Ember::App::GET_ID).to_string(),
+                              &get_ID,
+                              &APP_SYSCALL_CTX));
+        defs.add_back(define6(Ember::App::START,
+                              Ember::App(Ember::App::START).to_string(),
+                              &app_start,
+                              &APP_SYSCALL_CTX));
+        defs.add_back(define1(Ember::App::EXIT,
+                              Ember::App(Ember::App::EXIT).to_string(),
+                              &app_exit,
+                              &APP_SYSCALL_CTX));
+        defs.add_back(define1(Ember::App::JOIN,
+                              Ember::App(Ember::App::JOIN).to_string(),
+                              &app_join,
+                              &APP_SYSCALL_CTX));
         defs.add_back(define2(Ember::App::CURRENT_DIRECTORY,
                               Ember::App(Ember::App::CURRENT_DIRECTORY).to_string(),
                               &app_current_directory,
@@ -92,17 +102,34 @@ namespace Rune::SystemCall {
                               Ember::VFS(Ember::VFS::GET_NODE_INFO).to_string(),
                               &vfs_get_node_info,
                               &VFS_SYSCALL_CTX));
-        defs.add_back(
-            define2(Ember::VFS::CREATE, Ember::VFS(Ember::VFS::CREATE).to_string(), &vfs_create, &VFS_SYSCALL_CTX));
-        defs.add_back(define2(Ember::VFS::OPEN, Ember::VFS(Ember::VFS::OPEN).to_string(), &vfs_open, &VFS_SYSCALL_CTX));
-        defs.add_back(
-            define1(Ember::VFS::DELETE, Ember::VFS(Ember::VFS::DELETE).to_string(), &vfs_delete, &VFS_SYSCALL_CTX));
-        defs.add_back(
-            define1(Ember::VFS::CLOSE, Ember::VFS(Ember::VFS::CLOSE).to_string(), &vfs_close, &VFS_SYSCALL_CTX));
-        defs.add_back(define3(Ember::VFS::READ, Ember::VFS(Ember::VFS::READ).to_string(), &vfs_read, &VFS_SYSCALL_CTX));
-        defs.add_back(
-            define3(Ember::VFS::WRITE, Ember::VFS(Ember::VFS::WRITE).to_string(), &vfs_write, &VFS_SYSCALL_CTX));
-        defs.add_back(define3(Ember::VFS::SEEK, Ember::VFS(Ember::VFS::SEEK).to_string(), &vfs_seek, &VFS_SYSCALL_CTX));
+        defs.add_back(define2(Ember::VFS::CREATE,
+                              Ember::VFS(Ember::VFS::CREATE).to_string(),
+                              &vfs_create,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define2(Ember::VFS::OPEN,
+                              Ember::VFS(Ember::VFS::OPEN).to_string(),
+                              &vfs_open,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define1(Ember::VFS::DELETE,
+                              Ember::VFS(Ember::VFS::DELETE).to_string(),
+                              &vfs_delete,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define1(Ember::VFS::CLOSE,
+                              Ember::VFS(Ember::VFS::CLOSE).to_string(),
+                              &vfs_close,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define3(Ember::VFS::READ,
+                              Ember::VFS(Ember::VFS::READ).to_string(),
+                              &vfs_read,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define3(Ember::VFS::WRITE,
+                              Ember::VFS(Ember::VFS::WRITE).to_string(),
+                              &vfs_write,
+                              &VFS_SYSCALL_CTX));
+        defs.add_back(define3(Ember::VFS::SEEK,
+                              Ember::VFS(Ember::VFS::SEEK).to_string(),
+                              &vfs_seek,
+                              &VFS_SYSCALL_CTX));
         defs.add_back(define1(Ember::VFS::DIRECTORY_STREAM_OPEN,
                               Ember::VFS(Ember::VFS::DIRECTORY_STREAM_OPEN).to_string(),
                               &vfs_directory_stream_open,
@@ -177,14 +204,16 @@ namespace Rune::SystemCall {
                               Ember::Threading(Ember::Threading::THREAD_GET_ID).to_string(),
                               &get_thread_ID,
                               &T_SYSCALL_CTX));
-        defs.add_back(define1(Ember::Threading::THREAD_CONTROL_BLOCK_SET,
-                              Ember::Threading(Ember::Threading::THREAD_CONTROL_BLOCK_SET).to_string(),
-                              &set_thread_control_block,
-                              &T_SYSCALL_CTX));
+        defs.add_back(
+            define1(Ember::Threading::THREAD_CONTROL_BLOCK_SET,
+                    Ember::Threading(Ember::Threading::THREAD_CONTROL_BLOCK_SET).to_string(),
+                    &set_thread_control_block,
+                    &T_SYSCALL_CTX));
         return {"Threading", defs};
     }
 
-    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian* k_guard, const SubsystemRegistry& k_subsys_reg) {
+    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian*          k_guard,
+                                                      const SubsystemRegistry& k_subsys_reg) {
         LinkedList<Bundle> bundles;
         bundles.add_back(make_app_bundle(k_guard, k_subsys_reg));
         bundles.add_back(make_vfs_bundle(k_guard, k_subsys_reg));

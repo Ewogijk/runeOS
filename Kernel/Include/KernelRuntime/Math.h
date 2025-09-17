@@ -20,7 +20,9 @@
 #include <limits.h>
 
 namespace Rune {
-    template <typename TNum> TNum div_round_up(TNum num, TNum divisor) { return (num + divisor - 1) / divisor; }
+    template <typename TNum> TNum div_round_up(TNum num, TNum divisor) {
+        return (num + divisor - 1) / divisor;
+    }
 
     template <typename TNum> TNum min(TNum a, TNum b) { return a < b ? a : b; }
 

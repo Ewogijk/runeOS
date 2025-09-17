@@ -29,7 +29,8 @@ namespace Rune::VFS {
 
         if (_node && _node->has_attribute(Ember::NodeAttribute::FILE)) {
             _can_read  = _node->get_io_mode() == Ember::IOMode::READ;
-            _can_write = _node->get_io_mode() == Ember::IOMode::WRITE || _node->get_io_mode() == Ember::IOMode::APPEND;
+            _can_write = _node->get_io_mode() == Ember::IOMode::WRITE
+                         || _node->get_io_mode() == Ember::IOMode::APPEND;
         }
     }
 

@@ -29,15 +29,15 @@
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 namespace Rune::App {
-#define LOAD_STATUSES(X)                                                                                               \
-    X(LoadStatus, LOADED, 0x1)                                                                                         \
-    X(LoadStatus, RUNNING, 0x2)                                                                                        \
-    X(LoadStatus, IO_ERROR, 0x3)                                                                                       \
-    X(LoadStatus, BAD_HEADER, 0x4)                                                                                     \
-    X(LoadStatus, BAD_SEGMENT, 0x5)                                                                                    \
-    X(LoadStatus, MEMORY_ERROR, 0x6)                                                                                   \
-    X(LoadStatus, LOAD_ERROR, 0x7)                                                                                     \
-    X(LoadStatus, BAD_VENDOR_INFO, 0x8)                                                                                \
+#define LOAD_STATUSES(X)                                                                           \
+    X(LoadStatus, LOADED, 0x1)                                                                     \
+    X(LoadStatus, RUNNING, 0x2)                                                                    \
+    X(LoadStatus, IO_ERROR, 0x3)                                                                   \
+    X(LoadStatus, BAD_HEADER, 0x4)                                                                 \
+    X(LoadStatus, BAD_SEGMENT, 0x5)                                                                \
+    X(LoadStatus, MEMORY_ERROR, 0x6)                                                               \
+    X(LoadStatus, LOAD_ERROR, 0x7)                                                                 \
+    X(LoadStatus, BAD_VENDOR_INFO, 0x8)                                                            \
     X(LoadStatus, BAD_STDIO, 0x9)
 
     /**
@@ -76,13 +76,14 @@ namespace Rune::App {
         /**
          * @brief The current directory of the app.
          *
-         * After start this is either the directory of the executable if not explicitly set or an explicitly requested
-         * path.
+         * After start this is either the directory of the executable if not explicitly set or an
+         * explicitly requested path.
          */
         Path working_directory = Path("");
 
         /**
-         * @brief Exit code of the application, this value will be set when an app makes a system call to quit itself.
+         * @brief Exit code of the application, this value will be set when an app makes a system
+         * call to quit itself.
          */
         int exit_code = INT_MAX;
 
@@ -106,9 +107,11 @@ namespace Rune::App {
         LinkedList<int> thread_table = LinkedList<int>();
 
         /**
-         * @brief All threads that are joining with this application, meaning waiting for it to exit.
+         * @brief All threads that are joining with this application, meaning waiting for it to
+         * exit.
          */
-        LinkedList<SharedPointer<CPU::Thread>> joining_thread_table = LinkedList<SharedPointer<CPU::Thread>>();
+        LinkedList<SharedPointer<CPU::Thread>> joining_thread_table =
+            LinkedList<SharedPointer<CPU::Thread>>();
 
         /**
          * @brief All open nodes of the app.

@@ -29,8 +29,8 @@ namespace Rune::Memory {
 
     /**
      *
-     * @return The starting addresses of the virtual kernel regions. The exact size of each regions is defined by the
-     *          actual memory consumption of the region which is determined during runtime.
+     * @return The starting addresses of the virtual kernel regions. The exact size of each regions
+     * is defined by the actual memory consumption of the region which is determined during runtime.
      */
     KernelSpaceLayout get_virtual_kernel_space_layout();
 

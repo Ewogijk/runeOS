@@ -42,7 +42,8 @@ namespace Rune::Device {
 
     /**
      *
-     * Source: <a href="https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html#gpt-header">
+     * Source: <a
+     * href="https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html#gpt-header">
      * UEFI 2.10 - GPT Header</a>
      * @brief The GPT header contains information about all partitions on a drive.
      */
@@ -64,7 +65,8 @@ namespace Rune::Device {
     };
 
     /**
-     * Source: <a href="https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html#gpt-partition-entry-array">
+     * Source: <a
+     * href="https://uefi.org/specs/UEFI/2.10/05_GUID_Partition_Table_Format.html#gpt-partition-entry-array">
      * UEFI 2.10 - GPT Partition Entry Array</a>
      * @brief An entry in the GPT partition table represents a single partition on a drive.
      */
@@ -83,11 +85,11 @@ namespace Rune::Device {
         String get_name();
     };
 
-#define GPT_SCAN_STATUSES(X)                                                                                           \
-    X(GPTScanStatus, DETECTED, 0x1)                                                                                    \
-    X(GPTScanStatus, NOT_DETECTED, 0x2)                                                                                \
-    X(GPTScanStatus, CORRUPT_HEADER, 0x3)                                                                              \
-    X(GPTScanStatus, CORRUPT_PARTITION_TABLE, 0x4)                                                                     \
+#define GPT_SCAN_STATUSES(X)                                                                       \
+    X(GPTScanStatus, DETECTED, 0x1)                                                                \
+    X(GPTScanStatus, NOT_DETECTED, 0x2)                                                            \
+    X(GPTScanStatus, CORRUPT_HEADER, 0x3)                                                          \
+    X(GPTScanStatus, CORRUPT_PARTITION_TABLE, 0x4)                                                 \
     X(GPTScanStatus, STORAGE_DEV_ERROR, 0x5)
 
     /**
@@ -104,8 +106,8 @@ namespace Rune::Device {
     DECLARE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0) // NOLINT
 
     /**
-     * If Status == GPTScanStatus::Detected the Header and PartitionTable variables contain valid data else they
-     * should be ignored.
+     * If Status == GPTScanStatus::Detected the Header and PartitionTable variables contain valid
+     * data else they should be ignored.
      *
      * @brief End result of trying to detect a GPT on a storage device.
      */

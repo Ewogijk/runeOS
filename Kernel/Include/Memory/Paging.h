@@ -36,20 +36,21 @@ namespace Rune::Memory {
     using NativePageTableEntry = VirtualAddr;
 
     /**
-     * @brief A page table entry (PTE) acts as an architecture independent interface to the architecture dependant
-     *          paging implementation, a native page table entry (NPTE).
+     * @brief A page table entry (PTE) acts as an architecture independent interface to the
+     * architecture dependant paging implementation, a native page table entry (NPTE).
      *
      * <p>
-     *  A PTE exposes all paging properties supported by the kernel in an architecture independent way, that is the NPTE
-     *  could have more properties that are not explicitly supported by the kernel.
+     *  A PTE exposes all paging properties supported by the kernel in an architecture independent
+     * way, that is the NPTE could have more properties that are not explicitly supported by the
+     * kernel.
      * </p>
      * <p>
-     *  The Level describes the position of this PTE in the page table hierarchy starting from the base page table
-     *  (BPT). The BTP is the entry point to the page table hierarchy, e.g. in x86_64 4-level paging the BTP would be
-     *  the Page-Map Level-4 Table.<br>
-     *  Counting starts from the highest level down to zero, where zero is effectively the physical page offset. This
-     *  means that practically the page table hierarchy ends at level 1 (L1), since L0 is is not a PTE. If level=0xFF
-     *  it indicates that is PTE is invalid and should not be used.
+     *  The Level describes the position of this PTE in the page table hierarchy starting from the
+     * base page table (BPT). The BTP is the entry point to the page table hierarchy, e.g. in x86_64
+     * 4-level paging the BTP would be the Page-Map Level-4 Table.<br> Counting starts from the
+     * highest level down to zero, where zero is effectively the physical page offset. This means
+     * that practically the page table hierarchy ends at level 1 (L1), since L0 is is not a PTE. If
+     * level=0xFF it indicates that is PTE is invalid and should not be used.
      * </p>
      * <p>
      *  Lastly the PTE exposes the NPTE which can be used to create page table objects.
@@ -103,8 +104,8 @@ namespace Rune::Memory {
 
         /**
          *
-         * @return If the PTE points to a page frame, return its address else the address will point to another page
-         *          table.
+         * @return If the PTE points to a page frame, return its address else the address will point
+         * to another page table.
          */
         [[nodiscard]]
         PhysicalAddr get_address() const;
@@ -122,8 +123,8 @@ namespace Rune::Memory {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * @brief A page table (PT) exposes an architecture independent way of iterating and accessing the page table
-     *          hierarchy.
+     * @brief A page table (PT) exposes an architecture independent way of iterating and accessing
+     * the page table hierarchy.
      */
     class PageTable {
         NativePageTableEntry  _npte;
@@ -201,8 +202,8 @@ namespace Rune::Memory {
     /**
      * @brief Load a new base page table for the CPU.
      *
-     * Important note: This will invalidate all currently used pages! The new base page table must at least have the
-     * kernel pages mapped, otherwise the system will crash immediately.
+     * Important note: This will invalidate all currently used pages! The new base page table must
+     * at least have the kernel pages mapped, otherwise the system will crash immediately.
      */
     CLINK void load_base_page_table(PhysicalAddr base_pt);
 
@@ -238,16 +239,16 @@ namespace Rune::Memory {
     CLINK PhysicalAddr get_base_page_table_address();
 
     /**
-     * @brief Interpret the given physical address as the base page table for another virtual address space that is
-     *          not loaded at the moment.
+     * @brief Interpret the given physical address as the base page table for another virtual
+     * address space that is not loaded at the moment.
      * @param p_addr Physical address of a base page table.
      * @return Base page table from the physical address.
      */
     PageTable interp_as_base_page_table(PhysicalAddr p_addr);
 
     /**
-     * Get the currently used base page table which is the entry point to the page table hierarchy, thus is never
-     * referenced by another page table.
+     * Get the currently used base page table which is the entry point to the page table hierarchy,
+     * thus is never referenced by another page table.
      *
      * @return The core page table.
      */
@@ -258,7 +259,8 @@ namespace Rune::Memory {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * @brief If the given virtual address is not in canonical form, convert it to its canonical form.
+     * @brief If the given virtual address is not in canonical form, convert it to its canonical
+     * form.
      * @param v_addr
      * @return The virtual address in canonical form.
      */
@@ -275,8 +277,8 @@ namespace Rune::Memory {
     /**
      *
      * @param v_addr Virtual address.
-     * @param out   If true is returned, the variable will contain the physical address for the given virtual address;
-     *              otherwise, the value is undefined.
+     * @param out   If true is returned, the variable will contain the physical address for the
+     * given virtual address; otherwise, the value is undefined.
      *
      * @return True if the physical address mapped to the virtual address has been found.
      */
@@ -289,13 +291,13 @@ namespace Rune::Memory {
     /**
      * A page flag represents a property of a page table entry.
      */
-#define PAGE_FLAGS(X)                                                                                                  \
-    X(PageFlag, PRESENT, 0x01)                                                                                         \
-    X(PageFlag, WRITE_ALLOWED, 0x02)                                                                                   \
-    X(PageFlag, USER_MODE_ACCESS, 0x04)                                                                                \
-    X(PageFlag, WRITE_THROUGH, 0x08)                                                                                   \
-    X(PageFlag, CACHE_DISABLE, 0x10)                                                                                   \
-    X(PageFlag, ACCESSED, 0x20)                                                                                        \
+#define PAGE_FLAGS(X)                                                                              \
+    X(PageFlag, PRESENT, 0x01)                                                                     \
+    X(PageFlag, WRITE_ALLOWED, 0x02)                                                               \
+    X(PageFlag, USER_MODE_ACCESS, 0x04)                                                            \
+    X(PageFlag, WRITE_THROUGH, 0x08)                                                               \
+    X(PageFlag, CACHE_DISABLE, 0x10)                                                               \
+    X(PageFlag, ACCESSED, 0x20)                                                                    \
     X(PageFlag, DIRTY, 0x40)
 
     DECLARE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0) // NOLINT
@@ -309,35 +311,39 @@ namespace Rune::Memory {
      *  <li>PAGE_TABLE_ENTRY_MISSING: The entry of an intermediate page table is missing.</li>
      * </ol>
      */
-#define PAGE_TABLE_ACCESS_STATUSES(X)                                                                                  \
-    X(PageTableAccessStatus, OKAY, 0x1)                                                                                \
-    X(PageTableAccessStatus, ALLOC_ERROR, 0x2)                                                                         \
-    X(PageTableAccessStatus, FREE_ERROR, 0x3)                                                                          \
+#define PAGE_TABLE_ACCESS_STATUSES(X)                                                              \
+    X(PageTableAccessStatus, OKAY, 0x1)                                                            \
+    X(PageTableAccessStatus, ALLOC_ERROR, 0x2)                                                     \
+    X(PageTableAccessStatus, FREE_ERROR, 0x3)                                                      \
     X(PageTableAccessStatus, PAGE_TABLE_ENTRY_MISSING, 0x4)
 
     DECLARE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) // NOLINT
 
     /**
-     * @brief Describes the outcome of accessing the page table hierarchy and performing an operation (e.g allocation).
+     * @brief Describes the outcome of accessing the page table hierarchy and performing an
+     * operation (e.g allocation).
      *
      * <p>
      * Field descriptions:
      * <ol>
      *  <li>Status:        Outcome of the access.</li>
-     *  <li>Path:          All PTEs that have been accessed before any modification until the access ended.</li>
-     *  <li>Level:         Page table level where the access ended.</li>
-     *  <li>PageTableLeak: True if the physical memory on an intermediate page table could not be freed.</li>
-     *  <li>PTEAfter:      Copy of the accessed page table entry after modification (currently in use).</li>
+     *  <li>Path:          All PTEs that have been accessed before any modification until the access
+     * ended.</li> <li>Level:         Page table level where the access ended.</li>
+     *  <li>PageTableLeak: True if the physical memory on an intermediate page table could not be
+     * freed.</li> <li>PTEAfter:      Copy of the accessed page table entry after modification
+     * (currently in use).</li>
      * </ol>
      * </p>
      *
      * <p>
-     *  The path array is filled in reverse, that is the first accessed PTE will not be at index 0 but at index 3. In
-     *  general a Level n PTE will be found at index (n - 1), e.g. the L4 PTE can be accessed at path[3].
+     *  The path array is filled in reverse, that is the first accessed PTE will not be at index 0
+     * but at index 3. In general a Level n PTE will be found at index (n - 1), e.g. the L4 PTE can
+     * be accessed at path[3].
      * </p>
      * <p>
-     *  The path array may not contain valid PTEs at all indices, this is the case if the access ended early due to an
-     *  error. The number of valid PTEs in the path is always equal to the (MaxPathLength - Level).
+     *  The path array may not contain valid PTEs at all indices, this is the case if the access
+     * ended early due to an error. The number of valid PTEs in the path is always equal to the
+     * (MaxPathLength - Level).
      * </p>
      */
     struct PageTableAccess {
@@ -352,17 +358,17 @@ namespace Rune::Memory {
     };
 
     /**
-     * allocate a page mapping the vAddr to the pAddr in the virtual address space defined by the basePT using the given
-     * flags.
+     * allocate a page mapping the vAddr to the pAddr in the virtual address space defined by the
+     * basePT using the given flags.
      *
      * <p>
-     * If intermediate page tables on the path to the page table entry are missing they will be allocated using the
-     * physical memory manager.
+     * If intermediate page tables on the path to the page table entry are missing they will be
+     * allocated using the physical memory manager.
      * </p>
      *
      * <p>
-     *  If allocation of any intermediate page table fails then the allocation will be stopped and memory allocated for
-     *  already allocated intermediate page tables will be freed.
+     *  If allocation of any intermediate page table fails then the allocation will be stopped and
+     * memory allocated for already allocated intermediate page tables will be freed.
      * </p>
      *
      * @param base_pt       Base page table.
@@ -380,11 +386,12 @@ namespace Rune::Memory {
                                   PhysicalMemoryManager* pmm);
 
     /**
-     * free the page of the given vAddr and free the associated page frame using the physical memory manager.
+     * free the page of the given vAddr and free the associated page frame using the physical memory
+     * manager.
      *
      * <p>
-     *  If any intermediate page table has no other entries except the page table entry for vAddr or another page table
-     *  that has no entries then it will be freed.
+     *  If any intermediate page table has no other entries except the page table entry for vAddr or
+     * another page table that has no entries then it will be freed.
      * </p>
      *
      * @param base_pt Base page table.
@@ -393,7 +400,8 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm);
+    PageTableAccess
+    free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm);
 
     /**
      * Modify the flags of the page for a virtual address.
@@ -405,7 +413,8 @@ namespace Rune::Memory {
      *
      * @return Result of the page table access.
      */
-    PageTableAccess modify_page_flags(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, bool set);
+    PageTableAccess
+    modify_page_flags(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, bool set);
 
     /**
      * Try to find the page for the given virtual address.

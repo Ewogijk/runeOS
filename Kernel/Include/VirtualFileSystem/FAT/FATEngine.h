@@ -35,8 +35,8 @@ namespace Rune::VFS {
         //////////////////////////////////////////////////////////////////////////////////
 
         /**
-         * Create a new boot record for a storage device and write it to the buffer which must have the size of a
-         * sector on said storage device.
+         * Create a new boot record for a storage device and write it to the buffer which must have
+         * the size of a sector on said storage device.
          *
          * @param buf          Output buffer for the boot record.
          * @param sector_size  Sector size of a storage.
@@ -100,8 +100,8 @@ namespace Rune::VFS {
          *
          * @param cluster cluster index.
          *
-         * @return Offset into the FAT for a cluster, that is the number of bytes that need to be skipped to read the
-         *          FAT entry for the cluster.
+         * @return Offset into the FAT for a cluster, that is the number of bytes that need to be
+         * skipped to read the FAT entry for the cluster.
          */
         virtual uint32_t fat_offset(uint32_t cluster) = 0;
 
@@ -127,8 +127,8 @@ namespace Rune::VFS {
          * Try to find a free cluster in the given FAT buffer.
          *
          * @param fat            A buffer for two FAT sectors.
-         * @param fat_sector_idx Sector index of the FAT buffer, e.g. if the buffer starts at the 11th FAT sector the
-         *                        sector index is 11.
+         * @param fat_sector_idx Sector index of the FAT buffer, e.g. if the buffer starts at the
+         * 11th FAT sector the sector index is 11.
          *
          * @return A free cluster or MaxClusterCount() + 1 if no free cluster was found.
          */

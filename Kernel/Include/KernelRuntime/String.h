@@ -124,19 +124,19 @@ namespace Rune {
      * </p>
      *
      * <p>
-     *  Index: The position of an argument in the argument list. Is optional, if not declared arguments are formatted
-     *          in order of the argument list, meaning indices 0,1,2,... are assumed.
+     *  Index: The position of an argument in the argument list. Is optional, if not declared
+     * arguments are formatted in order of the argument list, meaning indices 0,1,2,... are assumed.
      * </p>
      *
      * <p>
-     *  Align: '<' is left alignment, '^' is center alignment, '>' is right alignment and '=' right alignment but a
-     *          prefix is used padding will be applied between prefix and argument. e.g. 0x000A (0's are padded).
-     *          A fill character can be specified if not an empty space is used.
+     *  Align: '<' is left alignment, '^' is center alignment, '>' is right alignment and '=' right
+     * alignment but a prefix is used padding will be applied between prefix and argument. e.g.
+     * 0x000A (0's are padded). A fill character can be specified if not an empty space is used.
      * </p>
      *
      * <p>
-     *  '#': Use a prefix before the argument, only applied to non decimal integer arguments. For binary '0b', octal
-     *          '0o' and hex '0x' is prepended.
+     *  '#': Use a prefix before the argument, only applied to non decimal integer arguments. For
+     * binary '0b', octal '0o' and hex '0x' is prepended.
      * </p>
      *
      * <p>
@@ -144,9 +144,9 @@ namespace Rune {
      * </p>
      *
      * <p>
-     *  Precision: Maximum length of the formatted argument. This is for floating points the number of digits after
-     *              the decimal point and for strings the number of characters printed. Integer arguments are not
-     *              allowed to have a precision.
+     *  Precision: Maximum length of the formatted argument. This is for floating points the number
+     * of digits after the decimal point and for strings the number of characters printed. Integer
+     * arguments are not allowed to have a precision.
      * </p>
      *
      * <p>
@@ -159,10 +159,12 @@ namespace Rune {
      * @param args      Array of arguments.
      * @param arg_size  Number of arguments.
      *
-     * @return Index of the last character that was placed in the output buffer. Zero has two meanings no character was
-     *          actually placed or an error while parsing the format string happened.
+     * @return Index of the last character that was placed in the output buffer. Zero has two
+     * meanings no character was actually placed or an error while parsing the format string
+     * happened.
      */
-    size_t interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size);
+    size_t
+    interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size);
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          String class
@@ -172,7 +174,8 @@ namespace Rune {
         static constexpr U16 FMT_BUF_SIZE = 256;
 
         // Small string optimization (SSO)
-        // If a c string is smaller the BufSize we allocate it in the stack buffer else we make a heap allocation
+        // If a c string is smaller the BufSize we allocate it in the stack buffer else we make a
+        // heap allocation
         static constexpr size_t BUF_SIZE = 24;
         union {
             char* _heapBuf = nullptr;
@@ -271,8 +274,8 @@ namespace Rune {
         String upper() const;
 
         /**
-         * Split the string along all occurrences of the separator and return a list of all generated
-         * substrings.
+         * Split the string along all occurrences of the separator and return a list of all
+         * generated substrings.
          *
          * @param separator
          *

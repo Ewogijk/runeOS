@@ -36,7 +36,13 @@ namespace Rune::CPU {
         idt_load_ass(&IDT);
     }
 
-    void idt_set(U8 vector, void* handler, U16 segment_selector, U8 ist, GateType gt, U8 dpl, bool present) {
+    void idt_set(U8       vector,
+                 void*    handler,
+                 U16      segment_selector,
+                 U8       ist,
+                 GateType gt,
+                 U8       dpl,
+                 bool     present) {
         auto offset                        = (uintptr_t) handler;
         IDT.entry[vector].offset_low       = offset & 0xFFFF;
         IDT.entry[vector].offset_mid       = offset >> 16 & 0xFFFF;

@@ -62,7 +62,8 @@ namespace Rune::Memory {
           _start_fail(PMMStartFailure::NONE),
           _largest_free_block(0) {}
 
-    PMMStartFailure PhysicalMemoryManager::start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset
+    PMMStartFailure
+    PhysicalMemoryManager::start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset
 
     ) {
         _page_size = page_size;
@@ -95,18 +96,19 @@ namespace Rune::Memory {
     }
 
     MemoryRegion PhysicalMemoryManager::get_managed_memory() const {
-        return MemoryRegion{
-            _mem_base,
-            _mem_base - 1 + _mem_size * _page_size, // will overflow because it will be max value of some type e.g. U32
-            MemoryRegionType::RESERVED};
+        return MemoryRegion{_mem_base,
+                            _mem_base - 1
+                                + _mem_size * _page_size, // will overflow because it will be max
+                                                          // value of some type e.g. U32
+                            MemoryRegionType::RESERVED};
     }
 
     void PhysicalMemoryManager::log_start_routine_phases() const {
-        _logger->info(
-            FILE,
-            "Detected physical memory range: {:0=#16x}-{:0=#16x}",
-            _mem_base,
-            _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max value of some type e.g. U32
+        _logger->info(FILE,
+                      "Detected physical memory range: {:0=#16x}-{:0=#16x}",
+                      _mem_base,
+                      _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max
+                                                             // value of some type e.g. U32
         );
         MemoryRegion mem_idx = get_memory_index_region();
         _logger->info(FILE,
@@ -114,12 +116,16 @@ namespace Rune::Memory {
                       mem_idx.start,
                       mem_idx.end(),
                       mem_idx.size);
-        _logger->info(FILE, "Memory index can be accessed at virtual address: {:0=#16x}", get_memory_index());
+        _logger->info(FILE,
+                      "Memory index can be accessed at virtual address: {:0=#16x}",
+                      get_memory_index());
     }
 
     bool PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) { return allocate(p_addr, 1); }
 
-    bool PhysicalMemoryManager::allocate_explicit(PhysicalAddr p_addr) { return allocate_explicit(p_addr, 1); }
+    bool PhysicalMemoryManager::allocate_explicit(PhysicalAddr p_addr) {
+        return allocate_explicit(p_addr, 1);
+    }
 
     bool PhysicalMemoryManager::free(PhysicalAddr p_addr) { return free(p_addr, 1); }
 

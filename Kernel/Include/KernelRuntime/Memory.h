@@ -196,15 +196,15 @@ namespace Rune {
     using MemoryFloatSize = double;
 #endif
 
-#define MEMORY_UNITS(X)                                                                                                \
-    X(MemoryUnit, B, 1)                                                                                                \
-    X(MemoryUnit, KB, 1000)                                                                                            \
-    X(MemoryUnit, MB, 1000000)                                                                                         \
-    X(MemoryUnit, GB, 1000000000)                                                                                      \
-    X(MemoryUnit, TB, 1000000000000)                                                                                   \
-    X(MemoryUnit, KiB, 1024)                                                                                           \
-    X(MemoryUnit, MiB, 1048576)                                                                                        \
-    X(MemoryUnit, GiB, 1073741824)                                                                                     \
+#define MEMORY_UNITS(X)                                                                            \
+    X(MemoryUnit, B, 1)                                                                            \
+    X(MemoryUnit, KB, 1000)                                                                        \
+    X(MemoryUnit, MB, 1000000)                                                                     \
+    X(MemoryUnit, GB, 1000000000)                                                                  \
+    X(MemoryUnit, TB, 1000000000000)                                                               \
+    X(MemoryUnit, KiB, 1024)                                                                       \
+    X(MemoryUnit, MiB, 1048576)                                                                    \
+    X(MemoryUnit, GiB, 1073741824)                                                                 \
     X(MemoryUnit, TiB, 1099511627776)
 
     /**
@@ -232,12 +232,14 @@ namespace Rune {
     bool memory_is_aligned(MemoryAddr mem_addr, MemoryAddr boundary);
 
     /**
-     * Align the memory address to the given boundary. If roundUp is true the memory address will be rounded up to the
-     * next aligned memory address (e.g. 4KB boundary: 5KB -> 8KB) else rounded down (e.g. 4KB boundary: 5KB -> 4KB)
+     * Align the memory address to the given boundary. If roundUp is true the memory address will be
+     * rounded up to the next aligned memory address (e.g. 4KB boundary: 5KB -> 8KB) else rounded
+     * down (e.g. 4KB boundary: 5KB -> 4KB)
      *
      * @param mem_addr  Memory address.
      * @param page_boundary Memory boundary.
-     * @param round_up  If true the memory address is rounded up to the next boundary else rounded down.
+     * @param round_up  If true the memory address is rounded up to the next boundary else rounded
+     * down.
      *
      * @return The aligned memory address.
      */
@@ -249,7 +251,9 @@ namespace Rune {
      * @param v_addr
      * @return Pointer to the numerical value of the virtual address.
      */
-    template <typename T> T* memory_addr_to_pointer(VirtualAddr v_addr) { return reinterpret_cast<T*>(v_addr); }
+    template <typename T> T* memory_addr_to_pointer(VirtualAddr v_addr) {
+        return reinterpret_cast<T*>(v_addr);
+    }
 
     /**
      *
@@ -258,22 +262,25 @@ namespace Rune {
      *
      * @return Virtual address of the pointer as numerical value.
      */
-    template <typename T> MemoryAddr memory_pointer_to_addr(T* pointer) { return reinterpret_cast<uintptr_t>(pointer); }
+    template <typename T> MemoryAddr memory_pointer_to_addr(T* pointer) {
+        return reinterpret_cast<uintptr_t>(pointer);
+    }
 
     /**
-     * Describes if a memory region is free to use or reserved for something else. If further information is available
-     * the type may also describe which type of data is stored in the region (e.g. kernel code).
+     * Describes if a memory region is free to use or reserved for something else. If further
+     * information is available the type may also describe which type of data is stored in the
+     * region (e.g. kernel code).
      */
-#define MEMORY_REGION_TYPES(X)                                                                                         \
-    X(MemoryRegionType, USABLE, 0x1)                                                                                   \
-    X(MemoryRegionType, USED, 0x2)                                                                                     \
-    X(MemoryRegionType, RESERVED, 0x3)                                                                                 \
-    X(MemoryRegionType, USERSPACE, 0x4)                                                                                \
-    X(MemoryRegionType, HHDM, 0x5)                                                                                     \
-    X(MemoryRegionType, PMM_RESERVED, 0x6)                                                                             \
-    X(MemoryRegionType, VMM_RESERVED, 0x7)                                                                             \
-    X(MemoryRegionType, KERNEL_HEAP, 0x8)                                                                              \
-    X(MemoryRegionType, KERNEL_CODE, 0x9)                                                                              \
+#define MEMORY_REGION_TYPES(X)                                                                     \
+    X(MemoryRegionType, USABLE, 0x1)                                                               \
+    X(MemoryRegionType, USED, 0x2)                                                                 \
+    X(MemoryRegionType, RESERVED, 0x3)                                                             \
+    X(MemoryRegionType, USERSPACE, 0x4)                                                            \
+    X(MemoryRegionType, HHDM, 0x5)                                                                 \
+    X(MemoryRegionType, PMM_RESERVED, 0x6)                                                         \
+    X(MemoryRegionType, VMM_RESERVED, 0x7)                                                         \
+    X(MemoryRegionType, KERNEL_HEAP, 0x8)                                                          \
+    X(MemoryRegionType, KERNEL_CODE, 0x9)                                                          \
     X(MemoryRegionType, BOOTLOADER_RECLAIMABLE, 0xA)
 
     DECLARE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0) // NOLINT
@@ -381,17 +388,18 @@ namespace Rune {
         MemoryFloatSize get_total_memory_in(MemoryUnit unit) const;
 
         /**
-         * Claim the memory region defined by the `claimant` and mark it with the memory type of the `claimant`. The
-         * `claimant` must lie completely within the targeted memory region and will be aligned to given `boundary` if
-         * not properly aligned.
+         * Claim the memory region defined by the `claimant` and mark it with the memory type of the
+         * `claimant`. The `claimant` must lie completely within the targeted memory region and will
+         * be aligned to given `boundary` if not properly aligned.
          *
          * <p>
-         * Claiming fails if the claimed region needs to be split but no more space for more memory regions is
-         * available.
+         * Claiming fails if the claimed region needs to be split but no more space for more memory
+         * regions is available.
          * </p>
          *
          * <p>
-         * If the memory type of the `claimant` is `Usable` the memory will be freed otherwise reserved.
+         * If the memory type of the `claimant` is `Usable` the memory will be freed otherwise
+         * reserved.
          * </p>
          *
          * @param claimant Memory region that should be

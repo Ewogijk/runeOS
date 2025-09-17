@@ -19,8 +19,9 @@
 
 namespace Ember {
     /**
-     * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of keys. Each key is
-     *          defined by it's keycode which is an 16 bit unsigned integer defined as followed:
+     * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of
+     * keys. Each key is defined by it's keycode which is an 16 bit unsigned integer defined as
+     * followed:
      *
      * <p>
      *        15      14      13       9 8   4 2   0 <br>

@@ -26,13 +26,13 @@ namespace Rune::CPU {
     }
 
     VirtualAddr setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter) {
-        // Set up the stack so that the CPU jumps to the thread_enter function on context switch with a null frame at
-        // the bottom.
+        // Set up the stack so that the CPU jumps to the thread_enter function on context switch
+        // with a null frame at the bottom.
         //
         // thread_enter signature: void ThreadEnter();
         //
-        // Additionally we need to push zeroes for all preserved registers as defined in context_switch_ass()
-        // in X64Core-a.asm onto the stack, check it out for details.
+        // Additionally we need to push zeroes for all preserved registers as defined in
+        // context_switch_ass() in X64Core-a.asm onto the stack, check it out for details.
         //
         // ------------------------------------------
         // |       Initial Stack Layout             |

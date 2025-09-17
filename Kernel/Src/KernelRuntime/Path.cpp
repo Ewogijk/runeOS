@@ -26,7 +26,9 @@ namespace Rune {
 
     char Path::get_path_separator() { return UNIX_PATH_SEPARATOR; }
 
-    String Path::get_file_name() const { return _path.substring(_path.last_index_of(UNIX_PATH_SEPARATOR) + 1); }
+    String Path::get_file_name() const {
+        return _path.substring(_path.last_index_of(UNIX_PATH_SEPARATOR) + 1);
+    }
 
     String Path::get_file_name_without_extension() const {
         LinkedList<String> name_and_ext = get_file_name().split('.');
@@ -43,7 +45,8 @@ namespace Rune {
             // Parent of "" is ".".
             return Path(".");
         if (_path == "/" || _path == "." || _path == "..")
-            // Parent of "." is ".", of "/" is "/" and of ".." is also ".." (need to resolve but cant do here)
+            // Parent of "." is ".", of "/" is "/" and of ".." is also ".." (need to resolve but
+            // cant do here)
             return Path(_path);
 
         int idx = _path.last_index_of(UNIX_PATH_SEPARATOR);
@@ -123,8 +126,9 @@ namespace Rune {
         Path out(working_dir);
         for (auto& part : _path.split(UNIX_PATH_SEPARATOR)) {
             if (part == ".")
-                // skip dot entries, since only a dot entry at the beginning of a path can be reasonably resolved, and
-                // we already did by always starting with the working directory
+                // skip dot entries, since only a dot entry at the beginning of a path can be
+                // reasonably resolved, and we already did by always starting with the working
+                // directory
                 continue;
 
             if (part == "..") {

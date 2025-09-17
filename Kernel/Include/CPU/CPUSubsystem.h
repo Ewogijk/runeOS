@@ -38,15 +38,14 @@ namespace Rune::CPU {
      *  <li>THREAD_CREATED: A new thread object was created and is about to be scheduled
      *                          Event Context - Thread*: The created thread.</li>
      *  <li>THREAD_TERMINATED: A thread has returned from main or requested termination.
-     *                          Event Context - ThreadTerminatedContext*: Contains pointers to the terminated and next
-     *                          to be scheduled thread.</li>
-     *  <li>CONTEXT_SWITCH: A context switch is about to happen. Event Context - Thread*: The next thread that will be
-     *                      scheduled.</li>
+     *                          Event Context - ThreadTerminatedContext*: Contains pointers to the
+     * terminated and next to be scheduled thread.</li> <li>CONTEXT_SWITCH: A context switch is
+     * about to happen. Event Context - Thread*: The next thread that will be scheduled.</li>
      * </ul>
      */
-#define CPU_EVENT_HOOKS(X)                                                                                             \
-    X(EventHook, THREAD_CREATED, 0x1)                                                                                  \
-    X(EventHook, THREAD_TERMINATED, 0x2)                                                                               \
+#define CPU_EVENT_HOOKS(X)                                                                         \
+    X(EventHook, THREAD_CREATED, 0x1)                                                              \
+    X(EventHook, THREAD_TERMINATED, 0x2)                                                           \
     X(EventHook, CONTEXT_SWITCH, 0x3)
 
     DECLARE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0) // NOLINT
@@ -138,8 +137,9 @@ namespace Rune::CPU {
         /**
          * @brief Install a driver PIC driver that will be responsible for IRQ handling.
          *
-         * During CPU init all installed drivers will be asked to try to detect their device in order of installation
-         * and the first driver to detect their device will handle interrupt requests.
+         * During CPU init all installed drivers will be asked to try to detect their device in
+         * order of installation and the first driver to detect their device will handle interrupt
+         * requests.
          *
          * @param driver Pointer to a PIC driver.
          *
@@ -155,7 +155,10 @@ namespace Rune::CPU {
          * @param handler
          * @return True: The IRQ handler is installed. False: Installation failed.
          */
-        bool install_irq_handler(U8 irq_line, U16 dev_handle, const String& dev_name, const IRQHandler& handler);
+        bool install_irq_handler(U8                irq_line,
+                                 U16               dev_handle,
+                                 const String&     dev_name,
+                                 const IRQHandler& handler);
 
         /**
          * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
@@ -196,25 +199,29 @@ namespace Rune::CPU {
         Thread* find_thread(int handle);
 
         /**
-         * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue it to be scheduled
-         *          in the future.
+         * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue
+         * it to be scheduled in the future.
          *
-         * Each thread will be assigned a unique ID, the kernel stack is allocated and setup for the first context
-         * switch. As part of the setup a null frame is pushed onto the stack to enable stack tracing.
+         * Each thread will be assigned a unique ID, the kernel stack is allocated and setup for the
+         * first context switch. As part of the setup a null frame is pushed onto the stack to
+         * enable stack tracing.
          *
          * <p>
-         *  Note: The user stack must already be setup! The scheduler cannot do so, because the user stack may be in
-         *  another VAS and therefore inaccessible.
+         *  Note: The user stack must already be setup! The scheduler cannot do so, because the user
+         * stack may be in another VAS and therefore inaccessible.
          * </p>
          *
          * @param thread_name    Name of the thread.
-         * @param start_info     The thread start info contains the thread arguments, thread main and more info.
+         * @param start_info     The thread start info contains the thread arguments, thread main
+         * and more info.
          *
-         * @param base_pt_addr   Address of the base page table defining the virtual address space of the thread.
+         * @param base_pt_addr   Address of the base page table defining the virtual address space
+         * of the thread.
          * @param policy         Scheduling policy to use for the thread.
          * @param user_stack     The user mode stack.
          *
-         * @return The ID if the scheduled thread, 0 if the thread could not be created or scheduled.
+         * @return The ID if the scheduled thread, 0 if the thread could not be created or
+         * scheduled.
          */
         U16 schedule_new_thread(const String&    thread_name,
                                 StartInfo*       start_info,
@@ -223,24 +230,24 @@ namespace Rune::CPU {
                                 Stack            user_stack);
 
         /**
-         * @brief Mark the thread with the requested handle as terminated, except if it is the running thread. The
-         *          thread will no longer be scheduled and after the next context switch its allocated memory will be
-         *          freed.
+         * @brief Mark the thread with the requested handle as terminated, except if it is the
+         * running thread. The thread will no longer be scheduled and after the next context switch
+         * its allocated memory will be freed.
          *
          * <p>
-         *  The function will try to determine the location of the thread based on it's current state. For example: If
-         *  the thread is in the "Sleeping" state, it will be removed from the timers wait queue and put into the
-         *  terminated threads queue.
+         *  The function will try to determine the location of the thread based on it's current
+         * state. For example: If the thread is in the "Sleeping" state, it will be removed from the
+         * timers wait queue and put into the terminated threads queue.
          * </p>
          * <p>
-         *  The function is guaranteed to always exit, that is it will never trigger a context switch by itself. This is
-         *  the reason why the currently running thread cannot be terminated, since this inevitable triggers a context
-         *  switch.
+         *  The function is guaranteed to always exit, that is it will never trigger a context
+         * switch by itself. This is the reason why the currently running thread cannot be
+         * terminated, since this inevitable triggers a context switch.
          * </p>
          *
          * @param handle
-         * @return True: The thread is marked as terminated, False: No thread with the ID was found or it is currently
-         *          running.
+         * @return True: The thread is marked as terminated, False: No thread with the ID was found
+         * or it is currently running.
          */
         bool terminate_thread(int handle);
 
@@ -271,7 +278,8 @@ namespace Rune::CPU {
         /**
          * @brief Create a new mutex instance with the given name and add it to the mutex table.
          *
-         * Each acquired mutex must be freed via the ReleaseMutex() function to avoid leaked resources.
+         * Each acquired mutex must be freed via the ReleaseMutex() function to avoid leaked
+         * resources.
          *
          * @param name Name of the mutex.
          * @return A new mutex instance.
@@ -281,7 +289,8 @@ namespace Rune::CPU {
         /**
          * @brief Free the memory of the mutex with the given handle.
          *
-         * The caller of this functions is responsible to free the shared pointer on it's own end to avoid leaks.
+         * The caller of this functions is responsible to free the shared pointer on it's own end to
+         * avoid leaks.
          *
          * @param mutex_handle
          * @return True: The mutex was released, False: No mutex with the given ID was found.
@@ -307,8 +316,8 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief Mark the currently running thread as terminated which will immediately trigger a context switch to the
-     *          next thread.
+     * @brief Mark the currently running thread as terminated which will immediately trigger a
+     * context switch to the next thread.
      *
      * This is the clean and advised way of terminating a thread whose main function has returned.
      * @param exit_code Exit code as returned by the main function of the thread.

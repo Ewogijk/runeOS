@@ -16,8 +16,8 @@
 
 #include <Shell/Interpreter.h>
 
-#include <Shell/BuiltInCommand.h>
 #include <Shell/Action.h>
+#include <Shell/BuiltInCommand.h>
 
 #include <Forge/App.h>
 
@@ -26,17 +26,13 @@
 
 #include "Shell/Utility.h"
 
-
 namespace Rune::Shell {
     void Interpreter::print_pretty_line_start() const {
-        std::cout << "\033[38;2;"
-            << static_cast<int>(GRAPE.red) << ";"
-            << static_cast<int>(GRAPE.green) << ";"
-            << static_cast<int>(GRAPE.blue) << "m"
-            << _env.working_directory.to_string() << "\033[0m> ";
+        std::cout << "\033[38;2;" << static_cast<int>(GRAPE.red) << ";"
+                  << static_cast<int>(GRAPE.green) << ";" << static_cast<int>(GRAPE.blue) << "m"
+                  << _env.working_directory.to_string() << "\033[0m> ";
         std::cout.flush();
     }
-
 
     void Interpreter::exec(const std::string& input) {
         auto [ast_node, has_error, actual, expected] = _parser.parse_shell_input(input);
@@ -51,8 +47,8 @@ namespace Rune::Shell {
 
             std::cerr << error_prefix << input << std::endl;
             std::cerr << highlight << std::endl;
-            std::cerr << "Unexpected token at " << actual.position
-                << ": " << actual.type.to_string() << std::endl;
+            std::cerr << "Unexpected token at " << actual.position << ": "
+                      << actual.type.to_string() << std::endl;
             std::cerr << "Expected: " << expected.to_string() << std::endl << std::endl;
         } else {
             // Execute the parsed command
@@ -60,11 +56,7 @@ namespace Rune::Shell {
         }
     }
 
-
-    Interpreter::Interpreter() : _keyboard_modifier(),
-                                 _env(),
-                                 _parser() { }
-
+    Interpreter::Interpreter() : _keyboard_modifier(), _env(), _parser() {}
 
     bool Interpreter::setup_environment(const char* wd) {
         _env.working_directory     = Path(wd);
@@ -77,17 +69,16 @@ namespace Rune::Shell {
             b_cmd_list.push_back(fst);
         return _env.auto_completion.init_vocabulary(
             b_cmd_list,
-            str_split(_env.env_var_table.find("PATH")->second, ':')
-        );
+            str_split(_env.env_var_table.find("PATH")->second, ':'));
     }
-
 
     void Interpreter::run() {
         print_pretty_line_start();
         while (true) {
             if (Ember::VirtualKey key = Forge::app_read_stdin(); !key.is_none()) {
                 // Update modifiers
-                if ((key.get_row() == 4 && key.get_col() == 0) || (key.get_row() == 4 && key.get_col() == 12)) {
+                if ((key.get_row() == 4 && key.get_col() == 0)
+                    || (key.get_row() == 4 && key.get_col() == 12)) {
                     _keyboard_modifier.shift_pressed = key.is_pressed();
                     continue;
                 } else if (key.get_row() == 5 && key.get_col() == 0) {
@@ -107,8 +98,9 @@ namespace Rune::Shell {
 
                 if (key.is_pressed()) {
                     // Convert keycode to ascii
-                    char         ch     = '\0';
-                    const size_t kd_off = key.get_row() * Ember::VirtualKey::MAX_COLS + key.get_col();
+                    char         ch = '\0';
+                    const size_t kd_off =
+                        key.get_row() * Ember::VirtualKey::MAX_COLS + key.get_col();
                     if (_keyboard_modifier.shift_pressed || _keyboard_modifier.angry_mode_on) {
                         ch = _key_code_decoder_upper[kd_off];
                     } else if (_keyboard_modifier.alt_gr_pressed) {
@@ -120,14 +112,13 @@ namespace Rune::Shell {
                     // Print if the pressed key is human-readable
                     if (ch != '\0') {
                         switch (ch) {
-                            case '\b':
-                                _env.input_delete(false);
-                                break;
+                            case '\b': _env.input_delete(false); break;
                             case '\n': {
                                 std::cout << ch;
                                 std::cout.flush();
                                 if (_env.input_buffer_size > 0) {
-                                    auto cmd = std::string(_env.input_buffer, _env.input_buffer_size);
+                                    auto cmd =
+                                        std::string(_env.input_buffer, _env.input_buffer_size);
                                     _env.command_history.push_back(cmd);
                                     _env.command_history_cursor = _env.command_history.size();
                                     exec(cmd);
@@ -136,15 +127,15 @@ namespace Rune::Shell {
                                 print_pretty_line_start();
                                 break;
                             }
-                            default:
-                                _env.input_append(ch);
+                            default: _env.input_append(ch);
                         }
                     } else {
-                        if (auto action = _env.action_table.find(key); action != _env.action_table.end())
+                        if (auto action = _env.action_table.find(key);
+                            action != _env.action_table.end())
                             (action->second)(_env);
                     }
                 }
             }
         }
     }
-}
+} // namespace Rune::Shell

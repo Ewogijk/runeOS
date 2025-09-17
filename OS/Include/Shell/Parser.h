@@ -17,13 +17,11 @@
 #ifndef RUNEOS_PARSER_H
 #define RUNEOS_PARSER_H
 
-
 #include <Shell/AST.h>
 #include <Shell/Lexer.h>
 
-#include <string>
 #include <memory>
-
+#include <string>
 
 namespace Rune::Shell {
     /**
@@ -31,22 +29,21 @@ namespace Rune::Shell {
      */
     struct ParsedInput {
         std::unique_ptr<ASTNode> ast_node;
-        bool                   has_error;
-        Token                  actual;
-        TokenType              expected;
-
+        bool                     has_error;
+        Token                    actual;
+        TokenType                expected;
 
         /**
-         * @brief Create a parsed input object with has_error=false, expected=TokenType::NONE, token={} and the given
-         * ast_node.
+         * @brief Create a parsed input object with has_error=false, expected=TokenType::NONE,
+         * token={} and the given ast_node.
          * @param ast_node
          * @return
          */
         static ParsedInput make_good(std::unique_ptr<ASTNode> ast_node);
 
-
         /**
-         * @brief Create a parsed input object with ast_node=null, has_error=true and the given values.
+         * @brief Create a parsed input object with ast_node=null, has_error=true and the given
+         * values.
          * @param actual
          * @param expected
          * @return
@@ -54,19 +51,18 @@ namespace Rune::Shell {
         static ParsedInput make_error(const Token& actual, TokenType expected);
     };
 
-
     /**
      * The grammar of the parser is defined as followed:
      * <ul>
-     *  <li>Input               = CommandSequence, CmdSeqPostfix? | EnvVarDeclaration | Redirection</li>
-     *  <li>Redirection         = CommandSequence, ">", Path | Identifier<li>
+     *  <li>Input               = CommandSequence, CmdSeqPostfix? | EnvVarDeclaration |
+     * Redirection</li> <li>Redirection         = CommandSequence, ">", Path | Identifier<li>
      *  <li>CommandSequence     = (Path | Identifier), Argument*</li>
      *  <li>CmdSeqPostfix       = ">", Path<li>
      *  <li>Argument            = Identifier | Path | EnvVar | String | Flag</li>
      *  <li>Flag                = "-", ["-"], Identifier</li>
-     *  <li>EnvVarDeclaration   = Identifier, "=", (Identifier | Path | EnvVar | String | EscapeCode)+</li>
-     *  <li>String              = "'", (" " | Identifier | Path | EnvVar | EscapeCode)*, "'"</li>
-     *  <li>Path                = PathElement, ("/", PathElement+)*</li>
+     *  <li>EnvVarDeclaration   = Identifier, "=", (Identifier | Path | EnvVar | String |
+     * EscapeCode)+</li> <li>String              = "'", (" " | Identifier | Path | EnvVar |
+     * EscapeCode)*, "'"</li> <li>Path                = PathElement, ("/", PathElement+)*</li>
      *  <li>EnvVar              = "$", Identifier </li>
      *  <li>PathElement         = ^[>\'$=]+</li>
      *  <li>Identifier          = [a-zA-Z0-9_-]+</li>
@@ -78,42 +74,31 @@ namespace Rune::Shell {
     class Parser {
         Lexer _lexer;
 
-
         ParsedInput parse_input();
-
 
         ParsedInput parse_command_sequence();
 
-
         ParsedInput parse_argument();
-
 
         ParsedInput parse_flag();
 
-
         ParsedInput parse_env_var_declaration();
-
 
         ParsedInput parse_string();
 
-
         ParsedInput parse_env_var();
-
 
         ParsedInput parse_path();
 
-
         ParsedInput parse_identifier();
-
 
         ParsedInput parse_escape_code();
 
-    public:
+      public:
         Parser();
-
 
         ParsedInput parse_shell_input(const std::string& input);
     };
-}
+} // namespace Rune::Shell
 
-#endif //RUNEOS_PARSER_H
+#endif // RUNEOS_PARSER_H

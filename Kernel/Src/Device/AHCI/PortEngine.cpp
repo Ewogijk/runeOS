@@ -53,7 +53,8 @@ namespace Rune::Device {
         _logger = move(logger);
         DeviceDetection          dev_detect(_port->SSTS.DET);
         InterfacePowerManagement ipm(_port->SSTS.IPM);
-        if (dev_detect != DeviceDetection::DEVICE_ACTIVE && ipm != InterfacePowerManagement::IPM_ACTIVE) {
+        if (dev_detect != DeviceDetection::DEVICE_ACTIVE
+            && ipm != InterfacePowerManagement::IPM_ACTIVE) {
             _logger->debug(FILE, "No device detected...");
             return false;
         }
@@ -69,7 +70,10 @@ namespace Rune::Device {
         return true;
     }
 
-    bool PortEngine::start(SystemMemory* system_memory, bool s_64_a, Memory::SlabAllocator* heap, CPU::Timer* timer) {
+    bool PortEngine::start(SystemMemory*          system_memory,
+                           bool                   s_64_a,
+                           Memory::SlabAllocator* heap,
+                           CPU::Timer*            timer) {
         _system_memory = system_memory;
         _s64_a         = s_64_a;
         _heap          = heap;
@@ -85,13 +89,15 @@ namespace Rune::Device {
         }
 
         PhysicalAddr p_clb;
-        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL), p_clb)) {
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL),
+                                                 p_clb)) {
             _logger->error(FILE, "Failed to get physical address of command list...");
             return false;
         }
 
         PhysicalAddr p_fb;
-        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS), p_fb)) {
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS),
+                                                 p_fb)) {
             _logger->error(FILE, "Failed to get physical address of received FIS...");
             return false;
         }
@@ -134,8 +140,8 @@ namespace Rune::Device {
 
         bool s48_bit = buf[83] >> 10 & 1;
         if (s48_bit) {
-            _disk_info.sector_count =
-                ((U64) buf[103] << 48) | ((U64) buf[102] << 32) | ((U64) buf[101] << 16) | (U64) buf[100];
+            _disk_info.sector_count = ((U64) buf[103] << 48) | ((U64) buf[102] << 32)
+                                      | ((U64) buf[101] << 16) | (U64) buf[100];
         } else {
             _disk_info.sector_count = (buf[61] << 16) | buf[60];
         }
@@ -144,15 +150,16 @@ namespace Rune::Device {
         _disk_info.sector_size  = s_long_sector_size ? (U32) buf[117] : 512;
 
         // Scan for partitions
-        Function<size_t(U8[], size_t, U64)> sectorReader = [this](U8 buf[], size_t bufSize, U64 lba) {
-            return read(buf, bufSize, lba);
-        };
+        Function<size_t(U8[], size_t, U64)> sectorReader =
+            [this](U8 buf[], size_t bufSize, U64 lba) { return read(buf, bufSize, lba); };
         GPTScanResult scan_res = gpt_scan_device(_logger, sectorReader, _disk_info.sector_size);
         _logger->debug(FILE, "GPT Scan Status: {}", scan_res.status.to_string());
         if (scan_res.status == GPTScanStatus::DETECTED) {
             for (auto& partition : scan_res.partition_table) {
-                bool is_kernel_partition =
-                    memcmp(partition.unique_partition_guid.buf, (void*) KERNEL_PARTITION_GUID, GUID::SIZE) == 0;
+                bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf,
+                                                  (void*) KERNEL_PARTITION_GUID,
+                                                  GUID::SIZE)
+                                           == 0;
                 _disk_info.partition_table.add_back(
                     {partition.get_name(),
                      partition.starting_lba,
@@ -160,15 +167,18 @@ namespace Rune::Device {
                      is_kernel_partition ? PartitionType::KERNEL : PartitionType::DATA});
             }
         } else {
-            // Fixing the GPT is not supported for now, therefore we treat a corrupted GPT as if there is no GPT at all
+            // Fixing the GPT is not supported for now, therefore we treat a corrupted GPT as if
+            // there is no GPT at all
             // -> Create the implicit partition over the whole disk
-            _disk_info.partition_table.add_back({"Disk", 0, _disk_info.sector_count - 1, PartitionType::DATA});
+            _disk_info.partition_table.add_back(
+                {"Disk", 0, _disk_info.sector_count - 1, PartitionType::DATA});
         }
         return true;
     }
 
     bool PortEngine::stop() {
-        if (_port->CMD.ST == 0 && _port->CMD.CR == 0 && _port->CMD.FRE == 0 && _port->CMD.FR == 0) return true;
+        if (_port->CMD.ST == 0 && _port->CMD.CR == 0 && _port->CMD.FRE == 0 && _port->CMD.FR == 0)
+            return true;
 
         int spin_lock = 0;
         _port->CMD.ST = 0;
@@ -222,7 +232,8 @@ namespace Rune::Device {
         if (!request.internal_buf) return false;
 
         PhysicalAddr p_internal_buf;
-        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(request.internal_buf), p_internal_buf))
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(request.internal_buf),
+                                                 p_internal_buf))
             return false;
 
         CommandTable& ct        = _system_memory->CT[slot];
@@ -252,7 +263,8 @@ namespace Rune::Device {
         while (_port->CI && !_port->IS.TFES)
             ;
 
-        if (!_port->IS.TFES && !_system_memory->CL[slot].W) memcpy(request.buf, request.internal_buf, request.buf_size);
+        if (!_port->IS.TFES && !_system_memory->CL[slot].W)
+            memcpy(request.buf, request.internal_buf, request.buf_size);
 
         _internal_buf_cache->free(request.internal_buf);
         request.internal_buf = nullptr;
@@ -263,17 +275,19 @@ namespace Rune::Device {
     }
 
     size_t PortEngine::read(void* buf, size_t buf_size, size_t lba) {
-        return send_ata_command(
-            buf,
-            buf_size,
-            RegisterHost2DeviceFIS::ReadDMAExtended(lba, div_round_up(buf_size, (size_t) _disk_info.sector_size)));
+        return send_ata_command(buf,
+                                buf_size,
+                                RegisterHost2DeviceFIS::ReadDMAExtended(
+                                    lba,
+                                    div_round_up(buf_size, (size_t) _disk_info.sector_size)));
     }
 
     size_t PortEngine::write(void* buf, size_t buf_size, size_t lba) {
-        return send_ata_command(
-            buf,
-            buf_size,
-            RegisterHost2DeviceFIS::WriteDMAExtended(lba, div_round_up(buf_size, (size_t) _disk_info.sector_size)));
+        return send_ata_command(buf,
+                                buf_size,
+                                RegisterHost2DeviceFIS::WriteDMAExtended(
+                                    lba,
+                                    div_round_up(buf_size, (size_t) _disk_info.sector_size)));
     }
 
 } // namespace Rune::Device

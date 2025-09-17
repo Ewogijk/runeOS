@@ -33,10 +33,11 @@ namespace Rune::CPU {
         // Create kernel stack - only used for system calls and interrupts
         // Context switches will only ever happen between kernel stacks that's
         // why we have to set it up, so it jumps to the thread startup function
-        auto* stack_bottom       = new U8[Thread::KERNEL_STACK_SIZE];
-        auto  stack_top          = setup_trampoline_kernel_stack((uintptr_t) stack_bottom + Thread::KERNEL_STACK_SIZE,
-                                                       (VirtualAddr) (uintptr_t) _thread_enter);
-        thread->kernel_stack_top = stack_top;
+        auto* stack_bottom = new U8[Thread::KERNEL_STACK_SIZE];
+        auto  stack_top =
+            setup_trampoline_kernel_stack((uintptr_t) stack_bottom + Thread::KERNEL_STACK_SIZE,
+                                          (VirtualAddr) (uintptr_t) _thread_enter);
+        thread->kernel_stack_top    = stack_top;
         thread->kernel_stack_bottom = stack_bottom;
     }
 
@@ -69,7 +70,9 @@ namespace Rune::CPU {
 
     MultiLevelQueue* Scheduler::get_ready_queue() { return _ready_threads; }
 
-    LinkedList<SharedPointer<Thread>>* Scheduler::get_terminated_threads() { return &_terminated_threads; }
+    LinkedList<SharedPointer<Thread>>* Scheduler::get_terminated_threads() {
+        return &_terminated_threads;
+    }
 
     SharedPointer<Thread> Scheduler::get_running_thread() { return _running_thread; }
 
@@ -99,9 +102,9 @@ namespace Rune::CPU {
                          const SharedPointer<Thread>& thread_terminator,
                          void                         (*thread_enter)()) {
         auto* back_ground_threads = new MultiLevelQueue(SchedulingPolicy::BACKGROUND, nullptr);
-        auto* normal_threads      = new MultiLevelQueue(SchedulingPolicy::NORMAL, back_ground_threads);
-        _ready_threads            = new MultiLevelQueue(SchedulingPolicy::LOW_LATENCY, normal_threads);
-        _thread_enter             = thread_enter;
+        auto* normal_threads = new MultiLevelQueue(SchedulingPolicy::NORMAL, back_ground_threads);
+        _ready_threads       = new MultiLevelQueue(SchedulingPolicy::LOW_LATENCY, normal_threads);
+        _thread_enter        = thread_enter;
 
         // Set the code running since the start of the machine as the initial thread
         // No "main" is needed as the code is already running
@@ -190,7 +193,8 @@ namespace Rune::CPU {
         if (next_thread == _idle_thread) {
             if (_running_thread == _idle_thread) return; // Just keep the idle thread running
 
-            if (_running_thread->state == ThreadState::RUNNING) return; // Let the last non-idle thread keep running
+            if (_running_thread->state == ThreadState::RUNNING)
+                return; // Let the last non-idle thread keep running
         }
 
         if (_running_thread == _idle_thread) {
@@ -199,9 +203,13 @@ namespace Rune::CPU {
         } else if (_running_thread->state == ThreadState::RUNNING) {
             // Reschedule thread
             if (!_ready_threads->enqueue(_running_thread))
-                _logger->warn(FILE, R"(Failed to reschedule "{}-{}")", _running_thread->handle, _running_thread->name);
+                _logger->warn(FILE,
+                              R"(Failed to reschedule "{}-{}")",
+                              _running_thread->handle,
+                              _running_thread->name);
             else {
-                if (_running_thread->state == ThreadState::RUNNING) _running_thread->state = ThreadState::READY;
+                if (_running_thread->state == ThreadState::RUNNING)
+                    _running_thread->state = ThreadState::READY;
             }
         }
 

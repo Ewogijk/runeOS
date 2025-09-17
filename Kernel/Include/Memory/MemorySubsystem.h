@@ -26,8 +26,8 @@
 namespace Rune::Memory {
 
     /**
-     * The memory subsystem contains the physical and virtual memory managers, the kernel heap and physical and virtual
-     * memory maps.
+     * The memory subsystem contains the physical and virtual memory managers, the kernel heap and
+     * physical and virtual memory maps.
      */
     class MemorySubsystem : public Subsystem {
         MemoryMap _p_map;
@@ -89,8 +89,8 @@ namespace Rune::Memory {
          * Log the intermediate steps of the start routine.
          *
          * <p>
-         *  Call the function only after a successful start of the Memory Subsystem as logging is not available prior
-         *  to it.
+         *  Call the function only after a successful start of the Memory Subsystem as logging is
+         * not available prior to it.
          * </p>
          */
         void log_start_routine_phases() const;

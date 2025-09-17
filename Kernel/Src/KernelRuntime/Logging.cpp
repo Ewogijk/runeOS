@@ -33,7 +33,9 @@ namespace Rune {
 
     LogLevel Logger::get_log_level() const { return _log_level; }
 
-    void Logger::set_log_formatter(SharedPointer<LogFormatter> log_msg_fmt) { _log_msg_fmt = move(log_msg_fmt); }
+    void Logger::set_log_formatter(SharedPointer<LogFormatter> log_msg_fmt) {
+        _log_msg_fmt = move(log_msg_fmt);
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Simple Log Formatter
@@ -72,11 +74,13 @@ namespace Rune {
             // and keep the default background color of the stream for other log levels
             // Setting the background color in all cases looks strange on other terminals
             // e.g. clion, windows terminal, etc.
-            if (log_level == LogLevel::CRITICAL) _txt_stream->set_background_color(BG_COLOR_CRITICAL);
+            if (log_level == LogLevel::CRITICAL)
+                _txt_stream->set_background_color(BG_COLOR_CRITICAL);
             _txt_stream->set_foreground_color(FG_COLOR[(int) log_level - 1]);
         }
 
-        String log_message = _log_msg_fmt->format_log_message(log_level, module, fmt, arg_list, arg_size);
+        String log_message =
+            _log_msg_fmt->format_log_message(log_level, module, fmt, arg_list, arg_size);
         _txt_stream->write_line(log_message);
 
         if (_txt_stream->is_ansi_supported()) _txt_stream->reset_style();
@@ -88,7 +92,9 @@ namespace Rune {
     //                                          System Logger
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    SystemLogger::SystemLogger(SharedPointer<LogFormatter> log_msg_fmt, LogLevel log_level, const String& log_file)
+    SystemLogger::SystemLogger(SharedPointer<LogFormatter> log_msg_fmt,
+                               LogLevel                    log_level,
+                               const String&               log_file)
         : Logger(move(log_msg_fmt), log_level),
           _log_file(log_file) {
         SILENCE_UNUSED(log_msg_fmt)
@@ -102,9 +108,13 @@ namespace Rune {
 
     String SystemLogger::get_log_file() const { return _log_file; }
 
-    void SystemLogger::set_serial_logger(SharedPointer<Logger> serial_logger) { _serial_logger = move(serial_logger); }
+    void SystemLogger::set_serial_logger(SharedPointer<Logger> serial_logger) {
+        _serial_logger = move(serial_logger);
+    }
 
-    void SystemLogger::set_file_logger(UniquePointer<Logger> file_logger) { _file_logger = move(file_logger); }
+    void SystemLogger::set_file_logger(UniquePointer<Logger> file_logger) {
+        _file_logger = move(file_logger);
+    }
 
     void SystemLogger::log(LogLevel      log_level,
                            const String& module,

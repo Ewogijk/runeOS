@@ -30,8 +30,8 @@ namespace Rune::CPU {
      * </ul>
      *
      */
-#define IRQ_STATES(X)                                                                                                  \
-    X(IRQState, PENDING, 0x1)                                                                                          \
+#define IRQ_STATES(X)                                                                              \
+    X(IRQState, PENDING, 0x1)                                                                      \
     X(IRQState, HANDLED, 0x2)
 
     DECLARE_ENUM(IRQState, IRQ_STATES, 0x0) // NOLINT
@@ -48,8 +48,8 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief A IRQ table for a specific IRQ line contains some general information about the IRQ line
-     *          and installed IRQ handlers.
+     * @brief A IRQ table for a specific IRQ line contains some general information about the IRQ
+     * line and installed IRQ handlers.
      */
     struct IRQTable {
         U8                        irq_line     = 0;
@@ -59,28 +59,31 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief Try to detect a PIC device on the system and initialize it, so that it immediately will be able to forward
-     *        IRQs to the CPU.
+     * @brief Try to detect a PIC device on the system and initialize it, so that it immediately
+     * will be able to forward IRQs to the CPU.
      *
-     * The first PIC driver in the list that is able to detect it's device will be responsible for IRQ handling.
+     * The first PIC driver in the list that is able to detect it's device will be responsible for
+     * IRQ handling.
      *
      * @param pic_drivers List of installed PIC drivers.
-     * @return -1 if no PIC device was detected else the index of the PIC driver that has detected it's device.
+     * @return -1 if no PIC device was detected else the index of the PIC driver that has detected
+     * it's device.
      */
     int irq_init(const LinkedList<PICDriver*>& pic_drivers);
 
     /**
      * @brief Get the highest possible IRQ line.
      *
-     * IRQ lines will always start from zero to the highest possible IRQ line which is architecture dependant.
+     * IRQ lines will always start from zero to the highest possible IRQ line which is architecture
+     * dependant.
      *
      * @return Highest IRQ line.
      */
     U8 irq_get_line_limit();
 
     /**
-     * @brief Get the IRQ table for an IRQ line which contains general information about an IRQ and all
-     *          installed IRQ handlers.
+     * @brief Get the IRQ table for an IRQ line which contains general information about an IRQ and
+     * all installed IRQ handlers.
      * @param irq_line
      * @return IRQ table of an IRQ line.
      */
@@ -94,7 +97,8 @@ namespace Rune::CPU {
      * @param handler
      * @return True: The IRQ handler is installed. False: Installation failed.
      */
-    bool irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler);
+    bool
+    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler);
 
     /**
      * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
@@ -106,8 +110,8 @@ namespace Rune::CPU {
 
     /**
      * @brief Send an "End of Interrupt" signal through the PIC driver.
-     * @return True: The EOI was sent, False: It was not send because IRQ are not initialized or no IRQ is
-     *          currently pending.
+     * @return True: The EOI was sent, False: It was not send because IRQ are not initialized or no
+     * IRQ is currently pending.
      */
     bool irq_send_eoi();
 } // namespace Rune::CPU

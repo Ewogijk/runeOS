@@ -30,12 +30,12 @@ namespace Rune {
      * Priorities: Trace < Debug < Info < Warn < Error < Critical.
      * </p>
      */
-#define LOG_LEVELS(X)                                                                                                  \
-    X(LogLevel, TRACE, 0x1)                                                                                            \
-    X(LogLevel, DEBUG, 0x2)                                                                                            \
-    X(LogLevel, INFO, 0x3)                                                                                             \
-    X(LogLevel, WARN, 0x4)                                                                                             \
-    X(LogLevel, ERROR, 0x5)                                                                                            \
+#define LOG_LEVELS(X)                                                                              \
+    X(LogLevel, TRACE, 0x1)                                                                        \
+    X(LogLevel, DEBUG, 0x2)                                                                        \
+    X(LogLevel, INFO, 0x3)                                                                         \
+    X(LogLevel, WARN, 0x4)                                                                         \
+    X(LogLevel, ERROR, 0x5)                                                                        \
     X(LogLevel, CRITICAL, 0x6)
 
     DECLARE_ENUM(LogLevel, LOG_LEVELS, 0x0) // NOLINT
@@ -108,8 +108,8 @@ namespace Rune {
          * Log a message.
          *
          * <p>
-         *  This function is intended for functions that need to pass arguments as an array. For general purpose
-         *  logging use the other log functions (e.g. Trace, ...).
+         *  This function is intended for functions that need to pass arguments as an array. For
+         * general purpose logging use the other log functions (e.g. Trace, ...).
          * </p>
          *
          * @param log_level Log level of the message.
@@ -118,8 +118,11 @@ namespace Rune {
          * @param arg_list  Arguments for the format string.
          * @param arg_size  Number of arguments.
          */
-        virtual void
-        log(LogLevel log_level, const String& module, const String& fmt, Argument* arg_list, size_t arg_size) = 0;
+        virtual void log(LogLevel      log_level,
+                         const String& module,
+                         const String& fmt,
+                         Argument*     arg_list,
+                         size_t        arg_size) = 0;
 
         /**
          * Log a message.
@@ -143,7 +146,8 @@ namespace Rune {
          * @param fmt    The message as a format string.
          * @param args   Arguments for the format string.
          */
-        template <typename... Args> void trace(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void trace(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::TRACE, module, fmt, arg_array, sizeof...(Args));
         }
@@ -155,7 +159,8 @@ namespace Rune {
          * @param fmt    The message as a format string.
          * @param args   Arguments for the format string.
          */
-        template <typename... Args> void debug(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void debug(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::DEBUG, module, fmt, arg_array, sizeof...(Args));
         }
@@ -167,7 +172,8 @@ namespace Rune {
          * @param fmt    The message as a format string.
          * @param args   Arguments for the format string.
          */
-        template <typename... Args> void info(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void info(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::INFO, module, fmt, arg_array, sizeof...(Args));
         }
@@ -179,7 +185,8 @@ namespace Rune {
          * @param fmt    The message as a format string.
          * @param args   Arguments for the format string.
          */
-        template <typename... Args> void warn(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void warn(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::WARN, module, fmt, arg_array, sizeof...(Args));
         }
@@ -191,7 +198,8 @@ namespace Rune {
          * @param fmt    The message as a format string.
          * @param args   Arguments for the format string.
          */
-        template <typename... Args> void error(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void error(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::ERROR, module, fmt, arg_array, sizeof...(Args));
         }
@@ -204,7 +212,8 @@ namespace Rune {
          * @param args  Arguments for the format string.
          *
          */
-        template <typename... Args> void critical(const String& module, const String& fmt, Args... args) {
+        template <typename... Args>
+        void critical(const String& module, const String& fmt, Args... args) {
             Argument arg_array[] = {args...};
             log(LogLevel::CRITICAL, module, fmt, arg_array, sizeof...(Args));
         }
@@ -245,8 +254,11 @@ namespace Rune {
                          LogLevel                    log_level,
                          UniquePointer<TextStream>   txt_stream);
 
-        void
-        log(LogLevel log_level, const String& module, const String& fmt, Argument* arg_list, size_t arg_size) override;
+        void log(LogLevel      log_level,
+                 const String& module,
+                 const String& fmt,
+                 Argument*     arg_list,
+                 size_t        arg_size) override;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -254,7 +266,8 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * A cached log message with preformatted text since storing the template arguments is a pain in the ass.
+     * A cached log message with preformatted text since storing the template arguments is a pain in
+     * the ass.
      */
     struct CachedLogMessage {
         LogLevel log_level          = LogLevel::NONE;
@@ -263,7 +276,8 @@ namespace Rune {
     };
 
     /**
-     * Main kernel logger that logs either to both serial port and files in dev builds or to files in a non dev build.
+     * Main kernel logger that logs either to both serial port and files in dev builds or to files
+     * in a non dev build.
      */
     class SystemLogger : public Logger {
         const String _log_file;
@@ -277,10 +291,15 @@ namespace Rune {
         UniquePointer<Logger> _file_logger;
 
       public:
-        SystemLogger(SharedPointer<LogFormatter> log_msg_fmt, LogLevel log_level, const String& log_file);
+        SystemLogger(SharedPointer<LogFormatter> log_msg_fmt,
+                     LogLevel                    log_level,
+                     const String&               log_file);
 
-        void
-        log(LogLevel log_level, const String& module, const String& fmt, Argument* arg_list, size_t arg_size) override;
+        void log(LogLevel      log_level,
+                 const String& module,
+                 const String& fmt,
+                 Argument*     arg_list,
+                 size_t        arg_size) override;
 
         /**
          * @brief Update the log formatters of the serial and file logger.

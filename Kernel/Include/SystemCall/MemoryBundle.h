@@ -43,18 +43,19 @@ namespace Rune::SystemCall {
     Ember::StatusCode memory_get_page_size(const void* sys_call_ctx);
 
     /**
-     * If v_addr is zero then the location of the memory region will be chosen by the kernel. When v_addr is >0 then the
-     * kernel will use the value as a hint to where the memory region should be mapped. v_addr will always be page
-     * aligned if needed.
+     * If v_addr is zero then the location of the memory region will be chosen by the kernel. When
+     * v_addr is >0 then the kernel will use the value as a hint to where the memory region should
+     * be mapped. v_addr will always be page aligned if needed.
      *
      * <p>
      *  The memory region will always be zero initialized.
      * </p>
      *
-     * @brief Allocate the requested amount of memory in the active applications virtual address space.
+     * @brief Allocate the requested amount of memory in the active applications virtual address
+     * space.
      * @param sys_call_ctx    The memory management context.
-     * @param v_addr          Requested start address of the memory region that will be allocated. If zero the kernel
-     *                          chooses where to map the memory region.
+     * @param v_addr          Requested start address of the memory region that will be allocated.
+     * If zero the kernel chooses where to map the memory region.
      * @param num_pages       Number of pages that should be mapped.
      * @param page_protection Requested page protection level.
      * @return Success:  A pointer to the start of the mapped memory region.<br>
@@ -62,7 +63,8 @@ namespace Rune::SystemCall {
      *                   flag is invalid.<br>
      *          FAULT:   The memory allocation failed.
      */
-    Ember::StatusCode memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection);
+    Ember::StatusCode
+    memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection);
 
     /**
      * If v_addr is not page aligned it will be aligned to a page boundary.

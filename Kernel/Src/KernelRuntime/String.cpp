@@ -51,14 +51,20 @@ namespace Rune {
         return num;
     }
 
-    size_t write_reverse(char* buf, const size_t off, const size_t buf_len, const char* msg, int len, const int limit) {
+    size_t write_reverse(char*        buf,
+                         const size_t off,
+                         const size_t buf_len,
+                         const char*  msg,
+                         int          len,
+                         const int    limit) {
         size_t buf_pos = off;
         while (--len >= limit && buf_pos < buf_len)
             buf[buf_pos++] = msg[len];
         return buf_pos;
     }
 
-    template <typename TNumber> U8 int_to_buf(TNumber num, char buf[], U8 radix, const size_t precision) {
+    template <typename TNumber>
+    U8 int_to_buf(TNumber num, char buf[], U8 radix, const size_t precision) {
         U8 pos = 0;
         do {
             TNumber rem  = num % radix;
@@ -124,7 +130,7 @@ namespace Rune {
         const bool negative = num < 0;
         if (negative) num = 0 - num;
         char b[32];
-        U8   pos = int_to_buf(num, b, radix, 256); // Integer have no precision -> Set extremely high
+        U8 pos = int_to_buf(num, b, radix, 256); // Integer have no precision -> Set extremely high
         if (negative) {
             b[pos++] = '-';
         }
@@ -204,8 +210,9 @@ namespace Rune {
             num            = 0 - num;
         }
 
-        static const int pow10[]  = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
-        const bool       negative = num < 0;
+        static const int pow10[] =
+            {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
+        const bool negative = num < 0;
         if (negative) num = 0 - num;
 
         long         whole = static_cast<long>(num);
@@ -260,10 +267,11 @@ namespace Rune {
         while (frac_buf[frac_limit] == '0' && frac_limit < frac_pos)
             frac_limit++;
 
-        const size_t padding =
-            width > whole_pos + 1 + frac_pos - frac_limit ? width - whole_pos - 1 - frac_pos + frac_limit : 0;
-        size_t pad_left  = 0;
-        size_t pad_right = 0;
+        const size_t padding   = width > whole_pos + 1 + frac_pos - frac_limit
+                                     ? width - whole_pos - 1 - frac_pos + frac_limit
+                                     : 0;
+        size_t       pad_left  = 0;
+        size_t       pad_right = 0;
         if (align == '^') {
             pad_left  = padding / 2;
             pad_right = padding - pad_left;
@@ -281,8 +289,12 @@ namespace Rune {
 
         // When we print 0.001 for example, then fracBuf will only contain the 1 and not 001
         // that's why we need to print the zeroes explicitly
-        buf_pos =
-            write_reverse(buf, buf_pos, buf_len, frac_buf, static_cast<int>(frac_pos), static_cast<int>(frac_limit));
+        buf_pos = write_reverse(buf,
+                                buf_pos,
+                                buf_len,
+                                frac_buf,
+                                static_cast<int>(frac_pos),
+                                static_cast<int>(frac_limit));
 
         for (size_t i = 0; i < pad_right && buf_pos < buf_len; i++)
             buf[buf_pos++] = fill;
@@ -290,7 +302,11 @@ namespace Rune {
         return buf_pos;
     }
 
-    size_t interpolate(const char* fmt, char* buf, const size_t buf_size, const Argument* args, const size_t arg_size) {
+    size_t interpolate(const char*     fmt,
+                       char*           buf,
+                       const size_t    buf_size,
+                       const Argument* args,
+                       const size_t    arg_size) {
         auto   state            = ParserState::START;
         size_t buf_pos          = 0;
         U8     auto_idx_listing = 0; // 0: tbd, 1: no, 2: yes
@@ -405,7 +421,8 @@ namespace Rune {
                         if (args[arg_pos].type != Argument::AType::SIGNED_CHAR
                             && args[arg_pos].type != Argument::AType::CHAR
                             && args[arg_pos].type != Argument::AType::SHORT
-                            && args[arg_pos].type != Argument::AType::INT && args[arg_pos].type != Argument::AType::LONG
+                            && args[arg_pos].type != Argument::AType::INT
+                            && args[arg_pos].type != Argument::AType::LONG
                             && args[arg_pos].type != Argument::AType::LONG_LONG
                             && args[arg_pos].type != Argument::AType::U_CHAR
                             && args[arg_pos].type != Argument::AType::U_SHORT
@@ -544,54 +561,59 @@ namespace Rune {
                                                         use_prefix);
                                 break;
                             case Argument::FLOAT:
-                                buf_pos = format_floating_point_number(buf,
-                                                                       buf_pos,
-                                                                       buf_size,
-                                                                       arg.values.Float,
-                                                                       fill,
-                                                                       align,
-                                                                       width,
-                                                                       precision > 0 ? precision : DEF_FLOAT_PRECISION);
+                                buf_pos = format_floating_point_number(
+                                    buf,
+                                    buf_pos,
+                                    buf_size,
+                                    arg.values.Float,
+                                    fill,
+                                    align,
+                                    width,
+                                    precision > 0 ? precision : DEF_FLOAT_PRECISION);
                                 break;
                             case Argument::DOUBLE:
-                                buf_pos = format_floating_point_number(buf,
-                                                                       buf_pos,
-                                                                       buf_size,
-                                                                       arg.values.Double,
-                                                                       fill,
-                                                                       align,
-                                                                       width,
-                                                                       precision > 0 ? precision : DEF_FLOAT_PRECISION);
+                                buf_pos = format_floating_point_number(
+                                    buf,
+                                    buf_pos,
+                                    buf_size,
+                                    arg.values.Double,
+                                    fill,
+                                    align,
+                                    width,
+                                    precision > 0 ? precision : DEF_FLOAT_PRECISION);
                                 break;
                             case Argument::LONG_DOUBLE:
-                                buf_pos = format_floating_point_number(buf,
-                                                                       buf_pos,
-                                                                       buf_size,
-                                                                       arg.values.LongDouble,
-                                                                       fill,
-                                                                       align,
-                                                                       width,
-                                                                       precision > 0 ? precision : DEF_FLOAT_PRECISION);
+                                buf_pos = format_floating_point_number(
+                                    buf,
+                                    buf_pos,
+                                    buf_size,
+                                    arg.values.LongDouble,
+                                    fill,
+                                    align,
+                                    width,
+                                    precision > 0 ? precision : DEF_FLOAT_PRECISION);
                                 break;
                             case Argument::BOOL:
-                                buf_pos = format_string(buf,
-                                                        buf_pos,
-                                                        buf_size,
-                                                        arg.values.Bool ? "True" : "False",
-                                                        fill,
-                                                        align,
-                                                        width,
-                                                        precision > 0 ? precision : DEF_STRING_PRECISION);
+                                buf_pos =
+                                    format_string(buf,
+                                                  buf_pos,
+                                                  buf_size,
+                                                  arg.values.Bool ? "True" : "False",
+                                                  fill,
+                                                  align,
+                                                  width,
+                                                  precision > 0 ? precision : DEF_STRING_PRECISION);
                                 break;
                             case Argument::C_STRING:
-                                buf_pos = format_string(buf,
-                                                        buf_pos,
-                                                        buf_size,
-                                                        arg.values.CString,
-                                                        fill,
-                                                        align,
-                                                        width,
-                                                        precision > 0 ? precision : DEF_STRING_PRECISION);
+                                buf_pos =
+                                    format_string(buf,
+                                                  buf_pos,
+                                                  buf_size,
+                                                  arg.values.CString,
+                                                  fill,
+                                                  align,
+                                                  width,
+                                                  precision > 0 ? precision : DEF_STRING_PRECISION);
                                 break;
                         }
                         fill       = ' ';
@@ -636,7 +658,9 @@ namespace Rune {
         return size;
     }
 
-    const char* String::get_buf() const { return _size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf; }
+    const char* String::get_buf() const {
+        return _size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf;
+    }
 
     void String::init(const char* c_str, const size_t offset, const size_t size) {
         if (size < BUF_SIZE) {
@@ -704,11 +728,17 @@ namespace Rune {
         }
     }
 
-    String::String(const char* c_str) : _size(0), _capacity(0) { init(c_str, 0, get_cstr_size(c_str)); }
+    String::String(const char* c_str) : _size(0), _capacity(0) {
+        init(c_str, 0, get_cstr_size(c_str));
+    }
 
-    String::String(const char* c_str, const size_t size) : _size(0), _capacity(0) { init(c_str, 0, size); }
+    String::String(const char* c_str, const size_t size) : _size(0), _capacity(0) {
+        init(c_str, 0, size);
+    }
 
-    String::String(const char* c_str, const size_t offset, const size_t size) : _size(0), _capacity(0) {
+    String::String(const char* c_str, const size_t offset, const size_t size)
+        : _size(0),
+          _capacity(0) {
         init(c_str, offset, size);
     }
 
@@ -745,7 +775,9 @@ namespace Rune {
 
     bool String::is_empty() const { return _size == 0; }
 
-    const char* String::to_cstr() const { return _size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf; }
+    const char* String::to_cstr() const {
+        return _size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf;
+    }
 
     String String::lower() const {
         char        tmp_buf[size() + 1];
@@ -777,7 +809,8 @@ namespace Rune {
         size_t             start = 0;
         for (size_t i = 0; i < _size; i++) {
             if (buf[i] == separator) {
-                if (const size_t part_len = i - start; part_len > 0) parts.add_back(String(buf, start, part_len));
+                if (const size_t part_len = i - start; part_len > 0)
+                    parts.add_back(String(buf, start, part_len));
                 start = i + 1;
             }
         }
@@ -792,7 +825,8 @@ namespace Rune {
         for (size_t i = 0; i < _size; i++)
             new_buf[i] = buf[i] == c ? replacement : buf[i];
 
-        // When the replacement is the null terminator we must recalculate the size of the new string
+        // When the replacement is the null terminator we must recalculate the size of the new
+        // string
         return {new_buf, 0, replacement == '\0' ? get_cstr_size(new_buf) : _size};
     }
 
@@ -804,8 +838,9 @@ namespace Rune {
     }
 
     bool String::starts_with(const String& prefix) const {
-        if (prefix.is_empty()) return true;      // Every string is prefixed with the empty string
-        if (_size < prefix.size()) return false; // prefix is longer -> cannot be prefix e.g. abc cannot prefix ab
+        if (prefix.is_empty()) return true; // Every string is prefixed with the empty string
+        if (_size < prefix.size())
+            return false; // prefix is longer -> cannot be prefix e.g. abc cannot prefix ab
 
         const auto t_b = get_buf();
         const auto p_b = prefix.get_buf();
@@ -814,12 +849,17 @@ namespace Rune {
         return true;
     }
 
-    String String::substring(size_t start_idx) const { return {get_buf(), start_idx, size() - start_idx}; }
+    String String::substring(size_t start_idx) const {
+        return {get_buf(), start_idx, size() - start_idx};
+    }
 
-    String String::substring(size_t start_idx, size_t len) const { return {get_buf(), start_idx, len}; }
+    String String::substring(size_t start_idx, size_t len) const {
+        return {get_buf(), start_idx, len};
+    }
 
     String String::operator+(const String& o) const {
-        if (o.size() == 0) return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, 0, _size};
+        if (o.size() == 0)
+            return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, 0, _size};
 
         return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf,
                 o.size() < BUF_SIZE ? o._storage._stackBuf : o._storage._heapBuf,
@@ -836,7 +876,8 @@ namespace Rune {
 
     String String::operator+(const char* o) const {
         size_t o_size = get_cstr_size(o);
-        if (o_size == 0) return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, 0, _size};
+        if (o_size == 0)
+            return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, 0, _size};
 
         return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, o, _size, o_size};
     }
@@ -875,7 +916,9 @@ namespace Rune {
         return _size < BUF_SIZE ? _storage._stackBuf[index] : _storage._heapBuf[index];
     }
 
-    const char* String::begin() const { return _size < BUF_SIZE ? &_storage._stackBuf[0] : &_storage._heapBuf[0]; }
+    const char* String::begin() const {
+        return _size < BUF_SIZE ? &_storage._stackBuf[0] : &_storage._heapBuf[0];
+    }
 
     const char* String::end() const {
         return _size < BUF_SIZE ? &_storage._stackBuf[_size] : &_storage._heapBuf[_size];
