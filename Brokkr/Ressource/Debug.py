@@ -19,50 +19,54 @@ import subprocess
 import os
 import re
 
-KERNEL_ELF = 'bin/runeKernel.elf'
-RUNE_OS = 'bin/runeOS.app'
+KERNEL_ELF = "bin/runeKernel.elf"
+RUNE_OS = "bin/runeOS.app"
 
 
 def get_text_section_address(elf_file: str):
-    result = subprocess.run(['readelf', '-WS', elf_file], stdout=subprocess.PIPE)
-    sections = result.stdout.decode('utf-8').split('\n')
-    text_section = ''
+    result = subprocess.run(["readelf", "-WS", elf_file], stdout=subprocess.PIPE)
+    sections = result.stdout.decode("utf-8").split("\n")
+    text_section = ""
     for s in sections:
-        if '.text' in s:
+        if ".text" in s:
             text_section = s
             break
 
-    text_section = re.sub(r'\s+', ' ', text_section).split()
-    return f'0x{text_section[4]}'
+    text_section = re.sub(r"\s+", " ", text_section).split()
+    return f"0x{text_section[4]}"
 
 
 def create_gdb_conf(break_instruction: str):
-    print(f'Configure gdb to run until breakpoint: {break_instruction}.')
-    with open('GDB.conf', 'w') as f:
-        f.write(f'file {KERNEL_ELF}\n')
-        f.write(f'add-symbol-file {RUNE_OS} {get_text_section_address(RUNE_OS)}\n')
-        f.write('target remote localhost:1234\n')
-        f.write('lay next\n')
-        f.write('lay next\n')
-        f.write('lay next\n')
-        f.write('lay next\n')
-        f.write('lay next\n')
-        f.write(f'{break_instruction}\n')
-        f.write('c\n')
-    print('Saved config to GDB.conf.')
+    print(f"Configure gdb to run until breakpoint: {break_instruction}.")
+    with open("GDB.conf", "w") as f:
+        f.write(f"file {KERNEL_ELF}\n")
+        f.write(f"add-symbol-file {RUNE_OS} {get_text_section_address(RUNE_OS)}\n")
+        f.write("target remote localhost:1234\n")
+        f.write("lay next\n")
+        f.write("lay next\n")
+        f.write("lay next\n")
+        f.write("lay next\n")
+        f.write("lay next\n")
+        f.write(f"{break_instruction}\n")
+        f.write("c\n")
+    print("Saved config to GDB.conf.")
 
 
 def run_gdb() -> None:
-    print('gdb -x GDB.conf')
-    os.system('gdb -x GDB.conf')
+    print("gdb -x GDB.conf")
+    os.system("gdb -x GDB.conf")
 
 
 @click.command()
-@click.argument('break_instruction', type=str)
+@click.argument("break_instruction", type=str)
 def debug(break_instruction: str):
-    create_gdb_conf(f'b *{break_instruction}' if break_instruction.startswith('0x') else f'b {break_instruction}')
+    create_gdb_conf(
+        f"b *{break_instruction}"
+        if break_instruction.startswith("0x")
+        else f"b {break_instruction}"
+    )
     run_gdb()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     debug()

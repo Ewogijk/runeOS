@@ -14,14 +14,14 @@
 
 from SCons.Environment import *
 
-Import('target_env')
+Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File('BitMapAllocator.cpp'),
-    target_env.File('MemorySubsystem.cpp'),
-    target_env.File('PhysicalMemoryManager.cpp'),
-    target_env.File('SlabAllocator.cpp'),
-    target_env.File('VirtualMemoryManager.cpp'),
+    target_env.File("BitMapAllocator.cpp"),
+    target_env.File("MemorySubsystem.cpp"),
+    target_env.File("PhysicalMemoryManager.cpp"),
+    target_env.File("SlabAllocator.cpp"),
+    target_env.File("VirtualMemoryManager.cpp"),
 ]
-Memory = target_env.StaticLibrary('Memory.o', target_env.Object(sources))
-Export('Memory')
+Memory = target_env.StaticLibrary("Memory.o", target_env.Object(sources))
+Export("Memory")

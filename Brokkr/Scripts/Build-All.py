@@ -33,21 +33,20 @@ import click
 from Setting import Setting
 
 from pathlib import Path
-from typing import List
 
 
-##############################################################################################################
+##################################################################################################
 #                                           General Stuff
-##############################################################################################################
+##################################################################################################
 
 
 def assert_condition(condition: bool, err_msg: str) -> None:
     if not condition:
-        print(f'Error - {err_msg}')
+        print(f"Error - {err_msg}")
         sys.exit(-1)
 
 
-def exec_shell_cmd(cmd: List[str], wd: str, err_msg: str) -> None:
+def exec_shell_cmd(cmd: list[str], wd: str, err_msg: str) -> None:
     """
     Print the shell command then run it.
     :param cmd:
@@ -55,45 +54,48 @@ def exec_shell_cmd(cmd: List[str], wd: str, err_msg: str) -> None:
     :param err_msg:
     :return:
     """
-    print(f'>>> {" ".join(cmd)}')
+    print(f">>> {' '.join(cmd)}")
     assert_condition(subprocess.run(cmd, cwd=wd).returncode == 0, err_msg)
 
 
 def meson_build(source_dir: Path):
-    build_dir = source_dir / 'Build'
+    build_dir = source_dir / "Build"
     if not build_dir.exists():
         exec_shell_cmd(
-            ['meson', 'setup', '--cross-file', 'x86_64-rune.txt', 'Build'],
+            ["meson", "setup", "--cross-file", "x86_64-rune.txt", "Build"],
             str(source_dir),
-            'Failed to setup meson.'
+            "Failed to setup meson.",
         )
-    exec_shell_cmd(['meson', 'compile'], str(build_dir), f'Failed to compile {source_dir.name}.')
+    exec_shell_cmd(["meson", "compile"], str(build_dir), f"Failed to compile {source_dir.name}.")
     print()
 
 
 @click.command()
-@click.help_option('-h', '--help')
-@click.argument('build_settings', type=str)
+@click.help_option("-h", "--help")
+@click.argument("build_settings", type=str)
 def build_all(build_settings: str) -> None:
-    """Build all the project sources, create the runeOS.image file and install it in the build directory of the target
-    using the given BUILD_SETTINGS.
+    """Build all the project sources, create the runeOS.image file and install it in the build
+    directory of the target using the given BUILD_SETTINGS.
 
-    The script will not perform any build steps by itself but rather call the appropriate build script with the required
-    arguments, e.g. to compile the kernel the 'scons' command will be run in the 'Kernel/' directory.
+    The script will not perform any build steps by itself but rather call the appropriate build
+    script with the required arguments, e.g. to compile the kernel the 'scons' command will be run
+    in the 'Kernel/' directory.
 
     As a result the image build related steps will require sudo permissions.
 
     \b
-    All paths will be relative to the project root directory. The script performs the following build steps:
+    All paths will be relative to the project root directory. The script performs the following
+    build steps:
         1. Parse the build.settings file.
         2. Create the BuildVariables.py in 'Kernel/'.
         3. Run 'scons' in 'Kernel/'.
-        4. Check if 'OS/Build' exists, if not run 'meson setup --cross-file x86_64-rune.txt Build' in 'OS'.
+        4. Check if 'OS/Build' exists, if not run 'meson setup --cross-file x86_64-rune.txt Build'
+            in 'OS'.
         5. Run 'meson compile' in 'OS/Build'.
         6. Run 'Build-Image.sh ...' in 'Brokkr/'. (sudo permissions required)
         7. For each application in 'App/'
-            7.1. Check if '<app-dir>/Build' exists, if not run 'meson setup --cross-file x86_64-rune.txt Build' in
-                    '<app-dir>/'.
+            7.1. Check if '<app-dir>/Build' exists, if not run 'meson setup --cross-file
+                    x86_64-rune.txt Build' in '<app-dir>/'.
             7.2 Run 'meson compile' in '<app-dir>/Build'.
             7.3 Run 'Install-App.sh ...' in 'Brokkr/'. (sudo permissions required)
         8. Run 'Install.sh ...' in 'Brokkr/'.
@@ -102,11 +104,8 @@ def build_all(build_settings: str) -> None:
     # Load build.settings
     #
     build_settings = Path(build_settings)
-    assert_condition(
-        build_settings.exists(),
-        f'\'{build_settings}\' not found.'
-    )
-    with open(build_settings, 'r') as f:
+    assert_condition(build_settings.exists(), f"'{build_settings}' not found.")
+    with open(build_settings) as f:
         settings = json.load(f)
 
     project_root = Path(settings[Setting.PROJECT_ROOT.to_json_key()])
@@ -116,7 +115,7 @@ def build_all(build_settings: str) -> None:
     #
     # Build Kernel
     #
-    kernel_directory = project_root / 'Kernel'
+    kernel_directory = project_root / "Kernel"
     build_variables = [
         Setting.BUILD,
         Setting.ARCH,
@@ -126,72 +125,61 @@ def build_all(build_settings: str) -> None:
         Setting.CRT_BEGIN,
         Setting.CRT_END,
     ]
-    with open(kernel_directory / 'BuildVariables.py', 'w') as file:
-        file.writelines([
-            '#\n',
-            '# This file was automatically generated by runeToolkit.\n',
-            '#\n'
-        ])
+    with open(kernel_directory / "BuildVariables.py", "w") as file:
+        file.writelines(["#\n", "# This file was automatically generated by runeToolkit.\n", "#\n"])
         for build_var in build_variables:
-            file.write(f'{build_var.to_scons_key()} = \'{settings[build_var.to_json_key()]}\'\n')
-    build_kernel_cmd = ['scons']
-    exec_shell_cmd(build_kernel_cmd, str(kernel_directory), 'Failed to build the kernel.')
+            file.write(f"{build_var.to_scons_key()} = '{settings[build_var.to_json_key()]}'\n")
+    build_kernel_cmd = ["scons"]
+    exec_shell_cmd(build_kernel_cmd, str(kernel_directory), "Failed to build the kernel.")
 
     #
     # Build OS
     #
-    os_directory = project_root / 'OS'
+    os_directory = project_root / "OS"
     meson_build(os_directory)
 
     #
     # Build Image
     #
-    kernel_elf = (project_root
-                  / 'Kernel'
-                  / 'Build'
-                  / f'{arch}-{build}'
-                  / 'runeKernel.elf')
-    os_elf = (project_root
-              / 'OS'
-              / 'Build'
-              / 'runeOS.app')
+    kernel_elf = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "runeKernel.elf"
+    os_elf = project_root / "OS" / "Build" / "runeOS.app"
     build_image_cmd = [
-        'Scripts/Build-Image.sh',
+        "Scripts/Build-Image.sh",
         str(kernel_elf),
         str(os_elf),
-        str(settings[Setting.IMAGE_SIZE.to_json_key()])
+        str(settings[Setting.IMAGE_SIZE.to_json_key()]),
     ]
-    exec_shell_cmd(build_image_cmd, '.', 'Failed to build runeOS.image.')
+    exec_shell_cmd(build_image_cmd, ".", "Failed to build runeOS.image.")
     print()
 
     #
     # Install all apps
     #
-    rune_os_image = project_root / 'Brokkr' / 'runeOS.image'
-    app_dir = project_root / 'App'
+    rune_os_image = project_root / "Brokkr" / "runeOS.image"
+    app_dir = project_root / "App"
     for app_proj in app_dir.iterdir():
         meson_build(app_proj)
         install_app_cmd = [
-            'Scripts/Install-App.sh',
+            "Scripts/Install-App.sh",
             str(rune_os_image),
-            str(app_proj / 'Build' / f'{app_proj.name}.app'),
+            str(app_proj / "Build" / f"{app_proj.name}.app"),
         ]
-        exec_shell_cmd(install_app_cmd, '.', 'Failed to install build files.')
+        exec_shell_cmd(install_app_cmd, ".", "Failed to install build files.")
     print()
 
     #
     # Install
     #
     install_cmd = [
-        'Scripts/Install.sh',
+        "Scripts/Install.sh",
         build,
-        str(project_root / 'Brokkr' / 'Build' / f'{arch}-{build}'),
+        str(project_root / "Brokkr" / "Build" / f"{arch}-{build}"),
         str(rune_os_image),
         str(kernel_elf),
-        str(os_elf)
+        str(os_elf),
     ]
-    exec_shell_cmd(install_cmd, '.', 'Failed to install build files.')
+    exec_shell_cmd(install_cmd, ".", "Failed to install build files.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     build_all()

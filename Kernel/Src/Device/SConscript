@@ -14,17 +14,17 @@
 
 from SCons.Environment import *
 
-Import('target_env')
+Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File('DeviceSubsystem.cpp'),
-    target_env.File('AHCI/AHCI.cpp'),
-    target_env.File('AHCI/FIS.cpp'),
-    target_env.File('AHCI/GPT.cpp'),
-    target_env.File('AHCI/Port.cpp'),
-    target_env.File('AHCI/PortEngine.cpp'),
-    target_env.File('Keyboard/Keyboard.cpp'),
-    target_env.File('Keyboard/PS2Keyboard.cpp'),
+    target_env.File("DeviceSubsystem.cpp"),
+    target_env.File("AHCI/AHCI.cpp"),
+    target_env.File("AHCI/FIS.cpp"),
+    target_env.File("AHCI/GPT.cpp"),
+    target_env.File("AHCI/Port.cpp"),
+    target_env.File("AHCI/PortEngine.cpp"),
+    target_env.File("Keyboard/Keyboard.cpp"),
+    target_env.File("Keyboard/PS2Keyboard.cpp"),
 ]
-Device = target_env.StaticLibrary('Device.o', target_env.Object(sources))
-Export('Device')
+Device = target_env.StaticLibrary("Device.o", target_env.Object(sources))
+Export("Device")
