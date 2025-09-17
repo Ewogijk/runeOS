@@ -8,73 +8,74 @@ intend to make working on the project easier for everyone.
 
 ### Table of Contents
 
-- [Reporting Bugs](#reporting-bugs)
-- [Requesting Features](#requesting-features)
-- [Setting up your Local Development Environment](#setting-up-your-local-development-environment)
+- [Found a Bug?](#found-a-bug)
+- [Missing a Feature?](#missing-a-feature)
+- [Submitting Issues](#submitting-issues)
+- [Submitting a Pull Request](#submitting-a-pull-request)
+- [Building the Project](#building-the-project)
   - [Getting the Dependencies](#getting-the-dependencies)
   - [Building with Brokkr](#building-with-brokkr)
   - [Building Manually](#building-manually)
 - [Styleguide](#styleguide)
   - [Commit Message Style](#commit-message-style)
-  - [C/C++](#cc)
-
-## Reporting Bugs
-
-You have found a bug and want to report it? This section will introduce our guidelines for bug reports, by following
-them you help us to better understand your report and thus fixing your bug.
-
-### Before Submitting
-
-Please check the following guidelines before submitting, you may not need to create an issue if any of the following 
-points apply.
-
-1. **Update to the latest release** - We may have already fixed your bug.
-2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - To see if the issue has already been
-      reported. If it was and the issue is still open, comment on the existing issue rather than creating a new one.
-
-### Submitting a Bug Report
-
-To report a bug fill out the [Bug Report](https://github.com/Ewogijk/runeOS/issues/new/choose) template. Explain your problem as 
-detailed as possible to help us track down your issue:
-
-- **Use a clear and descriptive title**
-- **Describe the steps to reproduce** - Be as detailed as possible. Explain not only what but also how you did 
-    something. Provide the arguments you used for functions and commands.
-- **Explain the behavior after performing the steps**
-- **Describe what behavior you expected**
-- **Specify your environment** - Which runeOS release did you use? What is your Qemu version?
-- **Add screenshots or code snippets** if suitable
+  - [C/C++ Code Style](#cc-code-style)
 
 
-## Requesting Features
+## Found a Bug?
 
-You want a new feature for the OS? Or you want to make improvements to an existing feature? You are welcome to make a 
-feature request!
+When you find a bug in the source code, you can help us by [submitting an issue](#submitting-issues) or submit a 
+[Pull Request](#submitting-a-pull-request) with the fix.
 
-### Before Submitting
 
-Please check out the following guidelines before you submit your feature request to avoid creating duplicate requests:
- 
-1. **Make sure your feature is not already implemented** - If your feature is already implemented, check if your 
-      suggestion adds anything to the implementation. If yes, feel free to create an issue.
-2. **Check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues)** - Your feature might have already been requested. If that is the case, comment on 
-     the existing issue rather than creating a new one.
+## Missing a Feature?
 
-### Submitting a Feature Request
+You can request a new feature or an enhancement to an existing feature by [submitting an issue](#submitting-issues).
 
-To request a feature fill out the [Feature Request](https://github.com/Ewogijk/runeOS/issues/new/choose) template. 
-Explain what your feature does and why you think it is important: 
+If you want to implement a feature yourself, please first consider the size of your feature to determine your next 
+steps:
 
-- **Use a clear and descriptive title**
-- **Describe the feature or enhancement** - What problem does it solve? How does your solution look like? Why is it 
-    useful for the project?
+- **Minor Features** can be directly submitted as [pull requests](#submitting-a-pull-request).
+- **Major Features** require an issue to be created first so that they can go through a short design phase first. You 
+      outline your proposal so that it can be discussed.
+      
+When is a feature major? Your feature is major when it adds to, removes from or modifies...
+- the Kernel ABI.
+- the Public API between Kernel Modules.
+- System Calls.
 
-## Setting up your Local Development Environment
 
-You want to fix a bug or develop a new feature? This section will help you set up your local development environment 
-and make your first build. Before going further, you fork the repo and get the code. If you are new to GitHub check out 
-the [First Contributions](https://github.com/firstcontributions/first-contributions), it is a great repository to learn 
-about pull requests which includes forking repositories.
+## Submitting Issues
+
+Before submitting an issue please check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues) to make sure that 
+your issue has not been reported yet. If your issue has already been reported, comment on the existing issue rather than
+creating a new one.
+
+You can submit a new issue by choosing one of the [Issue Templates](https://github.com/Ewogijk/runeOS/issues/new/choose)
+and filling out the template.
+
+## Submitting a Pull Request
+
+Before you submit your pull request (PR), please take a look at our guidelines, they help us to ensure high quality and 
+speed up the review:
+
+- Search for an open [PR](https://github.com/Ewogijk/runeOS/pulls) that might relate to your submission, so you don't 
+    work on an issue that someone already fixed.
+- Follow our [Commit message style](#commit-message-style)
+- Document your changes.
+- Follow our [Code Style](#cc-code-style).
+- Send the Pull Request to `runeOS/main`.
+
+Your first time contributing? Check out
+[First Contributions](https://github.com/firstcontributions/first-contributions), it is great repo that guides you 
+through your first contribution.
+
+After you submit the PR, we will review it and provide feedback. If we ask you to make changes to your submission then 
+make the required changes to your code and push them to your fork, your PR will be updated automatically.
+
+Once your PR gets accepted, we will merge it. That's it!
+
+
+## Building the Project
 
 ### Getting the Dependencies
 
@@ -84,14 +85,8 @@ First of you will have to get the necessary tools to build the OS. Begin with in
 sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 ```
 
-- NASM: The Netwide Assembler is an assembler for the x86 architecture.
-- Ninja: A fast low-level build system and dependency of meson.
-- Qemu: A generic and open source machine emulator and virtualizer, you will run the OS with it.
-- dosfstools: Tooling to create FAT formatted disk images.
-- GDB: The GNU debugger.
-
 Our code formatter is `clang-format`, unfortunately the apt package of it is outdated. Run the following to get the
-clang-format version compatible with the `.clang-format` config:
+clang-format version compatible with our `.clang-format` config:
 
 ```shell
 wget https://apt.llvm.org/llvm.sh
@@ -106,19 +101,13 @@ sudo wget -qO /usr/local/bin/clang-tidy https://github.com/cpp-linter/clang-tool
 sudo chmod a+x /usr/local/bin/clang-tidy
 ```
 
-Then install the python dependencies, it is recommended use a [venv](https://docs.python.org/3/library/venv.html):
+Then install the python dependencies, we recommend to install in a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
 pip install scons click meson
 ```
 
-- SCons: SCons is a cross-platform substitute for make and used to build the kernel.
-- meson: Meson will build the OS and userspace applications.
-- click: A package to build command line interfaces and used with most python scripts.
-
-Lastly, head over to the [runeToolchain]() project and install the latest release. The toolchain provides two 
-cross-compilers, a freestanding cross-compiler to build the kernel and a hosted cross-compiler with C/C++ standard 
-library to compile userspace applications.
+Lastly, get the latest release of the [runeToolchain]() that provides the cross-compilers to build the runeOS.
 
 
 ### Building with Brokkr
@@ -127,7 +116,7 @@ Brokkr is the build system of runeOS that creates bootable OS images and the rec
 build system in the classical meaning like SCons or Meson, but rather a tool that executes those two build systems and 
 other build scripts that know how to build the OS.
 
-Building with Brokkr requires only two steps, first the build directory must be configured. In the 'Brokkr' directory 
+Building with Brokkr requires only two steps, first the build directory must be configured. In the `Brokkr/` directory 
 run:
 
 ```shell
@@ -135,16 +124,10 @@ run:
 ```
 
 This tells Brokkr that it should make a 'debug' build for the 'x86_64' architecture using the freestanding 
-cross-compiler installed in 'path/to/your/freestanding-compiler' and
-that the OS image should be 256MB. 
+cross-compiler installed in 'path/to/your/freestanding-compiler' and that the OS image should be 256MB.
 
-> 
-> Following step requires sudo privileges to format the OS image and mount it to copy files over. If you feel 
-> uncomfortable running Brokkr with those privileges, take a look at the 'Manual Build' section first to verify what
-> Brokkr does under hood.
-> 
-
-Now Brokkr is ready to build the OS:
+Now you can build runeOS, note that this step requires sudo permissions to create the bootable image. If you are 
+interested what happens behind the scenes, try to build runeOS [manually](#building-manually). Now run:
 
 ```shell
 ./Brokkr.py build x86_64 debug
@@ -157,9 +140,9 @@ you just made your first OS build!
 ### Building Manually
 
 It is highly recommended to use Brokkr to build the bootable OS image, as building manually is a lengthy and error-prone
-process and Brokkr will automatically perform the steps described in the following sections in the same order for you.
+process and Brokkr will automatically perform the steps described in the following sections for you.
 
-#### Kernel Build
+#### Building the Kernel
 
 The kernel implements its own runtime environment and therefore uses SCons as build system due to its high 
 customizability. SCons expects a set of build variables as input from a file called `BuildVariables.py`. Go to the 
@@ -183,7 +166,7 @@ scons
 
 In the `Build/<arch>-<build>` directory you should now find the `runeKernel.elf` file.
 
-#### OS Build
+#### Building the OS
 
 The OS is build with Meson which provides excellent cross-compiler support. Before trying to build ensure that the 
 hosted cross-compiler binaries have been added to your `PATH` environment variable.
@@ -202,7 +185,7 @@ cd Build && meson compile
 
 Now you should find the `runeOS.app` file in the `Build/` directory.
 
-#### Bootable Image Creation
+#### Creating the Bootable Image
 
 At this point you should have a `runeKernel.elf` and `runeOS.app`. There are two ways to create the bootable image, the 
 easy way is running the `Build-Image.sh` script in the `Brokkr/` directory:
@@ -221,7 +204,7 @@ Scripts/Build-Image.sh -h
 
 No matter how you created the bootable image, you should now have a bootable image, lets call it `runeOS.image`.
 
-#### App Build and Installation
+#### Building and Installing an App
 
 You should have a `runeOS.image` at this point. You could run it with Qemu but runeOS on its own does not provide many 
 features. The `App` directory contains a collection of basic software that you will likely recognize by name. This 
@@ -253,7 +236,7 @@ Again, the script requires sudo privileges to use the 'mount' and 'losetup' comm
 No matter your choice, the `cat.app` should now be successfully installed. Repeat the steps for any application you wish 
 to install.
 
-#### Build Installation
+#### Installing the Build
 
 If you have downloaded the latest release, you will have noticed it contains a `Start.py` file and more. To install your
 `runeOS.image` alongside this script and other configuration files, in `Brokkr/` run:
@@ -287,7 +270,7 @@ This feature solves this problem by doing this and that...
 
 ```
 
-### C/C++
+### C/C++ Code Style
 
 Our code formatter for C/C++ is `clang-format`, use it with the `.clang-format` config file in the project root 
 directory.
