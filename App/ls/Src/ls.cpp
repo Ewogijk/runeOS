@@ -17,10 +17,9 @@
 #include <Forge/App.h>
 #include <Forge/VFS.h>
 
-#include <string>
-#include <iostream>
 #include <format>
-
+#include <iostream>
+#include <string>
 
 struct CLIArgs {
     std::string dir;
@@ -30,27 +29,19 @@ struct CLIArgs {
     bool list = false;
 };
 
-
 bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
     bool dir_seen = false;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0)
-            continue;
+        if (arg.size() == 0) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
-                    case 'a':
-                        args_out.all = true;
-                        break;
-                    case 'l':
-                        args_out.list = true;
-                        break;
-                    case 'h':
-                        args_out.help = true;
-                        break;
-                    default: {
+                    case 'a': args_out.all = true; break;
+                    case 'l': args_out.list = true; break;
+                    case 'h': args_out.help = true; break;
+                    default:  {
                         std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
@@ -68,7 +59,9 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
 
     if (!dir_seen) {
         char c_path[Ember::STRING_SIZE_LIMIT];
-        if (const Ember::StatusCode ret = Forge::app_current_directory(c_path, Ember::STRING_SIZE_LIMIT); ret < 0) {
+        if (const Ember::StatusCode ret =
+                Forge::app_current_directory(c_path, Ember::STRING_SIZE_LIMIT);
+            ret < 0) {
             std::cerr << "IO error: Cannot get current directory." << std::endl;
             return false;
         }
@@ -76,7 +69,6 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
     }
     return true;
 }
-
 
 void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
     if (const std::string node_path = node_info.node_path;
@@ -87,26 +79,24 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
                 attr[0] = 'F';
             else
                 attr[0] = 'D';
-            if (node_info.is_hidden())
-                attr[1] = 'H';
+            if (node_info.is_hidden()) attr[1] = 'H';
             if (node_info.is_system_node()) {
                 attr[2] = 'S';
             }
             if (node_info.is_readonly()) {
                 attr[3] = 'R';
             }
-            std::cout << std::format("{:<10} {:<15} {}", attr, node_info.size, node_info.node_path) << std::endl;
+            std::cout << std::format("{:<10} {:<15} {}", attr, node_info.size, node_info.node_path)
+                      << std::endl;
         } else {
             std::cout << node_info.node_path << std::endl;
         }
     }
 }
 
-
 CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
-    if (!parse_cli_args(argc, argv, args))
-        return -1;
+    if (!parse_cli_args(argc, argv, args)) return -1;
 
     if (args.help) {
         std::cout << "ls [directory] [options]" << std::endl;
@@ -121,23 +111,19 @@ CLINK int main(const int argc, char* argv[]) {
     Ember::StatusCode dir_stream_ID = Forge::vfs_directory_stream_open(args.dir.c_str());
     if (dir_stream_ID < 0) {
         switch (dir_stream_ID) {
-            case Ember::Status::BAD_ARG:
-                std::cerr << "'" << args.dir << "': Bad path.";
-                break;
+            case Ember::Status::BAD_ARG: std::cerr << "'" << args.dir << "': Bad path."; break;
             case Ember::Status::NODE_NOT_FOUND:
                 std::cerr << "'" << args.dir << "': Directory not found.";
                 break;
             case Ember::Status::NODE_IS_FILE:
                 std::cerr << "'" << args.dir << "': Not a directory.";
                 break;
-            default:
-                std::cerr << "'" << args.dir << "': IO error.";
+            default: std::cerr << "'" << args.dir << "': IO error.";
         }
         return -1;
     }
 
-    if (args.list)
-        std::cout << "Attributes Size            Name" << std::endl;
+    if (args.list) std::cout << "Attributes Size            Name" << std::endl;
 
     Ember::NodeInfo   node_info;
     Ember::StatusCode next = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);

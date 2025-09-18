@@ -17,7 +17,6 @@
 #ifndef RUNEOS_AUTOCOMPLETION_H
 #define RUNEOS_AUTOCOMPLETION_H
 
-
 #include <Ember/VFSBits.h>
 
 #include <string>
@@ -30,19 +29,16 @@ namespace Rune::Shell {
         std::vector<std::string> _builtin_command_vocabulary;
         std::vector<std::string> _path_vocabulary;
 
-
         static bool list_directory(const std::string& directory, std::vector<Ember::NodeInfo>& out);
 
-
-    public:
-
+      public:
         /**
          * @brief
          * @param builtin_commands
          * @param path_variables
          */
-        bool init_vocabulary(const std::vector<std::string>& builtin_commands, const std::vector<std::string>& path_variables);
-
+        bool init_vocabulary(const std::vector<std::string>& builtin_commands,
+                             const std::vector<std::string>& path_variables);
 
         /**
          * @brief
@@ -51,9 +47,9 @@ namespace Rune::Shell {
          */
         std::vector<std::string> auto_complete_command(const std::string& command_prefix) const;
 
-
-        std::vector<std::string> auto_complete_node(const Path& working_dir, const Path& node_prefix);
+        std::vector<std::string> auto_complete_node(const Path& working_dir,
+                                                    const Path& node_prefix);
     };
-}
+} // namespace Rune::Shell
 
-#endif //RUNEOS_AUTOCOMPLETION_H
+#endif // RUNEOS_AUTOCOMPLETION_H

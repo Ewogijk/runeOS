@@ -49,7 +49,8 @@ namespace Rune::SystemCall {
     Ember::StatusCode mutex_create(void* sys_call_ctx, U64 mutex_name);
 
     /**
-     * If the mutex is already locked the system call will block the calling thread until the mutex is unlocked.
+     * If the mutex is already locked the system call will block the calling thread until the mutex
+     * is unlocked.
      *
      * @brief Lock the mutex with the requested ID.
      * @param sys_call_ctx A pointer to the thread management context.

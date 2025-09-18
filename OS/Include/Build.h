@@ -29,4 +29,4 @@
 // The OS prerelease version
 #define PRERELEASE "alpha"
 
-#endif //RUNEOS_BUILD_H
+#endif // RUNEOS_BUILD_H

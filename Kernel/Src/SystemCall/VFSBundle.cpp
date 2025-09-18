@@ -20,9 +20,10 @@
 #include <Ember/VFSBits.h>
 
 namespace Rune::SystemCall {
-    Ember::StatusCode vfs_get_node_info(void* sys_call_ctx, const U64 node_path, const U64 node_info_out) {
-        const auto* vfs_ctx                                   = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path                               = reinterpret_cast<const char*>(node_path);
+    Ember::StatusCode
+    vfs_get_node_info(void* sys_call_ctx, const U64 node_path, const U64 node_info_out) {
+        const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
+        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
         char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
@@ -30,7 +31,8 @@ namespace Rune::SystemCall {
         Path k_node_path(k_node_path_buf);
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
-            k_node_path = k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+            k_node_path =
+                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
 
         if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
@@ -40,14 +42,17 @@ namespace Rune::SystemCall {
                                                                (void*) &k_node_info_buf))
             return Ember::Status::BAD_ARG;
 
-        switch (VFS::IOStatus io_status = vfs_ctx->vfs_subsys->get_node_info(k_node_path, k_node_info_buf)) {
+        switch (VFS::IOStatus io_status =
+                    vfs_ctx->vfs_subsys->get_node_info(k_node_path, k_node_info_buf)) {
             case VFS::IOStatus::FOUND: {
                 const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
-                // The node info will only contain the node name -> set it to the path the caller has provided
+                // The node info will only contain the node name -> set it to the path the caller
+                // has provided
                 if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
                         (void*) k_node_info_buf.node_path.to_cstr(),
                         (void*) u_node_info->node_path,
-                        k_node_info_buf.node_path.size() + 1 // size() does not include null terminator
+                        k_node_info_buf.node_path.size()
+                            + 1 // size() does not include null terminator
                         )) {
                     return Ember::Status::BAD_ARG;
                 }
@@ -63,8 +68,8 @@ namespace Rune::SystemCall {
     }
 
     Ember::StatusCode vfs_create(void* sys_call_ctx, const U64 node_path, const U64 node_attr) {
-        const auto* vfs_ctx                                   = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path                               = reinterpret_cast<const char*>(node_path);
+        const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
+        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
         char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
@@ -78,7 +83,8 @@ namespace Rune::SystemCall {
         Path k_node_path(k_node_path_buf);
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
-            k_node_path = k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+            k_node_path =
+                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
 
         if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
@@ -91,8 +97,8 @@ namespace Rune::SystemCall {
     }
 
     Ember::StatusCode vfs_open(void* sys_call_ctx, const U64 node_path, const U64 io_mode) {
-        const auto* vfs_ctx                                   = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path                               = reinterpret_cast<const char*>(node_path);
+        const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
+        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
         char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
@@ -103,7 +109,8 @@ namespace Rune::SystemCall {
         Path k_node_path(k_node_path_buf);
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
-            k_node_path = k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+            k_node_path =
+                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
 
         if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
@@ -128,7 +135,8 @@ namespace Rune::SystemCall {
         Path k_node_path(k_node_path_buf);
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
-            k_node_path = k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+            k_node_path =
+                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
 
         if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
@@ -152,7 +160,8 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode vfs_read(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
+    Ember::StatusCode
+    vfs_read(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
@@ -160,7 +169,8 @@ namespace Rune::SystemCall {
         const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_ID);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
-        if (!node->has_attribute(Ember::NodeAttribute::FILE)) return Ember::Status::NODE_IS_DIRECTORY;
+        if (!node->has_attribute(Ember::NodeAttribute::FILE))
+            return Ember::Status::NODE_IS_DIRECTORY;
 
         const auto   u_buf      = reinterpret_cast<void*>(buf);
         const size_t u_buf_size = buf_size;
@@ -179,7 +189,8 @@ namespace Rune::SystemCall {
         return static_cast<Ember::StatusCode>(byte_count);
     }
 
-    Ember::StatusCode vfs_write(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
+    Ember::StatusCode
+    vfs_write(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
@@ -187,13 +198,15 @@ namespace Rune::SystemCall {
         const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_ID);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
-        if (!node->has_attribute(Ember::NodeAttribute::FILE)) return Ember::Status::NODE_IS_DIRECTORY;
+        if (!node->has_attribute(Ember::NodeAttribute::FILE))
+            return Ember::Status::NODE_IS_DIRECTORY;
 
         const auto   u_buf      = reinterpret_cast<void*>(buf);
         const size_t u_buf_size = buf_size;
         U8           k_buf[u_buf_size];
         memset(k_buf, 0, u_buf_size);
-        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_buf, u_buf_size, k_buf)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_buf, u_buf_size, k_buf))
+            return Ember::Status::BAD_ARG;
 
         switch (auto [status, byte_count] = node->write(k_buf, u_buf_size); status) {
             case VFS::NodeIOStatus::OKAY:          return static_cast<Ember::StatusCode>(byte_count);
@@ -204,7 +217,8 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_seek(void* sys_call_ctx, const U64 ID, const U64 seek_mode, const U64 offset) {
+    Ember::StatusCode
+    vfs_seek(void* sys_call_ctx, const U64 ID, const U64 seek_mode, const U64 offset) {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_handle = ID;
         if (node_handle == 0) return Ember::Status::BAD_ARG;
@@ -212,12 +226,14 @@ namespace Rune::SystemCall {
         const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_handle);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
-        if (!node->has_attribute(Ember::NodeAttribute::FILE)) return Ember::Status::NODE_IS_DIRECTORY;
+        if (!node->has_attribute(Ember::NodeAttribute::FILE))
+            return Ember::Status::NODE_IS_DIRECTORY;
 
         const auto k_seek_mode = Ember::SeekMode(seek_mode);
         if (k_seek_mode == Ember::SeekMode::NONE) return Ember::Status::BAD_ARG;
 
-        switch (auto [status, byte_count] = node->seek(k_seek_mode, static_cast<int>(offset)); status) {
+        switch (auto [status, byte_count] = node->seek(k_seek_mode, static_cast<int>(offset));
+                status) {
             case VFS::NodeIOStatus::OKAY:          return static_cast<Ember::StatusCode>(byte_count);
             case VFS::NodeIOStatus::NOT_SUPPORTED: return Ember::Status::NODE_IS_DIRECTORY;
             case VFS::NodeIOStatus::CLOSED:        return Ember::Status::NODE_CLOSED;
@@ -236,12 +252,14 @@ namespace Rune::SystemCall {
         Path k_node_path(k_node_path_buf);
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
-            k_node_path = k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+            k_node_path =
+                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
 
         if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
         SharedPointer<VFS::DirectoryStream> dir_stream;
-        const VFS::IOStatus io_status = vfs_ctx->vfs_subsys->open_directory_stream(k_node_path, dir_stream);
+        const VFS::IOStatus                 io_status =
+            vfs_ctx->vfs_subsys->open_directory_stream(k_node_path, dir_stream);
         switch (io_status) {
             case VFS::IOStatus::OPENED: return dir_stream->handle;
             case VFS::IOStatus::BAD_PATH:
@@ -252,7 +270,8 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_directory_stream_next(void* sys_call_ctx, const U64 dir_stream_ID, U64 node_info_ptr) {
+    Ember::StatusCode
+    vfs_directory_stream_next(void* sys_call_ctx, const U64 dir_stream_ID, U64 node_info_ptr) {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   k_ID    = static_cast<U16>(dir_stream_ID);
         if (k_ID == 0) return Ember::Status::BAD_ARG;
@@ -260,11 +279,13 @@ namespace Rune::SystemCall {
         if (!vfs_ctx->k_guard->verify_user_buffer((void*) node_info_ptr, sizeof(Ember::NodeInfo)))
             return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::DirectoryStream> dir_stream = vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
+        const SharedPointer<VFS::DirectoryStream> dir_stream =
+            vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
         if (!dir_stream) return Ember::Status::UNKNOWN_ID;
 
         auto [node_path, size, attributes] = dir_stream->get_next();
-        if (dir_stream->get_state() == VFS::DirectoryStreamState::IO_ERROR) return Ember::Status::IO_ERROR;
+        if (dir_stream->get_state() == VFS::DirectoryStreamState::IO_ERROR)
+            return Ember::Status::IO_ERROR;
 
         auto* u_node_info = reinterpret_cast<Ember::NodeInfo*>(node_info_ptr);
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
@@ -276,8 +297,9 @@ namespace Rune::SystemCall {
 
         u_node_info->size       = size;
         u_node_info->attributes = attributes;
-        return dir_stream->get_state() == VFS::DirectoryStreamState::HAS_MORE ? Ember::Status::DIRECTORY_STREAM_HAS_MORE
-                                                                              : Ember::Status::DIRECTORY_STREAM_EOD;
+        return dir_stream->get_state() == VFS::DirectoryStreamState::HAS_MORE
+                   ? Ember::Status::DIRECTORY_STREAM_HAS_MORE
+                   : Ember::Status::DIRECTORY_STREAM_EOD;
     }
 
     Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, const U64 dir_stream_ID) {
@@ -285,7 +307,8 @@ namespace Rune::SystemCall {
         const U16   k_ID    = static_cast<U16>(dir_stream_ID);
         if (k_ID == 0) return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::DirectoryStream> dir_stream = vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
+        const SharedPointer<VFS::DirectoryStream> dir_stream =
+            vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
         if (!dir_stream) return Ember::Status::UNKNOWN_ID;
 
         dir_stream->close();

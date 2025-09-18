@@ -43,7 +43,8 @@ namespace Rune {
     };
 
     /**
-     * Adds additional functionality to a Kernel Subsystem. E.g. A device driver or basically any software component.
+     * Adds additional functionality to a Kernel Subsystem. E.g. A device driver or basically any
+     * software component.
      */
     class Plugin {
 

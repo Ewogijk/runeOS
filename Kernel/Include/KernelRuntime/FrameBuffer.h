@@ -181,7 +181,12 @@ namespace Rune {
          * @param fg_color Foreground color.
          * @param ch ASCII code.
          */
-        void draw_glyph(const BitMapFont* font, U32 x, U32 y, Pixel bg_color, Pixel fg_color, char ch) const;
+        void draw_glyph(const BitMapFont* font,
+                        U32               x,
+                        U32               y,
+                        Pixel             bg_color,
+                        Pixel             fg_color,
+                        char              ch) const;
 
         void draw_line(Coord2D start, Coord2D end, Pixel color, double thickness) const;
     };

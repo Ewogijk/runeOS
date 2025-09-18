@@ -38,18 +38,18 @@ namespace Rune::VFS {
     /**
      * @brief All event hooks of the filesystem subsystem.
      * <ul>
-     *  <li>NodeOpened: A node has been opened. Event Context: The handle of the opened node, U16*.</li>
-     *  <li>NodeClosed: A node has been closed. Event Context: The handle of the closed node, U16*.</li>
-     *  <li>DirectoryStreamOpened: A directory stream has been closed. Event Context: The handle of the opened
-     *      directory stream, U16*.</li>
-     *  <li>DirectoryStreamClosed: A directory stream has been opened. Event Context: The handle of the closed
-     *      directory stream, U16*.</li>
+     *  <li>NodeOpened: A node has been opened. Event Context: The handle of the opened node,
+     * U16*.</li> <li>NodeClosed: A node has been closed. Event Context: The handle of the closed
+     * node, U16*.</li> <li>DirectoryStreamOpened: A directory stream has been closed. Event
+     * Context: The handle of the opened directory stream, U16*.</li> <li>DirectoryStreamClosed: A
+     * directory stream has been opened. Event Context: The handle of the closed directory stream,
+     * U16*.</li>
      * </ul>
      */
-#define VFS_EVENT_HOOKS(X)                                                                                             \
-    X(EventHook, NODE_OPENED, 0x1)                                                                                     \
-    X(EventHook, NODE_CLOSED, 0x2)                                                                                     \
-    X(EventHook, DIRECTORY_STREAM_OPENED, 0x3)                                                                         \
+#define VFS_EVENT_HOOKS(X)                                                                         \
+    X(EventHook, NODE_OPENED, 0x1)                                                                 \
+    X(EventHook, NODE_CLOSED, 0x2)                                                                 \
+    X(EventHook, DIRECTORY_STREAM_OPENED, 0x3)                                                     \
     X(EventHook, DIRECTORY_STREAM_CLOSED, 0x4)
 
     DECLARE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
@@ -64,8 +64,8 @@ namespace Rune::VFS {
     };
 
     /**
-     * @brief Counts all open node handles that point to the same path and if the node should be deleted when
-     *          the last file handles is closed.
+     * @brief Counts all open node handles that point to the same path and if the node should be
+     * deleted when the last file handles is closed.
      */
     struct NodeRefCount {
         Path node_path   = Path("");
@@ -74,61 +74,67 @@ namespace Rune::VFS {
     };
 
     /**
-     * @brief The Virtual Filesystem Subsystem (VFSS) is the main entry point to access files/directories (Nodes) on
-     *          possibly multiple file systems.
+     * @brief The Virtual Filesystem Subsystem (VFSS) is the main entry point to access
+     * files/directories (Nodes) on possibly multiple file systems.
      *
      * <h1>Filesystem</h1>
      * <p>
-     *  The filesystem is unix like, thus an example path is "/my/fancy/path". Same as unix it contains a root
-     *  filesystem mounted at "/" and further devices can be mounted at any path, except if that path is already a
-     *  mount point e.g. another drive could be mounted at "/mnt/mydrive" but not at "/" since it is already taken.
+     *  The filesystem is unix like, thus an example path is "/my/fancy/path". Same as unix it
+     * contains a root filesystem mounted at "/" and further devices can be mounted at any path,
+     * except if that path is already a mount point e.g. another drive could be mounted at
+     * "/mnt/mydrive" but not at "/" since it is already taken.
      * </p>
      *
      * <h1>Mount Points</h1>
      * <p>
-     *  A mount point simply encodes a path under which a logical storage device can be accessed that it formatted with
-     *  a filesystem, thus when accessing different node paths different devices could be accessed. Each device may
-     *  additionally use a different filesystem format, therefore each mount point is associated with a specific
-     *  filesystem driver.
+     *  A mount point simply encodes a path under which a logical storage device can be accessed
+     * that it formatted with a filesystem, thus when accessing different node paths different
+     * devices could be accessed. Each device may additionally use a different filesystem format,
+     * therefore each mount point is associated with a specific filesystem driver.
      * </p>
      * <p>
-     *  All mount points are registered in the mount point table with its associated filesystem driver. The VFSS has
-     *  exclusive memory ownership over mount points, only copies of the mount point information is returned when
-     *  requested.
+     *  All mount points are registered in the mount point table with its associated filesystem
+     * driver. The VFSS has exclusive memory ownership over mount points, only copies of the mount
+     * point information is returned when requested.
      * </p>
      * <p>
-     *  Mount point resolution (MPR) is the process where the best matching mount point is determined for a given
-     *  absolute path. MPR chooses the mount point that has the longest matching common path with said absolute path.
-     *  E.g. Given the mount points /a and /a/b/c and some path /a/b/c/d, MPR will choose /a/b/c as the mount point for
-     *  the path. The virtual file system always has at least one device mounted under the root directory "/", therefore
-     *  MPR cannot fail, since all paths are at least mounted on the root directory if no other mount point.
+     *  Mount point resolution (MPR) is the process where the best matching mount point is
+     * determined for a given absolute path. MPR chooses the mount point that has the longest
+     * matching common path with said absolute path. E.g. Given the mount points /a and /a/b/c and
+     * some path /a/b/c/d, MPR will choose /a/b/c as the mount point for the path. The virtual file
+     * system always has at least one device mounted under the root directory "/", therefore MPR
+     * cannot fail, since all paths are at least mounted on the root directory if no other mount
+     * point.
      * </p>
      * <h1>Driver</h1>
      * <p>
-     *  Filesystem drivers are needed to be able to mount/unmount mount points, but also to format logical storage
-     *  devices. They are registered within the driver table. The VFSS has exclusive memory ownership over drivers as
-     *  long as they are registered, only when removing them from the driver table will memory ownership transfer over
-     *  to the caller.
+     *  Filesystem drivers are needed to be able to mount/unmount mount points, but also to format
+     * logical storage devices. They are registered within the driver table. The VFSS has exclusive
+     * memory ownership over drivers as long as they are registered, only when removing them from
+     * the driver table will memory ownership transfer over to the caller.
      * </p>
      *
      * <h1>Node</h1>
      * <p>
-     *  A node simply represents a file or directory in the filesystem. Each node can be identified by a globally unique
-     *  handle e.g. The node "/my/node" could have the handle 15. Whenever a node is opened it will be registered in the
-     *  node table that holds all currently open nodes in the kernel across all applications. When a node is closed it
-     *  will be removed from the node table.
+     *  A node simply represents a file or directory in the filesystem. Each node can be identified
+     * by a globally unique handle e.g. The node "/my/node" could have the handle 15. Whenever a
+     * node is opened it will be registered in the node table that holds all currently open nodes in
+     * the kernel across all applications. When a node is closed it will be removed from the node
+     * table.
      * </p>
      * <p>
-     *  Additionally a node ref table is maintained that keeps track of how many times the same node is opened, e.g.
-     *  again using the node "/my/node" if two apps have opened it at the same time an entry "/my/node" with a ref count
-     *  of two is made in the node ref table. The node ref table is required so that a node is not physically deleted
-     *  while other apps are still using it but rather physically deleted after the last app closed the node.
+     *  Additionally a node ref table is maintained that keeps track of how many times the same node
+     * is opened, e.g. again using the node "/my/node" if two apps have opened it at the same time
+     * an entry "/my/node" with a ref count of two is made in the node ref table. The node ref table
+     * is required so that a node is not physically deleted while other apps are still using it but
+     * rather physically deleted after the last app closed the node.
      * </p>
      * <p>
-     *  Each node is dynamically allocated when it is first opened and memory ownership is shared between the VFSS and
-     *  the calling code. As long as the node is open (registered in the node table) the memory will not be freed, thus
-     *  it is important to always close a node after it is no longer needed. But also the calling code can obtain shared
-     *  pointers to the node, thus must make sure that those pointers are deleted at some point.
+     *  Each node is dynamically allocated when it is first opened and memory ownership is shared
+     * between the VFSS and the calling code. As long as the node is open (registered in the node
+     * table) the memory will not be freed, thus it is important to always close a node after it is
+     * no longer needed. But also the calling code can obtain shared pointers to the node, thus must
+     * make sure that those pointers are deleted at some point.
      * </p>
      */
     class VFSSubsystem : public Subsystem {
@@ -278,20 +284,21 @@ namespace Rune::VFS {
         void dump_mount_point_table(const SharedPointer<TextStream>& stream) const;
 
         /**
-         * Try to format the storage device with the given ID with the filesystem implemented by the requested driver.
+         * Try to format the storage device with the given ID with the filesystem implemented by the
+         * requested driver.
          *
          * <p>
-         *  Formatting a storage device will make the old filesystem unusable, therefore erasing the current content
-         *  of the device.
+         *  Formatting a storage device will make the old filesystem unusable, therefore erasing the
+         * current content of the device.
          * </p>
          *
          * @param driver         Driver that will be used for formatting.
          * @param storage_device ID of the storage device.
          *
          * @return FORMATTED:     The storage device is formatted.
-         *          FORMAT_ERROR: An error happened while formatting the storage device. Failure reason is
-         *                        specific to the file system implementation, check the logs.
-         *          DEV_ERROR:    An IO error happened.
+         *          FORMAT_ERROR: An error happened while formatting the storage device. Failure
+         * reason is specific to the file system implementation, check the logs. DEV_ERROR:    An IO
+         * error happened.
          */
         [[nodiscard]]
         FormatStatus format(const String& driver_name, uint16_t storage_device) const;
@@ -299,8 +306,8 @@ namespace Rune::VFS {
         /**
          * Try to mount the storage with the given ID to the mount point.
          * <p>
-         *  The very first mount point must always be the root directory of the file system, an attempt to mount another
-         *  path will fail until the root directory is mounted.
+         *  The very first mount point must always be the root directory of the file system, an
+         * attempt to mount another path will fail until the root directory is mounted.
          * </p>
          *
          * <p>
@@ -317,10 +324,9 @@ namespace Rune::VFS {
          *
          * @return MOUNTED:          The storage device is mounted.
          *          ALREADY_MOUNTED: The storage device is already mounted.
-         *          MOUNT_ERROR:     No mount points are registered and this mount point is not the directory or
-         *                           the directory does not exists.
-         *          NOT_SUPPORTED:   No driver supports the filesystem of the storage device.
-         *          DEV_ERROR:       An IO error happened.
+         *          MOUNT_ERROR:     No mount points are registered and this mount point is not the
+         * directory or the directory does not exists. NOT_SUPPORTED:   No driver supports the
+         * filesystem of the storage device. DEV_ERROR:       An IO error happened.
          */
         MountStatus mount(const Path& mount_point, U16 storage_device_id);
 
@@ -336,9 +342,8 @@ namespace Rune::VFS {
          * @return UNMOUNTED:    The storage device is unmounted.
          *          BAD_PATH:    The mount is not absolute or the root directory.
          *          NOT_MOUNTED: The mount point is not known.
-         *          MOUNT_ERROR: The mount point could not be removed from the mount point table or the driver
-         *                       failed to unmount the storage device.
-         *          DEV_ERROR:   An IO error happened.
+         *          MOUNT_ERROR: The mount point could not be removed from the mount point table or
+         * the driver failed to unmount the storage device. DEV_ERROR:   An IO error happened.
          */
         MountStatus unmount(const Path& mount_point);
 
@@ -350,21 +355,22 @@ namespace Rune::VFS {
          * @brief Check if the absolute path contains any illegal characters.
          *
          * <p>
-         *  Checking the path involves going through each mount point along the whole path and finding the corresponding
-         *  driver that validates the portion of the path it is responsible for.
+         *  Checking the path involves going through each mount point along the whole path and
+         * finding the corresponding driver that validates the portion of the path it is responsible
+         * for.
          * </p>
          * <p>
          *  For example: /path/to/some/file
          *               |-----------|-----|
          *                   FAT32    EXT4
-         *  Assuming we have EXT4 support (which is not the case) and the mount point "/" which is a FAT32 filesystem
-         *  and the mount point "/path/to/some" an EXT4 filesystem.<br>
-         *  First the "/file" part is validated by the EXT4 filesystem driver and then "/path/to/some" is validated by
-         *  the FAT32 driver.
+         *  Assuming we have EXT4 support (which is not the case) and the mount point "/" which is a
+         * FAT32 filesystem and the mount point "/path/to/some" an EXT4 filesystem.<br> First the
+         * "/file" part is validated by the EXT4 filesystem driver and then "/path/to/some" is
+         * validated by the FAT32 driver.
          * </p>
          * @param path An absolute path.
-         * @return True: The path does not contain any illegal character, False: The path contains at least one illegal
-         *          character.
+         * @return True: The path does not contain any illegal character, False: The path contains
+         * at least one illegal character.
          */
         [[nodiscard]]
         bool is_valid_file_path(const Path& path) const;
@@ -384,12 +390,13 @@ namespace Rune::VFS {
         IOStatus get_node_info(const Path& path, NodeInfo& out);
 
         /**
-         * Try to create a file/directory at the path with the given attributes. Either the FileAttribute::Directory or
-         * FileAttribute::File attribute must be set otherwise the creation will fail.
+         * Try to create a file/directory at the path with the given attributes. Either the
+         * FileAttribute::Directory or FileAttribute::File attribute must be set otherwise the
+         * creation will fail.
          *
          * <p>
-         *  If the given path is a mount point, the attempt to resolve the path to a mount point fails or the driver
-         *  runs into an error, then the path is not created.
+         *  If the given path is a mount point, the attempt to resolve the path to a mount point
+         * fails or the driver runs into an error, then the path is not created.
          * </p>
          *
          * @param path       Absolute path.
@@ -406,12 +413,12 @@ namespace Rune::VFS {
         IOStatus create(const Path& path, U8 attributes);
 
         /**
-         * @brief Try to open the file/directory at the requested path. If the path is found the node will be added to
-         *          the node table and a pointer to it is placed in "out".
+         * @brief Try to open the file/directory at the requested path. If the path is found the
+         * node will be added to the node table and a pointer to it is placed in "out".
          *
          * <p>
-         *  If the attempt to resolve the path to a mount point fails or the driver runs into an error, then the path
-         *  is not opened.
+         *  If the attempt to resolve the path to a mount point fails or the driver runs into an
+         * error, then the path is not opened.
          * </p>
          *
          * @param path    Absolute path to an existing file/directory.
@@ -430,25 +437,30 @@ namespace Rune::VFS {
         IOStatus open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out);
 
         /**
-         * Try to delete the file/directory at the given path. Note that deleting a file does not close the file.
+         * Try to delete the file/directory at the given path. Note that deleting a file does not
+         close the file.
          *
          * <p>
-         *  If the attempt to resolve the path to a mount point fails or the driver runs into an error, then the path
+         *  If the attempt to resolve the path to a mount point fails or the driver runs into an
+         error, then the path
          *  is not opened.
          * </p>
          *
          * <p>
-         *  If multiple node handles point to the same file, the deletion will be postponed until the last node handle
+         *  If multiple node handles point to the same file, the deletion will be postponed until
+         the last node handle
          *  is closed.
          * </p>
          *
          * @param path Absolute path to an existing file/directory.
 
          *
-         * @return DELETED:        The node has been deleted or is marked for deletion and will be deleted later
+         * @return DELETED:        The node has been deleted or is marked for deletion and will be
+         deleted later
          *                         because another application has also opened the file.
          *          BAD_PATH:      The path is not absolute or the root directory.
-         *          ACCESS_DENIED: The path is a mount point or a directory and another node path in it is open.
+         *          ACCESS_DENIED: The path is a mount point or a directory and another node path in
+         it is open.
          *          NOT_FOUND:     The node path does not exist.
          *          DEV_UNKNOWN:   The storage device is unknown to the driver.
          *          DEV_ERROR:     An IO error happened.
@@ -459,8 +471,8 @@ namespace Rune::VFS {
          * @brief Try to open a stream over the content of the directory.
          *
          * <p>
-         *  If the attempt to resolve the path to a mount point fails or the driver runs into an error, then the path
-         *  is not opened.
+         *  If the attempt to resolve the path to a mount point fails or the driver runs into an
+         * error, then the path is not opened.
          * </p>
          * @param path Absolute path to an existing directory.
          * @param out  In case of success a pointer to the directory stream will be placed here.

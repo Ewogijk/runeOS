@@ -73,12 +73,12 @@ namespace Rune {
         String get_file_extension() const;
 
         /**
-         * The most top level parent of each absolute path is "/" and of an relative path is "." denoting the current
-         * directory which is the working directory.
+         * The most top level parent of each absolute path is "/" and of an relative path is "."
+         * denoting the current directory which is the working directory.
          *
          * <p>
-         *  The parent of "/" will always return "/" itself, the parent of "." is again "." and lastly given an empty
-         *  path "" it is assumed that "." is its parent.
+         *  The parent of "/" will always return "/" itself, the parent of "." is again "." and
+         * lastly given an empty path "" it is assumed that "." is its parent.
          * </p>
          *
          * @brief Get the parent of the path.
@@ -117,9 +117,9 @@ namespace Rune {
         Path common_path(const Path& path) const;
 
         /**
-         * A new path describing this path relative to the given path. The new path is still an absolute path assuming
-         * the given path is the root path of another filesystem. E.g. /a/b/c/d relative to /a/b results in the path
-         * /c/d.
+         * A new path describing this path relative to the given path. The new path is still an
+         * absolute path assuming the given path is the root path of another filesystem. E.g.
+         * /a/b/c/d relative to /a/b results in the path /c/d.
          *
          * @param path
          *
@@ -140,8 +140,9 @@ namespace Rune {
          * append the given part to this path. E.g. /a append with b will give the path /a/b.
          *
          * <p>
-         *  If this path is empty, the new path will consist of "part", if "part" is empty the new path will consist
-         *  of this path. If this path and "part" is empty, an empty path is returned.
+         *  If this path is empty, the new path will consist of "part", if "part" is empty the new
+         * path will consist of this path. If this path and "part" is empty, an empty path is
+         * returned.
          * </p>
          *
          * @param part

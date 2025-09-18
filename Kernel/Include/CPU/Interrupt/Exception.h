@@ -26,7 +26,8 @@
 
 namespace Rune::CPU {
     /**
-     * The interrupt frame contains interrupt related information and the CPU state when the interrupt occurred.
+     * The interrupt frame contains interrupt related information and the CPU state when the
+     * interrupt occurred.
      */
     struct InterruptContext {
         Register error_code; // Error code pushed by CPU
@@ -34,15 +35,17 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief A exception handler tries to recover the kernel from exception raised by the CPU. It either succeeds and
-     *          returns or it fails in which case it must panic and halt the kernel forever.
+     * @brief A exception handler tries to recover the kernel from exception raised by the CPU. It
+     * either succeeds and returns or it fails in which case it must panic and halt the kernel
+     * forever.
      */
     using ExceptionHandler = Function<void(InterruptContext*, const char*)>;
 
     /**
      * @brief Different types of exceptions e.g. page fault, etc.
      * <ul>
-     *  <li>PageFault: Indicates all kinds of errors related to accessing a virtual memory address.</li>
+     *  <li>PageFault: Indicates all kinds of errors related to accessing a virtual memory
+     * address.</li>
      * </ul>
      */
 #define EXCEPTION_TYPES(X) X(ExceptionType, PageFault, 0x1)
@@ -83,12 +86,12 @@ namespace Rune::CPU {
     /**
      * Panic handling involves two steps:
      * <ol>
-     *  <li>Print debugging information if the stream supports output else this step is skipped.</li>
-     *  <li>Halt the kernel forever.</li>
+     *  <li>Print debugging information if the stream supports output else this step is
+     * skipped.</li> <li>Halt the kernel forever.</li>
      * </ol>
      *
-     * @brief Install the panic stream where arch specific debugging information will be printed in case a raised
-     *          exception has no installed handler.
+     * @brief Install the panic stream where arch specific debugging information will be printed in
+     * case a raised exception has no installed handler.
      * @param panic_stream Output stream
      */
     void exception_install_panic_stream(SharedPointer<TextStream> panic_stream);
@@ -96,13 +99,13 @@ namespace Rune::CPU {
     /**
      * @brief Tries to install an exception handler for a exception.
      *
-     * Only a single exception handler can be installed per exception and once installed it is not intended to replace
-     * the handler.
+     * Only a single exception handler can be installed per exception and once installed it is not
+     * intended to replace the handler.
      *
      * @param type
      * @param exception_handler
-     * @return True: The exception handler is installed, False: An exception handler is already installed for the
-     *          requested exception, this exception handler was not installed.
+     * @return True: The exception handler is installed, False: An exception handler is already
+     * installed for the requested exception, this exception handler was not installed.
      */
     bool exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler);
 } // namespace Rune::CPU

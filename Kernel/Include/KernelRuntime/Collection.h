@@ -31,9 +31,12 @@ namespace Rune {
      *
      * A hash implementation must satisfy the following requirements:
      * <ol>
-     * <li><a href="https://en.cppreference.com/w/cpp/named_req/DefaultConstructible">DefaultConstructible</a></li>
-     * <li><a href="https://en.cppreference.com/w/cpp/named_req/CopyAssignable>CopyAssignable</a></li>
-     * <li>Implement the "size_t operator()(const int& key) const" function making the hash calculation.</li>
+     * <li><a
+     * href="https://en.cppreference.com/w/cpp/named_req/DefaultConstructible">DefaultConstructible</a></li>
+     * <li><a
+     * href="https://en.cppreference.com/w/cpp/named_req/CopyAssignable>CopyAssignable</a></li>
+     * <li>Implement the "size_t operator()(const int& key) const" function making the hash
+     * calculation.</li>
      * </ol>
      * @tparam K Hash type.
      */
@@ -260,7 +263,10 @@ namespace Rune {
         Pair<K, V>      _pair;
 
       public:
-        explicit HashMapIterator(HashNode<K, V>** bucket, size_t bucket_count, size_t bucket_pos, HashNode<K, V>* node)
+        explicit HashMapIterator(HashNode<K, V>** bucket,
+                                 size_t           bucket_count,
+                                 size_t           bucket_pos,
+                                 HashNode<K, V>*  node)
             : _bucket(bucket),
               _bucket_count(bucket_count),
               _bucket_pos(bucket_pos),
@@ -330,7 +336,8 @@ namespace Rune {
         // Create a bigger bucket array and rehash all entries.
         void rehash(size_t new_bucket_count) {
             auto** new_bucket = new HashNode<K, V>*[new_bucket_count];
-            // Important: Initialize with nullptr -> The data comes from the heap and will contain random values
+            // Important: Initialize with nullptr -> The data comes from the heap and will contain
+            // random values
             //            This leads to undefined behavior
             for (size_t i = 0; i < new_bucket_count; i++)
                 new_bucket[i] = nullptr;
@@ -390,7 +397,8 @@ namespace Rune {
             int             hash = calc_hash(key, _bucket_count);
             HashNode<K, V>* node = _bucket[hash];
             while (node) {
-                if (node->key == key) return HashMapIterator<K, V>(_bucket, _bucket_count, hash, node);
+                if (node->key == key)
+                    return HashMapIterator<K, V>(_bucket, _bucket_count, hash, node);
                 node = node->next;
             }
             return HashMapIterator<K, V>(_bucket, _bucket_count, _bucket_count, nullptr);
@@ -437,8 +445,8 @@ namespace Rune {
         /**
          * @brief Dynamically allocate the buckets.
          *
-         * We will perform a lazy allocation because the heap may or may not be ready at the point when a hash map will
-         * be created (e.g. when calling global constructors in the kernel).
+         * We will perform a lazy allocation because the heap may or may not be ready at the point
+         * when a hash map will be created (e.g. when calling global constructors in the kernel).
          */
         void perform_lazy_init() {
             if (!_bucket) {
@@ -453,7 +461,12 @@ namespace Rune {
          *
          * @param hashFunc
          */
-        explicit HashMap() : _load_factor(0.75), _bucket_count(4), _bucket(nullptr), _size(0), _hash(Hash<K>{}) {}
+        explicit HashMap()
+            : _load_factor(0.75),
+              _bucket_count(4),
+              _bucket(nullptr),
+              _size(0),
+              _hash(Hash<K>{}) {}
 
         /**
          * Init a new hashmap with given bucket count.
@@ -481,7 +494,9 @@ namespace Rune {
 
         ~HashMap() { free_nodes(); }
 
-        HashMap(const HashMap<K, V>& o) noexcept : _load_factor(0.0), _bucket_count(0), _size(0) { copy(o); }
+        HashMap(const HashMap<K, V>& o) noexcept : _load_factor(0.0), _bucket_count(0), _size(0) {
+            copy(o);
+        }
 
         HashMap& operator=(const HashMap<K, V>& o) noexcept {
             if (this == &o) return *this;
@@ -601,7 +616,8 @@ namespace Rune {
          *
          * @param key
          *
-         * @return If the key is found, an iterator pointing to the mapping else an iterator pointing to "end()".
+         * @return If the key is found, an iterator pointing to the mapping else an iterator
+         * pointing to "end()".
          */
         HashMapIterator<K, V> find(const K& key) const {
             if (!_bucket) return end();
@@ -613,7 +629,8 @@ namespace Rune {
          *
          * @param key
          *
-         * @return If the key is found, an iterator pointing to the mapping else an iterator pointing to "end()".
+         * @return If the key is found, an iterator pointing to the mapping else an iterator
+         * pointing to "end()".
          */
         HashMapIterator<K, V> find(K&& key) const {
             if (!_bucket) return end();
@@ -960,7 +977,8 @@ namespace Rune {
          *
          * @param idx Idx of an element.
          *
-         * @return The element at index or nullptr if the list is empty or the index is out of bounds.
+         * @return The element at index or nullptr if the list is empty or the index is out of
+         * bounds.
          */
         T* operator[](size_t idx) const {
             if (idx >= _size) return nullptr;

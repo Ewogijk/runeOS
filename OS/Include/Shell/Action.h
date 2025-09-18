@@ -17,9 +17,7 @@
 #ifndef RUNEOS_ACTION_H
 #define RUNEOS_ACTION_H
 
-
 #include <Shell/Environment.h>
-
 
 namespace Rune::Shell {
 
@@ -29,13 +27,11 @@ namespace Rune::Shell {
      */
     void command_history_scroll_up(Environment& shell_env);
 
-
     /**
      * @brief Scroll down in the command history of the shell.
      * @param shell_env
      */
     void command_history_scroll_down(Environment& shell_env);
-
 
     /**
      * @brief Move the cursor one position to the left.
@@ -43,13 +39,11 @@ namespace Rune::Shell {
      */
     void cursor_move_left(Environment& shell_env);
 
-
     /**
      * @brief Move the cursor one position to the right.
      * @param shell_env
      */
     void cursor_move_right(Environment& shell_env);
-
 
     /**
      * @brief Delete the character to the right of the cursor.
@@ -57,19 +51,17 @@ namespace Rune::Shell {
      */
     void delete_forward(Environment& shell_env);
 
-
     /**
      * @brief Perform autocompletion on the current shell input.
      * @param shell_env
      */
     void perform_auto_completion(Environment& shell_env);
 
-
     /**
      * @brief Add all
      * @param shell_env
      */
     void register_hotkey_actions(Environment& shell_env);
-}
+} // namespace Rune::Shell
 
-#endif //RUNEOS_ACTION_H
+#endif // RUNEOS_ACTION_H

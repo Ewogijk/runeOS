@@ -17,17 +17,14 @@
 #ifndef RUNEOS_X64CORE_H
 #define RUNEOS_X64CORE_H
 
-
 #include <CPU/CPU.h>
 
 #include "GDT.h"
-
 
 namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CPU state
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief The content of most CPU registers.
@@ -68,12 +65,10 @@ namespace Rune::CPU {
         Register GS;
     };
 
-
     /**
      * @brief Load the current CPU state into the state object.
      */
     CLINK void read_state(x86CoreState* state);
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CPUID functions
@@ -86,27 +81,23 @@ namespace Rune::CPU {
         Register rdx = 0;
     };
 
-
     /**
      * @brief True: CPU ID features are supported. False: Not.
      */
     CLINK bool cpuid_supported();
-
 
     /**
      * @brief Make a CPU ID request and store the result in "resp"
      */
     CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
 
-
     /**
-     * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the call to this
-     * function.
+     * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the
+     * call to this function.
      *
      * @param buf A char buffer of size 13.
      */
     String get_vendor();
-
 
     /**
      *
@@ -114,51 +105,44 @@ namespace Rune::CPU {
      */
     U8 get_physical_address_width();
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Model specific registers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
-#define MODEL_SPECIFIC_REGISTERS(X)                         \
-    X(ModelSpecificRegister, STAR, 0xC0000081)              \
-    X(ModelSpecificRegister, LSTAR, 0xC0000082)             \
-    X(ModelSpecificRegister, FMASK, 0xC0000084)             \
-    X(ModelSpecificRegister, EFER, 0xC0000080)              \
-    X(ModelSpecificRegister, FS_Base, 0xC0000100)           \
-    X(ModelSpecificRegister, GS_Base, 0xC0000101)           \
+#define MODEL_SPECIFIC_REGISTERS(X)                                                                \
+    X(ModelSpecificRegister, STAR, 0xC0000081)                                                     \
+    X(ModelSpecificRegister, LSTAR, 0xC0000082)                                                    \
+    X(ModelSpecificRegister, FMASK, 0xC0000084)                                                    \
+    X(ModelSpecificRegister, EFER, 0xC0000080)                                                     \
+    X(ModelSpecificRegister, FS_Base, 0xC0000100)                                                  \
+    X(ModelSpecificRegister, GS_Base, 0xC0000101)                                                  \
     X(ModelSpecificRegister, KERNEL_GS_BASE, 0xC0000102)
 
     /**
      * ID's of model specific registers.
      */
-    DECLARE_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0) //NOLINT
-
+    DECLARE_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0) // NOLINT
 
     /**
      * @brief Write the value to the MSR with the given ID.
      */
     CLINK void write_msr(Register msr_id, Register value);
 
-
     /**
      * @brief Read the current value from the MSR with the given ID:
      */
     CLINK Register read_msr(Register msr_id);
-
 
     /**
      * @brief Read the value of the pointer that GS is currently pointed at.
      */
     CLINK Register read_gs();
 
-
     /**
-     * @brief Call the "swapgs" instruction. If GS was currently pointing to KernelGSBase is will be pointing to GSBase
-     *          after this call and vice versa.
+     * @brief Call the "swapgs" instruction. If GS was currently pointing to KernelGSBase is will be
+     * pointing to GSBase after this call and vice versa.
      */
     CLINK void swapgs();
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Threading functions
@@ -172,19 +156,15 @@ namespace Rune::CPU {
      * @param nStack Stack of the next thread.
      * @param nVAS   Virtual address space of the next thread.
      */
-    CLINK void context_switch_ass(
-        VirtualAddr* c_stack,
-        PhysicalAddr c_vas,
-        VirtualAddr  n_stack,
-        PhysicalAddr n_vas
-    );
-
+    CLINK void context_switch_ass(VirtualAddr* c_stack,
+                                  PhysicalAddr c_vas,
+                                  VirtualAddr  n_stack,
+                                  PhysicalAddr n_vas);
 
     /**
      * @brief Call the thread main function with argc and argv as parameters in kernel mode.
      */
     CLINK void exec_kernel_mode(Register start_info, Register func_ptr, Register thread_exit);
-
 
     /**
      * @brief Call the thread main function with argc and argv as parameters in user mode.
@@ -193,23 +173,19 @@ namespace Rune::CPU {
      */
     CLINK void exec_user_mode(Register start_info, Register func_ptr);
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Other assembly stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
 
     /**
      * @brief Enable floating point arithmetic.
      */
     CLINK void enable_sse();
 
-
     /**
      * @brief Get the content of the CS register.
      */
     CLINK Register read_cs();
-
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          x64Core Class
@@ -220,47 +196,34 @@ namespace Rune::CPU {
         Register _kgs_base; // Current thread's kernel stack pointer
         Register _gs_base;  // Current thread's user stack pointer
 
-    public:
+      public:
         explicit X64Core(U8 core_id);
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Core API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
         bool init() override;
-
 
         U8 get_id() override;
 
-
         TechSpec get_tech_spec() override;
-
 
         ArchSpec get_arch_details() override;
 
-
         PrivilegeLevel get_current_privilege_level() override;
-
 
         LinkedList<InterruptVector> get_interrupt_vector_table() override;
 
-
         void dump_core_state(const SharedPointer<TextStream>& stream) override;
-
 
         void switch_to_thread(Thread* c_thread, Thread* n_thread) override;
 
-
         void execute_in_kernel_mode(Thread* t, Register thread_exit) override;
-
 
         void execute_in_user_mode(Thread* t) override;
 
-
         void update_thread_local_storage(void* tls_ptr) override;
-
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      x64 core specific API
@@ -268,6 +231,6 @@ namespace Rune::CPU {
 
         void dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state);
     };
-}
+} // namespace Rune::CPU
 
-#endif //RUNEOS_X64CORE_H
+#endif // RUNEOS_X64CORE_H

@@ -17,9 +17,13 @@
 #include <KernelRuntime/EventHook.h>
 
 namespace Rune {
-    bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) { return a.handle == b.handle; }
+    bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) {
+        return a.handle == b.handle;
+    }
 
-    bool operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) { return a.handle != b.handle; }
+    bool operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) {
+        return a.handle != b.handle;
+    }
 
     void EventHookTableEntry::dump(const SharedPointer<TextStream>& stream) const {
         auto it = event_handler_table.begin();
@@ -33,7 +37,11 @@ namespace Rune {
         });
     }
 
-    bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) { return a.event_hook == b.event_hook; }
+    bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) {
+        return a.event_hook == b.event_hook;
+    }
 
-    bool operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b) { return a.event_hook != b.event_hook; }
+    bool operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b) {
+        return a.event_hook != b.event_hook;
+    }
 } // namespace Rune

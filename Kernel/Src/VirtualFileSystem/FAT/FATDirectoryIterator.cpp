@@ -20,15 +20,19 @@ namespace Rune::VFS {
     DEFINE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0)
 
     void FATDirectoryIterator::get_next_cluster() {
-        // If the iterator has not started yet read the cluster mentioned in the directory file entry else get the next
-        // cluster from the FAT
-        U32 next_cluster =
-            _current_entry ? _volume_manager.fat_read(_storage_dev, _bpb, _current_cluster) : _current_cluster;
+        // If the iterator has not started yet read the cluster mentioned in the directory file
+        // entry else get the next cluster from the FAT
+        U32 next_cluster = _current_entry
+                               ? _volume_manager.fat_read(_storage_dev, _bpb, _current_cluster)
+                               : _current_cluster;
         if (next_cluster > _volume_manager.get_max_cluster_count()) {
             _state = DirectoryIteratorState::END_OF_DIRECTORY;
             return;
         }
-        if (!_volume_manager.data_cluster_read(_storage_dev, _bpb, _cluster_buf.get(), next_cluster)) {
+        if (!_volume_manager.data_cluster_read(_storage_dev,
+                                               _bpb,
+                                               _cluster_buf.get(),
+                                               next_cluster)) {
             _state = DirectoryIteratorState::DEV_ERROR;
             return;
         }
@@ -57,7 +61,8 @@ namespace Rune::VFS {
         // The current file entry is a used file or directory
         if (_current_entry->attributes == FATFileAttribute::LONG_FILE_NAME) {
             // Parse it's long file name entries
-            if ((_current_entry->short_name.as_array[0] & 0xF0) != LongFileNameEntry::LAST_LFN_ENTRY) {
+            if ((_current_entry->short_name.as_array[0] & 0xF0)
+                != LongFileNameEntry::LAST_LFN_ENTRY) {
                 _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
                 return;
             }
@@ -72,8 +77,8 @@ namespace Rune::VFS {
                 }
                 // Copy file name to temp buffer
                 // Encoding is UCS-2/UTF-16, but we only get the first byte of each char
-                // because the kernel only supports ASCII (for ASCII the second byte is always 0 padding)
-                // Should a non ASCII character be part of the name we will embrace chaos
+                // because the kernel only supports ASCII (for ASCII the second byte is always 0
+                // padding) Should a non ASCII character be part of the name we will embrace chaos
                 char tmp[13];
                 for (int i = 0; i < 5; i++)
                     tmp[i] = (char) (c_long_file_name_entry->file_name_1[i] & 0x00FF);
@@ -101,9 +106,11 @@ namespace Rune::VFS {
                 _entry_index++;
                 c_order--;
                 if (_entry_index >= _max_entries_per_cluster) {
-                    // The next long file name entry is located in the next directory cluster -> Get it!
+                    // The next long file name entry is located in the next directory cluster -> Get
+                    // it!
                     get_next_cluster();
-                    if (_state != DirectoryIteratorState::ITERATING) return; // StorageError or EndOfDirectory
+                    if (_state != DirectoryIteratorState::ITERATING)
+                        return; // StorageError or EndOfDirectory
                 }
             }
         } else {
@@ -142,8 +149,8 @@ namespace Rune::VFS {
             _current_cluster         = start_cluster;
             _cluster_buf             = SharedPointer<U8>(new U8[cluster_size]);
             _max_entries_per_cluster = (int) (cluster_size / sizeof(FileEntry));
-            // Load the very first cluster -> Can transition only to "StorageError" state because there must always be a
-            // "dot" and "dotdot"
+            // Load the very first cluster -> Can transition only to "StorageError" state because
+            // there must always be a "dot" and "dotdot"
             get_next_cluster();
             if (_state != DirectoryIteratorState::DEV_ERROR) {
                 _entry_index = -1;
@@ -171,10 +178,15 @@ namespace Rune::VFS {
                     // Reached end of patch and file entry found -> return file entry
                     return {NavigationStatus::FOUND, c_entry};
                 } else {
-                    // More path left -> Recursively search for the next part in the directory found here
+                    // More path left -> Recursively search for the next part in the directory found
+                    // here
                     if (FATFileAttribute(c_entry.file.attributes & FATFileAttribute::DIRECTORY)
                         == FATFileAttribute::DIRECTORY) {
-                        return navigate_to(storage_dev, bpb, volume_manager, c_entry.file.cluster(), path);
+                        return navigate_to(storage_dev,
+                                           bpb,
+                                           volume_manager,
+                                           c_entry.file.cluster(),
+                                           path);
                     }
                     return {NavigationStatus::BAD_PATH, {}};
                 }
@@ -182,12 +194,15 @@ namespace Rune::VFS {
             ++d_it;
         }
 
-        if (d_it.get_state() == DirectoryIteratorState::END_OF_DIRECTORY) return {NavigationStatus::NOT_FOUND, {}};
+        if (d_it.get_state() == DirectoryIteratorState::END_OF_DIRECTORY)
+            return {NavigationStatus::NOT_FOUND, {}};
 
         return {NavigationStatus::DEV_ERROR, {}};
     }
 
-    bool FATDirectoryIterator::has_next() const { return _state == DirectoryIteratorState::ITERATING; }
+    bool FATDirectoryIterator::has_next() const {
+        return _state == DirectoryIteratorState::ITERATING;
+    }
 
     LocationAwareFileEntry& FATDirectoryIterator::operator*() { return _current_entry_as_laf; }
 
@@ -197,7 +212,8 @@ namespace Rune::VFS {
         if (_state != DirectoryIteratorState::ITERATING) return *this;
 
         if (_entry_index >= _max_entries_per_cluster - 1)
-            // We are at the end of a directory cluster but not end of the directory -> Read next cluster
+            // We are at the end of a directory cluster but not end of the directory -> Read next
+            // cluster
             get_next_cluster();
         else
             // advance the file cursor by one
@@ -219,12 +235,13 @@ namespace Rune::VFS {
                 parse_used_file_entry();
                 break;
             case DirectoryIterationMode::LIST_ALL:
-                if (!_current_entry->is_empty_middle() && !_current_entry->is_empty_end()) parse_used_file_entry();
+                if (!_current_entry->is_empty_middle() && !_current_entry->is_empty_end())
+                    parse_used_file_entry();
                 // else file entry is empty -> LocationAwareFileEntry already set by "advance"
                 break;
             case DirectoryIterationMode::ATOMIC:
-                // We return each file entry individually (no LFN entry parsing) -> LocationAwareFileEntry already set
-                // by "advance"
+                // We return each file entry individually (no LFN entry parsing) ->
+                // LocationAwareFileEntry already set by "advance"
             case DirectoryIterationMode::NONE: break;
         }
 
@@ -255,15 +272,18 @@ namespace Rune::VFS {
 
     void FATDirectoryStream::update_state() {
         switch (_fat_it.get_state()) {
-            case DirectoryIteratorState::ITERATING:         _state = DirectoryStreamState::HAS_MORE; break;
-            case DirectoryIteratorState::END_OF_DIRECTORY:  _state = DirectoryStreamState::END_OF_DIRECTORY; break;
+            case DirectoryIteratorState::ITERATING: _state = DirectoryStreamState::HAS_MORE; break;
+            case DirectoryIteratorState::END_OF_DIRECTORY:
+                _state = DirectoryStreamState::END_OF_DIRECTORY;
+                break;
             case DirectoryIteratorState::CORRUPT_LFN_ENTRY:
             case DirectoryIteratorState::DEV_ERROR:         _state = DirectoryStreamState::IO_ERROR; break;
             default:                                        _state = DirectoryStreamState::NONE; break;
         }
     }
 
-    FATDirectoryStream::FATDirectoryStream(const Function<void()>& on_close, const FATDirectoryIterator& fat_it)
+    FATDirectoryStream::FATDirectoryStream(const Function<void()>&     on_close,
+                                           const FATDirectoryIterator& fat_it)
         : DirectoryStream(move(on_close)),
           _fat_it(move(fat_it)) {
         update_state();
@@ -273,11 +293,16 @@ namespace Rune::VFS {
         NodeInfo node_info;
         if (_fat_it.has_next()) {
             U8 node_attr = 0;
-            if (_fat_it->file.has_attribute(FATFileAttribute::READONLY)) node_attr |= Ember::NodeAttribute::READONLY;
-            if (_fat_it->file.has_attribute(FATFileAttribute::HIDDEN)) node_attr |= Ember::NodeAttribute::HIDDEN;
-            if (_fat_it->file.has_attribute(FATFileAttribute::SYSTEM)) node_attr |= Ember::NodeAttribute::SYSTEM;
-            if (_fat_it->file.has_attribute(FATFileAttribute::DIRECTORY)) node_attr |= Ember::NodeAttribute::DIRECTORY;
-            if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE)) node_attr |= Ember::NodeAttribute::FILE;
+            if (_fat_it->file.has_attribute(FATFileAttribute::READONLY))
+                node_attr |= Ember::NodeAttribute::READONLY;
+            if (_fat_it->file.has_attribute(FATFileAttribute::HIDDEN))
+                node_attr |= Ember::NodeAttribute::HIDDEN;
+            if (_fat_it->file.has_attribute(FATFileAttribute::SYSTEM))
+                node_attr |= Ember::NodeAttribute::SYSTEM;
+            if (_fat_it->file.has_attribute(FATFileAttribute::DIRECTORY))
+                node_attr |= Ember::NodeAttribute::DIRECTORY;
+            if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE))
+                node_attr |= Ember::NodeAttribute::FILE;
 
             node_info = {_fat_it->file_name, _fat_it->file.file_size, node_attr};
             ++_fat_it;

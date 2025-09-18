@@ -24,8 +24,10 @@ namespace Rune::Memory {
 
     MemoryMap create_virtual_memory_map() {
         return {
-            {               0x0,                      0x0000800000000000, MemoryRegionType::USERSPACE},
-            {0xFFFF800000000000, 0xFFFFFFFFFFFFFFFF - 0xFFFF800000000000,    MemoryRegionType::USABLE}
+            {               0x0,0x0000800000000000,MemoryRegionType::USERSPACE         },
+            {0xFFFF800000000000,
+             0xFFFFFFFFFFFFFFFF - 0xFFFF800000000000,
+             MemoryRegionType::USABLE}
         };
     }
 } // namespace Rune::Memory

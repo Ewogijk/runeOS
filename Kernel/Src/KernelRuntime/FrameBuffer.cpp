@@ -66,7 +66,9 @@ namespace Rune {
         }
     }
 
-    FrameBuffer* FrameBuffer::get_global() { return _instance._address == nullptr ? nullptr : &_instance; }
+    FrameBuffer* FrameBuffer::get_global() {
+        return _instance._address == nullptr ? nullptr : &_instance;
+    }
 
     U8* FrameBuffer::get_address() const { return _address; }
 
@@ -118,11 +120,13 @@ namespace Rune {
             for (U64 fx = 0; fx < font->pixel_width; fx++) {
                 if (fx > 0 && fx % BITS_PER_TYPE == 0) row_pos++;
                 if (((glyph[row_pos] >> (BITS_PER_TYPE - 1 - fx)) & 0x1) == 1)
-                    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off + fb_x_off),
+                    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off
+                                                   + fb_x_off),
                            fg_c,
                            4);
                 else
-                    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off + fb_x_off),
+                    memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off
+                                                   + fb_x_off),
                            bg_c,
                            4);
                 fb_x_off += _bytes_per_pixel;
@@ -160,7 +164,8 @@ namespace Rune {
                                          const int    w_init,
                                          const bool   sy,
                                          U8*          raw_pixel) const -> void {
-        // These values somehow define the width of the perpendicular line, but I have no clue what's going on
+        // These values somehow define the width of the perpendicular line, but I have no clue
+        // what's going on
         const double w_threshold = 2 * width * sqrt(dx * dx + dy * dy);
         int          tk          = dx + dy - w_init;
         int          x           = x0;
@@ -169,7 +174,9 @@ namespace Rune {
 
         // Draw the perpendicular to the left up/down
         while (tk <= w_threshold) {
-            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), raw_pixel, 4);
+            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
+                   raw_pixel,
+                   4);
             if (error > threshold) {
                 x     -= _bytes_per_pixel;
                 error += e_diag;
@@ -187,7 +194,9 @@ namespace Rune {
 
         // Draw the perpendicular to the right up/down
         while (tk <= w_threshold) {
-            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), raw_pixel, 4);
+            memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
+                   raw_pixel,
+                   4);
             if (error > threshold) {
                 x     += _bytes_per_pixel;
                 error += e_diag;
@@ -199,7 +208,10 @@ namespace Rune {
         }
     }
 
-    void FrameBuffer::draw_line(Coord2D start, Coord2D end, const Pixel color, const double thickness) const {
+    void FrameBuffer::draw_line(Coord2D      start,
+                                Coord2D      end,
+                                const Pixel  color,
+                                const double thickness) const {
         if (thickness <= 0)
             // Negative thickness is garbage and if thickness=0 -> Line is invisible
             return;
@@ -208,15 +220,15 @@ namespace Rune {
         to_raw_pixel(color, raw_color);
 
         // General note on x and y coords
-        // They are given in terms of pixel location, but we need them in terms of offset into the linear framebuffer.
-        // Conversions are: x_fb = x_px * _bytes_per_pixel, y_fb = y_px * _pitch
+        // They are given in terms of pixel location, but we need them in terms of offset into the
+        // linear framebuffer. Conversions are: x_fb = x_px * _bytes_per_pixel, y_fb = y_px * _pitch
         if (start.x == end.x) {
-            // Vertical line -> Line equation is undefined (division by zero), but can easily iterate y-axis
+            // Vertical line -> Line equation is undefined (division by zero), but can easily
+            // iterate y-axis
             if (start.y > end.y) swap(start, end);
 
-            // We want to draw (thickness / 2) lines to the left and right of the center line, the line directly at
-            // y position.
-            // Visualized the algorithm draws this:
+            // We want to draw (thickness / 2) lines to the left and right of the center line, the
+            // line directly at y position. Visualized the algorithm draws this:
             //  thickness=1     thickness=2     thickness=3
             //      c                c              c
             //      |               ||             |||
@@ -224,7 +236,8 @@ namespace Rune {
             // For even thickness we draw one line more to the left
             const double f_t_half = floor(thickness / 2);
             const U32    x_start =
-                (start.x >= static_cast<U32>(f_t_half) ? (start.x - static_cast<U32>(f_t_half)) : 0) * _bytes_per_pixel;
+                (start.x >= static_cast<U32>(f_t_half) ? (start.x - static_cast<U32>(f_t_half)) : 0)
+                * _bytes_per_pixel;
             const U32 x_end = (start.x + static_cast<U32>(ceil(thickness / 2))) * _bytes_per_pixel;
 
             for (U32 x = x_start; x < x_end; x += _bytes_per_pixel)
@@ -236,9 +249,8 @@ namespace Rune {
             // Horizontal line -> Can simplify the loop
             if (start.x > end.x) swap(start, end);
 
-            // Same principle as in the vertical line case: Draw (thickness / 2) lines above and beneath the center line
-            // Visualized:
-            // thickness=1  c ---
+            // Same principle as in the vertical line case: Draw (thickness / 2) lines above and
+            // beneath the center line Visualized: thickness=1  c ---
             //
             //                ---
             // thickness=2  c ---
@@ -248,33 +260,36 @@ namespace Rune {
             //                ---
             const double f_t_half = floor(thickness / 2);
             const U32    y_start =
-                (start.y >= static_cast<U32>(f_t_half) ? (start.y - static_cast<U32>(f_t_half)) : 0) * _pitch;
+                (start.y >= static_cast<U32>(f_t_half) ? (start.y - static_cast<U32>(f_t_half)) : 0)
+                * _pitch;
             const U32 y_end = (start.y + static_cast<U32>(ceil(thickness / 2))) * _pitch;
             for (U32 y = y_start; y < y_end; y += _pitch)
-                for (U32 x = start.x * _bytes_per_pixel; x < end.x * _bytes_per_pixel; x += _bytes_per_pixel)
+                for (U32 x  = start.x * _bytes_per_pixel; x < end.x * _bytes_per_pixel;
+                     x     += _bytes_per_pixel)
                     memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
                            raw_color,
                            _bytes_per_pixel);
         } else {
             // Draw line in any other direction using the line equation
-            // Basic Bresenham allows us to only draw in quadrant 0 in increasing order of y (y grows down) and x coords
+            // Basic Bresenham allows us to only draw in quadrant 0 in increasing order of y (y
+            // grows down) and x coords
             //                y
             //              2 | 1
             //             -------x
             //              3 | 0
             //
             if (start.x > end.x)
-                // End point is to the left of the start, we would draw in decreasing order, but it does not matter
-                // if we draw from right to left or left to right -> Swap! So we have easier math, this means
-                // essentially we allow drawing in quadrant 3
+                // End point is to the left of the start, we would draw in decreasing order, but it
+                // does not matter if we draw from right to left or left to right -> Swap! So we
+                // have easier math, this means essentially we allow drawing in quadrant 3
                 swap(start, end);
             const int dx = static_cast<int>(end.x) - static_cast<int>(start.x);
             int       dy;
             bool      sy;
-            // We keep track of the sign of dy, this allows to not only draw from top to bottom but also the other way
-            // end.y > start.y -> increment y, end.y < start.y -> decrement y
-            // Swapping will mess things up, so we have to live with harder math, the bright side is we can draw in
-            // quadrant 1 and 3 now!
+            // We keep track of the sign of dy, this allows to not only draw from top to bottom but
+            // also the other way end.y > start.y -> increment y, end.y < start.y -> decrement y
+            // Swapping will mess things up, so we have to live with harder math, the bright side is
+            // we can draw in quadrant 1 and 3 now!
             if (end.y > start.y) {
                 dy = static_cast<int>(end.y) - static_cast<int>(start.y);
                 sy = true;
@@ -288,25 +303,28 @@ namespace Rune {
             // | x<|-- Pixel
             // |   |
             // |---|
-            // The problem is that the line we will calculate will not always go through the center of the pixels,
-            // if error=0.5 than we intersect the pixel center, error=0.9 means the line goes above the pixel center
-            // We can utilize this to time the y increments, since if error>=1.0 the line is on the next row in the
-            // display
+            // The problem is that the line we will calculate will not always go through the center
+            // of the pixels, if error=0.5 than we intersect the pixel center, error=0.9 means the
+            // line goes above the pixel center We can utilize this to time the y increments, since
+            // if error>=1.0 the line is on the next row in the display
             int p_error = 0; // Error for the perpendiculars
             int error   = 0; // Error for the center line
             int y       = static_cast<int>(start.y) * static_cast<int>(_pitch);
             int x       = static_cast<int>(start.x) * static_cast<int>(_bytes_per_pixel);
-            // We essentially solve the line equation y=mx+b -> we could increment the error by m and be done, but this
-            // is slower because it uses floating point arithmetic
-            // Using this threshold, e_diag and e_square values we make it integer arithmetic only which is better but
-            // more complex and I don't know what's going on
+            // We essentially solve the line equation y=mx+b -> we could increment the error by m
+            // and be done, but this is slower because it uses floating point arithmetic Using this
+            // threshold, e_diag and e_square values we make it integer arithmetic only which is
+            // better but more complex and I don't know what's going on
             const int threshold = dx - 2 * dy;
             const int e_diag    = -2 * dx;
             const int e_square  = 2 * dy;
             for (int i = 0; i < dx; i++) {
-                memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x), (void*) raw_color, 4);
-                // To make diagonal lines thicker we will draw perpendicular lines to the left and right of the center
-                // line, this will be done whenever a pixel of the center line is drawn:
+                memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
+                       (void*) raw_color,
+                       4);
+                // To make diagonal lines thicker we will draw perpendicular lines to the left and
+                // right of the center line, this will be done whenever a pixel of the center line
+                // is drawn:
                 //
                 //    kinda perpendicular line
                 //        x
@@ -316,15 +334,26 @@ namespace Rune {
                 //           x
                 //           x
                 //      kinda perpendicular line
-                draw_perpendicular(x, y, dx, dy, threshold, e_diag, e_square, p_error, thickness, error, sy, raw_color);
+                draw_perpendicular(x,
+                                   y,
+                                   dx,
+                                   dy,
+                                   threshold,
+                                   e_diag,
+                                   e_square,
+                                   p_error,
+                                   thickness,
+                                   error,
+                                   sy,
+                                   raw_color);
                 if (error > threshold) {
                     y      = sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
                     error += e_diag;
                     if (p_error > threshold) {
-                        // When we do not draw the additional perpendicular line, the final line will have gaps
-                        // in between the perpendicular lines, because we only draw lines perpendicular to the point
-                        // when we advance in x direction, but we also need lines perpendicular to the point when we
-                        // advance in y direction
+                        // When we do not draw the additional perpendicular line, the final line
+                        // will have gaps in between the perpendicular lines, because we only draw
+                        // lines perpendicular to the point when we advance in x direction, but we
+                        // also need lines perpendicular to the point when we advance in y direction
                         //
                         //        x x
                         //         x x xx

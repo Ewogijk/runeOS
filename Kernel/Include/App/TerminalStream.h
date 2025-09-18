@@ -29,8 +29,8 @@
 namespace Rune::App {
 
     /**
-     * The line can be either relative to the scroll back buffer or the screen. The column has the same value from both
-     * view points.
+     * The line can be either relative to the scroll back buffer or the screen. The column has the
+     * same value from both view points.
      *
      * @brief The position of the cursor.
      */
@@ -54,7 +54,7 @@ namespace Rune::App {
     struct TextLine {
         // The last entry in the list is the currently entered text
         LinkedList<StyledText> styled_text;
-        size_t                 line_size; // Size of the line in characters as if it was a single string
+        size_t line_size; // Size of the line in characters as if it was a single string
 
         TextLine();
 
@@ -65,15 +65,16 @@ namespace Rune::App {
         void append_char(char ch);
 
         /**
-         * @brief Append all content of the raw text buffer to the line buffer with the currently used fg and bg colors
-         *          then clear the line buffer
+         * @brief Append all content of the raw text buffer to the line buffer with the currently
+         * used fg and bg colors then clear the line buffer
          * @param bg_color
          * @param fg_color
          */
         void style_raw_text(Pixel bg_color, Pixel fg_color);
 
         /**
-         * @brief Delete "len" characters starting from "off" as if the text line was a single string.
+         * @brief Delete "len" characters starting from "off" as if the text line was a single
+         * string.
          * @param off
          * @param len
          */
@@ -85,18 +86,18 @@ namespace Rune::App {
         void clear();
     };
 
-#define ANSI_INTERPRETER_STATES(X)                                                                                     \
-    X(ANSIInterpreterState, CHARACTER, 1)                                                                              \
-    X(ANSIInterpreterState, C0_CONTROL_CODE, 2)                                                                        \
-    X(ANSIInterpreterState, CSI_BEGIN, 3)                                                                              \
-    X(ANSIInterpreterState, CSI_ARG, 4)                                                                                \
+#define ANSI_INTERPRETER_STATES(X)                                                                 \
+    X(ANSIInterpreterState, CHARACTER, 1)                                                          \
+    X(ANSIInterpreterState, C0_CONTROL_CODE, 2)                                                    \
+    X(ANSIInterpreterState, CSI_BEGIN, 3)                                                          \
+    X(ANSIInterpreterState, CSI_ARG, 4)                                                            \
     X(ANSIInterpreterState, CSI_END, 5)
 
     DECLARE_ENUM(ANSIInterpreterState, ANSI_INTERPRETER_STATES, 0) // NOLINT
 
     /**
-     * The state is shared with the cursor render thread, a pointer to the state will be passed to it when it is
-     * created.
+     * The state is shared with the cursor render thread, a pointer to the state will be passed to
+     * it when it is created.
      *
      * @brief The internal state of the terminal.
      */
@@ -105,9 +106,9 @@ namespace Rune::App {
         //                                          Text Buffering
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        // Buffer of all text that was ever written to the terminal, the buffer is used to implement scroll back
-        // thus not all lines in the buffer will be rendered all the time
-        // Optimization note: Should use array list for random access
+        // Buffer of all text that was ever written to the terminal, the buffer is used to implement
+        // scroll back thus not all lines in the buffer will be rendered all the time Optimization
+        // note: Should use array list for random access
         LinkedList<TextLine> scroll_back_buffer = LinkedList<TextLine>();
         // Cursor position relative to the scroll back buffer
         TerminalCursor cursor_sbb = {};
@@ -130,10 +131,9 @@ namespace Rune::App {
         Pixel bg_color = {};
         Pixel fg_color = {};
 
-        // The view port describes the first line that is rendered on the display and is essentially an offset into
-        // the scroll back buffer. The view port is limited by the "_screen_height" property therefore it is not defined
-        // separately.
-        // A visualization of the view port:
+        // The view port describes the first line that is rendered on the display and is essentially
+        // an offset into the scroll back buffer. The view port is limited by the "_screen_height"
+        // property therefore it is not defined separately. A visualization of the view port:
         //      ...
         //      Line1     <- Lines are stored in the scroll back buffer
         //  ------------- <- Screen begin
@@ -157,36 +157,34 @@ namespace Rune::App {
         U16 cursor_blink_freq_ms = 0;
         // True: The cursor is visible, False: It is not.
         bool is_cursor_rendered = false;
-        // True: The render thread will skip a loop iteration, False: The render thread makes no skips.
+        // True: The render thread will skip a loop iteration, False: The render thread makes no
+        // skips.
         bool timeout_cursor_renderer = false;
 
-        // This flag controls if the cursor rendering thread keeps rendering the cursor, if set to false the render
-        // thread will terminate
+        // This flag controls if the cursor rendering thread keeps rendering the cursor, if set to
+        // false the render thread will terminate
         bool keep_rendering_cursor = true;
     };
 
     /**
-     * The terminal stream has an integrated ANSI interpreter that interprets incoming characters on the fly.
-     * <p>
-     *  The formal grammar is:
-     *  <ul>
-     *  <li>EscapeCode           = C0ControlCode | FEEscapeSequence</li>
-     *  <li>FEEscapeSequence     = "\033", "[", CSICommand</li>
-     *  <li>CSICommand           = ([0-9], ";")*, CSICommandSelector</li>
-     *  <li>CSICommandSelector   = [ABCDHJKSTm]</li>
+     * The terminal stream has an integrated ANSI interpreter that interprets incoming characters on
+     * the fly. <p> The formal grammar is: <ul> <li>EscapeCode           = C0ControlCode |
+     * FEEscapeSequence</li> <li>FEEscapeSequence     = "\033", "[", CSICommand</li> <li>CSICommand
+     * = ([0-9], ";")*, CSICommandSelector</li> <li>CSICommandSelector   = [ABCDHJKSTm]</li>
      *  <li>C0ControlCode        = [\b\t\r\n]</li>
      *  </ul>
      * </p>
      *
-     * @brief A terminal emulator that renders bitmap fonts to the framebuffer of a monitor thus providing an text
-     *          output for applications.
+     * @brief A terminal emulator that renders bitmap fonts to the framebuffer of a monitor thus
+     * providing an text output for applications.
      */
     class TerminalStream : public TextStream {
-        // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger than the limit the oldest
-        // text lines must be discarded
+        // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger than
+        // the limit the oldest text lines must be discarded
         static constexpr U8 SCROLL_BACK_BUFFER_LIMIT = 128;
 
-        // The amount of time in millis the cursor render thread sleeps before redrawing the cursor aka the blink speed
+        // The amount of time in millis the cursor render thread sleeps before redrawing the cursor
+        // aka the blink speed
         static constexpr U16 CURSOR_BLINK_FREQ = 500;
 
         CPU::CPUSubsystem* _cpu_subsys;
@@ -228,8 +226,8 @@ namespace Rune::App {
         TextLine* scroll_back_buffer_get_last_line();
 
         /**
-         * @brief Set the style of the last line in the scroll back buffer to the current fg and bg color and append a
-         *          new line.
+         * @brief Set the style of the last line in the scroll back buffer to the current fg and bg
+         * color and append a new line.
          */
         void scroll_back_buffer_append_new_line();
 
@@ -248,7 +246,8 @@ namespace Rune::App {
         // Draw the cursor
         void draw_cursor(const Pixel& color) const;
 
-        // If the cursor is rendered, clear it at its current position. Call this before moving the cursor.
+        // If the cursor is rendered, clear it at its current position. Call this before moving the
+        // cursor.
         void start_cursor_movement();
 
         // Render the cursor at its current position. Call this after moving the cursor.
@@ -266,8 +265,8 @@ namespace Rune::App {
         bool is_cursor_visible() const;
 
         /**
-         * If the cursor is below the viewport it is scrolled until the cursor is in the last line on the screen. If
-         * it is above the viewport then scroll until it is the first line.
+         * If the cursor is below the viewport it is scrolled until the cursor is in the last line
+         * on the screen. If it is above the viewport then scroll until it is the first line.
          *
          * @brief Scroll to the cursor if it is not visible.
          */

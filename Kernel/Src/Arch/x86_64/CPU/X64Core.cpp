@@ -56,8 +56,8 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     // when implementing SMP I need to figure out how to properly store multiple GDT (on per core)
-    // storage as class member does not work, probably due to padding bytes added by compiler (did not debug that
-    // detailed)
+    // storage as class member does not work, probably due to padding bytes added by compiler (did
+    // not debug that detailed)
     SegmentDescriptor     SD[7];
     GlobalDescriptorTable GDT;
     TaskStateSegment64    TSS;
@@ -86,8 +86,8 @@ namespace Rune::CPU {
 
         // KernelGSBase holds a pointer to the kernel stack of the running thread
         // GSBase holds a pointer to the user stack of the running thread
-        // These are needed during system calls as the CPU does not switch stacks automatically, so we need to keep
-        // track of them ourselves, these MSRs are intended to do exactly that
+        // These are needed during system calls as the CPU does not switch stacks automatically, so
+        // we need to keep track of them ourselves, these MSRs are intended to do exactly that
         write_msr(ModelSpecificRegister::KERNEL_GS_BASE, reinterpret_cast<uintptr_t>(&_kgs_base));
         write_msr(ModelSpecificRegister::GS_Base, reinterpret_cast<uintptr_t>(&_gs_base));
 
@@ -122,8 +122,8 @@ namespace Rune::CPU {
         for (int i = 0; i < 256; i++) {
             GateDescriptor gd = idt_get()->entry[i];
 
-            auto handler_addr =
-                ((VirtualAddr) gd.offset_high) << 32 | ((VirtualAddr) gd.offset_mid) << 16 | gd.offset_low;
+            auto handler_addr = ((VirtualAddr) gd.offset_high) << 32
+                                | ((VirtualAddr) gd.offset_mid) << 16 | gd.offset_low;
 
             PrivilegeLevel pl = PrivilegeLevel::NONE;
 
@@ -150,25 +150,29 @@ namespace Rune::CPU {
         // Kernel code is only ever run after an exception, IRQ or syscall and after this is handled
         // the kernel stack will be emptied, that is we set the stack pointer (nearly) to the bottom
         // on top of the null frame
-        const auto kernel_sp_bottom =
-            reinterpret_cast<uintptr_t>(n_thread->kernel_stack_bottom) + Thread::KERNEL_STACK_SIZE - 8;
+        const auto kernel_sp_bottom = reinterpret_cast<uintptr_t>(n_thread->kernel_stack_bottom)
+                                      + Thread::KERNEL_STACK_SIZE - 8;
 
-        // The user stack top in the thread struct will be out of date since it is not updated when a system call is
-        // accepted, only the GSBase MSR is updated and contains the latest user stack top value
-        // -> Update the thread struct user stack top to prevent it from being corrupted when we switch back to the
+        // The user stack top in the thread struct will be out of date since it is not updated when
+        // a system call is accepted, only the GSBase MSR is updated and contains the latest user
+        // stack top value
+        // -> Update the thread struct user stack top to prevent it from being corrupted when we
+        // switch back to the
         //      current stack at some point
         c_thread->user_stack.stack_top = _gs_base;
 
         TSS.rsp_0 = kernel_sp_bottom;
         _kgs_base = kernel_sp_bottom;
         _gs_base  = n_thread->user_stack.stack_top;
-        write_msr(ModelSpecificRegister::FS_Base, reinterpret_cast<uintptr_t>(n_thread->thread_control_block));
+        write_msr(ModelSpecificRegister::FS_Base,
+                  reinterpret_cast<uintptr_t>(n_thread->thread_control_block));
 
-        context_switch_ass(&c_thread->kernel_stack_top,
-                           // Passed as pointer so the assembly can update the value in the thread struct
-                           c_thread->base_page_table_address,
-                           n_thread->kernel_stack_top,
-                           n_thread->base_page_table_address);
+        context_switch_ass(
+            &c_thread->kernel_stack_top,
+            // Passed as pointer so the assembly can update the value in the thread struct
+            c_thread->base_page_table_address,
+            n_thread->kernel_stack_top,
+            n_thread->base_page_table_address);
     }
 
     void X64Core::execute_in_kernel_mode(Thread* t, const Register thread_exit) {
@@ -185,7 +189,8 @@ namespace Rune::CPU {
         TSS.rsp_0 = t->kernel_stack_top;
         _kgs_base = t->kernel_stack_top;
         _gs_base  = t->user_stack.stack_top;
-        exec_user_mode(reinterpret_cast<Register>(t->start_info), reinterpret_cast<Register>(t->start_info->main));
+        exec_user_mode(reinterpret_cast<Register>(t->start_info),
+                       reinterpret_cast<Register>(t->start_info->main));
     }
 
     void X64Core::update_thread_local_storage(void* tls_ptr) {
@@ -196,7 +201,8 @@ namespace Rune::CPU {
     //                                      x64 core specific API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void X64Core::dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state) {
+    void X64Core::dump_core_state(const SharedPointer<TextStream>& stream,
+                                  const x86CoreState&              state) {
         stream->write_formatted("-------------------------------------------- CPU{} Core Dump "
                                 "--------------------------------------------\n",
                                 _core_id);
@@ -230,18 +236,23 @@ namespace Rune::CPU {
                                 state.CR2,
                                 state.CR3,
                                 state.CR4);
-        stream->write_formatted("cs={:0=#4x}, ds={:0=#4x}, ss={:0=#4x}, es={:0=#4x}, fs={:0=#4x}, gs={:0=#4x}\n",
-                                state.CS,
-                                state.DS,
-                                state.SS,
-                                state.ES,
-                                state.FS,
-                                state.GS);
+        stream->write_formatted(
+            "cs={:0=#4x}, ds={:0=#4x}, ss={:0=#4x}, es={:0=#4x}, fs={:0=#4x}, gs={:0=#4x}\n",
+            state.CS,
+            state.DS,
+            state.SS,
+            state.ES,
+            state.FS,
+            state.GS);
 
         InterruptDescriptorTable* idt = idt_get();
         stream->write_formatted("");
-        stream->write_formatted("GDT={:0=#16x}, Limit={:0=#4x}\n", (uintptr_t) &GDT.entry, GDT.limit);
-        stream->write_formatted("IDT={:0=#16x}, Limit={:0=#4x}\n", (uintptr_t) &idt->entry, idt->limit);
+        stream->write_formatted("GDT={:0=#16x}, Limit={:0=#4x}\n",
+                                (uintptr_t) &GDT.entry,
+                                GDT.limit);
+        stream->write_formatted("IDT={:0=#16x}, Limit={:0=#4x}\n",
+                                (uintptr_t) &idt->entry,
+                                idt->limit);
         stream->write_formatted(
 
             "TSS={:0=#16x}, RSP0={:0=#16x}\n",
@@ -268,20 +279,21 @@ namespace Rune::CPU {
         for (int i = 0; i < 5; i++) {
             SegmentDescriptor sd    = GDT.entry[i];
             U32               limit = (U32) sd.limit_flags.limit_high << 16 | (U32) sd.limit_low;
-            stream->write_formatted(" {:0=#2x}    {:0=#16x} {:0=#5x} {} {}  {}  {} {}  {}  {} {} {}  {}\n",
-                                    i * sizeof(SegmentDescriptor),
-                                    0,
-                                    limit,
-                                    sd.access_byte.accessed,
-                                    sd.access_byte.read_write,
-                                    sd.access_byte.direction_conforming,
-                                    sd.access_byte.executable,
-                                    sd.access_byte.s,
-                                    sd.access_byte.descriptor_privilege_level,
-                                    sd.access_byte.present,
-                                    sd.limit_flags.long_mode,
-                                    sd.limit_flags.db,
-                                    sd.limit_flags.granularity);
+            stream->write_formatted(
+                " {:0=#2x}    {:0=#16x} {:0=#5x} {} {}  {}  {} {}  {}  {} {} {}  {}\n",
+                i * sizeof(SegmentDescriptor),
+                0,
+                limit,
+                sd.access_byte.accessed,
+                sd.access_byte.read_write,
+                sd.access_byte.direction_conforming,
+                sd.access_byte.executable,
+                sd.access_byte.s,
+                sd.access_byte.descriptor_privilege_level,
+                sd.access_byte.present,
+                sd.limit_flags.long_mode,
+                sd.limit_flags.db,
+                sd.limit_flags.granularity);
         }
     }
 } // namespace Rune::CPU

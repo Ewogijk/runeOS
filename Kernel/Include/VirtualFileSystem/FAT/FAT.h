@@ -30,9 +30,9 @@ namespace Rune::VFS {
     //                                                                              //
     //////////////////////////////////////////////////////////////////////////////////
 
-#define FAT_TYPES(X)                                                                                                   \
-    X(FATType, FAT12, 0x1)                                                                                             \
-    X(FATType, FAT16, 0x2)                                                                                             \
+#define FAT_TYPES(X)                                                                               \
+    X(FATType, FAT12, 0x1)                                                                         \
+    X(FATType, FAT16, 0x2)                                                                         \
     X(FATType, FAT32, 0x3)
 
     DECLARE_ENUM(FATType, FAT_TYPES, 0x0) // NOLINT
@@ -113,13 +113,13 @@ namespace Rune::VFS {
         FileSystemInfo();
     };
 
-#define FAT_FILE_ATTRIBUTES(X)                                                                                         \
-    X(FATFileAttribute, READONLY, 0x01)                                                                                \
-    X(FATFileAttribute, HIDDEN, 0x02)                                                                                  \
-    X(FATFileAttribute, SYSTEM, 0x04)                                                                                  \
-    X(FATFileAttribute, VOLUME_ID, 0x08)                                                                               \
-    X(FATFileAttribute, DIRECTORY, 0x10)                                                                               \
-    X(FATFileAttribute, ARCHIVE, 0x20)                                                                                 \
+#define FAT_FILE_ATTRIBUTES(X)                                                                     \
+    X(FATFileAttribute, READONLY, 0x01)                                                            \
+    X(FATFileAttribute, HIDDEN, 0x02)                                                              \
+    X(FATFileAttribute, SYSTEM, 0x04)                                                              \
+    X(FATFileAttribute, VOLUME_ID, 0x08)                                                           \
+    X(FATFileAttribute, DIRECTORY, 0x10)                                                           \
+    X(FATFileAttribute, ARCHIVE, 0x20)                                                             \
     X(FATFileAttribute, LONG_FILE_NAME, 0x0F)
 
     DECLARE_ENUM(FATFileAttribute, FAT_FILE_ATTRIBUTES, 0x0) // NOLINT
@@ -304,9 +304,9 @@ namespace Rune::VFS {
      * A file entry with it's position on the storage.
      */
     struct LocationAwareFileEntry {
-        String            file_name       = "";     // Cache the file name in case it is a long file name
-        FileEntry         file            = {};     // Copy of the file entry on the storage
-        FileEntryLocation location        = {0, 0}; // Location of the file entry on the volume
+        String            file_name = "";     // Cache the file name in case it is a long file name
+        FileEntry         file      = {};     // Copy of the file entry on the storage
+        FileEntryLocation location  = {0, 0}; // Location of the file entry on the volume
         FileEntryLocation first_lfn_entry = {0, 0}; // Location of the first LFN entry on the volume
     };
 

@@ -21,7 +21,8 @@
 
 namespace Rune::Memory {
     /**
-     * The bitmap allocator stores the state of each page frame in a bitmap where bit i saves the state of page frame i.
+     * The bitmap allocator stores the state of each page frame in a bitmap where bit i saves the
+     * state of page frame i.
      */
     class BitMapAllocator : public PhysicalMemoryManager {
         U8*          _bitmap;      // Base address where the bitmap is accessed.
@@ -74,8 +75,10 @@ namespace Rune::Memory {
 
         bool free(PhysicalAddr p_addr, size_t frames) override;
 
-        size_t
-        read_page_frame_states(MemoryRegion* buf, size_t buf_size, PhysicalAddr start, PhysicalAddr end) override;
+        size_t read_page_frame_states(MemoryRegion* buf,
+                                      size_t        buf_size,
+                                      PhysicalAddr  start,
+                                      PhysicalAddr  end) override;
     };
 } // namespace Rune::Memory
 

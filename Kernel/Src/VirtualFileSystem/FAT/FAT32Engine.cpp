@@ -43,9 +43,11 @@ namespace Rune::VFS {
         // Extended BIOS parameter block
         U32 non_reserved_sector_count = sector_count - (br32->BPB.reserved_sector_count);
         // Total non reserved clusters / Cluster count per FAT sector
-        U32 fat_size = div_round_up((non_reserved_sector_count / br32->BPB.sectors_per_cluster), (sector_size / 4));
+        U32 fat_size = div_round_up((non_reserved_sector_count / br32->BPB.sectors_per_cluster),
+                                    (sector_size / 4));
         // Exclude clusters used by the FAT tables
-        fat_size -= div_round_up(fat_size, sector_size) * br32->BPB.sectors_per_cluster * br32->BPB.fat_count;
+        fat_size -= div_round_up(fat_size, sector_size) * br32->BPB.sectors_per_cluster
+                    * br32->BPB.fat_count;
 
         br32->EBPB.fat_size_32      = fat_size;
         br32->EBPB.flags            = 0;
@@ -63,7 +65,9 @@ namespace Rune::VFS {
         return true;
     }
 
-    bool FAT32Engine::can_mount(U32 total_clusters) { return total_clusters >= FAT_16_MAX_CLUSTERS; }
+    bool FAT32Engine::can_mount(U32 total_clusters) {
+        return total_clusters >= FAT_16_MAX_CLUSTERS;
+    }
 
     U16 FAT32Engine::get_backup_boot_record_sector(BIOSParameterBlock* bpb) {
         return ((BootRecord32*) bpb)->EBPB.backup_bs_sector;
@@ -75,16 +79,20 @@ namespace Rune::VFS {
 
     U32 FAT32Engine::get_max_cluster_count() { return 0x0FFFFFF0; }
 
-    U32 FAT32Engine::fat_get_size(BIOSParameterBlock* bpb) { return ((BootRecord32*) bpb)->EBPB.fat_size_32; }
+    U32 FAT32Engine::fat_get_size(BIOSParameterBlock* bpb) {
+        return ((BootRecord32*) bpb)->EBPB.fat_size_32;
+    }
 
     U32 FAT32Engine::fat_get_eof_marker() { return 0xFFFFFFFF; }
 
     U32 FAT32Engine::fat_offset(U32 cluster) { return cluster * 4; }
 
-    U32 FAT32Engine::fat_get_entry(U8* fat, U32 entry_offset) { return (*((U32*) &fat[entry_offset])) & 0x0FFFFFFF; }
+    U32 FAT32Engine::fat_get_entry(U8* fat, U32 entry_offset) {
+        return (*((U32*) &fat[entry_offset])) & 0x0FFFFFFF;
+    }
 
     void FAT32Engine::fat_set_entry(U8* fat, U32 entry_offset, U32 new_entry) {
-        new_entry                    = ((*((U32*) &fat[entry_offset])) & 0xF0000000) | (new_entry & 0x0FFFFFFF);
+        new_entry = ((*((U32*) &fat[entry_offset])) & 0xF0000000) | (new_entry & 0x0FFFFFFF);
         *((U32*) &fat[entry_offset]) = new_entry;
     }
 

@@ -18,8 +18,8 @@
 
 #include <Forge/VFS.h>
 
-#include <string>
 #include <iostream>
+#include <string>
 
 constexpr U16 BUF_SIZE = 4096;
 
@@ -29,21 +29,17 @@ struct CLIArgs {
     bool help = false;
 };
 
-
 bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
-    bool     file_seen = false;
-    for (int i         = 1; i < argc; i++) {
+    bool file_seen = false;
+    for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0)
-            continue;
+        if (arg.size() == 0) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
                 switch (arg[j]) {
-                    case 'h':
-                        args_out.help = true;
-                        break;
-                    default: {
+                    case 'h': args_out.help = true; break;
+                    default:  {
                         std::cerr << "Unknown option '" << arg << "'" << std::endl;
                         return false;
                     }
@@ -55,19 +51,16 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
                 return false;
             }
             args_out.file = arg;
-            file_seen = true;
+            file_seen     = true;
         }
     }
-    if (!file_seen && !args_out.help)
-        std::cerr << "Missing file argument." << std::endl;
+    if (!file_seen && !args_out.help) std::cerr << "Missing file argument." << std::endl;
     return file_seen || args_out.help;
 }
 
-
 CLINK int main(const int argc, char* argv[]) {
     CLIArgs args;
-    if (!parse_cli_args(argc, argv, args))
-        return -1;
+    if (!parse_cli_args(argc, argv, args)) return -1;
 
     if (args.help) {
         std::cout << "cat [file] [options]" << std::endl;
@@ -85,15 +78,14 @@ CLINK int main(const int argc, char* argv[]) {
             case Ember::Status::NODE_NOT_FOUND:
                 std::cerr << "'" << args.file << "' - File not found." << std::endl;
                 break;
-            default:
-                std::cerr << "'" << args.file << "' - IO error." << std::endl;
-                break;
+            default: std::cerr << "'" << args.file << "' - IO error." << std::endl; break;
         }
         return -1;
     }
 
-    U8  buf[BUF_SIZE];
-    Ember::StatusCode bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1); // leave space for null terminator
+    U8                buf[BUF_SIZE];
+    Ember::StatusCode bytes_read =
+        Forge::vfs_read(file_ID, buf, BUF_SIZE - 1); // leave space for null terminator
     while (bytes_read > Ember::Status::OKAY) {
         buf[BUF_SIZE - 1] = 0;
         std::cout << reinterpret_cast<const char*>(buf);
@@ -110,9 +102,7 @@ CLINK int main(const int argc, char* argv[]) {
             case Ember::Status::NODE_NOT_FOUND:
                 std::cerr << "'" << args.file << "' - File not found." << std::endl;
                 break;
-            default:
-                std::cerr << "'" << args.file << "' - IO error." << std::endl;
-                break;
+            default: std::cerr << "'" << args.file << "' - IO error." << std::endl; break;
         }
         Forge::vfs_close(file_ID);
         return -1;

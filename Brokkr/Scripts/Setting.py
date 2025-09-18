@@ -14,30 +14,33 @@
 
 from enum import Enum, auto
 
+
 class Setting(Enum):
     """Keys of the settings in 'build.settings'"""
+
     # General
-    PROJECT_ROOT = auto(),
-    ARCH = auto(),
-    BUILD = auto(),
+    PROJECT_ROOT = (auto(),)
+    ARCH = (auto(),)
+    BUILD = (auto(),)
     # Kernel build
-    KERNEL_VERSION = auto(),
-    OS_EXECUTABLE = auto(),
-    QEMU_HOST = auto(),
-    C = auto(),
-    CPP = auto(),
-    CRT_BEGIN = auto(),
-    CRT_END = auto(),
+    KERNEL_VERSION = (auto(),)
+    OS_EXECUTABLE = (auto(),)
+    QEMU_HOST = (auto(),)
+    C = (auto(),)
+    CPP = (auto(),)
+    CRT_BEGIN = (auto(),)
+    CRT_END = (auto(),)
     # Image build
-    IMAGE_SIZE = auto(),
+    IMAGE_SIZE = (auto(),)
 
     def to_json_key(self) -> str:
         """
-        Convert the enum name to the key as found in the json config, e.g. PROJECT_ROOT -> project-root.
+        Convert the enum name to the key as found in the json config, e.g. PROJECT_ROOT ->
+        project-root.
 
         :return: Lower case name with '-' instead of '_'.
         """
-        return self.name.lower().replace('_', '-')
+        return self.name.lower().replace("_", "-")
 
     def to_scons_key(self) -> str:
         """

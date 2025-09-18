@@ -24,8 +24,8 @@ namespace Rune::Memory {
     /**
      * Describes if slab meta information is stored on or off a slab.
      */
-#define CACHE_TYPES(X)                                                                                                 \
-    X(CacheType, ON_SLAB, 0x1)                                                                                         \
+#define CACHE_TYPES(X)                                                                             \
+    X(CacheType, ON_SLAB, 0x1)                                                                     \
     X(CacheType, OFF_SLAB, 0x2)
 
     DECLARE_TYPED_ENUM(CacheType, U8, CACHE_TYPES, 0x0) // NOLINT
@@ -33,16 +33,16 @@ namespace Rune::Memory {
 /**
  * Reasons why the heap start can fail.
  */
-#define HEAP_START_FAILURE_CODES(X)                                                                                    \
-    X(HeapStartFailureCode, HEAP_NOT_MAPPED, 0x1)                                                                      \
-    X(HeapStartFailureCode, BC_OBJECT_CACHE_ERROR, 0x2)                                                                \
-    X(HeapStartFailureCode, BC_SLAB_ERROR, 0x3)                                                                        \
-    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_ERROR, 0x4)                                                             \
-    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_HASHMAP_ERROR, 0x5)                                                     \
-    X(HeapStartFailureCode, BC_HASHNODE_ERROR, 0x6)                                                                    \
-    X(HeapStartFailureCode, BC_MEMORY_NODE_ERROR, 0x7)                                                                 \
-    X(HeapStartFailureCode, ALLOC_GP_OR_DMA_CACHE_ERROR, 0x8)                                                          \
-    X(HeapStartFailureCode, GP_CACHE_ERROR, 0x9)                                                                       \
+#define HEAP_START_FAILURE_CODES(X)                                                                \
+    X(HeapStartFailureCode, HEAP_NOT_MAPPED, 0x1)                                                  \
+    X(HeapStartFailureCode, BC_OBJECT_CACHE_ERROR, 0x2)                                            \
+    X(HeapStartFailureCode, BC_SLAB_ERROR, 0x3)                                                    \
+    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_ERROR, 0x4)                                         \
+    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_HASHMAP_ERROR, 0x5)                                 \
+    X(HeapStartFailureCode, BC_HASHNODE_ERROR, 0x6)                                                \
+    X(HeapStartFailureCode, BC_MEMORY_NODE_ERROR, 0x7)                                             \
+    X(HeapStartFailureCode, ALLOC_GP_OR_DMA_CACHE_ERROR, 0x8)                                      \
+    X(HeapStartFailureCode, GP_CACHE_ERROR, 0x9)                                                   \
     X(HeapStartFailureCode, DMA_CACHE_ERROR, 0xA)
 
     DECLARE_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0) // NOLINT
@@ -83,7 +83,8 @@ namespace Rune::Memory {
      * See above.
      */
     struct Slab {
-        static constexpr U8 MAX_OBJECT_COUNT = 255; // And marker of the end of the free list (Object at index 255)
+        static constexpr U8 MAX_OBJECT_COUNT =
+            255; // And marker of the end of the free list (Object at index 255)
 
         Slab* next;
         Slab* prev;
@@ -154,8 +155,8 @@ namespace Rune::Memory {
     };
 
     /**
-     * Stores freed slab pages that lie between two used slab pages, these are prioritized for slab allocation when
-     * an object cache should grow again.
+     * Stores freed slab pages that lie between two used slab pages, these are prioritized for slab
+     * allocation when an object cache should grow again.
      */
     struct MemoryNode {
         MemoryNode* next;
@@ -219,8 +220,8 @@ namespace Rune::Memory {
         void* allocate();
 
         /**
-         * free an object in the cache, it is assumed that the given object is allocated in the object cache. If not
-         * undefined behavior may occur.
+         * free an object in the cache, it is assumed that the given object is allocated in the
+         * object cache. If not undefined behavior may occur.
          *
          * @param obj Pointer to the object to free.
          */
@@ -275,9 +276,9 @@ namespace Rune::Memory {
     };
 
     /**
-     * The slab allocator manages object caches. It contains general purpose and DMA caches that can allocate
-     * non-aligned objects of the size of a power of 2 from 16 byte - 64 KiB. Objects caches of custom size and specific
-     * alignment can be requested.
+     * The slab allocator manages object caches. It contains general purpose and DMA caches that can
+     * allocate non-aligned objects of the size of a power of 2 from 16 byte - 64 KiB. Objects
+     * caches of custom size and specific alignment can be requested.
      */
     class SlabAllocator {
         static constexpr U8         MIN_SIZE_POWER        = 4;
@@ -349,8 +350,9 @@ namespace Rune::Memory {
         HeapStartFailureCode start(MemoryMap* v_map, VirtualMemoryManager* vmm);
 
         /**
-         * allocate an object in a general purpose cache. The object size will rounded up to the next power of 2 if
-         * needed. When the object is smaller than 16 bytes, it will be padded to 16 bytes.
+         * allocate an object in a general purpose cache. The object size will rounded up to the
+         * next power of 2 if needed. When the object is smaller than 16 bytes, it will be padded to
+         * 16 bytes.
          *
          * @param size Object size.
          *
@@ -359,8 +361,8 @@ namespace Rune::Memory {
         void* allocate(size_t size);
 
         /**
-         * allocate an object in a DMA cache. The object size will rounded up to the next power of 2 if needed. When
-         * the object is smaller than 16 bytes, it will be padded to 16 bytes.
+         * allocate an object in a DMA cache. The object size will rounded up to the next power of 2
+         * if needed. When the object is smaller than 16 bytes, it will be padded to 16 bytes.
          *
          * @param size Object size.
          *
@@ -369,8 +371,9 @@ namespace Rune::Memory {
         void* allocate_dma(size_t size);
 
         /**
-         * free the object. The cache of the object is determined based on the pointer address and it is assumed that
-         * the object is dynamically allocated. If not undefined behavior may occur.
+         * free the object. The cache of the object is determined based on the pointer address and
+         * it is assumed that the object is dynamically allocated. If not undefined behavior may
+         * occur.
          *
          * @param obj Pointer to the object.
          */
@@ -381,8 +384,8 @@ namespace Rune::Memory {
          *
          * @param object_size Size of the objects in the cache.
          * @param align       Memory alignment of the objects.
-         * @param dma         Defines CPU caching strategies for paging. True: Use write-through and dont cache
-         *                    pages, False: Use write-back and cache pages.
+         * @param dma         Defines CPU caching strategies for paging. True: Use write-through and
+         * dont cache pages, False: Use write-back and cache pages.
          *
          * @return A pointer to the object cache.
          */

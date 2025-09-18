@@ -47,8 +47,11 @@ namespace Rune::CPU {
         return l;
     }
 
-    bool
-    PIT::start(SharedPointer<Logger> logger, CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) {
+    bool PIT::start(SharedPointer<Logger> logger,
+                    CPU::Scheduler*       scheduler,
+                    TimerMode             mode,
+                    U64                   frequency,
+                    U64                   quantum) {
         _logger            = move(logger);
         _scheduler         = scheduler;
         _mode              = mode;
@@ -63,20 +66,20 @@ namespace Rune::CPU {
 
         // The PIT is limited by the QuartzFrequency
         if (_freq_hz > QUARTZ_FREQUENCY_HZ) {
-            _logger->debug(
-                FILE,
-                "Requested frequency of {}Hz exceeds quartz frequency {}Hz. Will operate on quartz frequency.",
-                _freq_hz,
-                QUARTZ_FREQUENCY_HZ);
+            _logger->debug(FILE,
+                           "Requested frequency of {}Hz exceeds quartz frequency {}Hz. Will "
+                           "operate on quartz frequency.",
+                           _freq_hz,
+                           QUARTZ_FREQUENCY_HZ);
             _freq_hz = QUARTZ_FREQUENCY_HZ;
         }
 
-        // To calculate the divider based on the quartz frequency and a target frequency we have to solve the general
-        // frequency divider formula
-        // QUARTZ_FREQUENCY_GHZ / divider = _freq_ghz => divider = QUARTZ_FREQUENCY_GHZ / _freq_ghz
+        // To calculate the divider based on the quartz frequency and a target frequency we have to
+        // solve the general frequency divider formula QUARTZ_FREQUENCY_GHZ / divider = _freq_ghz =>
+        // divider = QUARTZ_FREQUENCY_GHZ / _freq_ghz
         U64 pit_divider = QUARTZ_FREQUENCY_HZ / _freq_hz;
-        // Frequency formula: _freq_hz = 1 / _time_between_irq -> _time_between_irq = 1 / _freq_hz. We want nanoseconds
-        // therefore we use 1000000000 instead of 1
+        // Frequency formula: _freq_hz = 1 / _time_between_irq -> _time_between_irq = 1 / _freq_hz.
+        // We want nanoseconds therefore we use 1000000000 instead of 1
         _time_between_irq = 1000000000 / _freq_hz;
         _logger->debug(FILE, "Time between IRQs will be ~{}ns", _time_between_irq);
 
@@ -94,8 +97,8 @@ namespace Rune::CPU {
                 _logger->trace(FILE, R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
                 _scheduler->schedule(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
-                    _scheduler
-                        ->execute_next_thread(); // Execute the thread immediately if it is first in the ready queue
+                    _scheduler->execute_next_thread(); // Execute the thread immediately if it is
+                                                       // first in the ready queue
                 c_t = _sleeping_threads.dequeue();
             }
 
@@ -119,7 +122,9 @@ namespace Rune::CPU {
         return irq_install_handler(0, 0, "PIT", _irq_handler);
     }
 
-    bool PIT::remove_sleeping_thread(int t_id) { return _sleeping_threads.remove_waiting_thread(t_id); }
+    bool PIT::remove_sleeping_thread(int t_id) {
+        return _sleeping_threads.remove_waiting_thread(t_id);
+    }
 
     void PIT::sleep_until(U64 wake_time_nanos) {
         _scheduler->lock();
@@ -132,7 +137,11 @@ namespace Rune::CPU {
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
         SharedPointer<Thread> r_t = _scheduler->get_running_thread();
-        _logger->trace(FILE, R"(Putting thread "{}-{}" to sleep for {}ns)", r_t->handle, r_t->name, sleep_time_nanos);
+        _logger->trace(FILE,
+                       R"(Putting thread "{}-{}" to sleep for {}ns)",
+                       r_t->handle,
+                       r_t->name,
+                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
         r_t->state = ThreadState::SLEEPING;
         _scheduler->execute_next_thread();

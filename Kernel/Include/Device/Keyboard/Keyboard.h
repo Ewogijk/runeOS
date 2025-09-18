@@ -22,10 +22,9 @@
 #include <KernelRuntime/Stream.h>
 
 namespace Rune::Device {
-
     /**
-     * @brief The virtual keyboard maps physical keyboard scancodes to virtual keycodes and provides them to the system
-     *          as a stream.
+     * @brief The virtual keyboard maps physical keyboard scancodes to virtual keycodes and provides
+     * them to the system as a stream.
      */
     class VirtualKeyboard : public TextStream {
       public:
@@ -47,7 +46,8 @@ namespace Rune::Device {
 
         /**
          * @brief Read a single virtual key press from the buffer.
-         * @return NoneKeyCode: The buffer is empty, Else: A virtual key code of the oldest pressed key.
+         * @return NoneKeyCode: The buffer is empty, Else: A virtual key code of the oldest pressed
+         * key.
          */
         int read() override = 0;
 

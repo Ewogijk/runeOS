@@ -47,12 +47,13 @@ namespace Rune::VFS {
     }
 
     IOStatus FATDriver::exists(const SharedPointer<StorageDevRef>& md, const Path& path) const {
-        LinkedListIterator<String> it     = path.split().begin();
-        NavigationResult           navRes = FATDirectoryIterator::navigate_to(md->storage_dev,
-                                                                    md->BPB,
-                                                                    _volume_manager,
-                                                                    _fat_engine->get_root_directory_cluster(md->BPB),
-                                                                    it);
+        LinkedListIterator<String> it = path.split().begin();
+        NavigationResult           navRes =
+            FATDirectoryIterator::navigate_to(md->storage_dev,
+                                              md->BPB,
+                                              _volume_manager,
+                                              _fat_engine->get_root_directory_cluster(md->BPB),
+                                              it);
         if (navRes.status == NavigationStatus::NOT_FOUND)
             return IOStatus::NOT_FOUND;
         else if (navRes.status == NavigationStatus::FOUND)
@@ -68,12 +69,14 @@ namespace Rune::VFS {
         if (!LongFileNameEntry::validate_name(file_name)) return IOStatus::BAD_NAME;
 
         // Find enough empty entries for the LFN entries and the actual file entry
-        U16 entry_range       = 1 + (div_round_up(file_name.size(), (size_t) LongFileNameEntry::MAX_CHAR_PER_ENTRY));
-        VolumeAccessStatus st = _file_entry_manager.find_empty_file_entries(md->storage_dev,
-                                                                            md->BPB,
-                                                                            path.get_parent().resolve(Path("")),
-                                                                            entry_range,
-                                                                            out);
+        U16 entry_range =
+            1 + (div_round_up(file_name.size(), (size_t) LongFileNameEntry::MAX_CHAR_PER_ENTRY));
+        VolumeAccessStatus st =
+            _file_entry_manager.find_empty_file_entries(md->storage_dev,
+                                                        md->BPB,
+                                                        path.get_parent().resolve(Path("")),
+                                                        entry_range,
+                                                        out);
         if (st != VolumeAccessStatus::OKAY) return IOStatus::DEV_ERROR;
 
         // Create LFN
@@ -82,7 +85,8 @@ namespace Rune::VFS {
         tmp[file_name.size()] = '\0';
         memset(&tmp[file_name.size() + 1],
                0xFF,
-               ((entry_range - 1) * LongFileNameEntry::MAX_CHAR_PER_ENTRY) - (file_name.size() + 1));
+               ((entry_range - 1) * LongFileNameEntry::MAX_CHAR_PER_ENTRY)
+                   - (file_name.size() + 1));
 
         // Set the file short name
         // TODO switch to the ~ naming
@@ -117,11 +121,14 @@ namespace Rune::VFS {
         return IOStatus::NONE;
     }
 
-    IOStatus FATDriver::create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes) {
+    IOStatus FATDriver::create_file(const SharedPointer<StorageDevRef>& md,
+                                    const Path&                         path,
+                                    U8                                  attributes) {
         // Verify attributes: Directory and VolumeID are not allowed
         FileEntry dummy;
         dummy.attributes = attributes;
-        if (dummy.has_attribute(FATFileAttribute::VOLUME_ID) || dummy.has_attribute(FATFileAttribute::DIRECTORY))
+        if (dummy.has_attribute(FATFileAttribute::VOLUME_ID)
+            || dummy.has_attribute(FATFileAttribute::DIRECTORY))
             return IOStatus::BAD_ATTRIBUTE;
 
         LinkedList<LocationAwareFileEntry> file_entries;
@@ -134,20 +141,27 @@ namespace Rune::VFS {
         e_file->file.attributes         = attributes;
 
         for (auto& entry : file_entries)
-            if (!_file_entry_manager.update(md->storage_dev, md->BPB, entry)) return IOStatus::DEV_ERROR;
+            if (!_file_entry_manager.update(md->storage_dev, md->BPB, entry))
+                return IOStatus::DEV_ERROR;
 
         return IOStatus::CREATED;
     }
 
-    IOStatus FATDriver::create_directory(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes) {
+    IOStatus FATDriver::create_directory(const SharedPointer<StorageDevRef>& md,
+                                         const Path&                         path,
+                                         U8                                  attributes) {
         // Verify attributes: Archive (normal file) and VolumeID are not allowed
         FileEntry dummy;
         dummy.attributes = attributes;
-        if (dummy.has_attribute(FATFileAttribute::VOLUME_ID) || dummy.has_attribute(FATFileAttribute::ARCHIVE))
+        if (dummy.has_attribute(FATFileAttribute::VOLUME_ID)
+            || dummy.has_attribute(FATFileAttribute::ARCHIVE))
             return IOStatus::BAD_ATTRIBUTE;
 
         LocationAwareFileEntry p_dir;
-        if (_file_entry_manager.search(md->storage_dev, md->BPB, path.get_parent().resolve(Path("")), p_dir)
+        if (_file_entry_manager.search(md->storage_dev,
+                                       md->BPB,
+                                       path.get_parent().resolve(Path("")),
+                                       p_dir)
             != VolumeAccessStatus::OKAY)
             return IOStatus::DEV_ERROR;
 
@@ -191,9 +205,13 @@ namespace Rune::VFS {
             return IOStatus::DEV_ERROR;
         // write the file entries
         for (auto& entry : file_entries)
-            if (!_file_entry_manager.update(md->storage_dev, md->BPB, entry)) return IOStatus::DEV_ERROR;
+            if (!_file_entry_manager.update(md->storage_dev, md->BPB, entry))
+                return IOStatus::DEV_ERROR;
         // Update the FAT
-        if (!_volume_manager.fat_write(md->storage_dev, md->BPB, cluster, _fat_engine->fat_get_eof_marker())) {
+        if (!_volume_manager.fat_write(md->storage_dev,
+                                       md->BPB,
+                                       cluster,
+                                       _fat_engine->fat_get_eof_marker())) {
             e_file->file.first_cluster_low  = 0;
             e_file->file.first_cluster_high = 0;
             _file_entry_manager.update(md->storage_dev, md->BPB, *e_file);
@@ -202,7 +220,8 @@ namespace Rune::VFS {
         return IOStatus::CREATED;
     }
 
-    IOStatus FATDriver::delete_file(const SharedPointer<VFS::StorageDevRef>& md, VFS::LocationAwareFileEntry& file) {
+    IOStatus FATDriver::delete_file(const SharedPointer<VFS::StorageDevRef>& md,
+                                    VFS::LocationAwareFileEntry&             file) {
         // Mark the file and all LFN entries as deleted
         FATDirectoryIterator d_it(md->storage_dev,
                                   md->BPB,
@@ -221,12 +240,14 @@ namespace Rune::VFS {
             }
 
             // Delete the file entry or LFN entry
-            // Optimization: Check if more file entries after this on are used. Mark: Yes -> 0xE5, No: 0x00
+            // Optimization: Check if more file entries after this on are used. Mark: Yes -> 0xE5,
+            // No: 0x00
             c_entry.file.short_name.as_array[0] = FileEntry::MARK_EMPTY_MIDDLE; // mark deleted
             c_entry.file.first_cluster_high     = 0;
             c_entry.file.first_cluster_low      = 0;
             c_entry.file.file_size              = 0;
-            if (!_file_entry_manager.update(md->storage_dev, md->BPB, c_entry)) return IOStatus::DEV_ERROR;
+            if (!_file_entry_manager.update(md->storage_dev, md->BPB, c_entry))
+                return IOStatus::DEV_ERROR;
 
             if (c_entry.location.cluster == file.location.cluster
                 && c_entry.location.entry_idx == file.location.entry_idx)
@@ -256,7 +277,8 @@ namespace Rune::VFS {
             dir.file.first_cluster_high     = 0;
             dir.file.first_cluster_low      = 0;
             dir.file.file_size              = 0;
-            return _file_entry_manager.update(md->storage_dev, md->BPB, dir) ? IOStatus::DELETED : IOStatus::DEV_ERROR;
+            return _file_entry_manager.update(md->storage_dev, md->BPB, dir) ? IOStatus::DELETED
+                                                                             : IOStatus::DEV_ERROR;
         }
 
         FATDirectoryIterator dIt(md->storage_dev,
@@ -275,8 +297,9 @@ namespace Rune::VFS {
         }
 
         // Delete the file entry of the current directory
-        return dIt.get_state() == DirectoryIteratorState::END_OF_DIRECTORY ? delete_file(md, dir)
-                                                                           : IOStatus(IOStatus::DEV_ERROR);
+        return dIt.get_state() == DirectoryIteratorState::END_OF_DIRECTORY
+                   ? delete_file(md, dir)
+                   : IOStatus(IOStatus::DEV_ERROR);
     }
 
     FATDriver::FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver)
@@ -302,26 +325,37 @@ namespace Rune::VFS {
 
         U16 backup_boot_sector = _fat_engine->get_backup_boot_record_sector(bpb);
         if (backup_boot_sector > 0
-            && _ahci_driver.write(storage_dev, boot_record_buf, hd.sector_size, backup_boot_sector) < hd.sector_size)
+            && _ahci_driver.write(storage_dev, boot_record_buf, hd.sector_size, backup_boot_sector)
+                   < hd.sector_size)
             return FormatStatus::DEV_ERROR;
 
         // Zero init both FAT's
         U8 zeroes[hd.sector_size];
         memset(zeroes, 0, hd.sector_size);
-        for (U32 i = bpb->reserved_sector_count; i < _fat_engine->fat_get_size(bpb) * bpb->fat_count; i++)
-            if (!_ahci_driver.write(storage_dev, zeroes, hd.sector_size, i)) return FormatStatus::DEV_ERROR;
+        for (U32 i = bpb->reserved_sector_count;
+             i < _fat_engine->fat_get_size(bpb) * bpb->fat_count;
+             i++)
+            if (!_ahci_driver.write(storage_dev, zeroes, hd.sector_size, i))
+                return FormatStatus::DEV_ERROR;
 
         // Set first entry to media type
-        if (!_volume_manager.fat_write(storage_dev, bpb, 0, 0xFFFFFFFF | bpb->media_descriptor_type))
+        if (!_volume_manager.fat_write(storage_dev,
+                                       bpb,
+                                       0,
+                                       0xFFFFFFFF | bpb->media_descriptor_type))
             return FormatStatus::DEV_ERROR;
         // Set second entry to "end of valid clusters" value
-        U16 root_dir_sectors = div_round_up((U16) (bpb->root_entry_count * 32), bpb->bytes_per_sector);
-        U32 total_sectors    = bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;
+        U16 root_dir_sectors =
+            div_round_up((U16) (bpb->root_entry_count * 32), bpb->bytes_per_sector);
+        U32 total_sectors =
+            bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;
         U32 data_sectors =
             total_sectors
-            - (bpb->reserved_sector_count + (bpb->fat_count * _fat_engine->fat_get_size(bpb)) + root_dir_sectors);
+            - (bpb->reserved_sector_count + (bpb->fat_count * _fat_engine->fat_get_size(bpb))
+               + root_dir_sectors);
         U32 total_clusters = data_sectors / bpb->sectors_per_cluster;
-        if (!_volume_manager.fat_write(storage_dev, bpb, 1, total_clusters + 1)) return FormatStatus::DEV_ERROR;
+        if (!_volume_manager.fat_write(storage_dev, bpb, 1, total_clusters + 1))
+            return FormatStatus::DEV_ERROR;
 
         // Create empty root dir
         if (!_volume_manager.fat_write(storage_dev,
@@ -347,16 +381,20 @@ namespace Rune::VFS {
         if (_ahci_driver.read(storage_dev, boot_record_buf, sector_size, 0) != sector_size)
             return MountStatus::DEV_ERROR;
 
-        auto* bpb              = (BIOSParameterBlock*) boot_record_buf;
-        U16   root_dir_sectors = div_round_up((U16) (bpb->root_entry_count * 32), bpb->bytes_per_sector);
-        U32   total_sectors    = bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;
-        U32   data_sectors =
+        auto* bpb = (BIOSParameterBlock*) boot_record_buf;
+        U16   root_dir_sectors =
+            div_round_up((U16) (bpb->root_entry_count * 32), bpb->bytes_per_sector);
+        U32 total_sectors =
+            bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;
+        U32 data_sectors =
             total_sectors
-            - (bpb->reserved_sector_count + (bpb->fat_count * _fat_engine->fat_get_size(bpb)) + root_dir_sectors);
+            - (bpb->reserved_sector_count + (bpb->fat_count * _fat_engine->fat_get_size(bpb))
+               + root_dir_sectors);
         U32 total_clusters = data_sectors / bpb->sectors_per_cluster;
         if (!_fat_engine->can_mount(total_clusters)) return MountStatus::NOT_SUPPORTED;
 
-        _storage_dev_ref_table.add_back(SharedPointer<StorageDevRef>(new StorageDevRef(storage_dev, bpb)));
+        _storage_dev_ref_table.add_back(
+            SharedPointer<StorageDevRef>(new StorageDevRef(storage_dev, bpb)));
         return MountStatus::MOUNTED;
     }
 
@@ -383,8 +421,9 @@ namespace Rune::VFS {
         if (st != IOStatus::NOT_FOUND) return st;
 
         U8 fat_attributes = node_attributes_to_fat_file_attributes(attributes);
-        return fat_attributes & FATFileAttribute::DIRECTORY ? create_directory(md, path, fat_attributes)
-                                                            : create_file(md, path, fat_attributes);
+        return fat_attributes & FATFileAttribute::DIRECTORY
+                   ? create_directory(md, path, fat_attributes)
+                   : create_file(md, path, fat_attributes);
     }
 
     IOStatus FATDriver::open(U16                  storage_dev,
@@ -430,11 +469,16 @@ namespace Rune::VFS {
             return IOStatus::DEV_ERROR;
 
         U8 node_attr = 0;
-        if (node.file.has_attribute(FATFileAttribute::READONLY)) node_attr |= Ember::NodeAttribute::READONLY;
-        if (node.file.has_attribute(FATFileAttribute::HIDDEN)) node_attr |= Ember::NodeAttribute::HIDDEN;
-        if (node.file.has_attribute(FATFileAttribute::SYSTEM)) node_attr |= Ember::NodeAttribute::SYSTEM;
-        if (node.file.has_attribute(FATFileAttribute::DIRECTORY)) node_attr |= Ember::NodeAttribute::DIRECTORY;
-        if (node.file.has_attribute(FATFileAttribute::ARCHIVE)) node_attr |= Ember::NodeAttribute::FILE;
+        if (node.file.has_attribute(FATFileAttribute::READONLY))
+            node_attr |= Ember::NodeAttribute::READONLY;
+        if (node.file.has_attribute(FATFileAttribute::HIDDEN))
+            node_attr |= Ember::NodeAttribute::HIDDEN;
+        if (node.file.has_attribute(FATFileAttribute::SYSTEM))
+            node_attr |= Ember::NodeAttribute::SYSTEM;
+        if (node.file.has_attribute(FATFileAttribute::DIRECTORY))
+            node_attr |= Ember::NodeAttribute::DIRECTORY;
+        if (node.file.has_attribute(FATFileAttribute::ARCHIVE))
+            node_attr |= Ember::NodeAttribute::FILE;
 
         out.node_path  = node.file_name;
         out.size       = node.file.file_size;
@@ -449,7 +493,7 @@ namespace Rune::VFS {
         LinkedList<String> split_path = path.split();
         if (split_path.is_empty()) return IOStatus::BAD_PATH;
         LocationAwareFileEntry to_delete;
-        VolumeAccessStatus     st = _file_entry_manager.search(storage_dev, md->BPB, path, to_delete);
+        VolumeAccessStatus st = _file_entry_manager.search(storage_dev, md->BPB, path, to_delete);
         if (st == VolumeAccessStatus::BAD_PATH)
             return IOStatus::BAD_PATH;
         else if (st == VolumeAccessStatus::NOT_FOUND)
@@ -469,7 +513,7 @@ namespace Rune::VFS {
         if (!md) return IOStatus::DEV_UNKNOWN;
 
         LocationAwareFileEntry file_entry;
-        VolumeAccessStatus     st = _file_entry_manager.search(storage_dev, md->BPB, path, file_entry);
+        VolumeAccessStatus st = _file_entry_manager.search(storage_dev, md->BPB, path, file_entry);
         if (st == VolumeAccessStatus::BAD_PATH)
             return IOStatus::BAD_PATH;
         else if (st == VolumeAccessStatus::NOT_FOUND)

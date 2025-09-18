@@ -64,7 +64,8 @@ namespace Rune::Device {
 
         bool stop();
 
-        size_t send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2dFIS);
+        size_t
+        send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2dFIS);
 
         size_t read(U8 hard_drive, void* buf, size_t buf_size, size_t lba);
 

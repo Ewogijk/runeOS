@@ -23,9 +23,12 @@ namespace Rune {
         return static_cast<MemoryFloatSize>(bytes) / static_cast<MemorySize>(unit);
     }
 
-    bool memory_is_aligned(const MemoryAddr mem_addr, const MemoryAddr boundary) { return mem_addr % boundary == 0; }
+    bool memory_is_aligned(const MemoryAddr mem_addr, const MemoryAddr boundary) {
+        return mem_addr % boundary == 0;
+    }
 
-    MemoryAddr memory_align(const MemoryAddr mem_addr, const MemoryAddr page_boundary, const bool round_up) {
+    MemoryAddr
+    memory_align(const MemoryAddr mem_addr, const MemoryAddr page_boundary, const bool round_up) {
         U64 pages = mem_addr / page_boundary;
         if (round_up) pages++;
         return pages * page_boundary;
@@ -46,9 +49,13 @@ namespace Rune {
         return start > (max - size) ? max : start + size;
     }
 
-    MemoryFloatSize MemoryRegion::size_in(const MemoryUnit unit) const { return memory_bytes_in(size, unit); }
+    MemoryFloatSize MemoryRegion::size_in(const MemoryUnit unit) const {
+        return memory_bytes_in(size, unit);
+    }
 
-    bool MemoryRegion::contains(const MemoryRegion& other) const { return start < other.end() && other.start < end(); }
+    bool MemoryRegion::contains(const MemoryRegion& other) const {
+        return start < other.end() && other.start < end();
+    }
 
     bool MemoryRegion::operator==(const MemoryRegion& b) const {
         return this->start == b.start && this->size == b.size && this->memory_type == b.memory_type;
@@ -65,7 +72,10 @@ namespace Rune {
     //                                          Memory Map
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MemoryMap::MemoryMap(MemoryRegion regions[LIMIT]) : _free_mem(0), _reserved_mem(0), _num_regions(0) {
+    MemoryMap::MemoryMap(MemoryRegion regions[LIMIT])
+        : _free_mem(0),
+          _reserved_mem(0),
+          _num_regions(0) {
         for (U8 i = 0; i < LIMIT; i++) {
             if (regions[i].memory_type != MemoryRegionType::NONE) {
                 _map[i] = regions[i];
@@ -82,7 +92,9 @@ namespace Rune {
         }
     }
 
-    MemoryMap::MemoryMap(const std::initializer_list<MemoryRegion> regions) : _free_mem(0), _reserved_mem(0) {
+    MemoryMap::MemoryMap(const std::initializer_list<MemoryRegion> regions)
+        : _free_mem(0),
+          _reserved_mem(0) {
         size_t i = 0;
         for (auto& r : regions) {
             if (r.memory_type != MemoryRegionType::NONE) {
@@ -148,10 +160,13 @@ namespace Rune {
                         if (!memory_is_aligned(claimant.start, boundary))
                             claimant.start = memory_align(claimant.start, boundary, false);
 
-                        MemorySize right_part_size = r.size - claimant.size - (claimant.start - r.start);
+                        MemorySize right_part_size =
+                            r.size - claimant.size - (claimant.start - r.start);
 
                         r.size               -= claimant.size + right_part_size;
-                        _map[_num_regions++]  = {claimant.end(), right_part_size, MemoryRegionType::USABLE};
+                        _map[_num_regions++]  = {claimant.end(),
+                                                 right_part_size,
+                                                 MemoryRegionType::USABLE};
                     }
                     _map[_num_regions++] = claimant;
                     claimed              = true;
@@ -190,18 +205,21 @@ namespace Rune {
         }
     }
 
-    void MemoryMap::dump(TextStream* out, const MemoryUnit region_unit, const MemoryUnit map_unit) const {
+    void MemoryMap::dump(TextStream*      out,
+                         const MemoryUnit region_unit,
+                         const MemoryUnit map_unit) const {
         const auto region_unit_str = region_unit.to_string();
         const auto unit_str        = map_unit.to_string();
         out->write_line("-------------------------- Memory Map --------------------------");
         for (const auto& region : *this) {
             if (region.memory_type != MemoryRegionType::NONE) {
-                out->write_formatted("Mem: {:0=#16x} - {:0=#16x}, Size: {:<9.3} {}, MemoryRegionType: {}\n",
-                                     region.start,
-                                     region.end(),
-                                     region.size_in(region_unit),
-                                     region_unit_str,
-                                     region.memory_type.to_string());
+                out->write_formatted(
+                    "Mem: {:0=#16x} - {:0=#16x}, Size: {:<9.3} {}, MemoryRegionType: {}\n",
+                    region.start,
+                    region.end(),
+                    region.size_in(region_unit),
+                    region_unit_str,
+                    region.memory_type.to_string());
             }
         }
         out->write_formatted("{:.3}/{:.3} {} RAM available\n",

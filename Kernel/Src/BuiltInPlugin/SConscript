@@ -14,13 +14,13 @@
 
 from SCons.Environment import *
 
-Import('target_env')
+Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File('8259PICDriverPlugin.cpp'),
-    target_env.File('AHCIDriverPlugin.cpp'),
-    target_env.File('FATDriverPlugin.cpp'),
-    target_env.File('PITDriverPlugin.cpp'),
+    target_env.File("8259PICDriverPlugin.cpp"),
+    target_env.File("AHCIDriverPlugin.cpp"),
+    target_env.File("FATDriverPlugin.cpp"),
+    target_env.File("PITDriverPlugin.cpp"),
 ]
-BuiltInPlugin = target_env.StaticLibrary('BuiltInPlugin.o', target_env.Object(sources))
-Export('BuiltInPlugin')
+BuiltInPlugin = target_env.StaticLibrary("BuiltInPlugin.o", target_env.Object(sources))
+Export("BuiltInPlugin")

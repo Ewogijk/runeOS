@@ -76,12 +76,14 @@ namespace Rune {
     }
 
     void TextStream::set_background_color(const Pixel& color) {
-        const String ansi_bg_selector = String::format("\033[48;2;{};{};{}m", color.red, color.green, color.blue);
+        const String ansi_bg_selector =
+            String::format("\033[48;2;{};{};{}m", color.red, color.green, color.blue);
         write(ansi_bg_selector);
     }
 
     void TextStream::set_foreground_color(const Pixel& color) {
-        const String ansi_bg_selector = String::format("\033[38;2;{};{};{}m", color.red, color.green, color.blue);
+        const String ansi_bg_selector =
+            String::format("\033[38;2;{};{};{}m", color.red, color.green, color.blue);
         write(ansi_bg_selector);
     }
 

@@ -53,8 +53,8 @@ namespace Rune::CPU {
         MultiLevelQueue* get_lower_policy_queue();
 
         /**
-         * Search through all queues starting from the queue with the highest scheduling policy priority and return the
-         * first thread that can be dequeued without removing it.
+         * Search through all queues starting from the queue with the highest scheduling policy
+         * priority and return the first thread that can be dequeued without removing it.
          *
          * @return The next thread in line or a null pointer if all queues are empty.
          */
@@ -65,13 +65,14 @@ namespace Rune::CPU {
          *
          * @param t Thread.
          *
-         * @return True if the thread got enqueued, false if not queue with the same scheduling policy got found.
+         * @return True if the thread got enqueued, false if not queue with the same scheduling
+         * policy got found.
          */
         bool enqueue(SharedPointer<Thread> t);
 
         /**
-         * Search through all queues starting from the queue with the highest scheduling policy priority and dequeue the
-         * first available thread.
+         * Search through all queues starting from the queue with the highest scheduling policy
+         * priority and dequeue the first available thread.
          *
          * @return The next thread in line or a null pointer if all queues are empty.
          */

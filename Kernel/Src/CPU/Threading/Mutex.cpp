@@ -68,7 +68,12 @@ namespace Rune::CPU {
         auto t      = _scheduler->get_running_thread();
         t->mutex_id = handle;
         if (!_owner) {
-            _logger->trace(File, R"(Mutex "{}-{}": Thread "{}-{}" acquired mutex.)", handle, name, t->handle, t->name);
+            _logger->trace(File,
+                           R"(Mutex "{}-{}": Thread "{}-{}" acquired mutex.)",
+                           handle,
+                           name,
+                           t->handle,
+                           t->name);
             _owner = t;
             _scheduler->unlock();
             return;
@@ -99,7 +104,8 @@ namespace Rune::CPU {
         if (_scheduler->get_running_thread()->handle == _owner->handle) {
             transfer_ownership();
             if (_scheduler->get_ready_queue()->peek() == _owner.get())
-                _scheduler->execute_next_thread(); // Execute the thread immediately if it is first in the ready queue
+                _scheduler->execute_next_thread(); // Execute the thread immediately if it is first
+                                                   // in the ready queue
         }
         _scheduler->unlock();
     }

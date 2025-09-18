@@ -29,13 +29,14 @@ namespace Rune::CPU {
     VirtualAddr setup_empty_stack(VirtualAddr stack_top);
 
     /**
-     * @brief Setup the kernel stack so that it returns to the provided thread_enter function with the per ABI
-     *          preserved registers initialized to zero.
+     * @brief Setup the kernel stack so that it returns to the provided thread_enter function with
+     * the per ABI preserved registers initialized to zero.
      *
      * A null frame will pushed to the bottom of the stack to allow stack tracing.
      *
      * @param stack_top    Top of the kernel stack.
-     * @param thread_enter Virtual address of the Thread Enter function that prepares a thread for execution.
+     * @param thread_enter Virtual address of the Thread Enter function that prepares a thread for
+     * execution.
      * @return The new top of the kernel stack.
      */
     VirtualAddr setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter);

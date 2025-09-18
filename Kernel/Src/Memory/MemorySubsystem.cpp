@@ -65,19 +65,22 @@ namespace Rune::Memory {
 
     String MemorySubsystem::get_name() const { return "Memory"; }
 
-    bool MemorySubsystem::start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) {
+    bool MemorySubsystem::start(const BootLoaderInfo&    boot_info,
+                                const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(k_subsys_reg)
         _p_map = boot_info.physical_memory_map;
         _v_map = create_virtual_memory_map();
 
         KernelSpaceLayout k_space_layout = get_virtual_kernel_space_layout();
         // Init pmm
-        if (_pmm.start(&_p_map, get_page_size(), k_space_layout.higher_half_direct_map) != PMMStartFailure::NONE)
+        if (_pmm.start(&_p_map, get_page_size(), k_space_layout.higher_half_direct_map)
+            != PMMStartFailure::NONE)
             return false;
 
         // Init vmm
         init_paging(boot_info.physical_address_width);
-        if (_vmm.start(&_p_map, &_v_map, k_space_layout, 128 * (MemorySize) MemoryUnit::MiB) != VMMStartFailure::NONE)
+        if (_vmm.start(&_p_map, &_v_map, k_space_layout, 128 * (MemorySize) MemoryUnit::MiB)
+            != VMMStartFailure::NONE)
             return false;
 
         // Adjust pmm to new virtual memory space
@@ -116,23 +119,29 @@ namespace Rune::Memory {
         _logger->debug(FILE, "The bootloader reclaimable memory has been claimed.");
 
         MemoryRegion managed = _pmm.get_managed_memory();
-        _logger->debug(FILE, "Detected physical memory range: {:0=#16x}-{:0=#16x}", managed.start, managed.end());
+        _logger->debug(FILE,
+                       "Detected physical memory range: {:0=#16x}-{:0=#16x}",
+                       managed.start,
+                       managed.end());
         MemoryRegion memIdx = _pmm.get_memory_index_region();
         _logger->debug(FILE,
                        "Physical memory index region: {:0=#16x}-{:0=#16x} (MemorySize: {} bytes)",
                        memIdx.start,
                        memIdx.end(),
                        memIdx.size);
-        _logger->debug(FILE, "Memory index can be accessed at virtual address: {:0=#16x}", _pmm.get_memory_index());
+        _logger->debug(FILE,
+                       "Memory index can be accessed at virtual address: {:0=#16x}",
+                       _pmm.get_memory_index());
 
         _logger->debug(FILE,
                        "The base page table is located at physical address: {:0=#16x}",
                        get_base_page_table_address());
 
         _logger->debug(FILE, "Bootstrap caches are initialized.");
-        _logger->debug(FILE,
-                       "General purpose and DMA caches are initialized. MemorySize range: {}-{} bytes.",
-                       _heap.get_min_cache_size(),
-                       _heap.get_max_cache_size());
+        _logger->debug(
+            FILE,
+            "General purpose and DMA caches are initialized. MemorySize range: {}-{} bytes.",
+            _heap.get_min_cache_size(),
+            _heap.get_max_cache_size());
     }
 } // namespace Rune::Memory

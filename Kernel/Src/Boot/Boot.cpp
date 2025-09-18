@@ -64,7 +64,8 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * Only the memory subsystem is statically allocated because other subsystems (may) need the kernel heap.
+     * Only the memory subsystem is statically allocated because other subsystems (may) need the
+     * kernel heap.
      */
     Memory::MemorySubsystem MEMORY_SUBSYSTEM = Memory::MemorySubsystem();
 
@@ -124,7 +125,11 @@ namespace Rune {
                 while (true)
                     CPU::halt();
             }
-            SYSTEM_LOGGER->info(FILE, "Plugin started: {} v{} by {}", info.name, info.version.to_string(), info.vendor);
+            SYSTEM_LOGGER->info(FILE,
+                                "Plugin started: {} v{} by {}",
+                                info.name,
+                                info.version.to_string(),
+                                info.vendor);
         }
     }
 
@@ -132,7 +137,10 @@ namespace Rune {
         LOG_REG.enable_serial_logging(move(txt_stream), KERNEL_LOG_LEVEL);
 
         SYSTEM_LOGGER->info(FILE, "runeKernel v{}", KERNEL_VERSION.to_string());
-        SYSTEM_LOGGER->info(FILE, "Loaded by {} - v{}", BOOT_INFO.boot_loader_name, BOOT_INFO.boot_loader_version);
+        SYSTEM_LOGGER->info(FILE,
+                            "Loaded by {} - v{}",
+                            BOOT_INFO.boot_loader_name,
+                            BOOT_INFO.boot_loader_version);
         SYSTEM_LOGGER->info(FILE, "Subsystem started: {}", MEMORY_SUBSYSTEM.get_name().to_cstr());
         MEMORY_SUBSYSTEM.log_start_routine_phases();
     }
@@ -162,9 +170,10 @@ namespace Rune {
         }
 
         // Switch to a more detailed log formatter
-        auto* cpu_subsys    = K_SUBSYS_REG.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
-        auto* app_subsys    = K_SUBSYS_REG.get_as<App::AppSubsystem>(KernelSubsystem::APP);
-        auto  fancy_log_fmt = SharedPointer<LogFormatter>(new FancyLogFormatter(cpu_subsys, app_subsys));
+        auto* cpu_subsys = K_SUBSYS_REG.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+        auto* app_subsys = K_SUBSYS_REG.get_as<App::AppSubsystem>(KernelSubsystem::APP);
+        auto  fancy_log_fmt =
+            SharedPointer<LogFormatter>(new FancyLogFormatter(cpu_subsys, app_subsys));
         LOG_REG.update_log_formatter(fancy_log_fmt);
         SYSTEM_LOGGER->set_log_formatter(fancy_log_fmt);
 
@@ -181,16 +190,21 @@ namespace Rune {
 
         App::LoadStatus ls = app_subsys->start_os(os, Path::ROOT);
         if (ls != App::LoadStatus::RUNNING) {
-            SYSTEM_LOGGER->critical(FILE, R"("{}": OS start failure! Reason: {})", os.to_string(), ls.to_string());
+            SYSTEM_LOGGER->critical(FILE,
+                                    R"("{}": OS start failure! Reason: {})",
+                                    os.to_string(),
+                                    ls.to_string());
         }
 
-        // At this point the OS should have taken over control of the system, so we let the boot thread terminate
+        // At this point the OS should have taken over control of the system, so we let the boot
+        // thread terminate
         return 0;
     }
 
     void kernel_boot(BootLoaderInfo boot_loader_info) {
-        // Kernel boot Phase 1 is still running on the implicit Bootstrap Thread using the bootloader resources
-        // Main goal here is to set up memory management, interrupts and scheduling asap
+        // Kernel boot Phase 1 is still running on the implicit Bootstrap Thread using the
+        // bootloader resources Main goal here is to set up memory management, interrupts and
+        // scheduling asap
         BOOT_INFO = {boot_loader_info.boot_loader_name,
                      boot_loader_info.boot_loader_version,
                      boot_loader_info.physical_memory_map,
@@ -202,7 +216,8 @@ namespace Rune {
             while (true)
                 CPU::halt();
 
-        // Allocate the kernel subsystems - We do this here because the log registry needs an allocated FILE subsystem
+        // Allocate the kernel subsystems - We do this here because the log registry needs an
+        // allocated FILE subsystem
         KERNEL_SUBSYSTEMS[0] = &MEMORY_SUBSYSTEM;
         KERNEL_SUBSYSTEMS[1] = new CPU::CPUSubsystem();
         KERNEL_SUBSYSTEMS[2] = new Device::DeviceSubsystem();
@@ -213,9 +228,10 @@ namespace Rune {
         // Setup logging
         LOG_REG.init(K_SUBSYS_REG.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS), Path("/System"));
         SYSTEM_LOGGER = LOG_REG.build_logger(KERNEL_LOG_LEVEL, Path("System.log"));
-        MEMORY_SUBSYSTEM.set_logger(LOG_REG.build_logger(KERNEL_LOG_LEVEL,
-                                                         Path(MEMORY_SUBSYSTEM.get_name())
-                                                             / (MEMORY_SUBSYSTEM.get_name() + LOG_FILE_EXTENSION)));
+        MEMORY_SUBSYSTEM.set_logger(
+            LOG_REG.build_logger(KERNEL_LOG_LEVEL,
+                                 Path(MEMORY_SUBSYSTEM.get_name())
+                                     / (MEMORY_SUBSYSTEM.get_name() + LOG_FILE_EXTENSION)));
 #ifdef QEMU_HOST
         // Enable Serial logging via E9 port on Qemu
         turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));
@@ -226,9 +242,9 @@ namespace Rune {
         // Initialize the logging in the kernel subsystems and start the built-in kernel plugins
         for (size_t i = 1; i < SUBSYSTEM_COUNT; i++) {
             auto* k_subsys = KERNEL_SUBSYSTEMS[i];
-            k_subsys->set_logger(
-                LOG_REG.build_logger(KERNEL_LOG_LEVEL,
-                                     Path(k_subsys->get_name()) / (k_subsys->get_name() + LOG_FILE_EXTENSION)));
+            k_subsys->set_logger(LOG_REG.build_logger(
+                KERNEL_LOG_LEVEL,
+                Path(k_subsys->get_name()) / (k_subsys->get_name() + LOG_FILE_EXTENSION)));
         }
         start_built_in_plugins();
 

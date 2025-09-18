@@ -19,15 +19,13 @@
 #include <Forge/App.h>
 
 #include <iostream>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 #include <Build.h>
 
-
 namespace Rune::Shell {
     std::unordered_map<std::string, std::string> HELP_TEXT_TABLE;
-
 
     int cd(const int argc, char* argv[], Environment& shell_env) {
         if (argc == 0)
@@ -51,8 +49,7 @@ namespace Rune::Shell {
                 case Ember::Status::NODE_IS_FILE:
                     std::cerr << "'" << new_wd << "': Not a directory." << std::endl;
                     break;
-                default:
-                    std::cerr << "'" << new_wd << "': IO error." << std::endl;
+                default: std::cerr << "'" << new_wd << "': IO error." << std::endl;
             }
             return -1;
         }
@@ -68,14 +65,12 @@ namespace Rune::Shell {
         return 0;
     }
 
-
     int pwd(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
         std::cout << shell_env.working_directory.to_string().c_str() << std::endl;
         return 0;
     }
-
 
     int clear(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(argc)
@@ -90,12 +85,12 @@ namespace Rune::Shell {
         return 0;
     }
 
-
     int help(const int argc, char* argv[], const Environment& shell_env) {
         SILENCE_UNUSED(shell_env)
         if (argc == 1) {
-            const std::string cmd            = argv[0];
-            if (const auto maybe_help_txt = HELP_TEXT_TABLE.find(cmd); maybe_help_txt != HELP_TEXT_TABLE.end())
+            const std::string cmd = argv[0];
+            if (const auto maybe_help_txt = HELP_TEXT_TABLE.find(cmd);
+                maybe_help_txt != HELP_TEXT_TABLE.end())
                 std::cout << maybe_help_txt->second;
             else
                 std::cout << "Unknown command: " << cmd << std::endl;
@@ -103,16 +98,19 @@ namespace Rune::Shell {
         }
 
         std::cout << "runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
-        if (!std::string(PRERELEASE).empty())
-            std::cout << "-" << PRERELEASE << std::endl;
+        if (!std::string(PRERELEASE).empty()) std::cout << "-" << PRERELEASE << std::endl;
         std::cout << std::endl;
 
         std::cout << "The shell executes built-in and external commands." << std::endl;
         std::cout << "Scroll with arrow down/up through the command history." << std::endl;
         std::cout << "Press 'Tab' to auto complete commands and file paths." << std::endl;
-        std::cout << "External commands are applications found in '/Apps/' which in return are files with the '.app'"
-            " extension." << std::endl;
-        std::cout << "Type 'help [command]' to get more info about a built-in command, e.g. 'help cd'." << std::endl;
+        std::cout << "External commands are applications found in '/Apps/' which in return are "
+                     "files with the '.app'"
+                     " extension."
+                  << std::endl;
+        std::cout
+            << "Type 'help [command]' to get more info about a built-in command, e.g. 'help cd'."
+            << std::endl;
         std::cout << std::endl;
 
         std::cout << "Following built-in commands are available:" << std::endl;
@@ -123,25 +121,22 @@ namespace Rune::Shell {
         return 0;
     }
 
-
     void register_builtin_commands(Environment& shell_env) {
 
-        shell_env.command_table["cd"] = &cd;
-        shell_env.command_table["pwd"] = &pwd;
+        shell_env.command_table["cd"]    = &cd;
+        shell_env.command_table["pwd"]   = &pwd;
         shell_env.command_table["clear"] = &clear;
-        shell_env.command_table["help"] = &help;
+        shell_env.command_table["help"]  = &help;
 
         HELP_TEXT_TABLE["cd"] =
             "cd [directory]\n"
             "    Change the current directory of the shell to another directory.\n";
-        HELP_TEXT_TABLE["pwd"] =
-            "pwd\n"
-            "    Print the current directory of the shell.\n";
-        HELP_TEXT_TABLE["clear"] =
-            "clear\n"
-            "    Clear the screen and the terminal scroll back buffer.\n";
+        HELP_TEXT_TABLE["pwd"]   = "pwd\n"
+                                   "    Print the current directory of the shell.\n";
+        HELP_TEXT_TABLE["clear"] = "clear\n"
+                                   "    Clear the screen and the terminal scroll back buffer.\n";
         HELP_TEXT_TABLE["help"] =
             "help [command]\n"
             "    Display information about the shell or a built-in command.\n";
     }
-}
+} // namespace Rune::Shell

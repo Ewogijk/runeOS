@@ -40,9 +40,10 @@ namespace Rune::CPU {
     struct StartInfo;
 
     /**
-     * @brief Main function of a thread. It has the signature int(int, char*[]). Parameters are the number of arguments
-     *          and a pointer to the array with the string arguments. The return value is the thread status after it
-     *          finished. status >= 0 -> everything fine, status < 0 -> exit with error.
+     * @brief Main function of a thread. It has the signature int(int, char*[]). Parameters are the
+     * number of arguments and a pointer to the array with the string arguments. The return value is
+     * the thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
+     * error.
      */
     using ThreadMain = int (*)(StartInfo*);
 
@@ -53,14 +54,15 @@ namespace Rune::CPU {
      *  <li>Running: The thread is in the ready queue and waiting to be scheduled.</li>
      *  <li>Sleeping: The thread is in the sleep queue of a timer.</li>
      *  <li>Waiting: The thread is in the wait queue of a mutex.</li>
-     *  <li>Terminated: The thread has finished execution and but it's resources are not freed yet.</li>
+     *  <li>Terminated: The thread has finished execution and but it's resources are not freed
+     * yet.</li>
      * </ul>
      */
-#define THREAD_STATES(X)                                                                                               \
-    X(ThreadState, READY, 0x1)                                                                                         \
-    X(ThreadState, RUNNING, 0x2)                                                                                       \
-    X(ThreadState, SLEEPING, 0x3)                                                                                      \
-    X(ThreadState, WAITING, 0x4)                                                                                       \
+#define THREAD_STATES(X)                                                                           \
+    X(ThreadState, READY, 0x1)                                                                     \
+    X(ThreadState, RUNNING, 0x2)                                                                   \
+    X(ThreadState, SLEEPING, 0x3)                                                                  \
+    X(ThreadState, WAITING, 0x4)                                                                   \
     X(ThreadState, TERMINATED, 0x5)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
@@ -73,9 +75,9 @@ namespace Rune::CPU {
      *  <li>Background: Lowest priority.</li>
      * </ul>
      */
-#define SCHEDULING_POLICIES(X)                                                                                         \
-    X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                                              \
-    X(SchedulingPolicy, NORMAL, 0x2)                                                                                   \
+#define SCHEDULING_POLICIES(X)                                                                     \
+    X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                          \
+    X(SchedulingPolicy, NORMAL, 0x2)                                                               \
     X(SchedulingPolicy, BACKGROUND, 0x3)
 
     DECLARE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0) // NOLINT
@@ -92,14 +94,15 @@ namespace Rune::CPU {
     /**
      * @brief The thread arguments, dynamic linker information and other useful information.
      *
-     * A thread is either an application main thread or a minor thread. The type of thread determines how much
-     * information shall be passed in the start info.
+     * A thread is either an application main thread or a minor thread. The type of thread
+     * determines how much information shall be passed in the start info.
      *
      * <p>
      *  The information passed in the StartInfo is defined as followed:
      *  <ul>
      *   <li>Application Main Thread: All StartInfo information shall be provided.</li>
-     *   <li>Minor Thread: Argc, argv and main shall be provided, the state of the other fields is undefined.</li>
+     *   <li>Minor Thread: Argc, argv and main shall be provided, the state of the other fields is
+     * undefined.</li>
      *  </ul>
      * </p>
      */
@@ -161,8 +164,8 @@ namespace Rune::CPU {
         ThreadState      state      = ThreadState::NONE;
         SchedulingPolicy policy     = SchedulingPolicy::NONE;
 
-        // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or syscall
-        // It is dynamically allocated on the kernel heap and has a preconfigured fixed size
+        // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or
+        // syscall It is dynamically allocated on the kernel heap and has a preconfigured fixed size
         U8*         kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
         VirtualAddr kernel_stack_top    = 0x0;
 
@@ -194,8 +197,9 @@ namespace Rune::CPU {
         StartInfo* start_info;
 
         /**
-         * The thread control block contains the thread local storage (TLS) and other data, it is maintained by libc.
-         * We simply provide easy access to it through an arch specific TLS register.
+         * The thread control block contains the thread local storage (TLS) and other data, it is
+         * maintained by libc. We simply provide easy access to it through an arch specific TLS
+         * register.
          */
         void* thread_control_block = nullptr;
 
@@ -227,14 +231,14 @@ namespace Rune::CPU {
     /**
      * @brief A privilege level defines the currently executing code can do on the computer.
      * <ul>
-     *  <li>Kernel: The running program can access all kernel and user memory and run any assembly command.</li>
-     *  <li>User:   The running program can only access user memory and may not be able to run all assembly commands.
-     *              Disallowed assembly commands are CPU specific.</li>
+     *  <li>Kernel: The running program can access all kernel and user memory and run any assembly
+     * command.</li> <li>User:   The running program can only access user memory and may not be able
+     * to run all assembly commands. Disallowed assembly commands are CPU specific.</li>
      * </ul>
      *
      */
-#define PRIVILEGE_LEVELS(X)                                                                                            \
-    X(PrivilegeLevel, KERNEL, 0x1)                                                                                     \
+#define PRIVILEGE_LEVELS(X)                                                                        \
+    X(PrivilegeLevel, KERNEL, 0x1)                                                                 \
     X(PrivilegeLevel, USER, 0x2)
 
     DECLARE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0) // NOLINT
@@ -243,10 +247,12 @@ namespace Rune::CPU {
      * @brief General information about an entry in the interrupt vector table of the processor.
      */
     struct InterruptVector {
-        const U8             vector = 0;   // The ID of the interrupt vector
-        const VirtualAddr    handler_addr; // Virtual address of the function handling this interrupt vector
-        const PrivilegeLevel level;        // The privilege level at which this interrupt can be manually triggered
-        const bool           active;       // True: The interrupt handler is used, False: It is unused.
+        const U8 vector = 0; // The ID of the interrupt vector
+        const VirtualAddr
+            handler_addr; // Virtual address of the function handling this interrupt vector
+        const PrivilegeLevel
+                   level;  // The privilege level at which this interrupt can be manually triggered
+        const bool active; // True: The interrupt handler is used, False: It is unused.
     };
 
     /**
@@ -293,7 +299,8 @@ namespace Rune::CPU {
         virtual LinkedList<InterruptVector> get_interrupt_vector_table() = 0;
 
         /**
-         * @brief Write the current values of general purpose registers and CPU specific structures to the logger.
+         * @brief Write the current values of general purpose registers and CPU specific structures
+         * to the logger.
          * @param stream
          */
         virtual void dump_core_state(const SharedPointer<TextStream>& stream) = 0;
@@ -318,8 +325,8 @@ namespace Rune::CPU {
         /**
          * @brief Execute the thread main in user mode.
          *
-         * A jump to the thread main in user mode will be performed and upon exit the thread must make a system call
-         * to terminate itself.
+         * A jump to the thread main in user mode will be performed and upon exit the thread must
+         * make a system call to terminate itself.
          *
          * @param t
          */
@@ -333,20 +340,20 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief Initialize the bootstrap core, that is the CPU core that is initially running when the device was powered
-     *          on.
+     * @brief Initialize the bootstrap core, that is the CPU core that is initially running when the
+     * device was powered on.
      *
      * The bootstrap core will always have the ID 0.
      *
-     * @return True: All CPU features are initialized. False: Failed to initialize the CPU, the kernel boot must
-     *          be halted.
+     * @return True: All CPU features are initialized. False: Failed to initialize the CPU, the
+     * kernel boot must be halted.
      */
     bool init_bootstrap_core();
 
     /**
      * @brief Try to detect and then initialize all other CPU cores on the device.
-     * @return True: All other CPU cores have been initialized and are running. False: At least one CPU core could not
-     *          be initialized.
+     * @return True: All other CPU cores have been initialized and are running. False: At least one
+     * CPU core could not be initialized.
      */
     bool init_other_cores();
 
@@ -379,8 +386,8 @@ namespace Rune::CPU {
     /**
      * @brief Get the virtual address that was responsible for a page fault.
      *
-     * Important: The returned virtual address is only valid during handling of a page fault otherwise the virtual
-     *              address is undefined.
+     * Important: The returned virtual address is only valid during handling of a page fault
+     * otherwise the virtual address is undefined.
      */
     CLINK Register get_page_fault_address();
 } // namespace Rune::CPU

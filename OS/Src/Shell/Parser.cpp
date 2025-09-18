@@ -18,22 +18,19 @@
 
 #include <vector>
 
-
 namespace Rune::Shell {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          ParsedInput
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     ParsedInput ParsedInput::make_good(std::unique_ptr<ASTNode> ast_node) {
         ParsedInput good;
         good.ast_node  = move(ast_node);
         good.has_error = false;
-        good.actual    = { };
+        good.actual    = {};
         good.expected  = TokenType::NONE;
         return good;
     }
-
 
     ParsedInput ParsedInput::make_error(const Token& actual, const TokenType expected) {
         ParsedInput err;
@@ -44,24 +41,18 @@ namespace Rune::Shell {
         return err;
     }
 
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Parser
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-
     ParsedInput Parser::parse_input() {
         switch (_lexer.peek_token().type) {
             case TokenType::PATH:
-            case TokenType::IDENTIFIER:
-                return parse_command_sequence();
-            case TokenType::DOLLAR:
-                return parse_env_var_declaration();
-            default:
-                return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
+            case TokenType::IDENTIFIER: return parse_command_sequence();
+            case TokenType::DOLLAR:     return parse_env_var_declaration();
+            default:                    return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
         }
     }
-
 
     ParsedInput Parser::parse_command_sequence() {
         ParsedInput path_or_identifier;
@@ -70,15 +61,13 @@ namespace Rune::Shell {
         else
             path_or_identifier = parse_identifier();
 
-        if (path_or_identifier.has_error)
-            return path_or_identifier;
+        if (path_or_identifier.has_error) return path_or_identifier;
 
         std::vector<std::unique_ptr<ASTNode>> args;
         Token                                 peek_a_boo = _lexer.peek_token();
         while (peek_a_boo.type != TokenType::REDIRECT && peek_a_boo.type != TokenType::END) {
             ParsedInput arg = parse_argument();
-            if (arg.has_error)
-                return arg;
+            if (arg.has_error) return arg;
             args.push_back(move(arg.ast_node));
             peek_a_boo = _lexer.peek_token();
         }
@@ -86,45 +75,38 @@ namespace Rune::Shell {
         if (_lexer.peek_token().type == TokenType::REDIRECT) {
             _lexer.next_token();
             const Token redirect_token = _lexer.next_token();
-            if (redirect_token.type != TokenType::PATH && redirect_token.type != TokenType::IDENTIFIER)
+            if (redirect_token.type != TokenType::PATH
+                && redirect_token.type != TokenType::IDENTIFIER)
                 return ParsedInput::make_error(redirect_token, TokenType::PATH);
             redirect_str = redirect_token.text;
         }
         return ParsedInput::make_good(
-            std::make_unique<CommandSequence>(
-                move(path_or_identifier.ast_node),
-                move(args),
-                Path(redirect_str)
-            )
-        );
+            std::make_unique<CommandSequence>(move(path_or_identifier.ast_node),
+                                              move(args),
+                                              Path(redirect_str)));
     }
 
-
     ParsedInput Parser::parse_argument() {
-        switch (const Token identifier_path_or_string = _lexer.peek_token(); identifier_path_or_string.type) {
-            case TokenType::IDENTIFIER:
-                return parse_identifier();
-            case TokenType::PATH:
-                return parse_path();
-            case TokenType::DOLLAR:
-                return parse_env_var();
-            case TokenType::QUOTE:
-                return parse_string();
-            case TokenType::DASH:
-                return parse_flag();
-            default: {
+        switch (const Token identifier_path_or_string = _lexer.peek_token();
+                identifier_path_or_string.type) {
+            case TokenType::IDENTIFIER: return parse_identifier();
+            case TokenType::PATH:       return parse_path();
+            case TokenType::DOLLAR:     return parse_env_var();
+            case TokenType::QUOTE:      return parse_string();
+            case TokenType::DASH:       return parse_flag();
+            default:                    {
                 return ParsedInput::make_error(identifier_path_or_string, TokenType::IDENTIFIER);
             }
         }
     }
-
 
     ParsedInput Parser::parse_flag() {
         const Token dash               = _lexer.next_token();
         Token       dash_or_identifier = _lexer.next_token();
         bool        double_dash        = false;
         if (dash.type == TokenType::DASH) {
-            if (dash_or_identifier.type != TokenType::DASH && dash_or_identifier.type != TokenType::IDENTIFIER)
+            if (dash_or_identifier.type != TokenType::DASH
+                && dash_or_identifier.type != TokenType::IDENTIFIER)
                 return ParsedInput::make_error(dash_or_identifier, TokenType::IDENTIFIER);
 
             if (dash_or_identifier.type == TokenType::DASH) {
@@ -138,14 +120,13 @@ namespace Rune::Shell {
         if (dash_or_identifier.type != TokenType::IDENTIFIER)
             return ParsedInput::make_error(dash_or_identifier, TokenType::IDENTIFIER);
         const std::string dashes = double_dash ? "--" : "-";
-        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(dashes + dash_or_identifier.text));
+        return ParsedInput::make_good(
+            std::make_unique<IdentifierOrPath>(dashes + dash_or_identifier.text));
     }
-
 
     ParsedInput Parser::parse_env_var_declaration() {
         ParsedInput env_var = parse_env_var();
-        if (env_var.has_error)
-            return env_var;
+        if (env_var.has_error) return env_var;
         if (Token token = _lexer.next_token(); token.type != TokenType::ASSIGNMENT)
             return ParsedInput::make_error(token, TokenType::ASSIGNMENT);
 
@@ -155,41 +136,35 @@ namespace Rune::Shell {
             switch (t.type) {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
-                    if (identifier.has_error)
-                        return identifier;
+                    if (identifier.has_error) return identifier;
                     value.push_back(move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
-                    if (escape_code.has_error)
-                        return escape_code;
+                    if (escape_code.has_error) return escape_code;
                     value.push_back(move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput more_env_var = parse_env_var();
-                    if (more_env_var.has_error)
-                        return more_env_var;
+                    if (more_env_var.has_error) return more_env_var;
                     value.push_back(move(more_env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
-                    if (path.has_error)
-                        return path;
+                    if (path.has_error) return path;
                     value.push_back(move(path.ast_node));
                     break;
                 }
                 case TokenType::QUOTE: {
                     ParsedInput sh_string = parse_string();
-                    if (sh_string.has_error)
-                        return sh_string;
+                    if (sh_string.has_error) return sh_string;
                     value.push_back(move(sh_string.ast_node));
                     break;
                 }
-                default:
-                    return ParsedInput::make_error(t, TokenType::IDENTIFIER);
+                default: return ParsedInput::make_error(t, TokenType::IDENTIFIER);
             }
             t = _lexer.peek_token();
         }
@@ -197,9 +172,9 @@ namespace Rune::Shell {
         if (value.empty())
             return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
 
-        return ParsedInput::make_good(std::make_unique<EnvVarDecl>(move(env_var.ast_node), move(value)));
+        return ParsedInput::make_good(
+            std::make_unique<EnvVarDecl>(move(env_var.ast_node), move(value)));
     }
-
 
     ParsedInput Parser::parse_string() {
         Token opening_quote = _lexer.next_token();
@@ -212,34 +187,29 @@ namespace Rune::Shell {
             switch (t.type) {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
-                    if (identifier.has_error)
-                        return identifier;
+                    if (identifier.has_error) return identifier;
                     content.push_back(move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
-                    if (escape_code.has_error)
-                        return escape_code;
+                    if (escape_code.has_error) return escape_code;
                     content.push_back(move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput env_var = parse_env_var();
-                    if (env_var.has_error)
-                        return env_var;
+                    if (env_var.has_error) return env_var;
                     content.push_back(move(env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
-                    if (path.has_error)
-                        return path;
+                    if (path.has_error) return path;
                     content.push_back(move(path.ast_node));
                     break;
                 }
-                default:
-                    return ParsedInput::make_error(t, TokenType::IDENTIFIER);
+                default: return ParsedInput::make_error(t, TokenType::IDENTIFIER);
             }
             t = _lexer.peek_token();
         }
@@ -251,24 +221,19 @@ namespace Rune::Shell {
         return ParsedInput::make_good(std::make_unique<ShellString>(move(content)));
     }
 
-
     ParsedInput Parser::parse_env_var() {
         if (const Token token = _lexer.next_token(); token.type != TokenType::DOLLAR)
             return ParsedInput::make_error(token, TokenType::DOLLAR);
         ParsedInput env_var = parse_identifier();
-        if (env_var.has_error)
-            return env_var;
+        if (env_var.has_error) return env_var;
         return ParsedInput::make_good(std::make_unique<EnvVar>(move(env_var.ast_node)));
     }
 
-
     ParsedInput Parser::parse_path() {
         Token token = _lexer.next_token();
-        if (token.type != TokenType::PATH)
-            return ParsedInput::make_error(token, TokenType::PATH);
+        if (token.type != TokenType::PATH) return ParsedInput::make_error(token, TokenType::PATH);
         return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
-
 
     ParsedInput Parser::parse_identifier() {
         Token token = _lexer.next_token();
@@ -277,20 +242,18 @@ namespace Rune::Shell {
         return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
 
-
     ParsedInput Parser::parse_escape_code() {
         const Token token = _lexer.next_token();
         if (token.type != TokenType::ESCAPE_CODE)
             return ParsedInput::make_error(token, TokenType::ESCAPE_CODE);
-        return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(std::string(1, token.text[1])));
+        return ParsedInput::make_good(
+            std::make_unique<IdentifierOrPath>(std::string(1, token.text[1])));
     }
 
-
-    Parser::Parser() : _lexer("") { }
-
+    Parser::Parser() : _lexer("") {}
 
     ParsedInput Parser::parse_shell_input(const std::string& input) {
         _lexer = Lexer(input);
         return parse_input();
     }
-}
+} // namespace Rune::Shell

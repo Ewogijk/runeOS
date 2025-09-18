@@ -38,7 +38,8 @@ namespace Rune::BuiltInPlugin {
         auto* fs = ks_registry.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
         auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         bool  r  = fs->install_driver(UniquePointer<VFS::Driver>(
-            new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()), ds->get_ahic_driver())));
+            new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()),
+                               ds->get_ahic_driver())));
         return r;
     }
 } // namespace Rune::BuiltInPlugin

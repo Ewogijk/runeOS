@@ -31,9 +31,9 @@ namespace Rune::VFS {
      *  <li>IOError:        An IO error occurred while iterating the directory.</li>
      * </ul>
      */
-#define DIRECTORY_STREAM_STATES(X)                                                                                     \
-    X(DirectoryStreamState, HAS_MORE, 0x1)                                                                             \
-    X(DirectoryStreamState, END_OF_DIRECTORY, 0x2)                                                                     \
+#define DIRECTORY_STREAM_STATES(X)                                                                 \
+    X(DirectoryStreamState, HAS_MORE, 0x1)                                                         \
+    X(DirectoryStreamState, END_OF_DIRECTORY, 0x2)                                                 \
     X(DirectoryStreamState, IO_ERROR, 0x3)
 
     DECLARE_ENUM(DirectoryStreamState, DIRECTORY_STREAM_STATES, 0x0) // NOLINT
@@ -65,8 +65,9 @@ namespace Rune::VFS {
 
         /**
          * Check the state of the stream to verify if the node info has valid data. If
-         * "GetState() == EndOfDirectory || get_state() == IOError" then the node info will contain invalid data aka
-         * a default initialized node info otherwise it will contain valid data of a node.
+         * "GetState() == EndOfDirectory || get_state() == IOError" then the node info will contain
+         * invalid data aka a default initialized node info otherwise it will contain valid data of
+         * a node.
          *
          * @brief Get info about the next node in the directory.
          * @return Info about a node in the directory.
@@ -74,8 +75,8 @@ namespace Rune::VFS {
         virtual NodeInfo get_next() = 0;
 
         /**
-         * @brief Free all associated resources, after a call to this function the stream can no longer return valid
-         *          node infos.
+         * @brief Free all associated resources, after a call to this function the stream can no
+         * longer return valid node infos.
          */
         void close();
     };

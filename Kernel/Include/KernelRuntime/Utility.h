@@ -56,7 +56,9 @@ namespace Rune {
      * @param param
      * @return
      */
-    template <typename T> constexpr T&& forward(typename RemoveRef<T>::Type& param) { return static_cast<T&&>(param); }
+    template <typename T> constexpr T&& forward(typename RemoveRef<T>::Type& param) {
+        return static_cast<T&&>(param);
+    }
 
     /**
      * Implementation of std::forward.
@@ -65,7 +67,9 @@ namespace Rune {
      * @param param
      * @return
      */
-    template <typename T> constexpr T&& forward(typename RemoveRef<T>::Type&& param) { return static_cast<T&&>(param); }
+    template <typename T> constexpr T&& forward(typename RemoveRef<T>::Type&& param) {
+        return static_cast<T&&>(param);
+    }
 
     /**
      * Swap the position of the two pointers.
@@ -223,7 +227,9 @@ namespace std {
         size_type _M_len;
 
         // The compiler can call a private constructor.
-        constexpr initializer_list(const_iterator __a, size_type __l) : _M_array(__a), _M_len(__l) {}
+        constexpr initializer_list(const_iterator __a, size_type __l)
+            : _M_array(__a),
+              _M_len(__l) {}
 
       public:
         constexpr initializer_list() noexcept : _M_array(0), _M_len(0) {}
@@ -238,9 +244,13 @@ namespace std {
         constexpr const_iterator end() const noexcept { return begin() + size(); }
     };
 
-    template <class _Tp> constexpr const _Tp* begin(initializer_list<_Tp> __ils) noexcept { return __ils.begin(); }
+    template <class _Tp> constexpr const _Tp* begin(initializer_list<_Tp> __ils) noexcept {
+        return __ils.begin();
+    }
 
-    template <class _Tp> constexpr const _Tp* end(initializer_list<_Tp> __ils) noexcept { return __ils.end(); }
+    template <class _Tp> constexpr const _Tp* end(initializer_list<_Tp> __ils) noexcept {
+        return __ils.end();
+    }
 } // namespace std
 
 #endif // RUNEOS_UTILITY_H

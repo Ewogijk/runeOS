@@ -114,14 +114,19 @@ namespace Rune::VFS {
                                       || c == 0x23  // #
                                       || c == 0x26; // &
 
-            if (!is_digit && !is_big_letter && !is_small_letter && !is_allowed_special) return false;
+            if (!is_digit && !is_big_letter && !is_small_letter && !is_allowed_special)
+                return false;
         }
         return true;
     }
 
-    bool FileEntry::is_empty_end() const { return (unsigned char) short_name.as_array[0] == MARK_EMPTY_END; }
+    bool FileEntry::is_empty_end() const {
+        return (unsigned char) short_name.as_array[0] == MARK_EMPTY_END;
+    }
 
-    bool FileEntry::is_empty_middle() const { return (unsigned char) short_name.as_array[0] == MARK_EMPTY_MIDDLE; }
+    bool FileEntry::is_empty_middle() const {
+        return (unsigned char) short_name.as_array[0] == MARK_EMPTY_MIDDLE;
+    }
 
     String FileEntry::make_short_name() const {
         String file_name = String((const char*) short_name.name, 8).replace(0x20, '\0');
@@ -148,7 +153,8 @@ namespace Rune::VFS {
             case FATFileAttribute::DIRECTORY: return check_bit(attributes, 4);
             case FATFileAttribute::ARCHIVE:   return check_bit(attributes, 5);
             case FATFileAttribute::LONG_FILE_NAME:
-                return (attributes & FATFileAttribute::LONG_FILE_NAME) == FATFileAttribute::LONG_FILE_NAME;
+                return (attributes & FATFileAttribute::LONG_FILE_NAME)
+                       == FATFileAttribute::LONG_FILE_NAME;
             case FATFileAttribute::NONE: return false;
         }
         return false;
@@ -158,7 +164,9 @@ namespace Rune::VFS {
     //                                    Mounted Storage Ref Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    StorageDevRef::StorageDevRef(U16 storage_dev, BIOSParameterBlock* bpb) : storage_dev(storage_dev), BPB(bpb) {}
+    StorageDevRef::StorageDevRef(U16 storage_dev, BIOSParameterBlock* bpb)
+        : storage_dev(storage_dev),
+          BPB(bpb) {}
 
     StorageDevRef::~StorageDevRef() { delete BPB; }
 
@@ -202,7 +210,8 @@ namespace Rune::VFS {
                                       || c == 0x5B  // [
                                       || c == 0x5D; // ]
 
-            if (!is_digit && !is_big_letter && !is_small_letter && !is_allowed_special) return false;
+            if (!is_digit && !is_big_letter && !is_small_letter && !is_allowed_special)
+                return false;
         }
         return true;
     }

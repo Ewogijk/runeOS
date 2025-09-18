@@ -118,7 +118,8 @@ namespace Rune::Device {
                 return CPU::IRQState::HANDLED;
             }
 
-            Ember::VirtualKey key = _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
+            Ember::VirtualKey key =
+                _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
             if (!key.is_none()) {
                 _key_code_cache[_end] = key.get_key_code();
                 _end                  = (_end + 1) % 256;

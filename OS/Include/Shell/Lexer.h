@@ -17,12 +17,10 @@
 #ifndef RUNEOS_LEXER_H
 #define RUNEOS_LEXER_H
 
-
 #include <Ember/Enum.h>
 
 #include <string>
 #include <vector>
-
 
 namespace Rune::Shell {
     /**
@@ -40,103 +38,83 @@ namespace Rune::Shell {
      *  <li>REDIRECT:           ></li>
      * </ul>
      */
-#define TOKEN_TYPES(X)                              \
-             X(TokenType, END, 0x1)                 \
-             X(TokenType, UNEXPECTED_TOKEN, 0x2)    \
-             X(TokenType, PATH, 0x3)                \
-             X(TokenType, IDENTIFIER, 0x4)          \
-             X(TokenType, ESCAPE_CODE, 0x5)         \
-             X(TokenType, DOLLAR, 0x6)              \
-             X(TokenType, DASH, 0x7)                \
-             X(TokenType, ASSIGNMENT, 0x8)          \
-             X(TokenType, QUOTE, 0x9)               \
-             X(TokenType, REDIRECT, 0xA)            \
+#define TOKEN_TYPES(X)                                                                             \
+    X(TokenType, END, 0x1)                                                                         \
+    X(TokenType, UNEXPECTED_TOKEN, 0x2)                                                            \
+    X(TokenType, PATH, 0x3)                                                                        \
+    X(TokenType, IDENTIFIER, 0x4)                                                                  \
+    X(TokenType, ESCAPE_CODE, 0x5)                                                                 \
+    X(TokenType, DOLLAR, 0x6)                                                                      \
+    X(TokenType, DASH, 0x7)                                                                        \
+    X(TokenType, ASSIGNMENT, 0x8)                                                                  \
+    X(TokenType, QUOTE, 0x9)                                                                       \
+    X(TokenType, REDIRECT, 0xA)
 
-
-
-    DECLARE_ENUM(TokenType, TOKEN_TYPES, 0x0)  // NOLINT
-
+    DECLARE_ENUM(TokenType, TOKEN_TYPES, 0x0) // NOLINT
 
     /**
      * @brief A token from an input string, e.g. $hi -> Token(ENV_NAME, "hi")
      */
     struct Token {
-        TokenType type;
-        std::string    text;     // Value of the token e.g. "hi"
-        int       position; // Start index of this token relative to the input e.g "123 hi" -> Token "hi", character=4
+        TokenType   type;
+        std::string text; // Value of the token e.g. "hi"
+        int position; // Start index of this token relative to the input e.g "123 hi" -> Token "hi",
+                      // character=4
     };
-
 
     class Lexer {
         static constexpr size_t BUF_SIZE = 64;
 
         std::string _input;
-        int    _cursor;
+        int         _cursor;
 
         std::vector<Token> _token_buffer;
 
-        //OLD STUFF
+        // OLD STUFF
         bool  _skip_ws;
         Token _current_token;
         Token _next_token;
 
-
         static bool is_digit(char c);
-
 
         static bool is_lower_case(char c);
 
-
         static bool is_upper_case(char c);
 
-
         static bool is_reserved(char c);
-
 
         // Check if c is in [a-zA-Z0-9_-]
         static bool is_path_element(char c);
 
-
         // Check if c is in [a-zA-Z0-9_]
         static bool is_identifier(char c);
-
 
         // Check if c is in [\'$=]
         static bool is_esc_ch(char c);
 
-
         bool has_more();
-
 
         // Get char at cursor then increment the cursor by one
         char advance();
 
-
         // Get chat at cursor without incrementing the cursor
         char peek();
 
-
         void parse_escape_code();
-
 
         void parse_identifier_or_path_element(bool include_ws);
 
-
         void parse_string();
-
 
         void scan_token();
 
-
-    public:
+      public:
         explicit Lexer(const std::string& input);
-
 
         Token next_token();
 
-
         Token peek_token();
     };
-}
+} // namespace Rune::Shell
 
-#endif //RUNEOS_LEXER_H
+#endif // RUNEOS_LEXER_H

@@ -17,8 +17,8 @@
 import click
 
 
-@click.command('isr-stubs-cpp')
-@click.argument('out_file', type=str)
+@click.command("isr-stubs-cpp")
+@click.argument("out_file", type=str)
 def generate_isr_assembly_stubs(out_file: str) -> None:
     """Generate the ISR_Stubs.inc assembly include file.
 
@@ -26,29 +26,31 @@ def generate_isr_assembly_stubs(out_file: str) -> None:
     :return: -
     """
     stubs_with_error_code = [8, 10, 11, 12, 13, 14, 17, 21]
-    with open(out_file, 'w') as file:
-        file.write(';\n')
-        file.write(';  Copyright 2025 Ewogijk\n')
-        file.write(';\n')
+    with open(out_file, "w") as file:
+        file.write(";\n")
+        file.write(";  Copyright 2025 Ewogijk\n")
+        file.write(";\n")
         file.write(';  Licensed under the Apache License, Version 2.0 (the "License");\n')
-        file.write(';  you may not use this file except in compliance with the License.\n')
-        file.write(';  You may obtain a copy of the License at\n')
-        file.write(';\n')
-        file.write(';      http://www.apache.org/licenses/LICENSE-2.0\n')
-        file.write(';\n')
-        file.write(';  Unless required by applicable law or agreed to in writing, software\n')
+        file.write(";  you may not use this file except in compliance with the License.\n")
+        file.write(";  You may obtain a copy of the License at\n")
+        file.write(";\n")
+        file.write(";      http://www.apache.org/licenses/LICENSE-2.0\n")
+        file.write(";\n")
+        file.write(";  Unless required by applicable law or agreed to in writing, software\n")
         file.write(';  distributed under the License is distributed on an "AS IS" BASIS,\n')
-        file.write(';  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n')
-        file.write(';  See the License for the specific language governing permissions and\n')
-        file.write(';  limitations under the License.\n')
-        file.write(';/\n\n')
+        file.write(";  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n")
+        file.write(";  See the License for the specific language governing permissions and\n")
+        file.write(";  limitations under the License.\n")
+        file.write(";/\n\n")
 
-        file.write(';\n')
-        file.write('; This file is auto generated.\n')
-        file.write(';\n\n')
+        file.write(";\n")
+        file.write("; This file is auto generated.\n")
+        file.write(";\n\n")
         for i in range(0, 256):
-            file.write(f'ISR_ERRORCODE {i}\n' if i in stubs_with_error_code else f'ISR_NOERRORCODE {i}\n')
+            file.write(
+                f"ISR_ERRORCODE {i}\n" if i in stubs_with_error_code else f"ISR_NOERRORCODE {i}\n"
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_isr_assembly_stubs()

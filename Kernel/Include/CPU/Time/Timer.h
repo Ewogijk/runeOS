@@ -27,12 +27,12 @@ namespace Rune::CPU {
      * @brief All kernel supported timer modes of operation.
      * <ul>
      *  <li>Periodic: The timer will raises periodic IRQs e.g. every 1ms</li>
-     *  <li>OneShot: The timer uses a countdown mechanism to raise an IRQ when the countdown reaches zero. The countdown
-     *                  is set by software.</li>
+     *  <li>OneShot: The timer uses a countdown mechanism to raise an IRQ when the countdown reaches
+     * zero. The countdown is set by software.</li>
      * </ul>
      */
-#define TIMER_MODES(X)                                                                                                 \
-    X(TimerMode, PERIODIC, 0x1)                                                                                        \
+#define TIMER_MODES(X)                                                                             \
+    X(TimerMode, PERIODIC, 0x1)                                                                    \
     X(TimerMode, ONE_SHOT, 0x2)
 
     DECLARE_ENUM(TimerMode, TIMER_MODES, 0x0) // NOLINT
@@ -52,7 +52,8 @@ namespace Rune::CPU {
       protected:
         TimerMode _mode;
 
-        // In order to avoid using floating point values we measure everything in hertz e.g. 1MHz -> 1000000Hz
+        // In order to avoid using floating point values we measure everything in hertz e.g. 1MHz ->
+        // 1000000Hz
         U64 _freq_hz;
 
         // Time in nanoseconds a thread can run before being preempted
@@ -106,17 +107,19 @@ namespace Rune::CPU {
         virtual LinkedList<SleepingThread> get_sleeping_threads() const = 0;
 
         /**
-         * @brief Start the timer and thus enabling preemptive multithreading and sleeping for threads.
+         * @brief Start the timer and thus enabling preemptive multithreading and sleeping for
+         * threads.
          *
          * <p>
-         *  The timer itself will be initialized with the requested mode of operation and it is tried to operate it at
-         *  the requested frequency in Hz. If frequency is bigger then the maximum possible frequency in Hz the
-         *  timer supports it will be configured to run at it's maximum frequency instead.
+         *  The timer itself will be initialized with the requested mode of operation and it is
+         * tried to operate it at the requested frequency in Hz. If frequency is bigger then the
+         * maximum possible frequency in Hz the timer supports it will be configured to run at it's
+         * maximum frequency instead.
          * </p>
          *
          * <p>
-         *  Preemptive multithreading will be initialized using the requested quantum in nanoseconds, that is the
-         *  maximum time a thread is allowed to run without being preempted.
+         *  Preemptive multithreading will be initialized using the requested quantum in
+         * nanoseconds, that is the maximum time a thread is allowed to run without being preempted.
          * </p>
          *
          * @param logger
@@ -124,11 +127,15 @@ namespace Rune::CPU {
          * @param mode      Timer mode of operation.
          * @param frequency Requested timer frequency in Hz.
          * @param quantum   Maximum time in nanoseconds a thread can run before being preempted.
-         * @return True: The timer is started, thread sleep and preemptive multithreading is now working.
-         *          False: The timer could not be started, no sleeping and preemptive multithreading is possible.
+         * @return True: The timer is started, thread sleep and preemptive multithreading is now
+         * working. False: The timer could not be started, no sleeping and preemptive multithreading
+         * is possible.
          */
-        virtual bool
-        start(SharedPointer<Logger> logger, CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) = 0;
+        virtual bool start(SharedPointer<Logger> logger,
+                           CPU::Scheduler*       scheduler,
+                           TimerMode             mode,
+                           U64                   frequency,
+                           U64                   quantum) = 0;
 
         /**
          * @brief Search for a thread with requested ID in the wait queue and remove it if found.
@@ -138,51 +145,55 @@ namespace Rune::CPU {
         virtual bool remove_sleeping_thread(int t_id) = 0;
 
         /**
-         * @brief Put the currently running thread to sleep and wake it at the specified wake time. If the wake time is
-         *          in the past the function will do nothing.
+         * @brief Put the currently running thread to sleep and wake it at the specified wake time.
+         * If the wake time is in the past the function will do nothing.
          *
-         * Note that it is not guaranteed that the thread will be woken immediately as higher priority threads could be
-         * scheduled first.
+         * Note that it is not guaranteed that the thread will be woken immediately as higher
+         * priority threads could be scheduled first.
          *
          * @param wake_time_nanos Wake time in nanoseconds
          */
         virtual void sleep_until(U64 wake_time_nanos) = 0;
 
         /**
-         * @brief Put the currently running thread to sleep and wake it in the specified amount of nanoseconds.
+         * @brief Put the currently running thread to sleep and wake it in the specified amount of
+         * nanoseconds.
          *
-         * Note that it is not guaranteed that the thread will be woken immediately as higher priority threads could be
-         * scheduled first.
+         * Note that it is not guaranteed that the thread will be woken immediately as higher
+         * priority threads could be scheduled first.
          *
          * @param time_nanos
          */
         void sleep_nano(U64 time_nanos);
 
         /**
-         * @brief Put the currently running thread to sleep and wake it in the specified amount of micro seconds.
+         * @brief Put the currently running thread to sleep and wake it in the specified amount of
+         * micro seconds.
          *
-         * Note that it is not guaranteed that the thread will be woken immediately as higher priority threads could be
-         * scheduled first.
+         * Note that it is not guaranteed that the thread will be woken immediately as higher
+         * priority threads could be scheduled first.
          *
          * @param time_micros
          */
         void sleep_micro(U64 time_micros);
 
         /**
-         * @brief Put the currently running thread to sleep and wake it in the specified amount of milli seconds.
+         * @brief Put the currently running thread to sleep and wake it in the specified amount of
+         * milli seconds.
          *
-         * Note that it is not guaranteed that the thread will be woken immediately as higher priority threads could be
-         * scheduled first.
+         * Note that it is not guaranteed that the thread will be woken immediately as higher
+         * priority threads could be scheduled first.
          *
          * @param time_millis
          */
         void sleep_milli(U64 time_millis);
 
         /**
-         * @brief Put the currently running thread to sleep and wake it in the specified amount of seconds.
+         * @brief Put the currently running thread to sleep and wake it in the specified amount of
+         * seconds.
          *
-         * Note that it is not guaranteed that the thread will be woken immediately as higher priority threads could be
-         * scheduled first.
+         * Note that it is not guaranteed that the thread will be woken immediately as higher
+         * priority threads could be scheduled first.
          *
          * @param time_seconds
          */

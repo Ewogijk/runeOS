@@ -25,8 +25,8 @@
 namespace Rune::SystemCall {
 
     /**
-     * @brief A system call bundle is a list of system calls, the system call context and a range of ID's to be used for
-     *          system calls.
+     * @brief A system call bundle is a list of system calls, the system call context and a range of
+     * ID's to be used for system calls.
      *
      */
     struct Bundle {
@@ -40,7 +40,8 @@ namespace Rune::SystemCall {
      * @param k_subsys_reg Kernel subsystem registry.
      * @return System call bundles.
      */
-    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian* k_guard, const SubsystemRegistry& k_subsys_reg);
+    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian*          k_guard,
+                                                      const SubsystemRegistry& k_subsys_reg);
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_BUNDLE_H

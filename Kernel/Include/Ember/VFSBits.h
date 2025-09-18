@@ -26,17 +26,17 @@ namespace Ember {
      *
      * <ul>
      *  <li>Readonly:  The VFS node cannot be modified.</li>
-     *  <li>Hidden:    The VFS node should not be presented to the user if not explicitly requested.</li>
-     *  <li>System:    This directory belongs to the kernel or OS.</li>
+     *  <li>Hidden:    The VFS node should not be presented to the user if not explicitly
+     * requested.</li> <li>System:    This directory belongs to the kernel or OS.</li>
      *  <li>Directory: The VFS node represents a directory.</li>
      *  <li>File:      The VFS node represents a file.</li>
      * <ul>
      */
-#define NODE_ATTRIBUTES(X)                                                                                             \
-    X(NodeAttribute, READONLY, 0x01)                                                                                   \
-    X(NodeAttribute, HIDDEN, 0x02)                                                                                     \
-    X(NodeAttribute, SYSTEM, 0x04)                                                                                     \
-    X(NodeAttribute, DIRECTORY, 0x08)                                                                                  \
+#define NODE_ATTRIBUTES(X)                                                                         \
+    X(NodeAttribute, READONLY, 0x01)                                                               \
+    X(NodeAttribute, HIDDEN, 0x02)                                                                 \
+    X(NodeAttribute, SYSTEM, 0x04)                                                                 \
+    X(NodeAttribute, DIRECTORY, 0x08)                                                              \
     X(NodeAttribute, FILE, 0x10)
 
     DECLARE_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) // NOLINT
@@ -49,9 +49,9 @@ namespace Ember {
      *  <li>append: Read and write allowed, start at end of node</li>
      * </ul>
      */
-#define IO_MODES(X)                                                                                                    \
-    X(IOMode, READ, 0x1)                                                                                               \
-    X(IOMode, WRITE, 0x2)                                                                                              \
+#define IO_MODES(X)                                                                                \
+    X(IOMode, READ, 0x1)                                                                           \
+    X(IOMode, WRITE, 0x2)                                                                          \
     X(IOMode, APPEND, 0x3)
 
     DECLARE_ENUM(IOMode, IO_MODES, 0x0) // NOLINT
@@ -64,9 +64,9 @@ namespace Ember {
      *  <li>END: From the end of the file -> cursor = file_size + offset</li>
      * </ul>
      */
-#define SEEK_MODE(X)                                                                                                   \
-    X(SeekMode, BEGIN, 0x1)                                                                                            \
-    X(SeekMode, CURSOR, 0x2)                                                                                           \
+#define SEEK_MODE(X)                                                                               \
+    X(SeekMode, BEGIN, 0x1)                                                                        \
+    X(SeekMode, CURSOR, 0x2)                                                                       \
     X(SeekMode, END, 0x3)
 
     DECLARE_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT

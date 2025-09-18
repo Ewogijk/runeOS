@@ -18,7 +18,7 @@ import click
 import json
 
 
-build_h_template = '''
+build_h_template = """
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -54,16 +54,18 @@ $QEMU
 
 
 #endif //RUNEOS_BUILD_INFO_H
-'''
+"""
 
-@click.command('build_info_header')
-@click.argument('out_file', type=str)
-@click.argument('macro_defs_json', type=str)
+
+@click.command("build_info_header")
+@click.argument("out_file", type=str)
+@click.argument("macro_defs_json", type=str)
 def generate_build_info_h(out_file: str, macro_defs_json: str) -> None:
     """Generate the header file with kernel build info macro definitions.
 
-    The macro definitions json contains a dictionary of placeholder variables mapped to their replacements. The script
-    contains a template for the Build.h file and replace each placeholder variable with the associated value.
+    The macro definitions json contains a dictionary of placeholder variables mapped to their
+    replacements. The script contains a template for the Build.h file and replace each placeholder
+    variable with the associated value.
 
 
     :param out_file:        Path to the output file.
@@ -71,16 +73,16 @@ def generate_build_info_h(out_file: str, macro_defs_json: str) -> None:
     :return: -
     """
     macro_defs = []
-    with open(macro_defs_json, 'r') as f:
+    with open(macro_defs_json) as f:
         macro_defs = json.load(f)
 
     build_h_out = build_h_template
     for placeholder, replacement in macro_defs.items():
         build_h_out = build_h_out.replace(placeholder, replacement)
 
-    with open(out_file, 'w') as file:
+    with open(out_file, "w") as file:
         file.write(build_h_out)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_build_info_h()

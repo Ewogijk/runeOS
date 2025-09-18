@@ -29,16 +29,16 @@ namespace Rune::VFS {
     /**
      * <ul>
      *  <li>ITERATING: Directory is still iterated. No Errors.</li>
-     *  <li>END_OF_DIRECTORY: Last file entry has been returned. End is iteration mode dependant, could be last used
-     *                          file entry or end of last allocated cluster.</li>
-     *  <li>CORRUPT_LFN_ENTRY: Corrupt long file name entry encountered. Iteration is stopped.</li>
-     *  <li>DEV_ERROR: Error of the underlying storage device. Iteration is stopped.</li>
+     *  <li>END_OF_DIRECTORY: Last file entry has been returned. End is iteration mode dependant,
+     * could be last used file entry or end of last allocated cluster.</li> <li>CORRUPT_LFN_ENTRY:
+     * Corrupt long file name entry encountered. Iteration is stopped.</li> <li>DEV_ERROR: Error of
+     * the underlying storage device. Iteration is stopped.</li>
      * </ul>
      */
-#define DIRECTORY_ITERATOR_STATES(X)                                                                                   \
-    X(DirectoryIteratorState, ITERATING, 0x1)                                                                          \
-    X(DirectoryIteratorState, END_OF_DIRECTORY, 0x2)                                                                   \
-    X(DirectoryIteratorState, CORRUPT_LFN_ENTRY, 0x3)                                                                  \
+#define DIRECTORY_ITERATOR_STATES(X)                                                               \
+    X(DirectoryIteratorState, ITERATING, 0x1)                                                      \
+    X(DirectoryIteratorState, END_OF_DIRECTORY, 0x2)                                               \
+    X(DirectoryIteratorState, CORRUPT_LFN_ENTRY, 0x3)                                              \
     X(DirectoryIteratorState, DEV_ERROR, 0x4)
 
     DECLARE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0) // NOLINT
@@ -46,17 +46,17 @@ namespace Rune::VFS {
     /**
      * Modes of iteration define, how a directory is iterated:
      * <ul>
-     *  <li>LIST_DIRECTORY: Iterate over all used file entries. Long file name and empty entries are not returned.
-     *                       Iteration stops at the last used file entry.</li>
-     *  <li>LIST_ALL: Iterate over all file entries including empty entries. Long file name entries are not returned.
-     *                 Iteration stops at the end of all allocated clusters.</li>
-     *  <li>ATOMIC: Iterate atomically over all file entries, that is each used, empty and long file name entry is
-     *                returned. Iteration stops at the end of all allocated clusters.</li>
+     *  <li>LIST_DIRECTORY: Iterate over all used file entries. Long file name and empty entries are
+     * not returned. Iteration stops at the last used file entry.</li> <li>LIST_ALL: Iterate over
+     * all file entries including empty entries. Long file name entries are not returned. Iteration
+     * stops at the end of all allocated clusters.</li> <li>ATOMIC: Iterate atomically over all file
+     * entries, that is each used, empty and long file name entry is returned. Iteration stops at
+     * the end of all allocated clusters.</li>
      * </ul>
      */
-#define DIRECTORY_ITERATION_MODES(X)                                                                                   \
-    X(DirectoryIterationMode, LIST_DIRECTORY, 0x1)                                                                     \
-    X(DirectoryIterationMode, LIST_ALL, 0x2)                                                                           \
+#define DIRECTORY_ITERATION_MODES(X)                                                               \
+    X(DirectoryIterationMode, LIST_DIRECTORY, 0x1)                                                 \
+    X(DirectoryIterationMode, LIST_ALL, 0x2)                                                       \
     X(DirectoryIterationMode, ATOMIC, 0x3)
 
     DECLARE_ENUM(DirectoryIterationMode, DIRECTORY_ITERATION_MODES, 0x0) // NOLINT
@@ -70,10 +70,10 @@ namespace Rune::VFS {
      *  <li>DEV_ERROR: Error on the underlying storage device.</li>
      * </ul>
      */
-#define NAVIGATION_STATUSES(X)                                                                                         \
-    X(NavigationStatus, FOUND, 0x1)                                                                                    \
-    X(NavigationStatus, NOT_FOUND, 0x2)                                                                                \
-    X(NavigationStatus, BAD_PATH, 0x3)                                                                                 \
+#define NAVIGATION_STATUSES(X)                                                                     \
+    X(NavigationStatus, FOUND, 0x1)                                                                \
+    X(NavigationStatus, NOT_FOUND, 0x2)                                                            \
+    X(NavigationStatus, BAD_PATH, 0x3)                                                             \
     X(NavigationStatus, DEV_ERROR, 0x3)
 
     DECLARE_ENUM(NavigationStatus, NAVIGATION_STATUSES, 0x0) // NOLINT
@@ -113,8 +113,8 @@ namespace Rune::VFS {
         void advance();
 
         /**
-         * Advance to the next used or unused file entry, if the file entry has a long file name, all long file entries
-         * are also parsed in this step.
+         * Advance to the next used or unused file entry, if the file entry has a long file name,
+         * all long file entries are also parsed in this step.
          */
         void parse_used_file_entry();
 
@@ -181,7 +181,8 @@ namespace Rune::VFS {
         void update_state();
 
       public:
-        explicit FATDirectoryStream(const Function<void()>& on_close, const FATDirectoryIterator& fat_it);
+        explicit FATDirectoryStream(const Function<void()>&     on_close,
+                                    const FATDirectoryIterator& fat_it);
 
         NodeInfo get_next() override;
     };

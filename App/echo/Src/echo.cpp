@@ -16,7 +16,6 @@
 
 #include <iostream>
 
-
 int main(const int argc, char* argv[]) {
     for (int i = 1; i < argc; i++) // Skip the application path
         std::cout << argv[i] << (i < argc - 1 ? " " : "");

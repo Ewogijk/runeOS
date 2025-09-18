@@ -24,18 +24,19 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Interrupt Controller
     //
-    // Design note: As this is extremely low level code nearly down to assembly, we will not use classes
-    //              here to simplify the code, meaning less intermediate functions called or having to figure out
-    //              how to call member functions from assembly which results in a simpler stack to debug.
-    //              Same applies to Exception.h and IRQ.h
+    // Design note: As this is extremely low level code nearly down to assembly, we will not use
+    // classes
+    //              here to simplify the code, meaning less intermediate functions called or having
+    //              to figure out how to call member functions from assembly which results in a
+    //              simpler stack to debug. Same applies to Exception.h and IRQ.h
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * @brief Load and initialize the interrupt vector table (IVT) and any additional infrastructure required for the
-     *          IVT to work. All interrupts will be initially disabled.
+     * @brief Load and initialize the interrupt vector table (IVT) and any additional infrastructure
+     * required for the IVT to work. All interrupts will be initially disabled.
      *
-     * A generic interrupt dispatcher will be used that notifies more specific interrupt handlers about their interrupt
-     * of interest.
+     * A generic interrupt dispatcher will be used that notifies more specific interrupt handlers
+     * about their interrupt of interest.
      */
     void interrupt_load_vector_table();
 

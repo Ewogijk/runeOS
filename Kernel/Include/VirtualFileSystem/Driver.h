@@ -29,7 +29,8 @@
 namespace Rune::VFS {
 
     /**
-     * A filesystem driver allows access to a disk formatted according to some filesystem specification.
+     * A filesystem driver allows access to a disk formatted according to some filesystem
+     * specification.
      */
     class Driver {
       public:
@@ -46,7 +47,8 @@ namespace Rune::VFS {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
-         * Important: The old filesystem (if any) will be overriden by this function. All data will be lost.
+         * Important: The old filesystem (if any) will be overriden by this function. All data will
+         * be lost.
          *
          * @brief Create a new empty filesystem on the storage device.
          *
@@ -55,14 +57,15 @@ namespace Rune::VFS {
          * @param storage_dev ID of a storage device.
          *
          * @return Formatted:           The storage device is formatted.
-         *          FormatError:        An error happened while formatting the storage device. Failure reason is
-         *                              specific to the file system implementation, check the logs.
+         *          FormatError:        An error happened while formatting the storage device.
+         * Failure reason is specific to the file system implementation, check the logs.
          *          StorageDevError:    An IO error happened.
          */
         virtual FormatStatus format(U16 storage_dev) = 0;
 
         /**
-         * A filesystem driver implementation shall be able to mount multiple storage devices at once.
+         * A filesystem driver implementation shall be able to mount multiple storage devices at
+         * once.
          *
          * @brief Make the storage device known to this filesystem driver.
          *
@@ -72,8 +75,8 @@ namespace Rune::VFS {
          *
          * @return Mounted:            The storage device is mounted.
          *          AlreadyMounted:    The storage device is already mounted.
-         *          NotSupported:      The storage device is not formatted or uses an unknown filesystem.
-         *          StorageDevError:   An IO error happened.
+         *          NotSupported:      The storage device is not formatted or uses an unknown
+         * filesystem. StorageDevError:   An IO error happened.
          */
         virtual MountStatus mount(U16 storage_dev) = 0;
 
@@ -99,8 +102,8 @@ namespace Rune::VFS {
         /**
          * @brief Check if the given path contains any illegal characters.
          * @param path
-         * @return True: The path does not contain any illegal character, False: The path contains at least one illegal
-         *          character.
+         * @return True: The path does not contain any illegal character, False: The path contains
+         * at least one illegal character.
          */
         [[nodiscard]]
         virtual bool is_valid_file_path(const Path& path) const = 0;

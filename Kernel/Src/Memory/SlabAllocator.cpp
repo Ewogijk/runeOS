@@ -53,7 +53,8 @@ namespace Rune::Memory {
         slab->slab_size       = get_page_size();
 
         // Init free list
-        auto* free_list            = memory_addr_to_pointer<U8>(page + get_page_size() - sizeof(Slab) - free_list_size);
+        auto* free_list =
+            memory_addr_to_pointer<U8>(page + get_page_size() - sizeof(Slab) - free_list_size);
         slab->free_buf.free_object = 0;
         for (size_t i = 0; i < objects - 1; i++)
             free_list[i] = i + 1;
@@ -108,8 +109,9 @@ namespace Rune::Memory {
     void* Slab::alloc_on_slab() {
         if (allocated_count == object_count) return nullptr;
 
-        auto* obj = memory_addr_to_pointer<void>(memory_pointer_to_addr(page) + free_buf.free_object * object_size);
-        auto* free_list      = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
+        auto* obj       = memory_addr_to_pointer<void>(memory_pointer_to_addr(page)
+                                                 + free_buf.free_object * object_size);
+        auto* free_list = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
         free_buf.free_object = free_list[free_buf.free_object];
         allocated_count++;
         return obj;
@@ -129,8 +131,8 @@ namespace Rune::Memory {
     bool Slab::free_on_slab(void* obj) {
         if (allocated_count == 0) return false;
 
-        size_t obj_idx       = (memory_pointer_to_addr(obj) - memory_pointer_to_addr(page)) / object_size;
-        auto*  free_list     = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
+        size_t obj_idx = (memory_pointer_to_addr(obj) - memory_pointer_to_addr(page)) / object_size;
+        auto*  free_list = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
         free_list[obj_idx]   = free_buf.free_object;
         free_buf.free_object = obj_idx;
         allocated_count--;
@@ -209,9 +211,10 @@ namespace Rune::Memory {
     }
 
     bool ObjectCache::grow() {
-        VirtualAddr page         = _free_page_list ? _free_page_list->mem_addr : _limit;
-        size_t      aligned_size = _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
-        size_t      slab_size    = aligned_size;
+        VirtualAddr page = _free_page_list ? _free_page_list->mem_addr : _limit;
+        size_t      aligned_size =
+            _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
+        size_t slab_size = aligned_size;
         if (!memory_is_aligned(slab_size, Memory::get_page_size()))
             slab_size = memory_align(aligned_size, Memory::get_page_size(), true);
 
@@ -302,7 +305,8 @@ namespace Rune::Memory {
 
         _slab_cache = slab_cache;
 
-        _type = object_size < (Memory::get_page_size() / 8) ? CacheType::ON_SLAB : CacheType::OFF_SLAB;
+        _type =
+            object_size < (Memory::get_page_size() / 8) ? CacheType::ON_SLAB : CacheType::OFF_SLAB;
         return 0;
     }
 
@@ -312,7 +316,8 @@ namespace Rune::Memory {
             if (!grow()) return nullptr;
             alloc_slab = _partial_list ? _partial_list : _empty_list;
         }
-        void* obj = _type == CacheType::ON_SLAB ? alloc_slab->alloc_on_slab() : alloc_slab->alloc_off_slab();
+        void* obj = _type == CacheType::ON_SLAB ? alloc_slab->alloc_on_slab()
+                                                : alloc_slab->alloc_off_slab();
 
         if (alloc_slab->allocated_count == alloc_slab->object_count) {
             // Move to full slabs
@@ -335,8 +340,9 @@ namespace Rune::Memory {
         size_t old_alloc_count  = 0;
         bool   slab_has_changed = false;
         if (_type == CacheType::ON_SLAB) {
-            auto page = memory_pointer_to_addr(obj) >> 12 << 12; // TODO add function to get page of address??
-            slab      = memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
+            auto page = memory_pointer_to_addr(obj)
+                        >> 12 << 12; // TODO add function to get page of address??
+            slab = memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
             if (slab->page != memory_addr_to_pointer<void>(page)) return;
 
             old_alloc_count  = slab->allocated_count;
@@ -546,7 +552,15 @@ namespace Rune::Memory {
         MemoryRegion region = {_free_list ? _free_list->mem_addr : _limit, CACHE_SIZE};
         int8_t       r_code;
         if (obj_size < Memory::get_page_size() / 8) {
-            r_code = cache->init(_vmm, nullptr, region, page_flags, nullptr, nullptr, obj_size, align, nullptr);
+            r_code = cache->init(_vmm,
+                                 nullptr,
+                                 region,
+                                 page_flags,
+                                 nullptr,
+                                 nullptr,
+                                 obj_size,
+                                 align,
+                                 nullptr);
         } else {
             r_code = cache->init(_vmm,
                                  &_memory_node_cache,
@@ -575,7 +589,9 @@ namespace Rune::Memory {
 
     U32 SlabAllocator::get_min_cache_size() const { return 1 << MIN_SIZE_POWER; }
 
-    U32 SlabAllocator::get_max_cache_size() const { return 1 << (STATIC_CACHE_COUNT + MIN_SIZE_POWER - 1); }
+    U32 SlabAllocator::get_max_cache_size() const {
+        return 1 << (STATIC_CACHE_COUNT + MIN_SIZE_POWER - 1);
+    }
 
     HeapStartFailureCode SlabAllocator::start(MemoryMap* v_map, VirtualMemoryManager* vmm) {
         for (auto& reg : *v_map) {
@@ -594,7 +610,8 @@ namespace Rune::Memory {
         // Init the bootstrap caches
         U16 page_flags = PageFlag::PRESENT | PageFlag::WRITE_ALLOWED;
 
-        if (init_cache(&_object_cache_cache, sizeof(ObjectCache), 0, page_flags, true, nullptr) < 0) {
+        if (init_cache(&_object_cache_cache, sizeof(ObjectCache), 0, page_flags, true, nullptr)
+            < 0) {
             _start_failure_code = HeapStartFailureCode::BC_OBJECT_CACHE_ERROR;
             return _start_failure_code;
         }
@@ -604,12 +621,18 @@ namespace Rune::Memory {
             return _start_failure_code;
         }
 
-        if (init_cache(&_object_buf_node_cache, sizeof(ObjectBufNode), 0, page_flags, true, nullptr) < 0) {
+        if (init_cache(&_object_buf_node_cache, sizeof(ObjectBufNode), 0, page_flags, true, nullptr)
+            < 0) {
             _start_failure_code = HeapStartFailureCode::BC_OBJECT_BUF_NODE_ERROR;
             return _start_failure_code;
         }
 
-        if (init_cache(&_object_buf_node_hash_map_cache, sizeof(ObjectBufNodeHashMap), 0, page_flags, true, nullptr)
+        if (init_cache(&_object_buf_node_hash_map_cache,
+                       sizeof(ObjectBufNodeHashMap),
+                       0,
+                       page_flags,
+                       true,
+                       nullptr)
             < 0) {
             _start_failure_code = HeapStartFailureCode::BC_OBJECT_BUF_NODE_HASHMAP_ERROR;
             return _start_failure_code;
@@ -629,10 +652,12 @@ namespace Rune::Memory {
         U16    dma_page_flags = page_flags | PageFlag::CACHE_DISABLE | PageFlag::WRITE_THROUGH;
         size_t size           = MIN_OBJ_SIZE;
         for (size_t i = 0; i < STATIC_CACHE_COUNT; i++) {
-            auto* gpc    = reinterpret_cast<ObjectCache*>(_object_cache_cache.allocate());
-            auto* dmac   = reinterpret_cast<ObjectCache*>(_object_cache_cache.allocate());
-            auto* gpcMap = reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
-            auto* dmaMap = reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
+            auto* gpc  = reinterpret_cast<ObjectCache*>(_object_cache_cache.allocate());
+            auto* dmac = reinterpret_cast<ObjectCache*>(_object_cache_cache.allocate());
+            auto* gpcMap =
+                reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
+            auto* dmaMap =
+                reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
 
             if (!gpc || !dmac || !gpcMap || !dmaMap) {
                 _start_failure_code = HeapStartFailureCode::ALLOC_GP_OR_DMA_CACHE_ERROR;
@@ -690,8 +715,10 @@ namespace Rune::Memory {
 
     void SlabAllocator::free(void* obj) {
         size_t cache_idx =
-            (memory_align(memory_pointer_to_addr(obj), CACHE_SIZE, false) - _heap_memory.start) / CACHE_SIZE;
-        auto* c = reinterpret_cast<ObjectCache*>(_object_cache_cache.object_at(cache_idx - BOOTSTRAP_CACHE_COUNT));
+            (memory_align(memory_pointer_to_addr(obj), CACHE_SIZE, false) - _heap_memory.start)
+            / CACHE_SIZE;
+        auto* c = reinterpret_cast<ObjectCache*>(
+            _object_cache_cache.object_at(cache_idx - BOOTSTRAP_CACHE_COUNT));
         if (!c || c->get_type() == CacheType::NONE) return;
         c->free(obj);
     }
@@ -700,7 +727,8 @@ namespace Rune::Memory {
         auto* cache = reinterpret_cast<ObjectCache*>(_object_cache_cache.allocate());
         if (!cache) return nullptr;
 
-        auto* obnhm = reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
+        auto* obnhm =
+            reinterpret_cast<ObjectBufNodeHashMap*>(_object_buf_node_hash_map_cache.allocate());
         if (!obnhm) {
             _object_cache_cache.free(cache);
             return nullptr;

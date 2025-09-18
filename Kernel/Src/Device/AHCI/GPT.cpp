@@ -87,8 +87,10 @@ namespace Rune::Device {
         return {(const char*) buf};
     }
 
-    GPTScanStatus
-    parse_header(Function<size_t(U8[], size_t, U64)>& sector_reader, size_t sector_size, U64 lba, GPTHeader& out) {
+    GPTScanStatus parse_header(Function<size_t(U8[], size_t, U64)>& sector_reader,
+                               size_t                               sector_size,
+                               U64                                  lba,
+                               GPTHeader&                           out) {
         U8     sector_buf[sector_size];
         size_t read = sector_reader(sector_buf, forward<size_t>(sector_size), forward<U64>(lba));
         if (read != sector_size) return GPTScanStatus::STORAGE_DEV_ERROR;
@@ -128,19 +130,23 @@ namespace Rune::Device {
         GPTScanStatus gpt_scan_status = parse_header(sector_reader, sector_size, 1, header);
         if (gpt_scan_status != GPTScanStatus::DETECTED) {
             if (gpt_scan_status != GPTScanStatus::NOT_DETECTED)
-                logger->warn("GPT", "Failed to parse GPT header: {} (LBA 1)", gpt_scan_status.to_string());
+                logger->warn("GPT",
+                             "Failed to parse GPT header: {} (LBA 1)",
+                             gpt_scan_status.to_string());
             return {gpt_scan_status, {}, LinkedList<GPTPartitionTableEntry>()};
         }
 
         // Read whole partition table
         size_t buf_size = header.size_of_partition_entry * header.number_of_partition_entries;
-        if (!memory_is_aligned(buf_size, sector_size)) buf_size = memory_align(buf_size, sector_size, true);
+        if (!memory_is_aligned(buf_size, sector_size))
+            buf_size = memory_align(buf_size, sector_size, true);
         U8  partition_table_buf[buf_size];
         U32 b_pos = 0;
         U64 c_lba = header.partition_entry_lba;
         while (b_pos < buf_size) {
-            size_t bytes_read =
-                sector_reader(&partition_table_buf[b_pos], forward<size_t>(sector_size), forward<U64>(c_lba));
+            size_t bytes_read = sector_reader(&partition_table_buf[b_pos],
+                                              forward<size_t>(sector_size),
+                                              forward<U64>(c_lba));
             if (bytes_read != sector_size) {
                 logger->warn("GPT", "Failed to read partition table entry at sector {}.", c_lba);
                 return {GPTScanStatus::STORAGE_DEV_ERROR, {}, LinkedList<GPTPartitionTableEntry>()};
@@ -151,10 +157,13 @@ namespace Rune::Device {
 
         // Compute partition table CRC
         U32 p_t_crc_32 = compute_crc_32_checksum(partition_table_buf,
-                                                 header.size_of_partition_entry * header.number_of_partition_entries);
+                                                 header.size_of_partition_entry
+                                                     * header.number_of_partition_entries);
         if (p_t_crc_32 != header.partition_entry_array_crc_32) {
             logger->warn("GPT", "Wrong partition table CRC detected.");
-            return {GPTScanStatus::CORRUPT_PARTITION_TABLE, {}, LinkedList<GPTPartitionTableEntry>()};
+            return {GPTScanStatus::CORRUPT_PARTITION_TABLE,
+                    {},
+                    LinkedList<GPTPartitionTableEntry>()};
         }
 
         GPTHeader back_up_header;

@@ -46,11 +46,14 @@ namespace Rune {
 
         if (_file_logging_available) {
             SharedPointer<VFS::Node> node;
-            VFS::IOStatus io_status = _vfs_subsystem->open(_system_directory / path, Ember::IOMode::APPEND, node);
+            VFS::IOStatus            io_status =
+                _vfs_subsystem->open(_system_directory / path, Ember::IOMode::APPEND, node);
             if (io_status == VFS::IOStatus::OPENED) {
                 ((SystemLogger*) logger.get())
-                    ->set_file_logger(UniquePointer<Logger>(
-                        new TextStreamLogger(_log_msg_fmt, lvl, UniquePointer<TextStream>(new VFS::FileStream(node)))));
+                    ->set_file_logger(UniquePointer<Logger>(new TextStreamLogger(
+                        _log_msg_fmt,
+                        lvl,
+                        UniquePointer<TextStream>(new VFS::FileStream(node)))));
             }
         }
 
@@ -59,7 +62,8 @@ namespace Rune {
     }
 
     void LogRegistry::enable_serial_logging(UniquePointer<TextStream> stream, LogLevel log_level) {
-        _serial_logger = SharedPointer<Logger>(new TextStreamLogger(_log_msg_fmt, log_level, move(stream)));
+        _serial_logger =
+            SharedPointer<Logger>(new TextStreamLogger(_log_msg_fmt, log_level, move(stream)));
         for (auto& l : _logger_registry)
             ((SystemLogger*) l.get())->set_serial_logger(_serial_logger);
     }
@@ -69,7 +73,8 @@ namespace Rune {
         for (auto& l : _logger_registry) {
             Path          log_file = _system_directory / ((SystemLogger*) l.get())->get_log_file();
             VFS::IOStatus st =
-                _vfs_subsystem->create(log_file, Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
+                _vfs_subsystem->create(log_file,
+                                       Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
             if (st != VFS::IOStatus::CREATED && st != VFS::IOStatus::FOUND) {
                 return;
             }
@@ -81,10 +86,10 @@ namespace Rune {
                                      node);
             if (io_status == VFS::IOStatus::OPENED) {
                 ((SystemLogger*) l.get())
-                    ->set_file_logger(UniquePointer<Logger>(
-                        new TextStreamLogger(_log_msg_fmt,
-                                             l->get_log_level(),
-                                             UniquePointer<TextStream>(new VFS::FileStream(node)))));
+                    ->set_file_logger(UniquePointer<Logger>(new TextStreamLogger(
+                        _log_msg_fmt,
+                        l->get_log_level(),
+                        UniquePointer<TextStream>(new VFS::FileStream(node)))));
                 ((SystemLogger*) l.get())->flush(true);
             }
         }

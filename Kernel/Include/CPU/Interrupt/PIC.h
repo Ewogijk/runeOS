@@ -51,14 +51,17 @@ namespace Rune::CPU {
         virtual bool is_irq_requested(U8 irq_line) = 0;
 
         /**
-         * @brief Check if an IRQ on the line was forwarded to the CPU and is currently being serviced by it.
+         * @brief Check if an IRQ on the line was forwarded to the CPU and is currently being
+         * serviced by it.
          * @param irq_line
-         * @return True: An IRQ is currently being handle by the CPU, False: The IRQ is ot handled by the CPU.
+         * @return True: An IRQ is currently being handle by the CPU, False: The IRQ is ot handled
+         * by the CPU.
          */
         virtual bool is_irq_serviced(U8 irq_line) = 0;
 
         /**
-         * @brief Check if IRQs on the line are masked, if an IRQ is masked it will be ignored by the PIC.
+         * @brief Check if IRQs on the line are masked, if an IRQ is masked it will be ignored by
+         * the PIC.
          * @param irq_line
          * @return True: The IRQ line is masked, False: It is not masked.
          */
@@ -66,8 +69,8 @@ namespace Rune::CPU {
 
         /**
          * @brief Initialize the PIC device with all IRQs being masked initially.
-         * @return True: The PIC is ready service IRQs, False: The PIC device could not be initialized, IRQs are not
-         *          available.
+         * @return True: The PIC is ready service IRQs, False: The PIC device could not be
+         * initialized, IRQs are not available.
          */
         virtual bool start() = 0;
 

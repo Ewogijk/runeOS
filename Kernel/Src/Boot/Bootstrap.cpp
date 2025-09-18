@@ -33,7 +33,9 @@ limine_bootloader_info_request LIMINE_BOOTLOADER_INFO = {.id       = LIMINE_BOOT
                                                          .revision = 0,
                                                          .response = nullptr};
 
-limine_memmap_request LIMINE_MEM_MAP = {.id = LIMINE_MEMMAP_REQUEST, .revision = 0, .response = nullptr};
+limine_memmap_request LIMINE_MEM_MAP = {.id       = LIMINE_MEMMAP_REQUEST,
+                                        .revision = 0,
+                                        .response = nullptr};
 
 limine_framebuffer_request LIMINE_FRAME_BUFFERS = {.id       = LIMINE_FRAMEBUFFER_REQUEST,
                                                    .revision = 0,
@@ -73,14 +75,16 @@ int Rune::kernel_bootstrap() {
         auto*            l_mem_map_entry = LIMINE_MEM_MAP.response->entries[i];
         MemoryRegionType t               = MemoryRegionType::NONE;
         switch (l_mem_map_entry->type) {
-            case LIMINE_MEMMAP_USABLE:                 t = MemoryRegionType::USABLE; break;
-            case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE: t = MemoryRegionType::BOOTLOADER_RECLAIMABLE; break;
+            case LIMINE_MEMMAP_USABLE: t = MemoryRegionType::USABLE; break;
+            case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
+                t = MemoryRegionType::BOOTLOADER_RECLAIMABLE;
+                break;
             case LIMINE_MEMMAP_RESERVED:
             case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
             case LIMINE_MEMMAP_ACPI_NVS:
             case LIMINE_MEMMAP_BAD_MEMORY:
-            case LIMINE_MEMMAP_FRAMEBUFFER:            t = MemoryRegionType::RESERVED; break;
-            case LIMINE_MEMMAP_KERNEL_AND_MODULES:     t = MemoryRegionType::KERNEL_CODE;
+            case LIMINE_MEMMAP_FRAMEBUFFER:        t = MemoryRegionType::RESERVED; break;
+            case LIMINE_MEMMAP_KERNEL_AND_MODULES: t = MemoryRegionType::KERNEL_CODE;
         }
         regions[regions_end++] = {l_mem_map_entry->base, l_mem_map_entry->length, t};
     }
@@ -122,7 +126,8 @@ int Rune::kernel_bootstrap() {
                         i--;
                     }
                 } else if (overlap < next.size) {
-                    // Free region partially overlaps reserved region -> Shrink free region by overlapped memory
+                    // Free region partially overlaps reserved region -> Shrink free region by
+                    // overlapped memory
                     current.size -= overlap;
                 } else {
                     // Free region completely overlaps (maybe overshoots) reserved region
@@ -141,19 +146,23 @@ int Rune::kernel_bootstrap() {
     // Fix alignment
     for (size_t i = 0; i < regions_end; i++) {
         MemoryRegion& current = regions[i];
-        // Ignore if last region is not aligned, because to be aligned the end of the region must overflow
-        // which we do not want (e.g. 0xFFFFFFFF should be 0x0)
+        // Ignore if last region is not aligned, because to be aligned the end of the region must
+        // overflow which we do not want (e.g. 0xFFFFFFFF should be 0x0)
         if (!memory_is_aligned(current.end(), page_frame_boundary) && i < (regions_end - 1)) {
             MemoryRegion& next = regions[i + 1];
             if (current.end() != next.start) {
                 // Gap between regions
                 PhysicalAddr aligned_end =
-                    memory_align(current.end(), page_frame_boundary, current.memory_type != MemoryRegionType::USABLE);
+                    memory_align(current.end(),
+                                 page_frame_boundary,
+                                 current.memory_type != MemoryRegionType::USABLE);
                 current.size = aligned_end - current.start;
             } else {
                 // Adjacent regions
                 PhysicalAddr aligned_end =
-                    memory_align(current.end(), page_frame_boundary, next.memory_type == MemoryRegionType::USABLE);
+                    memory_align(current.end(),
+                                 page_frame_boundary,
+                                 next.memory_type == MemoryRegionType::USABLE);
                 U32 diff      = aligned_end - current.end();
                 current.size += diff;
                 next.start   += diff;

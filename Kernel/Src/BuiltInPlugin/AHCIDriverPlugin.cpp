@@ -36,8 +36,8 @@ namespace Rune::BuiltInPlugin {
         auto* ms = ks_registry.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
         auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
         auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
-        ds->set_ahci_driver(
-            UniquePointer(new Device::AHCIDriver(ms->get_heap(), cs->get_system_timer(), ds->get_logger())));
+        ds->set_ahci_driver(UniquePointer(
+            new Device::AHCIDriver(ms->get_heap(), cs->get_system_timer(), ds->get_logger())));
         return true;
     }
 } // namespace Rune::BuiltInPlugin

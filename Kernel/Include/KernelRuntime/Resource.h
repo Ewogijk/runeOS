@@ -30,8 +30,8 @@ namespace Rune {
      *  A handle must be a unsigned numeric type, so it can be incremented.
      * </p>
      * <p>
-     *  The handle 0 is reserved and means the resource is invalid or in case of referencing means that no resource is
-     *  referenced. 0 is basically a null pointer in a sense.
+     *  The handle 0 is reserved and means the resource is invalid or in case of referencing means
+     * that no resource is referenced. 0 is basically a null pointer in a sense.
      * </p>
      * @tparam Counter
      */
@@ -59,7 +59,8 @@ namespace Rune {
         /**
          * The counter will not be decrement when it is zero, to prevent an underflow.
          *
-         * @brief Decrement the previously incremented counter, thus making the last acquired handle usable again.
+         * @brief Decrement the previously incremented counter, thus making the last acquired handle
+         * usable again.
          */
         void release_last_acquired() {
             if (_counter > 0) _counter--;
@@ -67,8 +68,9 @@ namespace Rune {
     };
 
     /**
-     * @brief Defines the header and width of a column. Furthermore the ValueYeeter is a function that returns the
-     *          string representation of the value that should be displayed in the column for a given resource.
+     * @brief Defines the header and width of a column. Furthermore the ValueYeeter is a function
+     * that returns the string representation of the value that should be displayed in the column
+     * for a given resource.
      */
     template <class Resource> struct Column {
         String                      header = "";
@@ -76,8 +78,8 @@ namespace Rune {
         Function<String(Resource*)> value_yeeter;
 
         /**
-         * @brief Make a column named "Handle-Name" and width 56 that displays the Handle and Name properties of a
-         *          resource.
+         * @brief Make a column named "Handle-Name" and width 56 that displays the Handle and Name
+         * properties of a resource.
          *
          * A resource must fulfill the following requirements:
          * <ol>
@@ -95,8 +97,8 @@ namespace Rune {
     };
 
     /**
-     * @brief The table formatter formats information about system resources in a tabular format. The columns are
-     *          defined by the subsystems.
+     * @brief The table formatter formats information about system resources in a tabular format.
+     * The columns are defined by the subsystems.
      */
     template <class Resource> class TableFormatter {
         String                       _name;
@@ -122,19 +124,21 @@ namespace Rune {
                 _name          = name;
                 _table_columns = move(table_columns);
 
-                _table_width = 2 * (_table_columns.size() - 1); // Number of spaces in between columns
+                _table_width =
+                    2 * (_table_columns.size() - 1); // Number of spaces in between columns
                 for (auto& c : _table_columns)
                     _table_width += c.width;
             }
         }
 
         /**
-         * @brief Write the formatted table with information about each resource returned by the iterator to the given
-         *          stream.
+         * @brief Write the formatted table with information about each resource returned by the
+         * iterator to the given stream.
          * @param stream
          * @param iterator
          */
-        void dump(const SharedPointer<TextStream>& stream, const Function<Resource*()>& iterator) const {
+        void dump(const SharedPointer<TextStream>& stream,
+                  const Function<Resource*()>&     iterator) const {
             if (!stream->is_write_supported()) return;
 
             // Write a divider with the resource table name
@@ -144,7 +148,8 @@ namespace Rune {
             // Write the column header names
             for (size_t i = 0; i < _table_columns.size(); i++) {
                 auto* tc = _table_columns[i];
-                stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}", tc->header);
+                stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}",
+                                        tc->header);
                 if (i < _table_columns.size() - 1) stream->write("  ");
             }
             stream->write('\n');
@@ -159,7 +164,8 @@ namespace Rune {
             while (curr) {
                 for (size_t i = 0; i < _table_columns.size(); i++) {
                     auto* tc = _table_columns[i];
-                    stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}",
+                    stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width)
+                                                + "}",
                                             tc->value_yeeter(curr));
                     if (i < _table_columns.size() - 1) stream->write("  ");
                 }

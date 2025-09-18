@@ -14,21 +14,21 @@
 
 from SCons.Environment import *
 
-Import('target_env')
+Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File('Assert.cpp'),
-    target_env.File('ByteOrder.cpp'),
-    target_env.File('CppLanguageSupport.cpp'),
-    target_env.File('EventHook.cpp'),
-    target_env.File('FrameBuffer.cpp'),
-    target_env.File('Logging.cpp'),
-    target_env.File('Math.cpp'),
-    target_env.File('Memory.cpp'),
-    target_env.File('Path.cpp'),
-    target_env.File('Stream.cpp'),
-    target_env.File('String.cpp'),
-    target_env.File('Subsystem.cpp'),
+    target_env.File("Assert.cpp"),
+    target_env.File("ByteOrder.cpp"),
+    target_env.File("CppLanguageSupport.cpp"),
+    target_env.File("EventHook.cpp"),
+    target_env.File("FrameBuffer.cpp"),
+    target_env.File("Logging.cpp"),
+    target_env.File("Math.cpp"),
+    target_env.File("Memory.cpp"),
+    target_env.File("Path.cpp"),
+    target_env.File("Stream.cpp"),
+    target_env.File("String.cpp"),
+    target_env.File("Subsystem.cpp"),
 ]
-KernelRuntime = target_env.StaticLibrary('KernelRuntime.o', target_env.Object(sources))
-Export('KernelRuntime')
+KernelRuntime = target_env.StaticLibrary("KernelRuntime.o", target_env.Object(sources))
+Export("KernelRuntime")

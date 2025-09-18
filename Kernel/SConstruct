@@ -25,128 +25,131 @@ from SCons.Variables import *
 ######################################################################################################
 
 # Define command line arguments
-vars = Variables('BuildVariables.py')
+vars = Variables("BuildVariables.py")
 vars.Add(
     EnumVariable(
-        'build',
-        'The build type determines if compiler optimizations are used, release builds have compiler optimizations.',
-        'debug',
-        allowed_values=['debug', 'release']
+        "build",
+        "The build type determines if compiler optimizations are used, release builds have compiler optimizations.",
+        "debug",
+        allowed_values=["debug", "release"],
     )
 )
 vars.Add(
     EnumVariable(
-        'arch',
-        'The CPU architecture the kernel will be build for.',
-        'x86_64',
-        allowed_values=['x86_64']
+        "arch",
+        "The CPU architecture the kernel will be build for.",
+        "x86_64",
+        allowed_values=["x86_64"],
     )
 )
 vars.Add(
     BoolVariable(
-        'qemu_build',
-        'Enables additional qemu specific debugging features in the kernel.',
-        True
+        "qemu_build",
+        "Enables additional qemu specific debugging features in the kernel.",
+        True,
     )
 )
 vars.Add(
     (
-        'c',
-        'The absolute path to the c cross compiler e.g. x86_64-elf-gcc.',
-        '/path/to/your/cross-compiler/bin/x86_64-elf-gcc'
+        "c",
+        "The absolute path to the c cross compiler e.g. x86_64-elf-gcc.",
+        "/path/to/your/cross-compiler/bin/x86_64-elf-gcc",
     )
 )
 vars.Add(
     (
-        'cpp',
-        'The absolute path to the cpp cross compiler e.g. x86_64-elf-g++.',
-        '/path/to/your/cross-compiler/bin/x86_64-elf-g++'
+        "cpp",
+        "The absolute path to the cpp cross compiler e.g. x86_64-elf-g++.",
+        "/path/to/your/cross-compiler/bin/x86_64-elf-g++",
     )
 )
 vars.Add(
     (
-        'crt_begin',
-        'The absolute path to the crtbegin.o file of the cross compiler.',
-        '/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtbegin.o'
+        "crt_begin",
+        "The absolute path to the crtbegin.o file of the cross compiler.",
+        "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtbegin.o",
     )
 )
 vars.Add(
     (
-        'crt_end',
-        'The absolute path to the crtend.o file of the cross compiler.',
-        '/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtend.o'
+        "crt_end",
+        "The absolute path to the crtend.o file of the cross compiler.",
+        "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtend.o",
     )
 )
-
 
 
 target_env = Environment(
     variables=vars,
-    AS='nasm',
+    AS="nasm",
 )
 Help(vars.GenerateHelpText(target_env))
-arch = target_env['arch']
-build = target_env['build']
+arch = target_env["arch"]
+build = target_env["build"]
 
-target_env['CXX'] = target_env['cpp']
-target_env['CPPPATH'] = target_env['cpp']
+target_env["CXX"] = target_env["cpp"]
+target_env["CPPPATH"] = target_env["cpp"]
 
 # Include directoriesx
-target_env['CPPPATH'] = [
-    str(Path.cwd() / 'Include'),
+target_env["CPPPATH"] = [
+    str(Path.cwd() / "Include"),
 ]
 
 # Compiler flags
-target_env['CXXFLAGS'] = [
-    '-Wall',
-    '-Wextra',
-    '-ffreestanding',
-    '-fno-exceptions',
-    '-fno-rtti',
-    '-fstack-protector-all',
-    '-m64',
-    '-mcmodel=kernel',
-    '-mno-mmx',
-    '-mno-red-zone',
-    '-fno-use-cxa-atexit',  # Do not call destructors for global objects
-    '-g',
-    '-mincoming-stack-boundary=3',
+target_env["CXXFLAGS"] = [
+    "-Wall",
+    "-Wextra",
+    "-ffreestanding",
+    "-fno-exceptions",
+    "-fno-rtti",
+    "-fstack-protector-all",
+    "-m64",
+    "-mcmodel=kernel",
+    "-mno-mmx",
+    "-mno-red-zone",
+    "-fno-use-cxa-atexit",  # Do not call destructors for global objects
+    "-g",
+    "-mincoming-stack-boundary=3",
 ]
 
 # Linker flags
-target_env['LINKFLAGS'] = [
-    '-ffreestanding',
-    '-lgcc',
-    '-nostdlib',
-    '-static',
-    '-pie',
-    '-z', 'text',
-    '-z', 'max-page-size=0x1000',
-    '-g',
+target_env["LINKFLAGS"] = [
+    "-ffreestanding",
+    "-lgcc",
+    "-nostdlib",
+    "-static",
+    "-pie",
+    "-z",
+    "text",
+    "-z",
+    "max-page-size=0x1000",
+    "-g",
 ]
 
 # Nasm flags
-target_env['ASFLAGS'] = [
-    '-Wall',
-    '-f', 'elf64',
-    '-I', str(Path.cwd() / 'Src' / 'Arch' / arch)
+target_env["ASFLAGS"] = [
+    "-Wall",
+    "-f",
+    "elf64",
+    "-I",
+    str(Path.cwd() / "Src" / "Arch" / arch),
 ]
 
-if build == 'release':
+if build == "release":
     # enable optimizations
-    target_env['CXXFLAGS'].append('-O2')
-    target_env['LINKFLAGS'].append('-O2')
+    target_env["CXXFLAGS"].append("-O2")
+    target_env["LINKFLAGS"].append("-O2")
 
 # Change scons messages for better readability
 target_env.Replace(
-    ASCOMSTR='Assembling [$SOURCE]',
-    CXXCOMSTR='Compiling [$SOURCE]',
-    ARCOMSTR='Creating static library [$TARGET]',
-    RANLIBCOMSTR='Updating static library [$TARGET]',
-    LINKCOMSTR='Linking [$TARGET]',
-    INSTALLSTR='Installing [$TARGET]'
+    ASCOMSTR="Assembling [$SOURCE]",
+    CXXCOMSTR="Compiling [$SOURCE]",
+    ARCOMSTR="Creating static library [$TARGET]",
+    RANLIBCOMSTR="Updating static library [$TARGET]",
+    LINKCOMSTR="Linking [$TARGET]",
+    INSTALLSTR="Installing [$TARGET]",
 )
-Export('target_env')
+Export("target_env")
 
 
 ######################################################################################################
@@ -156,42 +159,42 @@ Export('target_env')
 
 def create_build_h_replacements(out_file: str):
     macro_defs = {
-        '$ARCH' : f'#define ARCH {arch} // Target architecture of the kernel.',
+        "$ARCH": f"#define ARCH {arch} // Target architecture of the kernel.",
     }
-    if '64' in arch:
-        macro_defs['$BIT'] = '#define BIT64 //Activate 64-bit related features'
-    if target_env['qemu_build']:
-        macro_defs['$QEMU'] = '#define QEMU_HOST // Enable Qemu related debugging features.'
-    with open(out_file, 'w') as f:
+    if "64" in arch:
+        macro_defs["$BIT"] = "#define BIT64 //Activate 64-bit related features"
+    if target_env["qemu_build"]:
+        macro_defs["$QEMU"] = "#define QEMU_HOST // Enable Qemu related debugging features."
+    with open(out_file, "w") as f:
         json.dump(macro_defs, f, indent=4)
 
 
 # Only run code generation if the kernel should be build
-if not GetOption('clean'):
+if not GetOption("clean"):
     # Provide the python scripts as source so the code gen is always triggered when the scripts are updated
     #                           OR
     # Obviously the generated source file is missing
     target_env.Command(
-        f'Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc',
-        'BuildTools/GenerateISRStubsAssembly.py',
-        'python3 $SOURCE $TARGET'
+        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc",
+        "BuildTools/GenerateISRStubsAssembly.py",
+        "python3 $SOURCE $TARGET",
     )
     target_env.Command(
-        f'Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h',
-        'BuildTools/GenerateISRStubsCPP.py',
-        'python3 $SOURCE $TARGET'
+        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
+        "BuildTools/GenerateISRStubsCPP.py",
+        "python3 $SOURCE $TARGET",
     )
     target_env.Command(
-        'Include/KernelRuntime/Lat15-Terminus16.h',
-        'BuildTools/PSF2ToCPP.py',
-        'python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf'
+        "Include/KernelRuntime/Lat15-Terminus16.h",
+        "BuildTools/PSF2ToCPP.py",
+        "python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf",
     )
     # Dunno how to make this only run when cli args change -> just run it everytime
-    create_build_h_replacements('BuildTools/BuildHReplacements.json')
+    create_build_h_replacements("BuildTools/BuildHReplacements.json")
     target_env.Command(
-        'Include/KernelRuntime/Build.h',
-        ['BuildTools/GenerateBuildHeader.py', 'BuildTools/BuildHReplacements.json'],
-        'python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json'
+        "Include/KernelRuntime/Build.h",
+        ["BuildTools/GenerateBuildHeader.py", "BuildTools/BuildHReplacements.json"],
+        "python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json",
     )
 
 ######################################################################################################
@@ -199,79 +202,79 @@ if not GetOption('clean'):
 ######################################################################################################
 
 
-build_dir = Path('Build') / f'{arch}-{build}'
+build_dir = Path("Build") / f"{arch}-{build}"
 target_env.SConscript(
-    str(Path('Src') / 'Ember' / 'SConscript'),
-    variant_dir=str(build_dir / 'Ember'),
-    duplicate=0
+    str(Path("Src") / "Ember" / "SConscript"),
+    variant_dir=str(build_dir / "Ember"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'KernelRuntime' / 'SConscript'),
-    variant_dir=str(build_dir / 'KernelRuntime'),
-    duplicate=0
+    str(Path("Src") / "KernelRuntime" / "SConscript"),
+    variant_dir=str(build_dir / "KernelRuntime"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'Arch' / arch / 'SConscript'),
-    variant_dir=str(build_dir / 'Arch'),
-    duplicate=0
+    str(Path("Src") / "Arch" / arch / "SConscript"),
+    variant_dir=str(build_dir / "Arch"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'Memory' / 'SConscript'),
-    variant_dir=str(build_dir / 'Memory'),
-    duplicate=0
+    str(Path("Src") / "Memory" / "SConscript"),
+    variant_dir=str(build_dir / "Memory"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'CPU' / 'SConscript'),
-    variant_dir=str(build_dir / 'CPU'),
-    duplicate=0
+    str(Path("Src") / "CPU" / "SConscript"),
+    variant_dir=str(build_dir / "CPU"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'Device' / 'SConscript'),
-    variant_dir=str(build_dir / 'Device'),
-    duplicate=0
+    str(Path("Src") / "Device" / "SConscript"),
+    variant_dir=str(build_dir / "Device"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'VirtualFileSystem' / 'SConscript'),
-    variant_dir=str(build_dir / 'VirtualFileSystem'),
-    duplicate=0
+    str(Path("Src") / "VirtualFileSystem" / "SConscript"),
+    variant_dir=str(build_dir / "VirtualFileSystem"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'App' / 'SConscript'),
-    variant_dir=str(build_dir / 'App'),
-    duplicate=0
+    str(Path("Src") / "App" / "SConscript"),
+    variant_dir=str(build_dir / "App"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'SystemCall' / 'SConscript'),
-    variant_dir=str(build_dir / 'SystemCall'),
-    duplicate=0
+    str(Path("Src") / "SystemCall" / "SConscript"),
+    variant_dir=str(build_dir / "SystemCall"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'Boot' / 'SConscript'),
-    variant_dir=str(build_dir / 'Boot'),
-    duplicate=0
+    str(Path("Src") / "Boot" / "SConscript"),
+    variant_dir=str(build_dir / "Boot"),
+    duplicate=0,
 )
 target_env.SConscript(
-    str(Path('Src') / 'BuiltInPlugin' / 'SConscript'),
-    variant_dir=str(build_dir / 'BuiltInPlugin'),
-    duplicate=0
+    str(Path("Src") / "BuiltInPlugin" / "SConscript"),
+    variant_dir=str(build_dir / "BuiltInPlugin"),
+    duplicate=0,
 )
 
-Import('Ember')
-Import('KernelRuntime')
-Import('Arch')
-Import('Memory')
-Import('CPU')
-Import('Device')
-Import('VirtualFileSystem')
-Import('App')
-Import('SystemCall')
-Import('BuiltInPlugin')
-Import('Boot')
-Import('crti')
-Import('crtn')
+Import("Ember")
+Import("KernelRuntime")
+Import("Arch")
+Import("Memory")
+Import("CPU")
+Import("Device")
+Import("VirtualFileSystem")
+Import("App")
+Import("SystemCall")
+Import("BuiltInPlugin")
+Import("Boot")
+Import("crti")
+Import("crtn")
 objects = [
     crti,
-    target_env['crt_begin'],
+    target_env["crt_begin"],
     Boot,
     BuiltInPlugin,
     SystemCall,
@@ -283,12 +286,10 @@ objects = [
     Arch,
     KernelRuntime,
     Ember,
-    target_env['crt_end'],
-    crtn
+    target_env["crt_end"],
+    crtn,
 ]
 
-target_env.Append(
-    LINKFLAGS=['-T', target_env.File('Kernel.ld').srcnode().path]
-)
+target_env.Append(LINKFLAGS=["-T", target_env.File("Kernel.ld").srcnode().path])
 
-target_env.Program(build_dir / 'runeKernel.elf', objects)
+target_env.Program(build_dir / "runeKernel.elf", objects)
