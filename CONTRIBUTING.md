@@ -2,8 +2,8 @@
 
 :tada: Welcome and thanks for taking the time to contribute to runeOS! :tada:
 
-Please take a moment to review this document before starting to contribute. It is mostly a 
-collection of guidelines that intend to make working on the project easier for everyone.
+This document is a set of guidelines for contributing to runeOS, please take a moment to review it.
+These guidelines are not rules, so feel free to propose changes in a pull request.
 
 
 ### Table of Contents
@@ -30,7 +30,7 @@ or submit a [Pull Request](#submitting-a-pull-request) with the fix.
 
 ## Missing a Feature?
 
-You can request a new feature or an enhancement to an existing feature by 
+You can request a new feature or an enhancement of an existing feature by 
 [submitting an issue](#submitting-issues).
 
 If you want to implement a feature yourself, please first consider the size of your feature to 
@@ -54,6 +54,7 @@ existing issue rather than creating a new one.
 
 You can submit a new issue by choosing one of the [Issue Templates](https://github.com/Ewogijk/runeOS/issues/new/choose)
 and filling out the template.
+
 
 ## Submitting a Pull Request
 
@@ -89,30 +90,14 @@ required system packages:
 sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 ```
 
-Our code formatter is `clang-format`, unfortunately the apt package of it is outdated. Run the 
-following to get the clang-format version compatible with our `.clang-format` config:
-
-```shell
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-sudo ./llvm.sh 19
-sudo apt install clang-format-19
-```
-
-`clang-tidy` does the linting, get the latest release from their GitHub repo:
-```shell
-sudo wget -qO /usr/local/bin/clang-tidy https://github.com/cpp-linter/clang-tools-static-binaries/releases/latest/download/clang-tidy-20_linux-amd64
-sudo chmod a+x /usr/local/bin/clang-tidy
-```
-
 Then install the python dependencies, we recommend to install in a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
 pip install scons click meson
 ```
 
-Lastly, get the latest release of the [runeToolchain]() that provides the cross-compilers to build 
-runeOS.
+Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk/runeToolchain) that
+provides the cross-compilers to build runeOS.
 
 
 ### Building with Brokkr
@@ -150,6 +135,7 @@ It is highly recommended to use Brokkr to build the bootable OS image, as buildi
 lengthy and error-prone process and Brokkr will automatically perform the steps described in the 
 following sections for you.
 
+
 #### Building the Kernel
 
 The kernel implements its own runtime environment and therefore uses SCons as build system due to 
@@ -176,6 +162,7 @@ scons
 
 In the `Build/<arch>-<build>` directory you should now find the `runeKernel.elf` file.
 
+
 #### Building the OS
 
 The OS is build with Meson which provides excellent cross-compiler support. Before trying to build 
@@ -194,6 +181,7 @@ cd Build && meson compile
 ```
 
 Now you should find the `runeOS.app` file in the `Build/` directory.
+
 
 #### Creating the Bootable Image
 
@@ -214,6 +202,7 @@ Scripts/Build-Image.sh -h
 
 No matter how you created the bootable image, you should now have a bootable image, lets call it 
 `runeOS.image`.
+
 
 #### Building and Installing an App
 
@@ -247,6 +236,7 @@ Again, the script requires sudo privileges to use the 'mount' and 'losetup' comm
 
 No matter your choice, the `cat.app` should now be successfully installed. Repeat the steps for any 
 application you wish to install.
+
 
 #### Installing the Build
 
@@ -283,12 +273,13 @@ This feature solves this problem by doing this and that...
 
 ```
 
+
 ### C/C++ Code Style
 
-Our code formatter for C/C++ is `clang-format`, use it with the `.clang-format` config file in the 
-project root directory.
+Our code formatter for C/C++ is `clang-format-19`, use it with the `.clang-format` config file in 
+the project root directory.
 
-The following command will recursively format all .h/.cpp files in `SRC_DIR` with clang-format:
+Format the `SRC_FILES` with the following command:
 ```shell
 clang-format-19 -i SRC_FILES
 ```
@@ -328,4 +319,4 @@ Run the linter with the following:
 ruff check SRC_FILES
 ```
 
-ruff will find the config automatically if you run the commands in the project directories. 
+ruff will find the config automatically if you run the commands in the project directories.

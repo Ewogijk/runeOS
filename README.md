@@ -5,15 +5,16 @@
     <image alt="Latest runeOS release" src="https://img.shields.io/github/v/release/Ewogijk/runeOS?color=blue"/>
 </p>
 
-runeOS is the product of a man's journey to understand how kernels and operating systems works. Roughly speaking, the
-goal is to develop a small operating system with a modern and intuitive graphical user interface that can run basic
-software like a text editor, a calculator, a small game, and more.
+runeOS is a hobby OS for the x86 architecture built from scratch using modern C/C++. It aims to be
+simple to use with a modern UI and to provide a playground where anyone can learn about OS Design
+and system programming.
+
 
 ![alt text](Docs/Shell.png)
 
 ## Features
 
-- Shell with basic file manipulation commands and auto-completion
+- Simple Shell
 - Unix-like filesystem
 - ELF loading and execution
 - 64-bit monolithic kernel with
@@ -25,26 +26,21 @@ software like a text editor, a calculator, a small game, and more.
 
 ## Installation
 
-At the moment runeOS only runs in the Qemu VM on an Ubuntu system. First of download the latest runeOS release and unzip
-it somewhere.
-
-Next make sure that Qemu and Python are installed, run the following command:
+First, you will need to get the dependencies to run the OS:
 
     sudo apt install qemu-system-x86 python3
 
-Then install the python dependencies:
+Now get the latest release, unzip it and change into the directory. Then install the python 
+dependencies:
 
     pip install -r requirements.txt
 
-
-## Usage
+We recommend install the dependencies in a [venv](https://docs.python.org/3/library/venv.html).
 
 To start runeOS run:
 
     python3 StartRuneOS.py
 
-The first menu will be the Limine bootloader, press enter to start the OS. The shell will now be started.
-
-At the moment, the basic filesystem manipulations commands like ls, touch, mkdir, and the usual suspects are supported.
-Type 'help' to get more info about the shell features.
+The first menu will be the Limine bootloader, press enter to start the OS then you should see the
+shell. Type 'help' to get more info about the shell features.
 
