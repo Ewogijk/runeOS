@@ -21,12 +21,12 @@
 #define MAJOR 0
 
 // The OS minor version
-#define MINOR 1
+#define MINOR 2
 
 // The OS patch version
 #define PATCH 0
 
 // The OS prerelease version
-#define PRERELEASE "alpha"
+#define PRERELEASE ""
 
 #endif // RUNEOS_BUILD_H

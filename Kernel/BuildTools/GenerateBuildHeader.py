@@ -44,9 +44,9 @@ build_h_template = """
 
 
 #define MAJOR 0                     // The kernel major version
-#define MINOR 0                     // The kernel minor version
+#define MINOR 2                     // The kernel minor version
 #define PATCH 0                     // The kernel patch version
-#define PRERELEASE "dummy"          // The kernel prerelease version
+#define PRERELEASE ""               // The kernel prerelease version
 #define OS "/System/OS/runeOS.app"  // The absolute path to the OS executable
 $ARCH
 $BIT
