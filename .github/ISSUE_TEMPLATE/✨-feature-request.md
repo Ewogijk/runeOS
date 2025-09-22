@@ -3,7 +3,7 @@ name: "✨ Feature request"
 about: Propose a new feature or an enhancement for an existing feature. Please check
   the issue tracker first, to see if someone already requested a similar feature.
 title: ''
-labels: feature
+labels: feature-request
 assignees: ''
 
 ---
