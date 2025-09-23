@@ -29,10 +29,6 @@ namespace Rune {
     template <typename TNum> TNum max(TNum a, TNum b) { return a > b ? a : b; }
 
     template <typename TNum> TNum abs(TNum a) { return a >= 0 ? a : -a; }
-
-    double floor(double num);
-
-    double ceil(double num);
 } // namespace Rune
 
 #endif // RUNEOS_MATH_H

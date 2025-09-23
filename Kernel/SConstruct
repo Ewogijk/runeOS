@@ -97,6 +97,7 @@ target_env["CPPPATH"] = [
 
 # Compiler flags
 target_env["CXXFLAGS"] = [
+    "-std=c++23",
     "-Wall",
     "-Wextra",
     "-ffreestanding",

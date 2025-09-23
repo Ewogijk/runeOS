@@ -234,11 +234,9 @@ namespace Rune {
             //      |               ||             |||
             //      |               ||             |||
             // For even thickness we draw one line more to the left
-            const double f_t_half = floor(thickness / 2);
-            const U32    x_start =
-                (start.x >= static_cast<U32>(f_t_half) ? (start.x - static_cast<U32>(f_t_half)) : 0)
-                * _bytes_per_pixel;
-            const U32 x_end = (start.x + static_cast<U32>(ceil(thickness / 2))) * _bytes_per_pixel;
+            const U32 f_t_half = static_cast<U32>(thickness / 2);
+            const U32 x_start = (start.x >= f_t_half ? (start.x - f_t_half) : 0) * _bytes_per_pixel;
+            const U32 x_end   = (start.x + static_cast<U32>(thickness / 2) + 1) * _bytes_per_pixel;
 
             for (U32 x = x_start; x < x_end; x += _bytes_per_pixel)
                 for (U32 y = start.y * _pitch; y < end.y * _pitch; y += _pitch)
@@ -258,11 +256,9 @@ namespace Rune {
             //                ---
             // thickness=3  c ---
             //                ---
-            const double f_t_half = floor(thickness / 2);
-            const U32    y_start =
-                (start.y >= static_cast<U32>(f_t_half) ? (start.y - static_cast<U32>(f_t_half)) : 0)
-                * _pitch;
-            const U32 y_end = (start.y + static_cast<U32>(ceil(thickness / 2))) * _pitch;
+            const U32 f_t_half = static_cast<U32>(thickness / 2);
+            const U32 y_start  = (start.y >= f_t_half ? (start.y - f_t_half) : 0) * _pitch;
+            const U32 y_end    = (start.y + static_cast<U32>(thickness / 2) + 1) * _pitch;
             for (U32 y = y_start; y < y_end; y += _pitch)
                 for (U32 x  = start.x * _bytes_per_pixel; x < end.x * _bytes_per_pixel;
                      x     += _bytes_per_pixel)
