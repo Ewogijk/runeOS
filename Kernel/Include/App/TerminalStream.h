@@ -18,11 +18,12 @@
 #define RUNEOS_TERMINALSTREAM_H
 
 #include <Ember/Enum.h>
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/String.h>
 
-#include <KernelRuntime/FrameBuffer.h>
-#include <KernelRuntime/Stream.h>
+#include <KRE/Collections/LinkedList.h>
+#include <KRE/String.h>
+#include <KRE/Stream.h>
+
+#include <KRE/System/FrameBuffer.h>
 
 #include <CPU/CPUSubsystem.h>
 

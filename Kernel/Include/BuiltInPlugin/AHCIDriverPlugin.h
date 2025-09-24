@@ -17,7 +17,7 @@
 #ifndef RUNEOS_AHCIDRIVERPLUGIN_H
 #define RUNEOS_AHCIDRIVERPLUGIN_H
 
-#include <KernelRuntime/Plugin.h>
+#include <KRE/System/Plugin.h>
 
 namespace Rune::BuiltInPlugin {
     /**

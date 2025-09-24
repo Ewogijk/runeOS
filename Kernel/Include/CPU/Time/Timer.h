@@ -17,7 +17,7 @@
 #ifndef RUNEOS_TIMER_H
 #define RUNEOS_TIMER_H
 
-#include <KernelRuntime/Collection.h>
+#include <KRE/Collections/LinkedList.h>
 
 #include <CPU/Threading/Scheduler.h>
 

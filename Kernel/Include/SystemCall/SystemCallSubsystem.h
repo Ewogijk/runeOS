@@ -17,7 +17,7 @@
 #ifndef RUNEOS_SYSTEMCALLSUBSYSTEM_H
 #define RUNEOS_SYSTEMCALLSUBSYSTEM_H
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <CPU/CPU.h>
 

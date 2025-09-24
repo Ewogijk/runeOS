@@ -17,11 +17,11 @@
 #ifndef RUNEOS_SCHEDULER_H
 #define RUNEOS_SCHEDULER_H
 
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/Utility.h>
+#include <KRE/Collections/LinkedList.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/Logging.h>
-#include <KernelRuntime/Memory.h>
+#include <KRE/Logging.h>
+#include <KRE/Memory.h>
 
 #include <CPU/Threading/MultiLevelQueue.h>
 

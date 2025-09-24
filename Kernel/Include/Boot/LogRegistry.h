@@ -18,9 +18,9 @@
 #ifndef RUNEOS_LOGREGISTRY_H
 #define RUNEOS_LOGREGISTRY_H
 
-#include <KernelRuntime/Collection.h>
+#include <KRE/Collections/LinkedList.h>
 
-#include <KernelRuntime/Logging.h>
+#include <KRE/Logging.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 

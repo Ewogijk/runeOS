@@ -17,8 +17,8 @@
 #ifndef RUNEOS_MULTILEVELQUEUE_H
 #define RUNEOS_MULTILEVELQUEUE_H
 
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/Memory.h>
+#include <KRE/Collections/LinkedList.h>
+#include <KRE/Memory.h>
 
 #include <CPU/CPU.h>
 

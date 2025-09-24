@@ -17,8 +17,8 @@
 #ifndef RUNEOS_FILESTREAM_H
 #define RUNEOS_FILESTREAM_H
 
-#include <KernelRuntime/Memory.h>
-#include <KernelRuntime/Stream.h>
+#include <KRE/Memory.h>
+#include <KRE/Stream.h>
 
 #include <VirtualFileSystem/Node.h>
 

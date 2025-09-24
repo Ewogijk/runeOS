@@ -19,8 +19,8 @@
 
 #include <Ember/Ember.h>
 
-#include <KernelRuntime/String.h>
-#include <KernelRuntime/Utility.h>
+#include <KRE/String.h>
+#include <KRE/Utility.h>
 
 namespace Rune::SystemCall {
     /**

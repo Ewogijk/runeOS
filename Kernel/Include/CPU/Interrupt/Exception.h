@@ -18,9 +18,9 @@
 #define RUNEOS_EXCEPTION_H
 
 #include <Ember/Enum.h>
-#include <KernelRuntime/Utility.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/Stream.h>
+#include <KRE/Stream.h>
 
 #include <CPU/CPU.h>
 

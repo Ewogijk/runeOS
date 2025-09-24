@@ -17,7 +17,7 @@
 #ifndef RUNEOS_BOOT_H
 #define RUNEOS_BOOT_H
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 namespace Rune {
     /**

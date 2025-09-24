@@ -17,7 +17,7 @@
 #ifndef EWOGIJKOS_PITEXTENSION_H
 #define EWOGIJKOS_PITEXTENSION_H
 
-#include <KernelRuntime/Plugin.h>
+#include <KRE/System/Plugin.h>
 
 namespace Rune::BuiltInPlugin {
 

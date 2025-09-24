@@ -17,7 +17,7 @@
 #ifndef RUNEOS_KERNELGUARDIAN_H
 #define RUNEOS_KERNELGUARDIAN_H
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 namespace Rune::SystemCall {
     class KernelGuardian {

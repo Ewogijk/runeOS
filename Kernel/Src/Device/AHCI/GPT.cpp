@@ -16,9 +16,9 @@
 
 #include <Device/AHCI/GPT.h>
 
-#include <KernelRuntime/ByteOrder.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 namespace Rune::Device {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

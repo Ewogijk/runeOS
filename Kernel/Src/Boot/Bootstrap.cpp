@@ -19,9 +19,9 @@
 #include <Boot/Boot.h>
 #include <Boot/limine.h>
 
-#include <KernelRuntime/Algorithm.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/FrameBuffer.h>
+#include <KRE/System/FrameBuffer.h>
 
 #include <Memory/Paging.h>
 

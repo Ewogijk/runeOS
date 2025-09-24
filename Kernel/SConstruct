@@ -186,14 +186,14 @@ if not GetOption("clean"):
         "python3 $SOURCE $TARGET",
     )
     target_env.Command(
-        "Include/KernelRuntime/Lat15-Terminus16.h",
+        "Include/KRE/System/Lat15-Terminus16.h",
         "BuildTools/PSF2ToCPP.py",
         "python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf",
     )
     # Dunno how to make this only run when cli args change -> just run it everytime
     create_build_h_replacements("BuildTools/BuildHReplacements.json")
     target_env.Command(
-        "Include/KernelRuntime/Build.h",
+        "Include/KRE/Build.h",
         ["BuildTools/GenerateBuildHeader.py", "BuildTools/BuildHReplacements.json"],
         "python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json",
     )
@@ -210,8 +210,8 @@ target_env.SConscript(
     duplicate=0,
 )
 target_env.SConscript(
-    str(Path("Src") / "KernelRuntime" / "SConscript"),
-    variant_dir=str(build_dir / "KernelRuntime"),
+    str(Path("Src") / "KRE" / "SConscript"),
+    variant_dir=str(build_dir / "KRE"),
     duplicate=0,
 )
 target_env.SConscript(
@@ -261,7 +261,7 @@ target_env.SConscript(
 )
 
 Import("Ember")
-Import("KernelRuntime")
+Import("KRE")
 Import("Arch")
 Import("Memory")
 Import("CPU")
@@ -285,7 +285,7 @@ objects = [
     CPU,
     Memory,
     Arch,
-    KernelRuntime,
+    KRE,
     Ember,
     target_env["crt_end"],
     crtn,

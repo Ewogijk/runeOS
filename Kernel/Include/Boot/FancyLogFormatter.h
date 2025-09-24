@@ -17,7 +17,7 @@
 #ifndef RUNEOS_FANCYLOGFORMATTER_H
 #define RUNEOS_FANCYLOGFORMATTER_H
 
-#include <KernelRuntime/Logging.h>
+#include <KRE/Logging.h>
 
 #include <CPU/CPUSubsystem.h>
 

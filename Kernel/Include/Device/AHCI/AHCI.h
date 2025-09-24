@@ -17,7 +17,7 @@
 #ifndef RUNEOS_AHCI_H
 #define RUNEOS_AHCI_H
 
-#include <KernelRuntime/Collection.h>
+#include <KRE/Collections/LinkedList.h>
 
 #include <Device/AHCI/HBAMemory.h>
 #include <Device/AHCI/PortEngine.h>

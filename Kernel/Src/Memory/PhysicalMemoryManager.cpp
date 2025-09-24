@@ -16,7 +16,7 @@
 
 #include <Memory/PhysicalMemoryManager.h>
 
-#include <KernelRuntime/Math.h>
+#include <KRE/Math.h>
 
 namespace Rune::Memory {
     constexpr char const* FILE = "Physical Memory Manager";

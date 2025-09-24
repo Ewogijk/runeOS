@@ -17,7 +17,7 @@
 #ifndef RUNEOS_VOIDSTREAM_H
 #define RUNEOS_VOIDSTREAM_H
 
-#include <KernelRuntime/Stream.h>
+#include <KRE/Stream.h>
 
 namespace Rune::App {
 

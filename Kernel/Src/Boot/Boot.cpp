@@ -19,11 +19,12 @@
 #include <Boot/FancyLogFormatter.h>
 #include <Boot/LogRegistry.h>
 
-#include <KernelRuntime/Build.h>
-#include <KernelRuntime/CppLanguageSupport.h>
-#include <KernelRuntime/Logging.h>
-#include <KernelRuntime/Path.h>
-#include <KernelRuntime/String.h>
+#include <KRE/CppLanguageSupport.h>
+
+#include <KRE/Build.h>
+#include <KRE/Logging.h>
+#include <VirtualFileSystem/Path.h>
+#include <KRE/String.h>
 
 #include <App/AppSubsystem.h>
 
@@ -148,7 +149,6 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Main Kernel Thread
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
     int kernel_boot_phase_2(CPU::StartInfo* start_info) {
         SILENCE_UNUSED(start_info)
 
@@ -237,7 +237,7 @@ namespace Rune {
         turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));
 #endif
 
-        init_kernel_runtime_env(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
+        init_cpp_language_support(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
 
         // Initialize the logging in the kernel subsystems and start the built-in kernel plugins
         for (size_t i = 1; i < SUBSYSTEM_COUNT; i++) {

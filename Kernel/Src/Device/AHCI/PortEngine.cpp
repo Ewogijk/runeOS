@@ -18,7 +18,7 @@
 
 #include <Device/AHCI/GPT.h>
 
-#include <KernelRuntime/Math.h>
+#include <KRE/Math.h>
 
 namespace Rune::Device {
     constexpr char const* FILE = "PortEngine";

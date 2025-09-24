@@ -19,7 +19,7 @@
 
 #include <Ember/Ember.h>
 
-#include <KernelRuntime/Stream.h>
+#include <KRE/Stream.h>
 
 namespace Rune::Device {
     /**

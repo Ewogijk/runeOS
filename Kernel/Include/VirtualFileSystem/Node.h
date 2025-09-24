@@ -21,8 +21,8 @@
 #include <Ember/Enum.h>
 #include <Ember/VFSBits.h>
 
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/Path.h>
+#include <KRE/Collections/LinkedList.h>
+#include <VirtualFileSystem/Path.h>
 
 namespace Rune::VFS {
 #define NODE_IO_STATUSES(X)                                                                        \

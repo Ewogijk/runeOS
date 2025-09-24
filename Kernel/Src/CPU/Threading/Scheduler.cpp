@@ -16,7 +16,7 @@
 
 #include <CPU/Threading/Scheduler.h>
 
-#include <KernelRuntime/Logging.h>
+#include <KRE/Logging.h>
 
 #include <CPU/CPU.h>
 #include <CPU/Interrupt/Interrupt.h>

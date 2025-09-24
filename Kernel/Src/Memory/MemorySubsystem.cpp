@@ -16,7 +16,7 @@
 
 #include <Memory/MemorySubsystem.h>
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                   Kernel Runtime Support
