@@ -17,7 +17,7 @@
 #ifndef RUNEOS_MEMORYSUBSYSTEM_H
 #define RUNEOS_MEMORYSUBSYSTEM_H
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <Memory/BitMapAllocator.h>
 #include <Memory/SlabAllocator.h>

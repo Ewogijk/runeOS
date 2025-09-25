@@ -18,7 +18,7 @@
 
 #include "X64Core.h"
 
-#include <KernelRuntime/Collection.h>
+#include <KRE/Collections/LinkedList.h>
 
 namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

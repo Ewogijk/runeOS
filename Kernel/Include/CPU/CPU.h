@@ -19,9 +19,11 @@
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
-#include <KernelRuntime/String.h>
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/String.h>
+#include <KRE/Stream.h>
+
+#include <KRE/Memory.h>
 
 namespace Rune::CPU {
     // Size of a register

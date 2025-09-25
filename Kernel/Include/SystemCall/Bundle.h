@@ -17,7 +17,7 @@
 #ifndef RUNEOS_BUNDLE_H
 #define RUNEOS_BUNDLE_H
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <SystemCall/Definition.h>
 #include <SystemCall/KernelGuardian.h>

@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FAT.h>
 
-#include <KernelRuntime/Algorithm.h>
-#include <KernelRuntime/Memory.h>
+#include <KRE/Utility.h>
+#include <KRE/Memory.h>
 
 namespace Rune::VFS {
     DEFINE_ENUM(FATType, FAT_TYPES, 0x0)
@@ -146,12 +146,12 @@ namespace Rune::VFS {
 
     bool FileEntry::has_attribute(VFS::FATFileAttribute attr) const {
         switch (attr) {
-            case FATFileAttribute::READONLY:  return check_bit(attributes, 0);
-            case FATFileAttribute::HIDDEN:    return check_bit(attributes, 1);
-            case FATFileAttribute::SYSTEM:    return check_bit(attributes, 2);
-            case FATFileAttribute::VOLUME_ID: return check_bit(attributes, 3);
-            case FATFileAttribute::DIRECTORY: return check_bit(attributes, 4);
-            case FATFileAttribute::ARCHIVE:   return check_bit(attributes, 5);
+            case FATFileAttribute::READONLY:  return bit_check(attributes, 0);
+            case FATFileAttribute::HIDDEN:    return bit_check(attributes, 1);
+            case FATFileAttribute::SYSTEM:    return bit_check(attributes, 2);
+            case FATFileAttribute::VOLUME_ID: return bit_check(attributes, 3);
+            case FATFileAttribute::DIRECTORY: return bit_check(attributes, 4);
+            case FATFileAttribute::ARCHIVE:   return bit_check(attributes, 5);
             case FATFileAttribute::LONG_FILE_NAME:
                 return (attributes & FATFileAttribute::LONG_FILE_NAME)
                        == FATFileAttribute::LONG_FILE_NAME;

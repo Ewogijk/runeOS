@@ -17,7 +17,7 @@
 #ifndef RUNEOS_8259PICDRIVERPLUGIN_H
 #define RUNEOS_8259PICDRIVERPLUGIN_H
 
-#include <KernelRuntime/Plugin.h>
+#include <KRE/System/Plugin.h>
 
 namespace Rune::BuiltInPlugin {
 

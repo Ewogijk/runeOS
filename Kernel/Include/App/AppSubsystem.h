@@ -17,9 +17,9 @@
 #ifndef RUNEOS_APPSUBSYSTEM_H
 #define RUNEOS_APPSUBSYSTEM_H
 
-#include <KernelRuntime/Path.h>
+#include <VirtualFileSystem/Path.h>
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <App/App.h>
 

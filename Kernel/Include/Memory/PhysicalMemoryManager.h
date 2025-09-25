@@ -18,10 +18,10 @@
 #define RUNEOS_PHYSICALMEMORYMANAGER_H
 
 #include <Ember/Enum.h>
-#include <KernelRuntime/Utility.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/Logging.h>
-#include <KernelRuntime/Memory.h>
+#include <KRE/Logging.h>
+#include <KRE/Memory.h>
 
 namespace Rune::Memory {
     using PageFrameIndex = U32;

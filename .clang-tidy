@@ -2,12 +2,17 @@
 Checks:          'clang-diagnostic-*,
                   clang-analyzer-*,
                   bugprone-*,
+                  -bugprone-easily-swappable-parameters,
                   cppcoreguidelines-*,
                   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
                   -cppcoreguidelines-pro-type-union-access,
                   -cppcoreguidelines-avoid-c-arrays,
+                  -cppcoreguidelines-owning-memory,
+                  -cppcoreguidelines-rvalue-reference-param-not-moved,
+                  -cppcoreguidelines-init-variables,
                   modernize-*,
-                  readability-*'
+                  readability-*,
+                  -readability-braces-around-statements'
 WarningsAsErrors: true
 CheckOptions:
   - key:             cert-dcl16-c.NewSuffixes

@@ -17,9 +17,9 @@
 #ifndef RUNEOS_CPUSUBSYSTEM_H
 #define RUNEOS_CPUSUBSYSTEM_H
 
-#include <KernelRuntime/Utility.h>
+#include <KRE/Utility.h>
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <CPU/CPU.h>
 #include <CPU/Interrupt/IRQ.h>

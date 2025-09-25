@@ -19,7 +19,7 @@
 
 #include <Device/AHCI/Port.h>
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 #include <Memory/SlabAllocator.h>
 

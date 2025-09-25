@@ -16,7 +16,7 @@
 
 #include <CPU/Interrupt/8259PIC.h>
 
-#include <KernelRuntime/Algorithm.h>
+#include <KRE/Utility.h>
 
 #include <CPU/IO.h>
 
@@ -85,14 +85,14 @@ namespace Rune::CPU {
     U8 _8259PIC::get_irq_line_offset() { return ICW2::PIC1_IRQ_OFFSET; }
 
     bool _8259PIC::is_irq_requested(U8 irq_line) {
-        return check_bit(read_pic_register(READ_IRR), irq_line);
+        return bit_check(read_pic_register(READ_IRR), irq_line);
     }
 
     bool _8259PIC::is_irq_serviced(U8 irq_line) {
-        return check_bit(read_pic_register(READ_ISR), irq_line);
+        return bit_check(read_pic_register(READ_ISR), irq_line);
     }
 
-    bool _8259PIC::is_irq_masked(U8 irq_line) { return check_bit(get_imr_0(), irq_line); }
+    bool _8259PIC::is_irq_masked(U8 irq_line) { return bit_check(get_imr_0(), irq_line); }
 
     bool _8259PIC::start() {
         if (_fully_init) return true;

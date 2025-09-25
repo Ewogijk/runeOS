@@ -16,7 +16,7 @@
 
 #include <App/AppSubsystem.h>
 
-#include <KernelRuntime/Lat15-Terminus16.h>
+#include <KRE/System/Lat15-Terminus16.h>
 
 #include <App/App.h>
 #include <App/ELFLoader.h>

@@ -17,7 +17,7 @@
 #ifndef RUNEOS_DEVICESUBSYSTEM_H
 #define RUNEOS_DEVICESUBSYSTEM_H
 
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/System/Subsystem.h>
 
 #include <Memory/MemorySubsystem.h>
 

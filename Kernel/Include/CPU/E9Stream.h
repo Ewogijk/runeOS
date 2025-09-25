@@ -17,7 +17,7 @@
 #ifndef RUNEOS_E9STREAM_H
 #define RUNEOS_E9STREAM_H
 
-#include <KernelRuntime/Stream.h>
+#include <KRE/Stream.h>
 
 namespace Rune::CPU {
 

@@ -17,7 +17,7 @@
 #ifndef RUNEOS_FATDRIVERPLUGIN_H
 #define RUNEOS_FATDRIVERPLUGIN_H
 
-#include <KernelRuntime/Plugin.h>
+#include <KRE/System/Plugin.h>
 
 namespace Rune::BuiltInPlugin {
 

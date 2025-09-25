@@ -18,10 +18,10 @@
 #define RUNEOS_DRIVER_H
 
 #include <Ember/Enum.h>
-#include <KernelRuntime/Path.h>
-#include <KernelRuntime/String.h>
+#include <VirtualFileSystem/Path.h>
+#include <KRE/String.h>
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 #include <VirtualFileSystem/DirectoryStream.h>
 #include <VirtualFileSystem/Node.h>
 #include <VirtualFileSystem/Status.h>

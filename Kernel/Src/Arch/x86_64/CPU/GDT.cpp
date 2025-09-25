@@ -16,7 +16,7 @@
 
 #include "GDT.h"
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 namespace Rune::CPU {
     DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)

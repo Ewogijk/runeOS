@@ -16,7 +16,7 @@
 
 #include <SystemCall/MemoryBundle.h>
 
-#include <KernelRuntime/Algorithm.h>
+#include <KRE/Utility.h>
 
 #include <Ember/Ember.h>
 #include <Ember/MemoryBits.h>
@@ -95,7 +95,7 @@ namespace Rune::SystemCall {
         // TODO allow init with buffer
         memset((void*) kv_addr, 0, num_pages * page_size);
 
-        if (!check_bit(page_protection, 1)) {
+        if (!bit_check(page_protection, 1)) {
             // Memory was requested as readonly -> remove the write allowed flag
             for (VirtualAddr c_addr  = kv_addr; c_addr < kv_addr + num_pages * page_size;
                  c_addr             += page_size) {

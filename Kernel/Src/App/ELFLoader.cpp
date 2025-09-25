@@ -16,10 +16,8 @@
 
 #include <App/ELFLoader.h>
 
-#include <KernelRuntime/ByteOrder.h>
-#include <KernelRuntime/Math.h>
-
-#include <KernelRuntime/Assert.h>
+#include <KRE/Utility.h>
+#include <KRE/Math.h>
 
 #include <CPU/Threading/Stack.h>
 
@@ -392,9 +390,6 @@ namespace Rune::App {
           _vfs_subsys(vfs_subsys),
           _logger(move(logger)),
           _elf_file() {
-        assert(_memory_subsys, FILE, "_memory_subsys is null.");
-        assert(_vfs_subsys, FILE, "_vfs_subsys is null.");
-        assert(static_cast<bool>(_logger), FILE, "_logger is null.");
     }
 
     LoadStatus ELFLoader::load(const Path&                executable,

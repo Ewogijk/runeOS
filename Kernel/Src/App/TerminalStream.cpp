@@ -16,7 +16,7 @@
 
 #include <App/TerminalStream.h>
 
-#include <KernelRuntime/Math.h>
+#include <KRE/Math.h>
 
 #include <CPU/Time/Timer.h>
 

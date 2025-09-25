@@ -17,7 +17,7 @@
 #ifndef RUNEOS_STACK_H
 #define RUNEOS_STACK_H
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 namespace Rune::CPU {
 

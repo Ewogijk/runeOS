@@ -19,7 +19,7 @@
 
 #include <Ember/Ember.h>
 
-#include <KernelRuntime/Logging.h>
+#include <KRE/Logging.h>
 
 #include <SystemCall/Definition.h>
 #include <SystemCall/KernelGuardian.h>

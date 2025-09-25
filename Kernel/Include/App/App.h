@@ -19,12 +19,12 @@
 
 #include <limits.h>
 
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/Memory.h>
-#include <KernelRuntime/Path.h>
-#include <KernelRuntime/String.h>
+#include <KRE/Collections/LinkedList.h>
+#include <KRE/Memory.h>
+#include <VirtualFileSystem/Path.h>
+#include <KRE/String.h>
 
-#include <KernelRuntime/Stream.h>
+#include <KRE/Stream.h>
 
 #include <VirtualFileSystem/VFSSubsystem.h>
 

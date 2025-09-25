@@ -17,7 +17,7 @@
 #ifndef RUNEOS_VIRTUALMEMORY_H
 #define RUNEOS_VIRTUALMEMORY_H
 
-#include <KernelRuntime/Memory.h>
+#include <KRE/Memory.h>
 
 namespace Rune::Memory {
     struct KernelSpaceLayout {

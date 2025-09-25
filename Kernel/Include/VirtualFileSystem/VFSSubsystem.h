@@ -17,13 +17,13 @@
 #ifndef RUNEOS_FILESUBSYSTEM_H
 #define RUNEOS_FILESUBSYSTEM_H
 
-#include <KernelRuntime/Collection.h>
-#include <KernelRuntime/Path.h>
-#include <KernelRuntime/String.h>
+#include <KRE/Collections/HashMap.h>
+#include <VirtualFileSystem/Path.h>
+#include <KRE/String.h>
 
-#include <KernelRuntime/Resource.h>
-#include <KernelRuntime/Stream.h>
-#include <KernelRuntime/Subsystem.h>
+#include <KRE/Stream.h>
+#include <KRE/System/Resource.h>
+#include <KRE/System/Subsystem.h>
 
 #include <VirtualFileSystem/DirectoryStream.h>
 #include <VirtualFileSystem/Driver.h>

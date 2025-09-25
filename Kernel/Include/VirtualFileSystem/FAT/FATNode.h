@@ -17,7 +17,7 @@
 #ifndef RUNEOS_FATNODE_H
 #define RUNEOS_FATNODE_H
 
-#include <KernelRuntime/Path.h>
+#include <VirtualFileSystem/Path.h>
 
 #include <VirtualFileSystem/Node.h>
 

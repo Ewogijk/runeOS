@@ -17,12 +17,12 @@
 #ifndef RUNEOS_GPT_H
 #define RUNEOS_GPT_H
 
-#include <KernelRuntime/String.h>
+#include <KRE/String.h>
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-#include <KernelRuntime/Logging.h>
+#include <KRE/Logging.h>
 
 namespace Rune::Device {
     /**

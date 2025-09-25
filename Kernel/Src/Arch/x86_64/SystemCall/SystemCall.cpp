@@ -16,8 +16,8 @@
 
 #include <SystemCall/SystemCall.h>
 
-#include <KernelRuntime/Algorithm.h>
-#include <KernelRuntime/Collection.h>
+#include <KRE/Utility.h>
+#include <KRE/Collections/HashMap.h>
 
 #include "../CPU/X64Core.h"
 
@@ -96,7 +96,7 @@ namespace Rune::SystemCall {
 
         // Enable the syscall and sysret instructions
         CPU::Register efer = CPU::read_msr(CPU::ModelSpecificRegister::EFER);
-        CPU::write_msr(CPU::ModelSpecificRegister::EFER, set_bit(efer, 0));
+        CPU::write_msr(CPU::ModelSpecificRegister::EFER, bit_set(efer, 0));
         return true;
     }
 

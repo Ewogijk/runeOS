@@ -18,7 +18,7 @@
 #define RUNEOS_FILEENTRYMANAGER_H
 
 #include <Ember/Enum.h>
-#include <KernelRuntime/Path.h>
+#include <VirtualFileSystem/Path.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
 #include <VirtualFileSystem/FAT/FATDirectoryIterator.h>

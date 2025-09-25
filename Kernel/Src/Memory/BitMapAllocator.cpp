@@ -16,7 +16,7 @@
 
 #include <Memory/BitMapAllocator.h>
 
-#include <KernelRuntime/Math.h>
+#include <KRE/Math.h>
 
 namespace Rune::Memory {
     static constexpr U32         INVALID_PAGE = -1;

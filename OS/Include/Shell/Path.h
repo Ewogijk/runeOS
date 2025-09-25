@@ -239,12 +239,12 @@ namespace Rune {
 
         /**
          *
-         * @param a
+         * @param first
          * @param b
          *
          * @return True: The path string of the two paths is equal. False: Not.
          */
-        friend bool operator!=(const Path& a, const Path& b);
+        friend bool operator!=(const Path& first, const Path& b);
     };
 } // namespace Rune
 
