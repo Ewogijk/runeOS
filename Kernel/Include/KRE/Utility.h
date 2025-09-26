@@ -30,15 +30,18 @@ namespace Rune {
     //                                      General Stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    template <typename T> struct RemoveRef {
+    template <typename T>
+    struct RemoveRef {
         using Type = T;
     };
 
-    template <typename T> struct RemoveRef<T&> {
+    template <typename T>
+    struct RemoveRef<T&> {
         using Type = T;
     };
 
-    template <typename T> struct RemoveRef<T&&> {
+    template <typename T>
+    struct RemoveRef<T&&> {
         using Type = T;
     };
 
@@ -49,7 +52,8 @@ namespace Rune {
      * @param param
      * @return
      */
-    template <typename T> auto move(T&& param) -> typename RemoveRef<T>::Type&& { // NOLINT
+    template <typename T>
+    auto move(T&& param) -> typename RemoveRef<T>::Type&& { // NOLINT
         return static_cast<typename RemoveRef<T>::Type&&>(param);
     }
 
@@ -60,7 +64,8 @@ namespace Rune {
      * @param param
      * @return
      */
-    template <typename T> constexpr auto forward(typename RemoveRef<T>::Type& param) -> T&& {
+    template <typename T>
+    constexpr auto forward(typename RemoveRef<T>::Type& param) -> T&& {
         return static_cast<T&&>(param);
     }
 
@@ -82,7 +87,8 @@ namespace Rune {
      * @param one
      * @param two
      */
-    template <typename T> void swap(T& one, T& two) noexcept {
+    template <typename T>
+    void swap(T& one, T& two) noexcept {
         T temp = move(one);
         one    = move(two);
         two    = move(temp);
@@ -123,7 +129,8 @@ namespace Rune {
     //                               Array operations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    template <typename T> auto partition(T array[], int left, int high) -> int {
+    template <typename T>
+    auto partition(T array[], int left, int high) -> int {
         T   pivot = array[high];
         int idx   = left - 1;
         for (int j = left; j <= high - 1; j++) {
@@ -136,7 +143,8 @@ namespace Rune {
         return idx + 1;
     }
 
-    template <typename T> void quick_sort(T array[], int low, int high) {
+    template <typename T>
+    void quick_sort(T array[], int low, int high) {
         if (low < high) {
             const int pivot = partition(array, low, high);
             quick_sort(array, low, pivot - 1);
@@ -151,7 +159,8 @@ namespace Rune {
      * @param array     Array to be sorted.
      * @param arr_size   Size of the array.
      */
-    template <typename T> void sort(T array[], const size_t arr_size) {
+    template <typename T>
+    void sort(T array[], const size_t arr_size) {
         quick_sort(array, 0, arr_size - 1);
     }
 
@@ -163,7 +172,8 @@ namespace Rune {
      * @param idx   Starting point of deletion.
      * @param count Number of elements to delete.
      */
-    template <typename T> void array_delete(T arr[], size_t idx, size_t& count) {
+    template <typename T>
+    void array_delete(T arr[], size_t idx, size_t& count) {
         memmove(arr + idx, arr + idx + 1, sizeof(T) * (count - idx - 1));
         count--;
     }
@@ -179,7 +189,10 @@ namespace Rune {
      * @param offset Bit offset.
      * @return True: The bit at offset is set, False: The bit is not set.
      */
-    template <Integer T> auto bit_check(T num, size_t offset) -> bool { return num >> offset & 1; }
+    template <Integer T>
+    auto bit_check(T num, size_t offset) -> bool {
+        return num >> offset & 1;
+    }
 
     /**
      * Set the bit at offset and leave all other bits as they are.
@@ -189,7 +202,10 @@ namespace Rune {
      * @param offset Bit offset.
      * @return The number with the bit at offset set.
      */
-    template <Integer T> auto bit_set(T num, const size_t offset) -> T { return num | 1 << offset; }
+    template <Integer T>
+    auto bit_set(T num, const size_t offset) -> T {
+        return num | 1 << offset;
+    }
 
     /**
      * Clear the bit at offset and leave all other bits as they are.
@@ -199,7 +215,8 @@ namespace Rune {
      * @param offset Bit offset.
      * @return The number with the bit at offset cleared.
      */
-    template <Integer T> auto bit_clear(T num, const size_t offset) -> T {
+    template <Integer T>
+    auto bit_clear(T num, const size_t offset) -> T {
         return num & ~(1 << offset);
     }
 
@@ -353,9 +370,11 @@ namespace Rune {
      * </ol>
      * @tparam K Hash type.
      */
-    template <class K> struct Hash;
+    template <class K>
+    struct Hash;
 
-    template <> struct Hash<signed char> {
+    template <>
+    struct Hash<signed char> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -364,7 +383,8 @@ namespace Rune {
         auto operator()(const signed char& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<char> {
+    template <>
+    struct Hash<char> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -373,7 +393,8 @@ namespace Rune {
         auto operator()(const char& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<short> {
+    template <>
+    struct Hash<short> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -382,7 +403,8 @@ namespace Rune {
         auto operator()(const short& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<int> {
+    template <>
+    struct Hash<int> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -391,7 +413,8 @@ namespace Rune {
         auto operator()(const int& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<long> {
+    template <>
+    struct Hash<long> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -400,7 +423,8 @@ namespace Rune {
         auto operator()(const long& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<long long> {
+    template <>
+    struct Hash<long long> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -409,7 +433,8 @@ namespace Rune {
         auto operator()(const long long& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<unsigned char> {
+    template <>
+    struct Hash<unsigned char> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -418,7 +443,8 @@ namespace Rune {
         auto operator()(const unsigned char& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<unsigned short> {
+    template <>
+    struct Hash<unsigned short> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -427,7 +453,8 @@ namespace Rune {
         auto operator()(const unsigned short& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<unsigned int> {
+    template <>
+    struct Hash<unsigned int> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -436,7 +463,8 @@ namespace Rune {
         auto operator()(const unsigned int& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<unsigned long> {
+    template <>
+    struct Hash<unsigned long> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -445,7 +473,8 @@ namespace Rune {
         auto operator()(const unsigned long& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<unsigned long long> {
+    template <>
+    struct Hash<unsigned long long> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -454,7 +483,8 @@ namespace Rune {
         auto operator()(const unsigned long long& key) const -> size_t { return key; }
     };
 
-    template <> struct Hash<float> {
+    template <>
+    struct Hash<float> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -471,7 +501,8 @@ namespace Rune {
         }
     };
 
-    template <> struct Hash<double> {
+    template <>
+    struct Hash<double> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -488,7 +519,8 @@ namespace Rune {
         }
     };
 
-    template <> struct Hash<long double> {
+    template <>
+    struct Hash<long double> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -505,7 +537,8 @@ namespace Rune {
         }
     };
 
-    template <> struct Hash<bool> {
+    template <>
+    struct Hash<bool> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -514,7 +547,8 @@ namespace Rune {
         auto operator()(const bool& key) const -> size_t { return (size_t) key; }
     };
 
-    template <> struct Hash<const char*> {
+    template <>
+    struct Hash<const char*> {
 
         auto operator=(Hash&& other) -> Hash& = default;
 
@@ -538,7 +572,8 @@ namespace Rune {
     //                               std::function Port
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    template <typename R, typename... A> class ICallable {
+    template <typename R, typename... A>
+    class ICallable {
       public:
         virtual ~ICallable() = default;
 
@@ -549,7 +584,8 @@ namespace Rune {
         virtual auto clone() const -> ICallable<R, A...>* = 0;
     };
 
-    template <typename F, typename R, typename... A> class Callable : public ICallable<R, A...> {
+    template <typename F, typename R, typename... A>
+    class Callable : public ICallable<R, A...> {
         F _function;
 
       public:
@@ -562,16 +598,20 @@ namespace Rune {
         auto clone() const -> ICallable<R, A...>* override { return new Callable(_function); }
     };
 
-    template <typename> class Function;
+    template <typename>
+    class Function;
 
-    template <typename R, typename... A> class Function<R(A...)> {
+    template <typename R, typename... A>
+    class Function<R(A...)> {
         static constexpr size_t STACK_LIMIT = 24;
 
         ICallable<R, A...>* _function;
         unsigned char       _stack_ptr[STACK_LIMIT];
 
       public:
-        template <typename Func> Function(Func function) : _function(nullptr), _stack_ptr{} {
+        template <typename Func>
+        Function(Func function) : _function(nullptr),
+                                  _stack_ptr{} {
             if (sizeof(Callable<Func, R, A...>) <= STACK_LIMIT) {
                 _function = (decltype(_function)) &_stack_ptr;
                 new (_function) Callable<Func, R, A...>(function);
@@ -659,6 +699,253 @@ namespace Rune {
 
         auto operator()(A... args) const -> R { return (*_function)(forward<A>(args)...); }
     };
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  std::optional port
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    /**
+     * A dummy arg useful to differentiate between functions when variadic arguments are used.
+     */
+    struct Inplace {
+        explicit Inplace() = default;
+    };
+
+    constexpr Inplace INPLACE{};
+
+    /**
+     * Represents an empty optional.
+     */
+    struct NullOptional {
+        constexpr explicit NullOptional(int num) { SILENCE_UNUSED(num) };
+    };
+
+    constexpr NullOptional NULL_OPT{0};
+
+    /**
+     * Optional manages a value that may or may not be present.
+     *
+     * @tparam T
+     */
+    template <typename T>
+    class Optional {
+        union {
+            T _data;
+        };
+        bool _has_value = false;
+        //
+        // /**
+        //  * Note: The behavior is undefined if !_has_value.
+        //  * @return _data interpreted as T*
+        //  */
+        // auto ptr() -> T* {
+        //     return reinterpret_cast<T*>(_data); // NOLINT
+        // }
+        //
+        // auto ptr() const -> const T* {
+        //     return reinterpret_cast<const T*>(_data); // NOLINT
+        // }
+
+      public:
+        Optional() noexcept {};
+
+        template <typename U>
+        Optional(const U& obj) : _has_value(true) {
+            new (&_data) T(obj);
+        }
+
+        Optional(const NullOptional& null_opt) noexcept {
+
+        }
+
+        Optional(const Optional& other) : _has_value(other._has_value) {
+            if (other._has_value) {
+                new (&_data) T(other.value());
+            }
+        }
+
+        Optional(Optional&& other) noexcept : _has_value(other._has_value) {
+            if (other._has_value) {
+                new (&_data) T(move(other.value()));
+                other.reset();
+            }
+        }
+
+        template <typename... Args>
+        Optional(Inplace inplace, Args&&... args) : _has_value(true) {
+            SILENCE_UNUSED(inplace);
+            new (&_data) T(forward<Args>(args)...);
+        }
+
+        auto operator=(const Optional<T>& other) -> Optional<T>& {
+            if (this == &other) return *this;
+            Optional tmp(other);
+            swap(tmp, *this);
+            return *this;
+        }
+
+        auto operator=(Optional<T>&& other) noexcept -> Optional<T>& {
+            if (this == &other) return *this;
+            Optional tmp(move(other));
+            swap(tmp, *this);
+            return *this;
+        }
+
+        ~Optional() { reset(); }
+
+        /**
+         *
+         * @return True: The optional contains a value, False: The optional contains no value.
+         */
+        constexpr explicit operator bool() { return !_has_value; }
+
+        /**
+         *
+         * @return True: The optional contains a value, False: The optional contains no value.
+         */
+        [[nodiscard]] constexpr auto empty() const -> bool { return !_has_value; }
+
+        /**
+         *
+         * @return True: The optional contains a value, False: The optional contains no value.
+         */
+        [[nodiscard]] constexpr auto empty() -> bool { return !_has_value; }
+
+        /**
+         * If the optional does not contain a value, empty() == true, then the behavior is not
+         * defined.
+         * @return A reference to the contained value.
+         */
+        auto value() const -> const T& { return _data; }
+
+        /**
+         * If the optional does not contain a value, empty() == true, then the behavior is not
+         * defined.
+         * @return A reference to the contained value.
+         */
+        auto value() -> T& { return _data; }
+
+        /**
+         *
+         * @param default_value A default value to be returned if the optional is empty.
+         * @return A reference to the contained value or the default value.
+         */
+        auto value_or(T&& default_value) -> T& { return empty() ? default_value : _data; }
+
+        /**
+         * Apply the value of this optional to the function. If the optional is empty, an empty
+         * optional is returned.
+         *
+         * @tparam U Return type of the function.
+         * @tparam F A callable returning Optional<U>.
+         * @param func
+         * @return If empty: An empty optional, else: The result of calling func.
+         */
+        template <class U, class F>
+        auto and_then(F&& func) -> Optional<U> {
+            return empty() ? Optional<U>() : func(forward<T>(_data));
+        }
+
+        /**
+         * If the optional is empty, return the result of calling func. Otherwise, return this
+         * optional.
+         *
+         * @tparam F A callable returning Optional<T>.
+         * @param func
+         * @return If empty: The result of calling func, else: An empty optional.
+         */
+        template <class F>
+        auto or_else(F&& func) -> Optional<T> {
+            return empty() ? func(forward<T>(_data)) : *this;
+        }
+
+        /**
+         * Apply the value of this optional to the function. If the optional is empty, an empty
+         * optional is returned.
+         *
+         * @tparam U Return type of the function.
+         * @tparam F A callable returning U.
+         * @param func
+         * @return If empty: The result of calling func wrapped in an optional,
+         *          else: An empty optional.
+         */
+        template <typename U, typename F>
+        auto transform(F&& func) -> Optional<U> {
+            return empty() ? Optional<U>() : Optional<U>(func(forward<T>(_data)));
+        }
+
+        /**
+         * If the optional contains a value, call the value's destructor to empty the optional. If
+         * the optional is already empty this function will do nothing.
+         */
+        void reset() noexcept {
+            if (_has_value) {
+                _data.~T();
+                _has_value = false;
+            }
+        }
+
+        /**
+         * Swap the values of the two optionals.
+         * @param fst
+         * @param sec
+         */
+        friend void swap(Optional& fst, Optional& sec) noexcept {
+            // Both optionals have no value -> nothing to do
+            if (!fst._has_value && !sec._has_value) return;
+
+            if (fst._has_value && sec._has_value) {
+                // Both optionals have a value -> just swap
+                using Rune::swap;
+                swap(fst.value(), sec.value());
+            } else {
+                if (fst._has_value) {
+                    // Move fst value to sec and reset fst
+                    new (&sec._data) T(move(fst.value()));
+                    sec._has_value = true;
+                    fst.reset(); // sets fst._has_value = false
+                } else {
+                    // Move sec value to fst and reset sec
+                    new (&fst._data) T(move(sec.value()));
+                    fst._has_value = true;
+                    sec.reset(); // sets sec._has_value = false
+                }
+            }
+        }
+
+        friend bool operator==(const Optional& fst, const Optional& sec) {
+            if (fst.empty() && sec.empty()) return true;
+            if (fst.empty() || sec.empty()) return false;
+            return fst.value() == sec.value();
+        }
+
+        friend bool operator!=(const Optional& fst, const Optional& sec) {
+            if (fst.empty() && sec.empty()) return false;
+            if (fst.empty() || sec.empty()) return true;
+            return fst.value() != sec.value();
+        }
+    };
+
+    /**
+     *
+     * @param value
+     * @return
+     */
+    template <typename T>
+    auto make_optional(T&& value) -> Optional<T> {
+        return Optional<T>(forward<T>(value));
+    }
+
+    /**
+     *
+     * @tparam Args
+     * @param args
+     * @return
+     */
+    template <typename T, typename... Args>
+    auto make_optional(Args&&... args) -> Optional<T> {
+        return Optional<T>(INPLACE, forward<Args>(args)...);
+    }
 } // namespace Rune
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -667,7 +954,8 @@ namespace Rune {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 namespace std {
-    template <class _E> class initializer_list { // NOLINT
+    template <class _E>
+    class initializer_list { // NOLINT
       public:
         typedef _E        value_type;      // NOLINT
         typedef const _E& reference;       // NOLINT
@@ -703,7 +991,8 @@ namespace std {
         return __ils.begin();
     }
 
-    template <class _Tp> constexpr const _Tp* end(initializer_list<_Tp> __ils) noexcept { // NOLINT
+    template <class _Tp>
+    constexpr const _Tp* end(initializer_list<_Tp> __ils) noexcept { // NOLINT
         return __ils.end();
     }
 } // namespace std
