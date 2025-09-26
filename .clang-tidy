@@ -10,6 +10,7 @@ Checks:          'clang-diagnostic-*,
                   -cppcoreguidelines-owning-memory,
                   -cppcoreguidelines-rvalue-reference-param-not-moved,
                   -cppcoreguidelines-init-variables,
+                  -cppcoreguidelines-missing-std-forward,
                   modernize-*,
                   readability-*,
                   -readability-braces-around-statements'

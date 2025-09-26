@@ -19,11 +19,9 @@
 #include <Boot/FancyLogFormatter.h>
 #include <Boot/LogRegistry.h>
 
-#include <KRE/CppLanguageSupport.h>
-
 #include <KRE/Build.h>
+#include <KRE/CppLanguageSupport.h>
 #include <KRE/Logging.h>
-#include <VirtualFileSystem/Path.h>
 #include <KRE/String.h>
 
 #include <App/AppSubsystem.h>
@@ -39,6 +37,7 @@
 #include <Device/DeviceSubsystem.h>
 
 #include <VirtualFileSystem/FileStream.h>
+#include <VirtualFileSystem/Path.h>
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 #include <BuiltInPlugin/8259PICDriverPlugin.h>
@@ -92,8 +91,7 @@ namespace Rune {
 
     void on_stack_guard_fail_callback() {
         SYSTEM_LOGGER->critical(FILE, "Yoho, the stack got smashed real hard!");
-        while (true)
-            CPU::halt();
+        while (true) CPU::halt();
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -103,8 +101,7 @@ namespace Rune {
     void start_kernel_subsystem(Subsystem* k_subsys) {
         if (!k_subsys->start(BOOT_INFO, K_SUBSYS_REG)) {
             SYSTEM_LOGGER->critical(FILE, "Subsystem start failure: {}", k_subsys->get_name());
-            while (true)
-                CPU::halt();
+            while (true) CPU::halt();
         }
         SYSTEM_LOGGER->info(FILE, "Subsystem started: {}", k_subsys->get_name());
     }
@@ -123,8 +120,7 @@ namespace Rune {
                                         info.name,
                                         info.version.to_string(),
                                         info.vendor);
-                while (true)
-                    CPU::halt();
+                while (true) CPU::halt();
             }
             SYSTEM_LOGGER->info(FILE,
                                 "Plugin started: {} v{} by {}",
@@ -184,8 +180,7 @@ namespace Rune {
         VFS::IOStatus st = file_subsys->get_node_info(os, dummy);
         if (st != VFS::IOStatus::FOUND) {
             SYSTEM_LOGGER->critical(FILE, R"("{}": OS not found!)", os.to_string());
-            while (true)
-                CPU::halt();
+            while (true) CPU::halt();
         }
 
         App::LoadStatus ls = app_subsys->start_os(os, Path::ROOT);
@@ -213,8 +208,7 @@ namespace Rune {
                      boot_loader_info.stack};
 
         if (!MEMORY_SUBSYSTEM.start(boot_loader_info, K_SUBSYS_REG))
-            while (true)
-                CPU::halt();
+            while (true) CPU::halt();
 
         // Allocate the kernel subsystems - We do this here because the log registry needs an
         // allocated FILE subsystem
@@ -237,7 +231,8 @@ namespace Rune {
         turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));
 #endif
 
-        init_cpp_language_support(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
+        init_cpp_language_support(&on_pure_virtual_function_callback,
+                                  &on_stack_guard_fail_callback);
 
         // Initialize the logging in the kernel subsystems and start the built-in kernel plugins
         for (size_t i = 1; i < SUBSYSTEM_COUNT; i++) {
