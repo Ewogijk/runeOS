@@ -714,7 +714,7 @@ namespace Rune {
     constexpr Inplace INPLACE{};
 
     /**
-     * Represents an empty optional.
+     * A tagging class for an empty optional.
      */
     struct NullOptional {
         constexpr explicit NullOptional(int num) { SILENCE_UNUSED(num) };
@@ -733,18 +733,6 @@ namespace Rune {
             T _data;
         };
         bool _has_value = false;
-        //
-        // /**
-        //  * Note: The behavior is undefined if !_has_value.
-        //  * @return _data interpreted as T*
-        //  */
-        // auto ptr() -> T* {
-        //     return reinterpret_cast<T*>(_data); // NOLINT
-        // }
-        //
-        // auto ptr() const -> const T* {
-        //     return reinterpret_cast<const T*>(_data); // NOLINT
-        // }
 
       public:
         Optional() noexcept {};
@@ -754,9 +742,7 @@ namespace Rune {
             new (&_data) T(obj);
         }
 
-        Optional(const NullOptional& null_opt) noexcept {
-
-        }
+        Optional(const NullOptional& null_opt) noexcept {}
 
         Optional(const Optional& other) : _has_value(other._has_value) {
             if (other._has_value) {
@@ -803,13 +789,13 @@ namespace Rune {
          *
          * @return True: The optional contains a value, False: The optional contains no value.
          */
-        [[nodiscard]] constexpr auto empty() const -> bool { return !_has_value; }
+        [[nodiscard]] constexpr auto has_value() const -> bool { return !_has_value; }
 
         /**
          *
          * @return True: The optional contains a value, False: The optional contains no value.
          */
-        [[nodiscard]] constexpr auto empty() -> bool { return !_has_value; }
+        [[nodiscard]] constexpr auto has_value() -> bool { return !_has_value; }
 
         /**
          * If the optional does not contain a value, empty() == true, then the behavior is not
@@ -830,7 +816,7 @@ namespace Rune {
          * @param default_value A default value to be returned if the optional is empty.
          * @return A reference to the contained value or the default value.
          */
-        auto value_or(T&& default_value) -> T& { return empty() ? default_value : _data; }
+        auto value_or(T&& default_value) -> T& { return has_value() ? _data : default_value; }
 
         /**
          * Apply the value of this optional to the function. If the optional is empty, an empty
@@ -843,7 +829,7 @@ namespace Rune {
          */
         template <class U, class F>
         auto and_then(F&& func) -> Optional<U> {
-            return empty() ? Optional<U>() : func(forward<T>(_data));
+            return has_value() ? func(forward<T>(_data)) : Optional<U>();
         }
 
         /**
@@ -856,7 +842,7 @@ namespace Rune {
          */
         template <class F>
         auto or_else(F&& func) -> Optional<T> {
-            return empty() ? func(forward<T>(_data)) : *this;
+            return has_value() ? *this : func(forward<T>(_data));
         }
 
         /**
@@ -871,7 +857,7 @@ namespace Rune {
          */
         template <typename U, typename F>
         auto transform(F&& func) -> Optional<U> {
-            return empty() ? Optional<U>() : Optional<U>(func(forward<T>(_data)));
+            return has_value() ? Optional<U>(func(forward<T>(_data))) : Optional<U>();
         }
 
         /**
@@ -885,11 +871,6 @@ namespace Rune {
             }
         }
 
-        /**
-         * Swap the values of the two optionals.
-         * @param fst
-         * @param sec
-         */
         friend void swap(Optional& fst, Optional& sec) noexcept {
             // Both optionals have no value -> nothing to do
             if (!fst._has_value && !sec._has_value) return;
@@ -913,16 +894,16 @@ namespace Rune {
             }
         }
 
-        friend bool operator==(const Optional& fst, const Optional& sec) {
-            if (fst.empty() && sec.empty()) return true;
-            if (fst.empty() || sec.empty()) return false;
-            return fst.value() == sec.value();
+        friend auto operator==(const Optional& fst, const Optional& sec) -> bool {
+            if (fst.has_value() && sec.has_value()) return fst.value() == sec.value();
+            if (fst.has_value() || sec.has_value()) return false;
+            return false;
         }
 
-        friend bool operator!=(const Optional& fst, const Optional& sec) {
-            if (fst.empty() && sec.empty()) return false;
-            if (fst.empty() || sec.empty()) return true;
-            return fst.value() != sec.value();
+        friend auto operator!=(const Optional& fst, const Optional& sec) -> bool {
+            if (fst.has_value() && sec.has_value()) return fst.value() != sec.value();
+            if (fst.has_value() || sec.has_value()) return true;
+            return true;
         }
     };
 
@@ -946,6 +927,368 @@ namespace Rune {
     auto make_optional(Args&&... args) -> Optional<T> {
         return Optional<T>(INPLACE, forward<Args>(args)...);
     }
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  std::expected Port
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    /**
+     * Tagging class to represent an unexpected value.
+     */
+    struct UnexpectTag {
+        explicit UnexpectTag() = default;
+    };
+
+    constexpr UnexpectTag UNEXPECT{};
+
+    /**
+     * Convenience class to create Expected objects that contain an error.
+     *
+     * @tparam E Error type.
+     */
+    template <typename E>
+    class Unexpected {
+        E _error;
+
+      public:
+        constexpr explicit Unexpected(E&& error) : _error(error) {}
+
+        template <typename... Args>
+        constexpr explicit Unexpected(Inplace inplace, Args&&... args) {
+            SILENCE_UNUSED(inplace);
+            new (_error) E(forward(args)...);
+        }
+
+        constexpr Unexpected(const Unexpected& other) = default;
+        constexpr Unexpected(Unexpected&& other)      = default;
+
+        ~Unexpected() noexcept { _error.~E(); }
+
+        auto operator=(const Unexpected& other) -> Unexpected& = default;
+        auto operator=(Unexpected&& other) -> Unexpected&      = default;
+
+        /**
+         *
+         * @return The error value.
+         */
+        constexpr auto error() & -> E& { return _error; }
+
+        /**
+         *
+         * @return The error value.
+         */
+        constexpr auto error() const& -> const E& { return _error; }
+
+        /**
+         *
+         * @return The error value.
+         */
+        constexpr auto error() && -> E&& { return _error; }
+
+        /**
+         *
+         * @return The error value.
+         */
+        constexpr auto error() const&& -> const E&& { return _error; }
+
+        friend void swap(Unexpected& fst, Unexpected& sec) noexcept {
+            using Rune::swap;
+            swap(fst._error, sec._error);
+        }
+
+        friend auto operator==(const Unexpected& fst, const Unexpected& sec) -> bool {
+            return fst._error == sec._error;
+        }
+
+        friend auto operator!=(const Unexpected& fst, const Unexpected& sec) -> bool {
+            return fst._error != sec._error;
+        }
+    };
+
+    template <typename T, typename E>
+    class Expected {
+        union {
+            T _value;
+            E _error;
+        };
+        bool _has_value = false;
+
+        void reset() {
+            if (_has_value) {
+                _value.~T();
+            } else {
+                _error.~E();
+            }
+            _has_value = false;
+        }
+
+      public:
+        constexpr Expected() = default;
+
+        template <typename U>
+        constexpr Expected(const U& obj) : _has_value(true) {
+            new (&_value) T(obj);
+        }
+
+        template <typename... Args>
+        constexpr Expected(Inplace inplace, Args&&... args) : _has_value(true) {
+            SILENCE_UNUSED(inplace);
+            new (&_value) T(forward(args)...);
+        }
+
+        Expected(UnexpectTag unexpected) {}
+
+        template <typename... Args>
+        Expected(UnexpectTag unexpected, Args&&... args) {
+            new (&_error) E(forward<Args>(args)...);
+        }
+
+        template <typename U>
+        Expected(Unexpected<U>&& unexpected) {
+            new (&_error) E(unexpected.error());
+        }
+
+        Expected(const Expected& other) : _has_value(other._has_value) {
+            if (other._has_value) {
+                new (&_value) T(other._value);
+            } else {
+                new (&_error) E(other._error);
+            }
+        }
+
+        Expected(Expected&& other) noexcept : _has_value(other._has_value) {
+            if (other._has_value) {
+                new (&_value) T(other._value);
+            } else {
+                new (&_error) E(other._error);
+            }
+            other.reset();
+        }
+
+        ~Expected() noexcept { reset(); }
+
+        auto operator=(const Expected& other) -> Expected& {
+            if (this == &other) return *this;
+            Expected tmp(other);
+            swap(*this, tmp);
+            return *this;
+        }
+
+        auto operator=(Expected&& other) noexcept -> Expected& {
+            if (this == &other) return *this;
+            Expected tmp(move(other));
+            swap(*this, tmp);
+            return *this;
+        }
+
+        /**
+         *
+         * @return True: The expected contains a value. False: The expected contains an error.
+         */
+        constexpr explicit operator bool() const noexcept { return _has_value; }
+
+        /**
+         *
+         * @return True: The expected contains a value. False: The expected contains an error.
+         */
+        [[nodiscard]] constexpr auto has_value() noexcept -> bool { return _has_value; }
+
+        /**
+         *
+         * @return True: The expected contains a value. False: The expected contains an error.
+         */
+        [[nodiscard]] constexpr auto has_value() const noexcept -> bool { return _has_value; }
+
+        /**
+         * If the expected does not contain a value the behavior is undefined.
+         * @return A reference to the value.
+         */
+        constexpr auto value() -> T& { return _value; }
+
+        /**
+         * If the expected does not contain a value the behavior is undefined.
+         * @return A reference to the value.
+         */
+        constexpr auto value() const -> const T& { return _value; }
+
+        /**
+         * Return the value of the expected or the default value if it does not have a value.
+         * @param default_value A value to be returned when the expected does not contain a value.
+         * @return A reference to the value.
+         */
+        constexpr auto value_or(T&& default_value) -> T& {
+            return has_value() ? _value : default_value;
+        }
+
+        /**
+         * If the expected does contain a value the behavior is undefined.
+         * @return A reference to the error.
+         */
+        constexpr auto error() -> E& { return _error; }
+
+        /**
+         * If the expected does contain a value the behavior is undefined.
+         * @return A reference to the error.
+         */
+        constexpr auto error() const -> const E& { return _error; }
+
+        /**
+         * Return the error of the expected or the default error if it does have a value.
+         * @param default_error An error to be returned when the expected does contain a value.
+         * @return A reference to the error.
+         */
+        constexpr auto error_or(E&& default_error) -> T& {
+            return !has_value() ? _error : default_error;
+        }
+
+        /**
+         * If this expected contains a value, invoke the function on the value. Otherwise, return an
+         * expected with the error of this expected.
+         * @tparam U Value type of the expected returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function Expected<U, E>(T).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto and_then(F&& func) -> Expected<U, E> {
+            return has_value() ? func(forward<T>(_value)) : Expected<U, E>(UNEXPECT, _error);
+        }
+
+        /**
+         * If this expected contains a value, invoke the function on the value. Otherwise, return an
+         * expected with the error of this expected.
+         * @tparam U Value type of the expected returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function Expected<U, E>(T).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto and_then(F&& func) const -> Expected<U, E> {
+            return has_value() ? func(forward<T>(_value)) : Expected<U, E>(UNEXPECT, _error);
+        }
+
+        /**
+         * If this expected contains an error, invoke the function with this error and return the
+         * result. Otherwise, return this expected.
+         * @tparam U Value type of the expected returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function Expected<U, E>(E).
+         * @return The return value of the function or this expected.
+         */
+        template <typename U, typename F>
+        constexpr auto or_else(F&& func) -> Expected<U, E> {
+            return has_value() ? *this : func(forward<E>(_error));
+        }
+
+        /**
+         * If this expected contains an error, invoke the function with this error and return the
+         * result. Otherwise, return this expected.
+         * @tparam U Value type of the expected returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function Expected<U, E>(E).
+         * @return The return value of the function or this expected.
+         */
+        template <typename U, typename F>
+        constexpr auto or_else(F&& func) const -> Expected<U, E> {
+            return has_value() ? *this : func(forward<E>(_error));
+        }
+
+        /**
+         * If this expected contains a value, invoke the function on the value and return the
+         * result as an expected. Otherwise, return an expected with this error.
+         * @tparam U Type of the value returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function U(T).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto transform(F&& func) const -> Expected<U, E> {
+            return has_value() ? Expected<U, E>(func(forward<T>(_value)))
+                               : Expected<U, E>(UNEXPECT, _error);
+        }
+
+        /**
+         * If this expected contains a value, invoke the function on the value and return the
+         * result as an expected. Otherwise, return an expected with this error.
+         * @tparam U Type of the value returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function U(T).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto transform(F&& func) -> Expected<U, E> {
+            return has_value() ? Expected<U, E>(func(forward<T>(_value)))
+                               : Expected<U, E>(UNEXPECT, _error);
+        }
+
+        /**
+         * If this expected contains an error, invoke the function on the error and return the
+         * result as an expected. Otherwise, return an expected with this value.
+         * @tparam U Ttype of the error returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function U(E).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto transform_error(F&& func) const -> Expected<T, U> {
+            return has_value() ? Expected<T, U>(_value)
+                               : Expected<T, U>(UNEXPECT, func(forward<E>(_error)));
+        }
+
+        /**
+         * If this expected contains an error, invoke the function on the error and return the
+         * result as an expected. Otherwise, return an expected with this value.
+         * @tparam U Type of the error returned by the function.
+         * @tparam F Type of the function.
+         * @param func A function U(E).
+         * @return The return value of the function or an expected with this error value.
+         */
+        template <typename U, typename F>
+        constexpr auto transform_error(F&& func) -> Expected<T, U> {
+            return has_value() ? Expected<T, U>(_value)
+                               : Expected<T, U>(UNEXPECT, func(forward<E>(_error)));
+        }
+
+        friend void swap(Expected& fst, Expected& sec) noexcept {
+            if (fst._has_value && sec._has_value) {
+                using Rune::swap;
+                swap(fst._value, sec._value);
+            } else if (fst._has_value && !sec._has_value) {
+                T tmp_val(move(fst._value));
+                fst._value.~T();
+                new (&fst._error) E(sec._error);
+                sec._error.~E();
+                new (&sec._value) T(tmp_val);
+
+                fst._has_value = false;
+                sec._has_value = true;
+            } else if (!fst._has_value && sec._has_value) {
+                E tmp_err(move(fst._error));
+                fst._error.~E();
+                new (&fst._value) T(sec._value);
+                sec._value.~T();
+                new (&sec._error) E(tmp_err);
+
+                fst._has_value = true;
+                sec._has_value = false;
+            } else {
+                using Rune::swap;
+                swap(fst._error, sec._error);
+            }
+        }
+
+        friend auto operator==(const Expected& fst, const Expected& sec) -> bool {
+            if (fst.has_value() && sec.has_value()) return fst._value == sec._value;
+            if (!fst.has_value() && !sec.has_value()) return fst._error == sec._error;
+            return false;
+        }
+
+        friend auto operator!=(const Expected& fst, const Expected& sec) -> bool {
+            if (fst.has_value() && sec.has_value()) return fst._value != sec._value;
+            if (!fst.has_value() && !sec.has_value()) return fst._error != sec._error;
+            return true;
+        }
+    };
 } // namespace Rune
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

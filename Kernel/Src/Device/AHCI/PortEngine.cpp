@@ -78,9 +78,6 @@ namespace Rune::Device {
         _s64_a         = s_64_a;
         _heap          = heap;
         _timer         = timer;
-        int    a       = 1;
-        double b       = 0.0;
-        double c       = (double) a / b;
 
         _internal_buf_cache = _heap->create_new_cache(Request::INTERNAL_BUF_SIZE, 2, true);
         if (!_internal_buf_cache) {
