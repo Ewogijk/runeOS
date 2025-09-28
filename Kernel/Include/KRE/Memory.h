@@ -21,8 +21,8 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-#include <KRE/Utility.h>
 #include <KRE/Build.h>
+#include <KRE/Utility.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -32,7 +32,8 @@ namespace Rune {
     /**
      * Simple std::unique_ptr implementation.
      */
-    template <typename T> class UniquePointer {
+    template <typename T>
+    class UniquePointer {
         T* _ptr;
 
         void swap(UniquePointer<T>& other) noexcept {
@@ -48,34 +49,47 @@ namespace Rune {
 
         ~UniquePointer() { delete _ptr; }
 
-        UniquePointer(const UniquePointer<T>& o) = delete;
+        UniquePointer(const UniquePointer<T>& other) = delete;
 
-        UniquePointer& operator=(const UniquePointer<T>& o) = delete;
+        auto operator=(const UniquePointer<T>& other) -> UniquePointer& = delete;
 
-        UniquePointer(UniquePointer<T>&& o) noexcept : _ptr(nullptr) { swap(o); }
+        UniquePointer(UniquePointer<T>&& other) noexcept : _ptr(nullptr) { swap(other); }
 
-        UniquePointer& operator=(UniquePointer<T>&& o) noexcept {
-            swap(o);
+        auto operator=(UniquePointer<T>&& other) noexcept -> UniquePointer& {
+            swap(other);
             return *this;
         }
 
-        T* get() const { return _ptr; }
+        auto get() const -> T* { return _ptr; }
 
         explicit operator bool() const { return _ptr; }
 
         [[nodiscard]]
-        T& operator*() const {
+        auto operator*() const -> T& {
             return *_ptr;
         }
 
-        T* operator->() const { return _ptr; }
+        auto operator->() const -> T* { return _ptr; }
 
-        bool operator==(const UniquePointer<T>& o) const { return _ptr == o._ptr; }
+        auto operator==(const UniquePointer<T>& other) const -> bool { return _ptr == other._ptr; }
 
-        bool operator!=(const UniquePointer<T>& o) const { return _ptr != o._ptr; }
+        auto operator!=(const UniquePointer<T>& other) const -> bool { return _ptr != other._ptr; }
     };
 
-    template <typename T> struct RefControlBlock {
+    /**
+     * Construct an object of T and wrap it in a unique pointer.
+     * @tparam T Pointer type.
+     * @tparam Args Type of the variadic constructor arguments.
+     * @param args Variadic arguments passed to the constructor of T.
+     * @return A unique pointer wrapping a T instance.
+     */
+    template <typename T, typename... Args>
+    auto make_unique(Args... args) -> UniquePointer<T> {
+        return UniquePointer<T>(new T(forward<Args>(args)...));
+    }
+
+    template <typename T>
+    struct RefControlBlock {
         T*     ptr              = nullptr;
         size_t strong_ref_count = 0;
     };
@@ -83,11 +97,12 @@ namespace Rune {
     /**
      * Simple std::shared_ptr implementation.
      */
-    template <typename T> class SharedPointer {
+    template <typename T>
+    class SharedPointer {
         RefControlBlock<T>* _refs;
 
         void init(T* ptr) {
-            if (!ptr) return;
+            if (ptr == nullptr) return;
             _refs      = new RefControlBlock<T>;
             _refs->ptr = ptr;
             ++_refs->strong_ref_count;
@@ -105,7 +120,7 @@ namespace Rune {
         explicit SharedPointer(T* ptr) : _refs(nullptr) { init(ptr); }
 
         ~SharedPointer() {
-            if (!_refs) return;
+            if (_refs == nullptr) return;
             --_refs->strong_ref_count;
             if (_refs->strong_ref_count == 0) {
                 delete _refs->ptr;
@@ -113,14 +128,14 @@ namespace Rune {
             }
         }
 
-        SharedPointer(const SharedPointer<T>& o) noexcept : _refs(o._refs) {
+        SharedPointer(const SharedPointer<T>& other) noexcept : _refs(other._refs) {
             if (_refs) ++_refs->strong_ref_count;
         }
 
-        SharedPointer& operator=(const SharedPointer<T>& o) noexcept {
-            if (this == &o) return *this;
+        auto operator=(const SharedPointer<T>& other) noexcept -> SharedPointer& {
+            if (this == &other) return *this;
 
-            if (_refs == o._refs) // Same ref control block
+            if (_refs == other._refs) // Same ref control block
                 return *this;
 
             // Different pointer -> Decrement current pointer ref count
@@ -131,40 +146,51 @@ namespace Rune {
                     delete _refs;
                 }
             }
-            _refs = o._refs;
+            _refs = other._refs;
             if (_refs) ++_refs->strong_ref_count;
             return *this;
         }
 
-        SharedPointer(SharedPointer<T>&& o) noexcept : _refs(o._refs) { o._refs = nullptr; }
+        SharedPointer(SharedPointer<T>&& other) noexcept : _refs(other._refs) {
+            other._refs = nullptr;
+        }
 
-        SharedPointer& operator=(SharedPointer<T>&& o) noexcept {
-            SharedPointer<T> tmp(move(o));
+        auto operator=(SharedPointer<T>&& other) noexcept -> SharedPointer& {
+            SharedPointer<T> tmp(move(other));
             swap(tmp);
             return *this;
         }
 
-        T* get() const { return _refs ? _refs->ptr : nullptr; }
+        auto get() const -> T* { return _refs ? _refs->ptr : nullptr; }
 
-        size_t get_ref_count() { return _refs ? _refs->strong_ref_count : 0; }
+        auto get_ref_count() -> size_t { return _refs ? _refs->strong_ref_count : 0; }
 
         explicit operator bool() const { return _refs; }
 
-        [[nodiscard]]
-        T& operator*() const {
-            return *_refs->ptr;
+        [[nodiscard]] auto operator*() const -> T& { return *_refs->ptr; }
+
+        auto operator->() const -> T* { return _refs ? _refs->ptr : nullptr; }
+
+        auto operator==(const SharedPointer<T>& other) const -> bool {
+            return _refs ? _refs->ptr == other._refs->ptr : _refs == other._refs;
         }
 
-        T* operator->() const { return _refs ? _refs->ptr : nullptr; }
-
-        bool operator==(const SharedPointer<T>& o) const {
-            return _refs ? _refs->ptr == o._refs->ptr : _refs == o._refs;
-        }
-
-        bool operator!=(const SharedPointer<T>& o) const {
-            return _refs ? _refs->ptr != o._refs->ptr : _refs != o._refs;
+        auto operator!=(const SharedPointer<T>& other) const -> bool {
+            return _refs ? _refs->ptr != other._refs->ptr : _refs != other._refs;
         }
     };
+
+    /**
+     * Construct an object of T and wrap it in a shared pointer.
+     * @tparam T Pointer type.
+     * @tparam Args Type of the variadic constructor arguments.
+     * @param args Variadic arguments passed to the constructor of T.
+     * @return A shared pointer wrapping a T instance.
+     */
+    template <typename T, typename... Args>
+    auto make_shared(Args... args) -> SharedPointer<T> {
+        return SharedPointer<T>(new T(forward<Args>(args)...));
+    }
 
 #ifdef BIT64
     // A memory address e.g. 0x7328FAD123
@@ -222,7 +248,7 @@ namespace Rune {
      *
      * @return Bytes converted to another unit.
      */
-    MemoryFloatSize memory_bytes_in(MemorySize bytes, MemoryUnit unit);
+    auto memory_bytes_in(MemorySize bytes, MemoryUnit unit) -> MemoryFloatSize;
 
     /**
      * Check if the memory address is aligned to the given boundary.
@@ -231,7 +257,7 @@ namespace Rune {
      * @param boundary Memory boundary.
      * @return True if aligned else false.
      */
-    bool memory_is_aligned(MemoryAddr mem_addr, MemoryAddr boundary);
+    auto memory_is_aligned(MemoryAddr mem_addr, MemoryAddr boundary) -> bool;
 
     /**
      * Align the memory address to the given boundary. If roundUp is true the memory address will be
@@ -253,8 +279,9 @@ namespace Rune {
      * @param v_addr
      * @return Pointer to the numerical value of the virtual address.
      */
-    template <typename T> T* memory_addr_to_pointer(VirtualAddr v_addr) {
-        return reinterpret_cast<T*>(v_addr);
+    template <typename T>
+    auto memory_addr_to_pointer(VirtualAddr v_addr) -> T* {
+        return reinterpret_cast<T*>(v_addr); // NOLINT
     }
 
     /**
@@ -264,8 +291,9 @@ namespace Rune {
      *
      * @return Virtual address of the pointer as numerical value.
      */
-    template <typename T> MemoryAddr memory_pointer_to_addr(T* pointer) {
-        return reinterpret_cast<uintptr_t>(pointer);
+    template <typename T>
+    auto memory_pointer_to_addr(T* pointer) -> MemoryAddr {
+        return reinterpret_cast<uintptr_t>(pointer); // NOLINT
     }
 
     /**
@@ -295,20 +323,17 @@ namespace Rune {
         MemorySize       size        = 0x0;
         MemoryRegionType memory_type = MemoryRegionType::NONE;
 
-        [[nodiscard]]
-        MemoryAddr end() const;
+        [[nodiscard]] auto end() const -> MemoryAddr;
 
-        [[nodiscard]]
-        MemoryFloatSize size_in(MemoryUnit unit) const;
+        [[nodiscard]] auto size_in(MemoryUnit unit) const -> MemoryFloatSize;
 
-        [[nodiscard]]
-        bool contains(const MemoryRegion& other) const;
+        [[nodiscard]] auto contains(const MemoryRegion& other) const -> bool;
 
-        bool operator==(const MemoryRegion& b) const;
+        auto operator==(const MemoryRegion& other) const -> bool;
 
-        bool operator!=(const MemoryRegion& b) const;
+        auto operator!=(const MemoryRegion& other) const -> bool;
 
-        bool operator<=(const MemoryRegion& o) const;
+        auto operator<=(const MemoryRegion& other) const -> bool;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -340,45 +365,39 @@ namespace Rune {
          *
          * @return Number of memory regions with memory type unequal to "None" in the map.
          */
-        [[nodiscard]]
-        size_t size() const;
+        [[nodiscard]] auto size() const -> size_t;
 
         /**
          *
          * @return Usable memory in bytes.
          */
-        [[nodiscard]]
-        MemorySize get_free_memory() const;
+        [[nodiscard]] auto get_free_memory() const -> MemorySize;
 
         /**
          *
          * @param unit Memory unit.
          * @return Usable memory converted to a memory unit.
          */
-        [[nodiscard]]
-        MemoryFloatSize get_free_memory_in(MemoryUnit unit) const;
+        [[nodiscard]] auto get_free_memory_in(MemoryUnit unit) const -> MemoryFloatSize;
 
         /**
          *
          * @return Reserved memory in bytes.
          */
-        [[nodiscard]]
-        MemorySize get_reserved_memory() const;
+        [[nodiscard]] auto get_reserved_memory() const -> MemorySize;
 
         /**
          *
          * @param unit Memory unit.
          * @return Reserved memory converted to a memory unit.
          */
-        [[nodiscard]]
-        MemoryFloatSize get_reserved_memory_in(MemoryUnit unit) const;
+        [[nodiscard]] auto get_reserved_memory_in(MemoryUnit unit) const -> MemoryFloatSize;
 
         /**
          *
          * @return Total memory in bytes.
          */
-        [[nodiscard]]
-        MemorySize get_total_memory() const;
+        [[nodiscard]] auto get_total_memory() const -> MemorySize;
 
         /**
          *
@@ -386,8 +405,7 @@ namespace Rune {
          *
          * @return Total memory converted to a memory unit.
          */
-        [[nodiscard]]
-        MemoryFloatSize get_total_memory_in(MemoryUnit unit) const;
+        [[nodiscard]] auto get_total_memory_in(MemoryUnit unit) const -> MemoryFloatSize;
 
         /**
          * Claim the memory region defined by the `claimant` and mark it with the memory type of the
@@ -409,20 +427,20 @@ namespace Rune {
          *
          * @return True if the region got claimed else false.
          */
-        bool claim(MemoryRegion& claimant, uint32_t boundary);
+        auto claim(MemoryRegion& claimant, uint32_t boundary) -> bool;
 
         /**
          * Merge adjacent regions of the same type into bigger regions.
          */
         void merge();
 
-        const MemoryRegion& operator[](size_t index) const;
+        auto operator[](size_t index) const -> const MemoryRegion&;
 
         [[nodiscard]]
-        const MemoryRegion* begin() const;
+        auto begin() const -> const MemoryRegion*;
 
         [[nodiscard]]
-        const MemoryRegion* end() const;
+        auto end() const -> const MemoryRegion*;
     };
 } // namespace Rune
 
