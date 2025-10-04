@@ -17,40 +17,37 @@
 #include <CPU/Threading/Mutex.h>
 
 namespace Rune::CPU {
-    constexpr char const* File = "Mutex";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Mutex");
 
     void Mutex::transfer_ownership() {
         _owner->mutex_id = 0;
         if (_wait_queue.is_empty()) {
-            _logger->trace(File,
-                           R"(Mutex "{}-{}": Thread "{}-{}" unlocked mutex.)",
-                           handle,
-                           name,
-                           _owner->handle,
-                           _owner->name);
+            LOGGER->trace(R"(Mutex "{}-{}": Thread "{}-{}" unlocked mutex.)",
+                          handle,
+                          name,
+                          _owner->handle,
+                          _owner->name);
             _owner = SharedPointer<Thread>(nullptr);
         } else {
             auto waiting = *_wait_queue.head();
             _wait_queue.remove_front();
-            _logger->trace(File,
-                           R"(Mutex "{}-{}": Thread "{}-{}" transferred ownership to "{}-{}".)",
-                           handle,
-                           name,
-                           _owner->handle,
-                           _owner->name,
-                           waiting->handle,
-                           waiting->name);
+            LOGGER->trace(R"(Mutex "{}-{}": Thread "{}-{}" transferred ownership to "{}-{}".)",
+                          handle,
+                          name,
+                          _owner->handle,
+                          _owner->name,
+                          waiting->handle,
+                          waiting->name);
             _owner            = waiting;
             waiting->mutex_id = handle;
             _scheduler->schedule(waiting);
         }
     }
 
-    Mutex::Mutex() : _scheduler(nullptr), _logger(nullptr), handle(0), name("") {}
+    Mutex::Mutex() : _scheduler(nullptr), handle(0), name("") {}
 
-    Mutex::Mutex(Scheduler* scheduler, SharedPointer<Logger> logger, String name)
+    Mutex::Mutex(Scheduler* scheduler, String name)
         : _scheduler(scheduler),
-          _logger(move(logger)),
           handle(0),
           name(move(name)) {}
 
@@ -58,8 +55,7 @@ namespace Rune::CPU {
 
     LinkedList<Thread*> Mutex::get_waiting_threads() const {
         LinkedList<Thread*> copy;
-        for (auto& t : _wait_queue)
-            copy.add_back(t.get());
+        for (auto& t : _wait_queue) copy.add_back(t.get());
         return copy;
     }
 
@@ -68,24 +64,22 @@ namespace Rune::CPU {
         auto t      = _scheduler->get_running_thread();
         t->mutex_id = handle;
         if (!_owner) {
-            _logger->trace(File,
-                           R"(Mutex "{}-{}": Thread "{}-{}" acquired mutex.)",
-                           handle,
-                           name,
-                           t->handle,
-                           t->name);
+            LOGGER->trace(R"(Mutex "{}-{}": Thread "{}-{}" acquired mutex.)",
+                          handle,
+                          name,
+                          t->handle,
+                          t->name);
             _owner = t;
             _scheduler->unlock();
             return;
         }
 
         if (t->handle != _owner->handle) {
-            _logger->trace(File,
-                           R"(Mutex "{}-{}": Thread "{}-{}" is put in wait queue.)",
-                           handle,
-                           name,
-                           t->handle,
-                           t->name);
+            LOGGER->trace(R"(Mutex "{}-{}": Thread "{}-{}" is put in wait queue.)",
+                          handle,
+                          name,
+                          t->handle,
+                          t->name);
             _wait_queue.add_back(t);
             t->state = ThreadState::WAITING;
             _scheduler->execute_next_thread();

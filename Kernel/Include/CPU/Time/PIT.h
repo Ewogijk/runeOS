@@ -34,9 +34,8 @@ namespace Rune::CPU {
          */
         static constexpr U64 QUARTZ_FREQUENCY_HZ = 1193182;
 
-        SharedPointer<Logger> _logger;
-        Scheduler*            _scheduler;
-        IRQHandler            _irq_handler;
+        Scheduler* _scheduler;
+        IRQHandler _irq_handler;
 
         DeltaQueue _sleeping_threads;
         U64        _count; // Ticks since boot
@@ -52,22 +51,16 @@ namespace Rune::CPU {
 
         ~PIT() override = default;
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        [[nodiscard]]
-        U64 get_time_since_start() const override;
+        [[nodiscard]] auto get_time_since_start() const -> U64 override;
 
-        [[nodiscard]]
-        LinkedList<SleepingThread> get_sleeping_threads() const override;
+        [[nodiscard]] auto get_sleeping_threads() const -> LinkedList<SleepingThread> override;
 
-        bool start(SharedPointer<Logger> logger,
-                   CPU::Scheduler*       scheduler,
-                   TimerMode             mode,
-                   U64                   frequency,
-                   U64                   quantum) override;
+        auto start(CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum)
+            -> bool override;
 
-        bool remove_sleeping_thread(int t_id) override;
+        auto remove_sleeping_thread(int t_id) -> bool override;
 
         void sleep_until(U64 wake_time_nanos) override;
     };

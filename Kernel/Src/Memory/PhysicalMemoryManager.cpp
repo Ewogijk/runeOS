@@ -19,7 +19,7 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    constexpr char const* FILE = "Physical Memory Manager";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VirtualMemoryManager");
 
     DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
@@ -104,21 +104,18 @@ namespace Rune::Memory {
     }
 
     void PhysicalMemoryManager::log_start_routine_phases() const {
-        _logger->info(FILE,
-                      "Detected physical memory range: {:0=#16x}-{:0=#16x}",
-                      _mem_base,
-                      _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max
-                                                             // value of some type e.g. U32
+        LOGGER->info("Detected physical memory range: {:0=#16x}-{:0=#16x}",
+                     _mem_base,
+                     _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max
+                                                            // value of some type e.g. U32
         );
         MemoryRegion mem_idx = get_memory_index_region();
-        _logger->info(FILE,
-                      "Physical memory index region: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
-                      mem_idx.start,
-                      mem_idx.end(),
-                      mem_idx.size);
-        _logger->info(FILE,
-                      "Memory index can be accessed at virtual address: {:0=#16x}",
-                      get_memory_index());
+        LOGGER->info("Physical memory index region: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
+                     mem_idx.start,
+                     mem_idx.end(),
+                     mem_idx.size);
+        LOGGER->info("Memory index can be accessed at virtual address: {:0=#16x}",
+                     get_memory_index());
     }
 
     bool PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) { return allocate(p_addr, 1); }
@@ -128,6 +125,4 @@ namespace Rune::Memory {
     }
 
     bool PhysicalMemoryManager::free(PhysicalAddr p_addr) { return free(p_addr, 1); }
-
-    void PhysicalMemoryManager::set_logger(SharedPointer<Logger> logger) { _logger = move(logger); }
 } // namespace Rune::Memory

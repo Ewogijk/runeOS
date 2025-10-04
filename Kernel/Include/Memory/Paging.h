@@ -18,7 +18,6 @@
 #define RUNEOS_PAGING_H
 
 #include <Ember/Enum.h>
-#include <KRE/Memory.h>
 
 #include <KRE/Memory.h>
 

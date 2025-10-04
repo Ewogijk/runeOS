@@ -68,43 +68,37 @@ namespace Rune::CPU {
          * @brief
          * @return The name of the timer device.
          */
-        [[nodiscard]]
-        virtual String get_name() const = 0;
+        [[nodiscard]] virtual auto get_name() const -> String = 0;
 
         /**
          * @brief
          * @return The configured frequency in Hz.
          */
-        [[nodiscard]]
-        U64 get_frequency() const;
+        [[nodiscard]] auto get_frequency() const -> U64;
 
         /**
          * @brief
          * @return The current mode of operation.
          */
-        [[nodiscard]]
-        TimerMode get_mode() const;
+        [[nodiscard]] auto get_mode() const -> TimerMode;
 
         /**
          * @brief
          * @return The quantum each thread gets before being preempted.
          */
-        [[nodiscard]]
-        U64 get_quantum() const;
+        [[nodiscard]] auto get_quantum() const -> U64;
 
         /**
          *
          * @return The time since the timer was started in nanoseconds.
          */
-        [[nodiscard]]
-        virtual U64 get_time_since_start() const = 0;
+        [[nodiscard]] virtual auto get_time_since_start() const -> U64 = 0;
 
         /**
          * @brief Get all threads that have been put to sleep by this timer.
          * @return A list of sleeping threads.
          */
-        [[nodiscard]]
-        virtual LinkedList<SleepingThread> get_sleeping_threads() const = 0;
+        [[nodiscard]] virtual auto get_sleeping_threads() const -> LinkedList<SleepingThread> = 0;
 
         /**
          * @brief Start the timer and thus enabling preemptive multithreading and sleeping for
@@ -122,7 +116,6 @@ namespace Rune::CPU {
          * nanoseconds, that is the maximum time a thread is allowed to run without being preempted.
          * </p>
          *
-         * @param logger
          * @param sched
          * @param mode      Timer mode of operation.
          * @param frequency Requested timer frequency in Hz.
@@ -131,18 +124,15 @@ namespace Rune::CPU {
          * working. False: The timer could not be started, no sleeping and preemptive multithreading
          * is possible.
          */
-        virtual bool start(SharedPointer<Logger> logger,
-                           CPU::Scheduler*       scheduler,
-                           TimerMode             mode,
-                           U64                   frequency,
-                           U64                   quantum) = 0;
+        virtual auto start(CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum)
+            -> bool = 0;
 
         /**
          * @brief Search for a thread with requested ID in the wait queue and remove it if found.
          * @param t_id
          * @return True: The thread is removed, False: It is not.
          */
-        virtual bool remove_sleeping_thread(int t_id) = 0;
+        virtual auto remove_sleeping_thread(int t_id) -> bool = 0;
 
         /**
          * @brief Put the currently running thread to sleep and wake it at the specified wake time.

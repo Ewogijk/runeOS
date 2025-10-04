@@ -48,7 +48,7 @@ void operator delete[](void* p, size_t size) noexcept {
 }
 
 namespace Rune::Memory {
-    constexpr char const* FILE = "Memory";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("MemorySubsystem");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem
@@ -97,11 +97,9 @@ namespace Rune::Memory {
         return true;
     }
 
-    void MemorySubsystem::set_logger(SharedPointer<Logger> logger) {
+    void MemorySubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
         if (!_logger) {
             _logger = logger;
-            _pmm.set_logger(logger);
-            _vmm.set_logger(logger);
         }
     }
 
@@ -116,30 +114,25 @@ namespace Rune::Memory {
     SlabAllocator* MemorySubsystem::get_heap() { return &_heap; }
 
     void MemorySubsystem::log_start_routine_phases() const {
-        _logger->debug(FILE, "The bootloader reclaimable memory has been claimed.");
+        LOGGER->debug("The bootloader reclaimable memory has been claimed.");
 
         MemoryRegion managed = _pmm.get_managed_memory();
-        _logger->debug(FILE,
-                       "Detected physical memory range: {:0=#16x}-{:0=#16x}",
-                       managed.start,
-                       managed.end());
+        LOGGER->debug("Detected physical memory range: {:0=#16x}-{:0=#16x}",
+                      managed.start,
+                      managed.end());
         MemoryRegion memIdx = _pmm.get_memory_index_region();
-        _logger->debug(FILE,
-                       "Physical memory index region: {:0=#16x}-{:0=#16x} (MemorySize: {} bytes)",
-                       memIdx.start,
-                       memIdx.end(),
-                       memIdx.size);
-        _logger->debug(FILE,
-                       "Memory index can be accessed at virtual address: {:0=#16x}",
-                       _pmm.get_memory_index());
+        LOGGER->debug("Physical memory index region: {:0=#16x}-{:0=#16x} (MemorySize: {} bytes)",
+                      memIdx.start,
+                      memIdx.end(),
+                      memIdx.size);
+        LOGGER->debug("Memory index can be accessed at virtual address: {:0=#16x}",
+                      _pmm.get_memory_index());
 
-        _logger->debug(FILE,
-                       "The base page table is located at physical address: {:0=#16x}",
-                       get_base_page_table_address());
+        LOGGER->debug("The base page table is located at physical address: {:0=#16x}",
+                      get_base_page_table_address());
 
-        _logger->debug(FILE, "Bootstrap caches are initialized.");
-        _logger->debug(
-            FILE,
+        LOGGER->debug("Bootstrap caches are initialized.");
+        LOGGER->debug(
             "General purpose and DMA caches are initialized. MemorySize range: {}-{} bytes.",
             _heap.get_min_cache_size(),
             _heap.get_max_cache_size());

@@ -41,7 +41,7 @@ namespace Rune::Memory {
      * memory regions are not accidentally freed.
      */
     class PhysicalMemoryManager {
-        bool detect_memory_range();
+        auto detect_memory_range() -> bool;
 
       protected:
         U64          _page_size; // MemSize of a page frame
@@ -53,20 +53,15 @@ namespace Rune::Memory {
         PMMStartFailure _start_fail;
         U32             _largest_free_block;
 
-        SharedPointer<Logger> _logger;
+        [[nodiscard]] auto to_page_frame(PhysicalAddr addr) const -> PageFrameIndex;
 
-        [[nodiscard]]
-        PageFrameIndex to_page_frame(PhysicalAddr addr) const;
+        [[nodiscard]] auto to_page_frame_round_up(PhysicalAddr addr) const -> PageFrameIndex;
 
-        [[nodiscard]]
-        PageFrameIndex to_page_frame_round_up(PhysicalAddr addr) const;
+        [[nodiscard]] auto to_address(PageFrameIndex page_frame) const -> PhysicalAddr;
 
-        [[nodiscard]]
-        PhysicalAddr to_address(PageFrameIndex page_frame) const;
+        virtual auto compute_memory_index_size() -> MemorySize = 0;
 
-        virtual MemorySize compute_memory_index_size() = 0;
-
-        virtual bool init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) = 0;
+        virtual auto init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) -> bool = 0;
 
       public:
         PhysicalMemoryManager();
@@ -91,14 +86,8 @@ namespace Rune::Memory {
          *
          * @return True if the each step of the initialization was successful.
          */
-        [[nodiscard]]
-        PMMStartFailure start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset);
-
-        /**
-         *
-         * @param logger
-         */
-        void set_logger(SharedPointer<Logger> logger);
+        [[nodiscard]] auto start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset)
+            -> PMMStartFailure;
 
         /**
          * Log the intermediate steps of the start routine.
@@ -109,7 +98,7 @@ namespace Rune::Memory {
          *
          * @return The managed physical memory region.
          */
-        MemoryRegion get_managed_memory() const;
+        [[nodiscard]] auto get_managed_memory() const -> MemoryRegion;
 
         /**
          * After the first initialization phase ended successfully the region will contain a valid
@@ -118,15 +107,13 @@ namespace Rune::Memory {
          *
          * @return The physical memory region where the memory index is saved.
          */
-        [[nodiscard]]
-        virtual MemoryRegion get_memory_index_region() const = 0;
+        [[nodiscard]] virtual auto get_memory_index_region() const -> MemoryRegion = 0;
 
         /**
          *
          * @return The virtual address where the memory index can be accessed.
          */
-        [[nodiscard]]
-        virtual VirtualAddr get_memory_index() const = 0;
+        [[nodiscard]] virtual auto get_memory_index() const -> VirtualAddr = 0;
 
         /**
          * Swap out the current memory index location with the new `memoryIndex`.
@@ -141,7 +128,7 @@ namespace Rune::Memory {
          *
          * @return True if the memory is usable else false.
          */
-        virtual bool claim_boot_loader_reclaimable_memory() = 0;
+        virtual auto claim_boot_loader_reclaimable_memory() -> bool = 0;
 
         /**
          * Try to allocate a single page frame and save the physical start address of it in the
@@ -153,7 +140,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if not enough physical memory is
          * available.
          */
-        bool allocate(PhysicalAddr& p_addr);
+        auto allocate(PhysicalAddr& p_addr) -> bool;
 
         /**
          * Try to allocate the requested number of page frames which are guaranteed to be
@@ -167,7 +154,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if not enough physical memory is
          * available.
          */
-        virtual bool allocate(PhysicalAddr& pAddr, size_t frames) = 0;
+        virtual auto allocate(PhysicalAddr& pAddr, size_t frames) -> bool = 0;
 
         /**
          * Try to allocate the the page frame at the specified physical address.
@@ -178,7 +165,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if not enough physical memory is
          * available.
          */
-        bool allocate_explicit(PhysicalAddr p_addr);
+        auto allocate_explicit(PhysicalAddr p_addr) -> bool;
 
         /**
          * Try to allocate the requested number of page frames starting at the specified physical
@@ -191,7 +178,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if not enough physical memory is
          * available.
          */
-        virtual bool allocate_explicit(PhysicalAddr pAddr, size_t frames) = 0;
+        virtual auto allocate_explicit(PhysicalAddr pAddr, size_t frames) -> bool = 0;
 
         /**
          * Try to free a single page frame with the given start address.<br>
@@ -200,7 +187,7 @@ namespace Rune::Memory {
          *
          * @return True if the free succeeded, false if not enough physical memory is available.
          */
-        bool free(PhysicalAddr p_addr);
+        auto free(PhysicalAddr p_addr) -> bool;
 
         /**
          * Try to free a the requested number of consecutive page frames with the given start
@@ -210,7 +197,7 @@ namespace Rune::Memory {
          *
          * @return True if the free succeeded, false if not enough physical memory is available.
          */
-        virtual bool free(PhysicalAddr p_addr, size_t frames) = 0;
+        virtual auto free(PhysicalAddr p_addr, size_t frames) -> bool = 0;
 
         /**
          * Try to read the status pmm managed memory region from `start` to `end` into the given
@@ -236,10 +223,10 @@ namespace Rune::Memory {
          *
          * @return Number regions read into the buffer.
          */
-        virtual size_t read_page_frame_states(MemoryRegion* buf,
-                                              size_t        buf_size,
-                                              PhysicalAddr  start,
-                                              PhysicalAddr  end) = 0;
+        virtual auto read_page_frame_states(MemoryRegion* buf,
+                                            size_t        buf_size,
+                                            PhysicalAddr  start,
+                                            PhysicalAddr  end) -> size_t = 0;
     };
 } // namespace Rune::Memory
 
