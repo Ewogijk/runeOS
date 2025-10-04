@@ -168,9 +168,7 @@ namespace Rune {
         }
 
       public:
-        Logger(LogEventDistributor*      distributor,
-               const String&             name,
-               const LoggerConfig& config)
+        Logger(LogEventDistributor* distributor, const String& name, const LoggerConfig& config)
             : _distributor(distributor),
               _name(move(name)),
               _config(move(config)) {}
@@ -283,7 +281,7 @@ namespace Rune {
 
         LoggerConfig _default_config;
 
-        LogContext()  = default;
+        LogContext(const LoggerConfig& default_config);
         ~LogContext() = default;
 
         /**
@@ -321,15 +319,11 @@ namespace Rune {
          * @return An instance of the log context.
          */
         static auto instance() -> LogContext& {
-            static LogContext instance;
+            // TODO use compile time configuration with macros??
+            static LogContext instance(
+                {.log_level = LogLevel::TRACE, .layout_ref = "earlyboot", .target_refs = {"e9"}});
             return instance;
         }
-
-        /**
-         * Set the default configuration that will be used when get_logger(const String&) is called.
-         * @param config Default configuration.
-         */
-        void set_default_config(const LoggerConfig& config);
 
         /**
          * Create a new logger instance with the requested configuration.

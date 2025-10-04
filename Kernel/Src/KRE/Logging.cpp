@@ -147,7 +147,7 @@ namespace Rune {
         return filter_list;
     }
 
-    void LogContext::set_default_config(const LoggerConfig& config) { _default_config = config; }
+    LogContext::LogContext(const LoggerConfig& default_config) : _default_config(default_config) {}
 
     auto LogContext::get_logger(const String&             name,
                                 LogLevel                  level,
