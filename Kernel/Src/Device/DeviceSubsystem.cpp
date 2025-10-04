@@ -19,6 +19,8 @@
 #include <Device/PCI.h>
 
 namespace Rune::Device {
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("DeviceSubsystem");
+
     DeviceSubsystem::DeviceSubsystem()
         : Subsystem(),
           _ahci_driver(nullptr),
@@ -30,13 +32,13 @@ namespace Rune::Device {
                                 const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)
         SILENCE_UNUSED(k_subsys_reg)
-        PCI::discover_devices(*_ahci_driver, _logger);
+        PCI::discover_devices(*_ahci_driver);
 
         _keyboard->start();
         return true;
     }
 
-    void DeviceSubsystem::set_logger(SharedPointer<Logger> logger) {
+    void DeviceSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
         if (!_logger) _logger = logger;
     }
 

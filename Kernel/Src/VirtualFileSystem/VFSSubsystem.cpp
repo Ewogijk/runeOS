@@ -19,7 +19,7 @@
 #include <Device/DeviceSubsystem.h>
 
 namespace Rune::VFS {
-    constexpr char const* FILE = "VFS";
+    SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFSSubsystem");
 
     DEFINE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
@@ -27,7 +27,7 @@ namespace Rune::VFS {
     //                                      KernelSubsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void VFSSubsystem::set_logger(SharedPointer<Logger> logger) {
+    void VFSSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
         if (!_logger) _logger = move(logger);
     }
 
@@ -107,24 +107,20 @@ namespace Rune::VFS {
             }
         }
         if (logical_drive == -1) {
-            _logger->critical(FILE, "Cannot mount root directory! No data partition found...");
+            LOGGER->critical("Cannot mount root directory! No data partition found...");
             return false;
         }
         // Mount root directory
         Path        root = Path::ROOT;
         MountStatus ms   = mount(root, logical_drive);
         if (ms != MountStatus::MOUNTED) {
-            _logger->critical(FILE,
-                              "Failed to mount logical drive {} at \"{}\". Mount Status: {}",
-                              root.to_string(),
-                              logical_drive,
-                              ms.to_string());
+            LOGGER->critical("Failed to mount logical drive {} at \"{}\". Mount Status: {}",
+                             root.to_string(),
+                             logical_drive,
+                             ms.to_string());
             return false;
         }
-        _logger->debug(FILE,
-                       "Logical drive {} is mounted at \"{}\".",
-                       logical_drive,
-                       root.to_string());
+        LOGGER->debug("Logical drive {} is mounted at \"{}\".", logical_drive, root.to_string());
 
         // Create system directories
         Path sys_dir = root / "System";
@@ -158,28 +154,26 @@ namespace Rune::VFS {
                 best_fit     = *mp_pair.value;
             }
         }
-        _logger->trace(FILE,
-                       R"(Path "{}" has been resolved to "{}" (Storage Device: {}, Driver: {}))",
-                       path.to_string(),
-                       best_fit.mount_point.to_string(),
-                       best_fit.storage_device,
-                       best_fit.driver_name);
+        LOGGER->trace(R"(Path "{}" has been resolved to "{}" (Storage Device: {}, Driver: {}))",
+                      path.to_string(),
+                      best_fit.mount_point.to_string(),
+                      best_fit.storage_device,
+                      best_fit.driver_name);
         return best_fit;
     }
 
     bool VFSSubsystem::create_system_directory(const Path& path) {
         IOStatus st = create(path, Ember::NodeAttribute::DIRECTORY | Ember::NodeAttribute::SYSTEM);
         if (st != IOStatus::CREATED && st != IOStatus::FOUND) {
-            _logger->critical(FILE,
-                              "Failed to create the \"{}\" directory: {}",
-                              path.to_string(),
-                              st.to_string());
+            LOGGER->critical("Failed to create the \"{}\" directory: {}",
+                             path.to_string(),
+                             st.to_string());
             return false;
         }
         if (st == IOStatus::CREATED)
-            _logger->debug(FILE, "The \"{}\" directory has been created.", path.to_string());
+            LOGGER->debug("The \"{}\" directory has been created.", path.to_string());
         else
-            _logger->debug(FILE, "The \"{}\" directory already exists.", path.to_string());
+            LOGGER->debug("The \"{}\" directory already exists.", path.to_string());
         return true;
     }
 
@@ -203,8 +197,7 @@ namespace Rune::VFS {
 
     LinkedList<String> VFSSubsystem::get_driver_table() const {
         auto dn = LinkedList<String>();
-        for (auto& mpi_p : _mount_point_table)
-            dn.add_back(mpi_p.value->driver_name);
+        for (auto& mpi_p : _mount_point_table) dn.add_back(mpi_p.value->driver_name);
         return dn;
     }
 
@@ -216,12 +209,12 @@ namespace Rune::VFS {
             auto   a       = _driver_table.put(driver->get_name(), move(driver));
             bool   success = a != _driver_table.end();
             if (success)
-                _logger->info(FILE, R"("{}" driver has been registered.)", d_name);
+                LOGGER->info(R"("{}" driver has been registered.)", d_name);
             else
-                _logger->warn(FILE, R"(Failed to register "{}" driver.)", d_name);
+                LOGGER->warn(R"(Failed to register "{}" driver.)", d_name);
             return success;
         } else {
-            _logger->info(FILE, R"("{}" driver is already registered.)", driver->get_name());
+            LOGGER->info(R"("{}" driver is already registered.)", driver->get_name());
             return false;
         }
     }
@@ -231,9 +224,9 @@ namespace Rune::VFS {
 
         bool success = _driver_table.remove(driver->get_name());
         if (success)
-            _logger->info(FILE, R"("{}" driver is no longer registered.)", driver->get_name());
+            LOGGER->info(R"("{}" driver is no longer registered.)", driver->get_name());
         else
-            _logger->info(FILE, R"(Failed to remove "{}" driver.)", driver->get_name());
+            LOGGER->info(R"(Failed to remove "{}" driver.)", driver->get_name());
         return success;
     }
 
@@ -243,8 +236,7 @@ namespace Rune::VFS {
 
     LinkedList<Node*> VFSSubsystem::get_node_table() const {
         LinkedList<Node*> files;
-        for (auto& fe : _node_table)
-            files.add_back(fe.value->get());
+        for (auto& fe : _node_table) files.add_back(fe.value->get());
         return files;
     }
 
@@ -283,8 +275,7 @@ namespace Rune::VFS {
 
     LinkedList<DirectoryStream*> VFSSubsystem::get_directory_stream_table() const {
         LinkedList<DirectoryStream*> dir_streams;
-        for (auto& dse : _dir_stream_table)
-            dir_streams.add_back(dse.value->get());
+        for (auto& dse : _dir_stream_table) dir_streams.add_back(dse.value->get());
         return dir_streams;
     }
 
@@ -311,8 +302,7 @@ namespace Rune::VFS {
 
     LinkedList<MountPointInfo> VFSSubsystem::get_mount_point_table() const {
         auto mpi = LinkedList<MountPointInfo>();
-        for (auto& mpip : _mount_point_table)
-            mpi.add_back(*mpip.value);
+        for (auto& mpip : _mount_point_table) mpi.add_back(*mpip.value);
         return mpi;
     }
 
@@ -331,24 +321,19 @@ namespace Rune::VFS {
     FormatStatus VFSSubsystem::format(const String& driver_name, uint16_t storage_device) const {
         UniquePointer<Driver>* maybe_driver = _driver_table.find(driver_name)->value;
         if (!maybe_driver) {
-            _logger->warn(FILE,
-                          "Unknown driver: {}. Cannot format storage device {}.",
-                          driver_name,
-                          storage_device);
+            LOGGER->warn("Unknown driver: {}. Cannot format storage device {}.",
+                         driver_name,
+                         storage_device);
             return FormatStatus::UNKNOWN_DRIVER;
         }
         FormatStatus st = (*maybe_driver)->format(storage_device);
         if (st == FormatStatus::FORMATTED)
-            _logger->info(FILE,
-                          R"(Storage device {} is now {} formatted.)",
-                          storage_device,
-                          driver_name);
+            LOGGER->info(R"(Storage device {} is now {} formatted.)", storage_device, driver_name);
         else
-            _logger->warn(FILE,
-                          R"(Failed to {} format storage device {}. Format Status: {})",
-                          driver_name,
-                          storage_device,
-                          st.to_string());
+            LOGGER->warn(R"(Failed to {} format storage device {}. Format Status: {})",
+                         driver_name,
+                         storage_device,
+                         st.to_string());
         return st;
     }
 
@@ -356,14 +341,13 @@ namespace Rune::VFS {
         if (!mount_point.is_absolute()) return MountStatus::BAD_PATH;
 
         if (_mount_point_table.is_empty() && !mount_point.is_root()) {
-            _logger->error(FILE,
-                           R"(Cannot mount "{}". The first mount point must always be "/"!)",
-                           mount_point.to_string());
+            LOGGER->error(R"(Cannot mount "{}". The first mount point must always be "/"!)",
+                          mount_point.to_string());
             return MountStatus::MOUNT_ERROR;
         }
 
         if (_mount_point_table.find(mount_point) != _mount_point_table.end()) {
-            _logger->info(FILE, R"("{}" is already mounted)", mount_point.to_string());
+            LOGGER->info(R"("{}" is already mounted)", mount_point.to_string());
             return MountStatus::ALREADY_MOUNTED;
         }
 
@@ -377,8 +361,8 @@ namespace Rune::VFS {
                                                mount_point.relative_to(mpi.mount_point),
                                                dummy);
             if (as != IOStatus::FOUND) {
-                _logger->warn(
-                    FILE,
+                LOGGER->warn(
+
                     R"(Mounting storage device {} on "{}" failed. Mount point does not exist.)",
                     storage_device,
                     mount_point.to_string());
@@ -394,17 +378,16 @@ namespace Rune::VFS {
             if (ms == MountStatus::MOUNTED) {
                 _mount_point_table.put(mount_point,
                                        {mount_point, (*dp.value)->get_name(), storage_device});
-                _logger->info(FILE,
-                              R"(The {} formatted storage device {} is now mounted at "{}")",
-                              (*dp.value)->get_name(),
-                              storage_device,
-                              mount_point.to_string());
+                LOGGER->info(R"(The {} formatted storage device {} is now mounted at "{}")",
+                             (*dp.value)->get_name(),
+                             storage_device,
+                             mount_point.to_string());
                 return ms;
             }
             // Mount error or fs not supported -> Check next driver
         }
-        _logger->warn(
-            FILE,
+        LOGGER->warn(
+
             R"(Failed to mount "{}". The FILEsystem of storage device {} is not supported.)",
             mount_point.to_string(),
             storage_device);
@@ -415,16 +398,13 @@ namespace Rune::VFS {
         if (!mount_point.is_absolute()) return MountStatus::BAD_PATH;
 
         if (mount_point.is_root()) {
-            _logger->warn(FILE,
-                          R"(Cannot unmount "{}". There must always be a root directory!)",
-                          mount_point.to_string());
+            LOGGER->warn(R"(Cannot unmount "{}". There must always be a root directory!)",
+                         mount_point.to_string());
             return MountStatus::BAD_PATH;
         }
 
         if (_mount_point_table.find(mount_point) == _mount_point_table.end()) {
-            _logger->warn(FILE,
-                          R"(Cannot unmount "{}". It is not mounted.)",
-                          mount_point.to_string());
+            LOGGER->warn(R"(Cannot unmount "{}". It is not mounted.)", mount_point.to_string());
             return MountStatus::NOT_MOUNTED;
         }
 
@@ -432,8 +412,8 @@ namespace Rune::VFS {
         UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
         MountStatus            mst    = (*driver)->unmount(mpi.storage_device);
         if (mst != MountStatus::UNMOUNTED) {
-            _logger->warn(
-                FILE,
+            LOGGER->warn(
+
                 R"(Failed to unmount storage device {} from {}. Driver={}, Mount Status={})",
                 mpi.storage_device,
                 mount_point.to_string(),
@@ -443,15 +423,13 @@ namespace Rune::VFS {
         }
         bool success = _mount_point_table.remove(mount_point);
         if (success)
-            _logger->info(FILE,
-                          R"(The {} formatted storage device {} is no longer mounted at "{}")",
-                          mpi.driver_name,
-                          mpi.storage_device,
-                          mount_point.to_string());
+            LOGGER->info(R"(The {} formatted storage device {} is no longer mounted at "{}")",
+                         mpi.driver_name,
+                         mpi.storage_device,
+                         mount_point.to_string());
         else
-            _logger->warn(FILE,
-                          R"(Failed to remove "{}" from the mount point table.)",
-                          mount_point.to_string());
+            LOGGER->warn(R"(Failed to remove "{}" from the mount point table.)",
+                         mount_point.to_string());
         return success ? MountStatus::UNMOUNTED : MountStatus::MOUNT_ERROR;
     }
 
@@ -486,15 +464,13 @@ namespace Rune::VFS {
         IOStatus               st =
             (*driver)->create(mpi.storage_device, path.relative_to(mpi.mount_point), attributes);
         if (st == IOStatus::CREATED)
-            _logger->debug(FILE,
-                           R"(Created FILE "{}" with attributes {:0=#8b})",
-                           path.to_string(),
-                           attributes);
+            LOGGER->debug(R"(Created FILE "{}" with attributes {:0=#8b})",
+                          path.to_string(),
+                          attributes);
         else
-            _logger->debug(FILE,
-                           R"(Failed to create FILE "{}". IO Status: {})",
-                           path.to_string(),
-                           st.to_string());
+            LOGGER->debug(R"(Failed to create FILE "{}". IO Status: {})",
+                          path.to_string(),
+                          st.to_string());
         return st;
     }
 
@@ -503,9 +479,8 @@ namespace Rune::VFS {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         if (!_node_handle_counter.has_more_handles()) {
-            _logger->warn(FILE,
-                          R"(Cannot open "{}". The node handle counter is out of handles!)",
-                          path.to_string());
+            LOGGER->warn(R"(Cannot open "{}". The node handle counter is out of handles!)",
+                         path.to_string());
             return IOStatus::OUT_OF_HANDLES;
         }
 
@@ -527,9 +502,7 @@ namespace Rune::VFS {
                 // Decrement node ref count
                 auto it = _node_ref_table.find(path);
                 if (it == _node_ref_table.end()) {
-                    _logger->error(FILE,
-                                   "Missing node ref table entry for node handle: {}",
-                                   node_handle);
+                    LOGGER->error("Missing node ref table entry for node handle: {}", node_handle);
                     return;
                 }
                 it->value->ref_count--;
@@ -539,24 +512,21 @@ namespace Rune::VFS {
                     bool delete_this = it->value->delete_this;
                     // Remove the Node Ref Table entry
                     if (!_node_ref_table.remove(path))
-                        _logger->warn(FILE,
-                                      "Could not remove node ref table entry for node handle: {}",
-                                      node_handle);
+                        LOGGER->warn("Could not remove node ref table entry for node handle: {}",
+                                     node_handle);
 
                     // Delete the node if it was marked for deletion
                     if (delete_this) {
-                        _logger->trace(FILE,
-                                       "Node handle {} is marked for deletion. Will do now...",
-                                       node_handle);
+                        LOGGER->trace("Node handle {} is marked for deletion. Will do now...",
+                                      node_handle);
                         // Node Ref Table entry is removed -> Will always delete
                         IOStatus rs = delete_node(path);
                         if (rs != IOStatus::DELETED)
-                            _logger->warn(FILE, "Failed to delete '{}'.", path.to_string());
+                            LOGGER->warn("Failed to delete '{}'.", path.to_string());
                         else
-                            _logger->debug(FILE,
-                                           R"(Deleted node handle "{}-{}"...)",
-                                           node_handle,
-                                           path.get_file_name());
+                            LOGGER->debug(R"(Deleted node handle "{}-{}"...)",
+                                          node_handle,
+                                          path.get_file_name());
                     }
                 }
             },
@@ -574,17 +544,15 @@ namespace Rune::VFS {
             else
                 it->value->ref_count++;
 
-            _logger->debug(FILE,
-                           R"(Opened node "{}-{}", RefCount={})",
-                           node_handle,
-                           path.to_string(),
-                           _node_ref_table.find(path)->value->ref_count);
+            LOGGER->debug(R"(Opened node "{}-{}", RefCount={})",
+                          node_handle,
+                          path.to_string(),
+                          _node_ref_table.find(path)->value->ref_count);
         } else {
             _node_handle_counter.release_last_acquired();
-            _logger->debug(FILE,
-                           R"(Failed to open "{}". IOStatus={})",
-                           path.to_string(),
-                           open_status.to_string());
+            LOGGER->debug(R"(Failed to open "{}". IOStatus={})",
+                          path.to_string(),
+                          open_status.to_string());
         }
         return open_status;
     }
@@ -612,10 +580,9 @@ namespace Rune::VFS {
             // open
             for (auto& frte : _node_ref_table) {
                 if (frte.key->relative_to(path).to_string().size() > 0) {
-                    _logger->warn(FILE,
-                                  "Cannot delete '{}' because '{}' is open.",
-                                  path.to_string(),
-                                  frte.key->to_string());
+                    LOGGER->warn("Cannot delete '{}' because '{}' is open.",
+                                 path.to_string(),
+                                 frte.key->to_string());
                     return IOStatus::ACCESS_DENIED;
                 }
             }
@@ -624,15 +591,14 @@ namespace Rune::VFS {
             IOStatus st =
                 (*driver)->delete_node(mpi.storage_device, path.relative_to(mpi.mount_point));
             if (st == IOStatus::DELETED)
-                _logger->trace(FILE, "Deleted '{}'", path.to_string());
+                LOGGER->trace("Deleted '{}'", path.to_string());
             else
-                _logger->trace(FILE,
-                               "Failed to delete '{}'. IO Status: {}",
-                               path.to_string(),
-                               st.to_string());
+                LOGGER->trace("Failed to delete '{}'. IO Status: {}",
+                              path.to_string(),
+                              st.to_string());
             return st;
         } else {
-            _logger->trace(FILE, "Marked '{}' for deletion...", path.to_string());
+            LOGGER->trace("Marked '{}' for deletion...", path.to_string());
             it->value->delete_this = true;
             return IOStatus::DELETED;
         }
@@ -655,10 +621,9 @@ namespace Rune::VFS {
                 _dir_stream_table.remove(dir_stream_handle);
                 fire(EventHook(EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
                      (void*) &dir_stream_handle);
-                _logger->trace(FILE,
-                               R"(Closed directory stream "{}-{}".)",
-                               dir_stream_handle,
-                               path.to_string());
+                LOGGER->trace(R"(Closed directory stream "{}-{}".)",
+                              dir_stream_handle,
+                              path.to_string());
             },
             out);
         if (io_st != IOStatus::OPENED) {
@@ -668,7 +633,7 @@ namespace Rune::VFS {
 
         out->handle = dir_stream_handle;
         out->name   = path.to_string();
-        _logger->trace(FILE, R"(Opened directory stream "{}-{}".)", dir_stream_handle, out->name);
+        LOGGER->trace(R"(Opened directory stream "{}-{}".)", dir_stream_handle, out->name);
         _dir_stream_table.put(dir_stream_handle, out);
         fire(EventHook(EventHook::DIRECTORY_STREAM_OPENED).to_string(), (void*) &dir_stream_handle);
         return io_st;

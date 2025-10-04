@@ -24,6 +24,8 @@
 #include <Device/AHCI/AHCI.h>
 
 namespace Rune::Device {
+    const SharedPointer<Logger> PCI_LOGGER = LogContext::instance().get_logger("PCI");
+
     union CommandRegister {
         U16 AsUInt16 = 0;
         struct {
@@ -79,14 +81,12 @@ namespace Rune::Device {
         U8        max_latency;
     };
 
-
-
     class PCI {
         static constexpr U16 PCI_CONFIG = 0xCF8;
         static constexpr U16 PCI_DATA   = 0xCFC;
 
       public:
-        static U8 read_byte(U8 bus, U8 device, U8 func, U8 offset) {
+        static auto read_byte(U8 bus, U8 device, U8 func, U8 offset) -> U8 {
             CPU::out_dw(PCI_CONFIG,
                         (1 << 31 | (bus << 16) | (device << 11) | (func << 8) | (offset & 0xFC)));
             return CPU::in_b(PCI_DATA + (offset & 0x03));
@@ -98,7 +98,7 @@ namespace Rune::Device {
             CPU::out_b(PCI_DATA + (offset & 0x03), value);
         }
 
-        static U16 read_word(U8 bus, U8 device, U8 func, U8 offset) {
+        static auto read_word(U8 bus, U8 device, U8 func, U8 offset) -> U16 {
             if ((offset & 0x03) > 2) {
                 return (read_byte(bus, device, func, offset + 1) << 8)
                        | read_byte(bus, device, func, offset);
@@ -118,7 +118,7 @@ namespace Rune::Device {
             CPU::out_w(PCI_DATA + (offset & 0x03), value);
         }
 
-        static U32 read_dword(U8 bus, U8 device, U8 func, U8 offset) {
+        static auto read_dword(U8 bus, U8 device, U8 func, U8 offset) -> U32 {
             if ((offset & 0x03) > 0) {
                 return (read_word(bus, device, func, offset + 2) << 16)
                        | read_word(bus, device, func, offset);
@@ -138,7 +138,7 @@ namespace Rune::Device {
             CPU::out_dw(PCI_DATA + (offset & 0x03), value);
         }
 
-        static PCIHeader read_header(U8 bus, U8 device, U8 func) {
+        static auto read_header(U8 bus, U8 device, U8 func) -> PCIHeader {
             return {
                 read_word(bus, device, func, 0x00),
                 read_word(bus, device, func, 0x02),
@@ -155,13 +155,11 @@ namespace Rune::Device {
             };
         }
 
-        static void
-        check_device(AHCIDriver& ahci_driver, SharedPointer<Logger> logger, U8 bus, U8 device) {
+        static void check_device(AHCIDriver& ahci_driver, U8 bus, U8 device) {
             PCIHeader header = read_header(bus, device, 0);
             if (header.vendor_id == 0xFFFF) return;
 
-            logger->debug("PCI",
-                          "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: "
+            PCI_LOGGER->debug("Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: "
                           "{:#x} - Sub Class: {:#x} "
                           "- Programming Interface: {:#x}",
                           bus,
@@ -200,9 +198,8 @@ namespace Rune::Device {
                 volatile auto* hba = reinterpret_cast<HBAMemory*>(
                     Memory::physical_to_virtual_address(ahci_header.bar_5));
                 if (!ahci_driver.start(hba)) {
-                    logger->error("PCI", "Failed to init AHCI");
-                    while (true)
-                        ;
+                    PCI_LOGGER->error("Failed to init AHCI");
+                    while (true);
                 }
             }
 
@@ -211,8 +208,7 @@ namespace Rune::Device {
                     header = read_header(bus, device, 0);
                     if (header.vendor_id == 0xFFFF) continue;
 
-                    logger->debug("PCI",
-                                  "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class "
+                    PCI_LOGGER->debug("Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class "
                                   "Code: {:#x} - Sub "
                                   "Class: {:#x} - Programming Interface: {:#x}",
                                   bus,
@@ -227,10 +223,10 @@ namespace Rune::Device {
             }
         }
 
-        static void discover_devices(AHCIDriver& ahci_driver, SharedPointer<Logger> logger) {
+        static void discover_devices(AHCIDriver& ahci_driver) {
             for (int bus = 0; bus < 255; bus++) {
                 for (int device = 0; device < 32; device++) {
-                    check_device(ahci_driver, logger, bus, device);
+                    check_device(ahci_driver, bus, device);
                 }
             }
         }

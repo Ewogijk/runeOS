@@ -45,7 +45,7 @@ namespace Rune::Device {
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-        void set_logger(SharedPointer<Logger> logger) override;
+        void set_logger(SharedPointer<LegacyLogger> logger) override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Device specific functions

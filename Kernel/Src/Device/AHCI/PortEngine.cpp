@@ -21,7 +21,7 @@
 #include <KRE/Math.h>
 
 namespace Rune::Device {
-    constexpr char const* FILE = "PortEngine";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("PortEngine");
 
     DEFINE_ENUM(PartitionType, PARTITION_TYPES, 0x0) // NOLINT
 
@@ -39,7 +39,6 @@ namespace Rune::Device {
         : _port(nullptr),
           _internal_buf_cache(nullptr),
           _system_memory(nullptr),
-          _logger(nullptr),
           _s64_a(false),
           _heap(nullptr),
           _timer(nullptr) {}
@@ -48,25 +47,23 @@ namespace Rune::Device {
 
     bool PortEngine::is_active() const { return _port && _port->CMD.ST && _port->CMD.FRE; }
 
-    bool PortEngine::scan_device(volatile HBAPort* port, SharedPointer<Logger> logger) {
+    bool PortEngine::scan_device(volatile HBAPort* port) {
         _port   = port;
-        _logger = move(logger);
         DeviceDetection          dev_detect(_port->SSTS.DET);
         InterfacePowerManagement ipm(_port->SSTS.IPM);
         if (dev_detect != DeviceDetection::DEVICE_ACTIVE
             && ipm != InterfacePowerManagement::IPM_ACTIVE) {
-            _logger->debug(FILE, "No device detected...");
+            LOGGER->debug("No device detected...");
             return false;
         }
 
         InterfaceSpeed is(_port->SSTS.SPD);
         SATADeviceType sdt(_port->SIG.AsUInt32);
-        _logger->debug(FILE,
-                       "Active Device detected: {}/{}/{}/{}",
-                       dev_detect.to_string(),
-                       ipm.to_string(),
-                       is.to_string(),
-                       sdt.to_string());
+        LOGGER->debug("Active Device detected: {}/{}/{}/{}",
+                      dev_detect.to_string(),
+                      ipm.to_string(),
+                      is.to_string(),
+                      sdt.to_string());
         return true;
     }
 
@@ -81,32 +78,32 @@ namespace Rune::Device {
 
         _internal_buf_cache = _heap->create_new_cache(Request::INTERNAL_BUF_SIZE, 2, true);
         if (!_internal_buf_cache) {
-            _logger->error(FILE, "Failed to allocate object cache for internal buffers.");
+            LOGGER->error("Failed to allocate object cache for internal buffers.");
             return false;
         }
 
         PhysicalAddr p_clb;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL),
                                                  p_clb)) {
-            _logger->error(FILE, "Failed to get physical address of command list...");
+            LOGGER->error("Failed to get physical address of command list...");
             return false;
         }
 
         PhysicalAddr p_fb;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS),
                                                  p_fb)) {
-            _logger->error(FILE, "Failed to get physical address of received FIS...");
+            LOGGER->error("Failed to get physical address of received FIS...");
             return false;
         }
 
         _port->CLB.AsUInt32 = (U32) p_clb;
         _port->FB.AsUInt32  = (U32) p_fb;
         if (_port->CLB.Reserved != 0) {
-            _logger->error(FILE, "Command list base address is not 1024 byte aligned!");
+            LOGGER->error("Command list base address is not 1024 byte aligned!");
             return false;
         }
         if (_port->FB.Reserved != 0) {
-            _logger->error(FILE, "Received FIS base address is not 256 byte aligned!");
+            LOGGER->error("Received FIS base address is not 256 byte aligned!");
             return false;
         }
 #ifdef IS_64_BIT
@@ -116,8 +113,7 @@ namespace Rune::Device {
         }
 #endif
 
-        while (_port->CMD.CR)
-            ;
+        while (_port->CMD.CR);
 
         _port->SERR.AsUInt32 = (U32) -1;
         _port->CMD.FRE       = 1;
@@ -125,7 +121,7 @@ namespace Rune::Device {
 
         U16 buf[256];
         if (send_ata_command(buf, 512, RegisterHost2DeviceFIS::IdentifyDevice()) == 0) {
-            _logger->error(FILE, "Failed to get disk info.");
+            LOGGER->error("Failed to get disk info.");
             stop();
             return false;
         }
@@ -149,8 +145,8 @@ namespace Rune::Device {
         // Scan for partitions
         Function<size_t(U8[], size_t, U64)> sectorReader =
             [this](U8 buf[], size_t bufSize, U64 lba) { return read(buf, bufSize, lba); };
-        GPTScanResult scan_res = gpt_scan_device(_logger, sectorReader, _disk_info.sector_size);
-        _logger->debug(FILE, "GPT Scan Status: {}", scan_res.status.to_string());
+        GPTScanResult scan_res = gpt_scan_device(sectorReader, _disk_info.sector_size);
+        LOGGER->debug("GPT Scan Status: {}", scan_res.status.to_string());
         if (scan_res.status == GPTScanStatus::DETECTED) {
             for (auto& partition : scan_res.partition_table) {
                 bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf,
@@ -203,8 +199,7 @@ namespace Rune::Device {
         _timer->sleep_milli(1);
         _port->SCTL.DET = 0;
 
-        while (_port->SSTS.DET != 3)
-            ; // Wait until port reset finished
+        while (_port->SSTS.DET != 3); // Wait until port reset finished
         _port->SERR.AsUInt32 = (U32) -1;
         return true;
     }
@@ -251,14 +246,12 @@ namespace Rune::Device {
 
         if (_system_memory->CL[slot].W) memcpy(request.internal_buf, request.buf, request.buf_size);
 
-        while (_port->TFD.STS.BSY || _port->TFD.STS.DRQ)
-            ;
+        while (_port->TFD.STS.BSY || _port->TFD.STS.DRQ);
 
         request.status.Issued  = 1;
         _port->CI             |= 1 << slot;
 
-        while (_port->CI && !_port->IS.TFES)
-            ;
+        while (_port->CI && !_port->IS.TFES);
 
         if (!_port->IS.TFES && !_system_memory->CL[slot].W)
             memcpy(request.buf, request.internal_buf, request.buf_size);
