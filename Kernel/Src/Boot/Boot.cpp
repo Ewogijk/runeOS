@@ -68,7 +68,7 @@ namespace Rune {
      * Only the memory subsystem is statically allocated because other subsystems (may) need the
      * kernel heap.
      */
-    Memory::MemorySubsystem MEMORY_SUBSYSTEM = Memory::MemorySubsystem();
+    Memory::MemorySubsystem* MEMORY_SUBSYSTEM = nullptr;
 
     constexpr size_t  SUBSYSTEM_COUNT                    = 6;
     Subsystem*        KERNEL_SUBSYSTEMS[SUBSYSTEM_COUNT] = {};
@@ -136,8 +136,8 @@ namespace Rune {
         SYSTEM_LOGGER->info("Loaded by {} - v{}",
                             BOOT_INFO.boot_loader_name,
                             BOOT_INFO.boot_loader_version);
-        SYSTEM_LOGGER->info("Subsystem started: {}", MEMORY_SUBSYSTEM.get_name().to_cstr());
-        MEMORY_SUBSYSTEM.log_start_routine_phases();
+        SYSTEM_LOGGER->info("Subsystem started: {}", MEMORY_SUBSYSTEM->get_name().to_cstr());
+        MEMORY_SUBSYSTEM->log_start_routine_phases();
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -201,19 +201,24 @@ namespace Rune {
         // Kernel boot Phase 1 is still running on the implicit Bootstrap Thread using the
         // bootloader resources Main goal here is to set up memory management, interrupts and
         // scheduling asap
-        BOOT_INFO = {boot_loader_info.boot_loader_name,
-                     boot_loader_info.boot_loader_version,
-                     boot_loader_info.physical_memory_map,
-                     boot_loader_info.framebuffer,
-                     boot_loader_info.base_page_table_addr,
-                     boot_loader_info.stack};
 
-        if (!MEMORY_SUBSYSTEM.start(boot_loader_info, K_SUBSYS_REG))
+        static Memory::MemorySubsystem mem_subsys_tmp;
+        if (!mem_subsys_tmp.start(boot_loader_info, K_SUBSYS_REG))
             while (true) CPU::halt();
+
+        MEMORY_SUBSYSTEM = &mem_subsys_tmp;
+        call_global_constructors();
+
+        BOOT_INFO = {boot_loader_info.boot_loader_name,
+             boot_loader_info.boot_loader_version,
+             boot_loader_info.physical_memory_map,
+             boot_loader_info.framebuffer,
+             boot_loader_info.base_page_table_addr,
+             boot_loader_info.stack};
 
         // Allocate the kernel subsystems - We do this here because the log registry needs an
         // allocated FILE subsystem
-        KERNEL_SUBSYSTEMS[0] = &MEMORY_SUBSYSTEM;
+        KERNEL_SUBSYSTEMS[0] = MEMORY_SUBSYSTEM;
         KERNEL_SUBSYSTEMS[1] = new CPU::CPUSubsystem();
         KERNEL_SUBSYSTEMS[2] = new Device::DeviceSubsystem();
         KERNEL_SUBSYSTEMS[3] = new VFS::VFSSubsystem();
@@ -230,10 +235,10 @@ namespace Rune {
             LogContext::instance().get_logger("System", KERNEL_LOG_LEVEL, "earlyboot", {"e9"});
 
         LOG_REG.init(K_SUBSYS_REG.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS), Path("/System"));
-        MEMORY_SUBSYSTEM.set_logger(
+        MEMORY_SUBSYSTEM->set_logger(
             LOG_REG.build_logger(KERNEL_LOG_LEVEL,
-                                 Path(MEMORY_SUBSYSTEM.get_name())
-                                     / (MEMORY_SUBSYSTEM.get_name() + LOG_FILE_EXTENSION)));
+                                 Path(MEMORY_SUBSYSTEM->get_name())
+                                     / (MEMORY_SUBSYSTEM->get_name() + LOG_FILE_EXTENSION)));
 #ifdef QEMU_HOST
         // Enable Serial logging via E9 port on Qemu
         turn_on_serial_logging(UniquePointer<TextStream>(new CPU::E9Stream()));

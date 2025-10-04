@@ -16,38 +16,44 @@
 
 #include "X64Core.h"
 
+#include "CPUID.h"
+
 #include "Interrupt/IDT.h"
 
 namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CPUID Features
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //
+    // String get_vendor() {
+    //     CPUIDResponse cpuid_response;
+    //     make_cpuid_request(0x0, &cpuid_response);
+    //     char buf[13];
+    //     buf[0]  = (char) ((cpuid_response.rbx >> 0) & 0xFF);
+    //     buf[1]  = (char) ((cpuid_response.rbx >> 8) & 0xFF);
+    //     buf[2]  = (char) ((cpuid_response.rbx >> 16) & 0xFF);
+    //     buf[3]  = (char) ((cpuid_response.rbx >> 24) & 0xFF);
+    //     buf[4]  = (char) ((cpuid_response.rdx >> 0) & 0xFF);
+    //     buf[5]  = (char) ((cpuid_response.rdx >> 8) & 0xFF);
+    //     buf[6]  = (char) ((cpuid_response.rdx >> 16) & 0xFF);
+    //     buf[7]  = (char) ((cpuid_response.rdx >> 24) & 0xFF);
+    //     buf[8]  = (char) ((cpuid_response.rcx >> 0) & 0xFF);
+    //     buf[9]  = (char) ((cpuid_response.rcx >> 8) & 0xFF);
+    //     buf[10] = (char) ((cpuid_response.rcx >> 16) & 0xFF);
+    //     buf[11] = (char) ((cpuid_response.rcx >> 24) & 0xFF);
+    //     buf[12] = 0;
+    //     return {buf};
+    // }
+    //
+    // U8 get_physical_address_width() {
+    //     CPUIDResponse cpuid_response;
+    //     make_cpuid_request(0x80000008, &cpuid_response);
+    //     return cpuid_response.rax & 0xFF;
+    // }
 
-    String get_vendor() {
-        CPUIDResponse cpuid_response;
-        make_cpuid_request(0x0, &cpuid_response);
-        char buf[13];
-        buf[0]  = (char) ((cpuid_response.rbx >> 0) & 0xFF);
-        buf[1]  = (char) ((cpuid_response.rbx >> 8) & 0xFF);
-        buf[2]  = (char) ((cpuid_response.rbx >> 16) & 0xFF);
-        buf[3]  = (char) ((cpuid_response.rbx >> 24) & 0xFF);
-        buf[4]  = (char) ((cpuid_response.rdx >> 0) & 0xFF);
-        buf[5]  = (char) ((cpuid_response.rdx >> 8) & 0xFF);
-        buf[6]  = (char) ((cpuid_response.rdx >> 16) & 0xFF);
-        buf[7]  = (char) ((cpuid_response.rdx >> 24) & 0xFF);
-        buf[8]  = (char) ((cpuid_response.rcx >> 0) & 0xFF);
-        buf[9]  = (char) ((cpuid_response.rcx >> 8) & 0xFF);
-        buf[10] = (char) ((cpuid_response.rcx >> 16) & 0xFF);
-        buf[11] = (char) ((cpuid_response.rcx >> 24) & 0xFF);
-        buf[12] = 0;
-        return {buf};
-    }
-
-    U8 get_physical_address_width() {
-        CPUIDResponse cpuid_response;
-        make_cpuid_request(0x80000008, &cpuid_response);
-        return cpuid_response.rax & 0xFF;
-    }
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  Model Specific Registers
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     DEFINE_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0)
 
@@ -65,7 +71,7 @@ namespace Rune::CPU {
     X64Core::X64Core(U8 core_id) : _core_id(core_id), _kgs_base(0), _gs_base(0) {}
 
     bool X64Core::init() {
-        if (!cpuid_supported()) return false;
+        if (!cpuid_is_supported()) return false;
 
         // NOTE: comment not valid anymore but too lazy to remove
         // We set the GDT members here instead of the constructor, because we need to init
@@ -102,9 +108,9 @@ namespace Rune::CPU {
 
     U8 X64Core::get_id() { return _core_id; }
 
-    TechSpec X64Core::get_tech_spec() { return {get_vendor(), "", ""}; }
+    TechSpec X64Core::get_tech_spec() { return {cpuid_get_vendor(), "", ""}; }
 
-    ArchSpec X64Core::get_arch_details() { return {get_physical_address_width()}; }
+    ArchSpec X64Core::get_arch_details() { return {cpuid_get_physical_address_width()}; }
 
     PrivilegeLevel X64Core::get_current_privilege_level() {
         U8 ring = read_cs() & 0x3; // Bits 0-1 encode the current privilege level

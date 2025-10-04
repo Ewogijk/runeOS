@@ -20,8 +20,8 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-#include <KRE/String.h>
 #include <KRE/Stream.h>
+#include <KRE/String.h>
 
 #include <KRE/Memory.h>
 
@@ -210,9 +210,9 @@ namespace Rune::CPU {
         friend bool operator!=(const Thread& one, const Thread& two);
     };
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Core API
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Core API
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
      * @brief Technical specs of the CPU.
@@ -268,37 +268,37 @@ namespace Rune::CPU {
          * @brief Setup CPU specific data structures for this core.
          * @return True: The CPU core is initialized. False: Initialization of this core failed.
          */
-        virtual bool init() = 0;
+        virtual auto init() -> bool = 0;
 
         /**
          * @brief Get the unique ID of this CPU core.
          * @return The core ID.
          */
-        virtual U8 get_id() = 0;
+        virtual auto get_id() -> U8 = 0;
 
         /**
          * @brief Get technical specs of the CPU like the model, etc.
          * @return
          */
-        virtual TechSpec get_tech_spec() = 0;
+        virtual auto get_tech_spec() -> TechSpec = 0;
 
         /**
          * @brief Get the architectural specs of the CPU like the physical address width, etc.
          * @return
          */
-        virtual ArchSpec get_arch_details() = 0;
+        virtual auto get_arch_details() -> ArchSpec = 0;
 
         /**
          * @brief
          * @return The privilege level at which the core currently runs.
          */
-        virtual PrivilegeLevel get_current_privilege_level() = 0;
+        virtual auto get_current_privilege_level() -> PrivilegeLevel = 0;
 
         /**
          * @brief Get the interrupt vector table of the core.
          * @return The interrupt vector table.
          */
-        virtual LinkedList<InterruptVector> get_interrupt_vector_table() = 0;
+        virtual auto get_interrupt_vector_table() -> LinkedList<InterruptVector> = 0;
 
         /**
          * @brief Write the current values of general purpose registers and CPU specific structures
@@ -350,26 +350,32 @@ namespace Rune::CPU {
      * @return True: All CPU features are initialized. False: Failed to initialize the CPU, the
      * kernel boot must be halted.
      */
-    bool init_bootstrap_core();
+    auto init_bootstrap_core() -> bool;
 
     /**
      * @brief Try to detect and then initialize all other CPU cores on the device.
      * @return True: All other CPU cores have been initialized and are running. False: At least one
      * CPU core could not be initialized.
      */
-    bool init_other_cores();
+    auto init_other_cores() -> bool;
 
     /**
      * @brief The CPU core that is currently running the calling code.
      * @return
      */
-    Core* current_core();
+    auto current_core() -> Core*;
 
     /**
      * @brief The core table contains all other detected CPU cores including the bootstrap core.
      * @return A list of all detected CPU cores.
      */
-    LinkedList<Core*> get_core_table();
+    auto get_core_table() -> LinkedList<Core*>;
+
+    /**
+     *
+     * @return The size of a physical address in bits.
+     */
+    auto get_physical_address_width() -> U8;
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Assembly Stuff
@@ -378,7 +384,7 @@ namespace Rune::CPU {
     /**
      * @return The current value of the stack pointer.
      */
-    CLINK Register get_stack_pointer();
+    CLINK auto get_stack_pointer() -> Register;
 
     /**
      * halt the CPU until an interrupt occurs.
@@ -391,7 +397,9 @@ namespace Rune::CPU {
      * Important: The returned virtual address is only valid during handling of a page fault
      * otherwise the virtual address is undefined.
      */
-    CLINK Register get_page_fault_address();
+    CLINK auto get_page_fault_address() -> Register;
+
+
 } // namespace Rune::CPU
 
 #endif // RUNEOS_CPU_H

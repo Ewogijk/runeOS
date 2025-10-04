@@ -65,7 +65,20 @@ CLINK void __cxa_pure_virtual(); //NOLINT
 //                               Stack smash protection
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-CLINK void __stack_chk_fail(void); //NOLINT
+CLINK void __stack_chk_fail(void); // NOLINT
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+//                              Other compiler requirements
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+/**
+ * Normally: Register a function to be called at normal program termination.
+ * But we simply implement the function stub because the compiler requires this function when
+ * static local variables are declared.
+ * @param func
+ * @return
+ */
+auto atexit(void (*func)()) -> int;
 
 namespace Rune {
 

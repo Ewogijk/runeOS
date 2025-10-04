@@ -26,6 +26,8 @@ sources = [
     target_env.File("CPU/Threading/Stack.cpp"),
     target_env.File("CPU/CPU.cpp"),
     target_env.File("CPU/CPU-a.asm"),
+    target_env.File("CPU/CPUID.cpp"),
+    target_env.File("CPU/CPUID-a.asm"),
     target_env.File("CPU/GDT.cpp"),
     target_env.File("CPU/GDT-a.asm"),
     target_env.File("CPU/IO-a.asm"),

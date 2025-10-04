@@ -16,6 +16,7 @@
 
 #include <CPU/CPU.h>
 
+#include "CPUID.h"
 #include "X64Core.h"
 
 #include <KRE/Collections/LinkedList.h>
@@ -42,4 +43,7 @@ namespace Rune::CPU {
     Core* current_core() { return &BOOTSTRAP_CORE; }
 
     LinkedList<Core*> get_core_table() { return CORES; }
+
+    auto get_physical_address_width() -> U8 { return cpuid_get_physical_address_width(); }
+
 } // namespace Rune::CPU

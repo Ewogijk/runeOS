@@ -20,9 +20,6 @@
 #include <Ember/Ember.h>
 
 namespace Rune {
-
-    CLINK void call_global_constructors();
-
     /**
      * @brief Kernel entry point for the boot loader.
      */
