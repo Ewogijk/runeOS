@@ -18,7 +18,8 @@ namespace Rune {
      * @brief A linked list node with an element.
      * @tparam T
      */
-    template <typename T> struct Node {
+    template <typename T>
+    struct Node {
         T        element;
         Node<T>* previous = nullptr;
         Node<T>* next     = nullptr;
@@ -26,7 +27,8 @@ namespace Rune {
         explicit Node(T element) : element(move(element)) {}
     };
 
-    template <typename T> class LinkedListIterator {
+    template <typename T>
+    class LinkedListIterator {
         Node<T>* _current;
 
       public:
@@ -66,7 +68,8 @@ namespace Rune {
     /**
      * Linked list implementation.
      */
-    template <typename T> class LinkedList {
+    template <typename T>
+    class LinkedList {
         Node<T>* _head;
         Node<T>* _tail;
         size_t   _size{0};
@@ -173,9 +176,13 @@ namespace Rune {
       public:
         explicit LinkedList() : _head(nullptr), _tail(nullptr) {}
 
+        LinkedList(std::initializer_list<T> values) : _head(nullptr), _tail(nullptr) {
+            for (const auto& value : values) add_back(value);
+        }
+
         ~LinkedList() { free_nodes(); }
 
-        LinkedList(const LinkedList<T>& other) noexcept  { copy(other); }
+        LinkedList(const LinkedList<T>& other) noexcept { copy(other); }
 
         auto operator=(const LinkedList<T>& other) noexcept -> LinkedList& {
             if (this == &other) {
@@ -366,8 +373,8 @@ namespace Rune {
                 return nullptr;
             }
 
-            size_t   c_idx  = 0;
-            Node<T>* curr = _head;
+            size_t   c_idx = 0;
+            Node<T>* curr  = _head;
             while (curr && c_idx < idx) {
                 curr = curr->next;
                 c_idx++;

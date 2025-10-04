@@ -742,7 +742,9 @@ namespace Rune {
             new (&_data) T(obj);
         }
 
-        Optional(const NullOptional& null_opt) noexcept {}
+        Optional(const NullOptional& null_opt) noexcept {
+            SILENCE_UNUSED(null_opt)
+        }
 
         Optional(const Optional& other) : _has_value(other._has_value) {
             if (other._has_value) {
@@ -783,19 +785,19 @@ namespace Rune {
          *
          * @return True: The optional contains a value, False: The optional contains no value.
          */
-        constexpr explicit operator bool() { return !_has_value; }
+        constexpr explicit operator bool() { return _has_value; }
 
         /**
          *
          * @return True: The optional contains a value, False: The optional contains no value.
          */
-        [[nodiscard]] constexpr auto has_value() const -> bool { return !_has_value; }
+        [[nodiscard]] constexpr auto has_value() const -> bool { return _has_value; }
 
         /**
          *
          * @return True: The optional contains a value, False: The optional contains no value.
          */
-        [[nodiscard]] constexpr auto has_value() -> bool { return !_has_value; }
+        [[nodiscard]] constexpr auto has_value() -> bool { return _has_value; }
 
         /**
          * If the optional does not contain a value, empty() == true, then the behavior is not
