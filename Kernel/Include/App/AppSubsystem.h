@@ -104,7 +104,7 @@ namespace Rune::App {
 
         bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
-        void set_logger(SharedPointer<Logger> logger) override;
+        void set_logger(SharedPointer<LegacyLogger> logger) override;
 
         /**
          *

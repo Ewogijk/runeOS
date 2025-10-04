@@ -16,13 +16,13 @@
 
 #include <App/ELFLoader.h>
 
-#include <KRE/Utility.h>
 #include <KRE/Math.h>
+#include <KRE/Utility.h>
 
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::App {
-    constexpr char const* FILE = "ELFLoader";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("ELFLoader");
 
     bool ELFLoader::get_next_buffer() {
         VFS::NodeIOResult io_res = _elf_file->read(_file_buf, BUF_SIZE);
@@ -53,10 +53,7 @@ namespace Rune::App {
         VFS::NodeIOResult fa   = _elf_file->seek(Ember::SeekMode::BEGIN, byte_count);
         bool              good = fa.status == VFS::NodeIOStatus::OKAY;
         if (!good)
-            _logger->warn(FILE,
-                          "Failed to seek {} bytes. Actual seeked: {}",
-                          byte_count,
-                          fa.byte_count);
+            LOGGER->warn("Failed to seek {} bytes. Actual seeked: {}", byte_count, fa.byte_count);
 
         return good && get_next_buffer();
     }
@@ -65,7 +62,7 @@ namespace Rune::App {
         // Verify the ELF identification
         ELFIdentification elf_ident;
         if (read_bytes(&elf_ident, sizeof(ELFIdentification)) < sizeof(ELFIdentification)) {
-            _logger->warn(FILE, "Failed to read the ELF identification.");
+            LOGGER->warn("Failed to read the ELF identification.");
             return LoadStatus::BAD_HEADER;
         }
         if (elf_ident.mag_0 != 0x7f || elf_ident.mag_1 != 'E' || elf_ident.mag_2 != 'L'
@@ -75,14 +72,14 @@ namespace Rune::App {
                                 static_cast<char>(elf_ident.mag_2),
                                 static_cast<char>(elf_ident.mag_3),
                                 '\0'};
-            _logger->warn(FILE, "Invalid ELF magic. Expected: 0xELF, Is: {}", is);
+            LOGGER->warn("Invalid ELF magic. Expected: 0xELF, Is: {}", is);
             return LoadStatus::BAD_HEADER;
         }
         if (elf_ident.clazz == Class::NONE) {
-            _logger->warn(FILE, "Invalid ELF FILE type: {}", Class(elf_ident.clazz).to_string());
+            LOGGER->warn("Invalid ELF FILE type: {}", Class(elf_ident.clazz).to_string());
             return LoadStatus::BAD_HEADER;
         } else if (elf_ident.clazz == Class::ELF32) {
-            _logger->warn(FILE, "ELF32 is not supported.");
+            LOGGER->warn("ELF32 is not supported.");
             return LoadStatus::BAD_HEADER;
         }
 
@@ -91,26 +88,24 @@ namespace Rune::App {
         if (read_bytes(&reinterpret_cast<U8*>(&elf_64_header)[sizeof(ELFIdentification)],
                        sizeof(ELF64Header) - sizeof(ELFIdentification))
             < sizeof(ELF64Header) - sizeof(ELFIdentification)) {
-            _logger->error(FILE, "Failed to read ELF64 header.");
+            LOGGER->error("Failed to read ELF64 header.");
             return LoadStatus::BAD_HEADER;
         }
         if (ObjectFileType(elf_64_header.type) != ObjectFileType::EXEC) {
-            _logger->error(FILE,
-                           "Unsupported object FILE type: {}",
-                           ObjectFileType(elf_64_header.type).to_string());
+            LOGGER->error("Unsupported object FILE type: {}",
+                          ObjectFileType(elf_64_header.type).to_string());
             return LoadStatus::BAD_HEADER;
         }
         if (elf_64_header.entry
             > _memory_subsys->get_virtual_memory_manager()->get_user_space_end()) {
-            _logger->error(FILE, "Entry points to kernel memory: {:0=#16x}", elf_64_header.entry);
+            LOGGER->error("Entry points to kernel memory: {:0=#16x}", elf_64_header.entry);
             return LoadStatus::BAD_HEADER;
         }
 
         // Load the program headers
         if (!seek(elf_64_header.ph_offset)) {
-            _logger->error(FILE,
-                           "Failed to skip {:0=#16x} bytes to program headers.",
-                           elf_64_header.ph_offset);
+            LOGGER->error("Failed to skip {:0=#16x} bytes to program headers.",
+                          elf_64_header.ph_offset);
             return LoadStatus::BAD_SEGMENT;
         }
 
@@ -121,14 +116,14 @@ namespace Rune::App {
         for (size_t i = 0; i < elf_64_header.ph_count; i++) {
             ELF64ProgramHeader elf_64_ph;
             if (read_bytes(&elf_64_ph, elf_64_header.ph_entry_size) < elf_64_header.ph_entry_size) {
-                _logger->error(FILE, "Failed to read program header {}", i);
+                LOGGER->error("Failed to read program header {}", i);
                 return LoadStatus::BAD_SEGMENT;
             }
             const auto st = SegmentType(elf_64_ph.type);
 
             if (elf_64_ph.virtual_address + elf_64_ph.memory_size > userspace_end
                 || elf_64_ph.virtual_address > userspace_end) {
-                _logger->error(FILE, "PH {}: {:0=#16x}-{:0=#16x} intersects kernel memory.", i);
+                LOGGER->error("PH {}: {:0=#16x}-{:0=#16x} intersects kernel memory.", i);
                 return LoadStatus::BAD_SEGMENT;
             }
             program_headers.add_back(elf_64_ph);
@@ -136,21 +131,21 @@ namespace Rune::App {
         }
         if (program_headers.is_empty()) {
             // Need at least one loadable PH
-            _logger->error(FILE, "No loadable program headers found.");
+            LOGGER->error("No loadable program headers found.");
             return LoadStatus::BAD_SEGMENT;
         }
 
         // Parse vendor information
         if (SegmentType(note_ph.type) == SegmentType::NOTE) {
             if (!seek(note_ph.offset)) {
-                _logger->error(FILE, "Failed to skip to Note PH content.");
+                LOGGER->error("Failed to skip to Note PH content.");
                 return LoadStatus::BAD_VENDOR_INFO;
             }
 
             constexpr U8 note_header_size = 12;
             U8*          note_header[note_header_size];
             if (!read_bytes(note_header, note_header_size)) {
-                _logger->error(FILE, "Failed to read note PH header.");
+                LOGGER->error("Failed to read note PH header.");
                 return LoadStatus::BAD_VENDOR_INFO;
             }
             const auto bo = ByteOrder(elf_64_header.identification.data);
@@ -159,7 +154,7 @@ namespace Rune::App {
                      ? LittleEndian::to_U32(reinterpret_cast<const U8*>(&note_header[8]))
                      : BigEndian::to_U32(reinterpret_cast<const U8*>(&note_header[8]));
             if (type != 1) {
-                _logger->error(FILE, "Unsupported note type: {}", type);
+                LOGGER->error("Unsupported note type: {}", type);
                 return LoadStatus::BAD_VENDOR_INFO;
             }
             const U32 name_size = bo == ByteOrder::LITTLE_ENDIAN
@@ -174,7 +169,7 @@ namespace Rune::App {
                 memory_align(name_size, 4, true) + memory_align(desc_size, 4, true);
             U8* name_desc_buffer[name_desc_size];
             if (!read_bytes(name_desc_buffer, name_desc_size)) {
-                _logger->error(FILE, "Failed to read note Name and Desc fields.");
+                LOGGER->error("Failed to read note Name and Desc fields.");
                 return LoadStatus::BAD_VENDOR_INFO;
             }
             elf_file.vendor = reinterpret_cast<const char*>(name_desc_buffer);
@@ -227,11 +222,10 @@ namespace Rune::App {
                                   | Memory::PageFlag::USER_MODE_ACCESS;
 
             if (!vmm->allocate(v_start, flags, num_pages)) {
-                _logger->error(FILE,
-                               "PH{}: Failed to allocate {:0=#16x}-{:0=#16x}",
-                               i,
-                               v_start,
-                               v_start + num_pages * Memory::get_page_size());
+                LOGGER->error("PH{}: Failed to allocate {:0=#16x}-{:0=#16x}",
+                              i,
+                              v_start,
+                              v_start + num_pages * Memory::get_page_size());
                 // The pages of the current program header are already freed
                 // -> Need to only free the pages of prior program headers
                 for (size_t j = 0; j < i; j++) {
@@ -244,11 +238,10 @@ namespace Rune::App {
                         div_round_up(ph_old->memory_size, Memory::get_page_size());
 
                     if (!vmm->free(v_start_old, num_pages_old)) {
-                        _logger->warn(FILE,
-                                      "PH{}: Failed to free {:0=#16x}-{:0=#16x}",
-                                      j,
-                                      v_start_old,
-                                      v_start_old + num_pages_old * Memory::get_page_size());
+                        LOGGER->warn("PH{}: Failed to free {:0=#16x}-{:0=#16x}",
+                                     j,
+                                     v_start_old,
+                                     v_start_old + num_pages_old * Memory::get_page_size());
                     }
                 }
                 return false;
@@ -265,10 +258,7 @@ namespace Rune::App {
 
             // Skip to PH content in FILE
             if (!seek(ph->offset)) {
-                _logger->error(FILE,
-                               "Failed to skip {:0=#16x} bytes to PH{} content.",
-                               ph->offset,
-                               i);
+                LOGGER->error("Failed to skip {:0=#16x} bytes to PH{} content.", ph->offset, i);
                 return false;
             }
 
@@ -335,10 +325,9 @@ namespace Rune::App {
                            Memory::PageFlag::PRESENT | Memory::PageFlag::WRITE_ALLOWED
                                | Memory::PageFlag::USER_MODE_ACCESS,
                            stack_and_bootstrap_area_size / Memory::get_page_size())) {
-            _logger->error(FILE,
-                           "Stack and bootstrap area allocation failed: {:0=#16x}-{:0=#16x}",
-                           stack_and_bootstrap_area_begin,
-                           stack_and_bootstrap_area_begin + stack_and_bootstrap_area_size);
+            LOGGER->error("Stack and bootstrap area allocation failed: {:0=#16x}-{:0=#16x}",
+                          stack_and_bootstrap_area_begin,
+                          stack_and_bootstrap_area_begin + stack_and_bootstrap_area_size);
             return nullptr;
         }
         const VirtualAddr bootstrap_area_begin = stack_and_bootstrap_area_begin + stack_size;
@@ -380,17 +369,14 @@ namespace Rune::App {
         return start_info;
     }
 
-    ELFLoader::ELFLoader(Memory::MemorySubsystem* memory_subsys,
-                         VFS::VFSSubsystem*       vfs_subsys,
-                         SharedPointer<Logger>    logger)
+    ELFLoader::ELFLoader(Memory::MemorySubsystem*    memory_subsys,
+                         VFS::VFSSubsystem*          vfs_subsys)
         : _buf_pos(0),
           _buf_limit(0),
           _file_buf(),
           _memory_subsys(memory_subsys),
           _vfs_subsys(vfs_subsys),
-          _logger(move(logger)),
-          _elf_file() {
-    }
+          _elf_file() {}
 
     LoadStatus ELFLoader::load(const Path&                executable,
                                char*                      args[],
@@ -401,7 +387,7 @@ namespace Rune::App {
         if (const VFS::IOStatus io_status =
                 _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {
-            _logger->error(FILE, "Failed to open {}.", executable.to_string());
+            LOGGER->error("Failed to open {}.", executable.to_string());
             return LoadStatus::IO_ERROR;
         }
 
@@ -420,7 +406,7 @@ namespace Rune::App {
             base_pt_addr = curr_app_vas;
         } else {
             if (!vmm->allocate_virtual_address_space(base_pt_addr)) {
-                _logger->error(FILE, "Failed to allocate virtual address space.");
+                LOGGER->error("Failed to allocate virtual address space.");
                 return LoadStatus::MEMORY_ERROR;
             }
             vmm->load_virtual_address_space(base_pt_addr);
@@ -428,19 +414,19 @@ namespace Rune::App {
 
         VirtualAddr heap_start = 0x0;
         if (!allocate_segments(elf64_file, heap_start)) {
-            _logger->error(FILE, "Segment memory allocation failed.");
+            LOGGER->error("Segment memory allocation failed.");
             return LoadStatus::MEMORY_ERROR;
         }
 
         if (!load_segments(elf64_file)) {
-            _logger->error(FILE, "Failed to load segments.");
+            LOGGER->error("Failed to load segments.");
             return LoadStatus::LOAD_ERROR;
         }
 
         constexpr MemorySize stack_size = 16 * MemoryUnit::KiB;
         auto*                start_info = setup_bootstrap_area(elf64_file, args, stack_size);
         if (!start_info) {
-            _logger->error(FILE, "Bootstrap area setup failed.");
+            LOGGER->error("Bootstrap area setup failed.");
             return LoadStatus::MEMORY_ERROR;
         }
         // The stack begins just above the bootstrap area

@@ -122,7 +122,7 @@ namespace Rune {
 
     class Subsystem {
       protected:
-        SharedPointer<Logger> _logger;
+        SharedPointer<LegacyLogger> _logger;
 
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;
         HandleCounter<U16>                                  _event_hook_handle_counter;
@@ -151,7 +151,7 @@ namespace Rune {
          * @return Logger instance.
          */
         [[nodiscard]]
-        SharedPointer<Logger> get_logger() const;
+        SharedPointer<LegacyLogger> get_logger() const;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                              Functions
@@ -183,7 +183,7 @@ namespace Rune {
          *
          * @param logger
          */
-        virtual void set_logger(SharedPointer<Logger> logger) = 0;
+        virtual void set_logger(SharedPointer<LegacyLogger> logger) = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hook API

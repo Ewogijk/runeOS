@@ -39,7 +39,6 @@ namespace Rune::App {
 
         Memory::MemorySubsystem* _memory_subsys;
         VFS::VFSSubsystem*       _vfs_subsys;
-        SharedPointer<Logger>    _logger;
 
         // Open ELF file
         SharedPointer<VFS::Node> _elf_file;
@@ -63,9 +62,7 @@ namespace Rune::App {
         setup_bootstrap_area(const ELF64File& elf_file, char* args[], size_t stack_size);
 
       public:
-        ELFLoader(Memory::MemorySubsystem* memory_subsys,
-                  VFS::VFSSubsystem*       vfs_subsys,
-                  SharedPointer<Logger>    logger);
+        ELFLoader(Memory::MemorySubsystem* memory_subsys, VFS::VFSSubsystem* vfs_subsys);
 
         /**
          * Try to parse and verify the given executable file, load it's segments into memory and
