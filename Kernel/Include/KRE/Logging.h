@@ -71,7 +71,9 @@ namespace Rune {
     };
 
     /**
+     * The layout for the early boot phases when most kernel features have not been started yet.
      *
+     * Layout: [LOG_LEVEL][LOGGER_NAME] LOG_MESSAGE
      */
     class EarlyBootLayout : public Layout {
       public:
@@ -79,15 +81,15 @@ namespace Rune {
     };
 
     /**
-     * The LogConfig stores all registered layouts and targets and is the central processing point
-     * of all log messages.
+     * The LogEventDistributor stores all registered layouts and targets and is the central delivery
+     * point of all log events.
      *
      * <p>
-     *  Layouts and targets have an unique name that loggers can references to define their message
+     *  Layouts and targets have a unique name that loggers can reference to define their message
      *  layout and the targets they want to deliver their messages to.
      * </p>
      */
-    class LogConfig {
+    class LogEventDistributor {
         static constexpr Pixel           BG_COLOR_CRITICAL = Pixie::VSCODE_RED;
         static constexpr Array<Pixel, 6> FG_COLOR          = {
             Pixie::VSCODE_CYAN,   // Trace
@@ -102,7 +104,7 @@ namespace Rune {
         HashMap<String, SharedPointer<TextStream>> _target_streams;
 
       public:
-        LogConfig() = default;
+        LogEventDistributor() = default;
 
         /**
          * Register a new layout under the given name.
@@ -138,37 +140,40 @@ namespace Rune {
     };
 
     /**
+     * The logger configuration stores the log level, layout ref and target stream refs of a logger.
+     */
+    struct LoggerConfig {
+        LogLevel           log_level;
+        String             layout_ref;
+        LinkedList<String> target_refs;
+    };
+
+    /**
      * A logger creates
      */
     class Logger {
-        LogConfig*         _config;
-        String             _name;
-        LogLevel           _log_level;
-        String             _layout_ref;
-        LinkedList<String> _target_refs;
+        LogEventDistributor* _distributor;
+        String               _name;
+        LoggerConfig         _config;
 
         void log(LogLevel log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
-            if ((int) log_level < (int) _log_level) return;
+            if ((int) log_level < (int) _config.log_level) return;
 
             LogEvent log_event = {.log_level        = log_level,
                                   .logger_name      = _name,
                                   .log_msg_template = fmt,
                                   .arg_list         = arg_list,
                                   .arg_size         = arg_size};
-            _config->log(log_event, _layout_ref, _target_refs);
+            _distributor->log(log_event, _config.layout_ref, _config.target_refs);
         }
 
       public:
-        Logger(LogConfig*                config,
+        Logger(LogEventDistributor*      distributor,
                const String&             name,
-               LogLevel                  level,
-               const String&             layout_ref,
-               const LinkedList<String>& target_refs)
-            : _config(config),
+               const LoggerConfig& config)
+            : _distributor(distributor),
               _name(move(name)),
-              _log_level(level),
-              _layout_ref(move(layout_ref)),
-              _target_refs(move(target_refs)) {}
+              _config(move(config)) {}
 
         /**
          *
@@ -273,10 +278,10 @@ namespace Rune {
      * layouts and targets, and handles creation and configuration of logger instances.
      */
     class LogContext {
-        LogConfig                              _config;
+        LogEventDistributor                    _distributor;
         HashMap<String, SharedPointer<Logger>> _loggers;
 
-        static LogContext INSTANCE;
+        LoggerConfig _default_config;
 
         LogContext()  = default;
         ~LogContext() = default;
@@ -295,11 +300,15 @@ namespace Rune {
         struct Selector {
             String the_namespace;
             String name;
+
+            [[nodiscard]] auto to_string() const -> String;
         };
 
         static auto is_identifier(const String& str) -> bool;
 
         static auto parse_selector(const String& selector) -> Optional<Selector>;
+
+        auto filter_loggers(Selector selector) -> LinkedList<SharedPointer<Logger>>;
 
       public:
         LogContext(const LogContext&)                    = delete;
@@ -311,7 +320,16 @@ namespace Rune {
          *
          * @return An instance of the log context.
          */
-        static auto instance() -> LogContext& { return INSTANCE; }
+        static auto instance() -> LogContext& {
+            static LogContext instance;
+            return instance;
+        }
+
+        /**
+         * Set the default configuration that will be used when get_logger(const String&) is called.
+         * @param config Default configuration.
+         */
+        void set_default_config(const LoggerConfig& config);
 
         /**
          * Create a new logger instance with the requested configuration.
@@ -334,6 +352,23 @@ namespace Rune {
                         LogLevel                  level,
                         const String&             layout_ref,
                         const LinkedList<String>& target_refs) -> SharedPointer<Logger>;
+
+        /**
+         * Create a new logger instance with the requested name and configured default log level,
+         * layout ref and target refs.
+         *
+         * <p>
+         *  Logger names are grouped by namespaces and follow the form NAMESPACE.NAME. All loggers
+         *  are part of the implicit root namespace if no namespace is explicitly defined. Names
+         *  must be unique in a namespace.
+         *  The dot selector * can be used to address all loggers in a namespace e.g. NAMESPACE.*.
+         *  Using * alone will address all loggers.
+         * </p>
+         * @param name Unique logger name.
+         * @return A pointer to the logger instance or a null pointer if a logger with the name
+         *          already exists.
+         */
+        auto get_logger(const String& name) -> SharedPointer<Logger>;
 
         /**
          * Change the log level of a single logger or a selection of loggers.

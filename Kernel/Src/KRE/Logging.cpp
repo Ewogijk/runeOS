@@ -34,20 +34,21 @@ namespace Rune {
     //                                      LogConfig
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto LogConfig::register_layout(const String& name, SharedPointer<Layout> layout) -> bool {
+    auto LogEventDistributor::register_layout(const String& name, SharedPointer<Layout> layout)
+        -> bool {
         if (_layouts.find(name) != _layouts.end()) return false;
         return _layouts.put(name, move(layout)) != _layouts.end();
     }
 
-    auto LogConfig::register_target_stream(const String& name, SharedPointer<TextStream> target)
-        -> bool {
+    auto LogEventDistributor::register_target_stream(const String&             name,
+                                                     SharedPointer<TextStream> target) -> bool {
         if (_target_streams.find(name) != _target_streams.end()) return false;
         return _target_streams.put(name, move(target)) != _target_streams.end();
     }
 
-    void LogConfig::log(const LogEvent&           log_event,
-                        const String&             layout_ref,
-                        const LinkedList<String>& target_refs) {
+    void LogEventDistributor::log(const LogEvent&           log_event,
+                                  const String&             layout_ref,
+                                  const LinkedList<String>& target_refs) {
         HashMapIterator<String, SharedPointer<Layout>> maybe_layout = _layouts.find(layout_ref);
         if (maybe_layout == _layouts.end()) return;
         String formatted_log_message = (*maybe_layout->value)->layout(log_event);
@@ -81,17 +82,17 @@ namespace Rune {
 
     auto Logger::get_name() const -> String { return _name; }
 
-    auto Logger::get_log_level() const -> LogLevel { return _log_level; }
+    auto Logger::get_log_level() const -> LogLevel { return _config.log_level; }
 
-    void Logger::set_log_level(LogLevel new_log_level) { _log_level = new_log_level; }
+    void Logger::set_log_level(LogLevel new_log_level) { _config.log_level = new_log_level; }
 
-    void Logger::set_layout_ref(const String& layout_ref) { _layout_ref = move(layout_ref); }
+    void Logger::set_layout_ref(const String& layout_ref) { _config.layout_ref = move(layout_ref); }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      LogContext
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LogContext LogContext::INSTANCE;
+    auto LogContext::Selector::to_string() const -> String { return the_namespace + '.' + name; }
 
     auto LogContext::is_identifier(const String& str) -> bool {
         if (str.is_empty()) return true;
@@ -124,6 +125,30 @@ namespace Rune {
         }
     }
 
+    auto LogContext::filter_loggers(Selector selector) -> LinkedList<SharedPointer<Logger>> {
+        LinkedList<SharedPointer<Logger>> filter_list;
+        if (selector.the_namespace == "*") {
+            // Select all loggers
+            for (const auto& logger : _loggers) filter_list.add_back(*logger.value);
+        } else {
+            if (selector.name == "*") {
+                // Select all loggers in a namespace
+                for (const auto& logger : _loggers) {
+                    if (logger.key->starts_with(selector.the_namespace))
+                        filter_list.add_back(*logger.value);
+                }
+            } else {
+                // Select a single logger
+                auto maybe_logger = _loggers.find(selector.to_string());
+                if (maybe_logger == _loggers.end()) return LinkedList<SharedPointer<Logger>>();
+                filter_list.add_back(*maybe_logger->value);
+            }
+        }
+        return filter_list;
+    }
+
+    void LogContext::set_default_config(const LoggerConfig& config) { _default_config = config; }
+
     auto LogContext::get_logger(const String&             name,
                                 LogLevel                  level,
                                 const String&             layout_ref,
@@ -133,9 +158,26 @@ namespace Rune {
             SILENCE_UNUSED(sel)
             auto maybe_logger = _loggers.find(name);
             if (maybe_logger != _loggers.end()) return NULL_OPT;
+
+            LoggerConfig config = {.log_level   = level,
+                                   .layout_ref  = layout_ref,
+                                   .target_refs = target_refs};
+            auto logger = _loggers.put(name, make_shared<Logger>(&_distributor, name, config));
+            return make_optional<SharedPointer<Logger>>(*logger->value);
+        };
+        return parse_selector(name)
+            .and_then<SharedPointer<Logger>>(register_logger)
+            .value_or(SharedPointer<Logger>());
+    }
+
+    auto LogContext::get_logger(const String& name) -> SharedPointer<Logger> {
+        auto register_logger = [this, &name](Selector sel) -> Optional<SharedPointer<Logger>> {
+            SILENCE_UNUSED(sel)
+            auto maybe_logger = _loggers.find(name);
+            if (maybe_logger != _loggers.end()) return NULL_OPT;
+
             auto logger =
-                _loggers.put(name,
-                             make_shared<Logger>(&_config, name, level, layout_ref, target_refs));
+                _loggers.put(name, make_shared<Logger>(&_distributor, name, _default_config));
             return make_optional<SharedPointer<Logger>>(*logger->value);
         };
         return parse_selector(name)
@@ -145,23 +187,9 @@ namespace Rune {
 
     auto LogContext::set_log_level(const String& selector, LogLevel level) -> bool {
         auto change_level = [this, &selector, level](Selector sel) -> Optional<bool> {
-            if (sel.the_namespace == "*") {
-                // Select all loggers
-                for (const auto& logger : _loggers) (*logger.value)->set_log_level(level);
-            } else {
-                if (sel.name == "*") {
-                    // Select all loggers in a namespace
-                    for (const auto& logger : _loggers) {
-                        if (logger.key->starts_with(sel.the_namespace))
-                            (*logger.value)->set_log_level(level);
-                    }
-                } else {
-                    // Select a single logger
-                    auto maybe_logger = _loggers.find(selector);
-                    if (maybe_logger == _loggers.end()) return NULL_OPT;
-                    (*maybe_logger->value)->set_log_level(level);
-                }
-            }
+            LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
+            if (filter_list.is_empty()) return NULL_OPT;
+            for (auto& logger : filter_list) logger->set_log_level(level);
             return make_optional<bool>(true);
         };
         return parse_selector(selector).and_then<bool>(change_level).value_or(false);
@@ -169,35 +197,21 @@ namespace Rune {
 
     auto LogContext::set_layout_ref(const String& selector, const String& layout_ref) -> bool {
         auto change_layout_ref = [this, &selector, &layout_ref](Selector sel) -> Optional<bool> {
-            if (sel.the_namespace == "*") {
-                // Select all loggers
-                for (const auto& logger : _loggers) (*logger.value)->set_layout_ref(layout_ref);
-            } else {
-                if (sel.name == "*") {
-                    // Select all loggers in a namespace
-                    for (const auto& logger : _loggers) {
-                        if (logger.key->starts_with(sel.the_namespace))
-                            (*logger.value)->set_layout_ref(layout_ref);
-                    }
-                } else {
-                    // Select a single logger
-                    auto maybe_logger = _loggers.find(selector);
-                    if (maybe_logger == _loggers.end()) return NULL_OPT;
-                    (*maybe_logger->value)->set_layout_ref(layout_ref);
-                }
-            }
+            LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
+            if (filter_list.is_empty()) return NULL_OPT;
+            for (auto& logger : filter_list) logger->set_layout_ref(layout_ref);
             return make_optional<bool>(true);
         };
         return parse_selector(selector).and_then<bool>(change_layout_ref).value_or(false);
     }
 
     auto LogContext::register_layout(const String& name, SharedPointer<Layout> layout) -> bool {
-        return _config.register_layout(name, layout);
+        return _distributor.register_layout(name, layout);
     }
 
     auto LogContext::register_target_stream(const String& name, SharedPointer<TextStream> target)
         -> bool {
-        return _config.register_target_stream(name, target);
+        return _distributor.register_target_stream(name, target);
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
