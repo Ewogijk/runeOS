@@ -44,12 +44,10 @@ namespace Rune::Memory {
 
         explicit MemorySubsystem(const BitMapAllocator& pmm);
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
+        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) -> bool override;
 
-        void set_logger(SharedPointer<LegacyLogger> logger) override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Memory Subsystem Specific Functions
@@ -59,31 +57,31 @@ namespace Rune::Memory {
          *
          * @return Physical memory map of the RAM.
          */
-        MemoryMap& get_physical_memory_map();
+        auto get_physical_memory_map() -> MemoryMap&;
 
         /**
          *
          * @return Virtual memory map of the RAM.
          */
-        MemoryMap& get_virtual_memory_map();
+        auto get_virtual_memory_map() -> MemoryMap&;
 
         /**
          *
          * @return Physical memory manager.
          */
-        PhysicalMemoryManager* get_physical_memory_manager();
+        auto get_physical_memory_manager() -> PhysicalMemoryManager*;
 
         /**
          *
          * @return Virtual memory manager.
          */
-        VirtualMemoryManager* get_virtual_memory_manager();
+        auto get_virtual_memory_manager() -> VirtualMemoryManager*;
 
         /**
          *
          * @return
          */
-        SlabAllocator* get_heap();
+        auto get_heap() -> SlabAllocator*;
 
         /**
          * Log the intermediate steps of the start routine.

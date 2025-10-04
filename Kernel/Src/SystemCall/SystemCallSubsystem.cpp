@@ -34,10 +34,6 @@ namespace Rune::SystemCall {
 
     String SystemCallSubsystem::get_name() const { return "SystemCall"; }
 
-    void SystemCallSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
-        if (!_logger) _logger = move(logger);
-    }
-
     bool SystemCallSubsystem::start(const BootLoaderInfo&    boot_info,
                                     const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)

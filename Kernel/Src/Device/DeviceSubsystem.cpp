@@ -38,10 +38,6 @@ namespace Rune::Device {
         return true;
     }
 
-    void DeviceSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
-        if (!_logger) _logger = logger;
-    }
-
     void DeviceSubsystem::set_ahci_driver(UniquePointer<Device::AHCIDriver> ahci_driver) {
         _ahci_driver = move(ahci_driver);
     }

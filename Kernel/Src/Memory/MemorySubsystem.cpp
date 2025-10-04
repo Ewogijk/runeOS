@@ -97,12 +97,6 @@ namespace Rune::Memory {
         return true;
     }
 
-    void MemorySubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
-        if (!_logger) {
-            _logger = logger;
-        }
-    }
-
     MemoryMap& MemorySubsystem::get_physical_memory_map() { return _p_map; }
 
     MemoryMap& MemorySubsystem::get_virtual_memory_map() { return _v_map; }

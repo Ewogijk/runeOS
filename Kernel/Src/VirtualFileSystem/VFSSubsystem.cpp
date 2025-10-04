@@ -27,10 +27,6 @@ namespace Rune::VFS {
     //                                      KernelSubsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void VFSSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
-        if (!_logger) _logger = move(logger);
-    }
-
     bool VFSSubsystem::start(const BootLoaderInfo&    boot_info,
                              const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)

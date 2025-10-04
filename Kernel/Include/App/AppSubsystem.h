@@ -104,8 +104,6 @@ namespace Rune::App {
 
         bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
 
-        void set_logger(SharedPointer<LegacyLogger> logger) override;
-
         /**
          *
          * @return A list with all running apps.

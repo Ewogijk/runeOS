@@ -338,8 +338,6 @@ namespace Rune::App {
         return true;
     }
 
-    void AppSubsystem::set_logger(SharedPointer<LegacyLogger> logger) { _logger = logger; }
-
     LinkedList<Info*> AppSubsystem::get_app_table() const {
         LinkedList<Info*> apps;
         for (auto& app_entry : _app_table) apps.add_back(app_entry.value->get());

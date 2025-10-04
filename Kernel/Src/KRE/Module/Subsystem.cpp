@@ -57,9 +57,7 @@ namespace Rune {
         }
     }
 
-    Subsystem::Subsystem() : _logger(), _event_hook_table(), _event_hook_handle_counter() {}
-
-    SharedPointer<LegacyLogger> Subsystem::get_logger() const { return _logger; }
+    Subsystem::Subsystem() : _event_hook_table(), _event_hook_handle_counter() {}
 
     LinkedList<EventHookTableEntry> Subsystem::get_event_hook_table() {
         LinkedList<EventHookTableEntry> evt_hook_tbl;

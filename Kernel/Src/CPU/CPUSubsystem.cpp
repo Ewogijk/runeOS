@@ -283,12 +283,6 @@ namespace Rune::CPU {
         return true;
     }
 
-    void CPUSubsystem::set_logger(SharedPointer<LegacyLogger> logger) {
-        if (!_logger) {
-            _logger = logger;
-        }
-    }
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Interrupt functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
