@@ -14,26 +14,29 @@
  *  limitations under the License.
  */
 
-#include <Boot/FancyLogFormatter.h>
+#include <Boot/DetailedLogLayout.h>
 
 namespace Rune {
-    FancyLogFormatter::FancyLogFormatter(CPU::CPUSubsystem* cpu_subsys,
+    DetailedLogLayout::DetailedLogLayout(CPU::CPUSubsystem* cpu_subsys,
                                          App::AppSubsystem* app_subsys)
         : _cpu_subsys(cpu_subsys),
           _app_subsys(app_subsys) {}
 
-    String FancyLogFormatter::format_log_message(LogLevel      log_level,
-                                                 const String& module,
-                                                 const String& log_msg_tmpl,
-                                                 Argument*     arg_list,
-                                                 size_t        arg_size) {
+    auto DetailedLogLayout::layout(LogLevel      log_level,
+                                   const String& logger_name,
+                                   const String& log_msg_template,
+                                   Argument*     arg_list,
+                                   size_t        arg_size) -> String {
         auto       r_thread = _cpu_subsys->get_scheduler()->get_running_thread();
         App::Info* r_app    = _app_subsys->get_active_app();
         return String::format("[{}] [{}] [{}] [{}] ",
                               log_level.to_string(),
-                              module,
+                              logger_name,
                               r_app->name,
                               r_thread->name)
-               + String::format(log_msg_tmpl, static_cast<const Argument*>(arg_list), arg_size);
+               + String::format(log_msg_template,
+                                static_cast<const Argument*>(arg_list),
+                                arg_size);
     }
+
 } // namespace Rune

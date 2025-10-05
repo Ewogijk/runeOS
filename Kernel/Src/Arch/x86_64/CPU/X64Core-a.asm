@@ -92,64 +92,64 @@ give_rip:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-; CLINK bool cpuid_supported();
-; Args:
-;   -
+;; CLINK bool cpuid_supported();
+;; Args:
+;;   -
+;;
+;global cpuid_supported
+;cpuid_supported:
+;    push rbp
+;    mov rbp, rsp
 ;
-global cpuid_supported
-cpuid_supported:
-    push rbp
-    mov rbp, rsp
-
-    pushfq                  ; Save original rflags
-
-    pushfq                  ; Store rflags for modification
-    mov rax, [rsp]          ; Invert ID bit
-    xor rax, 0x00200000
-    mov [rsp], rax
-    popfq                   ; Load modified rflags
-
-    pushfq                  ; Save modified rflags
-    pop rax
-    xor rax, [rsp]          ; rax contains all modified bits
-
-    popfq                   ; Restore original rflags
-
-    and rax, 0x00200000     ; Check if ID bit (position 21) is modified
-    shr rax, 21
-
-    leave
-    ret
-
-
-; CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
-; Args:
-;   rdi -> request
-;   rsi -> resp
-; Returns:
-;   -
-global make_cpuid_request
-make_cpuid_request:
-    ; make new call frame
-    push rbp            ; save old call frame
-    mov rbp, rsp        ; initialize new call frame
-
-    push rbx
-
-    mov rax, rdi
-    cpuid
-
-    mov [rsi], rax
-    mov [rsi + 8], rbx
-    mov [rsi + 16], rcx
-    mov [rsi + 24], rdx
-
-    pop rbx
-
-    ; restore old call frame
-    mov rsp, rbp
-    pop rbp
-    ret
+;    pushfq                  ; Save original rflags
+;
+;    pushfq                  ; Store rflags for modification
+;    mov rax, [rsp]          ; Invert ID bit
+;    xor rax, 0x00200000
+;    mov [rsp], rax
+;    popfq                   ; Load modified rflags
+;
+;    pushfq                  ; Save modified rflags
+;    pop rax
+;    xor rax, [rsp]          ; rax contains all modified bits
+;
+;    popfq                   ; Restore original rflags
+;
+;    and rax, 0x00200000     ; Check if ID bit (position 21) is modified
+;    shr rax, 21
+;
+;    leave
+;    ret
+;
+;
+;; CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
+;; Args:
+;;   rdi -> request
+;;   rsi -> resp
+;; Returns:
+;;   -
+;global make_cpuid_request
+;make_cpuid_request:
+;    ; make new call frame
+;    push rbp            ; save old call frame
+;    mov rbp, rsp        ; initialize new call frame
+;
+;    push rbx
+;
+;    mov rax, rdi
+;    cpuid
+;
+;    mov [rsi], rax
+;    mov [rsi + 8], rbx
+;    mov [rsi + 16], rcx
+;    mov [rsi + 24], rdx
+;
+;    pop rbx
+;
+;    ; restore old call frame
+;    mov rsp, rbp
+;    pop rbp
+;    ret
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

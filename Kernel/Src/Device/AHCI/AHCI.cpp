@@ -20,21 +20,21 @@
 #include <Memory/Paging.h>
 
 namespace Rune::Device {
-    constexpr char const* FILE = "AHCI";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.AHCI");
 
     SystemMemory* AHCIDriver::alloc_system_memory(U32 ct_count) {
         auto* sys_mem = reinterpret_cast<SystemMemory*>(_heap->allocate(sizeof(SystemMemory)));
 
         void* clb = _heap->allocate_dma(SystemMemory::COMMAND_LIST_SIZE * sizeof(CommandHeader));
         if (!clb) {
-            _logger->error(FILE, "Failed to allocate command list.");
+            LOGGER->error("Failed to allocate command list.");
             return nullptr;
         }
         sys_mem->CL = reinterpret_cast<CommandHeader*>(clb);
 
         void* fb = _heap->allocate_dma(sizeof(ReceivedFIS));
         if (!fb) {
-            _logger->error(FILE, "Failed to allocate received FIS...");
+            LOGGER->error("Failed to allocate received FIS...");
             _heap->free(clb);
             return nullptr;
         }
@@ -42,7 +42,7 @@ namespace Rune::Device {
 
         void* ct = _heap->allocate_dma(ct_count * sizeof(CommandTable));
         if (!ct) {
-            _logger->error(FILE, "Failed to allocate command tables...");
+            LOGGER->error("Failed to allocate command tables...");
             _heap->free(clb);
             _heap->free(fb);
             return nullptr;
@@ -55,7 +55,7 @@ namespace Rune::Device {
             if (!Memory::virtual_to_physical_address(
                     memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
                     p_ctba)) {
-                _logger->error(FILE, "Failed hook command table {} into system memory!", j);
+                LOGGER->error("Failed hook command table {} into system memory!", j);
                 _heap->free(sys_mem->CL);
                 _heap->free(sys_mem->RFIS);
                 _heap->free(sys_mem->CT);
@@ -64,7 +64,7 @@ namespace Rune::Device {
 
             sys_mem->CL[j].CTBA.AsUInt32 = (U32) p_ctba;
             if (sys_mem->CL[j].CTBA.Reserved != 0) {
-                _logger->error(FILE, "Command table base address is not 128 byte aligned!");
+                LOGGER->error("Command table base address is not 128 byte aligned!");
                 _heap->free(sys_mem->CL);
                 _heap->free(sys_mem->RFIS);
                 _heap->free(sys_mem->CT);
@@ -81,23 +81,21 @@ namespace Rune::Device {
 
     LogicalDrive AHCIDriver::resolve_logical_drive(U8 logicalDrive) {
         if (logicalDrive > LOGICAL_DRIVE_LIMIT) {
-            _logger->warn(FILE, "Invalid logical drive ID: {}", logicalDrive);
+            LOGGER->warn("Invalid logical drive ID: {}", logicalDrive);
             return {};
         }
 
         auto ld = _logical_drive_table[logicalDrive];
         if (ld.port_index == LogicalDrive::INVALID_PORT) {
-            _logger->warn(FILE, "Logical drive {} not found.", logicalDrive);
+            LOGGER->warn("Logical drive {} not found.", logicalDrive);
             return {};
         }
         return ld;
     }
 
-    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap,
-                           CPU::Timer*            timer,
-                           SharedPointer<Logger>  logger)
+    AHCIDriver::AHCIDriver(Memory::SlabAllocator*      heap,
+                           CPU::Timer*                 timer)
         : _hba(nullptr),
-          _logger(move(logger)),
           _port_engine(),
           _heap(heap),
           _timer(timer),
@@ -128,7 +126,7 @@ namespace Rune::Device {
         if (ld.port_index == LogicalDrive::INVALID_PORT) return {};
         U8 port_idx = ld.port_index;
         if (!_port_engine[port_idx].is_active()) {
-            _logger->warn(FILE, "No hard drive on port {} detected.", port_idx);
+            LOGGER->warn("No hard drive on port {} detected.", port_idx);
             return {};
         }
         return _port_engine[port_idx].get_hard_drive_info();
@@ -136,8 +134,8 @@ namespace Rune::Device {
 
     bool AHCIDriver::start(volatile HBAMemory* hba) {
         _hba = hba;
-        _logger->info(FILE, "Initializing AHCI...");
-        //    _logger->info(FILE, "Disable caching for HBA memory...");
+        LOGGER->info("Initializing AHCI...");
+        //    LOGGER->info( "Disable caching for HBA memory...");
         //    // Disable cpu caching for the HBA Memory
         //    Memory::ModifyPageFlags(
         //            Memory::BasePageTable(),
@@ -150,7 +148,7 @@ namespace Rune::Device {
         //    );
         //    Memory::InvalidatePage(Memory::AsAddress(hba));
 
-        _logger->info(FILE, "Enabling AHCI.");
+        LOGGER->info("Enabling AHCI.");
         _hba->GHC.AE = 1;
 
         U32  pi                 = _hba->PI;
@@ -159,46 +157,42 @@ namespace Rune::Device {
         U8   c_logical_drive_id = 0;
         for (int i = 0; i < 32; i++) {
             if (c_logical_drive_id == 255) {
-                _logger->warn(FILE, "Limit of 255 logical drives reached. Stopping port scan... ");
+                LOGGER->warn("Limit of 255 logical drives reached. Stopping port scan... ");
                 break;
             }
 
             if (!(pi >> i & 1)) continue;
 
-            _logger->debug(FILE,
-                           "------------------------------------- Scanning Port {} "
-                           "-------------------------------------",
-                           i);
-            if (!_port_engine[i].scan_device(&_hba->Port[i], _logger)) continue;
+            LOGGER->debug("------------------------------------- Scanning Port {} "
+                          "-------------------------------------",
+                          i);
+            if (!_port_engine[i].scan_device(&_hba->Port[i])) continue;
 
             if (!_port_engine[i].stop()) {
-                _logger->error(FILE, "Stopping the port failed. Trying port reset...");
+                LOGGER->error("Stopping the port failed. Trying port reset...");
                 _port_engine[i].reset();
             }
 
             SystemMemory* system_memory = alloc_system_memory(command_slots);
             if (!_port_engine[i].start(system_memory, s64_a, _heap, _timer)) {
-                _logger->error(FILE,
-                               "Failed to start port {}. Freeing allocated system memory...",
-                               i);
+                LOGGER->error("Failed to start port {}. Freeing allocated system memory...", i);
                 _heap->free(system_memory->CL);
                 _heap->free(system_memory->CT);
                 _heap->free(system_memory->RFIS);
             }
 
-            _logger->debug(FILE, "Detected logical drives:");
+            LOGGER->debug("Detected logical drives:");
             auto pt = _port_engine[i].get_hard_drive_info().partition_table;
             for (size_t j = 0; j < pt.size(); j++) {
                 auto* partition = pt[j];
-                _logger->debug(FILE,
-                               "{} -> Drive{}, Partition{}: {} ({}): LBA {}-{}",
-                               c_logical_drive_id,
-                               i,
-                               j,
-                               partition->name,
-                               partition->type.to_string(),
-                               partition->start_lba,
-                               partition->end_lba);
+                LOGGER->debug("{} -> Drive{}, Partition{}: {} ({}): LBA {}-{}",
+                              c_logical_drive_id,
+                              i,
+                              j,
+                              partition->name,
+                              partition->type.to_string(),
+                              partition->start_lba,
+                              partition->end_lba);
                 _logical_drive_table[c_logical_drive_id++] = {(U8) i, (U8) j};
             }
         }
@@ -216,9 +210,7 @@ namespace Rune::Device {
                                         size_t                 buf_size,
                                         RegisterHost2DeviceFIS h2d_fis) {
         if (!_port_engine[hard_drive].is_active()) {
-            _logger->warn(FILE,
-                          "Cannot send ATA command. No hard drive on port {} detected.",
-                          hard_drive);
+            LOGGER->warn("Cannot send ATA command. No hard drive on port {} detected.", hard_drive);
             return false;
         }
         return _port_engine[hard_drive].send_ata_command(buf, buf_size, h2d_fis);
@@ -230,17 +222,15 @@ namespace Rune::Device {
         U8 port_idx              = ld.port_index;
         U8 partition_table_index = ld.partition_table_index;
         if (!_port_engine[port_idx].is_active()) {
-            _logger->warn(FILE,
-                          "Cannot read from device. No hard drive on port {} detected.",
-                          port_idx);
+            LOGGER->warn("Cannot read from device. No hard drive on port {} detected.", port_idx);
             return 0;
         }
         Partition* p =
             _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
         U64 t_lba = p->start_lba + lba;
         if (t_lba > p->end_lba) {
-            _logger->warn(
-                FILE,
+            LOGGER->warn(
+
                 "Cannot read from device. LBA not in partition range. Range: {}-{}, LBA: {}",
                 p->start_lba,
                 p->end_lba,
@@ -256,17 +246,15 @@ namespace Rune::Device {
         U8 port_idx              = ld.port_index;
         U8 partition_table_index = ld.partition_table_index;
         if (!_port_engine[port_idx].is_active()) {
-            _logger->warn(FILE,
-                          "Cannot write to device. No hard drive on port {} detected.",
-                          port_idx);
+            LOGGER->warn("Cannot write to device. No hard drive on port {} detected.", port_idx);
             return 0;
         }
         Partition* p =
             _port_engine[port_idx].get_hard_drive_info().partition_table[partition_table_index];
         U64 tLba = p->start_lba + lba;
         if (tLba > p->end_lba) {
-            _logger->warn(
-                FILE,
+            LOGGER->warn(
+
                 "Cannot write to device. LBA not in partition range. Range: {}-{}, LBA: {}",
                 p->start_lba,
                 p->end_lba,

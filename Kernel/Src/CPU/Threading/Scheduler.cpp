@@ -22,9 +22,9 @@
 #include <CPU/Interrupt/Interrupt.h>
 #include <CPU/Threading/Stack.h>
 
-constexpr char const* FILE = "Scheduler";
-
 namespace Rune::CPU {
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Scheduler");
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Scheduler Implementation
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -51,8 +51,7 @@ namespace Rune::CPU {
     }
 
     Scheduler::Scheduler()
-        : _logger(),
-          _running_thread(nullptr),
+        : _running_thread(nullptr),
           _ready_threads(nullptr),
           _terminated_threads(),
           _irq_disable_counter(0),
@@ -93,8 +92,6 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          General Stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    void Scheduler::set_logger(SharedPointer<Logger> logger) { _logger = move(logger); }
 
     bool Scheduler::init(PhysicalAddr                 base_pt_addr,
                          Register                     stack_top,
@@ -154,14 +151,14 @@ namespace Rune::CPU {
 
     bool Scheduler::schedule_new_thread(const SharedPointer<CPU::Thread>& thread) {
         if (thread->policy == SchedulingPolicy::NONE) {
-            _logger->error(FILE, R"(Attempt to schedule a thread with policy "None")");
+            LOGGER->error(R"(Attempt to schedule a thread with policy "None")");
             return false;
         }
 
         setup_kernel_stack(thread);
         if (!_ready_threads->enqueue(thread)) {
-            _logger->error(
-                FILE,
+            LOGGER->error(
+
                 R"(Failed to put initialized thread "{}" in the ready queue... Freeing allocated stack memory.)",
                 thread->name);
             delete[] thread->kernel_stack_bottom;
@@ -175,11 +172,11 @@ namespace Rune::CPU {
         if (!thread || thread == _running_thread) return false;
 
         if (!_ready_threads->enqueue(thread)) {
-            _logger->error(FILE, R"(Failed to put thread "{}" in the ready queue.)", thread->name);
+            LOGGER->error(R"(Failed to put thread "{}" in the ready queue.)", thread->name);
             return false;
         }
         thread->state = ThreadState::READY;
-        _logger->trace(FILE, R"(Thread "{}-{}" has been scheduled.)", thread->handle, thread->name);
+        LOGGER->trace(R"(Thread "{}-{}" has been scheduled.)", thread->handle, thread->name);
         return true;
     }
 
@@ -203,10 +200,9 @@ namespace Rune::CPU {
         } else if (_running_thread->state == ThreadState::RUNNING) {
             // Reschedule thread
             if (!_ready_threads->enqueue(_running_thread))
-                _logger->warn(FILE,
-                              R"(Failed to reschedule "{}-{}")",
-                              _running_thread->handle,
-                              _running_thread->name);
+                LOGGER->warn(R"(Failed to reschedule "{}-{}")",
+                             _running_thread->handle,
+                             _running_thread->name);
             else {
                 if (_running_thread->state == ThreadState::RUNNING)
                     _running_thread->state = ThreadState::READY;
@@ -214,12 +210,11 @@ namespace Rune::CPU {
         }
 
         // Switch to next thread
-        _logger->trace(FILE,
-                       R"(Context switch: "{}-{}" -> "{}-{}")",
-                       _running_thread->handle,
-                       _running_thread->name,
-                       next_thread->handle,
-                       next_thread->name);
+        LOGGER->trace(R"(Context switch: "{}-{}" -> "{}-{}")",
+                      _running_thread->handle,
+                      _running_thread->name,
+                      next_thread->handle,
+                      next_thread->name);
 
         auto* old_thread       = _running_thread.get();
         _running_thread        = move(next_thread);

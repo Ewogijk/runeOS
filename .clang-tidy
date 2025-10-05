@@ -12,8 +12,10 @@ Checks:          'clang-diagnostic-*,
                   -cppcoreguidelines-init-variables,
                   -cppcoreguidelines-missing-std-forward,
                   modernize-*,
+                  -modernize-use-ranges,
                   readability-*,
-                  -readability-braces-around-statements'
+                  -readability-braces-around-statements,
+                  -readability-use-anyofallof'
 WarningsAsErrors: true
 CheckOptions:
   - key:             cert-dcl16-c.NewSuffixes

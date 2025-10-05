@@ -20,6 +20,9 @@
 #include <KRE/System/Subsystem.h>
 
 namespace Rune {
+
+    CLINK void call_global_constructors();
+
     /**
      * Entry point to the high level boot routine.
      * <p>

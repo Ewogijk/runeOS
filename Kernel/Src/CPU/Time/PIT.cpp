@@ -17,7 +17,7 @@
 #include <CPU/Time/PIT.h>
 
 namespace Rune::CPU {
-    constexpr char const* FILE = "PIT";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
 
     enum Channel { ZERO = 0x40, COMMAND = 0x43 };
 
@@ -25,7 +25,6 @@ namespace Rune::CPU {
 
     PIT::PIT()
         : CPU::Timer(),
-          _logger(),
           _scheduler(nullptr),
           _irq_handler([] { return IRQState::PENDING; }),
           _sleeping_threads(),
@@ -47,30 +46,23 @@ namespace Rune::CPU {
         return l;
     }
 
-    bool PIT::start(SharedPointer<Logger> logger,
-                    CPU::Scheduler*       scheduler,
-                    TimerMode             mode,
-                    U64                   frequency,
-                    U64                   quantum) {
-        _logger            = move(logger);
+    bool PIT::start(CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) {
         _scheduler         = scheduler;
         _mode              = mode;
         _freq_hz           = frequency;
         _quantum           = quantum;
         _quantum_remaining = _quantum;
-        _logger->debug(FILE,
-                       "Requested PIT configuration: Mode={}, TargetFrequency={}Hz, Quantum={}",
-                       mode.to_string(),
-                       frequency,
-                       quantum);
+        LOGGER->debug("Requested PIT configuration: Mode={}, TargetFrequency={}Hz, Quantum={}",
+                      mode.to_string(),
+                      frequency,
+                      quantum);
 
         // The PIT is limited by the QuartzFrequency
         if (_freq_hz > QUARTZ_FREQUENCY_HZ) {
-            _logger->debug(FILE,
-                           "Requested frequency of {}Hz exceeds quartz frequency {}Hz. Will "
-                           "operate on quartz frequency.",
-                           _freq_hz,
-                           QUARTZ_FREQUENCY_HZ);
+            LOGGER->debug("Requested frequency of {}Hz exceeds quartz frequency {}Hz. Will "
+                          "operate on quartz frequency.",
+                          _freq_hz,
+                          QUARTZ_FREQUENCY_HZ);
             _freq_hz = QUARTZ_FREQUENCY_HZ;
         }
 
@@ -81,7 +73,7 @@ namespace Rune::CPU {
         // Frequency formula: _freq_hz = 1 / _time_between_irq -> _time_between_irq = 1 / _freq_hz.
         // We want nanoseconds therefore we use 1000000000 instead of 1
         _time_between_irq = 1000000000 / _freq_hz;
-        _logger->debug(FILE, "Time between IRQs will be ~{}ns", _time_between_irq);
+        LOGGER->debug("Time between IRQs will be ~{}ns", _time_between_irq);
 
         // Configure the frequency divider
         out_b(Channel::COMMAND, Mode::SQUARE_WAVE_GENERATOR);
@@ -94,7 +86,7 @@ namespace Rune::CPU {
             _scheduler->lock();
             auto c_t = _sleeping_threads.dequeue();
             while (c_t) {
-                _logger->trace(FILE, R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
+                LOGGER->trace(R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
                 _scheduler->schedule(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
                     _scheduler->execute_next_thread(); // Execute the thread immediately if it is
@@ -137,11 +129,10 @@ namespace Rune::CPU {
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
         SharedPointer<Thread> r_t = _scheduler->get_running_thread();
-        _logger->trace(FILE,
-                       R"(Putting thread "{}-{}" to sleep for {}ns)",
-                       r_t->handle,
-                       r_t->name,
-                       sleep_time_nanos);
+        LOGGER->trace(R"(Putting thread "{}-{}" to sleep for {}ns)",
+                      r_t->handle,
+                      r_t->name,
+                      sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
         r_t->state = ThreadState::SLEEPING;
         _scheduler->execute_next_thread();

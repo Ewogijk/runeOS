@@ -78,9 +78,9 @@ namespace Rune {
       public:
         explicit Array() = default;
 
-        Array(const Array<T, N>& other) noexcept { copy(other); }
+        constexpr Array(const Array<T, N>& other) noexcept { copy(other); }
 
-        Array(std::initializer_list<T> init) noexcept {
+        constexpr Array(std::initializer_list<T> init) noexcept {
             size_t idx = 0;
             for (auto ele : init) {
                 if (idx > N) break;
@@ -127,6 +127,13 @@ namespace Rune {
          * @return Element at index.
          */
         auto operator[](size_t index) -> T& { return _array[index]; }
+
+        /**
+         * If index>=N the behavior is undefined.
+         * @param index
+         * @return Element at index.
+         */
+        auto operator[](size_t index) const -> const T& { return _array[index]; }
 
         /**
          *

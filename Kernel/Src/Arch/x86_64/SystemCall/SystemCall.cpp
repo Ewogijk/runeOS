@@ -16,13 +16,13 @@
 
 #include <SystemCall/SystemCall.h>
 
-#include <KRE/Utility.h>
 #include <KRE/Collections/HashMap.h>
+#include <KRE/Utility.h>
 
 #include "../CPU/X64Core.h"
 
 namespace Rune::SystemCall {
-    constexpr char const* FILE = "SystemCall";
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCall");
 
     struct SystemCallContainer {
         SystemCallInfo info             = {0, "", 0};
@@ -32,7 +32,6 @@ namespace Rune::SystemCall {
 
     HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE;
     KernelGuardian*                                 K_GUARD;
-    SharedPointer<Logger>                           LOGGER;
 
     /**
      * @brief On "syscall" the CPU will jump to this assembly stub. It loads the kernel stack and
@@ -51,8 +50,7 @@ namespace Rune::SystemCall {
         Ember::StatusCode ret     = -1;
         auto              handler = SYSTEM_CALL_HANDLER_TABLE.find(ID);
         if (handler != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace(FILE,
-                          R"(Handling system call request: "{}-{}"!)",
+            LOGGER->trace(R"(Handling system call request: "{}-{}"!)",
                           ID,
                           handler->value->info.name);
             handler->value->info.requested++;
@@ -64,7 +62,7 @@ namespace Rune::SystemCall {
                                                    arg5,
                                                    arg6);
         } else {
-            LOGGER->warn(FILE, "No system call with ID {} installed!", ID);
+            LOGGER->warn("No system call with ID {} installed!", ID);
         }
         return ret;
     }
@@ -73,8 +71,7 @@ namespace Rune::SystemCall {
     //                                          System Call API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool system_call_init(SharedPointer<Logger> logger, KernelGuardian* kGuard) {
-        LOGGER                    = move(logger);
+    bool system_call_init(KernelGuardian* kGuard) {
         K_GUARD                   = kGuard;
         SYSTEM_CALL_HANDLER_TABLE = HashMap<U16, SystemCallContainer>();
         // Init the model specific registers for sysret/syscall, they act as caches for important
@@ -109,15 +106,11 @@ namespace Rune::SystemCall {
 
     bool system_call_install(const Definition& sys_call_def) {
         if (SYSTEM_CALL_HANDLER_TABLE.find(sys_call_def.ID) != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->warn(FILE,
-                         "Cannot install system call {}. It is already installed...",
+            LOGGER->warn("Cannot install system call {}. It is already installed...",
                          sys_call_def.ID);
             return false;
         }
-        LOGGER->trace(FILE,
-                      R"(Installing system call "{}-{}".)",
-                      sys_call_def.ID,
-                      sys_call_def.name);
+        LOGGER->trace(R"(Installing system call "{}-{}".)", sys_call_def.ID, sys_call_def.name);
         SYSTEM_CALL_HANDLER_TABLE.put(sys_call_def.ID,
                                       {
                                       {sys_call_def.ID, sys_call_def.name, 0},
@@ -129,15 +122,13 @@ namespace Rune::SystemCall {
 
     bool system_call_uninstall(U16 system_call_handle) {
         if (SYSTEM_CALL_HANDLER_TABLE.find(system_call_handle) == SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace(FILE,
-                          "System call {} is not installed. No need to uninstall...",
+            LOGGER->trace("System call {} is not installed. No need to uninstall...",
                           system_call_handle);
             return false;
         }
 
         auto sys_call = SYSTEM_CALL_HANDLER_TABLE.find(system_call_handle);
-        LOGGER->trace(FILE,
-                      R"(Uninstalling system call "{}-{}".)",
+        LOGGER->trace(R"(Uninstalling system call "{}-{}".)",
                       sys_call->value->info.handle,
                       sys_call->value->info.name);
         return SYSTEM_CALL_HANDLER_TABLE.remove(system_call_handle);

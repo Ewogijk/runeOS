@@ -40,7 +40,7 @@ namespace Rune::SystemCall {
      *
      * @return True: The kernel is ready to handle system calls, False: System calls cannot be used.
      */
-    bool system_call_init(SharedPointer<Logger> logger, KernelGuardian* k_guard);
+    bool system_call_init(KernelGuardian* k_guard);
 
     /**
      * @brief Get all installed system calls.

@@ -445,6 +445,14 @@ namespace Rune {
             return find0(key);
         }
 
+        auto operator[](const K& key) -> V& {
+            perform_lazy_init();
+            auto maybe_value = find(key);
+            if (maybe_value != end()) return *maybe_value->value;
+            maybe_value = put0(new HashNode<K, V>(move(key), V()));
+            return *maybe_value->value;
+        }
+
         auto begin() const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();

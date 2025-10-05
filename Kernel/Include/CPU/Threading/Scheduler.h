@@ -40,8 +40,6 @@ namespace Rune::CPU {
     class Scheduler {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
-        SharedPointer<Logger> _logger;
-
         SharedPointer<Thread> _running_thread;
         MultiLevelQueue*      _ready_threads;
 
@@ -90,7 +88,7 @@ namespace Rune::CPU {
          *
          * @return The next thread for scheduling.
          */
-        SharedPointer<Thread> next_scheduled_thread();
+        auto next_scheduled_thread() -> SharedPointer<Thread>;
 
       public:
         Scheduler();
@@ -103,7 +101,7 @@ namespace Rune::CPU {
          * @brief The ready queue contains all threads that are waiting to be scheduled.
          * @return The ready queue.
          */
-        MultiLevelQueue* get_ready_queue();
+        auto get_ready_queue() -> MultiLevelQueue*;
 
         /**
          * @brief Get all threads that have been marked as terminated that still need to have their
@@ -113,14 +111,14 @@ namespace Rune::CPU {
          *
          * @return A list of terminated threads.
          */
-        LinkedList<SharedPointer<Thread>>* get_terminated_threads();
+        auto get_terminated_threads() -> LinkedList<SharedPointer<Thread>>*;
 
         /**
          * @brief Get the thread that currently has CPU time, meaning the thread that can execute
          * code.
          * @return The running thread.
          */
-        SharedPointer<Thread> get_running_thread();
+        auto get_running_thread() -> SharedPointer<Thread>;
 
         /**
          * @brief The idle thread will always be scheduled when there is no other ready thread
@@ -131,7 +129,7 @@ namespace Rune::CPU {
          *
          * @return The idle thread.
          */
-        SharedPointer<Thread> get_idle_thread();
+        auto get_idle_thread() -> SharedPointer<Thread>;
 
         /**
          * @brief The thread terminator is responsible for freeing the memory allocated for another
@@ -142,7 +140,7 @@ namespace Rune::CPU {
          *
          * @return The thread terminator.
          */
-        SharedPointer<Thread> get_thread_terminator();
+        auto get_thread_terminator() -> SharedPointer<Thread>;
 
         /**
          * @brief Whenever this function returns true the scheduler can be preempted by e.g. a
@@ -151,7 +149,7 @@ namespace Rune::CPU {
          * allowed to call schedule() as part of preemption.
          */
         [[nodiscard]]
-        bool is_preemption_allowed() const;
+        auto is_preemption_allowed() const -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
@@ -170,12 +168,6 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
-         *
-         * @param logger
-         */
-        void set_logger(SharedPointer<Logger> logger);
-
-        /**
          * @brief Initialize the scheduler by creating the system threads, after initialization
          * finished successfully other threads can be scheduled.
          *
@@ -191,11 +183,11 @@ namespace Rune::CPU {
          * @param stack_top   Top of the bootstrap stack.
          * @return
          */
-        bool init(PhysicalAddr                 base_pt_addr,
+        auto init(PhysicalAddr                 base_pt_addr,
                   CPU::Register                stack_top,
                   const SharedPointer<Thread>& idle_thread,
                   const SharedPointer<Thread>& thread_terminator,
-                  void                         (*thread_enter)());
+                  void                         (*thread_enter)()) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Actual Scheduling
@@ -226,7 +218,7 @@ namespace Rune::CPU {
          * @return True: The thread is in the ready queue waiting to be scheduled, False: The thread
          * has policy "None" or could not be put into the ready queue.
          */
-        bool schedule_new_thread(const SharedPointer<Thread>& thread);
+        auto schedule_new_thread(const SharedPointer<Thread>& thread) -> bool;
 
         /**
          * @brief Put the thread in the "Ready" state and place it in the ready queue. The thread
@@ -246,7 +238,7 @@ namespace Rune::CPU {
          * @return True: The thread is in the ready queue, False: The could not be enqueued in the
          * ready queue, it was null or it is the currently running thread.
          */
-        bool schedule(const SharedPointer<Thread>& thread);
+        auto schedule(const SharedPointer<Thread>& thread) -> bool;
 
         /**
          * @brief Trigger a context switch to continue execution of the next ready thread if context

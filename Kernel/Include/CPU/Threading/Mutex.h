@@ -25,7 +25,6 @@ namespace Rune::CPU {
      */
     class Mutex {
         Scheduler*            _scheduler;
-        SharedPointer<Logger> _logger;
 
         SharedPointer<Thread>             _owner;
         LinkedList<SharedPointer<Thread>> _wait_queue;
@@ -41,21 +40,19 @@ namespace Rune::CPU {
         // Per definition of the "ResourceTable" a default constructor must be provided
         Mutex();
 
-        Mutex(Scheduler* scheduler, SharedPointer<Logger> logger, String name);
+        Mutex(Scheduler* scheduler, String name);
 
         /**
          * @brief The thread that is currently locking the mutex.
          * @return Owner thread of the mutex or nullptr if the mutex is not locked.
          */
-        [[nodiscard]]
-        Thread* get_owner() const;
+        [[nodiscard]] auto get_owner() const -> Thread*;
 
         /**
          * @brief All threads that are waiting for the mutex to be unlocked.
          * @return A copy of the mutexes wait queue.
          */
-        [[nodiscard]]
-        LinkedList<Thread*> get_waiting_threads() const;
+        [[nodiscard]] auto get_waiting_threads() const -> LinkedList<Thread*>;
 
         /**
          * @brief Try to lock the mutex.
@@ -89,7 +86,7 @@ namespace Rune::CPU {
          * @return True: The thread got removed from the wait queue., False: No thread with the
          * requested ID was found.
          */
-        bool remove_waiting_thread(int t_id);
+        auto remove_waiting_thread(int t_id) -> bool;
     };
 } // namespace Rune::CPU
 

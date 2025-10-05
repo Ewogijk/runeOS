@@ -17,21 +17,18 @@
 #ifndef RUNEOS_FILESUBSYSTEM_H
 #define RUNEOS_FILESUBSYSTEM_H
 
-#include <KRE/Collections/HashMap.h>
-#include <VirtualFileSystem/Path.h>
-#include <KRE/String.h>
-
 #include <KRE/Stream.h>
+#include <KRE/String.h>
 #include <KRE/System/Resource.h>
 #include <KRE/System/Subsystem.h>
+
+#include <KRE/Collections/HashMap.h>
 
 #include <VirtualFileSystem/DirectoryStream.h>
 #include <VirtualFileSystem/Driver.h>
 #include <VirtualFileSystem/Node.h>
+#include <VirtualFileSystem/Path.h>
 #include <VirtualFileSystem/Status.h>
-
-#include <VirtualFileSystem/FAT/FAT32Engine.h>
-#include <VirtualFileSystem/FAT/FATDriver.h>
 
 namespace Rune::VFS {
 
@@ -178,8 +175,6 @@ namespace Rune::VFS {
         String get_name() const override;
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
-
-        void set_logger(SharedPointer<Logger> logger) override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Filesystem Driver Registration

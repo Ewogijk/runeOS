@@ -43,8 +43,6 @@ namespace Rune::SystemCall {
 
         bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
 
-        void set_logger(SharedPointer<Logger> logger) override;
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          System Call API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

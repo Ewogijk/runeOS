@@ -38,7 +38,6 @@ namespace Rune::Device {
         static constexpr U8 PORT_LIMIT          = 32;
 
         volatile HBAMemory*   _hba;
-        SharedPointer<Logger> _logger;
         PortEngine            _port_engine[PORT_LIMIT];
 
         Memory::SlabAllocator* _heap;
@@ -52,7 +51,7 @@ namespace Rune::Device {
         LogicalDrive resolve_logical_drive(U8 logicalDrive);
 
       public:
-        AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer, SharedPointer<Logger> logger);
+        AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer);
 
         LinkedList<HardDrive> get_discovered_hard_drives();
 

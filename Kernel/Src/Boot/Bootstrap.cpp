@@ -46,9 +46,6 @@ int Rune::kernel_bootstrap() {
         while (true)
             CPU::halt();
 
-    // Init CPP related features
-    call_global_constructors();
-
     if (!LIMINE_BASE_REVISION_SUPPORTED)
         while (true)
             CPU::halt();
@@ -210,6 +207,6 @@ int Rune::kernel_bootstrap() {
                  frame_buffer,
                  Memory::get_base_page_table_address(),
                  CPU::get_stack_pointer(),
-                 CPU::current_core()->get_arch_details().physical_address_width});
+                 CPU::get_physical_address_width()});
     return 0;
 }

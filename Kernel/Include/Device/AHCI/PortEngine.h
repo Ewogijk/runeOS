@@ -135,10 +135,9 @@ namespace Rune::Device {
     };
 
     class PortEngine {
-        volatile HBAPort*     _port;
-        Memory::ObjectCache*  _internal_buf_cache;
-        SystemMemory*         _system_memory;
-        SharedPointer<Logger> _logger;
+        volatile HBAPort*    _port;
+        Memory::ObjectCache* _internal_buf_cache;
+        SystemMemory*        _system_memory;
 
         bool      _s64_a;
         Request   _request_table[SystemMemory::COMMAND_LIST_SIZE];
@@ -156,7 +155,7 @@ namespace Rune::Device {
         [[nodiscard]]
         bool is_active() const;
 
-        bool scan_device(volatile HBAPort* port, SharedPointer<Logger> logger);
+        bool scan_device(volatile HBAPort* port);
 
         bool start(SystemMemory*          system_memory,
                    bool                   s_64a,

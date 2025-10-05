@@ -1,4 +1,4 @@
-/*
+/* updated
  *  Copyright 2025 Ewogijk
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,6 @@ namespace Rune::Memory {
      */
     class VirtualMemoryManager {
         PhysicalMemoryManager* _pmm;
-        SharedPointer<Logger>  _logger;
 
         VirtualAddr _user_space_end;
 
@@ -59,15 +58,15 @@ namespace Rune::Memory {
 
         // Map a coherent physical address range to a virtual address range and claim the region in
         // the virtual memory map
-        KernelSpaceEntryAllocResult allocate_kernel_space_entries(const Memory::PageTable& base_pt,
-                                                                  VirtualAddr              v_start,
-                                                                  const MemoryRegion&      p_reg,
-                                                                  U16                      flags,
-                                                                  MemoryRegionType claim_type,
-                                                                  MemoryMap*       v_map,
-                                                                  const char*      region_name);
+        auto allocate_kernel_space_entries(const Memory::PageTable& base_pt,
+                                           VirtualAddr              v_start,
+                                           const MemoryRegion&      p_reg,
+                                           U16                      flags,
+                                           MemoryRegionType         claim_type,
+                                           MemoryMap*               v_map,
+                                           const char* region_name) -> KernelSpaceEntryAllocResult;
 
-        bool free_virtual_address_space_rec(const PageTableEntry& pte);
+        auto free_virtual_address_space_rec(const PageTableEntry& pte) -> bool;
 
       public:
         VirtualMemoryManager(PhysicalMemoryManager* pmm);
@@ -104,24 +103,16 @@ namespace Rune::Memory {
          *
          * @return True if the initial VAS got loaded else false.
          */
-        [[nodiscard]]
-        VMMStartFailure start(MemoryMap*        p_map,
-                              MemoryMap*        v_map,
-                              KernelSpaceLayout k_space_layout,
-                              MemorySize        heap_size);
-
-        /**
-         *
-         * @param logger
-         */
-        void set_logger(SharedPointer<Logger> logger);
+        [[nodiscard]] auto start(MemoryMap*        p_map,
+                                 MemoryMap*        v_map,
+                                 KernelSpaceLayout k_space_layout,
+                                 MemorySize        heap_size) -> VMMStartFailure;
 
         /**
          *
          * @return The last user space memory address.
          */
-        [[nodiscard]]
-        VirtualAddr get_user_space_end() const;
+        [[nodiscard]] auto get_user_space_end() const -> VirtualAddr;
 
         /**
          * allocate a new virtual address space containing the kernel space index page tables and an
@@ -133,7 +124,7 @@ namespace Rune::Memory {
          *
          * @return True if the new virtual address space got created else false.
          */
-        bool allocate_virtual_address_space(PhysicalAddr& base_pt_addr);
+        auto allocate_virtual_address_space(PhysicalAddr& base_pt_addr) -> bool;
 
         /**
          * free the user space of the virtual address space determined by the base page table loaded
@@ -143,7 +134,7 @@ namespace Rune::Memory {
          *
          * @return True if the user space of the virtual address space got freed else false.
          */
-        bool free_virtual_address_space(PhysicalAddr base_pt_addr);
+        auto free_virtual_address_space(PhysicalAddr base_pt_addr) -> bool;
 
         /**
          * Load the base page table into the core CPU register if it is not already loaded.
@@ -163,7 +154,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if the page is already allocated or out
          * of physical memory.
          */
-        bool allocate(VirtualAddr v_addr, U16 flags);
+        auto allocate(VirtualAddr v_addr, U16 flags) -> bool;
 
         /**
          * Try to allocate `pages` pages in the base page table loaded by the CPU for the page
@@ -177,7 +168,7 @@ namespace Rune::Memory {
          * @return True if the allocation succeeded, false if the page is already allocated or out
          * of physical memory.
          */
-        bool allocate(VirtualAddr v_addr, U16 flags, size_t pages);
+        auto allocate(VirtualAddr v_addr, U16 flags, size_t pages) -> bool;
 
         /**
          * Try to free the page aligned `vAddr` in the base page table loaded by the CPU by removing
@@ -188,7 +179,7 @@ namespace Rune::Memory {
          * @return True if the free succeeded, false if the virtual address is not mapped or the
          * physical memory manager fails to free the associated page frame.
          */
-        bool free(VirtualAddr v_addr);
+        auto free(VirtualAddr v_addr) -> bool;
 
         /**
          * Try to free `pages` pages aligned `vAddr` in the base page table loaded by the CPU by
@@ -200,7 +191,7 @@ namespace Rune::Memory {
          * @return True if the free succeeded, false if the virtual address is not mapped or the
          * physical memory manager fails to free the associated page frame.
          */
-        bool free(VirtualAddr v_addr, size_t pages);
+        auto free(VirtualAddr v_addr, size_t pages) -> bool;
     };
 } // namespace Rune::Memory
 

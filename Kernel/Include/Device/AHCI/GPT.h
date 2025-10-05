@@ -117,11 +117,8 @@ namespace Rune::Device {
         LinkedList<GPTPartitionTableEntry> partition_table;
     };
 
-    GPTHeader gpt_scan_sector(U8* sector_buf, U32 sector_size, const SharedPointer<Logger>& logger);
-
-    GPTScanResult gpt_scan_device(const SharedPointer<Logger>&         logger,
-                                  Function<size_t(U8[], size_t, U64)>& sector_reader,
-                                  size_t                               sector_size);
+    auto gpt_scan_device(Function<size_t(U8[], size_t, U64)>& sector_reader, size_t sector_size)
+        -> GPTScanResult;
 } // namespace Rune::Device
 
 #endif // RUNEOS_GPT_H

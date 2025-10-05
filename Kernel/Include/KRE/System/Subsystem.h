@@ -20,7 +20,6 @@
 
 #include <Ember/Enum.h>
 
-#include <KRE/Logging.h>
 #include <KRE/Memory.h>
 
 #include <KRE/Collections/HashMap.h>
@@ -53,8 +52,7 @@ namespace Rune {
         U16    patch       = 0;
         String pre_release = "";
 
-        [[nodiscard]]
-        String to_string() const;
+        [[nodiscard]] auto to_string() const -> String;
     };
 
     /**
@@ -98,8 +96,7 @@ namespace Rune {
          *
          * @return Number of kernel subsystems in the registry.
          */
-        [[nodiscard]]
-        size_t size() const;
+        [[nodiscard]] auto size() const -> size_t;
 
         /**
          *
@@ -107,7 +104,7 @@ namespace Rune {
          *
          * @return The kernel subsystem at index or null of the index is out of bounds.
          */
-        Subsystem* operator[](size_t index) const;
+        auto operator[](size_t index) const -> Subsystem*;
 
         /**
          *
@@ -115,15 +112,13 @@ namespace Rune {
          * @param k_subsys
          * @return
          */
-        template <typename T> T* get_as(KernelSubsystem k_subsys) const {
+        template <typename T> auto get_as(KernelSubsystem k_subsys) const -> T* {
             return (T*) _k_subsys_registry[k_subsys.to_value() - 1];
         }
     };
 
     class Subsystem {
       protected:
-        SharedPointer<Logger> _logger;
-
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;
         HandleCounter<U16>                                  _event_hook_handle_counter;
 
@@ -143,15 +138,7 @@ namespace Rune {
          *
          * @return Unique Kernel Subsystem name.
          */
-        [[nodiscard]]
-        virtual String get_name() const = 0;
-
-        /**
-         *
-         * @return Logger instance.
-         */
-        [[nodiscard]]
-        SharedPointer<Logger> get_logger() const;
+        [[nodiscard]] virtual auto get_name() const -> String = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                              Functions
@@ -175,15 +162,9 @@ namespace Rune {
          *
          * @return True: The subsystem has started, False: It has not.
          */
-        virtual bool start(const BootLoaderInfo&    boot_info,
-                           const SubsystemRegistry& k_subsys_reg) = 0;
+        virtual auto start(const BootLoaderInfo&    boot_info,
+                           const SubsystemRegistry& k_subsys_reg) -> bool = 0;
 
-        /**
-         * Set the logger if no logger instance has been set yet.
-         *
-         * @param logger
-         */
-        virtual void set_logger(SharedPointer<Logger> logger) = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hook API
@@ -194,7 +175,7 @@ namespace Rune {
          * event handlers.
          * @return The event hook table.
          */
-        LinkedList<EventHookTableEntry> get_event_hook_table();
+        auto get_event_hook_table() -> LinkedList<EventHookTableEntry>;
 
         /**
          * @brief Try to install the given event handler on the requested event hook.
@@ -207,9 +188,9 @@ namespace Rune {
          * @return ID > 0: The event handler will now receive events, ID == -1: The event handler
          * was not installed because the requested event hook is not supported.
          */
-        U16 install_event_handler(const String&       event_hook,
+        auto install_event_handler(const String&       event_hook,
                                   const String&       evt_handler_name,
-                                  const EventHandler& handler);
+                                  const EventHandler& handler) -> U16;
 
         /**
          * @brief Try to uninstall the event handler with the given evtHandlerID from an event hook.
@@ -218,7 +199,7 @@ namespace Rune {
          * @return True: The event handler will no longer receive events, False: The event handler
          * was not installed on this event hook or the event hook is not supported.
          */
-        bool uninstall_event_handler(const String& event_hook, U16 evt_handler_id);
+        auto uninstall_event_handler(const String& event_hook, U16 evt_handler_id) -> bool;
     };
 } // namespace Rune
 

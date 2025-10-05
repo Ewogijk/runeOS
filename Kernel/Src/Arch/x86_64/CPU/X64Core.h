@@ -74,36 +74,36 @@ namespace Rune::CPU {
     //                                          CPUID functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    struct CPUIDResponse {
-        Register rax = 0;
-        Register rbx = 0;
-        Register rcx = 0;
-        Register rdx = 0;
-    };
-
-    /**
-     * @brief True: CPU ID features are supported. False: Not.
-     */
-    CLINK bool cpuid_supported();
-
-    /**
-     * @brief Make a CPU ID request and store the result in "resp"
-     */
-    CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
-
-    /**
-     * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the
-     * call to this function.
-     *
-     * @param buf A char buffer of size 13.
-     */
-    String get_vendor();
-
-    /**
-     *
-     * @return The size of a physical address in bits.
-     */
-    U8 get_physical_address_width();
+    // struct CPUIDResponse {
+    //     Register rax = 0;
+    //     Register rbx = 0;
+    //     Register rcx = 0;
+    //     Register rdx = 0;
+    // };
+    //
+    // /**
+    //  * @brief True: CPU ID features are supported. False: Not.
+    //  */
+    // CLINK bool cpuid_supported();
+    //
+    // /**
+    //  * @brief Make a CPU ID request and store the result in "resp"
+    //  */
+    // CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
+    //
+    // /**
+    //  * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the
+    //  * call to this function.
+    //  *
+    //  * @param buf A char buffer of size 13.
+    //  */
+    // String get_vendor();
+    //
+    // /**
+    //  *
+    //  * @return The size of a physical address in bits.
+    //  */
+    // U8 get_physical_address_width();
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Model specific registers

@@ -19,13 +19,15 @@
 
 #include <limits.h>
 
-#include <KRE/Collections/LinkedList.h>
 #include <KRE/Memory.h>
-#include <VirtualFileSystem/Path.h>
+#include <KRE/Stream.h>
 #include <KRE/String.h>
 
-#include <KRE/Stream.h>
+#include <KRE/Collections/LinkedList.h>
 
+#include <CPU/CPU.h>
+
+#include <VirtualFileSystem/Path.h>
 #include <VirtualFileSystem/VFSSubsystem.h>
 
 namespace Rune::App {

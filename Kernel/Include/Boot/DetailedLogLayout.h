@@ -1,3 +1,4 @@
+
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -14,8 +15,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_FANCYLOGFORMATTER_H
-#define RUNEOS_FANCYLOGFORMATTER_H
+#ifndef RUNEOS_DETAILEDLOGLAYOUT_H
+#define RUNEOS_DETAILEDLOGLAYOUT_H
 
 #include <KRE/Logging.h>
 
@@ -24,19 +25,19 @@
 #include <App/AppSubsystem.h>
 
 namespace Rune {
-    class FancyLogFormatter : public LogFormatter {
+    class DetailedLogLayout : public Layout {
         CPU::CPUSubsystem* _cpu_subsys;
         App::AppSubsystem* _app_subsys;
 
       public:
-        FancyLogFormatter(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys);
+        DetailedLogLayout(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys);
 
-        String format_log_message(LogLevel      log_level,
-                                  const String& module,
-                                  const String& log_msg_tmpl,
-                                  Argument*     arg_list,
-                                  size_t        arg_size) override;
+        auto layout(LogLevel      log_level,
+                    const String& logger_name,
+                    const String& log_msg_template,
+                    Argument*     arg_list,
+                    size_t        arg_size) -> String override;
     };
 } // namespace Rune
 
-#endif // RUNEOS_FANCYLOGFORMATTER_H
+#endif // RUNEOS_DETAILEDLOGLAYOUT_H
