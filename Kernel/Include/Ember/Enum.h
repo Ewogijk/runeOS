@@ -109,17 +109,13 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
                                                                                                    \
         constexpr operator _E() const { return _value; }                                           \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        const char* to_string() const;                                                             \
+        [[nodiscard]] auto to_string() const -> const char*;                                       \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        EnumType to_value() const;                                                                 \
+        [[nodiscard]] auto to_value() const -> EnumType;                                           \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        static ClassName from_string(const char* str);                                             \
+        [[nodiscard]] static auto from_string(const char* str) -> ClassName;                       \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        static ClassName from_value(EnumType value);                                               \
+        [[nodiscard]] static auto from_value(EnumType value) -> ClassName;                         \
                                                                                                    \
       private:                                                                                     \
         _E _value = _E::NONE;                                                                      \
@@ -132,15 +128,15 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
         EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                        \
     }                                                                                              \
                                                                                                    \
-    const char* ClassName::to_string() const { EnumDefs(ENUM_TO_STRING) return "NONE"; }           \
+    auto ClassName::to_string() const -> const char* { EnumDefs(ENUM_TO_STRING) return "NONE"; }   \
                                                                                                    \
-    EnumType ClassName::to_value() const { return (EnumType) _value; }                             \
+    auto ClassName::to_value() const -> EnumType { return (EnumType) _value; }                     \
                                                                                                    \
-    ClassName ClassName::from_string(const char* str) {                                            \
+    auto ClassName::from_string(const char* str) -> ClassName {                                    \
         EnumDefs(ENUM_FROM_STRING) return ClassName::NONE;                                         \
     }                                                                                              \
                                                                                                    \
-    ClassName ClassName::from_value(EnumType value) {                                              \
+    auto ClassName::from_value(EnumType value) -> ClassName {                                      \
         EnumDefs(ENUM_FROM_VALUE) return ClassName::NONE;                                          \
     }
 
@@ -209,11 +205,13 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
                                                                                                    \
         constexpr operator _E() const { return _value; }                                           \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        const char* to_string() const;                                                             \
+        [[nodiscard]] auto to_string() const -> const char*;                                       \
                                                                                                    \
-        [[nodiscard]]                                                                              \
-        size_t to_value() const;                                                                   \
+        [[nodiscard]] auto to_value() const -> size_t;                                             \
+                                                                                                   \
+        [[nodiscard]] static auto from_string(const char* str) -> ClassName;                       \
+                                                                                                   \
+        [[nodiscard]] static auto from_value(int value) -> ClassName;                              \
                                                                                                    \
       private:                                                                                     \
         _E _value = _E::NONE;                                                                      \
@@ -226,8 +224,16 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
         EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                        \
     }                                                                                              \
                                                                                                    \
-    const char* ClassName::to_string() const { EnumDefs(ENUM_TO_STRING) return "NONE"; }           \
+    auto ClassName::to_string() const -> const char* { EnumDefs(ENUM_TO_STRING) return "NONE"; }   \
                                                                                                    \
-    size_t ClassName::to_value() const { return (size_t) _value; }
+    auto ClassName::to_value() const -> size_t { return (size_t) _value; }                         \
+                                                                                                   \
+    auto ClassName::from_string(const char* str) -> ClassName {                                    \
+        EnumDefs(ENUM_FROM_STRING) return ClassName::NONE;                                         \
+    }                                                                                              \
+                                                                                                   \
+    auto ClassName::from_value(int value) -> ClassName {                                           \
+        EnumDefs(ENUM_FROM_VALUE) return ClassName::NONE;                                          \
+    }
 
 #endif // EMBER_ENUM_H

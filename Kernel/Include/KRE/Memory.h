@@ -271,7 +271,7 @@ namespace Rune {
      *
      * @return The aligned memory address.
      */
-    MemoryAddr memory_align(MemoryAddr mem_addr, MemoryAddr page_boundary, bool round_up);
+    auto memory_align(MemoryAddr mem_addr, MemoryAddr page_boundary, bool round_up) -> MemoryAddr;
 
     /**
      *
