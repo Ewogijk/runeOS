@@ -17,7 +17,7 @@
 #include <CPU/Time/PIT.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("PIT");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
 
     enum Channel { ZERO = 0x40, COMMAND = 0x43 };
 

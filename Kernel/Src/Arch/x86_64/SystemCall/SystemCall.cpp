@@ -22,7 +22,7 @@
 #include "../CPU/X64Core.h"
 
 namespace Rune::SystemCall {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCall");
 
     struct SystemCallContainer {
         SystemCallInfo info             = {0, "", 0};

@@ -147,7 +147,10 @@ namespace Rune {
         return filter_list;
     }
 
-    LogContext::LogContext(const LoggerConfig& default_config) : _default_config(default_config) {}
+    const String LogContext::ROOT_NAMESPACE = "root";
+
+    LogContext::LogContext(const HashMap<String, LoggerConfig>& default_configs)
+        : _default_configs(default_configs) {}
 
     auto LogContext::get_logger(const String&             name,
                                 LogLevel                  level,
@@ -176,8 +179,12 @@ namespace Rune {
             auto maybe_logger = _loggers.find(name);
             if (maybe_logger != _loggers.end()) return NULL_OPT;
 
-            auto logger =
-                _loggers.put(name, make_shared<Logger>(&_distributor, name, _default_config));
+            auto maybe_config = _default_configs.find(sel.the_namespace);
+            // Use the root namespace config if no namespace is selected
+            if (maybe_config == _default_configs.end())
+                maybe_config = _default_configs.find(ROOT_NAMESPACE);
+
+            auto logger = _loggers.put(name, make_shared<Logger>(&_distributor, name, *maybe_config->value));
             return make_optional<SharedPointer<Logger>>(*logger->value);
         };
         return parse_selector(name)

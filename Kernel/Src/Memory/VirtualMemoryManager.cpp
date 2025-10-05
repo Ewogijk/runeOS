@@ -20,7 +20,7 @@
 #include <Memory/VirtualMemory.h>
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VirtualMemoryManager");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.VirtualMemoryManager");
 
     DEFINE_ENUM(VMMStartFailure, VMMStartFailures, 0x0)
 

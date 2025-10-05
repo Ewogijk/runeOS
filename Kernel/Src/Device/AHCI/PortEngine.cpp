@@ -21,7 +21,7 @@
 #include <KRE/Math.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("PortEngine");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PortEngine");
 
     DEFINE_ENUM(PartitionType, PARTITION_TYPES, 0x0) // NOLINT
 

@@ -23,7 +23,7 @@
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Scheduler");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Scheduler");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Scheduler Implementation

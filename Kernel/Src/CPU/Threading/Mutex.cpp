@@ -17,7 +17,7 @@
 #include <CPU/Threading/Mutex.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Mutex");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Mutex");
 
     void Mutex::transfer_ownership() {
         _owner->mutex_id = 0;

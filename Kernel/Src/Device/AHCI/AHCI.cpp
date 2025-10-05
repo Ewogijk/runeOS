@@ -20,7 +20,7 @@
 #include <Memory/Paging.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("AHCI");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.AHCI");
 
     SystemMemory* AHCIDriver::alloc_system_memory(U32 ct_count) {
         auto* sys_mem = reinterpret_cast<SystemMemory*>(_heap->allocate(sizeof(SystemMemory)));

@@ -21,7 +21,7 @@
 #include <KRE/Memory.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("GPT");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.GPT");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          CRC32 Implementation

@@ -279,9 +279,9 @@ namespace Rune {
         LogEventDistributor                    _distributor;
         HashMap<String, SharedPointer<Logger>> _loggers;
 
-        LoggerConfig _default_config;
+        HashMap<String, LoggerConfig> _default_configs;
 
-        LogContext(const LoggerConfig& default_config);
+        LogContext(const HashMap<String, LoggerConfig>& default_configs);
         ~LogContext() = default;
 
         /**
@@ -309,6 +309,8 @@ namespace Rune {
         auto filter_loggers(Selector selector) -> LinkedList<SharedPointer<Logger>>;
 
       public:
+        static const String ROOT_NAMESPACE;
+
         LogContext(const LogContext&)                    = delete;
         LogContext(LogContext&&)                         = delete;
         auto operator=(const LogContext&) -> LogContext& = delete;
@@ -320,8 +322,33 @@ namespace Rune {
          */
         static auto instance() -> LogContext& {
             // TODO use compile time configuration with macros??
-            static LogContext instance(
-                {.log_level = LogLevel::INFO, .layout_ref = "earlyboot", .target_refs = {"e9"}});
+            LogLevel log_level = LogLevel::INFO;
+            HashMap<String, LoggerConfig> default_configs;
+            default_configs[ROOT_NAMESPACE] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "Boot"}};
+            default_configs["App"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "App"}};
+            default_configs["Boot"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "Boot"}};
+            default_configs["CPU"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "CPU"}};
+            default_configs["Device"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "Device"}};
+            default_configs["Memory"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "Memory"}};
+            default_configs["SystemCall"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "SystemCall"}};
+            default_configs["VFS"] = {.log_level   = log_level,
+                                       .layout_ref  = "earlyboot",
+                                       .target_refs = {"e9", "VFS"}};
+            static LogContext instance(default_configs);
             return instance;
         }
 

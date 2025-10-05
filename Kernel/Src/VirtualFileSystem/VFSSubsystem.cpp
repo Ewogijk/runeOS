@@ -19,7 +19,7 @@
 #include <Device/DeviceSubsystem.h>
 
 namespace Rune::VFS {
-    SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFSSubsystem");
+    SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFS.VFSSubsystem");
 
     DEFINE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
@@ -122,10 +122,12 @@ namespace Rune::VFS {
         Path sys_dir = root / "System";
         if (!create_system_directory(sys_dir)) return false;
 
-        for (size_t i = 0; i < k_subsys_reg.size(); i++) {
-            Path k_subsys_dir = sys_dir / k_subsys_reg[i]->get_name();
-            if (!create_system_directory(k_subsys_dir)) return false;
-        }
+        sys_dir /= "Log";
+        if (!create_system_directory(sys_dir)) return false;
+        // for (size_t i = 0; i < k_subsys_reg.size(); i++) {
+        //     Path k_subsys_dir = sys_dir / k_subsys_reg[i]->get_name();
+        //     if (!create_system_directory(k_subsys_dir)) return false;
+        // }
 
         // stdin, stdout and stderr reserve handles 0-2 -> Start handle counter at 3
         _node_handle_counter.acquire_handle();

@@ -48,7 +48,7 @@ void operator delete[](void* p, size_t size) noexcept {
 }
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("MemorySubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.MemorySubsystem");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem

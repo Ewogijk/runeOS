@@ -19,7 +19,7 @@
 #include <Memory/Paging.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger>      LOGGER    = LogContext::instance().get_logger("CPUSubsystem");
+    const SharedPointer<Logger>      LOGGER    = LogContext::instance().get_logger("CPU.CPUSubsystem");
     Scheduler*                       SCHEDULER = nullptr;
     Function<void(Thread*, Thread*)> NOTIFY_THREAD_BOOM = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)

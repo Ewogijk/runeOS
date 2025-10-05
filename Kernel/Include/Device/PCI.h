@@ -24,7 +24,7 @@
 #include <Device/AHCI/AHCI.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> PCI_LOGGER = LogContext::instance().get_logger("PCI");
+    const SharedPointer<Logger> PCI_LOGGER = LogContext::instance().get_logger("Device.PCI");
 
     union CommandRegister {
         U16 AsUInt16 = 0;

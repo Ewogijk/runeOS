@@ -26,7 +26,7 @@
 #include <VirtualFileSystem/FileStream.h>
 
 namespace Rune::App {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("AppSubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("App.AppSubsystem");
 
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 

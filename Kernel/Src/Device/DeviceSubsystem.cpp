@@ -19,7 +19,7 @@
 #include <Device/PCI.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("DeviceSubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.DeviceSubsystem");
 
     DeviceSubsystem::DeviceSubsystem()
         : Subsystem(),

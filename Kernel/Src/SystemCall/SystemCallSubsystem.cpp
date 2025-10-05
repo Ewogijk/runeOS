@@ -21,7 +21,7 @@
 #include <Memory/MemorySubsystem.h>
 
 namespace Rune::SystemCall {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCallSubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCallSubsystem");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem Overrides

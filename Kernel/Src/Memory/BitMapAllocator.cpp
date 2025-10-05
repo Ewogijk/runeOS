@@ -20,7 +20,7 @@
 
 namespace Rune::Memory {
     static constexpr U32         INVALID_PAGE = -1;
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("BitMapAllocator");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.BitMapAllocator");
 
     bool BitMapAllocator::is_free(U32 page_frame) {
         // An unmanaged page frame is defined as free

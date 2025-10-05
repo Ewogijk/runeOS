@@ -22,7 +22,7 @@
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::App {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("ELFLoader");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("App.ELFLoader");
 
     bool ELFLoader::get_next_buffer() {
         VFS::NodeIOResult io_res = _elf_file->read(_file_buf, BUF_SIZE);
