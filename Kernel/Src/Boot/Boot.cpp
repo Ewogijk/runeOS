@@ -72,7 +72,7 @@ namespace Rune {
     SubsystemRegistry K_SUBSYS_REG(KERNEL_SUBSYSTEMS, SUBSYSTEM_COUNT);
 
     constexpr char const* LOG_FILE_EXTENSION = ".log";
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Boot");
     BootLoaderInfo        BOOT_INFO = {};
 
     constexpr size_t BUILT_IN_PLUGIN_COUNT                   = 4;

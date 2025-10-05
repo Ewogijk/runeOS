@@ -32,7 +32,11 @@ namespace Rune {
       public:
         DetailedLogLayout(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys);
 
-        auto layout(const LogEvent& log_event) -> String override;
+        auto layout(LogLevel      log_level,
+                    const String& logger_name,
+                    const String& log_msg_template,
+                    Argument*     arg_list,
+                    size_t        arg_size) -> String override;
     };
 } // namespace Rune
 

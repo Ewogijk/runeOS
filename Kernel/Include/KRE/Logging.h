@@ -48,11 +48,8 @@ namespace Rune {
      * A log event tracks information about a log message.
      */
     struct LogEvent {
-        LogLevel  log_level;
-        String    logger_name;      // Name of the logger that created the event.
-        String    log_msg_template; // Template string to be formatted.
-        Argument* arg_list;         // Variadic arguments to substitute in the template string.
-        size_t    arg_size;         // Number of variadic arguments.
+        LogLevel log_level;
+        String   formatted_log_msg; // Preformatted log message.
     };
 
     /**
@@ -67,7 +64,11 @@ namespace Rune {
          * @param @log_event Log event.
          * @return A formatted log message.
          */
-        virtual auto layout(const LogEvent& log_event) -> String = 0;
+        virtual auto layout(LogLevel      log_level,
+                            const String& logger_name,
+                            const String& log_msg_template,
+                            Argument*     arg_list,
+                            size_t        arg_size) -> String = 0;
     };
 
     /**
@@ -77,7 +78,11 @@ namespace Rune {
      */
     class EarlyBootLayout : public Layout {
       public:
-        auto layout(const LogEvent& log_event) -> String override;
+        auto layout(LogLevel      log_level,
+                    const String& logger_name,
+                    const String& log_msg_template,
+                    Argument*     arg_list,
+                    size_t        arg_size) -> String override;
     };
 
     /**
@@ -102,6 +107,11 @@ namespace Rune {
 
         HashMap<String, SharedPointer<Layout>>     _layouts;
         HashMap<String, SharedPointer<TextStream>> _target_streams;
+        HashMap<String, LinkedList<LogEvent>>      _log_event_cache;
+
+        static void deliver_log_event(const SharedPointer<TextStream>& target,
+                                      LogLevel                         log_level,
+                                      const String&                    formatted_log_msg);
 
       public:
         LogEventDistributor() = default;
@@ -134,7 +144,11 @@ namespace Rune {
          * @param layout_ref Layout that should format the log event.
          * @param target_refs A list of targets where the formatted log message should be delivered.
          */
-        void log(const LogEvent&           log_event,
+        void log(LogLevel                  log_level,
+                 const String&             logger_name,
+                 const String&             log_msg_template,
+                 Argument*                 arg_list,
+                 size_t                    arg_size,
                  const String&             layout_ref,
                  const LinkedList<String>& target_refs);
     };
@@ -158,13 +172,13 @@ namespace Rune {
 
         void log(LogLevel log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
             if ((int) log_level < (int) _config.log_level) return;
-
-            LogEvent log_event = {.log_level        = log_level,
-                                  .logger_name      = _name,
-                                  .log_msg_template = fmt,
-                                  .arg_list         = arg_list,
-                                  .arg_size         = arg_size};
-            _distributor->log(log_event, _config.layout_ref, _config.target_refs);
+            _distributor->log(log_level,
+                              _name,
+                              fmt,
+                              arg_list,
+                              arg_size,
+                              _config.layout_ref,
+                              _config.target_refs);
         }
 
       public:
@@ -322,32 +336,48 @@ namespace Rune {
          */
         static auto instance() -> LogContext& {
             // TODO use compile time configuration with macros??
-            LogLevel log_level = LogLevel::INFO;
+            LogLevel                      log_level = LogLevel::INFO;
             HashMap<String, LoggerConfig> default_configs;
-            default_configs[ROOT_NAMESPACE] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "Boot"}};
-            default_configs["App"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "App"}};
-            default_configs["Boot"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "Boot"}};
-            default_configs["CPU"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "CPU"}};
-            default_configs["Device"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "Device"}};
-            default_configs["Memory"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "Memory"}};
-            default_configs["SystemCall"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "SystemCall"}};
-            default_configs["VFS"] = {.log_level   = log_level,
-                                       .layout_ref  = "earlyboot",
-                                       .target_refs = {"e9", "VFS"}};
+            default_configs[ROOT_NAMESPACE] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "Boot"}
+            };
+            default_configs["App"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "App"}
+            };
+            default_configs["Boot"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "Boot"}
+            };
+            default_configs["CPU"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "CPU"}
+            };
+            default_configs["Device"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "Device"}
+            };
+            default_configs["Memory"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "Memory"}
+            };
+            default_configs["SystemCall"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "SystemCall"}
+            };
+            default_configs["VFS"] = {
+                .log_level   = log_level,
+                .layout_ref  = "earlyboot",
+                .target_refs = {"e9", "VFS"}
+            };
             static LogContext instance(default_configs);
             return instance;
         }

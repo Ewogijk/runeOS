@@ -23,16 +23,34 @@ namespace Rune {
     //                                      EarlyBootLayout
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto EarlyBootLayout::layout(const LogEvent& log_event) -> String {
-        return String::format("[{}] [{}] ", log_event.log_level.to_string(), log_event.logger_name)
-               + String::format(log_event.log_msg_template,
-                                static_cast<const Argument*>(log_event.arg_list),
-                                log_event.arg_size);
+    auto EarlyBootLayout::layout(LogLevel      log_level,
+                                 const String& logger_name,
+                                 const String& log_msg_template,
+                                 Argument*     arg_list,
+                                 size_t        arg_size) -> String {
+        return String::format("[{}] [{}] ", log_level.to_string(), logger_name)
+               + String::format(log_msg_template, static_cast<const Argument*>(arg_list), arg_size);
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      LogConfig
+    //                                  LogEventDistributor
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    void LogEventDistributor::deliver_log_event(const SharedPointer<TextStream>& target,
+                                                LogLevel                         log_level,
+                                                const String& formatted_log_msg) {
+        if (target->is_ansi_supported()) {
+            // Only set the background color to red when a critical message is logged
+            // and keep the default background color of the stream for other log levels
+            // Setting the background color in all cases looks strange on other terminals
+            // e.g. Clion, powershell, etc.
+            if (log_level == LogLevel::CRITICAL) target->set_background_color(BG_COLOR_CRITICAL);
+            target->set_foreground_color(FG_COLOR[(int) log_level - 1]);
+        }
+        target->write_line(formatted_log_msg);
+        if (target->is_ansi_supported()) target->reset_style();
+        target->flush();
+    }
 
     auto LogEventDistributor::register_layout(const String& name, SharedPointer<Layout> layout)
         -> bool {
@@ -43,36 +61,46 @@ namespace Rune {
     auto LogEventDistributor::register_target_stream(const String&             name,
                                                      SharedPointer<TextStream> target) -> bool {
         if (_target_streams.find(name) != _target_streams.end()) return false;
-        return _target_streams.put(name, move(target)) != _target_streams.end();
+        bool success = _target_streams.put(name, move(target)) != _target_streams.end();
+        if (success) {
+            // Flush the log event cache
+            auto maybe_cache = _log_event_cache.find(name);
+            if (maybe_cache != _log_event_cache.end()) {
+                LinkedList<LogEvent> cache = *maybe_cache->value;
+                for (auto& log_event : *maybe_cache->value)
+                    deliver_log_event(target, log_event.log_level, log_event.formatted_log_msg);
+                cache.clear();
+                _log_event_cache.remove(name);
+            }
+        }
+
+        return success;
     }
 
-    void LogEventDistributor::log(const LogEvent&           log_event,
+    void LogEventDistributor::log(LogLevel                  log_level,
+                                  const String&             logger_name,
+                                  const String&             log_msg_template,
+                                  Argument*                 arg_list,
+                                  size_t                    arg_size,
                                   const String&             layout_ref,
                                   const LinkedList<String>& target_refs) {
-        HashMapIterator<String, SharedPointer<Layout>> maybe_layout = _layouts.find(layout_ref);
+        auto maybe_layout = _layouts.find(layout_ref);
         if (maybe_layout == _layouts.end()) return;
-        String formatted_log_message = (*maybe_layout->value)->layout(log_event);
+        String formatted_log_message =
+            (*maybe_layout->value)
+                ->layout(log_level, logger_name, log_msg_template, arg_list, arg_size);
 
         for (auto& target : target_refs) {
             auto maybe_target = _target_streams.find(target);
-            if (maybe_target == _target_streams.end()) continue;
-
-            SharedPointer<TextStream> target_stream = (*maybe_target->value);
-            if (target_stream->is_ansi_supported()) {
-                // Only set the background color to red when a critical message is logged
-                // and keep the default background color of the stream for other log levels
-                // Setting the background color in all cases looks strange on other terminals
-                // e.g. Clion, powershell, etc.
-                if (log_event.log_level == LogLevel::CRITICAL)
-                    target_stream->set_background_color(BG_COLOR_CRITICAL);
-                target_stream->set_foreground_color(FG_COLOR[(int) log_event.log_level - 1]);
+            if (maybe_target == _target_streams.end()) {
+                // Creates list if missing
+                _log_event_cache[target].add_back(
+                    {.log_level = log_level, .formatted_log_msg = formatted_log_message});
+                continue;
             }
 
-            target_stream->write_line(formatted_log_message);
-
-            if (target_stream->is_ansi_supported()) target_stream->reset_style();
-
-            target_stream->flush();
+            SharedPointer<TextStream> target_stream = (*maybe_target->value);
+            deliver_log_event(target_stream, log_level, formatted_log_message);
         }
     }
 
@@ -184,7 +212,8 @@ namespace Rune {
             if (maybe_config == _default_configs.end())
                 maybe_config = _default_configs.find(ROOT_NAMESPACE);
 
-            auto logger = _loggers.put(name, make_shared<Logger>(&_distributor, name, *maybe_config->value));
+            auto logger =
+                _loggers.put(name, make_shared<Logger>(&_distributor, name, *maybe_config->value));
             return make_optional<SharedPointer<Logger>>(*logger->value);
         };
         return parse_selector(name)
