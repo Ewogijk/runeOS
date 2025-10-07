@@ -15,7 +15,8 @@ namespace Rune {
      * @tparam K
      * @tparam V
      */
-    template <typename K, typename V> struct HashNode {
+    template <typename K, typename V>
+    struct HashNode {
         HashNode<K, V>* next;
         K               key;
         V               value;
@@ -28,7 +29,8 @@ namespace Rune {
      * @tparam K
      * @tparam V
      */
-    template <typename K, typename V> struct Pair {
+    template <typename K, typename V>
+    struct Pair {
         K* key;
         V* value;
     };
@@ -38,7 +40,8 @@ namespace Rune {
      * @tparam K
      * @tparam V
      */
-    template <typename K, typename V> class HashMapIterator {
+    template <typename K, typename V>
+    class HashMapIterator {
         HashNode<K, V>** _bucket;
         size_t           _bucket_count{};
         size_t           _bucket_pos{};
@@ -103,12 +106,91 @@ namespace Rune {
     };
 
     /**
+     * @brief An interator over the values of a hashmap.
+     * @tparam K
+     * @tparam V
+     */
+    template <typename K, typename V>
+    class HashMapValueIterator {
+        HashMapIterator<K, V> _iter;
+
+      public:
+        explicit HashMapValueIterator(const HashMapIterator<K, V>& iter) : _iter(iter) {}
+
+        [[nodiscard]]
+        auto has_next() const -> bool {
+            return _iter.has_next();
+        }
+
+        auto operator*() const -> const V& { return *(*_iter).value; }
+
+        auto operator->() const -> const V* { return _iter.has_next() ? _iter->value : nullptr; }
+
+        // pre-increment
+        auto operator++() -> HashMapValueIterator<K, V>& {
+            ++_iter;
+            return *this;
+        }
+
+        // post-increment
+        auto operator++(int) -> HashMapValueIterator<K, V> {
+            HashMapIterator<K, V> tmp = *this;
+            ++(*this);
+            return tmp;
+        }
+
+        auto operator==(const HashMapValueIterator<K, V>& other) const -> bool {
+            return _iter == other._iter;
+        }
+
+        auto operator!=(const HashMapValueIterator<K, V>& other) const -> bool {
+            return _iter != other._iter;
+        }
+    };
+
+    /**
+     * A view over the values of a hashmap.
+     * @tparam K
+     * @tparam V
+     */
+    template <typename K, typename V>
+    class HashMapValueView {
+        HashNode<K, V>** _bucket;
+        size_t           _bucket_count;
+
+      public:
+        explicit HashMapValueView(HashNode<K, V>** bucket, size_t bucket_count)
+            : _bucket(bucket),
+              _bucket_count(bucket_count) {}
+
+        auto begin() const -> HashMapValueIterator<K, V> {
+            if (_bucket == nullptr) {
+                return end();
+            }
+
+            for (size_t i = 0; i < _bucket_count; i++) {
+                if (_bucket[i]) {
+                    return HashMapValueIterator<K, V>(
+                        HashMapIterator<K, V>(_bucket, _bucket_count, i, _bucket[i]));
+                }
+            }
+            return end();
+        }
+
+        auto end() const -> HashMapValueIterator<K, V> {
+            return HashMapValueIterator<K, V>(
+                HashMapIterator<K, V>(_bucket, _bucket_count, _bucket_count, nullptr));
+        }
+    };
+
+    /**
      * Simple hashmap implementation.
      *
      * @tparam K Key type.
      * @tparam V Value type.
      */
-    template <typename K, typename V> class HashMap {
+    template <typename K, typename V>
+    class HashMap {
         static constexpr double DEFAULT_LOAD_FACTOR  = 0.75;
         static constexpr size_t DEFAULT_BUCKET_COUNT = 4;
         double                  _load_factor;
@@ -134,8 +216,8 @@ namespace Rune {
             for (size_t i = 0; i < _bucket_count; i++) {
                 HashNode<K, V>* node = _bucket[i];
                 while (node) {
-                    HashNode<K, V>* next = node->next;
-                    int new_hash = calc_hash(node->key, new_bucket_count);
+                    HashNode<K, V>* next     = node->next;
+                    int             new_hash = calc_hash(node->key, new_bucket_count);
 
                     HashNode<K, V>* old_head = new_bucket[new_hash];
                     node->next               = old_head;
@@ -338,8 +420,7 @@ namespace Rune {
          *
          * @return Number of entries in the hashmap.
          */
-        [[nodiscard]]
-        auto size() const -> size_t {
+        [[nodiscard]] auto size() const -> size_t {
             return _size;
         }
 
@@ -347,8 +428,7 @@ namespace Rune {
          *
          * @return True if the hashmap contains at least one entry.
          */
-        [[nodiscard]]
-        auto is_empty() const -> bool {
+        [[nodiscard]] auto is_empty() const -> bool {
             return _size == 0;
         }
 
@@ -356,9 +436,16 @@ namespace Rune {
          *
          * @return Number of buckets that contain entries with the same hash.
          */
-        [[nodiscard]]
-        auto get_bucket_count() const -> size_t {
+        [[nodiscard]] auto get_bucket_count() const -> size_t {
             return _bucket_count;
+        }
+
+        /**
+         *
+         * @return A view of the values in the hashmap.
+         */
+        auto values() const -> HashMapValueView<K, V> {
+            return HashMapValueView<K, V>(_bucket, _bucket_count);
         }
 
         /**

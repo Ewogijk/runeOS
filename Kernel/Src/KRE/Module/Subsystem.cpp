@@ -64,16 +64,6 @@ namespace Rune {
         for (auto& e : _event_hook_table) {
             EventHookTableEntry evt_hook_tbl_e;
             evt_hook_tbl_e.event_hook = *e.key;
-
-            LinkedList<Column<EventHandlerStats>> evt_h_cols;
-            evt_h_cols.add_back(Column<EventHandlerStats>::make_handle_column_table(56));
-            evt_h_cols.add_back({"Notified", 10, [](EventHandlerStats* stats) {
-                                     return String::format("{}", stats->notified);
-                                 }});
-            evt_hook_tbl_e.formatter.configure(
-                String::format("{} Event Hook", evt_hook_tbl_e.event_hook),
-                evt_h_cols);
-
             for (auto& ee : *e.value) {
                 evt_hook_tbl_e.event_handler_table.add_back({ee.handle, ee.name, ee.notified});
             }
@@ -86,12 +76,12 @@ namespace Rune {
     U16 Subsystem::install_event_handler(const String&       event_hook,
                                          const String&       evt_handler_name,
                                          const EventHandler& handler) {
-        if (!_event_hook_handle_counter.has_more_handles()) return 0;
+        if (!_event_hook_handle_counter.has_more()) return 0;
 
         auto it = _event_hook_table.find(event_hook);
         if (it == _event_hook_table.end()) return 0;
 
-        U16 evt_handler_id = _event_hook_handle_counter.acquire_handle();
+        U16 evt_handler_id = _event_hook_handle_counter.acquire();
         it->value->add_back({evt_handler_id, evt_handler_name, 0, handler});
         return evt_handler_id;
     }

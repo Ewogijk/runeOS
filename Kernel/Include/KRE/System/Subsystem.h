@@ -120,7 +120,7 @@ namespace Rune {
     class Subsystem {
       protected:
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;
-        HandleCounter<U16>                                  _event_hook_handle_counter;
+        IDCounter<U16>                                  _event_hook_handle_counter;
 
         /**
          * @brief Fire an event for the given evtHook with the evtContext.

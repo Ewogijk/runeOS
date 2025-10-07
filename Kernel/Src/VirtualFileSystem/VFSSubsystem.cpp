@@ -42,57 +42,6 @@ namespace Rune::VFS {
         _event_hook_table.put(EventHook(EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
 
-        // Init table formatters
-        LinkedList<Column<MountPointInfo>> mpi_cols;
-        mpi_cols.add_back({"Mount Point", 50, [](const MountPointInfo* mpi) {
-                               return mpi->mount_point.to_string();
-                           }});
-        mpi_cols.add_back(
-            {"Driver", 10, [](const MountPointInfo* mpi) { return mpi->driver_name; }});
-        mpi_cols.add_back({"Storage Device", 14, [](const MountPointInfo* mpi) {
-                               return String::format("{}", mpi->storage_device);
-                           }});
-        _mount_point_table_fmt.configure("Mount Point", mpi_cols);
-
-        LinkedList<Column<NodeRefCount>> frt_cols;
-        frt_cols.add_back(
-            {"FILE", 50, [](const NodeRefCount* frc) { return frc->node_path.to_string(); }});
-        frt_cols.add_back({"RefCount", 8, [](const NodeRefCount* frc) {
-                               return String::format("{}", frc->ref_count);
-                           }});
-        _node_ref_table_fmt.configure("Node RefCount", frt_cols);
-
-        LinkedList<Column<Node>> ft_cols;
-        ft_cols.add_back(Column<Node>::make_handle_column_table(26));
-        ft_cols.add_back(
-            {"Mode", 10, [](const Node* file) { return file->get_io_mode().to_string(); }});
-        ft_cols.add_back({"Attributes", 10, [](const Node* file) {
-                              String fa("");
-                              if (file->has_attribute(Ember::NodeAttribute::READONLY))
-                                  fa += "R";
-                              else
-                                  fa += "W";
-
-                              if (file->has_attribute(Ember::NodeAttribute::DIRECTORY))
-                                  fa += "D";
-                              else
-                                  fa += "F";
-
-                              if (file->has_attribute(Ember::NodeAttribute::SYSTEM))
-                                  fa += "S";
-                              else
-                                  fa += "-";
-                              return fa;
-                          }});
-        _node_table_fmt.configure("Node", ft_cols);
-
-        LinkedList<Column<DirectoryStream>> ds_cols;
-        ds_cols.add_back(Column<DirectoryStream>::make_handle_column_table(56));
-        ds_cols.add_back({"State", 16, [](const DirectoryStream* dir_str) {
-                              return dir_str->get_state().to_string();
-                          }});
-        _dir_stream_table_fmt.configure("Directory Stream", ds_cols);
-
         auto* ds            = k_subsys_reg.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         int   logical_drive = -1;
         LinkedList<Device::Partition> p = ds->get_ahic_driver().get_logical_drives();
@@ -130,8 +79,8 @@ namespace Rune::VFS {
         // }
 
         // stdin, stdout and stderr reserve handles 0-2 -> Start handle counter at 3
-        _node_handle_counter.acquire_handle();
-        _node_handle_counter.acquire_handle();
+        _node_handle_counter.acquire();
+        _node_handle_counter.acquire();
         return true;
     }
 
@@ -179,14 +128,10 @@ namespace Rune::VFS {
         : Subsystem(),
           _driver_table(),
           _mount_point_table(),
-          _mount_point_table_fmt(),
           _node_ref_table(),
-          _node_ref_table_fmt(),
           _node_table(),
-          _node_table_fmt(),
           _node_handle_counter(),
           _dir_stream_table(),
-          _dir_stream_table_fmt(),
           _dir_stream_handle_counter() {}
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -239,27 +184,39 @@ namespace Rune::VFS {
     }
 
     void VFSSubsystem::dump_node_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _node_table.begin();
-        _node_table_fmt.dump(stream, [&it] {
-            Node* f = nullptr;
-            if (it.has_next()) {
-                f = it->value->get();
-                ++it;
-            }
-            return f;
-        });
+        Table<SharedPointer<Node>, 3>::make_table(
+            [](const SharedPointer<Node>& node) -> Array<String, 3> {
+                String fa("");
+                if (node->has_attribute(Ember::NodeAttribute::READONLY))
+                    fa += "R";
+                else
+                    fa += "W";
+
+                if (node->has_attribute(Ember::NodeAttribute::DIRECTORY))
+                    fa += "D";
+                else
+                    fa += "F";
+
+                if (node->has_attribute(Ember::NodeAttribute::SYSTEM))
+                    fa += "S";
+                else
+                    fa += "-";
+                return {String::format("{}-{}", node->handle, node->name),
+                        node->get_io_mode().to_string(),
+                        fa};
+            })
+            .with_headers({"ID-Name", "Mode", "Attributes"})
+            .with_data(_node_table.values())
+            .print(stream);
     }
 
     void VFSSubsystem::dump_node_ref_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _node_ref_table.begin();
-        _node_ref_table_fmt.dump(stream, [&it] {
-            NodeRefCount* f = nullptr;
-            if (it.has_next()) {
-                f = it->value;
-                ++it;
-            }
-            return f;
-        });
+        Table<NodeRefCount, 3>::make_table([](const NodeRefCount& nrc) -> Array<String, 3> {
+            return {nrc.node_path.to_string(), String::format("{}", nrc.ref_count)};
+        })
+            .with_headers({"Path", "RefCount"})
+            .with_data(_node_ref_table.values())
+            .print(stream);
     }
 
     SharedPointer<Node> VFSSubsystem::find_node(U16 handle) const {
@@ -278,15 +235,14 @@ namespace Rune::VFS {
     }
 
     void VFSSubsystem::dump_directory_stream_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _dir_stream_table.begin();
-        _dir_stream_table_fmt.dump(stream, [&it] {
-            DirectoryStream* d = nullptr;
-            if (it.has_next()) {
-                d = it->value->get();
-                ++it;
-            }
-            return d;
-        });
+        Table<SharedPointer<DirectoryStream>, 2>::make_table(
+            [](const SharedPointer<DirectoryStream>& dir_str) -> Array<String, 2> {
+                return {String::format("{}-{}", dir_str->handle, dir_str->name),
+                        dir_str->get_state().to_string()};
+            })
+            .with_headers({"ID-Name", "State"})
+            .with_data(_dir_stream_table.values())
+            .print(stream);
     }
 
     SharedPointer<DirectoryStream> VFSSubsystem::find_directory_stream(U16 handle) const {
@@ -305,15 +261,14 @@ namespace Rune::VFS {
     }
 
     void VFSSubsystem::dump_mount_point_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _mount_point_table.begin();
-        _mount_point_table_fmt.dump(stream, [&it] {
-            MountPointInfo* f = nullptr;
-            if (it.has_next()) {
-                f = it->value;
-                ++it;
-            }
-            return f;
-        });
+        Table<MountPointInfo, 3>::make_table([](const MountPointInfo& mpi) -> Array<String, 3> {
+            return {mpi.mount_point.to_string(),
+                    mpi.driver_name,
+                    String::format("{}", mpi.storage_device)};
+        })
+            .with_headers({"Mount Point", "Driver", "Storage Device"})
+            .with_data(_mount_point_table.values())
+            .print(stream);
     }
 
     FormatStatus VFSSubsystem::format(const String& driver_name, uint16_t storage_device) const {
@@ -476,7 +431,7 @@ namespace Rune::VFS {
     VFSSubsystem::open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out) {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
-        if (!_node_handle_counter.has_more_handles()) {
+        if (!_node_handle_counter.has_more()) {
             LOGGER->warn(R"(Cannot open "{}". The node handle counter is out of handles!)",
                          path.to_string());
             return IOStatus::OUT_OF_HANDLES;
@@ -485,7 +440,7 @@ namespace Rune::VFS {
         MountPointInfo         mpi    = resolve(path);
         UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
 
-        U16      node_handle = _node_handle_counter.acquire_handle();
+        U16      node_handle = _node_handle_counter.acquire();
         Path     p           = path.relative_to(mpi.mount_point);
         IOStatus open_status = (*driver)->open(
             mpi.storage_device,
@@ -606,9 +561,9 @@ namespace Rune::VFS {
                                                  SharedPointer<DirectoryStream>& out) {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
-        if (!_dir_stream_handle_counter.has_more_handles()) return IOStatus::OUT_OF_HANDLES;
+        if (!_dir_stream_handle_counter.has_more()) return IOStatus::OUT_OF_HANDLES;
 
-        U16                    dir_stream_handle = _dir_stream_handle_counter.acquire_handle();
+        U16                    dir_stream_handle = _dir_stream_handle_counter.acquire();
         MountPointInfo         mpi               = resolve(path);
         UniquePointer<Driver>* driver            = _driver_table.find(mpi.driver_name)->value;
         IOStatus               io_st             = (*driver)->open_directory_stream(

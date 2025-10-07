@@ -51,24 +51,27 @@ namespace Rune {
         U64          notified = 0;
         EventHandler handler  = [](void* evt_ctx) { SILENCE_UNUSED(evt_ctx) };
 
-        friend bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b);
+        friend auto operator==(const EventHandlerTableEntry& one, const EventHandlerTableEntry& two)
+            -> bool;
 
-        friend bool operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b);
+        friend auto operator!=(const EventHandlerTableEntry& one, const EventHandlerTableEntry& two)
+            -> bool;
     };
 
     /**
      * @brief An entry in the event hook table with the stats of all installed event handlers.
      */
     struct EventHookTableEntry {
-        String                            event_hook = "";
-        LinkedList<EventHandlerStats>     event_handler_table;
-        TableFormatter<EventHandlerStats> formatter;
+        String                        event_hook = "";
+        LinkedList<EventHandlerStats> event_handler_table;
 
         void dump(const SharedPointer<TextStream>& stream) const;
 
-        friend bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b);
+        friend auto operator==(const EventHookTableEntry& one, const EventHookTableEntry& two)
+            -> bool;
 
-        friend bool operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b);
+        friend auto operator!=(const EventHookTableEntry& one, const EventHookTableEntry& two)
+            -> bool;
     };
 } // namespace Rune
 

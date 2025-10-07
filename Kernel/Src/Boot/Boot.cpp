@@ -71,9 +71,9 @@ namespace Rune {
     Subsystem*        KERNEL_SUBSYSTEMS[SUBSYSTEM_COUNT] = {};
     SubsystemRegistry K_SUBSYS_REG(KERNEL_SUBSYSTEMS, SUBSYSTEM_COUNT);
 
-    constexpr char const* LOG_FILE_EXTENSION = ".log";
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Boot");
-    BootLoaderInfo        BOOT_INFO = {};
+    constexpr char const*       LOG_FILE_EXTENSION = ".log";
+    const SharedPointer<Logger> LOGGER             = LogContext::instance().get_logger("Boot");
+    BootLoaderInfo              BOOT_INFO          = {};
 
     constexpr size_t BUILT_IN_PLUGIN_COUNT                   = 4;
     Plugin*          BUILT_IN_PLUGINS[BUILT_IN_PLUGIN_COUNT] = {};
@@ -113,15 +113,15 @@ namespace Rune {
             PluginInfo info = plugin->get_info();
             if (!plugin->start(K_SUBSYS_REG)) {
                 LOGGER->critical("Plugin start failure: {} v{} by {}",
-                                        info.name,
-                                        info.version.to_string(),
-                                        info.vendor);
+                                 info.name,
+                                 info.version.to_string(),
+                                 info.vendor);
                 while (true) CPU::halt();
             }
             LOGGER->info("Plugin started: {} v{} by {}",
-                                info.name,
-                                info.version.to_string(),
-                                info.vendor);
+                         info.name,
+                         info.version.to_string(),
+                         info.vendor);
         }
     }
 
@@ -195,8 +195,8 @@ namespace Rune {
         App::LoadStatus ls = app_subsys->start_os(os, Path::ROOT);
         if (ls != App::LoadStatus::RUNNING) {
             LOGGER->critical(R"("{}": OS start failure! Reason: {})",
-                                    os.to_string(),
-                                    ls.to_string());
+                             os.to_string(),
+                             ls.to_string());
         }
 
         // At this point the OS should have taken over control of the system, so we let the boot
@@ -242,8 +242,8 @@ namespace Rune {
 #ifdef QEMU_HOST
         LOGGER->info("runeKernel v{}", KERNEL_VERSION.to_string());
         LOGGER->info("Loaded by {} - v{}",
-                            BOOT_INFO.boot_loader_name,
-                            BOOT_INFO.boot_loader_version);
+                     BOOT_INFO.boot_loader_name,
+                     BOOT_INFO.boot_loader_version);
         LOGGER->info("Subsystem started: {}", MEMORY_SUBSYSTEM->get_name().to_cstr());
         MEMORY_SUBSYSTEM->log_start_routine_phases();
 #endif

@@ -21,16 +21,14 @@
 #include <Memory/MemorySubsystem.h>
 
 namespace Rune::SystemCall {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCallSubsystem");
+    const SharedPointer<Logger> LOGGER =
+        LogContext::instance().get_logger("SystemCall.SystemCallSubsystem");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    SystemCallSubsystem::SystemCallSubsystem()
-        : Subsystem(),
-          _k_guard(),
-          _system_call_table_fmt() {}
+    SystemCallSubsystem::SystemCallSubsystem() : Subsystem(), _k_guard() {}
 
     String SystemCallSubsystem::get_name() const { return "SystemCall"; }
 
@@ -38,13 +36,6 @@ namespace Rune::SystemCall {
                                     const SubsystemRegistry& k_subsys_reg) {
         SILENCE_UNUSED(boot_info)
         SILENCE_UNUSED(k_subsys_reg)
-        // Configure system call table formatter
-        LinkedList<Column<SystemCallInfo>> sct_cols;
-        sct_cols.add_back(Column<SystemCallInfo>::make_handle_column_table(26));
-        sct_cols.add_back({"Requested", 10, [](SystemCallInfo* info) {
-                               return String::format("{}", info->requested);
-                           }});
-        _system_call_table_fmt.configure("System Call", sct_cols);
 
         auto* mem_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
         auto  user_space_end = mem_subsys->get_virtual_memory_manager()->get_user_space_end();
@@ -79,16 +70,13 @@ namespace Rune::SystemCall {
 
     void
     SystemCallSubsystem::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
-        LinkedList<SystemCallInfo> sys_call_table = system_call_get_table();
-        auto                       it             = sys_call_table.begin();
-        _system_call_table_fmt.dump(stream, [&it] {
-            SystemCallInfo* info = nullptr;
-            if (it.has_next()) {
-                info = &(*it);
-                ++it;
-            }
-            return info;
-        });
+        Table<SystemCallInfo, 2>::make_table([](const SystemCallInfo& sci) -> Array<String, 2> {
+            return {String::format("{}-{}", sci.handle, sci.name),
+                    String::format("{}", sci.requested)};
+        })
+            .with_headers({"ID-Name", "Requested"})
+            .with_data(system_call_get_table())
+            .print(stream);
     }
 
     bool SystemCallSubsystem::install_system_call(const Definition& system_call_definition) {
