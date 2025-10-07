@@ -18,11 +18,17 @@
 #ifndef RUNEOS_RESOURCE_H
 #define RUNEOS_RESOURCE_H
 
+#include "KRE/Collections/Array.h"
+
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
 
 namespace Rune {
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      ID Counter
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
      * @brief The handle counter provides a subsystem with unique handles for it's resources.
@@ -36,29 +42,27 @@ namespace Rune {
      * </p>
      * @tparam Counter
      */
-    template <typename Handle> class HandleCounter {
+    template <typename Handle>
+    class IDCounter {
         Handle _counter;
 
       public:
-        explicit HandleCounter() : _counter(0) {}
+        explicit IDCounter() : _counter(0) {}
 
         /**
          * @brief Check if the handle counter has free resource handles.
          * @return True: The handle counter has free handless, False: All handles have been used.
          */
-        [[nodiscard]]
-        bool has_more_handles() const {
-            return _counter < _counter + 1;
-        }
+        [[nodiscard]] auto has_more() const -> bool { return _counter < _counter + 1; }
 
         /**
          * @brief Get the next unused handle and increment the counter.
          * @return An unused handle;
          */
-        Handle acquire_handle() { return ++_counter; }
+        auto acquire() -> Handle { return ++_counter; }
 
         /**
-         * The counter will not be decrement when it is zero, to prevent an underflow.
+         * The counter will not be decremented when it is zero, to prevent an underflow.
          *
          * @brief Decrement the previously incremented counter, thus making the last acquired handle
          * usable again.
@@ -68,109 +72,162 @@ namespace Rune {
         }
     };
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Table
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
     /**
-     * @brief Defines the header and width of a column. Furthermore the ValueYeeter is a function
-     * that returns the string representation of the value that should be displayed in the column
-     * for a given resource.
+     * A table formatter that prints resource properties in tabular format to a stream.
+     * @tparam ResourceType Type of the resource.
+     * @tparam ColumnCount Number of table columns.
      */
-    template <class Resource> struct Column {
-        String                      header = "";
-        size_t                      width  = 0;
-        Function<String(Resource*)> value_yeeter;
+    template <typename ResourceType, size_t ColumnCount>
+    class Table {
+        // Padding before and after a data row
+        static constexpr size_t OUTER_PADDING = 1;
+        // Padding in between table cells
+        static constexpr size_t INNER_PADDING = 2;
+        // Character to be used to draw a horizontal divider
+        static constexpr char DIVIDER_CHAR = '-';
+
+        Array<String, ColumnCount>                                _column_headers;
+        Array<size_t, ColumnCount>                                _column_widths{};
+        Function<Array<String, ColumnCount>(const ResourceType&)> _row_converter;
+        LinkedList<Array<String, ColumnCount>>                    _rows;
+        size_t                                                    _table_width{0};
 
         /**
-         * @brief Make a column named "Handle-Name" and width 56 that displays the Handle and Name
-         * properties of a resource.
-         *
-         * A resource must fulfill the following requirements:
-         * <ol>
-         *  <li>It must define the "U16 Handle" public property.</li>
-         *  <li>It must define the "Lib::String Name" public property.</li>
-         * </ol>
-         * @param col_width Width of the column in characters.
-         * @return The column
+         * Increase width of column cold_idx if _column_widths[col_idx] < new_width.
+         * @param col_idx
+         * @param new_width
          */
-        static Column make_handle_column_table(size_t col_width) {
-            return {"Handle-Name", col_width, [](Resource* app) {
-                        return String::format("{}-{}", app->handle, app->name);
-                    }};
+        void adjust_column_width(size_t col_idx, size_t new_width) {
+            size_t col_width = _column_widths[col_idx];
+            if (col_width < new_width) {
+                _table_width            += new_width - col_width;
+                _column_widths[col_idx]  = new_width;
+            };
         }
-    };
 
-    /**
-     * @brief The table formatter formats information about system resources in a tabular format.
-     * The columns are defined by the subsystems.
-     */
-    template <class Resource> class TableFormatter {
-        String                       _name;
-        LinkedList<Column<Resource>> _table_columns;
-        size_t                       _table_width;
-
-        [[nodiscard]]
-        String make_str_template(char fill, char align, size_t width) const {
+        [[nodiscard]] auto make_str_template(char fill, char align, size_t width) const -> String {
             return String::format(":{}{}{}", fill, align, width);
         }
 
-      public:
-        TableFormatter() : _name(""), _table_columns(), _table_width(0) {}
-
         /**
-         * @brief Configure the table formatter with a table header and column definitions.
-         * @param name         Name of the table, will be printed as part of a header.
-         * @param tableColumns Table column definitions.
+         * Print a single row of data.
+         * @param stream
+         * @param data A row of data.
+         * @param align Alignment for the string format function.
          */
-        void configure(const String& name, const LinkedList<Column<Resource>>& table_columns) {
+        void print_data_row(const SharedPointer<TextStream>& stream,
+                            Array<String, ColumnCount>&      data,
+                            char                             align) {
 
-            if (_table_columns.size() == 0) {
-                _name          = name;
-                _table_columns = move(table_columns);
+            for (size_t j = 0; j < OUTER_PADDING; j++) stream->write(" ");
 
-                _table_width =
-                    2 * (_table_columns.size() - 1); // Number of spaces in between columns
-                for (auto& c : _table_columns) _table_width += c.width;
+            for (size_t i = 0; i < ColumnCount; i++) {
+                stream->write_formatted(
+                    String("{") + make_str_template(' ', align, _column_widths[i]) + "}",
+                    data[i]);
+                if (i != ColumnCount - 1) {
+                    for (size_t j = 0; j < INNER_PADDING; j++) stream->write(" ");
+                }
             }
+            stream->write('\n');
         }
 
         /**
-         * @brief Write the formatted table with information about each resource returned by the
-         * iterator to the given stream.
+         * Print a horizontal divider as wide as the table.
          * @param stream
-         * @param iterator
          */
-        void dump(const SharedPointer<TextStream>& stream,
-                  const Function<Resource*()>&     iterator) const {
-            if (!stream->is_write_supported()) return;
+        void print_divider(const SharedPointer<TextStream>& stream) {
+            for (size_t i = 0; i < _table_width; i++) stream->write(DIVIDER_CHAR);
+            stream->write('\n');
+        }
 
-            // Write a divider with the resource table name
-            stream->write_formatted(String("{") + make_str_template('-', '^', _table_width) + "}\n",
-                                    String::format(" {} Table ", _name));
+      public:
+        constexpr Table(Function<Array<String, ColumnCount>(const ResourceType&)> row_converter)
+            : _column_headers(),
+              _row_converter(move(row_converter)),
+              _table_width(OUTER_PADDING + (INNER_PADDING * (ColumnCount - 1)) + OUTER_PADDING) {}
+
+        constexpr Table(Array<String, ColumnCount>                                column_headers,
+                        Function<Array<String, ColumnCount>(const ResourceType&)> row_converter)
+            : _column_headers(move(column_headers)),
+              _row_converter(move(row_converter)),
+              _table_width(OUTER_PADDING + (INNER_PADDING * (ColumnCount - 1)) + OUTER_PADDING) {
+            for (size_t i = 0; i < ColumnCount; i++)
+                adjust_column_width(i, _column_headers[i].size());
+        }
+
+        /**
+         * Create a new table with the provided row constructor.
+         * @param row_converter
+         * @return A table instance.
+         */
+        static auto
+        make_table(Function<Array<String, ColumnCount>(const ResourceType&)> row_converter)
+            -> Table<ResourceType, ColumnCount> {
+            return Table<ResourceType, ColumnCount>(move(row_converter));
+        }
+
+        /**
+         * Add all resource objects in the provided collection to the table.
+         * @tparam CollectionType Type of the collection.
+         * @param collection An iterable collection.
+         * @return This table instance.
+         */
+        template <typename CollectionType>
+        auto with_data(CollectionType collection) -> Table<ResourceType, ColumnCount> {
+            for (const ResourceType& resource : collection) add_row(resource);
+            return *this;
+        }
+
+        /**
+         * Set the headers of the table.
+         * @param headers Array of headers.
+         * @return This table instance.
+         */
+        auto with_headers(Array<String, ColumnCount> headers) -> Table<ResourceType, ColumnCount>& {
+            _column_headers = move(headers);
+            for (size_t i = 0; i < ColumnCount; i++)
+                adjust_column_width(i, _column_headers[i].size());
+            return *this;
+        }
+
+        /**
+         * Add a new table row with the values of the given resource.
+         *
+         * @param resource Instance of a resource.
+         * @return This table instance.
+         */
+        auto add_row(const ResourceType& resource) -> Table<ResourceType, ColumnCount>& {
+            Array<String, ColumnCount> row_values = _row_converter(resource);
+            // Check if the column widths need to be increased
+            for (size_t i = 0; i < ColumnCount; i++) {
+                size_t value_size = row_values[i].size();
+                adjust_column_width(i, value_size);
+            }
+            _rows.add_back(row_values);
+            return *this;
+        }
+
+        /**
+         * Print the table to the provided text stream.
+         *
+         * @param stream
+         * @return This table instance.
+         */
+        auto print(const SharedPointer<TextStream>& stream) -> Table<ResourceType, ColumnCount>& {
+            if (!stream || !stream->is_write_supported()) return *this;
 
             // Write the column header names
-            for (size_t i = 0; i < _table_columns.size(); i++) {
-                auto* tc = _table_columns[i];
-                stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width) + "}",
-                                        tc->header);
-                if (i < _table_columns.size() - 1) stream->write("  ");
-            }
-            stream->write('\n');
-
-            // Write the horizontal column divider between headers and table entries
-            for (size_t i = 0; i < _table_width; i++) stream->write('-');
-            stream->write('\n');
+            print_data_row(stream, _column_headers, '^');
+            print_divider(stream);
 
             // Write the table entries
-            Resource* curr = iterator();
-            while (curr) {
-                for (size_t i = 0; i < _table_columns.size(); i++) {
-                    auto* tc = _table_columns[i];
-                    stream->write_formatted(String("{") + make_str_template(' ', '<', tc->width)
-                                                + "}",
-                                            tc->value_yeeter(curr));
-                    if (i < _table_columns.size() - 1) stream->write("  ");
-                }
-                stream->write('\n');
-                curr = iterator();
-            }
+            for (size_t i = 0; i < _rows.size(); i++) print_data_row(stream, *_rows[i], '<');
+            return *this;
         }
     };
 } // namespace Rune
