@@ -47,7 +47,7 @@ namespace Rune::App {
                                                     app->base_page_table_address,
                                                     CPU::SchedulingPolicy::NORMAL,
                                                     user_stack);
-        app->handle = _app_handle_counter.acquire_handle();
+        app->handle = _app_handle_counter.acquire();
         _app_table.put(app->handle, app);
         _cpu_subsys->find_thread(t_id)->app_handle = app->handle;
         app->thread_table.add_back(t_id);
@@ -120,7 +120,6 @@ namespace Rune::App {
           _vfs_subsys(nullptr),
           _dev_subsys(nullptr),
           _app_table(),
-          _app_table_fmt(),
           _app_handle_counter(),
           _active_app(nullptr) {}
 
@@ -133,38 +132,6 @@ namespace Rune::App {
         _vfs_subsys    = k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
         _dev_subsys    = k_subsys_reg.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
         _frame_buffer  = boot_info.framebuffer;
-
-        // Setup app table
-        LinkedList<Column<Info>> at_cols;
-        at_cols.add_back(Column<Info>::make_handle_column_table(26));
-        at_cols.add_back({"Version", 12, [](Info* app) { return app->version.to_string(); }});
-        at_cols.add_back({"Vendor", 12, [](Info* app) { return app->vendor; }});
-        at_cols.add_back({"Location", 20, [](Info* app) { return app->location.to_string(); }});
-        at_cols.add_back({"Thread Table", 50, [](Info* app) {
-                              String threads = "";
-                              for (auto handle : app->thread_table)
-                                  threads += String::format("{}, ", handle);
-
-                              if (threads.is_empty()) threads = "-";
-                              return threads;
-                          }});
-        at_cols.add_back({"Node Table", 50, [](Info* app) {
-                              String files = "";
-                              for (auto handle : app->node_table)
-                                  files += String::format("{}, ", handle);
-
-                              if (files.is_empty()) files = "-";
-                              return files;
-                          }});
-        at_cols.add_back({"Directory Stream Table", 50, [](Info* app) {
-                              String files = "";
-                              for (auto handle : app->directory_stream_table)
-                                  files += String::format("{}, ", handle);
-
-                              if (files.is_empty()) files = "-";
-                              return files;
-                          }});
-        _app_table_fmt.configure("App", at_cols);
 
         // Register event hooks
         LOGGER->debug("Registering eventhooks...");
@@ -311,7 +278,7 @@ namespace Rune::App {
         kernel_app->name    = "KApp";
         kernel_app->vendor  = "Ewogijk";
         kernel_app->version = {MAJOR, MINOR, PATCH, PRERELEASE};
-        kernel_app->handle  = _app_handle_counter.acquire_handle();
+        kernel_app->handle  = _app_handle_counter.acquire();
 
         // This is a dummy app that will be removed hence the standard IO streams are attached to
         // nothing
@@ -347,19 +314,31 @@ namespace Rune::App {
     Info* AppSubsystem::get_active_app() const { return _active_app.get(); }
 
     void AppSubsystem::dump_app_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _app_table.begin();
-        _app_table_fmt.dump(stream, [&it] {
-            Info* i = nullptr;
-            if (it.has_next()) {
-                i = it->value->get();
-                ++it;
-            }
-            return i;
-        });
+        Table<SharedPointer<Info>, 7>::make_table(
+            [this](const SharedPointer<Info>& info) -> Array<String, 7> {
+                return {
+                    String::format("{}-{}", info->handle, info->name),
+                    info->version.to_string(),
+                    info->vendor,
+                    info->location.to_string(),
+                    ID_list_to_string(info->thread_table),
+                    ID_list_to_string(info->node_table),
+                    ID_list_to_string(info->directory_stream_table),
+                };
+            })
+            .with_headers({"ID-Name",
+                           "Version",
+                           "Vendor",
+                           "Location",
+                           "Thread Table",
+                           "Node Table",
+                           "Directory Stream Table"})
+            .with_data(_app_table.values())
+            .print(stream);
     }
 
     LoadStatus AppSubsystem::start_os(const Path& os_exec, const Path& working_directory) {
-        if (!_app_handle_counter.has_more_handles()) return LoadStatus::LOAD_ERROR;
+        if (!_app_handle_counter.has_more()) return LoadStatus::LOAD_ERROR;
         ELFLoader   loader(_memory_subsys, _vfs_subsys);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
@@ -397,7 +376,7 @@ namespace Rune::App {
                                             const String& stdin_target,
                                             const String& stdout_target,
                                             const String& stderr_target) {
-        if (!_app_handle_counter.has_more_handles()) return {LoadStatus::LOAD_ERROR, -1};
+        if (!_app_handle_counter.has_more()) return {LoadStatus::LOAD_ERROR, -1};
         ELFLoader   loader(_memory_subsys, _vfs_subsys);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;

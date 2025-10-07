@@ -65,8 +65,7 @@ namespace Rune::App {
         FrameBuffer              _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
-        TableFormatter<Info>              _app_table_fmt;
-        HandleCounter<U16>                _app_handle_counter;
+        IDCounter<U16>                    _app_handle_counter;
 
         SharedPointer<Info> _active_app;
 
@@ -75,10 +74,10 @@ namespace Rune::App {
          * execution.
          * @return The assigned ID of the app.
          */
-        int schedule_for_start(const SharedPointer<Info>& app,
-                               const CPU::Stack&          user_stack,
-                               CPU::StartInfo*            start_info,
-                               const Path&                working_directory);
+        auto schedule_for_start(const SharedPointer<Info>& app,
+                                const CPU::Stack&          user_stack,
+                                CPU::StartInfo*            start_info,
+                                const Path&                working_directory) -> int;
 
         /**
          * @brief Setup a standard stream of the application.
@@ -86,9 +85,22 @@ namespace Rune::App {
          * @param target     Stream target.
          * @return The standard stream or nullptr if setup failed.
          */
-        SharedPointer<TextStream> setup_std_stream(const SharedPointer<Info>& app,
-                                                   StdStream                  std_stream,
-                                                   const String&              target);
+        auto setup_std_stream(const SharedPointer<Info>& app,
+                              StdStream                  std_stream,
+                              const String&              target) -> SharedPointer<TextStream>;
+
+        /**
+         * Join the given list of IDs by ','.
+         * @param ID_list
+         * @return The list of IDs as a string.
+         */
+        template <typename T>
+        auto ID_list_to_string(const LinkedList<T>& ID_list) const -> String {
+            String ID_list_str = "";
+            for (auto ID : ID_list) ID_list_str += String::format("{}, ", ID);
+            if (ID_list_str.is_empty()) ID_list_str = "-";
+            return ID_list_str;
+        }
 
       public:
         AppSubsystem();
@@ -99,24 +111,22 @@ namespace Rune::App {
          *
          * @return Unique Kernel SubSystem name.
          */
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
+        auto start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg)
+            -> bool override;
 
         /**
          *
          * @return A list with all running apps.
          */
-        [[nodiscard]]
-        LinkedList<Info*> get_app_table() const;
+        [[nodiscard]] auto get_app_table() const -> LinkedList<Info*>;
 
         /**
          *
          * @return The app that is currently executing code.
          */
-        [[nodiscard]]
-        Info* get_active_app() const;
+        [[nodiscard]] auto get_active_app() const -> Info*;
 
         /**
          * @brief Dump the app table to the stream.
@@ -131,7 +141,7 @@ namespace Rune::App {
          * @return Final status of the OS start, the assigned ID will always be zero as the OS is
          * always the first loaded app.
          */
-        LoadStatus start_os(const Path& os_exec, const Path& working_directory);
+        auto start_os(const Path& os_exec, const Path& working_directory) -> LoadStatus;
 
         /**
          * <p>
@@ -168,12 +178,12 @@ namespace Rune::App {
          * the assigned app ID, otherwise the app ID is -1 and LoadStatus contains the error that
          * happened.
          */
-        StartStatus start_new_app(const Path&   executable,
-                                  char*         argv[],
-                                  const Path&   working_directory,
-                                  const String& stdin_target,
-                                  const String& stdout_target,
-                                  const String& stderr_target);
+        auto start_new_app(const Path&   executable,
+                           char*         argv[],
+                           const Path&   working_directory,
+                           const String& stdin_target,
+                           const String& stdout_target,
+                           const String& stderr_target) -> StartStatus;
 
         /**
          * @brief free all app resources and exit the main thread with the provided exit code.
@@ -196,7 +206,7 @@ namespace Rune::App {
          * @return INT_MAX: No app with the handle was found, Else: The exit code of the
          * application.
          */
-        int join(int handle);
+        auto join(int handle) -> int;
     };
 } // namespace Rune::App
 

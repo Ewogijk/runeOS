@@ -19,8 +19,8 @@
 #include <Memory/Paging.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger>      LOGGER    = LogContext::instance().get_logger("CPU.CPUSubsystem");
-    Scheduler*                       SCHEDULER = nullptr;
+    const SharedPointer<Logger>      LOGGER = LogContext::instance().get_logger("CPU.CPUSubsystem");
+    Scheduler*                       SCHEDULER          = nullptr;
     Function<void(Thread*, Thread*)> NOTIFY_THREAD_BOOM = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)
         SILENCE_UNUSED(next)
@@ -131,10 +131,8 @@ namespace Rune::CPU {
           _pic_driver_table(),
           _active_pic(nullptr),
           _thread_table(),
-          _thread_table_fmt(),
           _thread_handle_counter(),
           _mutex_table(),
-          _mutex_table_fmt(),
           _mutex_handle_counter(),
           _scheduler(),
           _timer() {}
@@ -177,31 +175,6 @@ namespace Rune::CPU {
                                  ctx->terminated->name);
                 }
             });
-
-        // Init Resource Tables
-        LinkedList<Column<Thread>> tt_cols;
-        tt_cols.add_back(Column<Thread>::make_handle_column_table(26));
-        tt_cols.add_back({"State", 12, [](Thread* t) { return t->state.to_string(); }});
-        tt_cols.add_back({"Policy", 12, [](Thread* t) { return t->policy.to_string(); }});
-        tt_cols.add_back({"App", 5, [](Thread* t) { return String::format("{}", t->app_handle); }});
-        _thread_table_fmt.configure("Thread", tt_cols);
-
-        LinkedList<Column<Mutex>> mt_cols;
-        mt_cols.add_back(Column<Mutex>::make_handle_column_table(26));
-        mt_cols.add_back({"Owner", 26, [](Mutex* m) {
-                              Thread* owner = m->get_owner();
-                              return owner ? String::format("{}-{}", owner->handle, owner->name)
-                                           : "-";
-                          }});
-        mt_cols.add_back({"WaitQueue", 52, [](Mutex* m) {
-                              String waiting_threads = "";
-                              for (auto& t : m->get_waiting_threads())
-                                  waiting_threads += String::format("{}-{}, ", t->handle, t->name);
-
-                              if (waiting_threads.is_empty()) waiting_threads = "-";
-                              return waiting_threads;
-                          }});
-        _mutex_table_fmt.configure("Mutex", mt_cols);
 
         // Init Interrupts/IRQs
         LOGGER->debug("Loading interrupt vector table...");
@@ -255,9 +228,9 @@ namespace Rune::CPU {
         _scheduler.set_on_context_switch([this](Thread* next) {
             fire(EventHook(EventHook::CONTEXT_SWITCH).to_string(), (void*) next);
         });
-        _scheduler.get_running_thread()->handle = _thread_handle_counter.acquire_handle();
-        thread_terminator->handle               = _thread_handle_counter.acquire_handle();
-        le_idle_thread->handle                  = _thread_handle_counter.acquire_handle();
+        _scheduler.get_running_thread()->handle = _thread_handle_counter.acquire();
+        thread_terminator->handle               = _thread_handle_counter.acquire();
+        le_idle_thread->handle                  = _thread_handle_counter.acquire();
         _thread_table.put(_scheduler.get_running_thread()->handle, _scheduler.get_running_thread());
         _thread_table.put(thread_terminator->handle, thread_terminator);
         _thread_table.put(le_idle_thread->handle, le_idle_thread);
@@ -325,15 +298,16 @@ namespace Rune::CPU {
     }
 
     void CPUSubsystem::dump_thread_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _thread_table.begin();
-        _thread_table_fmt.dump(stream, [&it] {
-            Thread* t = nullptr;
-            if (it.has_next()) {
-                t = it->value->get();
-                ++it;
-            }
-            return t;
-        });
+        Table<SharedPointer<Thread>, 4>::make_table(
+            [](const SharedPointer<Thread>& thread) -> Array<String, 4> {
+                return {String::format("{}-{}", thread->handle, thread->name),
+                        thread->state.to_string(),
+                        thread->policy.to_string(),
+                        String::format("{}", thread->app_handle)};
+            })
+            .with_headers({"ID-Name", "State", "Policy", "App"})
+            .with_data(_thread_table.values())
+            .print(stream);
     }
 
     Thread* CPUSubsystem::find_thread(int handle) {
@@ -352,7 +326,7 @@ namespace Rune::CPU {
                                           PhysicalAddr     base_pt_addr,
                                           SchedulingPolicy policy,
                                           Stack            user_stack) {
-        if (!_thread_handle_counter.has_more_handles()) return 0;
+        if (!_thread_handle_counter.has_more()) return 0;
 
         SharedPointer<Thread> new_thread =
             create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
@@ -361,7 +335,7 @@ namespace Rune::CPU {
             return 0;
         }
 
-        new_thread->handle = _thread_handle_counter.acquire_handle();
+        new_thread->handle = _thread_handle_counter.acquire();
         _thread_table.put(new_thread->handle, new_thread);
         _scheduler.unlock();
         return new_thread->handle;
@@ -436,12 +410,11 @@ namespace Rune::CPU {
                 }
 
                 if (!m->remove_waiting_thread(da_thread->handle)) {
-                    LOGGER->error(
-                        R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
-                        da_thread->handle,
-                        da_thread->name,
-                        m->handle,
-                        m->name);
+                    LOGGER->error(R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
+                                  da_thread->handle,
+                                  da_thread->name,
+                                  m->handle,
+                                  m->name);
                     return false;
                 }
                 break;
@@ -475,21 +448,26 @@ namespace Rune::CPU {
     }
 
     void CPUSubsystem::dump_mutex_table(const SharedPointer<TextStream>& stream) const {
-        auto it = _mutex_table.begin();
-        _mutex_table_fmt.dump(stream, [&it] {
-            Mutex* m = nullptr;
-            if (it.has_next()) {
-                m = it->value->get();
-                ++it;
-            }
-            return m;
-        });
+        Table<SharedPointer<Mutex>, 3>::make_table(
+            [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
+                Thread* owner           = mutex->get_owner();
+                String  waiting_threads = "";
+                for (auto& t : mutex->get_waiting_threads())
+                    waiting_threads += String::format("{}-{}, ", t->handle, t->name);
+                if (waiting_threads.is_empty()) waiting_threads = "-";
+                return {String::format("{}-{}", mutex->handle, mutex->name),
+                        owner ? String::format("{}-{}", owner->handle, owner->name) : "-",
+                        waiting_threads};
+            })
+            .with_headers({"ID-Name", "Owner", "WaitQueue"})
+            .with_data(_mutex_table.values())
+            .print(stream);
     }
 
     SharedPointer<Mutex> CPUSubsystem::create_mutex(String name) {
-        if (!_mutex_handle_counter.has_more_handles()) return SharedPointer<Mutex>(nullptr);
+        if (!_mutex_handle_counter.has_more()) return SharedPointer<Mutex>(nullptr);
         auto m    = SharedPointer<Mutex>(new Mutex(&_scheduler, move(name)));
-        m->handle = _mutex_handle_counter.acquire_handle();
+        m->handle = _mutex_handle_counter.acquire();
         _mutex_table.put(m->handle, m);
         return m;
     }

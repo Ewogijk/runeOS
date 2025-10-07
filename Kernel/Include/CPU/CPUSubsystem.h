@@ -78,12 +78,10 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
-        TableFormatter<Thread>              _thread_table_fmt;
-        HandleCounter<U16>                  _thread_handle_counter;
+        IDCounter<U16>                      _thread_handle_counter;
 
         HashMap<U16, SharedPointer<Mutex>> _mutex_table;
-        TableFormatter<Mutex>              _mutex_table_fmt;
-        HandleCounter<U16>                 _mutex_handle_counter;
+        IDCounter<U16>                     _mutex_handle_counter;
         Scheduler                          _scheduler;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -92,11 +90,11 @@ namespace Rune::CPU {
 
         UniquePointer<Timer> _timer;
 
-        SharedPointer<Thread> create_thread(const String&    thread_name,
-                                            StartInfo*       start_info,
-                                            PhysicalAddr     base_pt_addr,
-                                            SchedulingPolicy policy,
-                                            Stack            user_stack);
+        auto create_thread(const String&    thread_name,
+                           StartInfo*       start_info,
+                           PhysicalAddr     base_pt_addr,
+                           SchedulingPolicy policy,
+                           Stack            user_stack) -> SharedPointer<Thread>;
 
       public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -111,10 +109,10 @@ namespace Rune::CPU {
         //                                          Kernel Subsystem Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg) override;
+        auto start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg)
+            -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt API
@@ -124,13 +122,13 @@ namespace Rune::CPU {
          * @brief
          * @return The actively used PIC driver.
          */
-        PICDriver* get_active_pic();
+        auto get_active_pic() -> PICDriver*;
 
         /**
          * @brief The PIC driver table contains all installed PIC drivers.
          * @return A list of installed PIC drivers.
          */
-        LinkedList<PICDriver*> get_pic_driver_table();
+        auto get_pic_driver_table() -> LinkedList<PICDriver*>;
 
         /**
          * @brief Install a driver PIC driver that will be responsible for IRQ handling.
@@ -143,7 +141,7 @@ namespace Rune::CPU {
          *
          * @returns True: The PIC driver is installed, False: It is not.
          */
-        bool install_pic_driver(UniquePointer<PICDriver> driver);
+        auto install_pic_driver(UniquePointer<PICDriver> driver) -> bool;
 
         /**
          * @brief Install the IRQ handler for a device on the specified IRQ line.
@@ -153,10 +151,10 @@ namespace Rune::CPU {
          * @param handler
          * @return True: The IRQ handler is installed. False: Installation failed.
          */
-        bool install_irq_handler(U8                irq_line,
+        auto install_irq_handler(U8                irq_line,
                                  U16               dev_handle,
                                  const String&     dev_name,
-                                 const IRQHandler& handler);
+                                 const IRQHandler& handler) -> bool;
 
         /**
          * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
@@ -164,7 +162,7 @@ namespace Rune::CPU {
          * @param dev_handle
          * @return True: The IRQ handler is uninstalled. False: Uninstalling failed.
          */
-        bool uninstall_irq_handler(U8 irq_line, U16 dev_handle);
+        auto uninstall_irq_handler(U8 irq_line, U16 dev_handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      High Level Threading API
@@ -175,13 +173,13 @@ namespace Rune::CPU {
          * @return The scheduler.
          *
          */
-        Scheduler* get_scheduler();
+        auto get_scheduler() -> Scheduler*;
 
         /**
          * @brief A list of all threads in the system.
          * @return The thread table.
          */
-        LinkedList<Thread*> get_thread_table();
+        auto get_thread_table() -> LinkedList<Thread*>;
 
         /**
          * @brief Dump the thread table to the stream.
@@ -194,7 +192,7 @@ namespace Rune::CPU {
          * @param id ID of a thread.
          * @return Pointer to the thread with the requested ID or a null pointer if not found.
          */
-        Thread* find_thread(int handle);
+        auto find_thread(int handle) -> Thread*;
 
         /**
          * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue
@@ -221,11 +219,11 @@ namespace Rune::CPU {
          * @return The ID if the scheduled thread, 0 if the thread could not be created or
          * scheduled.
          */
-        U16 schedule_new_thread(const String&    thread_name,
-                                StartInfo*       start_info,
-                                PhysicalAddr     base_pt_addr,
-                                SchedulingPolicy policy,
-                                Stack            user_stack);
+        auto schedule_new_thread(const String&    thread_name,
+                                 StartInfo*       start_info,
+                                 PhysicalAddr     base_pt_addr,
+                                 SchedulingPolicy policy,
+                                 Stack            user_stack) -> U16;
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the
@@ -247,7 +245,7 @@ namespace Rune::CPU {
          * @return True: The thread is marked as terminated, False: No thread with the ID was found
          * or it is currently running.
          */
-        bool terminate_thread(int handle);
+        auto terminate_thread(int handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Mutex API
@@ -257,14 +255,14 @@ namespace Rune::CPU {
          * @brief A list of all currently acquired mutexes.
          * @return The mutex table.
          */
-        LinkedList<Mutex*> get_mutex_table();
+        auto get_mutex_table() -> LinkedList<Mutex*>;
 
         /**
          * @brief Try to find the mutex with the given handle.
          * @param mutex_handle Handle of a mutex.
          * @return A pointer to a mutex, null if not found.
          */
-        SharedPointer<Mutex> find_mutex(U16 mutex_handle);
+        auto find_mutex(U16 mutex_handle) -> SharedPointer<Mutex>;
 
         /**
          * @brief Dump the mutex table to the stream.
@@ -282,7 +280,7 @@ namespace Rune::CPU {
          * @param name Name of the mutex.
          * @return A new mutex instance.
          */
-        SharedPointer<Mutex> create_mutex(String name);
+        auto create_mutex(String name) -> SharedPointer<Mutex>;
 
         /**
          * @brief Free the memory of the mutex with the given handle.
@@ -293,7 +291,7 @@ namespace Rune::CPU {
          * @param mutex_handle
          * @return True: The mutex was released, False: No mutex with the given ID was found.
          */
-        bool release_mutex(U16 mutex_handle);
+        auto release_mutex(U16 mutex_handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Time Functions
@@ -310,7 +308,7 @@ namespace Rune::CPU {
          *
          * @return
          */
-        Timer* get_system_timer();
+        auto get_system_timer() -> Timer*;
     };
 
     /**

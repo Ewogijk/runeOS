@@ -26,15 +26,17 @@ namespace Rune {
     }
 
     void EventHookTableEntry::dump(const SharedPointer<TextStream>& stream) const {
-        auto it = event_handler_table.begin();
-        formatter.dump(stream, [&it] {
-            EventHandlerStats* i = nullptr;
-            if (it.has_next()) {
-                i = &(*it);
-                ++it;
-            }
-            return i;
-        });
+        Table<EventHandlerStats, 2>::make_table(
+            [this](const EventHandlerStats stats) -> Array<String, 2> {
+                return {String::format("{}-{}", stats.handle, stats.name),
+                        String::format("{}", stats.notified)};
+            })
+            .with_headers({
+            "ID-Name",
+            "Notified",
+            })
+            .with_data(event_handler_table)
+            .print(stream);
     }
 
     bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) {

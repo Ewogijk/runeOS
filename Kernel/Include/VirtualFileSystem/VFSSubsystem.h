@@ -140,27 +140,22 @@ namespace Rune::VFS {
         HashMap<String, UniquePointer<Driver>> _driver_table;
 
         // All mount points and their devices
-        HashMap<Path, MountPointInfo>  _mount_point_table;
-        TableFormatter<MountPointInfo> _mount_point_table_fmt;
+        HashMap<Path, MountPointInfo> _mount_point_table;
 
         // Counts all open node handles that point to a single path
-        HashMap<Path, NodeRefCount>  _node_ref_table;
-        TableFormatter<NodeRefCount> _node_ref_table_fmt;
+        HashMap<Path, NodeRefCount> _node_ref_table;
 
         // All currently opened nodes
         HashMap<U16, SharedPointer<Node>> _node_table;
-        TableFormatter<Node>              _node_table_fmt;
-        HandleCounter<U16>                _node_handle_counter;
+        IDCounter<U16>                    _node_handle_counter;
 
         // All currently opened directory streams
         HashMap<U16, SharedPointer<DirectoryStream>> _dir_stream_table;
-        TableFormatter<DirectoryStream>              _dir_stream_table_fmt;
-        HandleCounter<U16>                           _dir_stream_handle_counter;
+        IDCounter<U16>                               _dir_stream_handle_counter;
 
-        [[nodiscard]]
-        MountPointInfo resolve(const Path& path) const;
+        [[nodiscard]] auto resolve(const Path& path) const -> MountPointInfo;
 
-        bool create_system_directory(const Path& path);
+        auto create_system_directory(const Path& path) -> bool;
 
       public:
         explicit VFSSubsystem();
@@ -171,10 +166,10 @@ namespace Rune::VFS {
         //                                      KernelSubsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
+        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg)
+            -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Filesystem Driver Registration
@@ -184,8 +179,7 @@ namespace Rune::VFS {
          *
          * @return A list of the names of all registered filesystem drivers.
          */
-        [[nodiscard]]
-        LinkedList<String> get_driver_table() const;
+        [[nodiscard]] auto get_driver_table() const -> LinkedList<String>;
 
         /**
          * Add a new filesystem driver.
@@ -194,7 +188,7 @@ namespace Rune::VFS {
          *
          * @return True: The filesystem driver is added, False: It is not.
          */
-        bool install_driver(UniquePointer<Driver> driver);
+        auto install_driver(UniquePointer<Driver> driver) -> bool;
 
         /**
          * Remove the filesystem driver.
@@ -203,7 +197,7 @@ namespace Rune::VFS {
          *
          * @return True: The filesystem driver is removed, False: It is not.
          */
-        bool uninstall_driver(UniquePointer<Driver> driver);
+        auto uninstall_driver(UniquePointer<Driver> driver) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Node Table Access
@@ -213,8 +207,7 @@ namespace Rune::VFS {
          * @brief
          * @return The node table with all currently open nodes.
          */
-        [[nodiscard]]
-        LinkedList<Node*> get_node_table() const;
+        [[nodiscard]] auto get_node_table() const -> LinkedList<Node*>;
 
         /**
          * @brief Dump the node table to the stream.
@@ -233,8 +226,7 @@ namespace Rune::VFS {
          * @param handle Node handle.
          * @return The node if the node handle is present else a nullptr.
          */
-        [[nodiscard]]
-        SharedPointer<Node> find_node(U16 handle) const;
+        [[nodiscard]] auto find_node(U16 handle) const -> SharedPointer<Node>;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Directory Stream Table Access
@@ -244,8 +236,7 @@ namespace Rune::VFS {
          * @brief
          * @return The directory stream table with all currently open directory streams.
          */
-        [[nodiscard]]
-        LinkedList<DirectoryStream*> get_directory_stream_table() const;
+        [[nodiscard]] auto get_directory_stream_table() const -> LinkedList<DirectoryStream*>;
 
         /**
          * @brief Dump the directory stream table to the stream.
@@ -258,8 +249,8 @@ namespace Rune::VFS {
          * @param handle Directory stream handle.
          * @return The directory stream if the directory stream handle is present else a nullptr.
          */
-        [[nodiscard]]
-        SharedPointer<DirectoryStream> find_directory_stream(U16 handle) const;
+        [[nodiscard]] auto find_directory_stream(U16 handle) const
+            -> SharedPointer<DirectoryStream>;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Mounting and Formatting
@@ -269,8 +260,7 @@ namespace Rune::VFS {
          *
          * @return A list of all mount points.
          */
-        [[nodiscard]]
-        LinkedList<MountPointInfo> get_mount_point_table() const;
+        [[nodiscard]] auto get_mount_point_table() const -> LinkedList<MountPointInfo>;
 
         /**
          * @brief Dump the mount point table to the stream.
@@ -295,8 +285,8 @@ namespace Rune::VFS {
          * reason is specific to the file system implementation, check the logs. DEV_ERROR:    An IO
          * error happened.
          */
-        [[nodiscard]]
-        FormatStatus format(const String& driver_name, uint16_t storage_device) const;
+        [[nodiscard]] auto format(const String& driver_name, uint16_t storage_device) const
+            -> FormatStatus;
 
         /**
          * Try to mount the storage with the given ID to the mount point.
@@ -323,7 +313,7 @@ namespace Rune::VFS {
          * directory or the directory does not exists. NOT_SUPPORTED:   No driver supports the
          * filesystem of the storage device. DEV_ERROR:       An IO error happened.
          */
-        MountStatus mount(const Path& mount_point, U16 storage_device_id);
+        auto mount(const Path& mount_point, U16 storage_device_id) -> MountStatus;
 
         /**
          * Try to unmount the given mount point.
@@ -340,7 +330,7 @@ namespace Rune::VFS {
          *          MOUNT_ERROR: The mount point could not be removed from the mount point table or
          * the driver failed to unmount the storage device. DEV_ERROR:   An IO error happened.
          */
-        MountStatus unmount(const Path& mount_point);
+        auto unmount(const Path& mount_point) -> MountStatus;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Filesystem Access
@@ -367,8 +357,7 @@ namespace Rune::VFS {
          * @return True: The path does not contain any illegal character, False: The path contains
          * at least one illegal character.
          */
-        [[nodiscard]]
-        bool is_valid_file_path(const Path& path) const;
+        [[nodiscard]] auto is_valid_file_path(const Path& path) const -> bool;
 
         /**
          * This operation will not create a node handle.
@@ -382,7 +371,7 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN: The storage device is unknown to the driver.
          *          DEV_ERROR:   An IO error happened.
          */
-        IOStatus get_node_info(const Path& path, NodeInfo& out);
+        auto get_node_info(const Path& path, NodeInfo& out) -> IOStatus;
 
         /**
          * Try to create a file/directory at the path with the given attributes. Either the
@@ -405,7 +394,7 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN:   The storage device is unknown to the driver.
          *          DEV_ERROR:     An IO error happened.
          */
-        IOStatus create(const Path& path, U8 attributes);
+        auto create(const Path& path, U8 attributes) -> IOStatus;
 
         /**
          * @brief Try to open the file/directory at the requested path. If the path is found the
@@ -428,8 +417,8 @@ namespace Rune::VFS {
          *          DEV_ERROR:      An IO error happened.
          *
          */
-        [[nodiscard]]
-        IOStatus open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out);
+        [[nodiscard]] auto
+        open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out) -> IOStatus;
 
         /**
          * Try to delete the file/directory at the given path. Note that deleting a file does not
@@ -460,7 +449,7 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN:   The storage device is unknown to the driver.
          *          DEV_ERROR:     An IO error happened.
          */
-        IOStatus delete_node(const Path& path);
+        auto delete_node(const Path& path) -> IOStatus;
 
         /**
          * @brief Try to open a stream over the content of the directory.
@@ -478,7 +467,8 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN:    The storage device is unknown to the driver.
          *          DEV_ERROR:      An IO error happened.
          */
-        IOStatus open_directory_stream(const Path& path, SharedPointer<DirectoryStream>& out);
+        auto open_directory_stream(const Path& path, SharedPointer<DirectoryStream>& out)
+            -> IOStatus;
     };
 } // namespace Rune::VFS
 

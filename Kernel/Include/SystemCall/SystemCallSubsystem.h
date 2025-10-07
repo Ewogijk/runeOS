@@ -29,8 +29,6 @@ namespace Rune::SystemCall {
     class SystemCallSubsystem : public Subsystem {
         KernelGuardian _k_guard;
 
-        TableFormatter<SystemCallInfo> _system_call_table_fmt;
-
       public:
         SystemCallSubsystem();
 
@@ -38,10 +36,10 @@ namespace Rune::SystemCall {
         //                                      Kernel Subsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
+        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg)
+            -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          System Call API
@@ -50,8 +48,7 @@ namespace Rune::SystemCall {
         /**
          * @brief Lightweight wrapper around the "SystemCallGetTable" function.
          */
-        [[nodiscard]]
-        LinkedList<SystemCallInfo> get_system_call_table() const;
+        [[nodiscard]] auto get_system_call_table() const -> LinkedList<SystemCallInfo>;
 
         /**
          * @brief Dump the system call table to the stream.
@@ -62,12 +59,12 @@ namespace Rune::SystemCall {
         /**
          * @brief Lightweight wrapper around the "SystemCallInstall" function.
          */
-        bool install_system_call(const Definition& system_call_definition);
+        auto install_system_call(const Definition& system_call_definition) -> bool;
 
         /**
          * @brief Lightweight wrapper around the "SystemCallUninstall" function.
          */
-        bool uninstall_system_call(U16 system_call_id);
+        auto uninstall_system_call(U16 system_call_id) -> bool;
     };
 } // namespace Rune::SystemCall
 
