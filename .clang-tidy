@@ -15,7 +15,8 @@ Checks:          'clang-diagnostic-*,
                   -modernize-use-ranges,
                   readability-*,
                   -readability-braces-around-statements,
-                  -readability-use-anyofallof'
+                  -readability-use-anyofallof,
+                  -readability-identifier-length'
 WarningsAsErrors: true
 CheckOptions:
   - key:             cert-dcl16-c.NewSuffixes
