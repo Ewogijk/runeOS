@@ -18,8 +18,8 @@
 #ifndef RUNEOS_STREAM_H
 #define RUNEOS_STREAM_H
 
-#include <KRE/Utility.h>
 #include <KRE/String.h>
+#include <KRE/Utility.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -38,13 +38,13 @@ namespace Rune {
          * @brief
          * @return True: The stream supports reading, False: It does not.
          */
-        virtual bool is_read_supported() = 0;
+        virtual auto is_read_supported() -> bool = 0;
 
         /**
          * @brief Read a single byte from the stream.
          * @return -1: The stream has no byte left, Else: A byte from the stream.
          */
-        virtual int read() = 0;
+        virtual auto read() -> int = 0;
 
         /**
          * @brief Read at most size bytes at the given offset into the buffer.
@@ -53,7 +53,7 @@ namespace Rune {
          * @param size
          * @return The number of bytes that have been read from the stream.
          */
-        size_t read(U8 buffer[], size_t offset, size_t size);
+        auto read(U8 buffer[], size_t offset, size_t size) -> size_t;
 
         /**
          * @brief Read at most size bytes to the beginning of the buffer.
@@ -61,20 +61,20 @@ namespace Rune {
          * @param size
          * @return The number of bytes that have been read from the stream.
          */
-        size_t read(U8 buffer[], size_t size);
+        auto read(U8 buffer[], size_t size) -> size_t;
 
         /**
          * @brief
          * @return True: The stream supports writing, False: It does not.
          */
-        virtual bool is_write_supported() = 0;
+        virtual auto is_write_supported() -> bool = 0;
 
         /**
          * @brief Write a single byte to the stream.
          * @param value
          * @return True: The byte was written, False: It was not.
          */
-        virtual bool write(U8 value) = 0;
+        virtual auto write(U8 value) -> bool = 0;
 
         /**
          * @brief Write size number of bytes from the offset in the buffer to the stream.
@@ -83,7 +83,7 @@ namespace Rune {
          * @param size
          * @return The number of bytes written.
          */
-        size_t write(U8 buffer[], size_t offset, size_t size);
+        auto write(U8 buffer[], size_t offset, size_t size) -> size_t;
 
         /**
          * @brief Write size number of bytes from the beginning of the buffer to the stream.
@@ -91,7 +91,7 @@ namespace Rune {
          * @param size
          * * @return The number of bytes written.
          */
-        size_t write(U8 buffer[], size_t size);
+        auto write(U8 buffer[], size_t size) -> size_t;
 
         /**
          * @brief If the stream supports buffering, write any bytes in the buffer immediately to the
@@ -151,13 +151,13 @@ namespace Rune {
         //                                      Stream API Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        bool is_read_supported() override = 0;
+        auto is_read_supported() -> bool override = 0;
 
-        int read() override = 0;
+        auto read() -> int override = 0;
 
-        bool is_write_supported() override = 0;
+        auto is_write_supported() -> bool override = 0;
 
-        bool write(U8 value) override = 0;
+        auto write(U8 value) -> bool override = 0;
 
         void flush() override = 0;
 
@@ -172,14 +172,14 @@ namespace Rune {
          * @param msg
          * @return The number of characters written.
          */
-        size_t write(const String& msg);
+        auto write(const String& msg) -> size_t;
 
         /**
          * @brief Write the string followed by a new line character to the stream.
          * @param msg
          * @return The number of characters written.
          */
-        size_t write_line(const String& msg);
+        auto write_line(const String& msg) -> size_t;
 
         /**
          * @brief First format the string then write it to the stream.
@@ -188,7 +188,7 @@ namespace Rune {
          * @param arg_size Size of the argument array.
          * @return The number of characters written.
          */
-        size_t write_formatted(const String& format, Argument* arg_list, size_t arg_size);
+        auto write_formatted(const String& format, Argument* arg_list, size_t arg_size) -> size_t;
 
         /**
          * @brief First format the string then write it to the stream.
@@ -196,7 +196,8 @@ namespace Rune {
          * @param args   Varargs of template arguments.
          * @return The number of characters written.
          */
-        template <typename... Args> size_t write_formatted(const String& fmt, Args... args) {
+        template <typename... Args>
+        auto write_formatted(const String& fmt, Args... args) -> size_t {
             Argument arg_array[] = {args...};
             interpolate(fmt.to_cstr(), _formatted_buf, BUF_SIZE, arg_array, sizeof...(Args));
             size_t out = write(_formatted_buf);
@@ -211,7 +212,7 @@ namespace Rune {
         /**
          * @brief True: This text stream supports ANSI escape codes, False: It does not.
          */
-        virtual bool is_ansi_supported() = 0;
+        virtual auto is_ansi_supported() -> bool = 0;
 
         /**
          * @brief Set the background color.
@@ -230,6 +231,6 @@ namespace Rune {
          */
         void reset_style();
     };
-}
+} // namespace Rune
 
 #endif // RUNEOS_STREAM_H
