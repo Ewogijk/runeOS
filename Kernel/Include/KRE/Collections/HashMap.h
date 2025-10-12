@@ -287,6 +287,7 @@ namespace Rune {
                     delete node;
                     node = next;
                 }
+                _bucket[i] = nullptr;
             }
             delete _bucket;
         }
@@ -294,9 +295,10 @@ namespace Rune {
         void copy(const HashMap<K, V>& other) {
             _load_factor  = other._load_factor;
             _bucket_count = other._bucket_count;
-            _bucket       = new HashNode<K, V>*[_bucket_count];
             _size         = other._size;
             _hash         = other._hash;
+            _bucket       = new HashNode<K, V>*[_bucket_count];
+            for (size_t i = 0; i < _bucket_count; i++) _bucket[i] = nullptr;
 
             if (other._bucket == nullptr) {
                 // Other hash map has not run "perform_lazy_init" yet
@@ -420,25 +422,19 @@ namespace Rune {
          *
          * @return Number of entries in the hashmap.
          */
-        [[nodiscard]] auto size() const -> size_t {
-            return _size;
-        }
+        [[nodiscard]] auto size() const -> size_t { return _size; }
 
         /**
          *
          * @return True if the hashmap contains at least one entry.
          */
-        [[nodiscard]] auto is_empty() const -> bool {
-            return _size == 0;
-        }
+        [[nodiscard]] auto is_empty() const -> bool { return _size == 0; }
 
         /**
          *
          * @return Number of buckets that contain entries with the same hash.
          */
-        [[nodiscard]] auto get_bucket_count() const -> size_t {
-            return _bucket_count;
-        }
+        [[nodiscard]] auto get_bucket_count() const -> size_t { return _bucket_count; }
 
         /**
          *

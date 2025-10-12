@@ -251,8 +251,8 @@ target_env.SConscript(
     duplicate=0,
 )
 target_env.SConscript(
-    str(Path("Src") / "Boot" / "SConscript"),
-    variant_dir=str(build_dir / "Boot"),
+    str(Path("Src") / "Test" / "Heimdall" / "SConscript"),
+    variant_dir=str(build_dir / "Test" / "Heimdall"),
     duplicate=0,
 )
 target_env.SConscript(
@@ -260,6 +260,12 @@ target_env.SConscript(
     variant_dir=str(build_dir / "BuiltInPlugin"),
     duplicate=0,
 )
+target_env.SConscript(
+    str(Path("Src") / "Boot" / "SConscript"),
+    variant_dir=str(build_dir / "Boot"),
+    duplicate=0,
+)
+
 
 Import("Ember")
 Import("KRE")
@@ -270,6 +276,7 @@ Import("Device")
 Import("VirtualFileSystem")
 Import("App")
 Import("SystemCall")
+Import("Heimdall")
 Import("BuiltInPlugin")
 Import("Boot")
 Import("crti")
@@ -279,6 +286,7 @@ objects = [
     target_env["crt_begin"],
     Boot,
     BuiltInPlugin,
+    Heimdall,
     SystemCall,
     App,
     VirtualFileSystem,

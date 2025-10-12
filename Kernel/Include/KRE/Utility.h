@@ -22,7 +22,6 @@
 
 #include <KRE/CppLanguageSupport.h>
 #include <KRE/TypeTraits.h>
-#include <KRE/Utility.h>
 
 namespace Rune {
 
