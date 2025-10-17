@@ -21,7 +21,7 @@
 #include <Ember/Ember.h>
 
 #include <KRE/Collections/LinkedList.h>
-#include <KRE/CppLanguageSupport.h>
+#include <KRE/CppRuntimeSupport.h>
 
 namespace Rune {
      //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

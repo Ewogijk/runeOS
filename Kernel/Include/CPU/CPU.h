@@ -350,7 +350,7 @@ namespace Rune::CPU {
      * @return True: All CPU features are initialized. False: Failed to initialize the CPU, the
      * kernel boot must be halted.
      */
-    auto init_bootstrap_core() -> bool;
+    auto init_boot_core() -> bool;
 
     /**
      * @brief Try to detect and then initialize all other CPU cores on the device.

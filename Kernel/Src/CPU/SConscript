@@ -18,7 +18,7 @@ Import("target_env")
 target_env: Environment
 sources = [
     target_env.File("CPU.cpp"),
-    target_env.File("CPUSubsystem.cpp"),
+    target_env.File("CPUModule.cpp"),
     target_env.File("E9Stream.cpp"),
     target_env.File("Interrupt/8259PIC.cpp"),
     target_env.File("Threading/MultiLevelQueue.cpp"),

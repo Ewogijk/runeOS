@@ -40,7 +40,7 @@ namespace Rune::SystemCall {
      *
      * @return True: The kernel is ready to handle system calls, False: System calls cannot be used.
      */
-    bool system_call_init(KernelGuardian* k_guard);
+    auto system_call_init(KernelGuardian* k_guard) -> bool;
 
     /**
      * @brief Get all installed system calls.
@@ -49,7 +49,7 @@ namespace Rune::SystemCall {
      *
      * @return A list of all installed system calls.
      */
-    LinkedList<SystemCallInfo> system_call_get_table();
+    auto system_call_get_table() -> LinkedList<SystemCallInfo>;
 
     /**
      * @brief Try to install the system call definition.
@@ -65,7 +65,7 @@ namespace Rune::SystemCall {
      * @return True: The system call is installed, False: The requested system call is already in
      * use, the handler was not installed.
      */
-    bool system_call_install(const Definition& sys_call_def);
+    auto system_call_install(const Definition& sys_call_def) -> bool;
 
     /**
      * @brief Try to uninstall the system call with the given ID.
@@ -73,7 +73,7 @@ namespace Rune::SystemCall {
      * @return True: The system call was uninstalled, False: No system call with the ID was
      * installed or the ID is invalid (systemCallID >= SystemCallLimit).
      */
-    bool system_call_uninstall(U16 system_call_id);
+    auto system_call_uninstall(U16 system_call_id) -> bool;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_SYSTEMCALL_H

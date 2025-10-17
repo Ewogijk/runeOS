@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
+#include <KRE/System/System.h>
 #include <KRE/System/Lat15-Terminus16.h>
 
 #include <App/App.h>
@@ -30,7 +31,7 @@ namespace Rune::App {
 
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 
-    int AppSubsystem::schedule_for_start(const SharedPointer<Info>& app,
+    int AppModule::schedule_for_start(const SharedPointer<Info>& app,
                                          const CPU::Stack&          user_stack,
                                          CPU::StartInfo*            start_info,
                                          const Path&                working_directory) {
@@ -41,23 +42,23 @@ namespace Rune::App {
                      app->vendor,
                      app->working_directory.to_string());
 
-        _cpu_subsys->get_scheduler()->lock();
-        int t_id    = _cpu_subsys->schedule_new_thread("main",
+        _cpu_module->get_scheduler()->lock();
+        int t_id    = _cpu_module->schedule_new_thread("main",
                                                     start_info,
                                                     app->base_page_table_address,
                                                     CPU::SchedulingPolicy::NORMAL,
                                                     user_stack);
         app->handle = _app_handle_counter.acquire();
         _app_table.put(app->handle, app);
-        _cpu_subsys->find_thread(t_id)->app_handle = app->handle;
+        _cpu_module->find_thread(t_id)->app_handle = app->handle;
         app->thread_table.add_back(t_id);
-        _cpu_subsys->get_scheduler()->unlock();
+        _cpu_module->get_scheduler()->unlock();
         return app->handle;
     }
 
-    SharedPointer<TextStream> AppSubsystem::setup_std_stream(const SharedPointer<Info>& app,
-                                                             StdStream                  std_stream,
-                                                             const Rune::String&        target) {
+    SharedPointer<TextStream> AppModule::setup_std_stream(const SharedPointer<Info>& app,
+                                                          StdStream                  std_stream,
+                                                          const Rune::String&        target) {
         LinkedList<String> t_split = target.split(':');
         if (t_split.is_empty() || t_split.size() > 2) return {};
         String t = *t_split[0];
@@ -77,22 +78,22 @@ namespace Rune::App {
         } else if (t == "file") {
             if (arg.is_empty()) return {}; // No file provided
             Path maybe_path = Path(arg).resolve(_active_app->working_directory);
-            if (_vfs_subsys->is_valid_file_path(maybe_path)) {
+            if (_vfs_module->is_valid_file_path(maybe_path)) {
                 // Setup std stream with a file
                 if (std_stream == StdStream::IN) return {}; // Not supported
 
                 SharedPointer<VFS::Node> node;
-                VFS::IOStatus            st = _vfs_subsys->open(
+                VFS::IOStatus            st = _vfs_module->open(
                     maybe_path,
                     std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
                     node);
                 if (st == VFS::IOStatus::NOT_FOUND) {
                     // File not found -> Create it
-                    st = _vfs_subsys->create(maybe_path, (int) Ember::NodeAttribute::FILE);
+                    st = _vfs_module->create(maybe_path, (int) Ember::NodeAttribute::FILE);
                     if (st != VFS::IOStatus::CREATED) return {};
 
                     // Try to open it again
-                    st = _vfs_subsys->open(maybe_path,
+                    st = _vfs_module->open(maybe_path,
                                            std_stream == StdStream::IN ? Ember::IOMode::READ
                                                                        : Ember::IOMode::WRITE,
                                            node);
@@ -113,36 +114,36 @@ namespace Rune::App {
         return {};
     }
 
-    App::AppSubsystem::AppSubsystem()
-        : Subsystem(),
-          _memory_subsys(nullptr),
-          _cpu_subsys(nullptr),
-          _vfs_subsys(nullptr),
-          _dev_subsys(nullptr),
+    App::AppModule::AppModule()
+        : Module(),
+          _memory_module(nullptr),
+          _cpu_module(nullptr),
+          _vfs_module(nullptr),
+          _dev_module(nullptr),
           _app_table(),
           _app_handle_counter(),
           _active_app(nullptr) {}
 
-    String AppSubsystem::get_name() const { return "App"; }
+    String AppModule::get_name() const { return "App"; }
 
-    bool AppSubsystem::start(const BootLoaderInfo&    boot_info,
-                             const SubsystemRegistry& k_subsys_reg) {
-        _memory_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
-        _cpu_subsys    = k_subsys_reg.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
-        _vfs_subsys    = k_subsys_reg.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
-        _dev_subsys    = k_subsys_reg.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
+    bool AppModule::load(const BootInfo& boot_info) {
+        System& system = System::instance();
+        _memory_module = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
+        _cpu_module    = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
+        _vfs_module    = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
+        _dev_module    = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         _frame_buffer  = boot_info.framebuffer;
 
         // Register event hooks
         LOGGER->debug("Registering eventhooks...");
-        _cpu_subsys->install_event_handler(
+        _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_CREATED).to_string(),
             "App Thread Table Manager - ThreadCreated",
             [this](void* evt_ctx) {
                 auto t        = (CPU::Thread*) evt_ctx;
                 t->app_handle = _active_app->handle;
             });
-        _cpu_subsys->install_event_handler(
+        _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_TERMINATED).to_string(),
             "App Thread Table Manager - ThreadTerminated",
             [this](void* evt_ctx) {
@@ -165,7 +166,7 @@ namespace Rune::App {
                                   finished_app->name);
 
                     Memory::PhysicalMemoryManager* pmm =
-                        _memory_subsys->get_physical_memory_manager();
+                        _memory_module->get_physical_memory_manager();
                     LOGGER->trace("Freeing base page table at {:0=#16x}",
                                   finished_app->base_page_table_address);
                     if (!pmm->free(finished_app->base_page_table_address))
@@ -200,7 +201,7 @@ namespace Rune::App {
                     _active_app = next_active;
                 }
             });
-        _cpu_subsys->install_event_handler(
+        _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::CONTEXT_SWITCH).to_string(),
             "App Thread Table Manager - ContextSwitch",
             [this](void* evt_ctx) {
@@ -222,7 +223,7 @@ namespace Rune::App {
                 }
             });
 
-        _vfs_subsys->install_event_handler(
+        _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::NODE_OPENED).to_string(),
             "App Node Table Manager - On Open",
             [this](void* evt_ctx) {
@@ -233,7 +234,7 @@ namespace Rune::App {
                               _active_app->name);
                 _active_app->node_table.add_back(handle);
             });
-        _vfs_subsys->install_event_handler(
+        _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::NODE_CLOSED).to_string(),
             "App Node Table Manager - On Close",
             [this](void* evt_ctx) {
@@ -245,7 +246,7 @@ namespace Rune::App {
                 _active_app->node_table.remove(handle);
             });
 
-        _vfs_subsys->install_event_handler(
+        _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::DIRECTORY_STREAM_OPENED).to_string(),
             "App Directory Stream Table Manager - On Open",
             [this](void* evt_ctx) {
@@ -258,7 +259,7 @@ namespace Rune::App {
                     _active_app->name);
                 _active_app->directory_stream_table.add_back(handle);
             });
-        _vfs_subsys->install_event_handler(
+        _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
             "App Directory Stream Table Manager - On Close",
             [this](void* evt_ctx) {
@@ -289,12 +290,12 @@ namespace Rune::App {
         kernel_app->base_page_table_address = Memory::get_base_page_table_address();
         _app_table.put(kernel_app->handle, kernel_app);
 
-        for (auto& t : _cpu_subsys->get_thread_table()) {
+        for (auto& t : _cpu_module->get_thread_table()) {
             kernel_app->thread_table.add_back(t->handle);
             t->app_handle = kernel_app->handle;
         }
 
-        for (auto& f_e : _vfs_subsys->get_node_table())
+        for (auto& f_e : _vfs_module->get_node_table())
             kernel_app->node_table.add_back(f_e->handle);
 
         _active_app = kernel_app;
@@ -305,15 +306,15 @@ namespace Rune::App {
         return true;
     }
 
-    LinkedList<Info*> AppSubsystem::get_app_table() const {
+    LinkedList<Info*> AppModule::get_app_table() const {
         LinkedList<Info*> apps;
         for (auto& app_entry : _app_table) apps.add_back(app_entry.value->get());
         return apps;
     }
 
-    Info* AppSubsystem::get_active_app() const { return _active_app.get(); }
+    Info* AppModule::get_active_app() const { return _active_app.get(); }
 
-    void AppSubsystem::dump_app_table(const SharedPointer<TextStream>& stream) const {
+    void AppModule::dump_app_table(const SharedPointer<TextStream>& stream) const {
         Table<SharedPointer<Info>, 7>::make_table(
             [this](const SharedPointer<Info>& info) -> Array<String, 7> {
                 return {
@@ -337,9 +338,9 @@ namespace Rune::App {
             .print(stream);
     }
 
-    LoadStatus AppSubsystem::start_os(const Path& os_exec, const Path& working_directory) {
+    LoadStatus AppModule::start_os(const Path& os_exec, const Path& working_directory) {
         if (!_app_handle_counter.has_more()) return LoadStatus::LOAD_ERROR;
-        ELFLoader   loader(_memory_subsys, _vfs_subsys);
+        ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
         VirtualAddr start_info_addr;
@@ -353,7 +354,7 @@ namespace Rune::App {
         }
 
         // Hook up the OS stdin/stderr to the terminal stream that renders on the display
-        app->std_out = SharedPointer<TextStream>(new TerminalStream(_cpu_subsys,
+        app->std_out = SharedPointer<TextStream>(new TerminalStream(_cpu_module,
                                                                     &_frame_buffer,
                                                                     &LAT15TERMINUS16,
                                                                     Pixie::BLACK,
@@ -361,7 +362,7 @@ namespace Rune::App {
         // Set the error stream also to the terminal stream, just print text in red
         app->std_err = app->std_out;
         // Hook up the stdin to the keyboard
-        app->std_in = SharedPointer<TextStream>(_dev_subsys->get_keyboard().get());
+        app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard().get());
 
         schedule_for_start(app,
                            user_stack,
@@ -370,14 +371,14 @@ namespace Rune::App {
         return LoadStatus::RUNNING;
     }
 
-    StartStatus AppSubsystem::start_new_app(const Path&   executable,
-                                            char**        argv,
-                                            const Path&   working_directory,
-                                            const String& stdin_target,
-                                            const String& stdout_target,
-                                            const String& stderr_target) {
+    StartStatus AppModule::start_new_app(const Path&   executable,
+                                         char**        argv,
+                                         const Path&   working_directory,
+                                         const String& stdin_target,
+                                         const String& stdout_target,
+                                         const String& stderr_target) {
         if (!_app_handle_counter.has_more()) return {LoadStatus::LOAD_ERROR, -1};
-        ELFLoader   loader(_memory_subsys, _vfs_subsys);
+        ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
         VirtualAddr start_info_addr;
@@ -427,7 +428,7 @@ namespace Rune::App {
         return {LoadStatus::RUNNING, app_id};
     }
 
-    void AppSubsystem::exit_running_app(int exit_code) {
+    void AppModule::exit_running_app(int exit_code) {
         _active_app->exit_code = exit_code;
 
         // Close std io streams
@@ -437,7 +438,7 @@ namespace Rune::App {
 
         LOGGER->debug(R"(App "{}-{}" has exited.)", _active_app->handle, _active_app->name);
         LOGGER->debug("Freeing user mode memory...");
-        if (!_memory_subsys->get_virtual_memory_manager()->free_virtual_address_space(
+        if (!_memory_module->get_virtual_memory_manager()->free_virtual_address_space(
                 _active_app->base_page_table_address)) {
             LOGGER->warn(R"(Failed to free virtual address space of app "{}-{}")",
                          _active_app->handle,
@@ -446,8 +447,8 @@ namespace Rune::App {
 
         LOGGER->debug("Terminating all app threads...");
         for (auto r_t : _active_app->thread_table) {
-            if (!_cpu_subsys->terminate_thread(r_t)
-                && r_t != _cpu_subsys->get_scheduler()->get_running_thread()->handle) {
+            if (!_cpu_module->terminate_thread(r_t)
+                && r_t != _cpu_module->get_scheduler()->get_running_thread()->handle) {
                 LOGGER->warn(R"(Failed to terminate thread with ID {}.)", r_t);
             }
         }
@@ -455,7 +456,7 @@ namespace Rune::App {
 
         LOGGER->debug("Closing all open nodes of the app...");
         for (auto handle : _active_app->node_table) {
-            auto node = _vfs_subsys->find_node(handle);
+            auto node = _vfs_module->find_node(handle);
             if (node)
                 node->close();
             else
@@ -464,7 +465,7 @@ namespace Rune::App {
         _active_app->node_table.clear();
 
         // Schedule all threads joining with this app
-        auto* scheduler = _cpu_subsys->get_scheduler();
+        auto* scheduler = _cpu_module->get_scheduler();
         scheduler->lock();
         LOGGER->debug("Scheduling all joining threads...");
         for (auto& j_t : _active_app->joining_thread_table) {
@@ -477,7 +478,7 @@ namespace Rune::App {
         CPU::thread_exit(exit_code);
     }
 
-    int AppSubsystem::join(int handle) {
+    int AppModule::join(int handle) {
         // Important: We need to keep a copy of the shared pointer here, so that the app info does
         // not get freed
         //              when the final context switch from its main thread to the next thread
@@ -493,7 +494,7 @@ namespace Rune::App {
             return INT_MAX;
         }
 
-        auto* scheduler = _cpu_subsys->get_scheduler();
+        auto* scheduler = _cpu_module->get_scheduler();
         scheduler->lock();
         auto r_t = scheduler->get_running_thread();
         LOGGER->debug(R"(Thread "{}-{}" is joining with app "{}-{}")",

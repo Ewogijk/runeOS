@@ -16,7 +16,7 @@
 
 #include <KRE/System/FrameBuffer.h>
 
-#include <KRE/CppLanguageSupport.h>
+#include <KRE/CppRuntimeSupport.h>
 #include <KRE/Math.h>
 #include <KRE/Utility.h>
 

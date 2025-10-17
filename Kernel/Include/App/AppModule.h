@@ -19,17 +19,17 @@
 
 #include <VirtualFileSystem/Path.h>
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 #include <App/App.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <VirtualFileSystem/VFSModule.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
-#include <Device/DeviceSubsystem.h>
+#include <Device/DeviceModule.h>
 
 namespace Rune::App {
 
@@ -57,11 +57,11 @@ namespace Rune::App {
      * last thread of an app is terminated.
      * </p>
      */
-    class AppSubsystem : public Subsystem {
-        Memory::MemorySubsystem* _memory_subsys;
-        CPU::CPUSubsystem*       _cpu_subsys;
-        VFS::VFSSubsystem*       _vfs_subsys;
-        Device::DeviceSubsystem* _dev_subsys;
+    class AppModule : public Module {
+        Memory::MemoryModule*    _memory_module;
+        CPU::CPUModule*          _cpu_module;
+        VFS::VFSModule*       _vfs_module;
+        Device::DeviceModule* _dev_module;
         FrameBuffer              _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
@@ -103,9 +103,9 @@ namespace Rune::App {
         }
 
       public:
-        AppSubsystem();
+        AppModule();
 
-        ~AppSubsystem() override = default;
+        ~AppModule() override = default;
 
         /**
          *
@@ -113,8 +113,7 @@ namespace Rune::App {
          */
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg)
-            -> bool override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
         /**
          *

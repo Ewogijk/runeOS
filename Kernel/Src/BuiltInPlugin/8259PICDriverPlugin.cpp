@@ -16,7 +16,9 @@
 
 #include <BuiltInPlugin/8259PICDriverPlugin.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <KRE/System/System.h>
+
+#include <CPU/CPUModule.h>
 
 #include <CPU/Interrupt/8259PIC.h>
 
@@ -29,8 +31,8 @@ namespace Rune::BuiltInPlugin {
 
     PluginInfo _8259PICDriverPlugin::get_info() const { return _8259_PIC_INFO; }
 
-    bool _8259PICDriverPlugin::start(const SubsystemRegistry& ks_registry) {
-        auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+    bool _8259PICDriverPlugin::load() {
+        auto* cs = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cs->install_pic_driver(UniquePointer<CPU::PICDriver>(new CPU::_8259PIC()));
 
         return true;

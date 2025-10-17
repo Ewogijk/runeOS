@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_FILESUBSYSTEM_H
-#define RUNEOS_FILESUBSYSTEM_H
+#ifndef RUNEOS_VFSMODULE_H
+#define RUNEOS_VFSMODULE_H
 
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/System/Module.h>
 #include <KRE/System/Resource.h>
-#include <KRE/System/Subsystem.h>
 
 #include <KRE/Collections/HashMap.h>
 
@@ -120,21 +120,21 @@ namespace Rune::VFS {
      * table.
      * </p>
      * <p>
-     *  Additionally a node ref table is maintained that keeps track of how many times the same node
-     * is opened, e.g. again using the node "/my/node" if two apps have opened it at the same time
-     * an entry "/my/node" with a ref count of two is made in the node ref table. The node ref table
-     * is required so that a node is not physically deleted while other apps are still using it but
-     * rather physically deleted after the last app closed the node.
+     *  Additionally, a node ref table is maintained that keeps track of how many times the same
+     * node is opened, e.g. again using the node "/my/node" if two apps have opened it at the same
+     * time an entry "/my/node" with a ref count of two is made in the node ref table. The node ref
+     * table is required so that a node is not physically deleted while other apps are still using
+     * it but rather physically deleted after the last app closed the node.
      * </p>
      * <p>
      *  Each node is dynamically allocated when it is first opened and memory ownership is shared
-     * between the VFSS and the calling code. As long as the node is open (registered in the node
+     * between the VFS and the calling code. As long as the node is open (registered in the node
      * table) the memory will not be freed, thus it is important to always close a node after it is
      * no longer needed. But also the calling code can obtain shared pointers to the node, thus must
      * make sure that those pointers are deleted at some point.
      * </p>
      */
-    class VFSSubsystem : public Subsystem {
+    class VFSModule : public Module {
       private:
         // All registered file system drivers
         HashMap<String, UniquePointer<Driver>> _driver_table;
@@ -158,9 +158,9 @@ namespace Rune::VFS {
         auto create_system_directory(const Path& path) -> bool;
 
       public:
-        explicit VFSSubsystem();
+        explicit VFSModule();
 
-        ~VFSSubsystem() override = default;
+        ~VFSModule() override = default;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      KernelSubsystem Overrides
@@ -168,8 +168,7 @@ namespace Rune::VFS {
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg)
-            -> bool override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Filesystem Driver Registration
@@ -472,4 +471,4 @@ namespace Rune::VFS {
     };
 } // namespace Rune::VFS
 
-#endif // RUNEOS_FILESUBSYSTEM_H
+#endif // RUNEOS_VFSMODULE_H

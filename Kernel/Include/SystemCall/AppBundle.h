@@ -14,18 +14,18 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_APPMANAGEMENT_H
-#define RUNEOS_APPMANAGEMENT_H
+#ifndef RUNEOS_APPBUNDLE_H
+#define RUNEOS_APPBUNDLE_H
 
 #include <Ember/Ember.h>
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
-#include <Device/DeviceSubsystem.h>
+#include <Device/DeviceModule.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <VirtualFileSystem/VFSModule.h>
 
 #include <SystemCall/KernelGuardian.h>
 
@@ -35,10 +35,10 @@ namespace Rune::SystemCall {
      */
     struct AppSystemCallContext {
         KernelGuardian*          k_guard       = nullptr;
-        App::AppSubsystem*       app_subsys    = nullptr;
-        Device::DeviceSubsystem* device_subsys = nullptr;
-        CPU::CPUSubsystem*       cpu_subsys    = nullptr;
-        VFS::VFSSubsystem*       vfs_subsys    = nullptr;
+        App::AppModule*       app_module    = nullptr;
+        Device::DeviceModule* device_module = nullptr;
+        CPU::CPUModule*       cpu_module    = nullptr;
+        VFS::VFSModule*       vfs_module    = nullptr;
     };
 
     /**
@@ -161,4 +161,4 @@ namespace Rune::SystemCall {
     Ember::StatusCode app_change_directory(void* sys_call_ctx, U64 wd);
 } // namespace Rune::SystemCall
 
-#endif // RUNEOS_APPMANAGEMENT_H
+#endif // RUNEOS_APPBUNDLE_H

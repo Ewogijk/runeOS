@@ -14,11 +14,13 @@
  *  limitations under the License.
  */
 
-#include <SystemCall/SystemCallSubsystem.h>
+#include <SystemCall/SystemCallModule.h>
+
+#include <KRE/System/System.h>
 
 #include <SystemCall/Bundle.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
 namespace Rune::SystemCall {
     const SharedPointer<Logger> LOGGER =
@@ -28,23 +30,22 @@ namespace Rune::SystemCall {
     //                                          Subsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    SystemCallSubsystem::SystemCallSubsystem() : Subsystem(), _k_guard() {}
+    SystemCallModule::SystemCallModule() : Module(), _k_guard() {}
 
-    String SystemCallSubsystem::get_name() const { return "SystemCall"; }
+    String SystemCallModule::get_name() const { return "SystemCall"; }
 
-    bool SystemCallSubsystem::start(const BootLoaderInfo&    boot_info,
-                                    const SubsystemRegistry& k_subsys_reg) {
+    bool SystemCallModule::load(const BootInfo& boot_info) {
         SILENCE_UNUSED(boot_info)
-        SILENCE_UNUSED(k_subsys_reg)
+        System& system = System::instance();
 
-        auto* mem_subsys = k_subsys_reg.get_as<Memory::MemorySubsystem>(KernelSubsystem::MEMORY);
-        auto  user_space_end = mem_subsys->get_virtual_memory_manager()->get_user_space_end();
+        auto* mem_module = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
+        auto  user_space_end = mem_module->get_virtual_memory_manager()->get_user_space_end();
         LOGGER->debug("Kernel memory start: {:0=#16x}", user_space_end);
         _k_guard.set_kernel_memory_start(user_space_end);
         system_call_init(&_k_guard);
 
         LinkedList<Bundle> native_sys_calls =
-            system_call_get_native_bundles(&_k_guard, k_subsys_reg);
+            system_call_get_native_bundles(&_k_guard);
         for (auto& bundle : native_sys_calls) {
             LOGGER->debug(R"(Installing the "{}" system call bundle.)", bundle.name);
             for (auto& def : bundle.system_call_definitions)
@@ -64,12 +65,11 @@ namespace Rune::SystemCall {
     //                                          System Call API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<SystemCallInfo> SystemCallSubsystem::get_system_call_table() const {
+    LinkedList<SystemCallInfo> SystemCallModule::get_system_call_table() const {
         return system_call_get_table();
     }
 
-    void
-    SystemCallSubsystem::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
+    void SystemCallModule::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
         Table<SystemCallInfo, 2>::make_table([](const SystemCallInfo& sci) -> Array<String, 2> {
             return {String::format("{}-{}", sci.handle, sci.name),
                     String::format("{}", sci.requested)};
@@ -79,11 +79,11 @@ namespace Rune::SystemCall {
             .print(stream);
     }
 
-    bool SystemCallSubsystem::install_system_call(const Definition& system_call_definition) {
+    bool SystemCallModule::install_system_call(const Definition& system_call_definition) {
         return system_call_install(system_call_definition);
     }
 
-    bool SystemCallSubsystem::uninstall_system_call(U16 system_call_id) {
+    bool SystemCallModule::uninstall_system_call(U16 system_call_id) {
         return system_call_uninstall(system_call_id);
     }
 } // namespace Rune::SystemCall

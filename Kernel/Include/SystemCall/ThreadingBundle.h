@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_THREADMANAGEMENT_H
-#define RUNEOS_THREADMANAGEMENT_H
+#ifndef RUNEOS_THREADMODULE_H
+#define RUNEOS_THREADMODULE_H
 
 #include <Ember/Ember.h>
 
 #include <SystemCall/KernelGuardian.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
 namespace Rune::SystemCall {
 
@@ -32,8 +32,8 @@ namespace Rune::SystemCall {
      */
     struct ThreadingSystemCallContext {
         KernelGuardian*    k_guard    = nullptr;
-        CPU::CPUSubsystem* cpu_subsys = nullptr;
-        App::AppSubsystem* app_subsys = nullptr;
+        CPU::CPUModule* cpu_module = nullptr;
+        App::AppModule* app_module = nullptr;
     };
 
     /**
@@ -100,4 +100,4 @@ namespace Rune::SystemCall {
     Ember::StatusCode set_thread_control_block(void* sys_call_ctx, U64 tcb);
 } // namespace Rune::SystemCall
 
-#endif // RUNEOS_THREADMANAGEMENT_H
+#endif // RUNEOS_THREADMODULE_H

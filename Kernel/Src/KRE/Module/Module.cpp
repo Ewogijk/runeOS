@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -28,26 +28,10 @@ namespace Rune {
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Kernel Subsystem Registry
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    DEFINE_ENUM(KernelSubsystem, K_SUBSYSTEMS, 0x0)
-
-    SubsystemRegistry::SubsystemRegistry(Subsystem** k_subsys_registry, size_t k_subsys_count)
-        : _k_subsys_registry(k_subsys_registry),
-          _k_subsys_count(k_subsys_count) {}
-
-    size_t SubsystemRegistry::size() const { return _k_subsys_count; }
-
-    Subsystem* SubsystemRegistry::operator[](size_t index) const {
-        return index < _k_subsys_count ? _k_subsys_registry[index] : nullptr;
-    }
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Kernel Subsystem
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void Subsystem::fire(const String& evt_hook, void* evt_context) {
+    void Module::fire(const String& evt_hook, void* evt_context) {
         auto it = _event_hook_table.find(evt_hook);
         if (it == _event_hook_table.end()) return;
 
@@ -57,9 +41,9 @@ namespace Rune {
         }
     }
 
-    Subsystem::Subsystem() : _event_hook_table(), _event_hook_handle_counter() {}
+    Module::Module() : _event_hook_table(), _event_hook_handle_counter() {}
 
-    LinkedList<EventHookTableEntry> Subsystem::get_event_hook_table() {
+    LinkedList<EventHookTableEntry> Module::get_event_hook_table() {
         LinkedList<EventHookTableEntry> evt_hook_tbl;
         for (auto& e : _event_hook_table) {
             EventHookTableEntry evt_hook_tbl_e;
@@ -73,7 +57,7 @@ namespace Rune {
         return evt_hook_tbl;
     }
 
-    U16 Subsystem::install_event_handler(const String&       event_hook,
+    U16 Module::install_event_handler(const String&       event_hook,
                                          const String&       evt_handler_name,
                                          const EventHandler& handler) {
         if (!_event_hook_handle_counter.has_more()) return 0;
@@ -86,7 +70,7 @@ namespace Rune {
         return evt_handler_id;
     }
 
-    bool Subsystem::uninstall_event_handler(const String& event_hook, U16 evt_handler_id) {
+    bool Module::uninstall_event_handler(const String& event_hook, U16 evt_handler_id) {
         auto it = _event_hook_table.find(event_hook);
         if (it == _event_hook_table.end()) return false;
 

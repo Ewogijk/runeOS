@@ -38,11 +38,9 @@ namespace Rune::BuiltInPlugin {
         //                                  Kernel Extension Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        PluginInfo get_info() const override;
+        [[nodiscard]] auto get_info() const -> PluginInfo override;
 
-        [[nodiscard]]
-        bool start(const SubsystemRegistry& ks_registry) override;
+        [[nodiscard]] auto load() -> bool override;
     };
 } // namespace Rune::BuiltInPlugin
 

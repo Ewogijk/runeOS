@@ -20,12 +20,12 @@
 #include <Ember/Enum.h>
 
 #include <KRE/Collections/LinkedList.h>
-#include <KRE/String.h>
 #include <KRE/Stream.h>
+#include <KRE/String.h>
 
 #include <KRE/System/FrameBuffer.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
 namespace Rune::App {
 
@@ -188,8 +188,8 @@ namespace Rune::App {
         // aka the blink speed
         static constexpr U16 CURSOR_BLINK_FREQ = 500;
 
-        CPU::CPUSubsystem* _cpu_subsys;
-        TerminalState      _state;
+        CPU::CPUModule* _cpu_module;
+        TerminalState   _state;
 
         U16            _render_thread_ID;
         String         _render_thread_arg;
@@ -294,11 +294,11 @@ namespace Rune::App {
         bool interpret_char(char ch);
 
       public:
-        TerminalStream(CPU::CPUSubsystem* cpu_subsys,
-                       FrameBuffer*       frame_buffer,
-                       BitMapFont*        font,
-                       Pixel              def_bg_color,
-                       Pixel              def_fg_color);
+        TerminalStream(CPU::CPUModule* cpu_module,
+                       FrameBuffer*    frame_buffer,
+                       BitMapFont*     font,
+                       Pixel           def_bg_color,
+                       Pixel           def_fg_color);
 
         using TextStream::write;
 

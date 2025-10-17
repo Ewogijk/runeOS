@@ -32,9 +32,9 @@ namespace Rune::SystemCall {
                                            const U64 num_pages,
                                            U64       page_protection) {
         const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
-        auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
+        auto*       vmm     = mem_ctx->mem_module->get_virtual_memory_manager();
 
-        App::Info*              app       = mem_ctx->app_subsys->get_active_app();
+        App::Info*              app       = mem_ctx->app_module->get_active_app();
         const Memory::PageTable base_pt   = Memory::get_base_page_table();
         const MemorySize        page_size = Memory::get_page_size();
         auto                    kv_addr   = static_cast<VirtualAddr>(v_addr);
@@ -116,8 +116,8 @@ namespace Rune::SystemCall {
 
     Ember::StatusCode memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages) {
         const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
-        auto*       vmm     = mem_ctx->mem_subsys->get_virtual_memory_manager();
-        auto*       app     = mem_ctx->app_subsys->get_active_app();
+        auto*       vmm     = mem_ctx->mem_module->get_virtual_memory_manager();
+        auto*       app     = mem_ctx->app_module->get_active_app();
 
         const MemorySize page_size = Memory::get_page_size();
         auto             kv_addr   = static_cast<VirtualAddr>(v_addr);

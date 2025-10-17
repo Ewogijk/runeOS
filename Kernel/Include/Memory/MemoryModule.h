@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_MEMORYSUBSYSTEM_H
-#define RUNEOS_MEMORYSUBSYSTEM_H
+#ifndef RUNEOS_MEMORYMODULE_H
+#define RUNEOS_MEMORYMODULE_H
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 #include <Memory/BitMapAllocator.h>
 #include <Memory/SlabAllocator.h>
@@ -29,7 +29,7 @@ namespace Rune::Memory {
      * The memory subsystem contains the physical and virtual memory managers, the kernel heap and
      * physical and virtual memory maps.
      */
-    class MemorySubsystem : public Subsystem {
+    class MemoryModule : public Module {
         MemoryMap _p_map;
         MemoryMap _v_map;
 
@@ -40,18 +40,17 @@ namespace Rune::Memory {
         bool _boot_loader_mem_claim_failed;
 
       public:
-        MemorySubsystem();
+        MemoryModule();
 
-        explicit MemorySubsystem(const BitMapAllocator& pmm);
+        explicit MemoryModule(const BitMapAllocator& pmm);
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) -> bool override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
-
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Memory Subsystem Specific Functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                              Memory Module Specific Functions
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          *
@@ -91,8 +90,8 @@ namespace Rune::Memory {
          * not available prior to it.
          * </p>
          */
-        void log_start_routine_phases() const;
+        void log_post_load() const;
     };
 } // namespace Rune::Memory
 
-#endif // RUNEOS_MEMORYSUBSYSTEM_H
+#endif // RUNEOS_MEMORYMODULE_H

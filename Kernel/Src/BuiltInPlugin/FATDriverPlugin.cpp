@@ -16,9 +16,11 @@
 
 #include <BuiltInPlugin/FATDriverPlugin.h>
 
-#include <Device/DeviceSubsystem.h>
+#include <KRE/System/System.h>
 
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <Device/DeviceModule.h>
+
+#include <VirtualFileSystem/VFSModule.h>
 
 #include <VirtualFileSystem/FAT/FAT32Engine.h>
 #include <VirtualFileSystem/FAT/FATDriver.h>
@@ -33,10 +35,10 @@ namespace Rune::BuiltInPlugin {
 
     PluginInfo FATDriverPlugin::get_info() const { return FAT_INFO; }
 
-    bool FATDriverPlugin::start(const SubsystemRegistry& ks_registry) {
-
-        auto* fs = ks_registry.get_as<VFS::VFSSubsystem>(KernelSubsystem::VFS);
-        auto* ds = ks_registry.get_as<Device::DeviceSubsystem>(KernelSubsystem::DEVICE);
+    bool FATDriverPlugin::load() {
+        System& system = System::instance();
+        auto* fs = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
+        auto* ds = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         bool  r  = fs->install_driver(UniquePointer<VFS::Driver>(
             new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()),
                                ds->get_ahic_driver())));

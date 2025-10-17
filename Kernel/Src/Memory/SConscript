@@ -18,7 +18,7 @@ Import("target_env")
 target_env: Environment
 sources = [
     target_env.File("BitMapAllocator.cpp"),
-    target_env.File("MemorySubsystem.cpp"),
+    target_env.File("MemoryModule.cpp"),
     target_env.File("PhysicalMemoryManager.cpp"),
     target_env.File("SlabAllocator.cpp"),
     target_env.File("VirtualMemoryManager.cpp"),
