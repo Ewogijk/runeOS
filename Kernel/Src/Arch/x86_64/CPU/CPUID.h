@@ -20,6 +20,8 @@
 
 #include <CPU/CPU.h>
 
+#include <Ember/Ember.h>
+
 namespace Rune::CPU {
 
     struct CPUIDResponse {
