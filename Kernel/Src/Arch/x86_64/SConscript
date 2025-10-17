@@ -17,7 +17,6 @@ from SCons.Environment import *
 Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File("Boot/Bootstrap-a.asm"),
     target_env.File("CPU/Interrupt/IDT.cpp"),
     target_env.File("CPU/Interrupt/IDT-a.asm"),
     target_env.File("CPU/Interrupt/Interrupt.cpp"),
@@ -33,6 +32,7 @@ sources = [
     target_env.File("CPU/IO-a.asm"),
     target_env.File("CPU/X64Core.cpp"),
     target_env.File("CPU/X64Core-a.asm"),
+    target_env.File("KRE/CppRuntimeSupport-a.asm"),
     target_env.File("Memory/Paging.cpp"),
     target_env.File("Memory/Paging-a.asm"),
     target_env.File("Memory/VirtualMemory.cpp"),

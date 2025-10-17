@@ -32,9 +32,9 @@ namespace Rune::SystemCall {
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
             k_node_path =
-                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+                k_node_path.resolve(vfs_ctx->app_module->get_active_app()->working_directory);
 
-        if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
         VFS::NodeInfo k_node_info_buf;
         if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel((void*) node_info_out,
@@ -43,7 +43,7 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
 
         switch (VFS::IOStatus io_status =
-                    vfs_ctx->vfs_subsys->get_node_info(k_node_path, k_node_info_buf)) {
+                    vfs_ctx->vfs_module->get_node_info(k_node_path, k_node_info_buf)) {
             case VFS::IOStatus::FOUND: {
                 const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
                 // The node info will only contain the node name -> set it to the path the caller
@@ -84,11 +84,11 @@ namespace Rune::SystemCall {
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
             k_node_path =
-                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+                k_node_path.resolve(vfs_ctx->app_module->get_active_app()->working_directory);
 
-        if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
-        switch (VFS::IOStatus io_status = vfs_ctx->vfs_subsys->create(k_node_path, k_node_attr)) {
+        switch (VFS::IOStatus io_status = vfs_ctx->vfs_module->create(k_node_path, k_node_attr)) {
             case VFS::IOStatus::CREATED:       return Ember::Status::OKAY;
             case VFS::IOStatus::FOUND:         return Ember::Status::NODE_EXISTS;
             case VFS::IOStatus::BAD_ATTRIBUTE: return Ember::Status::BAD_ARG;
@@ -110,13 +110,13 @@ namespace Rune::SystemCall {
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
             k_node_path =
-                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+                k_node_path.resolve(vfs_ctx->app_module->get_active_app()->working_directory);
 
-        if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
         SharedPointer<VFS::Node> node;
 
-        switch (VFS::IOStatus io_status = vfs_ctx->vfs_subsys->open(k_node_path, k_io_mode, node)) {
+        switch (VFS::IOStatus io_status = vfs_ctx->vfs_module->open(k_node_path, k_io_mode, node)) {
             case VFS::IOStatus::OPENED:         return node->handle;
             case VFS::IOStatus::NOT_FOUND:      return Ember::Status::NODE_NOT_FOUND;
             case VFS::IOStatus::OUT_OF_HANDLES: return Ember::Status::IO_ERROR;
@@ -136,11 +136,11 @@ namespace Rune::SystemCall {
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
             k_node_path =
-                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+                k_node_path.resolve(vfs_ctx->app_module->get_active_app()->working_directory);
 
-        if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
-        switch (VFS::IOStatus io_status = vfs_ctx->vfs_subsys->delete_node(k_node_path)) {
+        switch (VFS::IOStatus io_status = vfs_ctx->vfs_module->delete_node(k_node_path)) {
             case VFS::IOStatus::DELETED:       return Ember::Status::OKAY;
             case VFS::IOStatus::ACCESS_DENIED: return Ember::Status::NODE_IN_USE;
             case VFS::IOStatus::NOT_FOUND:     return Ember::Status::NODE_NOT_FOUND;
@@ -153,7 +153,7 @@ namespace Rune::SystemCall {
         const auto  node_ID = static_cast<U16>(ID);
         if (node_ID == 0) return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_ID);
+        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_module->find_node(node_ID);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
         node->close();
@@ -166,7 +166,7 @@ namespace Rune::SystemCall {
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_ID);
+        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_module->find_node(node_ID);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
         if (!node->has_attribute(Ember::NodeAttribute::FILE))
@@ -195,7 +195,7 @@ namespace Rune::SystemCall {
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_ID);
+        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_module->find_node(node_ID);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
         if (!node->has_attribute(Ember::NodeAttribute::FILE))
@@ -223,7 +223,7 @@ namespace Rune::SystemCall {
         const U16   node_handle = ID;
         if (node_handle == 0) return Ember::Status::BAD_ARG;
 
-        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_subsys->find_node(node_handle);
+        const SharedPointer<VFS::Node> node = vfs_ctx->vfs_module->find_node(node_handle);
         if (!node) return Ember::Status::UNKNOWN_ID;
 
         if (!node->has_attribute(Ember::NodeAttribute::FILE))
@@ -253,13 +253,13 @@ namespace Rune::SystemCall {
         // If the path is relative prepend the working directory of the active app
         if (!k_node_path.is_absolute())
             k_node_path =
-                k_node_path.resolve(vfs_ctx->app_subsys->get_active_app()->working_directory);
+                k_node_path.resolve(vfs_ctx->app_module->get_active_app()->working_directory);
 
-        if (!vfs_ctx->vfs_subsys->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
+        if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
         SharedPointer<VFS::DirectoryStream> dir_stream;
         const VFS::IOStatus                 io_status =
-            vfs_ctx->vfs_subsys->open_directory_stream(k_node_path, dir_stream);
+            vfs_ctx->vfs_module->open_directory_stream(k_node_path, dir_stream);
         switch (io_status) {
             case VFS::IOStatus::OPENED: return dir_stream->handle;
             case VFS::IOStatus::BAD_PATH:
@@ -280,7 +280,7 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
 
         const SharedPointer<VFS::DirectoryStream> dir_stream =
-            vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
+            vfs_ctx->vfs_module->find_directory_stream(k_ID);
         if (!dir_stream) return Ember::Status::UNKNOWN_ID;
 
         auto [node_path, size, attributes] = dir_stream->get_next();
@@ -308,7 +308,7 @@ namespace Rune::SystemCall {
         if (k_ID == 0) return Ember::Status::BAD_ARG;
 
         const SharedPointer<VFS::DirectoryStream> dir_stream =
-            vfs_ctx->vfs_subsys->find_directory_stream(k_ID);
+            vfs_ctx->vfs_module->find_directory_stream(k_ID);
         if (!dir_stream) return Ember::Status::UNKNOWN_ID;
 
         dir_stream->close();

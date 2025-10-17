@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
 #include <KRE/Memory.h>
 
@@ -22,40 +22,40 @@
 //                                   Kernel Runtime Support
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-Rune::Memory::MemorySubsystem* MEM_SUBSYS;
+Rune::Memory::MemoryModule* MEM_MODULE;
 
-void* operator new(size_t size) { return MEM_SUBSYS->get_heap()->allocate(size); }
+void* operator new(size_t size) { return MEM_MODULE->get_heap()->allocate(size); }
 
-void* operator new[](size_t size) { return MEM_SUBSYS->get_heap()->allocate(size); }
+void* operator new[](size_t size) { return MEM_MODULE->get_heap()->allocate(size); }
 
 void* operator new(size_t count, void* ptr) {
     SILENCE_UNUSED(count)
     return ptr;
 }
 
-void operator delete(void* p) noexcept { MEM_SUBSYS->get_heap()->free(p); }
+void operator delete(void* p) noexcept { MEM_MODULE->get_heap()->free(p); }
 
 void operator delete(void* p, size_t size) noexcept {
     SILENCE_UNUSED(size);
-    MEM_SUBSYS->get_heap()->free(p);
+    MEM_MODULE->get_heap()->free(p);
 }
 
-void operator delete[](void* p) noexcept { MEM_SUBSYS->get_heap()->free(p); }
+void operator delete[](void* p) noexcept { MEM_MODULE->get_heap()->free(p); }
 
 void operator delete[](void* p, size_t size) noexcept {
     SILENCE_UNUSED(size);
-    MEM_SUBSYS->get_heap()->free(p);
+    MEM_MODULE->get_heap()->free(p);
 }
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.MemorySubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.MemoryModule");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MemorySubsystem::MemorySubsystem()
-        : Subsystem(),
+    MemoryModule::MemoryModule()
+        : Module(),
           _p_map({}),
           _v_map({}),
           _pmm(),
@@ -63,11 +63,9 @@ namespace Rune::Memory {
           _heap(),
           _boot_loader_mem_claim_failed(false) {}
 
-    String MemorySubsystem::get_name() const { return "Memory"; }
+    String MemoryModule::get_name() const { return "Memory"; }
 
-    bool MemorySubsystem::start(const BootLoaderInfo&    boot_info,
-                                const SubsystemRegistry& k_subsys_reg) {
-        SILENCE_UNUSED(k_subsys_reg)
+    bool MemoryModule::load(const BootInfo&    boot_info) {
         _p_map = boot_info.physical_memory_map;
         _v_map = create_virtual_memory_map();
 
@@ -93,21 +91,21 @@ namespace Rune::Memory {
 
         if (_heap.start(&_v_map, &_vmm) != HeapStartFailureCode::NONE) return false;
 
-        MEM_SUBSYS = this;
+        MEM_MODULE = this;
         return true;
     }
 
-    MemoryMap& MemorySubsystem::get_physical_memory_map() { return _p_map; }
+    MemoryMap& MemoryModule::get_physical_memory_map() { return _p_map; }
 
-    MemoryMap& MemorySubsystem::get_virtual_memory_map() { return _v_map; }
+    MemoryMap& MemoryModule::get_virtual_memory_map() { return _v_map; }
 
-    PhysicalMemoryManager* MemorySubsystem::get_physical_memory_manager() { return &_pmm; }
+    PhysicalMemoryManager* MemoryModule::get_physical_memory_manager() { return &_pmm; }
 
-    VirtualMemoryManager* MemorySubsystem::get_virtual_memory_manager() { return &_vmm; }
+    VirtualMemoryManager* MemoryModule::get_virtual_memory_manager() { return &_vmm; }
 
-    SlabAllocator* MemorySubsystem::get_heap() { return &_heap; }
+    SlabAllocator* MemoryModule::get_heap() { return &_heap; }
 
-    void MemorySubsystem::log_start_routine_phases() const {
+    void MemoryModule::log_post_load() const {
         LOGGER->debug("The bootloader reclaimable memory has been claimed.");
 
         MemoryRegion managed = _pmm.get_managed_memory();

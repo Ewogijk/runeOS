@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <KRE/CppLanguageSupport.h>
+#include <KRE/CppRuntimeSupport.h>
 
 void (*ON_CXA_PURE_VIRTUAL)() = [] {}; // NOLINT
 
@@ -112,7 +112,7 @@ auto atexit(void (*func)()) -> int {
 
 namespace Rune {
 
-    void init_cpp_language_support(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)()) {
+    void init_cpp_runtime_support(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)()) {
         ON_CXA_PURE_VIRTUAL = on_cxa_pure_virtual;
         ON_STACK_GUARD_FAIL = on_stack_guard_fail;
     }

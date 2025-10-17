@@ -95,8 +95,7 @@ namespace Rune::App {
 
                     size_t num_spaces = min(st.text.size(), len - line_offset);
                     String spaces;
-                    for (size_t i = 0; i < num_spaces; i++)
-                        spaces += ' ';
+                    for (size_t i = 0; i < num_spaces; i++) spaces += ' ';
 
                     if (num_spaces < st.text.size())
                         // We are in the last text slice and only part of it got deleted -> Add the
@@ -126,8 +125,7 @@ namespace Rune::App {
                 }
                 line_offset += txt_size;
             }
-            for (auto& index : indices_to_remove)
-                styled_text.remove_at(index);
+            for (auto& index : indices_to_remove) styled_text.remove_at(index);
         }
     }
 
@@ -697,12 +695,12 @@ namespace Rune::App {
         }
     }
 
-    TerminalStream::TerminalStream(CPU::CPUSubsystem* cpu_subsys,
-                                   FrameBuffer*       frame_buffer,
-                                   BitMapFont*        font,
-                                   Pixel              def_bg_color,
-                                   Pixel              def_fg_color)
-        : _cpu_subsys(cpu_subsys),
+    TerminalStream::TerminalStream(CPU::CPUModule* cpu_module,
+                                   FrameBuffer*    frame_buffer,
+                                   BitMapFont*     font,
+                                   Pixel           def_bg_color,
+                                   Pixel           def_fg_color)
+        : _cpu_module(cpu_module),
           _state(),
           _render_thread_ID(0),
           _render_thread_arg(""),
@@ -725,8 +723,8 @@ namespace Rune::App {
         _state.screen_height        = (int) (frame_buffer->get_height() / font->pixel_height);
         _state.cursor_blink_freq_ms = CURSOR_BLINK_FREQ;
 
-        _state.timer = cpu_subsys->get_system_timer();
-        _state.mutex = cpu_subsys->create_mutex("Terminal");
+        _state.timer = cpu_module->get_system_timer();
+        _state.mutex = cpu_module->create_mutex("Terminal");
 
         // The arguments to the cursor render thread have to be maintained until the thread actually
         // is running else they are stack allocated and gone after the constructor is finished and
@@ -750,15 +748,15 @@ namespace Rune::App {
         if (!_initialized) return false;
 
         if (_render_thread_ID == 0) {
-            _cpu_subsys->get_scheduler()->lock();
+            _cpu_module->get_scheduler()->lock();
             _render_thread_ID =
-                _cpu_subsys->schedule_new_thread("Terminal-Cursor Render Thread",
+                _cpu_module->schedule_new_thread("Terminal-Cursor Render Thread",
                                                  &_render_thread_start_info,
                                                  Memory::get_base_page_table_address(),
                                                  CPU::SchedulingPolicy::LOW_LATENCY,
                                                  {nullptr, 0x0, 0x0});
             if (_render_thread_ID == 0) _initialized = false;
-            _cpu_subsys->get_scheduler()->unlock();
+            _cpu_module->get_scheduler()->unlock();
         }
 
         char ch = (char) value;

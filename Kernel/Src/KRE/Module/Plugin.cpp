@@ -14,16 +14,11 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_BOOTSTRAP_H
-#define RUNEOS_BOOTSTRAP_H
-
-#include <Ember/Ember.h>
+#include <KRE/System/Plugin.h>
 
 namespace Rune {
-    /**
-     * @brief Kernel entry point for the boot loader.
-     */
-    CLINK int kernel_bootstrap();
-} // namespace Rune
+    auto PluginInfo::to_string() const -> String {
+        return String::format("{} v{} by {}", name, version.to_string(), vendor);
+    }
 
-#endif // RUNEOS_BOOTSTRAP_H
+}

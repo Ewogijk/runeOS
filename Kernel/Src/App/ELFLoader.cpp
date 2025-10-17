@@ -369,12 +369,11 @@ namespace Rune::App {
         return start_info;
     }
 
-    ELFLoader::ELFLoader(Memory::MemorySubsystem*    memory_subsys,
-                         VFS::VFSSubsystem*          vfs_subsys)
+    ELFLoader::ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys)
         : _buf_pos(0),
           _buf_limit(0),
           _file_buf(),
-          _memory_subsys(memory_subsys),
+          _memory_subsys(memory_module),
           _vfs_subsys(vfs_subsys),
           _elf_file() {}
 

@@ -28,7 +28,7 @@
 #include <CPU/CPU.h>
 
 #include <VirtualFileSystem/Path.h>
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <VirtualFileSystem/VFSModule.h>
 
 namespace Rune::App {
 #define LOAD_STATUSES(X)                                                                           \

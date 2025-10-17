@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-ENTRY(kernel_bootstrap)
+ENTRY(boot_phase1)
 
 PHDRS
 {

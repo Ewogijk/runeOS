@@ -16,7 +16,7 @@
 
 #include <Device/AHCI/AHCI.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 #include <Memory/Paging.h>
 
 namespace Rune::Device {

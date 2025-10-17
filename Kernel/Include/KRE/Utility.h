@@ -20,7 +20,7 @@
 
 #include <stddef.h>
 
-#include <KRE/CppLanguageSupport.h>
+#include <KRE/CppRuntimeSupport.h>
 #include <KRE/TypeTraits.h>
 
 namespace Rune {

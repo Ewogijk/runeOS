@@ -68,6 +68,12 @@ CLINK void __cxa_pure_virtual(); //NOLINT
 CLINK void __stack_chk_fail(void); // NOLINT
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+//                                      NAME
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+CLINK void call_global_constructors();
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                              Other compiler requirements
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
@@ -87,7 +93,7 @@ namespace Rune {
      * @param on_cxa_pure_virtual Callback for "__cxa_pure_virtual"
      * @param on_stack_guard_fail Callback for "__stack_chk_fail"
      */
-    void init_cpp_language_support(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)());
+    void init_cpp_runtime_support(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)());
 } // namespace Rune
 
 #endif // RUNEOS_CPP_H

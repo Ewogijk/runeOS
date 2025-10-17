@@ -18,28 +18,31 @@
 #define RUNEOS_PLUGIN_H
 
 #include <KRE/String.h>
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 namespace Rune {
 
     /**
-     * Information about the Kernel Extension like it's unique name, vendor and version information.
+     * Information about the kernel plugin like it's unique name, vendor and version information.
      */
     struct PluginInfo {
         /**
-         * Unique Kernel Extension name.
+         * Unique kernel plugin name.
          */
         const String name;
 
         /**
-         * Creator of the kernel extension.
+         * Creator of the kernel plugin.
          */
         const String vendor;
 
         /**
-         * @brief The version of the kernel extension.
+         * @brief The version of the kernel plugin.
          */
-        Version version = {0, 0, 0, ""};
+        Version version = {.major = 0, .minor = 0, .patch = 0, .pre_release = ""};
+
+
+        [[nodiscard]] auto to_string() const -> String;
     };
 
     /**
@@ -55,8 +58,7 @@ namespace Rune {
          *
          * @return Info about the kernel extension e.g. its name or vendor.
          */
-        [[nodiscard]]
-        virtual PluginInfo get_info() const = 0;
+        [[nodiscard]] virtual auto get_info() const -> PluginInfo = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Functions
@@ -67,8 +69,7 @@ namespace Rune {
          *
          * @return True: The extension has started, False: If not.
          */
-        [[nodiscard]]
-        virtual bool start(const SubsystemRegistry& ks_registry) = 0;
+        [[nodiscard]] virtual auto load() -> bool = 0;
     };
 } // namespace Rune
 

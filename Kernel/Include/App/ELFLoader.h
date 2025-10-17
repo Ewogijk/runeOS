@@ -20,11 +20,11 @@
 #include <App/App.h>
 #include <App/ELF.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
 #include <CPU/CPU.h>
 
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <VirtualFileSystem/VFSModule.h>
 
 namespace Rune::App {
     /**
@@ -37,32 +37,32 @@ namespace Rune::App {
         U16                  _buf_limit;
         U8                   _file_buf[BUF_SIZE];
 
-        Memory::MemorySubsystem* _memory_subsys;
-        VFS::VFSSubsystem*       _vfs_subsys;
+        Memory::MemoryModule* _memory_subsys;
+        VFS::VFSModule*       _vfs_subsys;
 
         // Open ELF file
         SharedPointer<VFS::Node> _elf_file;
 
         // Read the next bytes in the buffer.
-        bool get_next_buffer();
+        auto get_next_buffer() -> bool;
 
         // Move the requested amount of bytes from the file buffer to the given buffer
-        size_t read_bytes(void* buf, U16 buf_size);
+        auto read_bytes(void* buf, U16 buf_size) -> size_t;
 
         // Skip the requested amount of bytes from the file start.
-        bool seek(U64 byte_count);
+        auto seek(U64 byte_count) -> bool;
 
-        LoadStatus load_elf_file(ELF64File& elf_file);
+        auto load_elf_file(ELF64File& elf_file) -> LoadStatus;
 
-        bool allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start);
+        auto allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start) -> bool;
 
-        bool load_segments(const ELF64File& elf_file);
+        auto load_segments(const ELF64File& elf_file) -> bool;
 
-        CPU::StartInfo*
-        setup_bootstrap_area(const ELF64File& elf_file, char* args[], size_t stack_size);
+        auto setup_bootstrap_area(const ELF64File& elf_file, char* args[], size_t stack_size)
+            -> CPU::StartInfo*;
 
       public:
-        ELFLoader(Memory::MemorySubsystem* memory_subsys, VFS::VFSSubsystem* vfs_subsys);
+        ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys);
 
         /**
          * Try to parse and verify the given executable file, load it's segments into memory and
@@ -101,12 +101,12 @@ namespace Rune::App {
          *
          * @return The final status of the ELF loading.
          */
-        LoadStatus load(const Path&                executable,
-                        char*                      args[],
-                        const SharedPointer<Info>& entry_out,
-                        CPU::Stack&                user_stack_out,
-                        VirtualAddr&               start_info_addr_out,
-                        bool                       keep_vas);
+        auto load(const Path&                executable,
+                  char*                      args[],
+                  const SharedPointer<Info>& entry_out,
+                  CPU::Stack&                user_stack_out,
+                  VirtualAddr&               start_info_addr_out,
+                  bool                       keep_vas) -> LoadStatus;
     };
 } // namespace Rune::App
 

@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_CPUSUBSYSTEM_H
-#define RUNEOS_CPUSUBSYSTEM_H
+#ifndef RUNEOS_CPUMODULE_H
+#define RUNEOS_CPUMODULE_H
 
 #include <KRE/Utility.h>
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 #include <CPU/CPU.h>
 #include <CPU/Interrupt/IRQ.h>
@@ -58,7 +58,7 @@ namespace Rune::CPU {
         Thread* next_scheduled = nullptr;
     };
 
-    class CPUSubsystem : public Subsystem {
+    class CPUModule : public Module {
         static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
         static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
         static constexpr char const* IDLE_THREAD_NAME       = "Idle";
@@ -101,9 +101,9 @@ namespace Rune::CPU {
         //                                          Constructors&Destructors
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        CPUSubsystem();
+        CPUModule();
 
-        ~CPUSubsystem() override = default;
+        ~CPUModule() override = default;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Kernel Subsystem Functions
@@ -111,8 +111,7 @@ namespace Rune::CPU {
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto start(const BootLoaderInfo& evt_ctx, const SubsystemRegistry& k_subsys_reg)
-            -> bool override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt API
@@ -322,4 +321,4 @@ namespace Rune::CPU {
 
 } // namespace Rune::CPU
 
-#endif // RUNEOS_CPUSUBSYSTEM_H
+#endif // RUNEOS_CPUMODULE_H

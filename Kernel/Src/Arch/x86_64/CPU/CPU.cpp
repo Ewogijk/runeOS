@@ -33,7 +33,7 @@ namespace Rune::CPU {
     X64Core           BOOTSTRAP_CORE = X64Core(0);
     LinkedList<Core*> CORES;
 
-    bool init_bootstrap_core() { return BOOTSTRAP_CORE.init(); }
+    bool init_boot_core() { return BOOTSTRAP_CORE.init(); }
 
     bool init_other_cores() {
         CORES.add_back(&BOOTSTRAP_CORE);

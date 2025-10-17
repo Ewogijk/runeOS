@@ -20,17 +20,17 @@
 
 #include <KRE/Logging.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
 namespace Rune {
     class DetailedLogLayout : public Layout {
-        CPU::CPUSubsystem* _cpu_subsys;
-        App::AppSubsystem* _app_subsys;
+        CPU::CPUModule* _cpu_module;
+        App::AppModule* _app_module;
 
       public:
-        DetailedLogLayout(CPU::CPUSubsystem* cpu_subsys, App::AppSubsystem* app_subsys);
+        DetailedLogLayout(CPU::CPUModule* cpu_module, App::AppModule* app_module);
 
         auto layout(LogLevel      log_level,
                     const String& logger_name,

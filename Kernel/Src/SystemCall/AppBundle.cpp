@@ -22,12 +22,12 @@
 namespace Rune::SystemCall {
     Ember::StatusCode read_stdin(void* sys_call_ctx, const U64 key_code_out) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        auto*       timer           = app_syscall_ctx->cpu_subsys->get_system_timer();
+        auto*       timer           = app_syscall_ctx->cpu_module->get_system_timer();
 
-        Ember::VirtualKey key(app_syscall_ctx->app_subsys->get_active_app()->std_in->read());
+        Ember::VirtualKey key(app_syscall_ctx->app_module->get_active_app()->std_in->read());
         while (key.is_none()) {
             timer->sleep_milli(2); // 1ms is too fast, dunno why but nothing happens
-            key = Ember::VirtualKey(app_syscall_ctx->app_subsys->get_active_app()->std_in->read());
+            key = Ember::VirtualKey(app_syscall_ctx->app_module->get_active_app()->std_in->read());
         }
         U16   key_code        = key.get_key_code();
         auto* key_code_buffer = reinterpret_cast<U16*>(key_code_out);
@@ -49,7 +49,7 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
         const String            k_msg(k_buf_msg);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_subsys->get_active_app()->std_out->write((U8*) k_buf_msg,
+            app_syscall_ctx->app_module->get_active_app()->std_out->write((U8*) k_buf_msg,
                                                                           k_msg.size()));
         delete[] k_buf_msg;
         return byte_out;
@@ -66,11 +66,11 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
         const String                    k_msg(k_buf_msg);
         const SharedPointer<TextStream> std_err =
-            app_syscall_ctx->app_subsys->get_active_app()->std_err;
+            app_syscall_ctx->app_module->get_active_app()->std_err;
 
         std_err->set_foreground_color(Pixie::VSCODE_RED);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_subsys->get_active_app()->std_err->write((U8*) k_buf_msg,
+            app_syscall_ctx->app_module->get_active_app()->std_err->write((U8*) k_buf_msg,
                                                                           k_msg.size()));
         std_err->reset_style();
         delete[] k_buf_msg;
@@ -79,7 +79,7 @@ namespace Rune::SystemCall {
 
     Ember::StatusCode get_ID(void* sys_call_ctx) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        return app_syscall_ctx->app_subsys->get_active_app()->handle;
+        return app_syscall_ctx->app_module->get_active_app()->handle;
     }
 
     Ember::StatusCode app_start(void*     sys_call_ctx,
@@ -179,19 +179,19 @@ namespace Rune::SystemCall {
         VFS::NodeInfo dummy;
         if (!k_app_path.is_absolute())
             k_app_path = k_app_path.resolve(
-                app_syscall_ctx->app_subsys->get_active_app()->working_directory);
-        if (app_syscall_ctx->vfs_subsys->get_node_info(k_app_path, dummy) != VFS::IOStatus::FOUND)
+                app_syscall_ctx->app_module->get_active_app()->working_directory);
+        if (app_syscall_ctx->vfs_module->get_node_info(k_app_path, dummy) != VFS::IOStatus::FOUND)
             // Path to the app executable does not exist
             return Ember::Status::NODE_NOT_FOUND;
 
         if (!k_app_wd.is_absolute())
             k_app_wd =
-                k_app_wd.resolve(app_syscall_ctx->app_subsys->get_active_app()->working_directory);
-        if (app_syscall_ctx->vfs_subsys->get_node_info(k_app_wd, dummy) != VFS::IOStatus::FOUND)
+                k_app_wd.resolve(app_syscall_ctx->app_module->get_active_app()->working_directory);
+        if (app_syscall_ctx->vfs_module->get_node_info(k_app_wd, dummy) != VFS::IOStatus::FOUND)
             // Path to the app working directory does not exist
             return Ember::Status::NODE_NOT_FOUND;
 
-        auto [load_result, ID] = app_syscall_ctx->app_subsys->start_new_app(k_app_path,
+        auto [load_result, ID] = app_syscall_ctx->app_module->start_new_app(k_app_path,
                                                                             k_app_argv,
                                                                             k_app_wd,
                                                                             k_stdin_target,
@@ -205,14 +205,14 @@ namespace Rune::SystemCall {
     Ember::StatusCode app_exit(void* sys_call_ctx, const U64 exit_code) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         const int   k_exit_code     = static_cast<int>(exit_code);
-        app_syscall_ctx->app_subsys->exit_running_app(k_exit_code);
+        app_syscall_ctx->app_module->exit_running_app(k_exit_code);
         return Ember::Status::OKAY;
     }
 
     Ember::StatusCode app_join(void* sys_call_ctx, U64 ID) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         const int   app_ID          = static_cast<int>(ID);
-        const int   app_exit_code   = app_syscall_ctx->app_subsys->join(app_ID);
+        const int   app_exit_code   = app_syscall_ctx->app_module->join(app_ID);
         return app_exit_code == INT_MAX ? Ember::Status::UNKNOWN_ID : app_exit_code;
     }
 
@@ -223,7 +223,7 @@ namespace Rune::SystemCall {
         const auto  b_size          = static_cast<size_t>(wd_out_size);
 
         const auto wd =
-            app_syscall_ctx->app_subsys->get_active_app()->working_directory.to_string();
+            app_syscall_ctx->app_module->get_active_app()->working_directory.to_string();
         if (b_size < wd.size() + 1) return Ember::Status::BAD_ARG;
 
         if (!app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) wd.to_cstr(),
@@ -241,18 +241,18 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
         }
 
-        App::Info* app = app_syscall_ctx->app_subsys->get_active_app();
+        App::Info* app = app_syscall_ctx->app_module->get_active_app();
         Path       path(k_str);
         if (!path.is_absolute()) path = path.resolve(app->working_directory);
         if (path == app->working_directory)
             // The resolved path is the current working directory (e.g. path==".") -> No need to do
             // anything
             return Ember::Status::OKAY;
-        if (!app_syscall_ctx->vfs_subsys->is_valid_file_path(path)) return Ember::Status::BAD_ARG;
+        if (!app_syscall_ctx->vfs_module->is_valid_file_path(path)) return Ember::Status::BAD_ARG;
 
         SharedPointer<VFS::Node> node;
         switch (VFS::IOStatus st =
-                    app_syscall_ctx->vfs_subsys->open(path, Ember::IOMode::READ, node)) {
+                    app_syscall_ctx->vfs_module->open(path, Ember::IOMode::READ, node)) {
             case VFS::IOStatus::OPENED:
                 if (node->has_attribute(Ember::NodeAttribute::FILE)) {
                     // Not a directory

@@ -14,10 +14,10 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SYSTEMCALLSUBSYSTEM_H
-#define RUNEOS_SYSTEMCALLSUBSYSTEM_H
+#ifndef RUNEOS_SYSTEMCALLMODULE_H
+#define RUNEOS_SYSTEMCALLMODULE_H
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
 #include <CPU/CPU.h>
 
@@ -26,11 +26,11 @@
 
 namespace Rune::SystemCall {
 
-    class SystemCallSubsystem : public Subsystem {
+    class SystemCallModule : public Module {
         KernelGuardian _k_guard;
 
       public:
-        SystemCallSubsystem();
+        SystemCallModule();
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Kernel Subsystem Overrides
@@ -38,8 +38,7 @@ namespace Rune::SystemCall {
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg)
-            -> bool override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          System Call API
@@ -68,4 +67,4 @@ namespace Rune::SystemCall {
     };
 } // namespace Rune::SystemCall
 
-#endif // RUNEOS_SYSTEMCALLSUBSYSTEM_H
+#endif // RUNEOS_SYSTEMCALLMODULE_H

@@ -30,9 +30,9 @@ namespace Rune::SystemCall {
 
         String m_name(km_name);
         if (m_name.is_empty())
-            m_name = String::format("Mutex-App{}", t_ctx->app_subsys->get_active_app()->handle);
+            m_name = String::format("Mutex-App{}", t_ctx->app_module->get_active_app()->handle);
 
-        const auto m = t_ctx->cpu_subsys->create_mutex(m_name);
+        const auto m = t_ctx->cpu_module->create_mutex(m_name);
         return m ? m->handle : Ember::Status(Ember::Status::FAULT).to_value();
     }
 
@@ -40,7 +40,7 @@ namespace Rune::SystemCall {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
-        const auto m = t_ctx->cpu_subsys->find_mutex(ID);
+        const auto m = t_ctx->cpu_module->find_mutex(ID);
         if (!m) return Ember::Status::UNKNOWN_ID;
 
         m->lock();
@@ -51,7 +51,7 @@ namespace Rune::SystemCall {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
-        const auto m = t_ctx->cpu_subsys->find_mutex(ID);
+        const auto m = t_ctx->cpu_module->find_mutex(ID);
         if (!m) return Ember::Status::UNKNOWN_ID;
 
         m->unlock();
@@ -62,13 +62,13 @@ namespace Rune::SystemCall {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
-        return t_ctx->cpu_subsys->release_mutex(ID) ? Ember::Status::OKAY
+        return t_ctx->cpu_module->release_mutex(ID) ? Ember::Status::OKAY
                                                     : Ember::Status::UNKNOWN_ID;
     }
 
     Ember::StatusCode get_thread_ID(void* sys_call_ctx) {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
-        return t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->handle;
+        return t_ctx->cpu_module->get_scheduler()->get_running_thread()->handle;
     }
 
     Ember::StatusCode set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
@@ -76,7 +76,7 @@ namespace Rune::SystemCall {
         auto*       tcb_ptr = memory_addr_to_pointer<void>(tcb);
         if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(void*)))
             return Ember::Status::BAD_ARG;
-        t_ctx->cpu_subsys->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;
+        t_ctx->cpu_module->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;
         CPU::current_core()->update_thread_local_storage(tcb_ptr);
         return Ember::Status::OKAY;
     }

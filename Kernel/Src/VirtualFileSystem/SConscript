@@ -22,7 +22,7 @@ sources = [
     target_env.File("Node.cpp"),
     target_env.File("Path.cpp"),
     target_env.File("Status.cpp"),
-    target_env.File("VFSSubsystem.cpp"),
+    target_env.File("VFSModule.cpp"),
     target_env.File("FAT/FAT.cpp"),
     target_env.File("FAT/FAT32Engine.cpp"),
     target_env.File("FAT/FATDirectoryIterator.cpp"),

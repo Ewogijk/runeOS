@@ -14,36 +14,36 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_DEVICESUBSYSTEM_H
-#define RUNEOS_DEVICESUBSYSTEM_H
+#ifndef RUNEOS_DEVICEMODULE_H
+#define RUNEOS_DEVICEMODULE_H
 
-#include <KRE/System/Subsystem.h>
+#include <KRE/System/Module.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <CPU/CPUModule.h>
 
 #include <Device/AHCI/AHCI.h>
 #include <Device/Keyboard/PS2Keyboard.h>
 
 namespace Rune::Device {
-    class DeviceSubsystem : public Subsystem {
+    class DeviceModule : public Module {
         UniquePointer<AHCIDriver>      _ahci_driver;
         SharedPointer<VirtualKeyboard> _keyboard;
 
       public:
-        explicit DeviceSubsystem();
+        explicit DeviceModule();
 
-        ~DeviceSubsystem() override = default;
+        ~DeviceModule() override = default;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      KernelSubsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         [[nodiscard]]
-        String get_name() const override;
+        auto get_name() const -> String override;
 
-        bool start(const BootLoaderInfo& boot_info, const SubsystemRegistry& k_subsys_reg) override;
+        auto load(const BootInfo& boot_info) -> bool override;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Device specific functions
@@ -51,10 +51,10 @@ namespace Rune::Device {
 
         void set_ahci_driver(UniquePointer<AHCIDriver> ahci_driver);
 
-        AHCIDriver& get_ahic_driver();
+        auto get_ahic_driver() -> AHCIDriver&;
 
-        SharedPointer<VirtualKeyboard> get_keyboard();
+        auto get_keyboard() -> SharedPointer<VirtualKeyboard>;
     };
 } // namespace Rune::Device
 
-#endif // RUNEOS_DEVICESUBSYSTEM_H
+#endif // RUNEOS_DEVICEMODULE_H

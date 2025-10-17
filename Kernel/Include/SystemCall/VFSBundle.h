@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_VFS_H
-#define RUNEOS_VFS_H
+#ifndef RUNEOS_VFSBUNDLE_H
+#define RUNEOS_VFSBUNDLE_H
 
 #include <Ember/Ember.h>
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
-#include <VirtualFileSystem/VFSSubsystem.h>
+#include <VirtualFileSystem/VFSModule.h>
 
 #include <SystemCall/KernelGuardian.h>
 
@@ -31,8 +31,8 @@ namespace Rune::SystemCall {
      */
     struct VFSSystemCallContext {
         KernelGuardian*    k_guard    = nullptr;
-        VFS::VFSSubsystem* vfs_subsys = nullptr;
-        App::AppSubsystem* app_subsys = nullptr;
+        VFS::VFSModule* vfs_module = nullptr;
+        App::AppModule* app_module = nullptr;
     };
 
     /**
@@ -183,4 +183,4 @@ namespace Rune::SystemCall {
     Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, U64 dir_stream_ID);
 } // namespace Rune::SystemCall
 
-#endif // RUNEOS_VFS_H
+#endif // RUNEOS_VFSBUNDLE_H

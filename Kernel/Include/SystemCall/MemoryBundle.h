@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_MEMORYMANAGEMENT_H
-#define RUNEOS_MEMORYMANAGEMENT_H
+#ifndef RUNEOS_MEMORYBUNDLE_H
+#define RUNEOS_MEMORYBUNDLE_H
 
 #include <Ember/Ember.h>
 
 #include <SystemCall/KernelGuardian.h>
 
-#include <Memory/MemorySubsystem.h>
+#include <Memory/MemoryModule.h>
 
-#include <App/AppSubsystem.h>
+#include <App/AppModule.h>
 
 namespace Rune::SystemCall {
     /**
@@ -31,8 +31,8 @@ namespace Rune::SystemCall {
      */
     struct MemorySystemCallContext {
         KernelGuardian*          k_guard    = nullptr;
-        Memory::MemorySubsystem* mem_subsys = nullptr;
-        App::AppSubsystem*       app_subsys = nullptr;
+        Memory::MemoryModule* mem_module = nullptr;
+        App::AppModule*       app_module = nullptr;
     };
 
     /**
@@ -80,4 +80,4 @@ namespace Rune::SystemCall {
     Ember::StatusCode memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages);
 } // namespace Rune::SystemCall
 
-#endif // RUNEOS_MEMORYMANAGEMENT_H
+#endif // RUNEOS_MEMORYMODULE_H

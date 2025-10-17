@@ -18,7 +18,7 @@ Import("target_env")
 target_env: Environment
 sources = [
     target_env.File("App.cpp"),
-    target_env.File("AppSubsystem.cpp"),
+    target_env.File("AppModule.cpp"),
     target_env.File("ELF.cpp"),
     target_env.File("ELFLoader.cpp"),
     target_env.File("TerminalStream.cpp"),

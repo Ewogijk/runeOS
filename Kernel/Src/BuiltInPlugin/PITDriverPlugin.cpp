@@ -16,7 +16,9 @@
 
 #include <BuiltInPlugin/PITDriverPlugin.h>
 
-#include <CPU/CPUSubsystem.h>
+#include <KRE/System/System.h>
+
+#include <CPU/CPUModule.h>
 
 #include <CPU/Time/PIT.h>
 
@@ -29,8 +31,8 @@ namespace Rune::BuiltInPlugin {
 
     PluginInfo PITDriverPlugin::get_info() const { return PIT_INFO; }
 
-    bool PITDriverPlugin::start(const SubsystemRegistry& ks_registry) {
-        auto* cs = ks_registry.get_as<CPU::CPUSubsystem>(KernelSubsystem::CPU);
+    bool PITDriverPlugin::load() {
+        auto* cs = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cs->install_timer_driver(UniquePointer<CPU::Timer>(new CPU::PIT()));
 
         return true;
