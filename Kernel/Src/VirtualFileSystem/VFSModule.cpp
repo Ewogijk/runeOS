@@ -519,6 +519,30 @@ namespace Rune::VFS {
         return (*driver)->find_node(mpi.storage_device, path.relative_to(mpi.mount_point), out);
     }
 
+    auto VFSModule::get_node_info(U16 node_ID, NodeInfo& out) -> IOStatus {
+        auto maybe_node = _node_table.find(node_ID);
+        if (maybe_node == _node_table.end()) return IOStatus::NOT_FOUND;
+
+        SharedPointer<Node> node = *maybe_node->value;
+        out.node_path = node->get_node_path().to_string();
+        out.size = node->get_size();
+
+        U8 node_attr = 0;
+        if (node->has_attribute(Ember::NodeAttribute::READONLY))
+            node_attr |= Ember::NodeAttribute::READONLY;
+        if (node->has_attribute(Ember::NodeAttribute::HIDDEN))
+            node_attr |= Ember::NodeAttribute::HIDDEN;
+        if (node->has_attribute(Ember::NodeAttribute::SYSTEM))
+            node_attr |= Ember::NodeAttribute::SYSTEM;
+        if (node->has_attribute(Ember::NodeAttribute::DIRECTORY))
+            node_attr |= Ember::NodeAttribute::DIRECTORY;
+        if (node->has_attribute(Ember::NodeAttribute::FILE))
+            node_attr |= Ember::NodeAttribute::FILE;
+        out.attributes = node_attr;
+
+        return IOStatus::FOUND;
+    }
+
     IOStatus VFSModule::delete_node(const Path& path) {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 

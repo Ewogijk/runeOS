@@ -372,6 +372,13 @@ namespace Rune::VFS {
          */
         auto get_node_info(const Path& path, NodeInfo& out) -> IOStatus;
 
+        /// @brief Search for the node with the given ID and get the node info if found.
+        /// @param node_ID ID of a node.
+        /// @param out     If a node was found the info will be put in this object.
+        /// @return FOUND:       The node was found.<br>
+        ///          NOT_FOUND:   No node with the ID was found.<br>
+        auto get_node_info(U16 node_ID, NodeInfo& out) -> IOStatus;
+
         /**
          * Try to create a file/directory at the path with the given attributes. Either the
          * FileAttribute::Directory or FileAttribute::File attribute must be set otherwise the

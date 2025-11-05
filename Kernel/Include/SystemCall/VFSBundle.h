@@ -47,6 +47,15 @@ namespace Rune::SystemCall {
      */
     Ember::StatusCode vfs_get_node_info(void* sys_call_ctx, U64 node_path, U64 node_info_out);
 
+    /// @brief Search for the node with the given ID and get the node info if found.
+    /// @param sys_call_ctx  A pointer to the VFS context.
+    /// @param node_ID       ID of a node.
+    /// @param node_info_out Node info buffer.
+    /// @return OKAY: The node was found and the node_info_out buffer contains the node info.<br>
+    ///         BAD_ARG: An argument is null, intersects kernel memory or the node ID is zero.<br>
+    ///         NODE_NOT_FOUND: The node does not exist.<br>
+    Ember::StatusCode vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out);
+
     /**
      * Note: Creating a node does not open it.
      *
