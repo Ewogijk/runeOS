@@ -59,16 +59,17 @@ namespace Ember {
      */
 #define VFS_SYSCALLS(X)                                                                            \
     X(VFS, GET_NODE_INFO, 300)                                                                     \
-    X(VFS, CREATE, 301)                                                                            \
-    X(VFS, OPEN, 302)                                                                              \
-    X(VFS, DELETE, 303)                                                                            \
-    X(VFS, CLOSE, 304)                                                                             \
-    X(VFS, READ, 305)                                                                              \
-    X(VFS, WRITE, 306)                                                                             \
-    X(VFS, SEEK, 307)                                                                              \
-    X(VFS, DIRECTORY_STREAM_OPEN, 308)                                                             \
-    X(VFS, DIRECTORY_STREAM_NEXT, 309)                                                             \
-    X(VFS, DIRECTORY_STREAM_CLOSE, 310)
+    X(VFS, GET_NODE_INFO_BY_ID, 301)                                                               \
+    X(VFS, CREATE, 302)                                                                            \
+    X(VFS, OPEN, 303)                                                                              \
+    X(VFS, DELETE, 304)                                                                            \
+    X(VFS, CLOSE, 305)                                                                             \
+    X(VFS, READ, 306)                                                                              \
+    X(VFS, WRITE, 307)                                                                             \
+    X(VFS, SEEK, 308)                                                                              \
+    X(VFS, DIRECTORY_STREAM_OPEN, 309)                                                             \
+    X(VFS, DIRECTORY_STREAM_NEXT, 310)                                                             \
+    X(VFS, DIRECTORY_STREAM_CLOSE, 311)
 
     DECLARE_TYPED_ENUM(VFS, ResourceID, VFS_SYSCALLS, 0x0) // NOLINT
 
