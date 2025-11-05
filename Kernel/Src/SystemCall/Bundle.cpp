@@ -112,6 +112,10 @@ namespace Rune::SystemCall {
                               Ember::VFS(Ember::VFS::GET_NODE_INFO).to_string(),
                               &vfs_get_node_info,
                               &VFS_SYSCALL_CTX));
+        defs.add_back(define2(Ember::VFS::GET_NODE_INFO_BY_ID,
+                              Ember::VFS(Ember::VFS::GET_NODE_INFO_BY_ID).to_string(),
+                              &vfs_get_node_info_by_ID,
+                              &VFS_SYSCALL_CTX));
         defs.add_back(define2(Ember::VFS::CREATE,
                               Ember::VFS(Ember::VFS::CREATE).to_string(),
                               &vfs_create,
