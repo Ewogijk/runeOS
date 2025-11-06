@@ -67,6 +67,35 @@ namespace Rune::SystemCall {
         }
     }
 
+    Ember::StatusCode vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out) {
+        const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
+
+        if (node_ID == 0) return Ember::Status::BAD_ARG;
+
+        VFS::NodeInfo k_node_info_buf;
+        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel((void*) node_info_out,
+                                                               sizeof(VFS::NodeInfo),
+                                                               (void*) &k_node_info_buf))
+            return Ember::Status::BAD_ARG;
+
+        VFS::IOStatus io_status = vfs_ctx->vfs_module->get_node_info(node_ID, k_node_info_buf);
+        if (io_status == VFS::IOStatus::NOT_FOUND) return Ember::Status::NODE_NOT_FOUND;
+
+        const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
+        // The node info will only contain the node name -> set it to the path the caller
+        // has provided
+        if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
+                (void*) k_node_info_buf.node_path.to_cstr(),
+                (void*) u_node_info->node_path,
+                k_node_info_buf.node_path.size() + 1 // size() does not include null terminator
+                )) {
+            return Ember::Status::BAD_ARG;
+        }
+        u_node_info->size       = k_node_info_buf.size;
+        u_node_info->attributes = k_node_info_buf.attributes;
+        return Ember::Status::OKAY;
+    }
+
     Ember::StatusCode vfs_create(void* sys_call_ctx, const U64 node_path, const U64 node_attr) {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         auto*       u_node_path = reinterpret_cast<const char*>(node_path);
