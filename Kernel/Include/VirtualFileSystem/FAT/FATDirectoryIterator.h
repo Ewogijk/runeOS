@@ -175,6 +175,10 @@ namespace Rune::VFS {
         U32 get_current_cluster() const;
     };
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      FAT Directory Stream
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
     class FATDirectoryStream : public DirectoryStream {
         FATDirectoryIterator _fat_it;
 
@@ -182,9 +186,10 @@ namespace Rune::VFS {
 
       public:
         explicit FATDirectoryStream(const Function<void()>&     on_close,
+
                                     const FATDirectoryIterator& fat_it);
 
-        NodeInfo get_next() override;
+        auto     next() -> Expected<NodeInfo, DirectoryStreamStatus> override;
     };
 } // namespace Rune::VFS
 

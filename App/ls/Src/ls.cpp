@@ -131,6 +131,5 @@ CLINK int main(const int argc, char* argv[]) {
         print_node_info(args, node_info);
         next = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
     }
-    print_node_info(args, node_info); // Print the last node
     return 0;
 }

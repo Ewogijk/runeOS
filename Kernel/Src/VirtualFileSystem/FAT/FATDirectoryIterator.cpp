@@ -96,8 +96,7 @@ namespace Rune::VFS {
                         pEnd--;
                 } else if (c_order == 1) {
                     // Skip leading whitespace
-                    while (tmp[pStart] == ' ')
-                        pStart++;
+                    while (tmp[pStart] == ' ') pStart++;
                 }
 
                 // Long file name entries are in reverse order
@@ -270,45 +269,36 @@ namespace Rune::VFS {
     //                                      FAT Directory Stream
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void FATDirectoryStream::update_state() {
-        switch (_fat_it.get_state()) {
-            case DirectoryIteratorState::ITERATING: _state = DirectoryStreamState::HAS_MORE; break;
-            case DirectoryIteratorState::END_OF_DIRECTORY:
-                _state = DirectoryStreamState::END_OF_DIRECTORY;
-                break;
-            case DirectoryIteratorState::CORRUPT_LFN_ENTRY:
-            case DirectoryIteratorState::DEV_ERROR:         _state = DirectoryStreamState::IO_ERROR; break;
-            default:                                        _state = DirectoryStreamState::NONE; break;
-        }
-    }
-
     FATDirectoryStream::FATDirectoryStream(const Function<void()>&     on_close,
                                            const FATDirectoryIterator& fat_it)
         : DirectoryStream(move(on_close)),
           _fat_it(move(fat_it)) {
-        update_state();
     }
 
-    NodeInfo FATDirectoryStream::get_next() {
-        NodeInfo node_info;
-        if (_fat_it.has_next()) {
-            U8 node_attr = 0;
-            if (_fat_it->file.has_attribute(FATFileAttribute::READONLY))
-                node_attr |= Ember::NodeAttribute::READONLY;
-            if (_fat_it->file.has_attribute(FATFileAttribute::HIDDEN))
-                node_attr |= Ember::NodeAttribute::HIDDEN;
-            if (_fat_it->file.has_attribute(FATFileAttribute::SYSTEM))
-                node_attr |= Ember::NodeAttribute::SYSTEM;
-            if (_fat_it->file.has_attribute(FATFileAttribute::DIRECTORY))
-                node_attr |= Ember::NodeAttribute::DIRECTORY;
-            if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE))
-                node_attr |= Ember::NodeAttribute::FILE;
-
-            node_info = {_fat_it->file_name, _fat_it->file.file_size, node_attr};
-            ++_fat_it;
+    Expected<NodeInfo, DirectoryStreamStatus> FATDirectoryStream::next() {
+        switch (_fat_it.get_state()) {
+            case DirectoryIteratorState::END_OF_DIRECTORY:
+                return Unexpected<DirectoryStreamStatus>(DirectoryStreamStatus::END_OF_DIRECTORY);
+            case DirectoryIteratorState::CORRUPT_LFN_ENTRY:
+            case DirectoryIteratorState::DEV_ERROR:
+                return Unexpected<DirectoryStreamStatus>(DirectoryStreamStatus::IO_ERROR);
+            default:
+                break; // ITERATING -> continue get node info
         }
-        update_state();
 
+        U8 node_attr = 0;
+        if (_fat_it->file.has_attribute(FATFileAttribute::READONLY))
+            node_attr |= Ember::NodeAttribute::READONLY;
+        if (_fat_it->file.has_attribute(FATFileAttribute::HIDDEN))
+            node_attr |= Ember::NodeAttribute::HIDDEN;
+        if (_fat_it->file.has_attribute(FATFileAttribute::SYSTEM))
+            node_attr |= Ember::NodeAttribute::SYSTEM;
+        if (_fat_it->file.has_attribute(FATFileAttribute::DIRECTORY))
+            node_attr |= Ember::NodeAttribute::DIRECTORY;
+        if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE))
+            node_attr |= Ember::NodeAttribute::FILE;
+        NodeInfo node_info = NodeInfo{_fat_it->file_name, _fat_it->file.file_size, node_attr};
+        ++_fat_it;
         return node_info;
     }
 } // namespace Rune::VFS

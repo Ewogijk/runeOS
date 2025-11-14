@@ -312,23 +312,24 @@ namespace Rune::SystemCall {
             vfs_ctx->vfs_module->find_directory_stream(k_ID);
         if (!dir_stream) return Ember::Status::UNKNOWN_ID;
 
-        auto [node_path, size, attributes] = dir_stream->get_next();
-        if (dir_stream->get_state() == VFS::DirectoryStreamState::IO_ERROR)
-            return Ember::Status::IO_ERROR;
+        auto maybe_node_info = dir_stream->next();
+        if (!maybe_node_info) {
+            return maybe_node_info.error() == VFS::DirectoryStreamStatus::END_OF_DIRECTORY
+                       ? Ember::Status::DIRECTORY_STREAM_EOD
+                       : Ember::Status::IO_ERROR;
+        }
 
+        auto  k_node_info = maybe_node_info.value();
         auto* u_node_info = reinterpret_cast<Ember::NodeInfo*>(node_info_ptr);
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
-                (void*) node_path.to_cstr(),
+                (void*) k_node_info.node_path.to_cstr(),
                 &u_node_info->node_path,
-                node_path.size() + 1 // size() does not include null terminator
+                k_node_info.node_path.size() + 1 // size() does not include null terminator
                 ))
             return Ember::Status::BAD_ARG;
-
-        u_node_info->size       = size;
-        u_node_info->attributes = attributes;
-        return dir_stream->get_state() == VFS::DirectoryStreamState::HAS_MORE
-                   ? Ember::Status::DIRECTORY_STREAM_HAS_MORE
-                   : Ember::Status::DIRECTORY_STREAM_EOD;
+        u_node_info->size       = k_node_info.size;
+        u_node_info->attributes = k_node_info.attributes;
+        return Ember::Status::DIRECTORY_STREAM_HAS_MORE;
     }
 
     Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, const U64 dir_stream_ID) {

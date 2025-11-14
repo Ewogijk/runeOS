@@ -19,31 +19,29 @@
 
 #include <Ember/Enum.h>
 
+#include <KRE/Utility.h>
+
 #include <VirtualFileSystem/Node.h>
 
 namespace Rune::VFS {
 
-    /**
-     * @brief
-     * <ul>
-     *  <li>Okay:           There are more nodes in the directory.</li>
-     *  <li>EndOfDirectory: End of directory reached, no more nodes left.</li>
-     *  <li>IOError:        An IO error occurred while iterating the directory.</li>
-     * </ul>
-     */
-#define DIRECTORY_STREAM_STATES(X)                                                                 \
-    X(DirectoryStreamState, HAS_MORE, 0x1)                                                         \
-    X(DirectoryStreamState, END_OF_DIRECTORY, 0x2)                                                 \
-    X(DirectoryStreamState, IO_ERROR, 0x3)
+    /// @brief
+    /// <ul>
+    ///     <li>END_OF_DIRECTORY: End of directory reached, no more nodes left.</li>
+    ///     <li>IO_ERROR:         An IO error occurred while iterating the directory.</li>
+    /// </ul>
+#define DIRECTORY_STREAM_STATUS_CODES(X)                                                           \
+    X(DirectoryStreamStatus, END_OF_DIRECTORY, 0x1)                                                \
+    X(DirectoryStreamStatus, IO_ERROR, 0x2)
 
-    DECLARE_ENUM(DirectoryStreamState, DIRECTORY_STREAM_STATES, 0x0) // NOLINT
+    DECLARE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0) // NOLINT
+
 
     /**
      * @brief The directory stream returns node infos until the end of directory is reached.
      */
     class DirectoryStream {
       protected:
-        DirectoryStreamState _state;
         bool                 _closed;
 
         Function<void()> _on_close;
@@ -56,23 +54,11 @@ namespace Rune::VFS {
 
         virtual ~DirectoryStream() = default;
 
-        /**
-         * @brief
-         * @return The current state.
-         */
-        [[nodiscard]]
-        DirectoryStreamState get_state() const;
-
-        /**
-         * Check the state of the stream to verify if the node info has valid data. If
-         * "GetState() == EndOfDirectory || get_state() == IOError" then the node info will contain
-         * invalid data aka a default initialized node info otherwise it will contain valid data of
-         * a node.
-         *
-         * @brief Get info about the next node in the directory.
-         * @return Info about a node in the directory.
-         */
-        virtual NodeInfo get_next() = 0;
+        /// @brief Try to get info about the next node in the directory.
+        ///
+        ///
+        /// @return
+        virtual auto next() -> Expected<NodeInfo, DirectoryStreamStatus> = 0;
 
         /**
          * @brief Free all associated resources, after a call to this function the stream can no

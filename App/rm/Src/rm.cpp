@@ -105,20 +105,6 @@ bool delete_dir(const std::string& directory_path) {
         next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
     }
-    if (node_path != "." && node_path != "..") {
-        // Delete last node
-        if (node_info.is_directory()) {
-            if (!delete_dir(directory_path + "/" + node_path)) {
-                Forge::vfs_directory_stream_close(dir_stream_ID);
-                return false;
-            }
-        } else {
-            if (!delete_node(directory_path + "/" + node_path)) {
-                Forge::vfs_directory_stream_close(dir_stream_ID);
-                return false;
-            }
-        }
-    }
 
     // Delete this directory
     if (!delete_node(directory_path)) {
@@ -176,9 +162,6 @@ CLINK int main(const int argc, char* argv[]) {
             next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
             node_path = node_info.node_path;
         }
-        if (node_path != "." && node_path != ".."
-            && (node_info.is_directory() || node_info.is_file()))
-            nodes_in_dir++;
 
         if (nodes_in_dir == 0) {
             if (!delete_node(args.node_path)) {

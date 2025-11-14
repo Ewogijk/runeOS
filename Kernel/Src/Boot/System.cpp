@@ -101,6 +101,7 @@ namespace Rune {
     }
 
     auto boot_phase3(CPU::StartInfo* start_info) -> int {
+        SILENCE_UNUSED(start_info);
         auto& system = System::instance();
         if (system._is_booted) {
             LOGGER->warn(

@@ -238,10 +238,9 @@ namespace Rune::VFS {
     void VFSModule::dump_directory_stream_table(const SharedPointer<TextStream>& stream) const {
         Table<SharedPointer<DirectoryStream>, 2>::make_table(
             [](const SharedPointer<DirectoryStream>& dir_str) -> Array<String, 2> {
-                return {String::format("{}-{}", dir_str->handle, dir_str->name),
-                        dir_str->get_state().to_string()};
+                return {String::format("{}-{}", dir_str->handle, dir_str->name)};
             })
-            .with_headers({"ID-Name", "State"})
+            .with_headers({"ID-Name"})
             .with_data(_dir_stream_table.values())
             .print(stream);
     }

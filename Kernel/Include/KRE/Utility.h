@@ -1037,7 +1037,7 @@ namespace Rune {
             new (&_value) T(forward(args)...);
         }
 
-        Expected(UnexpectTag unexpected) {}
+        Expected(UnexpectTag unexpected) { SILENCE_UNUSED(unexpected); }
 
         template <typename... Args>
         Expected(UnexpectTag unexpected, Args&&... args) {
