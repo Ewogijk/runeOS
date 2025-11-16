@@ -37,6 +37,23 @@ namespace Freya {
         std::string description;
         /// @brief The command that will be used to start the service.
         std::string exec_start;
+        /// @brief Controls if Freya will wait for a service to finish before starting the next
+        ///         service.
+        ///
+        /// True:  Wait for the service to exit, before starting the next service.<br>
+        /// False: Do not wait for the service to exit.
+        bool wait_for_exit;
+        /// @brief Exit code that is expected to be returned by the service when it exited
+        ///         successfully.
+        ///
+        /// The exit code will only be checked when wait_for_exit=true.
+        int expected_exit_code;
+        /// @brief Marks a service as mandatory for the system to be able to start.
+        ///
+        /// If the service does not exit successfully, meaning (expected_exit_code != exit_code),
+        /// then the start of other services is stopped and Freya will exit with the exit code
+        /// MANDATORY_SERVICE_CRASHED.
+        bool mandatory;
         /// @brief An optional list of services that should be started before this service.
         std::vector<std::string> dependencies;
     };
@@ -108,6 +125,9 @@ namespace Freya {
         /// @brief Search for dependencies that are not registered as a service.
         /// @return A list of the missing dependencies.
         auto detect_missing_dependencies() -> std::vector<MissingDependency>;
+
+
+        auto operator[](const std::string& service) -> Service&;
 
         auto begin() const -> ConstIterator;
         auto begin() -> Iterator;

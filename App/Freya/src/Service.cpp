@@ -40,6 +40,11 @@ namespace Freya {
         return missing_dependencies;
     }
 
+    auto ServiceRegistry::operator[](const std::string& service) -> Service& {
+        return _services[service];
+    }
+
+
     auto ServiceRegistry::begin() const -> ConstIterator {
         return ConstIterator(_services.begin());
     }

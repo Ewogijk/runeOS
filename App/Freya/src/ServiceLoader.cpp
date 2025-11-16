@@ -36,6 +36,18 @@ namespace Freya {
             std::cerr << "Missing property \"" << EXEC_START << "\"." << std::endl;
             return false;
         }
+        if (!_c_doc[WAIT_FOR_EXIT]) {
+            std::cerr << "Missing property \"" << WAIT_FOR_EXIT << "\"." << std::endl;
+            return false;
+        }
+        if (!_c_doc[EXPECTED_EXIT_CODE]) {
+            std::cerr << "Missing property \"" << EXPECTED_EXIT_CODE << "\"." << std::endl;
+            return false;
+        }
+        if (!_c_doc[MANDATORY]) {
+            std::cerr << "Missing property \"" << MANDATORY << "\"." << std::endl;
+            return false;
+        }
         if (!_c_doc[REQUIRES]) {
             std::cerr << "Missing property \"" << REQUIRES << "\"." << std::endl;
             return false;
@@ -44,12 +56,15 @@ namespace Freya {
     }
 
     auto ServiceLoader::create_service() -> Service {
-        std::string              name        = _c_doc[NAME].as<std::string>();
-        std::string              description = _c_doc[DESCRIPTION].as<std::string>();
-        std::string              exec_start  = _c_doc[EXEC_START].as<std::string>();
+        std::string              name               = _c_doc[NAME].as<std::string>();
+        std::string              description        = _c_doc[DESCRIPTION].as<std::string>();
+        std::string              exec_start         = _c_doc[EXEC_START].as<std::string>();
+        bool                     wait_for_exit      = _c_doc[WAIT_FOR_EXIT].as<bool>();
+        int                      expected_exit_code = _c_doc[EXPECTED_EXIT_CODE].as<int>();
+        bool                     mandatory          = _c_doc[MANDATORY].as<bool>();
         std::vector<std::string> deps;
         for (auto req : _c_doc[REQUIRES]) deps.push_back(req.as<std::string>());
-        return {name, description, exec_start, deps};
+        return {name, description, exec_start, wait_for_exit, expected_exit_code, mandatory, deps};
     }
 
     auto ServiceLoader::load_services(const std::string& directory) -> std::vector<Service> {
@@ -64,9 +79,10 @@ namespace Freya {
                 _c_doc = YAML::LoadFile(service_file.path());
                 if (!verify_service_config()) continue;
 
+
                 services.push_back(create_service());
             } catch (YAML::ParserException& e) {
-                std::cout << "Exception: " << e.what() << std::endl;
+                std::cout << "Invalid YAML file: " << e.what() << std::endl;
             }
         }
         return services;

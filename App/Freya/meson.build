@@ -11,8 +11,11 @@ yaml_cpp_dep = yaml_cpp_proj.get_variable('yaml_cpp_dep')
 
 sources = [
     'src/DependencyGraph.cpp',
+    'src/ExitCode.cpp',
     'src/main.cpp',
     'src/Service.cpp',
+    'src/ServiceLoader.cpp',
+    'src/ServiceStarter.cpp',
 ]
 
 executable('Freya.app',
