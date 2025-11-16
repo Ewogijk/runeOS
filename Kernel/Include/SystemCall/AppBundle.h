@@ -101,9 +101,9 @@ namespace Rune::SystemCall {
      * strings.
      * @param working_dir   The working directory of the app that will be started, either absolute
      * or relative to the working directory of the calling app.
-     * @param stdin_target  stdin stream target.
-     * @param stdout_target stdout stream target.
-     * @param stderr_target stderr stream target.
+     * @param stdin_config  stdin stream target.
+     * @param stdout_config stdout stream target.
+     * @param stderr_config stderr stream target.
      * @return >0:              The app has been started, the returned value is the assigned ID.<br>
      *          BAD_ARG:        One of the arguments is null, intersects kernel memory, exceeds the
      * string size limit or the number of arguments in argv exceeds the argument count limit.<br>
@@ -114,9 +114,9 @@ namespace Rune::SystemCall {
                                 U64   app_path,
                                 U64   argv,
                                 U64   working_dir,
-                                U64   stdin_target,
-                                U64   stdout_target,
-                                U64   stderr_target);
+                                U64   stdin_config,
+                                U64   stdout_config,
+                                U64   stderr_config);
 
     /**
      * @brief Exit the currently running app with the given exit code.

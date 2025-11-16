@@ -18,6 +18,36 @@
 #include <Ember/Ember.h>
 
 namespace Ember {
+
+#define STD_IO_TARGETS(X)                                                                          \
+    X(StdIOTarget, VOID, 0x1)                                                                      \
+    X(StdIOTarget, INHERIT, 0x2)                                                                   \
+    X(StdIOTarget, FILE, 0x3)                                                                      \
+    X(StdIOTarget, PIPE, 0x4)
+
+    /// @brief Describes to which target a std IO stream of an application can be connected.
+    ///
+    /// VOID: Connect the standard stream to the void stream, which provides no output and ignores
+    ///         all input.<br>
+    /// INHERIT: Connect stdin/stdout/stderr of the application to the std streams of the parent
+    ///             app.<br>
+    /// FILE: Only stdout/stderr: Redirect to the specified file, if it does not exist it will be
+    ///         created.<br>
+    /// PIPE: Connect the standard stream to the requested pipe.<br>
+    DECLARE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0) // NOLINT
+
+    /// @brief The configuration of a std IO stream.
+    ///
+    /// Each std IO target can have an optional argument:
+    /// VOID: -<br>
+    /// INHERIT: -<br>
+    /// FILE: A relative or absolute path to a file.<br>
+    /// PIPE: -<br>
+    struct StdIOConfig {
+        StdIOTarget target;
+        char        argument[STRING_SIZE_LIMIT] = {}; //NOLINT
+    };
+
     /**
      * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of
      * keys. Each key is defined by it's keycode which is an 16 bit unsigned integer defined as

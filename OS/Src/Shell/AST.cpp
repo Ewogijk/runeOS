@@ -105,8 +105,7 @@ namespace Rune::Shell {
 
     std::string CommandSequence::get_text() {
         std::string cs = _command->get_text();
-        for (const auto& arg : _arguments_or_flags)
-            cs += " " + arg->get_text();
+        for (const auto& arg : _arguments_or_flags) cs += " " + arg->get_text();
         return cs;
     }
 
@@ -168,14 +167,20 @@ namespace Rune::Shell {
                 std::cerr << "Unknown command: \"" << cmd << "\"" << std::endl;
                 return "";
             }
-            const std::string redirect =
-                _redirect_file == Path("") ? "inherit" : "file:" + _redirect_file.to_string();
+            std::string        redirect_file_str = _redirect_file.to_string();
+            Ember::StdIOConfig stdout_err_config{
+                redirect_file_str.empty() ? Ember::StdIOTarget::INHERIT : Ember::StdIOTarget::FILE};
+            if (stdout_err_config.target == Ember::StdIOTarget::FILE) {
+                memcpy(stdout_err_config.argument,
+                       redirect_file_str.c_str(),
+                       redirect_file_str.size());
+            }
             const Ember::ResourceID app_ID = Forge::app_start(target_app.to_string().c_str(),
                                                               const_cast<const char**>(argv),
                                                               wd.to_string().c_str(),
-                                                              "inherit",
-                                                              redirect.c_str(),
-                                                              redirect.c_str());
+                                                              {Ember::StdIOTarget::INHERIT},
+                                                              stdout_err_config,
+                                                              stdout_err_config);
             if (app_ID < Ember::Status::OKAY) {
                 std::cerr << "Failed to start app \"" << target_app.to_string()
                           << "\". Reason: " << app_ID << std::endl;
@@ -200,16 +205,14 @@ namespace Rune::Shell {
 
     std::string EnvVarDecl::get_text() {
         std::string v;
-        for (auto& vv : _value)
-            v += vv->get_text();
+        for (auto& vv : _value) v += vv->get_text();
         return _env_var->get_text() + "=" + v;
     }
 
     std::string EnvVarDecl::evaluate(Environment& shell_env) {
         const std::string new_env_var = _env_var->get_text();
         std::string       val;
-        for (const auto& v : _value)
-            val += " " + v->evaluate(shell_env);
+        for (const auto& v : _value) val += " " + v->evaluate(shell_env);
         shell_env.env_var_table[new_env_var] = val;
         return "";
     }
@@ -241,15 +244,13 @@ namespace Rune::Shell {
 
     std::string ShellString::get_text() {
         std::string text;
-        for (const auto& ele : _content)
-            text += ele->get_text();
+        for (const auto& ele : _content) text += ele->get_text();
         return text;
     }
 
     std::string ShellString::evaluate(Shell::Environment& shell_env) {
         std::string value("");
-        for (const auto& ele : _content)
-            value += ele->evaluate(shell_env);
+        for (const auto& ele : _content) value += ele->evaluate(shell_env);
         return value;
     }
 

@@ -17,6 +17,8 @@
 #ifndef RUNEOS_APPSUBSYSTEM_H
 #define RUNEOS_APPSUBSYSTEM_H
 
+#include <Ember/AppBits.h>
+
 #include <VirtualFileSystem/Path.h>
 
 #include <KRE/System/Module.h>
@@ -58,11 +60,11 @@ namespace Rune::App {
      * </p>
      */
     class AppModule : public Module {
-        Memory::MemoryModule*    _memory_module;
-        CPU::CPUModule*          _cpu_module;
+        Memory::MemoryModule* _memory_module;
+        CPU::CPUModule*       _cpu_module;
         VFS::VFSModule*       _vfs_module;
         Device::DeviceModule* _dev_module;
-        FrameBuffer              _frame_buffer;
+        FrameBuffer           _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
         IDCounter<U16>                    _app_handle_counter;
@@ -87,7 +89,7 @@ namespace Rune::App {
          */
         auto setup_std_stream(const SharedPointer<Info>& app,
                               StdStream                  std_stream,
-                              const String&              target) -> SharedPointer<TextStream>;
+                              const Ember::StdIOConfig&  stream_config) -> SharedPointer<TextStream>;
 
         /**
          * Join the given list of IDs by ','.
@@ -169,7 +171,7 @@ namespace Rune::App {
          * @param executable        Path to an ELF executable.
          * @param argv              Arguments for the app.
          * @param working_directory Initial working directory.
-         * @param stdin_target      Stdin stream target.
+         * @param stdin_config      Stdin stream target.
          * @param stdout_target     Stdout stream target.
          * @param stderr_target     Stderr stream target.
          *
@@ -177,12 +179,12 @@ namespace Rune::App {
          * the assigned app ID, otherwise the app ID is -1 and LoadStatus contains the error that
          * happened.
          */
-        auto start_new_app(const Path&   executable,
-                           char*         argv[],
-                           const Path&   working_directory,
-                           const String& stdin_target,
-                           const String& stdout_target,
-                           const String& stderr_target) -> StartStatus;
+        auto start_new_app(const Path&               executable,
+                           char*                     argv[],
+                           const Path&               working_directory,
+                           const Ember::StdIOConfig& stdin_config,
+                           const Ember::StdIOConfig& stdout_config,
+                           const Ember::StdIOConfig& stderr_config) -> StartStatus;
 
         /**
          * @brief free all app resources and exit the main thread with the provided exit code.
