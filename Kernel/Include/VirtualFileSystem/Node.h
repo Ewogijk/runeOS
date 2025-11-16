@@ -33,18 +33,15 @@ namespace Rune::VFS {
     X(NodeIOStatus, DEV_ERROR, 0x5)                                                                \
     X(NodeIOStatus, CLOSED, 0x6)
 
-    /**
-     * @brief End result of a node IO operation.
-     *
-     * <ul>
-     *  <li>Okay:               The operation was finished without errors.</li>
-     *  <li>BadBuffer:          A buffer points to null.</li>
-     *  <li>NotAllowed:         The operation is not allowed in the current context, e.g. node write
-     * on a node in read mode.</li> <li>NotSupported:       The operation is not supported, e.g.
-     * node read on a directory</li> <li>StorageDeviceError: Error on the underlying storage
-     * device.</li>
-     * </ul>
-     */
+
+    /// @brief End result of a node IO operation.
+    ///
+    /// Okay: The operation was finished without errors.<br>
+    /// BadBuffer: A buffer points to null.<br>
+    /// NotAllowed: The operation is not allowed in the current context, e.g. node write
+    ///             on a node in read mode.<br>
+    /// NotSupported: The operation is not supported, e.g. node read on a directory<br>
+    /// StorageDeviceError: Error on the underlying storage device.
     DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) // NOLINT
 
     /**
