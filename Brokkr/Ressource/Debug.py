@@ -41,6 +41,16 @@ def create_gdb_conf(break_instruction: str):
     with open("GDB.conf", "w") as f:
         f.write(f"file {KERNEL_ELF}\n")
         f.write(f"add-symbol-file {RUNE_OS} {get_text_section_address(RUNE_OS)}\n")
+
+        # Add libc sources
+        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/LibC/options/posix/generic\n")
+        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/LibC/sysdeps/rune/mlibc-integration\n")
+
+        # Add libstdc++-v3 sources
+        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/src/c++17\n")
+        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/include/bits\n")
+        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/src/filesystem\n")
+
         f.write("target remote localhost:1234\n")
         f.write("lay next\n")
         f.write("lay next\n")
