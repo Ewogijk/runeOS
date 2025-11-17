@@ -110,61 +110,6 @@ namespace Rune::App {
             case Ember::StdIOTarget::PIPE: return {}; // TODO implement pipes
             default:                       return {};                       // To appease the compiler and linter
         }
-
-        // LinkedList<String> t_split = target.split(':');
-        // if (t_split.is_empty() || t_split.size() > 2) return {};
-        // String t = *t_split[0];
-        // String arg;
-        // if (t_split.size() > 1) arg = *t_split[1];
-        //
-        // if (t == "inherit") {
-        //     // Inherit the std stream from the calling app
-        //     switch (std_stream) {
-        //         case StdStream::IN:  return _active_app->std_in;
-        //         case StdStream::OUT: return _active_app->std_out;
-        //         case StdStream::ERR: return _active_app->std_err;
-        //         default:             return {}; // NONE -> return nullptr
-        //     }
-        // } else if (t == "void") {
-        //     return SharedPointer<TextStream>(new VoidStream());
-        // } else if (t == "file") {
-        //     if (arg.is_empty()) return {}; // No file provided
-        //     Path maybe_path = Path(arg).resolve(_active_app->working_directory);
-        //     if (_vfs_module->is_valid_file_path(maybe_path)) {
-        //         // Setup std stream with a file
-        //         if (std_stream == StdStream::IN) return {}; // Not supported
-        //
-        //         SharedPointer<VFS::Node> node;
-        //         VFS::IOStatus            st = _vfs_module->open(
-        //             maybe_path,
-        //             std_stream == StdStream::IN ? Ember::IOMode::READ : Ember::IOMode::WRITE,
-        //             node);
-        //         if (st == VFS::IOStatus::NOT_FOUND) {
-        //             // File not found -> Create it
-        //             st = _vfs_module->create(maybe_path, (int) Ember::NodeAttribute::FILE);
-        //             if (st != VFS::IOStatus::CREATED) return {};
-        //
-        //             // Try to open it again
-        //             st = _vfs_module->open(maybe_path,
-        //                                    std_stream == StdStream::IN ? Ember::IOMode::READ
-        //                                                                : Ember::IOMode::WRITE,
-        //                                    node);
-        //         }
-        //         if (st != VFS::IOStatus::OPENED)
-        //             // Cannot open  even after possibly creating it
-        //             return {};
-        //
-        //         // The opened file will be added to the active app but should be added to the app
-        //         to
-        //         // be started
-        //         _active_app->node_table.remove(node->handle);
-        //         app->node_table.add_back(node->handle);
-        //         return SharedPointer<TextStream>(new VFS::FileStream(node));
-        //     }
-        // } else if (t == "pipe") {
-        //     // TODO implement pipes
-        // }
-        // return {};
     }
 
     App::AppModule::AppModule()
@@ -175,7 +120,8 @@ namespace Rune::App {
           _dev_module(nullptr),
           _app_table(),
           _app_handle_counter(),
-          _active_app(nullptr) {}
+          _active_app(nullptr),
+          _system_loader_handle(0) {}
 
     String AppModule::get_name() const { return "App"; }
 
@@ -391,16 +337,16 @@ namespace Rune::App {
             .print(stream);
     }
 
-    LoadStatus AppModule::start_os(const Path& os_exec, const Path& working_directory) {
+    LoadStatus AppModule::start_system_loader(const Path& system_loader_executable, const Path& working_directory) {
         if (!_app_handle_counter.has_more()) return LoadStatus::LOAD_ERROR;
         ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
         VirtualAddr start_info_addr;
-        LOGGER->info("Loading OS: {}", os_exec.to_string());
+        LOGGER->info("Loading OS: {}", system_loader_executable.to_string());
         char*      dummy_args[1] = {nullptr};
         LoadStatus load_status =
-            loader.load(os_exec, dummy_args, app, user_stack, start_info_addr, true);
+            loader.load(system_loader_executable, dummy_args, app, user_stack, start_info_addr, true);
         if (load_status != LoadStatus::LOADED) {
             LOGGER->warn("Failed to load OS. Status: {}", load_status.to_string());
             return load_status;
@@ -417,7 +363,8 @@ namespace Rune::App {
         // Hook up the stdin to the keyboard
         app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard().get());
 
-        schedule_for_start(app,
+
+        _system_loader_handle = schedule_for_start(app,
                            user_stack,
                            memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
                            move(working_directory));
@@ -484,6 +431,12 @@ namespace Rune::App {
     }
 
     void AppModule::exit_running_app(int exit_code) {
+        // The system loader is not allowed to exit!
+        // While technically okay, this would lead to the system with only the idle thread running
+        // which renders it useless.
+        if (_system_loader_handle == _active_app->handle)
+            System::instance().panic("The system loader shall not exit!");
+
         _active_app->exit_code = exit_code;
 
         // Close std io streams

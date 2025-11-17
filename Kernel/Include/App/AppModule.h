@@ -71,6 +71,8 @@ namespace Rune::App {
 
         SharedPointer<Info> _active_app;
 
+        U16 _system_loader_handle;
+
         /**
          * @brief Set the ID and working directory in the entry and schedule it's main thread for
          * execution.
@@ -89,7 +91,7 @@ namespace Rune::App {
          */
         auto setup_std_stream(const SharedPointer<Info>& app,
                               StdStream                  std_stream,
-                              const Ember::StdIOConfig&  stream_config) -> SharedPointer<TextStream>;
+                              const Ember::StdIOConfig& stream_config) -> SharedPointer<TextStream>;
 
         /**
          * Join the given list of IDs by ','.
@@ -136,13 +138,13 @@ namespace Rune::App {
         void dump_app_table(const SharedPointer<TextStream>& stream) const;
 
         /**
-         * @brief Load the OS and then schedule it's main thread.
-         * @param os_exec           Path to the OS executable.
-         * @param working_directory Working directory of the OS.
-         * @return Final status of the OS start, the assigned ID will always be zero as the OS is
-         * always the first loaded app.
+         * @brief Load the system loader and then schedule it's main thread.
+         * @param system_loader_executable Path to the system loader executable.
+         * @param working_directory Working directory of the system loader.
+         * @return Final status of the system loader start.
          */
-        auto start_os(const Path& os_exec, const Path& working_directory) -> LoadStatus;
+        auto start_system_loader(const Path& system_loader_executable,
+                                 const Path& working_directory) -> LoadStatus;
 
         /**
          * <p>

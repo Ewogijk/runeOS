@@ -133,6 +133,31 @@ namespace Rune {
          */
         static auto instance() -> System&;
 
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  Boot Phase
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+        /// @brief Run boot phase 2.
+        ///
+        /// Note: This function will be called at the end of boot phase 1 and will be disabled at
+        /// the end of boot phase 3.
+        ///
+        /// @param boot_info Boot info provided by boot phase 1.
+        void boot_phase2(BootInfo boot_info);
+
+        /// @brief Run boot phase 3.
+        ///
+        /// Note: This function will be scheduled in a new thread at then end of boot phase 2 and
+        /// will be disabled at the end of boot phase 3.
+        ///
+        /// @param start_info Thread start info.
+        /// @return Undefined. The function runs until system shutdown.
+        friend auto boot_phase3(CPU::StartInfo* start_info) -> int;
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  General Functions
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
         /**
          * Get a pointer to the requested kernel module.
          *
@@ -151,25 +176,25 @@ namespace Rune {
             return reinterpret_cast<ModuleType*>(_module_registry[mod_sel.to_value() - 1]);
         }
 
-        /**
-         * Run boot phase 2.
-         *
-         * Note: This function will be called at the end of boot phase 1 and will be disabled at the
-         * end of boot phase 3.
-         *
-         * @param boot_info Boot info provided by boot phase 1.
-         */
-        void boot_phase2(BootInfo boot_info);
+        /// @brief Print the given error message and halt code execution forever.
+        ///
+        /// Kernel panic should only be used when an unrecoverable error occurs, since the kernel
+        /// will be stuck in panic until the system gets rebooted.
+        ///
+        /// @tparam Args
+        /// @param panic_msg_fmt Formatting message to be printed before kernel panic.
+        /// @param args Formatting arguments.
+        template <typename... Args>
+        void panic(const String& panic_msg_fmt, Args... args) const {
+            const Argument arg_array[] = {args...};
+            const size_t   arg_size    = sizeof...(Args);
 
-        /**
-         * Run boot phase 3.
-         *
-         * Note: This function will be scheduled in a new thread at then end of boot phase 2 and
-         * will be disabled at the end of boot phase 3.
-         * @param start_info Thread start info.
-         * @return Undefined. The function runs until system shutdown.
-         */
-        friend auto boot_phase3(CPU::StartInfo* start_info) -> int;
+            _panic_stream->set_background_color(Pixie::VSCODE_RED);
+            _panic_stream->set_foreground_color(Pixie::VSCODE_WHITE);
+            _panic_stream->write_formatted("Kernel panic: {}",
+                                           String::format(panic_msg_fmt, arg_array, arg_size));
+            while (true) CPU::halt();
+        }
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

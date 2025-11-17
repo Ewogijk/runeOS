@@ -132,8 +132,7 @@ namespace Rune::CPU {
                         ->dump_core_state(PANIC_STREAM, x64_i_ctx->core_state);
                     PANIC_STREAM->reset_style();
                 }
-                while (true)
-                    ;
+                while (true) __asm__ ("hlt");
             }
             InterruptContext i_ctx = {x64_i_ctx->i_error_code, x64_i_ctx->i_vector};
                              (*EXCEPTION_HANDLER_TABLE[vector])(forward<InterruptContext*>(&i_ctx),
