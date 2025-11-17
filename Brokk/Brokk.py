@@ -28,16 +28,16 @@ MIN_IMAGE_SIZE = 256
 
 
 def print_banner() -> None:
-    print(f"------------------------ Brokkr v{VERSION} ------------------------\n")
+    print(f"------------------------ Brokk v{VERSION} ------------------------\n")
 
 
 @click.group(
     help="""
-    Brokkr is the build system for runeOS. It simplifies creating a bootable image and is the 
+    Brokk is the build system for runeOS. It simplifies creating a bootable image and is the 
     recommended way of building from sources.
     
     Building works similar to meson, first a build directory must be configured by running 
-    './Brokkr configure ...' and then the sources can be build using './Brokkr build ...'.
+    './Brokk configure ...' and then the sources can be build using './Brokk build ...'.
     """
 )
 @click.help_option("-h", "--help")
@@ -114,7 +114,7 @@ def configure(
         json.dump(build_settings, file, indent=4)
 
     print("Build directory created.")
-    print(f"Run './Brokkr.py build {arch} {build}' to build.")
+    print(f"Run './Brokk.py build {arch} {build}' to build.")
 
 
 @cli.command("build")
@@ -136,7 +136,7 @@ def build_target(arch: str, build: str) -> None:
     build_settings = Path("Build") / f"{arch}-{build}" / "build.settings"
     if not build_settings.exists():
         sys.exit(
-            f"'{build_settings}': Build settings not found. Run './Brokkr.py configure ...' first "
+            f"'{build_settings}': Build settings not found. Run './Brokk.py configure ...' first "
             f"to create a build directory."
         )
     ret = subprocess.run(["Scripts/Build-All.py", str(build_settings)]).returncode

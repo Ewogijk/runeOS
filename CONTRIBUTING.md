@@ -14,7 +14,7 @@ These guidelines are not rules, so feel free to propose changes in a pull reques
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Building the Project](#building-the-project)
   - [Getting the Dependencies](#getting-the-dependencies)
-  - [Building with Brokkr](#building-with-brokkr)
+  - [Building with Brokk](#building-with-Brokk)
   - [Building Manually](#building-manually)
 - [Styleguide](#styleguide)
   - [Commit Message Style](#commit-message-style)
@@ -100,20 +100,20 @@ Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk
 provides the cross-compilers to build runeOS.
 
 
-### Building with Brokkr
+### Building with Brokk
 
-Brokkr is the build system of runeOS that creates bootable OS images and the recommended way of 
+Brokk is the build system of runeOS that creates bootable OS images and the recommended way of 
 building. It is not a build system in the classical meaning like SCons or Meson, but rather a tool 
 that executes those two build systems and other build scripts that know how to build the OS.
 
-Building with Brokkr requires only two steps, first the build directory must be configured. In the 
-`Brokkr/` directory run:
+Building with Brokk requires only two steps, first the build directory must be configured. In the 
+`Brokk/` directory run:
 
 ```shell
-./Brokkr configure x86_64 debug path/to/your/freestanding-compiler 256
+./Brokk configure x86_64 debug path/to/your/freestanding-compiler 256
 ```
 
-This tells Brokkr that it should make a 'debug' build for the 'x86_64' architecture using the 
+This tells Brokk that it should make a 'debug' build for the 'x86_64' architecture using the 
 freestanding cross-compiler installed in 'path/to/your/freestanding-compiler' and that the OS image 
 should be 256MB.
 
@@ -122,17 +122,17 @@ image. If you are interested what happens behind the scenes, try to build runeOS
 Now run:
 
 ```shell
-./Brokkr.py build x86_64 debug
+./Brokk.py build x86_64 debug
 ```
 
-If Brokkr did not report any errors, you should notice more files have been installed in the build 
+If Brokk did not report any errors, you should notice more files have been installed in the build 
 directory. Congrats you just made your first OS build!
 
 
 ### Building Manually
 
-It is highly recommended to use Brokkr to build the bootable OS image, as building manually is a 
-lengthy and error-prone process and Brokkr will automatically perform the steps described in the 
+It is highly recommended to use Brokk to build the bootable OS image, as building manually is a 
+lengthy and error-prone process and Brokk will automatically perform the steps described in the 
 following sections for you.
 
 
@@ -186,7 +186,7 @@ Now you should find the `runeOS.app` file in the `Build/` directory.
 #### Creating the Bootable Image
 
 At this point you should have a `runeKernel.elf` and `runeOS.app`. There are two ways to create the 
-bootable image, the easy way is running the `Build-Image.sh` script in the `Brokkr/` directory:
+bootable image, the easy way is running the `Build-Image.sh` script in the `Brokk/` directory:
 
 ```shell
 Scripts/Build-Image.sh path/to/runeKernel.elf path/to/runeOS.app your-image-size
@@ -226,7 +226,7 @@ cd Build && meson compile
 
 Now in `Build/` you should find the `cat.app` file. It needs to be copied over to the `/Apps` 
 directory on the `Data` partition of your `runeOS.image`. This can either be done manually or the 
-`Brokkr/Scripts/Install-App.sh` build script can do it automatically:
+`Brokk/Scripts/Install-App.sh` build script can do it automatically:
 
 ```shell
 Scripts/Install-App.sh path/to/your/runeOS.image path/to/your/cat.app
@@ -242,7 +242,7 @@ application you wish to install.
 
 If you have downloaded the latest release, you will have noticed it contains a `Start.py` file and 
 more. To install your `runeOS.image` alongside this script and other configuration files, in 
-`Brokkr/` run:
+`Brokk/` run:
 
 ```shell
 Scripts/Install.sh your-build path/to/your/install-directory path/to/your/runeOS.image path/to/your/runeKernel.elf path/to/your/runeOS.app

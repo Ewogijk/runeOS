@@ -92,13 +92,13 @@ def build_all(build_settings: str) -> None:
         4. Check if 'OS/Build' exists, if not run 'meson setup --cross-file x86_64-rune.txt Build'
             in 'OS'.
         5. Run 'meson compile' in 'OS/Build'.
-        6. Run 'Build-Image.sh ...' in 'Brokkr/'. (sudo permissions required)
+        6. Run 'Build-Image.sh ...' in 'Brokk/'. (sudo permissions required)
         7. For each application in 'App/'
             7.1. Check if '<app-dir>/Build' exists, if not run 'meson setup --cross-file
                     x86_64-rune.txt Build' in '<app-dir>/'.
             7.2 Run 'meson compile' in '<app-dir>/Build'.
-            7.3 Run 'Install-App.sh ...' in 'Brokkr/'. (sudo permissions required)
-        8. Run 'Install.sh ...' in 'Brokkr/'.
+            7.3 Run 'Install-App.sh ...' in 'Brokk/'. (sudo permissions required)
+        8. Run 'Install.sh ...' in 'Brokk/'.
     """
     #
     # Load build.settings
@@ -155,13 +155,14 @@ def build_all(build_settings: str) -> None:
     #
     # Install all apps
     #
-    rune_os_image = project_root / "Brokkr" / "runeOS.image"
+    rune_os_image = project_root / "Brokk" / "runeOS.image"
     app_dir = project_root / "App"
     for app_proj in app_dir.iterdir():
         meson_build(app_proj)
         install_app_cmd = [
-            "Scripts/Install-App.sh",
+            "Scripts/Copy-File-To-Image.sh",
             str(rune_os_image),
+            "/Apps",
             str(app_proj / "Build" / f"{app_proj.name}.app"),
         ]
         exec_shell_cmd(install_app_cmd, ".", "Failed to install build files.")
@@ -173,7 +174,7 @@ def build_all(build_settings: str) -> None:
     install_cmd = [
         "Scripts/Install.sh",
         build,
-        str(project_root / "Brokkr" / "Build" / f"{arch}-{build}"),
+        str(project_root / "Brokk" / "Build" / f"{arch}-{build}"),
         str(rune_os_image),
         str(kernel_elf),
         str(os_elf),
