@@ -93,7 +93,7 @@ sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 Then install the python dependencies, we recommend to install in a [venv](https://docs.python.org/3/library/venv.html):
 
 ```shell
-pip install scons click meson
+pip install scons click meson pyyaml
 ```
 
 Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk/runeToolchain) that

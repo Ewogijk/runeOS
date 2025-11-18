@@ -17,9 +17,9 @@
 #
 
 help() {
-  echo Usage "./Install-App.sh [-h] RUNE_OS_IMAGE APP_ELF"
+  echo Usage "./Copy-File-To-Image.sh [-h] RUNE_OS_IMAGE IMAGE_DIR FILE"
   echo
-  echo Install the APP_ELF in the '/Apps' directory on the RUNE_OS_IMAGE.
+  echo Copy the local FILE to the IMAGE_DIR on the RUNE_OS_IMAGE.
   echo
   echo The script requires sudo permissions!
   echo
@@ -32,8 +32,9 @@ help() {
   echo
   echo
   echo Arguments:
-  echo "    rune-os-image - The runeOS image file."
-  echo "    app-elf       - The app executable."
+  echo "    RUNE_OS_IMAGE - The runeOS image file."
+  echo "    IMAGE_DIR     - Target directory on the image."
+  echo "    FILE          - Local file to be copied to the image."
   echo Options:
   echo "    -h - Print this help text"
 }
@@ -45,25 +46,26 @@ while getopts "h" option; do
    esac
 done
 
-arg_count=2
+arg_count=3
 if [ $# -ne $arg_count ]; then
     echo "ERROR: Insufficient number of arguments, Expected: ${arg_count}, Got: $#"
     exit 1
 fi
 
-APP_DIR="/Apps"           # All *.app files in this directory can be run as shell external commands.
 LOOP_DEVICE="/dev/loop7"  # Loop device used to mount the image
 TMP_DATA_DIR="TmpDataMnt" # Temporary mount directory for the data partition
 
 rune_os_image=$1
-app_elf=$2
+image_dir=$2
+file=$3
 
 echo
-echo Build-Image Configuration:
-echo -------------------------
+echo Copy-File-To-Image Configuration:
+echo ---------------------------------
 echo
 echo "runeOS Image: $rune_os_image"
-echo "App ELF: $app_elf"
+echo "Image Dir: $image_dir"
+echo "File: $file"
 echo
 
 # We will request mount directory ownership for the calling user
@@ -82,8 +84,8 @@ mkdir -p $TMP_DATA_DIR
 sudo mount -o uid="${uid}",gid="${gid}" ${LOOP_DEVICE}p2 $TMP_DATA_DIR
 
 # Copy the app elf to /Apps
-mkdir -p ${TMP_DATA_DIR}/$APP_DIR
-cp "$app_elf" ${TMP_DATA_DIR}/$APP_DIR
+mkdir -p ${TMP_DATA_DIR}/"$image_dir"
+cp "$file" ${TMP_DATA_DIR}/"$image_dir"
 
 # Clean up
 sudo umount $TMP_DATA_DIR
