@@ -17,16 +17,13 @@
 #include <VirtualFileSystem/DirectoryStream.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(DirectoryStreamState, DIRECTORY_STREAM_STATES, 0x0)
+    DEFINE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0)
 
     DirectoryStream::DirectoryStream(const Function<void()>& on_close)
-        : _state(DirectoryStreamState::HAS_MORE),
-          _closed(false),
+        : _closed(false),
           _on_close(move(on_close)),
           handle(0),
           name("") {}
-
-    DirectoryStreamState DirectoryStream::get_state() const { return _state; }
 
     void DirectoryStream::close() {
         _on_close();

@@ -51,6 +51,13 @@ vars.Add(
 )
 vars.Add(
     (
+        "system_loader",
+        "Absolute path to the system loader executable.",
+        "",
+    )
+)
+vars.Add(
+    (
         "c",
         "The absolute path to the c cross compiler e.g. x86_64-elf-gcc.",
         "/path/to/your/cross-compiler/bin/x86_64-elf-gcc",
@@ -162,6 +169,7 @@ Export("target_env")
 def create_build_h_replacements(out_file: str):
     macro_defs = {
         "$ARCH": f"#define ARCH {arch} // Target architecture of the kernel.",
+        "$SYSTEM_LOADER" : target_env["system_loader"]
     }
     if "64" in arch:
         macro_defs["$BIT"] = "#define BIT64 //Activate 64-bit related features"

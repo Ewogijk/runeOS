@@ -242,20 +242,6 @@ bool delete_dir(const std::string& directory_path) {
         next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
     }
-    if (node_path != "." && node_path != "..") {
-        // Delete last node
-        if (node_info.is_directory()) {
-            if (!delete_dir(directory_path + "/" + node_path)) {
-                Forge::vfs_directory_stream_close(dir_stream_ID);
-                return false;
-            }
-        } else {
-            if (!delete_node(directory_path + "/" + node_path)) {
-                Forge::vfs_directory_stream_close(dir_stream_ID);
-                return false;
-            }
-        }
-    }
 
     // Delete this directory
     if (!delete_node(directory_path)) {
@@ -308,22 +294,6 @@ bool copy_dir_content(const std::string& src, const std::string& dest) {
         }
         next      = Forge::vfs_directory_stream_next(dir_stream_ID, &node_info);
         node_path = node_info.node_path;
-    }
-    if (node_path != "." && node_path != "..") {
-        // Copy last node
-        const std::string src_node_to_cp  = src + '/' + node_path;
-        const std::string dest_node_to_cp = dest_node + '/' + node_path;
-        if (node_info.is_directory()) {
-            if (!copy_dir_content(src_node_to_cp, dest_node_to_cp)) {
-                close_dir_stream(dir_stream_ID);
-                return false;
-            }
-        } else {
-            if (!copy_file_content(src_node_to_cp, dest_node_to_cp)) {
-                close_dir_stream(dir_stream_ID);
-                return false;
-            }
-        }
     }
     close_dir_stream(dir_stream_ID);
     return delete_dir(src);

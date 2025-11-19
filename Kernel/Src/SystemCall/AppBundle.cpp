@@ -86,16 +86,16 @@ namespace Rune::SystemCall {
                                 const U64 app_path,
                                 const U64 argv,
                                 const U64 working_dir,
-                                const U64 stdin_target,
-                                const U64 stdout_target,
-                                const U64 stderr_target) {
+                                const U64 stdin_config,
+                                const U64 stdout_config,
+                                const U64 stderr_config) {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         auto*       u_app_path      = reinterpret_cast<const char*>(app_path);
         auto*       u_app_argv      = reinterpret_cast<const char**>(argv);
         auto*       u_app_wd        = reinterpret_cast<const char*>(working_dir);
-        auto*       u_stdin_target  = reinterpret_cast<const char*>(stdin_target);
-        auto*       u_stdout_target = reinterpret_cast<const char*>(stdout_target);
-        auto*       u_stderr_target = reinterpret_cast<const char*>(stderr_target);
+        auto*       u_stdin_config  = reinterpret_cast<void*>(stdin_config);
+        auto*       u_stdout_config = reinterpret_cast<void*>(stdout_config);
+        auto*       u_stderr_config = reinterpret_cast<void*>(stderr_config);
         char        k_str_buf[Ember::STRING_SIZE_LIMIT] = {};
 
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_app_path, -1, k_str_buf))
@@ -108,20 +108,23 @@ namespace Rune::SystemCall {
         Path k_app_wd(k_str_buf);
         memset(k_str_buf, '\0', Ember::STRING_SIZE_LIMIT);
 
-        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_stdin_target, -1, k_str_buf))
+        Ember::StdIOConfig k_stdin_config;
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_stdin_config,
+                                                                       sizeof(Ember::StdIOConfig),
+                                                                       &k_stdin_config))
             return Ember::Status::BAD_ARG;
-        const String k_stdin_target(k_str_buf);
-        memset(k_str_buf, '\0', Ember::STRING_SIZE_LIMIT);
 
-        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_stdout_target, -1, k_str_buf))
+        Ember::StdIOConfig k_stdout_config;
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_stdout_config,
+                                                                       sizeof(Ember::StdIOConfig),
+                                                                       &k_stdout_config))
             return Ember::Status::BAD_ARG;
-        const String k_stdout_target(k_str_buf);
-        memset(k_str_buf, '\0', Ember::STRING_SIZE_LIMIT);
 
-        if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_stderr_target, -1, k_str_buf))
+        Ember::StdIOConfig k_stderr_config;
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_stderr_config,
+                                                                       sizeof(Ember::StdIOConfig),
+                                                                       &k_stderr_config))
             return Ember::Status::BAD_ARG;
-        const String k_stderr_target(k_str_buf);
-        memset(k_str_buf, '\0', Ember::STRING_SIZE_LIMIT);
 
         // Copy uAppArgv to kernel memory
         char* k_app_argv[Ember::ARG_COUNT_LIMIT];
@@ -194,9 +197,9 @@ namespace Rune::SystemCall {
         auto [load_result, ID] = app_syscall_ctx->app_module->start_new_app(k_app_path,
                                                                             k_app_argv,
                                                                             k_app_wd,
-                                                                            k_stdin_target,
-                                                                            k_stdout_target,
-                                                                            k_stderr_target);
+                                                                            k_stdin_config,
+                                                                            k_stdout_config,
+                                                                            k_stderr_config);
         if (load_result != App::LoadStatus::RUNNING) return Ember::Status::FAULT;
 
         return ID;

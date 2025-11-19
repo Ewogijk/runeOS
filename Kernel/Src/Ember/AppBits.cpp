@@ -16,6 +16,8 @@
 #include <Ember/AppBits.h>
 
 namespace Ember {
+    DEFINE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0)
+
     const VirtualKey VirtualKey::NONE = VirtualKey();
 
     auto VirtualKey::build(const U8 row, const U8 col, bool released) -> VirtualKey {

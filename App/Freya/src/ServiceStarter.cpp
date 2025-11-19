@@ -1,0 +1,72 @@
+/*
+ *  Copyright 2025 Ewogijk
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+#include <Freya/ServiceStarter.h>
+
+#include <Forge/App.h>
+
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+namespace Freya {
+    std::vector<std::string> ServiceStarter::split(const std::string& s, char delim) {
+        std::stringstream        ss(s);
+        std::string              item;
+        std::vector<std::string> elems;
+        while (std::getline(ss, item, delim)) elems.push_back(item);
+        return elems;
+    }
+
+    auto ServiceStarter::start_services(ServiceRegistry&                registry,
+                                        const std::vector<std::string>& sorted_services) -> int {
+        bool mandatory_service_crashed = false;
+        for (auto service_name : sorted_services) {
+            auto service = registry[service_name];
+            auto args    = split(service.exec_start, ' ');
+
+            const char* argv[args.size()];
+            for (size_t i = 1; i < args.size(); ++i) argv[i - 1] = args[i].c_str();
+            argv[args.size() - 1]      = nullptr;
+            Ember::StdIOConfig inherit = {Ember::StdIOTarget::INHERIT};
+            Ember::StatusCode  st =
+                Forge::app_start(args[0].c_str(), argv, "/", inherit, inherit, inherit);
+            if (st < Ember::Status::OKAY) {
+                std::cerr << service_name
+                          << ": Could not start service. Reason: " << Ember::Status(st).to_string()
+                          << std::endl;
+                if (service.mandatory) break;
+                continue;
+            }
+
+            if (service.wait_for_exit) {
+                int service_exit_code = Forge::app_join(st);
+                if (service_exit_code != service.expected_exit_code) {
+                    std::cerr << service_name << ": Finished with unexpected exit code. Expected: "
+                              << service.expected_exit_code << ", Actual: " << service_exit_code
+                              << std::endl;
+                    if (service.mandatory) {
+                        mandatory_service_crashed = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return mandatory_service_crashed ? ExitCode::MANDATORY_SERVICE_CRASHED
+                                         : ExitCode::SERVICES_STARTED;
+    }
+
+} // namespace Freya

@@ -107,6 +107,7 @@ CLINK void __stack_chk_fail(void) { ON_STACK_GUARD_FAIL(); } // NOLINT
 
 auto atexit(void (*func)()) -> int {
     // NOP, because after the kernel exits there is only darkness
+    SILENCE_UNUSED(func)
     return 0;
 }
 

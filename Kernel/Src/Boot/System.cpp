@@ -101,6 +101,7 @@ namespace Rune {
     }
 
     auto boot_phase3(CPU::StartInfo* start_info) -> int {
+        SILENCE_UNUSED(start_info);
         auto& system = System::instance();
         if (system._is_booted) {
             LOGGER->warn(
@@ -123,22 +124,20 @@ namespace Rune {
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
 
-        // Load the OS
+        // Pass control to the system loader
         auto*         vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        Path          os(OS);
+        Path          system_loader(SYSTEM_LOADER);
         VFS::NodeInfo dummy;
-        VFS::IOStatus st = vfs_module->get_node_info(os, dummy);
-        if (st != VFS::IOStatus::FOUND) {
-            LOGGER->critical(R"("{}": OS not found!)", os.to_string());
-            while (true) CPU::halt();
-        }
+        VFS::IOStatus st = vfs_module->get_node_info(system_loader, dummy);
+        if (st != VFS::IOStatus::FOUND)
+            system.panic(R"("{}": System loader not found!)", system_loader.to_string());
 
-        system._is_booted = true;
-        App::LoadStatus ls = app_module->start_os(os, Path::ROOT);
+        system._is_booted  = true;
+        App::LoadStatus ls = app_module->start_system_loader(system_loader, Path::ROOT);
         if (ls != App::LoadStatus::RUNNING) {
-            LOGGER->critical(R"("{}": OS start failure! Reason: {})",
-                             os.to_string(),
-                             ls.to_string());
+            system.panic(R"("{}": System loader start failure! Reason: {})",
+                         system_loader.to_string(),
+                         ls.to_string());
         }
 
         return 0;
