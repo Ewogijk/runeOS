@@ -10,15 +10,18 @@ qemu-host: yes
 freestanding-compiler: /path/to/freestanding/compiler
 # The runeOS image size in MiB
 image-size: 256
+# The absolute path to the system loader on the runeOS image
+# During boot the kernel will look for the system loader and panic if it cannot find it
+system_loader: /path/to/systemloader/on/the/image
 # A list of local files that should be copied to the runeOS image
 # Src is the local file that will be copied to Dest/Src on the runeOS image
 # e.g. given /my/local/file: /on/the/image would be copied to the /on/the/image/file path on the
 # image
+# Note: Make sure to copy at least the system loader to the image!
 files:
-  a/file: a/directory
-  another/file: another/directory
+  systemloader/executable: systemloader/directory
 # A list of apps that will be preinstalled in the /Apps directory on the runeOS image
-# The apps will be build if necessary and then copied to the image
+# The apps will be build if necessary and then copied to /Apps on the image
 apps:
   - cat
   - cp

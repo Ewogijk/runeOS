@@ -24,6 +24,7 @@ class BrokkConfig(Enum):
     QEMU_HOST = (auto(),)
     FREESTANDING_COMPILER = (auto(),)
     IMAGE_SIZE = (auto(),)
+    SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)
     APPS = (auto(),)
 
@@ -50,6 +51,7 @@ class BuildConfig(Enum):
     CRT_BEGIN = (auto(),)
     CRT_END = (auto(),)
     IMAGE_SIZE = (auto(),)
+    SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)
     APPS = (auto(),)
 
@@ -88,7 +90,9 @@ def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
         "qemu-host": bool,
         "freestanding-compiler": str,
         "image-size": int,
+        "system-loader": str,
         "files": dict,
+        "apps": list,
     }
     for key, expected_type in config_keys.items():
         if key not in cfg:

@@ -9,12 +9,9 @@ Kernel/BuildTools/*.json
 Kernel/BuildVariables.py
 OS/BuildTools/*.json
 **/Build/
-Install
 
 # Scons files
 **/.sconsign.dblite
 
-# Toolkit files
-**/*.image
-Toolkit/tmp
-Toolkit/settings.json
+# Brokk files
+Brokk/Configurations/

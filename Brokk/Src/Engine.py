@@ -17,11 +17,13 @@ sys.path.append(os.path.dirname(__file__))
 
 import yaml
 import Config as Config
-from Steps.KernelBuild import KernelBuildStep
-from Steps.OSBuild import OSBuildStep
+from Steps.FileCopy import FileCopyStep
 from Steps.ImageBuild import ImageBuildStep
 from Steps.Install import InstallStep
 from Steps.InstallApps import InstallAppsStep
+from Steps.KernelBuild import KernelBuildStep
+from Steps.CrucibleBuild import CrucibleBuildStep
+from Steps.SystemLoaderBuild import SystemLoaderBuildStep
 
 from typing import List
 from pathlib import Path
@@ -32,9 +34,11 @@ VERSION = "0.2.0"
 MIN_IMAGE_SIZE = 256
 STEPS_BUILD_ALL: List[BuildStep] = [
     KernelBuildStep(),
-    OSBuildStep(),
+    SystemLoaderBuildStep(),
+    CrucibleBuildStep(),
     ImageBuildStep(),
     InstallAppsStep(),
+    FileCopyStep(),
     InstallStep(),
 ]
 
@@ -60,6 +64,9 @@ def print_err(msg: str) -> None:
 def configure(brokk_config_yaml: str) -> bool:
     print_banner()
     brokk_config = Config.load_brokk_config(brokk_config_yaml)
+    if len(brokk_config) == 0:
+        print_err(f"'{brokk_config_yaml}': Invalid configuration")
+        sys.exit(-1)
     print_msg("Configure build directory with config:")
     for config, value in brokk_config.items():
         print(f"    {config}: {value}")
@@ -99,6 +106,7 @@ def configure(brokk_config_yaml: str) -> bool:
             compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
         ),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
+        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[BrokkConfig.SYSTEM_LOADER.to_yaml_key()],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
         BuildConfig.APPS.to_yaml_key(): brokk_config[BrokkConfig.APPS.to_yaml_key()],
     }

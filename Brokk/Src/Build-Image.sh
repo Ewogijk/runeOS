@@ -84,7 +84,7 @@ RUNE_PARTITION_TYPE_GUID="8fa4455d-2d55-45ba-8bca-cbcedf48bdf6"     # Identifies
 KERNEL_PARTITION_UNIQUE_GUID="4d3f0533-902a-4642-b125-728c910c1f79" # Unique partition GUID of the Kernel/EFI System Partition partition
 DATA_PARTITION_UNIQUE_GUID="7574b273-9503-4d83-8617-678d4c2d30c0"   # Unique partition GUID of the OS partition
 OUT_FILE="runeOS.image"                                             # Output image file
-OS_INSTALL_DIR="/System/OS"                                         # Directory where the OS application is installed on the OS partition.
+#OS_INSTALL_DIR="/System/OS"                                         # Directory where the OS application is installed on the OS partition.
 
 MIN_FAT32_IMAGE_SIZE=64   #MB, Minimum FAT32 volume size
 MIN_IMAGE_SIZE=256        #MB, Minimum image size -> Data partition size >=192MB
@@ -98,9 +98,6 @@ fi
 kernel_elf=$1                     # Compiled Kernel sources
 os_elf=$2                         # Compiled OS sources
 image_size=$3                     # Requested image size in MB
-#os_install_dir=$4                 # OS install directory on the data partition
-#app_list=$5
-#app_dir=$6
 
 if [ $image_size -lt $MIN_IMAGE_SIZE ]; then
     echo "ERROR: Minimum image size is ${MIN_IMAGE_SIZE}MB, Requested: ${image_size}MB"
@@ -166,17 +163,10 @@ cp Ressource/BOOTX64.EFI ${TMP_KERNEL_DIR}/EFI/BOOT
 cp Ressource/limine.conf $TMP_KERNEL_DIR
 
 # Copy OS.app to the data partition
-mkdir -p ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
-mkdir -p ${TMP_DATA_DIR}/Apps
-cp "$os_elf" ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
+#mkdir -p ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
+#mkdir -p ${TMP_DATA_DIR}/Apps
+#cp "$os_elf" ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
 
-## Split the app list with ',' separator: one,two -> [one, two]
-#apps=$(echo $app_list | tr "," "\n")
-#mkdir -p ${TMP_DATA_DIR}/$app_dir
-#for a in $apps
-#do
-#    cp $a ${TMP_DATA_DIR}/$app_dir
-#done
 
 # Clean up
 sudo umount $TMP_KERNEL_DIR
