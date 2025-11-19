@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-#include <Shell/Path.h>
+#include <Crucible/Path.h>
 
-#include <Shell/Utility.h>
+#include <Crucible/Utility.h>
 
 #include <sstream>
 
-namespace Rune {
+namespace Crucible {
     Path Path::ROOT   = Path(UNIX_PATH_SEPARATOR);
     Path Path::DOT    = Path('.');
     Path Path::DOTDOT = Path("..");

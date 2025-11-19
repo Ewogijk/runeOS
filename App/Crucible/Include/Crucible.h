@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_OS_H
-#define RUNEOS_OS_H
+#ifndef CRUCIBLE_OS_H
+#define CRUCIBLE_OS_H
 
-namespace Rune {
+namespace Crucible {
     extern "C" int main(int argc, char* argv[]);
 }
 
-#endif // RUNEOS_OS_H
+#endif // CRUCIBLE_OS_H

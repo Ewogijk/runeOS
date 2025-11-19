@@ -14,19 +14,18 @@
  *  limitations under the License.
  */
 
-#include <Shell/Interpreter.h>
+#include <Crucible/Interpreter.h>
 
-#include <Shell/Action.h>
-#include <Shell/BuiltInCommand.h>
+#include <Crucible/Action.h>
+#include <Crucible/BuiltInCommand.h>
+#include <Crucible/Utility.h>
 
 #include <Forge/App.h>
 
 #include <iostream>
 #include <vector>
 
-#include "Shell/Utility.h"
-
-namespace Rune::Shell {
+namespace Crucible {
     void Interpreter::print_pretty_line_start() const {
         std::cout << "\033[38;2;" << static_cast<int>(GRAPE.red) << ";"
                   << static_cast<int>(GRAPE.green) << ";" << static_cast<int>(GRAPE.blue) << "m"

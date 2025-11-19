@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_BUILTINCOMMAND_H
-#define RUNEOS_BUILTINCOMMAND_H
+#ifndef CRUCIBLE_BUILTINCOMMAND_H
+#define CRUCIBLE_BUILTINCOMMAND_H
 
-#include <Shell/AST.h>
+#include <Crucible/AST.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     /**
      * @brief Change the working directory of the shell interpreter.
      * @param argc
@@ -63,4 +63,4 @@ namespace Rune::Shell {
     void register_builtin_commands(Environment& shell_env);
 } // namespace Rune::Shell
 
-#endif // RUNEOS_BUILTINCOMMAND_H
+#endif // CRUCIBLE_BUILTINCOMMAND_H

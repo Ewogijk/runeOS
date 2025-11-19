@@ -12,11 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Shell/Utility.h>
+#include <Crucible/Utility.h>
 
 #include <sstream>
 
-namespace Rune {
+namespace Crucible {
     std::vector<std::string> str_split(const std::string& s, char delimiter) {
         std::vector<std::string> tokens;
         std::istringstream       tokenStream(s);

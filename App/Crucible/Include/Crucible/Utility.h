@@ -13,16 +13,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_UTILITY_H
-#define RUNEOS_UTILITY_H
+#ifndef CRUCIBLE_UTILITY_H
+#define CRUCIBLE_UTILITY_H
 
 #include <string>
 #include <vector>
 
-namespace Rune {
+namespace Crucible {
     std::vector<std::string> str_split(const std::string& s, char delimiter);
 
     bool str_is_prefix(const std::string& prefix, const std::string& word);
 } // namespace Rune
 
-#endif // RUNEOS_UTILITY_H
+#endif // CRUCIBLE_UTILITY_H

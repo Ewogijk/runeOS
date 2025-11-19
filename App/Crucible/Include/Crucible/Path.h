@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_PATH_H
-#define RUNEOS_PATH_H
+#ifndef CRUCIBLE_PATH_H
+#define CRUCIBLE_PATH_H
 
 #include <string>
 #include <vector>
 
-namespace Rune {
+namespace Crucible {
     /**
      * An Unix file path.
      */
@@ -248,4 +248,4 @@ namespace Rune {
     };
 } // namespace Rune
 
-#endif // RUNEOS_PATH_H
+#endif // CRUCIBLE_PATH_H

@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_ENVIRONMENT_H
-#define RUNEOS_ENVIRONMENT_H
+#ifndef CRUCIBLE_ENVIRONMENT_H
+#define CRUCIBLE_ENVIRONMENT_H
 
 #include <Ember/AppBits.h>
 
@@ -24,8 +24,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Shell/AutoCompletion.h>
-#include <Shell/Path.h>
+#include <Crucible/AutoCompletion.h>
+#include <Crucible/Path.h>
 
 template <> struct std::hash<Ember::VirtualKey> {
     std::size_t operator()(const Ember::VirtualKey& s) const noexcept {
@@ -33,7 +33,7 @@ template <> struct std::hash<Ember::VirtualKey> {
     }
 };
 
-namespace Rune::Shell {
+namespace Crucible {
     struct Environment;
 
     /**
@@ -144,4 +144,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_ENVIRONMENT_H
+#endif // CRUCIBLE_ENVIRONMENT_H

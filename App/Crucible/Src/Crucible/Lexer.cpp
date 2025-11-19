@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-#include <Shell/Lexer.h>
+#include <Crucible/Lexer.h>
 
-namespace Rune::Shell {
+namespace Crucible {
 
     DEFINE_ENUM(TokenType, TOKEN_TYPES, 0x0) // NOLINT
 

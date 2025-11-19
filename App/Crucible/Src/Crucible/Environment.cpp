@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#include <Shell/Environment.h>
+#include <Crucible/Environment.h>
 
 #include <cstring>
 #include <iostream>
 
-namespace Rune::Shell {
+namespace Crucible {
     const std::string Environment::PATH = "PATH";
 
     void Environment::input_append(const char ch) {

@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_PARSER_H
-#define RUNEOS_PARSER_H
+#ifndef CRUCIBLE_PARSER_H
+#define CRUCIBLE_PARSER_H
 
-#include <Shell/AST.h>
-#include <Shell/Lexer.h>
+#include <Crucible/AST.h>
+#include <Crucible/Lexer.h>
 
 #include <memory>
 #include <string>
 
-namespace Rune::Shell {
+namespace Crucible {
     /**
      * @brief Parsed shell input either the AST node or error information.
      */
@@ -101,4 +101,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_PARSER_H
+#endif // CRUCIBLE_PARSER_H

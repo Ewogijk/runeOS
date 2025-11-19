@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_ACTION_H
-#define RUNEOS_ACTION_H
+#ifndef CRUCIBLE_ACTION_H
+#define CRUCIBLE_ACTION_H
 
-#include <Shell/Environment.h>
+#include <Crucible/Environment.h>
 
-namespace Rune::Shell {
+namespace Crucible {
 
     /**
      * @brief Scroll up in the command history of the shell.
@@ -64,4 +64,4 @@ namespace Rune::Shell {
     void register_hotkey_actions(Environment& shell_env);
 } // namespace Rune::Shell
 
-#endif // RUNEOS_ACTION_H
+#endif // CRUCIBLE_ACTION_H

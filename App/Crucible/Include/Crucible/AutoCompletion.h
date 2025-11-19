@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_AUTOCOMPLETION_H
-#define RUNEOS_AUTOCOMPLETION_H
+#ifndef CRUCIBLE_AUTOCOMPLETION_H
+#define CRUCIBLE_AUTOCOMPLETION_H
 
 #include <Ember/VFSBits.h>
 
 #include <string>
 #include <vector>
 
-#include <Shell/Path.h>
+#include <Crucible/Path.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     class AutoCompletion {
         std::vector<std::string> _builtin_command_vocabulary;
         std::vector<std::string> _path_vocabulary;
@@ -52,4 +52,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_AUTOCOMPLETION_H
+#endif // CRUCIBLE_AUTOCOMPLETION_H

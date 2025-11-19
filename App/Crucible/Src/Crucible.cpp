@@ -14,17 +14,18 @@
  *  limitations under the License.
  */
 
-#include <OS.h>
+#include <Crucible.h>
 
 #include <Forge/App.h>
 
-#include <Shell/Interpreter.h>
+#include <Crucible/Interpreter.h>
+#include <Crucible/BuiltInCommand.h>
 
 #include <Build.h>
 
 #include <iostream>
 
-namespace Rune {
+namespace Crucible {
     int main(const int argc, char* argv[]) {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
@@ -34,11 +35,12 @@ namespace Rune {
             // Failed to get the working directory
             Forge::app_exit(-1);
 
-        Shell::Interpreter interpreter;
-
+        Interpreter interpreter;
         if (!interpreter.setup_environment(wd)) return -1;
 
-        std::cout << "Welcome to runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
+        std::cout << "\033[3J\033[1;1H";
+        std::cout.flush();
+        std::cout << "Crucible v" << MAJOR << "." << MINOR << "." << PATCH;
         if (!std::string(PRERELEASE).empty())
             std::cout << "-" << PRERELEASE << std::endl;
         else

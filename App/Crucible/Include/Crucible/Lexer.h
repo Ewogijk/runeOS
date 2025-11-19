@@ -14,15 +14,15 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_LEXER_H
-#define RUNEOS_LEXER_H
+#ifndef CRUCIBLE_LEXER_H
+#define CRUCIBLE_LEXER_H
 
 #include <Ember/Enum.h>
 
 #include <string>
 #include <vector>
 
-namespace Rune::Shell {
+namespace Crucible {
     /**
      * @brief All types of shell tokens for the parser.
      * <ul>
@@ -117,4 +117,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_LEXER_H
+#endif // CRUCIBLE_LEXER_H

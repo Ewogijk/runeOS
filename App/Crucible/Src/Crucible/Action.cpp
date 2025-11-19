@@ -14,15 +14,15 @@
  *  limitations under the License.
  */
 
-#include <Shell/Action.h>
+#include <Crucible/Action.h>
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-#include <Shell/Utility.h>
+#include <Crucible/Utility.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     void command_history_scroll_up(Environment& shell_env) {
         // Arrow up pressed
         if (shell_env.command_history_cursor == shell_env.command_history.size()) {

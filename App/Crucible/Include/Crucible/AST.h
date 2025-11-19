@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_AST_H
-#define RUNEOS_AST_H
+#ifndef CRUCIBLE_AST_H
+#define CRUCIBLE_AST_H
 
-#include <Shell/Environment.h>
+#include <Crucible/Environment.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace Rune::Shell {
+namespace Crucible {
 
     /**
      * @brief A node in the abstract syntax tree of the shell interpreter that represents
@@ -146,4 +146,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_AST_H
+#endif // CRUCIBLE_AST_H

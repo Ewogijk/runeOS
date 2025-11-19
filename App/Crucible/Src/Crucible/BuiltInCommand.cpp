@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Shell/BuiltInCommand.h>
+#include <Crucible/BuiltInCommand.h>
 
 #include <Forge/App.h>
 
@@ -24,7 +24,7 @@
 
 #include <Build.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     std::unordered_map<std::string, std::string> HELP_TEXT_TABLE;
 
     int cd(const int argc, char* argv[], Environment& shell_env) {

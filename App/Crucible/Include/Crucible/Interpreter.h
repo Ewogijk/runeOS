@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_INTERPRETER_H
-#define RUNEOS_INTERPRETER_H
+#ifndef CRUCIBLE_INTERPRETER_H
+#define CRUCIBLE_INTERPRETER_H
 
 #include <Ember/Ember.h>
 
-#include <Shell/AST.h>
-#include <Shell/Parser.h>
+#include <Crucible/AST.h>
+#include <Crucible/Parser.h>
 
 #include <string>
 
-namespace Rune::Shell {
+namespace Crucible {
 
     struct Pixel {
         U8 red;
@@ -128,4 +128,4 @@ namespace Rune::Shell {
     };
 } // namespace Rune::Shell
 
-#endif // RUNEOS_INTERPRETER_H
+#endif // CRUCIBLE_INTERPRETER_H

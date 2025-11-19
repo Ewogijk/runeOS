@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_BUILD_H
-#define RUNEOS_BUILD_H
+#ifndef CRUCIBLE_BUILD_H
+#define CRUCIBLE_BUILD_H
 
 // The OS major version
 #define MAJOR 0
@@ -29,4 +29,4 @@
 // The OS prerelease version
 #define PRERELEASE ""
 
-#endif // RUNEOS_BUILD_H
+#endif // CRUCIBLE_BUILD_H

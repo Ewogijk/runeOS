@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Shell/AST.h>
+#include <Crucible/AST.h>
 
 #include <Forge/App.h>
 #include <Forge/VFS.h>
@@ -23,10 +23,10 @@
 #include <iostream>
 #include <utility>
 
-#include <Shell/Path.h>
-#include <Shell/Utility.h>
+#include <Crucible/Path.h>
+#include <Crucible/Utility.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Input
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -248,7 +248,7 @@ namespace Rune::Shell {
         return text;
     }
 
-    std::string ShellString::evaluate(Shell::Environment& shell_env) {
+    std::string ShellString::evaluate(Environment& shell_env) {
         std::string value("");
         for (const auto& ele : _content) value += ele->evaluate(shell_env);
         return value;

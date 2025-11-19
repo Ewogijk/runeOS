@@ -14,16 +14,16 @@
  *  limitations under the License.
  */
 
-#include <Shell/AutoCompletion.h>
+#include <Crucible/AutoCompletion.h>
 
 #include <Ember/Ember.h>
 
 #include <Forge/VFS.h>
 
-#include <Shell/Path.h>
-#include <Shell/Utility.h>
+#include <Crucible/Path.h>
+#include <Crucible/Utility.h>
 
-namespace Rune::Shell {
+namespace Crucible {
     bool AutoCompletion::list_directory(const std::string&            directory,
                                         std::vector<Ember::NodeInfo>& out) {
         const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(directory.c_str());
