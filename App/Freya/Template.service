@@ -1,0 +1,18 @@
+# Unique name of the service
+Name: A Service
+# Short description of the service
+Description: A description
+# The command line input to start the app. Note that the input is simply split by ' '
+ExecStart: /path/to/the/app arg1 arg2
+# Boolean value that indicates if Freya should wait for the service to finish
+WaitForExit: yes|no
+# The expected exit code when the service finished. The value is only used when 'WaitForExit==true'
+ExpectedExitCode: 0
+# A mandatory service must finish with the expected service code for the system to be considered
+# started successful. The value is only used when 'WaitForExit==true'
+Mandatory: yes
+# A list of services that this service depends on. These services will be started before this
+# service
+Requires:
+  - ADependency
+  - AnotherDependency

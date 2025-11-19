@@ -43,6 +43,7 @@ class KernelBuildStep(Build.BuildStep):
             BuildConfig.BUILD,
             BuildConfig.ARCH,
             BuildConfig.QEMU_HOST,
+            BuildConfig.SYSTEM_LOADER,
             BuildConfig.C,
             BuildConfig.CPP,
             BuildConfig.CRT_BEGIN,

@@ -97,7 +97,7 @@ namespace Crucible {
             return 0;
         }
 
-        std::cout << "runeOS v" << MAJOR << "." << MINOR << "." << PATCH;
+        std::cout << "Crucible v" << MAJOR << "." << MINOR << "." << PATCH;
         if (!std::string(PRERELEASE).empty()) std::cout << "-" << PRERELEASE << std::endl;
         std::cout << std::endl;
 

@@ -24,13 +24,13 @@ from Config import BuildConfig
 import Build
 
 
-class InstallStep(Build.BuildStep):
+class FileCopyStep(Build.BuildStep):
     def name(self) -> str:
         """
         :return: Name of the build step.
         """
 
-        return "Install"
+        return "File Copy"
 
     def execute(self, build_conf: Dict[str, Any]) -> bool:
         """Execute this build step.
@@ -38,17 +38,15 @@ class InstallStep(Build.BuildStep):
         """
 
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
-        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
-        kernel_elf = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "runeKernel.elf"
-        os_elf = project_root / "App" / "Crucible" / "Build" / "Crucible.app"
         rune_os_image = project_root / "Brokk" / "runeOS.image"
-        install_cmd = [
-            "Src/Install.sh",
-            build,
-            str(project_root / "Brokk" / "Build" / f"{arch}-{build}"),
-            str(rune_os_image),
-            str(kernel_elf),
-            str(os_elf),
-        ]
-        return Build.exec_shell_cmd(install_cmd, ".")
+        for src, dest in build_conf[BuildConfig.FILES.to_yaml_key()].items():
+            install_app_cmd = [
+                "Src/Copy-File-To-Image.sh",
+                str(rune_os_image),
+                dest,
+                src
+            ]
+            if not Build.exec_shell_cmd(install_app_cmd, "."):
+                return False
+
+        return True

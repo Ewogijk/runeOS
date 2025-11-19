@@ -20,7 +20,7 @@ import os
 import re
 
 KERNEL_ELF = "bin/runeKernel.elf"
-RUNE_OS = "bin/runeOS.app"
+RUNE_OS = "bin/Crucible.app"
 
 
 def get_text_section_address(elf_file: str):

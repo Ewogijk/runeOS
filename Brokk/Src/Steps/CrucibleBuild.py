@@ -23,18 +23,18 @@ from Config import BuildConfig
 import Build
 
 
-class OSBuildStep(Build.BuildStep):
+class CrucibleBuildStep(Build.BuildStep):
     def name(self) -> str:
         """
         :return: Name of the build step.
         """
 
-        return "OS Build"
+        return "Crucible Build"
 
     def execute(self, build_conf: Dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        os_directory = project_root / "OS"
+        os_directory = project_root / "App" / "Crucible"
         return Build.meson_build(os_directory)

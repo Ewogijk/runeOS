@@ -17,11 +17,11 @@
 #
 
 help() {
-  echo Usage "./Build-Image.sh [-h] KERNEL_ELF OS_ELF IMAGE_SIZE"
+  echo Usage "./Build-Image.sh [-h] KERNEL_ELF IMAGE_SIZE"
   echo
   echo Create the runeOS.image file with the requested IMAGE_SIZE in the directory of the script. The image will
-  echo contain two FAT32 formatted GPT partitions, the kernel partition with the bootloader and KERNEL_ELF and the data
-  echo partition with the OS_ELF.
+  echo contain two FAT32 formatted GPT partitions, the kernel partition with the bootloader and KERNEL_ELF and
+  echo the data partition.
   echo
   echo The script requires sudo permissions!
   echo
@@ -32,9 +32,8 @@ help() {
   echo "    4. Create the data partition directly after the kernel partition."
   echo "    5. Mount both partitions at mount points in the current directory."
   echo "    6. FAT32 format both partitions."
-  echo "    7. Copy the limine bootloader config and EFI application from 'Brokkr/Resource' and the kernel executable to the kernel partition."
-  echo "    8. Copy the os executable to the data partition."
-  echo "    9. Unmount the partitions, delete the 'dev/loop7' and delete the temporary mount points."
+  echo "    7. Copy the limine bootloader config and EFI application from 'Brokk/Resource' and the kernel executable to the kernel partition."
+  echo "    8. Unmount the partitions, delete the 'dev/loop7' and delete the temporary mount points."
   echo
   echo The GPT partitions will be created with the following properties and directory layout:
   echo
@@ -55,15 +54,11 @@ help() {
   echo "    Unique Partition GUID: 7574b273-9503-4d83-8617-678d4c2d30c0 (rune Data Partition)"
   echo "    Size:                  >=192MB"
   echo "    Name:                  Data"
-  echo Directory layout:
-  echo "    /System/OS/runeOS.app: OS_ELF, the kernel expects it to be at this location."
-  echo "    /Apps                : Contains applications that can be run as shell external commands, it needs to exist."
   echo
   echo
   echo
   echo Arguments:
   echo "    KERNEL_ELF - The kernel executable."
-  echo "    OS_ELF     - The OS executable."
   echo "    IMAGE_SIZE - Size of the image in MB. Minimum size: 256MB."
   echo Options:
   echo "    -h - Print this help text"
@@ -84,23 +79,18 @@ RUNE_PARTITION_TYPE_GUID="8fa4455d-2d55-45ba-8bca-cbcedf48bdf6"     # Identifies
 KERNEL_PARTITION_UNIQUE_GUID="4d3f0533-902a-4642-b125-728c910c1f79" # Unique partition GUID of the Kernel/EFI System Partition partition
 DATA_PARTITION_UNIQUE_GUID="7574b273-9503-4d83-8617-678d4c2d30c0"   # Unique partition GUID of the OS partition
 OUT_FILE="runeOS.image"                                             # Output image file
-OS_INSTALL_DIR="/System/OS"                                         # Directory where the OS application is installed on the OS partition.
 
 MIN_FAT32_IMAGE_SIZE=64   #MB, Minimum FAT32 volume size
 MIN_IMAGE_SIZE=256        #MB, Minimum image size -> Data partition size >=192MB
 
-arg_count=3
+arg_count=2
 if [ $# -ne $arg_count ]; then
     echo "ERROR: Insufficient number of arguments, Expected: ${arg_count}, Got: $#"
     exit 1
 fi
 
 kernel_elf=$1                     # Compiled Kernel sources
-os_elf=$2                         # Compiled OS sources
-image_size=$3                     # Requested image size in MB
-#os_install_dir=$4                 # OS install directory on the data partition
-#app_list=$5
-#app_dir=$6
+image_size=$2                     # Requested image size in MB
 
 if [ $image_size -lt $MIN_IMAGE_SIZE ]; then
     echo "ERROR: Minimum image size is ${MIN_IMAGE_SIZE}MB, Requested: ${image_size}MB"
@@ -112,7 +102,6 @@ echo Build-Image Configuration:
 echo -------------------------
 echo
 echo "Kernel ELF: $kernel_elf"
-echo "OS ELF: $os_elf"
 echo "Image Size: ${image_size}MB"
 echo
 
@@ -164,19 +153,6 @@ mkdir -p ${TMP_KERNEL_DIR}/EFI/BOOT
 cp "$kernel_elf" $TMP_KERNEL_DIR
 cp Ressource/BOOTX64.EFI ${TMP_KERNEL_DIR}/EFI/BOOT
 cp Ressource/limine.conf $TMP_KERNEL_DIR
-
-# Copy OS.app to the data partition
-mkdir -p ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
-mkdir -p ${TMP_DATA_DIR}/Apps
-cp "$os_elf" ${TMP_DATA_DIR}/"$OS_INSTALL_DIR"
-
-## Split the app list with ',' separator: one,two -> [one, two]
-#apps=$(echo $app_list | tr "," "\n")
-#mkdir -p ${TMP_DATA_DIR}/$app_dir
-#for a in $apps
-#do
-#    cp $a ${TMP_DATA_DIR}/$app_dir
-#done
 
 # Clean up
 sudo umount $TMP_KERNEL_DIR

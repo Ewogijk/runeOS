@@ -24,31 +24,17 @@ from Config import BuildConfig
 import Build
 
 
-class InstallStep(Build.BuildStep):
+class SystemLoaderBuildStep(Build.BuildStep):
     def name(self) -> str:
         """
         :return: Name of the build step.
         """
 
-        return "Install"
+        return "System Loader Build"
 
     def execute(self, build_conf: Dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """
-
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
-        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
-        kernel_elf = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "runeKernel.elf"
-        os_elf = project_root / "App" / "Crucible" / "Build" / "Crucible.app"
-        rune_os_image = project_root / "Brokk" / "runeOS.image"
-        install_cmd = [
-            "Src/Install.sh",
-            build,
-            str(project_root / "Brokk" / "Build" / f"{arch}-{build}"),
-            str(rune_os_image),
-            str(kernel_elf),
-            str(os_elf),
-        ]
-        return Build.exec_shell_cmd(install_cmd, ".")
+        return Build.meson_build(project_root / "App" / "Freya")

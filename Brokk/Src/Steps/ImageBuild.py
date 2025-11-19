@@ -39,11 +39,9 @@ class ImageBuildStep(Build.BuildStep):
         build = build_conf[BuildConfig.BUILD.to_yaml_key()]
 
         kernel_elf = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "runeKernel.elf"
-        os_elf = project_root / "OS" / "Build" / "runeOS.app"
         build_image_cmd = [
             "Src/Build-Image.sh",
             str(kernel_elf),
-            str(os_elf),
             str(build_conf[BuildConfig.IMAGE_SIZE.to_yaml_key()]),
         ]
         return Build.exec_shell_cmd(build_image_cmd, ".")
