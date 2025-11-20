@@ -37,9 +37,10 @@ int main(const int argc, char* argv[]) {
     // Check dependencies
     auto missing_dependencies = registry.detect_missing_dependencies();
     if (!missing_dependencies.empty()) {
-        std::cerr << "Missing dependencies detected:" << std::endl;
+        std::cerr << "Missing dependencies detected" << std::endl;
         for (auto& md : missing_dependencies)
-            std::cerr << md.dependency << ": Required by \"" << md.service << "\"" << std::endl;
+            std::cout << "  '" << md.dependency << "': Required by '" << md.service << "'"
+                      << std::endl;
         return Freya::ExitCode::MISSING_DEPENDENCIES;
     }
 
@@ -52,7 +53,7 @@ int main(const int argc, char* argv[]) {
         Freya::ServiceStarter service_starter;
         return service_starter.start_services(registry, order.value());
     } else {
-        std::cout << "Cycle detected in the dependency graph." << std::endl;
+        std::cerr << "Cycle detected in the dependency graph" << std::endl;
         return Freya::ExitCode::DEPENDENCY_CYCLE_DETECTED;
     }
 }
