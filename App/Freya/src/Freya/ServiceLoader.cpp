@@ -17,6 +17,7 @@
 #include <Freya/ServiceLoader.h>
 
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 
@@ -68,6 +69,7 @@ namespace Freya {
     }
 
     auto ServiceLoader::load_services(const std::string& directory) -> std::vector<Service> {
+        std::cout << "Load services: " << directory << std::endl;
         std::vector<Service>  services;
         std::filesystem::path dir(directory);
         for (auto service_file : std::filesystem::directory_iterator(dir)) {
@@ -75,14 +77,19 @@ namespace Freya {
                 // Only load *.service files
                 if (std::filesystem::path(service_file).extension() != SERVICE_FILE_EXT) continue;
 
-                std::cout << "Load service: " << service_file << std::endl;
                 _c_doc = YAML::LoadFile(service_file.path());
-                if (!verify_service_config()) continue;
-
-
+                if (!verify_service_config()) {
+                    std::cout << std::format("  {:<64}\033[38;2;205;49;49mFAILED\033[0m",
+                                             service_file.path().filename().string())
+                              << std::endl;
+                    continue;
+                }
                 services.push_back(create_service());
+                std::cout << std::format("  {:<64}\033[38;2;13;188;121mOKAY\033[0m",
+                                         service_file.path().filename().string())
+                          << std::endl;
             } catch (YAML::ParserException& e) {
-                std::cout << "Invalid YAML file: " << e.what() << std::endl;
+                std::cout << "  Could not parse YAML: " << e.what() << std::endl;
             }
         }
         return services;

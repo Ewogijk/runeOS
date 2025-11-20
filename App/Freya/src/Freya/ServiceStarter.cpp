@@ -18,6 +18,7 @@
 
 #include <Forge/App.h>
 
+#include <format>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -34,6 +35,7 @@ namespace Freya {
     auto ServiceStarter::start_services(ServiceRegistry&                registry,
                                         const std::vector<std::string>& sorted_services) -> int {
         bool mandatory_service_crashed = false;
+        std::cout << "Start services" << std::endl;
         for (auto service_name : sorted_services) {
             auto service = registry[service_name];
             auto args    = split(service.exec_start, ' ');
@@ -45,8 +47,9 @@ namespace Freya {
             Ember::StatusCode  st =
                 Forge::app_start(args[0].c_str(), argv, "/", inherit, inherit, inherit);
             if (st < Ember::Status::OKAY) {
-                std::cerr << service_name
-                          << ": Could not start service. Reason: " << Ember::Status(st).to_string()
+                std::cout << std::format("  {:<64}\033[38;2;205;49;49mFAILED ({})\033[0m",
+                                         service_name,
+                                         Ember::Status(st).to_string())
                           << std::endl;
                 if (service.mandatory) break;
                 continue;
@@ -55,8 +58,10 @@ namespace Freya {
             if (service.wait_for_exit) {
                 int service_exit_code = Forge::app_join(st);
                 if (service_exit_code != service.expected_exit_code) {
-                    std::cerr << service_name << ": Finished with unexpected exit code. Expected: "
-                              << service.expected_exit_code << ", Actual: " << service_exit_code
+                    std::cout << std::format(
+                        "  {:<64}\033[38;2;205;49;49mFAILED (WRONG_EXIT_CODE)\033[0m",
+                        service_name,
+                        Ember::Status(st).to_string())
                               << std::endl;
                     if (service.mandatory) {
                         mandatory_service_crashed = true;
@@ -64,6 +69,8 @@ namespace Freya {
                     }
                 }
             }
+            std::cout << std::format("  {:<64}\033[38;2;13;188;121mOKAY\033[0m", service_name)
+                      << std::endl;
         }
         return mandatory_service_crashed ? ExitCode::MANDATORY_SERVICE_CRASHED
                                          : ExitCode::SERVICES_STARTED;
