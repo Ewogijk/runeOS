@@ -15,9 +15,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_USERCONFIG_H
-#define RUNEOS_USERCONFIG_H
+#ifndef HEIMDALL_CONFIGURATION_H
+#define HEIMDALL_CONFIGURATION_H
 
-#define E9_REPORTER
+#include <Test/Heimdall/Reporter.h>
 
-#endif // RUNEOS_USERCONFIG_H
+namespace Heimdall {
+    /// @brief Configuration of the heimdall engine.
+    struct Configuration {
+        HStringList options;
+        ReporterRegistry reporter_registry;
+    };
+}
+
+#endif // HEIMDALL_CONFIGURATION_H

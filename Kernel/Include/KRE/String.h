@@ -24,7 +24,7 @@
 #include <KRE/CppRuntimeSupport.h>
 
 namespace Rune {
-     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      String Formatting
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
@@ -234,7 +234,8 @@ namespace Rune {
          *
          * @return Formatted string.
          */
-        template <typename... Args> static String format(const String& fmt_str, Args... args) {
+        template <typename... Args>
+        static String format(const String& fmt_str, Args... args) {
             const Argument arg_array[] = {args...};
             const size_t   arg_size    = sizeof...(Args);
             return format(fmt_str, arg_array, arg_size);
@@ -371,21 +372,18 @@ namespace Rune {
         const char* end() const;
     };
 
-    template <> struct Hash<String> {
+    template <>
+    struct Hash<String> {
         Hash<const char*> c_str_hash;
-
-        Hash& operator=(Hash&& o) = default;
-
-        Hash& operator=(const Hash& o) = default;
-
-        size_t operator()(const String& key) const { return c_str_hash(key.to_cstr()); }
+        auto operator()(const String& key) const -> size_t { return c_str_hash(key.to_cstr()); }
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          String Conversions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    template <class TNum> String int_to_string(TNum num, int radix) {
+    template <class TNum>
+    String int_to_string(TNum num, int radix) {
         constexpr char hex_chars[] = "0123456789ABCDEF";
         char           buf[32];
         memset(buf, 0, 32);
@@ -401,7 +399,8 @@ namespace Rune {
         return {buf, 32 - pos, pos};
     }
 
-    template <class TNum> bool parse_int(const String& str, TNum radix, TNum& out) {
+    template <class TNum>
+    bool parse_int(const String& str, TNum radix, TNum& out) {
         if (radix < 0 || 16 < radix)
             // Only radixes 0-16 are supported
             return false;
@@ -446,6 +445,6 @@ namespace Rune {
         out *= sign;
         return true;
     }
-}
+} // namespace Rune
 
 #endif // RUNEOS_STRING_H

@@ -18,6 +18,7 @@
 #ifndef RUNEOS_ENGINE_H
 #define RUNEOS_ENGINE_H
 
+#include <Test/Heimdall/Configuration.h>
 #include <Test/Heimdall/Expression.h>
 #include <Test/Heimdall/Reporter.h>
 
@@ -27,19 +28,18 @@ namespace Heimdall {
     //                                      Engine
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    /// @brief All possible test results.
     enum class TestResult {
         PASS,
         FAIL,
     };
 
-    /**
-     * The test engine configures the library and executes all tests.
-     */
+    /// @brief The test engine configures the library and executes all tests.
     class Engine {
-        TestResult _test_result; // Result of the currently running test.
-        Rune::LinkedList<Rune::UniquePointer<Reporter>> _reporter_registry;
+        TestResult    _test_result; // Result of the currently running test.
+        Configuration _configuration;
 
-        auto configure() -> bool;
+        auto configure(const HStringList& options) -> bool;
 
       public:
         [[nodiscard]] auto get_current_test_result() const -> TestResult;
@@ -56,19 +56,31 @@ namespace Heimdall {
          */
         void report_assertion_end(const AssertionStats& assert_stats);
 
-        /**
-         *
-         */
-        void execute();
+        /// @brief Configure heimdall according to the options and then execute all registered
+        ///         tests.
+        ///
+        /// Options are either general or heimdall runtime environment specific.
+        ///
+        /// General options:
+        ///     - None
+        ///
+        /// Kernel Test Options:
+        ///     - e9-reporter: Log the test report to the E9 port.
+        ///
+        /// @param options List of options.
+        void execute(const HStringList& options);
     };
 
-    /**
-     *
-     * @return A reference to the test engine.
-     */
+    /// @brief
+    /// @return A reference to the test engine.
     auto get_engine() -> Engine&;
 
-    void execute_tests();
+    /// @brief Configure heimdall according to the options and then execute all registered tests.
+    ///
+    /// A convenience method for 'Heimdall::get_engine.execute(options)'
+    ///
+    /// @param options List of options.
+    void execute_tests(const HStringList& options);
 } // namespace Heimdall
 
 #endif // RUNEOS_ENGINE_H

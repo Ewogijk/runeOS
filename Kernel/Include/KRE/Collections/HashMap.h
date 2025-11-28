@@ -370,34 +370,55 @@ namespace Rune {
               _bucket_count(bucket_count),
               _bucket(nullptr),
               _size(0),
-              _hash(Move(hash)) {}
+              _hash(hash) {}
 
         ~HashMap() { free_nodes(); }
 
         HashMap(const HashMap<K, V>& other) noexcept
-            : _load_factor(0.0),
-              _bucket_count(0),
-              _size(0) {
-            copy(other);
-        }
+            : _load_factor(other._load_factor),
+              _bucket_count(other._bucket_count),
+              _bucket(new HashNode<K, V>*[_bucket_count]),
+              _size(other._size),
+              _hash(move(other._hash)) {
 
-        auto operator=(const HashMap<K, V>& other) noexcept -> HashMap& {
-            if (this == &other) {
-                return *this;
+            for (size_t i = 0; i < _bucket_count; i++) _bucket[i] = nullptr;
+
+            if (other._bucket == nullptr) {
+                // Other hash map has not run "perform_lazy_init" yet
+                return;
             }
 
-            free_nodes();
+            for (size_t i = 0; i < _bucket_count; i++) {
+                HashNode<K, V>* o_curr = other._bucket[i];
+                HashNode<K, V>* t_prev = nullptr;
+                while (o_curr) {
+                    auto* t_curr = new HashNode<K, V>(o_curr->key, o_curr->value);
+                    if (t_prev != nullptr) {
+                        t_prev->next = t_curr;
+                    }
+                    if (o_curr == other._bucket[i]) {
+                        _bucket[i] = t_curr;
+                    }
+                    t_prev = t_curr;
+                    o_curr = o_curr->next;
+                }
+            }
             copy(other);
-
+        }
+        auto operator=(const HashMap<K, V>& other) noexcept -> HashMap& {
+            if (this == &other) return *this;
+            HashMap<K, V> tmp(move(other));
+            free_nodes();
+            swap(tmp, other);
             return *this;
         }
 
         HashMap(HashMap<K, V>&& other) noexcept
-            : _bucket_count(other._bucket_count),
-              _load_factor(other._load_factor),
+            : _load_factor(other._load_factor),
+              _bucket_count(other._bucket_count),
+              _bucket(other._bucket),
               _size(other._size),
               _hash(other._hash) {
-            swap(_bucket, other._bucket);
             other._load_factor  = 0.0;
             other._bucket_count = 0;
             other._bucket       = nullptr;
@@ -405,17 +426,25 @@ namespace Rune {
         }
 
         auto operator=(HashMap<K, V>&& other) noexcept -> HashMap& {
-            _load_factor  = other._load_factor;
-            _bucket_count = other._bucket_count;
-            swap(_bucket, other._bucket);
-            _size = other._size;
-            _hash = other._hash;
-
+            if (this == &other) return *this;
+            HashMap<K, V> tmp(move(other));
+            swap(tmp, other);
             other._load_factor  = 0.0;
             other._bucket_count = 0;
             other._bucket       = nullptr;
             other._size         = 0;
             return *this;
+        }
+
+        friend void swap(HashMap<K, V>& fst, HashMap<K, V>& sec) noexcept {
+            using Rune::swap;
+            swap(fst._bucket, sec._bucket);
+            swap(fst._bucket_count, sec._bucket_count);
+            swap(fst._load_factor, sec._load_factor);
+            swap(fst._size, sec._size);
+            Hash tmp  = fst._hash;
+            fst._hash = sec._hash;
+            sec._hash = tmp;
         }
 
         /**

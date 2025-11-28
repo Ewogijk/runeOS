@@ -24,17 +24,26 @@
 
 namespace Heimdall {
 
+    /// @brief The assertion handler parses, evaluates and reports the result of the expression
+    ///         inside a REQUIRE statement.
     class AssertionHandler {
         Engine* _engine;
 
       public:
         AssertionHandler(Engine* engine);
 
+        /// @brief Evaluate a binary expression.
+        /// @tparam LHS
+        /// @tparam RHS
+        /// @param expr Binary expression inside the REQUIRE.
+        /// @param expr_str String representation of the REQUIRE.
+        /// @param scl File name and code line of the REQUIRE.
+        /// @return Boolean result of evaluating the expression.
         template <typename LHS, typename RHS>
-        bool handle_expr(BinaryExprEvaluation<LHS, RHS> expr,
-                         const Rune::String&            expr_str,
-                         const SourceCodeLocation&      scl) {
-            // if (_engine->get_current_test_result() == TestResult::FAIL) return;
+        auto handle_expr(BinaryExprEvaluation<LHS, RHS> expr,
+                         const HString&            expr_str,
+                         const SourceCodeLocation&      scl) -> bool {
+            if (_engine->get_current_test_result() == TestResult::FAIL) return false;
 
             AssertionInfo info{.scl = scl, .assert = expr_str};
             _engine->report_assertion_begin(info);
@@ -43,14 +52,19 @@ namespace Heimdall {
 
             AssertionStats stats{.scl             = scl,
                                  .assert          = expr_str,
-                                 .expanded_assert = Rune::String::format("REQUIRE({})", expr_str),
+                                 .expanded_assert = HString("REQUIRE(") + expr_str + ")",
                                  .result          = result};
             _engine->report_assertion_end(stats);
             return result;
         }
 
+        /// @brief Evaluate an unary expression.
+        /// @param expr Unary expression inside the REQUIRE.
+        /// @param expr_str String representation of the REQUIRE.
+        /// @param scl File name and code line of the REQUIRE.
+        /// @return Boolean result of evaluating the expression.
         auto handle_expr(UnaryExpr<bool>           expr,
-                         const Rune::String&       expr_str,
+                         const HString&       expr_str,
                          const SourceCodeLocation& scl) -> bool;
     };
 } // namespace Heimdall

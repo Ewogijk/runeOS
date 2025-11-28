@@ -41,6 +41,8 @@
 
 #include <Boot/DetailedLogLayout.h>
 
+#include <Test/KernelTest/Runner.h>
+
 namespace Rune {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");
 
@@ -102,6 +104,9 @@ namespace Rune {
 
     auto boot_phase3(CPU::StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info);
+
+        Test::run_kernel_tests();
+
         auto& system = System::instance();
         if (system._is_booted) {
             LOGGER->warn(
@@ -175,11 +180,9 @@ namespace Rune {
 
         call_global_constructors();
 
-        LogContext::instance().register_layout("earlyboot",
-                                               SharedPointer<Layout>(new EarlyBootLayout()));
-        LogContext::instance().register_target_stream(
-            "e9",
-            SharedPointer<TextStream>(new CPU::E9Stream()));
+        LogContext& ctx = LogContext::instance();
+        ctx.register_layout("earlyboot", SharedPointer<Layout>(new EarlyBootLayout()));
+        ctx.register_target_stream("e9", SharedPointer<TextStream>(new CPU::E9Stream()));
         LOGGER->info("runeKernel v{}", KERNEL_VERSION.to_string());
         LOGGER->info("Loaded by {} - v{}",
                      _boot_info.boot_loader_name,

@@ -15,19 +15,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SOURCECODELOCATION_H
-#define RUNEOS_SOURCECODELOCATION_H
+#ifndef RUNEOS_DUMMY_H
+#define RUNEOS_DUMMY_H
 
-#include <Test/Heimdall/HString.h>
+#include <Test/Heimdall/Heimdall.h>
 
-#include <stddef.h>
+TEST("Add", "A Suite") {
+    REQUIRE(1 + 1 == 2)
+}
 
-namespace Heimdall {
-    /// @brief Location of a line of source code.
-    struct SourceCodeLocation {
-        HString file;
-        size_t       line;
-    };
-} // namespace Heimdall
+TEST("Add More", "A Suite") {
+    REQUIRE(1 + 1 == 3)
+}
 
-#endif // RUNEOS_SOURCECODELOCATION_H
+#endif // RUNEOS_DUMMY_H

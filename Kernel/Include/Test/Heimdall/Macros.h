@@ -43,37 +43,36 @@ namespace Heimdall {
 
 #define DELEGATE_TEST(_1, _2, name, ...) name
 
-    /**
-     * Define a test case in an optional test suite. If no test suite is declared the test will
-     * automatically be assigned to the "All Tests" test suite.
-     *
-     * Usage:
-     * TEST("My Test", "My Testsuite") {
-     *      // test code goes here
-     * }
-     *
-     * OR
-     *
-     * TEST("My Test") {
-     *      // test code goes here
-     * }
-     */
+    /// @brief
+    /// Define a test case in an optional test suite. If no test suite is declared the test will
+    /// automatically be assigned to the "All Tests" test suite.
+    ///
+    /// Usage:
+    /// TEST("My Test", "My Testsuite") {
+    ///      // test code goes here
+    /// }
+    ///
+    /// OR
+    ///
+    /// TEST("My Test") {
+    ///      // test code goes here
+    /// }
 #define TEST(...) DELEGATE_TEST(__VA_ARGS__, TEST_WITH_SUITE, TEST_NO_SUITE)(__VA_ARGS__)
 
-    /**
-     * Define an expression that will be evaluated and reported. If the expression fails, the test
-     * will be aborted.
-     *
-     * Usage:
-     *
-     * REQUIRE ( expression )
-     *
-     * Examples:
-     *
-     *  REQUIRE( sum(1, 1) == 2 )
-     *
-     *  REQUIRE( !object.some_property() )
-     */
+    /// @brief
+    /// Define an expression that will be evaluated and reported. If the expression fails, the test
+    /// will be aborted.
+    ///
+    /// Usage:
+    ///
+    /// REQUIRE ( expression )
+    ///
+    /// Examples:
+    ///
+    ///  REQUIRE( sum(1, 1) == 2 )
+    ///
+    ///  REQUIRE( !object.some_property() )
+    ///
 #define REQUIRE(...)                                                                               \
     {                                                                                              \
         Heimdall::AssertionHandler assert_handler(&Heimdall::get_engine());                        \

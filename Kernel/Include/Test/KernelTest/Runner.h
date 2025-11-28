@@ -15,19 +15,13 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SOURCECODELOCATION_H
-#define RUNEOS_SOURCECODELOCATION_H
+#ifndef RUNEOS_RUNNER_H
+#define RUNEOS_RUNNER_H
 
-#include <Test/Heimdall/HString.h>
+#include <Test/KernelTest/Dummy.h>
 
-#include <stddef.h>
+namespace Rune::Test {
+    void run_kernel_tests();
+}
 
-namespace Heimdall {
-    /// @brief Location of a line of source code.
-    struct SourceCodeLocation {
-        HString file;
-        size_t       line;
-    };
-} // namespace Heimdall
-
-#endif // RUNEOS_SOURCECODELOCATION_H
+#endif // RUNEOS_RUNNER_H

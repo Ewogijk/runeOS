@@ -20,7 +20,7 @@ namespace Heimdall {
     AssertionHandler::AssertionHandler(Engine* engine) : _engine(engine) {}
 
     auto AssertionHandler::handle_expr(UnaryExpr<bool>           expr,
-                                       const Rune::String&       expr_str,
+                                       const HString&       expr_str,
                                        const SourceCodeLocation& scl) -> bool {
         // if (_engine->get_current_test_result() == TestResult::FAIL) return;
 
@@ -29,7 +29,7 @@ namespace Heimdall {
         bool           result = expr.get_result();
         AssertionStats stats{.scl             = scl,
                              .assert          = expr_str,
-                             .expanded_assert = Rune::String::format("REQUIRE({})", expr_str),
+                             .expanded_assert = HString("REQUIRE(") + expr_str + ")",
                              .result          = result};
         _engine->report_assertion_end(stats);
         return result;
