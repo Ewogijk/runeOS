@@ -374,121 +374,61 @@ namespace Rune {
 
     template <>
     struct Hash<signed char> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const signed char& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<char> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const char& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<short> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const short& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<int> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const int& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<long> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const long& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<long long> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const long long& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<unsigned char> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const unsigned char& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<unsigned short> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const unsigned short& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<unsigned int> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const unsigned int& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<unsigned long> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const unsigned long& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<unsigned long long> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const unsigned long long& key) const -> size_t { return key; }
     };
 
     template <>
     struct Hash<float> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const float& key) const -> size_t {
             // Calc hash for floats up to 10 digit precision
             float            num   = key;
@@ -502,11 +442,6 @@ namespace Rune {
 
     template <>
     struct Hash<double> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const double& key) const -> size_t {
             // Calc hash for floats up to 10 digit precision
             double           num   = key;
@@ -520,11 +455,6 @@ namespace Rune {
 
     template <>
     struct Hash<long double> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const long double& key) const -> size_t {
             // Calc hash for floats up to 10 digit precision
             long double      num   = key;
@@ -538,21 +468,11 @@ namespace Rune {
 
     template <>
     struct Hash<bool> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const bool& key) const -> size_t { return (size_t) key; }
     };
 
     template <>
     struct Hash<const char*> {
-
-        auto operator=(Hash&& other) -> Hash& = default;
-
-        auto operator=(const Hash& other) -> Hash& = default;
-
         auto operator()(const char* key) const -> size_t {
             size_t      size  = 0;
             const char* c_pos = key;

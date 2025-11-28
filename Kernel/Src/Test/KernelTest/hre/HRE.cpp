@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -15,19 +14,24 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SOURCECODELOCATION_H
-#define RUNEOS_SOURCECODELOCATION_H
+#include <Test/Heimdall/HRE.h>
 
-#include <Test/Heimdall/HString.h>
+#include <CPU/E9Stream.h>
 
-#include <stddef.h>
+#include <Test/KernelTest/hre/E9Reporter.h>
 
 namespace Heimdall {
-    /// @brief Location of a line of source code.
-    struct SourceCodeLocation {
-        HString file;
-        size_t       line;
-    };
-} // namespace Heimdall
+    void hre_emergency_log(const HString& message) {
+        Rune::CPU::E9Stream e9;
+        e9.set_foreground_color(Rune::Pixie::VSCODE_RED);
+        e9.write_formatted(message.to_c_str());
+        e9.reset_style();
+    }
 
-#endif // RUNEOS_SOURCECODELOCATION_H
+    void hre_configure(Configuration& config) {
+        for (size_t i = 0; i < config.options.size(); i++) {
+            Rune::String opt(config.options[i].to_c_str());
+            if (opt == "e9-reporter") config.reporter_registry.insert(new Heimdall::E9Reporter());
+        }
+    }
+}

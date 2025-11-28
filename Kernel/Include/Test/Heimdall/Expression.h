@@ -18,14 +18,11 @@
 #ifndef RUNEOS_EXPRESSION_H
 #define RUNEOS_EXPRESSION_H
 
-#include <KRE/String.h>
+#include <Test/Heimdall/HString.h>
 
 namespace Heimdall {
-    /**
-     * CRTP base class for expressions.
-     *
-     * @tparam Derived Type of derived expression.
-     */
+    /// @brief CRTP base class for expressions.
+    /// @tparam Derived Type of derived expression.
     template <typename Derived>
     class ExprBase {
         friend Derived; // Allow Derived to call private constructors
@@ -42,25 +39,23 @@ namespace Heimdall {
 
         auto get_result() -> bool { return static_cast<Derived*>(this)->get_result(); }
 
-        auto get_expanded_expr() -> Rune::String {
+        auto get_expanded_expr() -> HString {
             return static_cast<Derived*>(this)->get_expanded_expr();
         }
     };
 
-    /**
-     * The result of evaluating a binary expression.
-     * @tparam LHS LHS type.
-     * @tparam RHS RHS type.
-     */
+    /// @brief The result of evaluating a binary expression.
+    /// @tparam LHS LHS type.
+    /// @tparam RHS RHS type.
     template <typename LHS, typename RHS>
     class BinaryExprEvaluation : public ExprBase<BinaryExprEvaluation<LHS, RHS>> {
-        bool         _result{};
-        LHS          _lhs;
-        Rune::String _op;
-        RHS          _rhs;
+        bool    _result{};
+        LHS     _lhs;
+        HString _op;
+        RHS     _rhs;
 
       public:
-        BinaryExprEvaluation(bool result, LHS lhs, Rune::String op, RHS rhs)
+        BinaryExprEvaluation(bool result, LHS lhs, HString op, RHS rhs)
             : ExprBase<BinaryExprEvaluation<LHS, RHS>>(),
               _result(result),
               _lhs(lhs),
@@ -69,8 +64,8 @@ namespace Heimdall {
 
         auto get_result() -> bool { return _result; }
 
-        auto get_expanded_expr() -> Rune::String {
-            return Rune::String::format("{} {} {}", _lhs, _op, _rhs);
+        auto get_expanded_expr() -> HString {
+            return HString::number_to_string(_lhs) + _op + HString::number_to_string(_rhs);
         }
 
         auto get_lhs() -> LHS { return _lhs; }
@@ -78,15 +73,13 @@ namespace Heimdall {
         auto get_rhs() -> RHS { return _rhs; }
     };
 
-    /**
-     * A unary or binary expression that can be evaluated.
-     *
-     * The result of unary expressions is in the 'value' member, binary expressions are evaluated
-     * via operator overloading.
-     *
-     * @tparam LHS_OR_Value A unary expression type or type of the left hand side value of a
-     *                      binary expression.
-     */
+    /// @brief A unary or binary expression that can be evaluated.
+    ///
+    /// The result of unary expressions is in the 'value' member, binary expressions are evaluated
+    /// via operator overloading.
+    ///
+    /// @tparam LHS_OR_Value A unary expression type or type of the left hand side value of a
+    ///                         binary expression.
     template <typename LHS_OR_Value>
     class UnaryExpr : public ExprBase<UnaryExpr<LHS_OR_Value>> {
         LHS_OR_Value _value;
@@ -96,7 +89,7 @@ namespace Heimdall {
 
         auto get_result() -> bool { return static_cast<bool>(_value); }
 
-        auto get_expanded_expr() -> Rune::String { return Rune::String::format("{}", _value); }
+        auto get_expanded_expr() -> HString { return HString::number_to_string(_value); }
 
         auto get_value() -> LHS_OR_Value { return _value; }
 
@@ -117,25 +110,24 @@ namespace Heimdall {
 #undef DEFINE_OP_OVERLOAD
     };
 
-    /**
-     * The Interpreter is the entry point to evaluating expressions given in the REQUIRE macro,
-     * essentially it boils down converting the left hand side of an expression to UnaryExpr so that
-     * the overloaded operators are used:
-     *
-     * REQUIRE(a == b) -> Interpreter() << a == b -> UnaryExpr(a) == b -> BinaryExprEvaluation(a ==
-     * b, a, "==", b)
-     *
-     * The '<<' operator was chosen because it has the highest precedence of all non-arithmetic
-     * binary operators to ensure it will always be called first.
-     *
-     * Unary expressions can also be evaluated:
-     *
-     * REQUIRE(a) -> Interpreter() << a -> UnaryExpr(a)
-     */
+    /// @brief
+    /// The Interpreter is the entry point to evaluating expressions given in the REQUIRE macro,
+    /// essentially it boils down converting the left hand side of an expression to UnaryExpr so
+    /// that the overloaded operators are used:
+    ///
+    /// REQUIRE(a == b) -> Interpreter() << a == b -> UnaryExpr(a) == b -> BinaryExprEvaluation(a ==
+    /// b, a, "==", b)
+    ///
+    /// The '<<' operator was chosen because it has the highest precedence of all non-arithmetic
+    /// binary operators to ensure it will always be called first.
+    ///
+    /// Unary expressions can also be evaluated:
+    ///
+    /// REQUIRE(a) -> Interpreter() << a -> UnaryExpr(a)
     struct Interpreter {
         template <typename T>
         constexpr friend auto operator<<(Interpreter d, T value) {
-            SILENCE_UNUSED(d)
+            (void) d; // silence "unused variable" compiler warning
             return UnaryExpr<T>{value};
         }
     };

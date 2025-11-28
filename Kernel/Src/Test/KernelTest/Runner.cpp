@@ -15,19 +15,15 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SOURCECODELOCATION_H
-#define RUNEOS_SOURCECODELOCATION_H
+#include <Test/Heimdall/Heimdall.h>
 
-#include <Test/Heimdall/HString.h>
 
-#include <stddef.h>
+namespace Rune::Test {
 
-namespace Heimdall {
-    /// @brief Location of a line of source code.
-    struct SourceCodeLocation {
-        HString file;
-        size_t       line;
-    };
-} // namespace Heimdall
-
-#endif // RUNEOS_SOURCECODELOCATION_H
+    /// @brief Configure the E9 reporter and execute the kernel tests.
+    void run_kernel_tests() {
+        Heimdall::HStringList options;
+        options.insert("e9-reporter");
+        Heimdall::execute_tests(options);
+    }
+}

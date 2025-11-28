@@ -15,19 +15,21 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_SOURCECODELOCATION_H
-#define RUNEOS_SOURCECODELOCATION_H
+#ifndef HEIMDALL_HRE_H
+#define HEIMDALL_HRE_H
 
 #include <Test/Heimdall/HString.h>
-
-#include <stddef.h>
+#include <Test/Heimdall/Configuration.h>
 
 namespace Heimdall {
-    /// @brief Location of a line of source code.
-    struct SourceCodeLocation {
-        HString file;
-        size_t       line;
-    };
-} // namespace Heimdall
 
-#endif // RUNEOS_SOURCECODELOCATION_H
+    /// @brief Log a message in case something terrible happened.
+    /// @param message
+    void hre_emergency_log(const HString& message);
+
+    /// @brief Perform engine configuration of the heimdall runtime environment.
+    /// @param config Configuration provided by the engine.
+    void hre_configure(Configuration& config);
+}
+
+#endif // HEIMDALL_HRE_H

@@ -259,7 +259,7 @@ target_env.SConscript(
     duplicate=0,
 )
 target_env.SConscript(
-    str(Path("Src") / "Test" / "Heimdall" / "SConscript"),
+    str(Path("Src") / "Test" / "SConscript"),
     variant_dir=str(build_dir / "Test" / "Heimdall"),
     duplicate=0,
 )

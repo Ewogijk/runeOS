@@ -16,27 +16,26 @@
 
 #include <Test/Heimdall/TestTracker.h>
 
+#include <KRE/CppRuntimeSupport.h>
+
 namespace Heimdall {
     auto get_test_tracker() -> TestTracker& {
         static TestTracker test_registry;
         return test_registry;
     }
 
-    auto register_test(const Rune::String&           name,
-                       const Rune::String&           test_suite,
-                       const Rune::Function<void()>& test_function) -> bool {
+    auto register_test(const HString& name, const HString& test_suite, void (*test_function)())
+        -> bool {
         auto& test_tracker = get_test_tracker();
 
         // All tests must belong to a test suite and a test suite name cannot be the empty string
         // So if a user does not define a test suite we put the test in the "All Tests" test suite
-        Rune::String suite = test_suite;
+        HString suite = test_suite;
         if (suite.is_empty()) suite = "All Tests";
 
         // Add test suite if it is missing
-        auto maybe_suite = test_tracker.find(test_suite);
-        if (maybe_suite == test_tracker.end()) test_tracker[suite] = Rune::LinkedList<Test>();
-
-        test_tracker[suite].add_back(Test{.name = name, .test_function = test_function});
+        if (!test_tracker.contains(test_suite)) test_tracker.create_test_suite(test_suite);
+        test_tracker.insert_test(test_suite, Test{.name = name, .test_function = test_function});
         return true;
     }
 } // namespace Heimdall

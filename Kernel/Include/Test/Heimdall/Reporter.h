@@ -18,13 +18,10 @@
 #ifndef RUNEOS_REPORTER_H
 #define RUNEOS_REPORTER_H
 
+#include <Ember/Ember.h>
+
 #include <Test/Heimdall/SourceCodeLocation.h>
-
-#include <KRE/String.h>
-#include <KRE/Memory.h>
-#include <KRE/Collections/LinkedList.h>
-
-#include <CPU/E9Stream.h>
+#include <Test/Heimdall/HString.h>
 
 namespace Heimdall {
 
@@ -32,73 +29,57 @@ namespace Heimdall {
     //                                  Infos and Stats
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * Info about the starting test run.
-     */
+    /// @brief Info about the starting test run.
     struct TestRunInfo {
-        U8 heimdall_major;
-        U8 heimdall_minor;
-        U8 heimdall_patch;
-        Rune::LinkedList<Rune::String> reporter_names;
+        U8                             heimdall_major;
+        U8                             heimdall_minor;
+        U8                             heimdall_patch;
+        HStringList reporter_names;
     };
 
-    /**
-     * The results of executing the test run.
-     */
+    /// @brief The results of executing the test run.
     struct TestRunStats {
         size_t total_tests;
         size_t passed_tests;
         size_t failed_tests;
     };
 
-    /**
-     * Info about the starting test.
-     */
+    /// @brief Info about the starting test.
     struct TestInfo {
-        Rune::String name;
+        HString name;
     };
 
-    /**
-     * The results of executing a test.
-     */
+    /// @brief The results of executing a test.
     struct TestStats {
-        Rune::String name;
+        HString name;
         bool         result;
     };
 
-    /**
-     * Info about the starting test suite.
-     */
+    /// @brief Info about the starting test suite.
     struct TestSuiteInfo {
-        Rune::String name;
+        HString name;
         size_t       total_tests;
     };
 
-    /**
-     * The results of executing the test suite.
-     */
+    /// @brief The results of executing the test suite.
     struct TestSuiteStats {
-        Rune::String name;
+        HString name;
         size_t       total_tests;
         size_t       passed_tests;
         size_t       failed_tests;
     };
 
-    /**
-     * Info about the starting assertion.
-     */
+    /// @brief Info about the starting assertion.
     struct AssertionInfo {
         SourceCodeLocation scl;
-        Rune::String       assert;
+        HString       assert;
     };
 
-    /**
-     * The results of evaluating the assertion.
-     */
+    /// @brief The results of evaluating the assertion.
     struct AssertionStats {
         SourceCodeLocation scl;
-        Rune::String       assert;
-        Rune::String       expanded_assert;
+        HString       assert;
+        HString       expanded_assert;
         bool               result;
     };
 
@@ -106,109 +87,86 @@ namespace Heimdall {
     //                                      Reporter
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * The reporter writes the test results to some destination.
-     */
+    /// @brief The reporter writes the test results to some destination.
     class Reporter {
       public:
         virtual ~Reporter() = default;
 
-        /**
-         *
-         * @return The name of the reporter.
-         */
-        [[nodiscard]] virtual auto get_name() const -> Rune::String = 0;
+        /// @brief
+        /// @return The name of the reporter.
+        [[nodiscard]] virtual auto get_name() const -> HString = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                   Test Events
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        /**
-         * The function will be called by the test engine before the first test case is
-         * executed.
-         * @param test_run_info
-         */
+        /// @brief The function will be called by the test engine before the first test case is
+        ///         executed.
+        /// @param test_run_info
         virtual void on_test_run_begin(const TestRunInfo& test_run_info) = 0;
 
-        /**
-         * The function will be called by the test engine after the last test case was
-         * executed.
-         * @param test_run_stats
-         */
+        /// @brief The function will be called by the test engine after the last test case was
+        ///         executed.
+        /// @param test_run_stats
         virtual void on_test_run_end(const TestRunStats& test_run_stats) = 0;
 
-        /**
-         * The function will be called by the test engine before the first test case of a test
-         * suite is executed.
-         * @param test_suite_info
-         */
+
+        /// @brief The function will be called by the test engine before the first test case of a test
+        ///         suite is executed.
+        /// @param test_suite_info
         virtual void on_test_suite_begin(const TestSuiteInfo& test_suite_info) = 0;
 
-        /**
-         * The function will be called by the test engine after the last test case of a test
-         * suite was executed.
-         * @param test_suite_stats
-         */
+        /// @brief The function will be called by the test engine after the last test case of a
+        ///         test.
+        /// @param test_suite_stats
         virtual void on_test_suite_end(const TestSuiteStats& test_suite_stats) = 0;
 
-        /**
-         * The function will be called by the test engine before a test case is executed.
-         * @param test_info
-         */
+        /// @brief The function will be called by the test engine before a test case is executed.
+        /// @param test_info
         virtual void on_test_begin(const TestInfo& test_info) = 0;
 
-        /**
-         * The function will be called by the test engine after a test case was executed.
-         * @param test_stats
-         */
+        /// @brief The function will be called by the test engine after a test case was executed.
+        /// @param test_stats
         virtual void on_test_end(const TestStats& test_stats) = 0;
 
-        /**
-         * The function will be called by the test engine before an assertion is evaluated.
-         * @param assertion_info
-         */
+        /// @brief The function will be called by the test engine before an assertion is evaluated.
+        /// @param assertion_info
         virtual void on_assertion_begin(const AssertionInfo& assertion_info) = 0;
 
-        /**
-         * The function will be called by the test engine after an assertion was evaluated.
-         * @param assertion_stats
-         */
+        /// @brief The function will be called by the test engine after an assertion was evaluated.
+        /// @param assertion_stats
         virtual void on_assertion_end(const AssertionStats& assertion_stats) = 0;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      E9 Reporter
+    //                                  Reporter Registry
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * Reports on the E9 port so that Qemu can forward the test results to the console of the
-     * host machine.
-     */
-    class E9Reporter : public Reporter {
-        static constexpr size_t TAG_WIDTH = 10;
-        Rune::CPU::E9Stream     _e9{};
+    /// @brief The reporter registry contains all configured reporters.
+    /// Note: The class is part of the heimdall runtime environment (hre).
+    class ReporterRegistry {
+        struct ReporterListDetail;
+        ReporterListDetail* _list_detail;
 
-        void write_tag(const Rune::String& tag, const Rune::String& text);
+    public:
+        ReporterRegistry();
+        ~ReporterRegistry();
 
-        void
-        write_colored_tag(const Rune::String& tag, const Rune::String& text, Rune::Pixel pixel);
+        ReporterRegistry(const ReporterRegistry& other);
+        ReporterRegistry(ReporterRegistry&& other) noexcept;
+        auto operator=(const ReporterRegistry& other) -> ReporterRegistry&;
+        auto operator=(ReporterRegistry&& other) noexcept -> ReporterRegistry&;
 
-        void write_divider(char div_char, const Rune::String& text);
+        friend void swap(ReporterRegistry& fst, ReporterRegistry& sec) noexcept;
 
-      public:
-        E9Reporter() = default;
+        [[nodiscard]] auto is_empty() const -> bool;
 
-        [[nodiscard]] auto get_name() const -> Rune::String override;
-        void on_test_run_begin(const TestRunInfo& test_run_info) override;
-        void on_test_run_end(const TestRunStats& test_run_stats) override;
-        void on_test_suite_begin(const TestSuiteInfo& test_suite_info) override;
-        void on_test_suite_end(const TestSuiteStats& test_suite_stats) override;
-        void on_test_begin(const TestInfo& test_info) override;
-        void on_test_end(const TestStats& test_stats) override;
-        void on_assertion_begin(const AssertionInfo& assertion_info) override;
-        void on_assertion_end(const AssertionStats& assertion_stats) override;
+        [[nodiscard]] auto size() const -> size_t;
+
+        void insert(Reporter* reporter);
+
+        auto operator[](size_t index) const -> Reporter*;
     };
-
 } // namespace Heimdall
 
 #endif // RUNEOS_REPORTER_H

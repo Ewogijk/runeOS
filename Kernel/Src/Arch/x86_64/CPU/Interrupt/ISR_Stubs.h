@@ -18,7 +18,7 @@
  * This file is auto generated.
  */
 
-#ifndef RUNEOS_ISR_STUBS_H
+#ifndef RUNEOS_ISR_STUBS_H 
 #define RUNEOS_ISR_STUBS_H
 
 #include "IDT.h"
@@ -539,6 +539,6 @@ namespace Rune::CPU {
         idt_set(254, (void*) ISR254, gdt_offset, 0, GateType::INTERRUPT_GATE, 0, false);
         idt_set(255, (void*) ISR255, gdt_offset, 0, GateType::INTERRUPT_GATE, 0, false);
     }
-} // namespace Rune::CPU
+}
 
-#endif // RUNEOS_ISR_STUBS_H
+#endif //RUNEOS_ISR_STUBS_H

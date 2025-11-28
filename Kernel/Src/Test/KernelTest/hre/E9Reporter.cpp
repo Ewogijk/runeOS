@@ -14,32 +14,26 @@
  *  limitations under the License.
  */
 
-#include <Test/Heimdall/Reporter.h>
+#include <Test/KernelTest/hre/E9Reporter.h>
 
 namespace Heimdall {
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      E9 Reporter
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    void E9Reporter::write_tag(const Rune::String& tag, const Rune::String& text) {
-        _e9.write_formatted("[{:<10}] {}\n", tag, text);
+    void E9Reporter::write_tag(const HString& tag, const HString& text) {
+        _e9.write_formatted("[{:<10}] {}\n", tag.to_c_str(), text.to_c_str());
     }
 
-    void E9Reporter::write_colored_tag(const Rune::String& tag,
-                                       const Rune::String& text,
-                                       Rune::Pixel         pixel) {
+    void E9Reporter::write_colored_tag(const HString& tag, const HString& text, Rune::Pixel pixel) {
         _e9.set_foreground_color(pixel);
-        _e9.write_formatted("[{:<10}] {}\n", tag, text);
+        _e9.write_formatted("[{:<10}] {}\n", tag.to_c_str(), text.to_c_str());
         _e9.reset_style();
     }
 
-    void E9Reporter::write_divider(char div_char, const Rune::String& text) {
-        Rune::String div;
-        for (size_t i = 0; i < TAG_WIDTH; ++i) div += div_char;
+    void E9Reporter::write_divider(char div_char, const HString& text) {
+        HString div;
+        for (size_t i = 0; i < TAG_WIDTH; ++i) div = div + div_char;
         write_tag(div, text);
     }
 
-    auto E9Reporter::get_name() const -> Rune::String { return "E9Reporter"; }
+    auto E9Reporter::get_name() const -> HString { return "E9Reporter"; }
 
     void E9Reporter::on_test_run_begin(const TestRunInfo& test_run_info) {
         _e9.write_formatted("Heimdall v{}.{}.{}\n\n",
@@ -49,36 +43,34 @@ namespace Heimdall {
         _e9.write_formatted("Registered reports: ");
         for (size_t i = 0; i < test_run_info.reporter_names.size(); ++i) {
             if (i < test_run_info.reporter_names.size() - 1)
-                _e9.write_formatted("{}, ", *test_run_info.reporter_names[i]);
+                _e9.write_formatted("{}, ", test_run_info.reporter_names[i].to_c_str());
             else
-                _e9.write_formatted("{}", *test_run_info.reporter_names[i]);
+                _e9.write_formatted("{}", test_run_info.reporter_names[i].to_c_str());
         }
         _e9.write_line("\n");
     }
 
     void E9Reporter::on_test_run_end(const TestRunStats& test_run_stats) {
         write_divider('=', "");
+
         write_tag("TOTAL",
-                  Rune::String::format("{} {}",
-                                       test_run_stats.total_tests,
-                                       test_run_stats.total_tests > 1 ? "tests" : "test"));
+                  HString::number_to_string(test_run_stats.total_tests)
+                      + (test_run_stats.total_tests > 1 ? " Tests" : " Test"));
         write_colored_tag("PASS",
-                          Rune::String::format("{} {}",
-                                               test_run_stats.passed_tests,
-                                               test_run_stats.passed_tests > 1 ? "tests" : "test"),
+                          HString::number_to_string(test_run_stats.passed_tests)
+                              + (test_run_stats.passed_tests > 1 ? " Tests" : " Test"),
                           Rune::Pixie::GREEN);
         write_colored_tag("FAIL",
-                          Rune::String::format("{} {}",
-                                               test_run_stats.failed_tests,
-                                               test_run_stats.failed_tests > 1 ? "tests" : "test"),
+                          HString::number_to_string(test_run_stats.failed_tests)
+                              + (test_run_stats.failed_tests > 1 ? " Tests" : " Test"),
                           Rune::Pixie::VSCODE_RED);
     }
 
     void E9Reporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {
         write_divider('-',
-                      Rune::String::format("{} ({} Tests)",
-                                           test_suite_info.name,
-                                           test_suite_info.total_tests));
+                      test_suite_info.name + " ("
+                          + HString::number_to_string(test_suite_info.total_tests)
+                          + (test_suite_info.total_tests > 1 ? " Tests" : " Test") + ")");
     }
 
     void E9Reporter::on_test_suite_end(const TestSuiteStats& test_suite_stats) {
@@ -104,13 +96,14 @@ namespace Heimdall {
         if (!assertion_stats.result) {
             _e9.set_foreground_color(Rune::Pixie::VSCODE_RED);
             _e9.write_formatted("             FAIL at {}:{}\n",
-                                assertion_stats.scl.file,
+                                assertion_stats.scl.file.to_c_str(),
                                 assertion_stats.scl.line);
             _e9.reset_style();
             _e9.set_foreground_color(Rune::Pixie::VSCODE_CYAN);
-            _e9.write_formatted("                       {}\n", assertion_stats.assert);
-            _e9.write_formatted("                 With: {}\n", assertion_stats.expanded_assert);
+            _e9.write_formatted("                       {}\n", assertion_stats.assert.to_c_str());
+            _e9.write_formatted("                 With: {}\n",
+                                assertion_stats.expanded_assert.to_c_str());
             _e9.reset_style();
         }
     }
-} // namespace Heimdall
+}
