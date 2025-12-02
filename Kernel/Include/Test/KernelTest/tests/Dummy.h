@@ -20,11 +20,11 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
-TEST("Add", "A Suite") {
+TEST("Kernel Test 1", "A Suite") {
     REQUIRE(1 + 1 == 2)
 }
 
-TEST("Add More", "A Suite") {
+TEST("Kernel Test 2", "A Suite") {
     REQUIRE(1 + 1 == 3)
 }
 

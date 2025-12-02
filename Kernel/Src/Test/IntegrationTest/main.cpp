@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -15,13 +14,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_RUNNER_H
-#define RUNEOS_RUNNER_H
-
 #include <Test/Heimdall/Heimdall.h>
 
-namespace Rune::Test {
-    auto run_kernel_tests() -> Heimdall::TestResult;
-}
+#include <Test/IntegrationTest/tests/Dummy.h>
 
-#endif // RUNEOS_RUNNER_H
+int main(const int argc, char* argv[]) {
+    Heimdall::HStringList options;
+    options.insert("std-reporter");
+    Heimdall::TestResult tr = Heimdall::execute_tests(options);
+    switch (tr) {
+        case Heimdall::TestResult::PASS: return 0;
+        case Heimdall::TestResult::FAIL: return -1;
+        default:                         return -2; // CONFIGURATION_FAIL
+    }
+}

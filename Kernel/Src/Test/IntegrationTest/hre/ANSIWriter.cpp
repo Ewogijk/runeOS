@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -15,13 +14,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_RUNNER_H
-#define RUNEOS_RUNNER_H
+#include <Test/IntegrationTest/hre/ANSIWriter.h>
 
-#include <Test/Heimdall/Heimdall.h>
+#include <iostream>
 
-namespace Rune::Test {
-    auto run_kernel_tests() -> Heimdall::TestResult;
-}
+namespace Heimdall {
+    void ansi_write_text(const std::string& text, Pixel px) {
+        std::cout << "\033[38;2;" << static_cast<int>(px.red) << ";" << static_cast<int>(px.green)
+                  << ";" << static_cast<int>(px.blue) << "m";
 
-#endif // RUNEOS_RUNNER_H
+        std::cout << text;
+
+        std::cout << "\033[0m";
+    }
+} // namespace Heimdall
