@@ -18,7 +18,7 @@
 
 #include <Test/Heimdall/HRE.h>
 #include <Test/Heimdall/Reporter.h>
-#include <Test/Heimdall/TestTracker.h>
+#include <Test/Heimdall/Test.h>
 
 /// atexit will be automatically generated when static local variables are declared
 /// This function will be provided by the heimdall runtime environment but a forward declaration
@@ -50,8 +50,8 @@ namespace Heimdall {
         _test_result = assert_stats.result ? TestResult::PASS : TestResult::FAIL;
     }
 
-    auto Engine::execute(const HStringList& options) -> TestResult {
-        if (!configure(options)) return TestResult::CONFIGURATION_FAIL;
+    auto Engine::execute(const HStringList& options) -> TestReport {
+        if (!configure(options)) return { TestResult::CONFIG_ERROR };
 
         auto&  test_tracker         = get_test_tracker();
         size_t overall_total_tests  = 0;
@@ -116,7 +116,7 @@ namespace Heimdall {
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_end(test_run_stats);
 
-        return overall_tests_passed == overall_total_tests ? TestResult::PASS : TestResult::FAIL;
+        return {overall_tests_passed == overall_total_tests ? TestResult::PASS : TestResult::FAIL};
     }
 
     auto get_engine() -> Engine& {
@@ -124,7 +124,7 @@ namespace Heimdall {
         return engine;
     }
 
-    auto execute_tests(const HStringList& options) -> TestResult {
+    auto execute_tests(const HStringList& options) -> TestReport {
         return get_engine().execute(options);
     }
 } // namespace Heimdall

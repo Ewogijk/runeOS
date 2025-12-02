@@ -1,4 +1,4 @@
-/*
+/*Heimdall
  *  Copyright 2025 Ewogijk
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@
 int main(const int argc, char* argv[]) {
     Heimdall::HStringList options;
     options.insert("std-reporter");
-    Heimdall::TestResult tr = Heimdall::execute_tests(options);
+    Heimdall::TestResult tr = Heimdall::execute_tests(options).result;
     switch (tr) {
         case Heimdall::TestResult::PASS: return 0;
         case Heimdall::TestResult::FAIL: return -1;

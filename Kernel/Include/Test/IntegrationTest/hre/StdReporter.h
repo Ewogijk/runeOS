@@ -20,6 +20,8 @@
 
 #include <Test/Heimdall/Reporter.h>
 
+#include <Test/IntegrationTest/hre/ANSIWriter.h>
+
 namespace Heimdall {
     /// @brief Reports on the E9 port so that Qemu can forward the test results to the console of
     /// the

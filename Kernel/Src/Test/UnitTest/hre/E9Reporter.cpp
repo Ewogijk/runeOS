@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Test/KernelTest/hre/E9Reporter.h>
+#include <Test/UnitTest/hre/E9Reporter.h>
 
 namespace Heimdall {
     void E9Reporter::write_tag(const HString& tag, const HString& text) {

@@ -32,13 +32,13 @@ sources = [
     target_env.File("Heimdall/AssertionHandler.cpp"),
     target_env.File("Heimdall/Engine.cpp"),
     target_env.File("Heimdall/TestTracker.cpp"),
-    target_env.File("KernelTest/hre/E9Reporter.cpp"),
-    target_env.File("KernelTest/hre/HRE.cpp"),
-    target_env.File("KernelTest/hre/HString.cpp"),
-    target_env.File("KernelTest/hre/ReporterRegistry.cpp"),
-    target_env.File("KernelTest/hre/TestList.cpp"),
-    target_env.File("KernelTest/hre/TestTracker.cpp"),
-    target_env.File("KernelTest/Runner.cpp"),
+    target_env.File("UnitTest/hre/E9Reporter.cpp"),
+    target_env.File("UnitTest/hre/HRE.cpp"),
+    target_env.File("UnitTest/hre/HString.cpp"),
+    target_env.File("UnitTest/hre/ReporterRegistry.cpp"),
+    target_env.File("UnitTest/hre/TestList.cpp"),
+    target_env.File("UnitTest/hre/TestTracker.cpp"),
+    target_env.File("UnitTest/Runner.cpp"),
 ]
 Heimdall = target_env.StaticLibrary("Heimdall.o", target_env.Object(sources))
 Export("Heimdall")

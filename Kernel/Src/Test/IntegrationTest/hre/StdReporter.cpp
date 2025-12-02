@@ -19,8 +19,6 @@
 #include <format>
 #include <iostream>
 
-#include <Test/IntegrationTest/hre/ANSIWriter.h>
-
 namespace Heimdall {
     void StdReporter::write_tag(const HString& tag, const HString& text) {
         std::cout << std::format("[{:<10}] {}", tag.to_c_str(), text.to_c_str()) << std::endl;
@@ -90,6 +88,7 @@ namespace Heimdall {
             write_tag("PASS", test_stats.name, GREEN);
         else
             write_tag("FAIL", test_stats.name, VSCODE_RED);
+        std::cout << std::endl;
     }
 
     void StdReporter::on_assertion_begin(const AssertionInfo& assertion_info) {
