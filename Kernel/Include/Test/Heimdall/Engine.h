@@ -15,25 +15,19 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_ENGINE_H
-#define RUNEOS_ENGINE_H
+#ifndef HEIMDALL_ENGINE_H
+#define HEIMDALL_ENGINE_H
 
 #include <Test/Heimdall/Configuration.h>
 #include <Test/Heimdall/Expression.h>
 #include <Test/Heimdall/Reporter.h>
+#include <Test/Heimdall/Test.h>
 
 namespace Heimdall {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Engine
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    /// @brief All possible test results.
-    enum class TestResult {
-        PASS,
-        FAIL,
-        CONFIGURATION_FAIL
-    };
 
     /// @brief The test engine configures the library and executes all tests.
     class Engine {
@@ -73,7 +67,7 @@ namespace Heimdall {
         ///
         /// @param options List of options.
         /// @return True: All tests are pass, False: At least one test is fail.
-        auto execute(const HStringList& options) -> TestResult;
+        auto execute(const HStringList& options) -> TestReport;
     };
 
     /// @brief
@@ -85,7 +79,7 @@ namespace Heimdall {
     /// A convenience method for 'Heimdall::get_engine.execute(options)'
     ///
     /// @param options List of options.
-    auto execute_tests(const HStringList& options) -> TestResult;
+    auto execute_tests(const HStringList& options) -> TestReport;
 } // namespace Heimdall
 
-#endif // RUNEOS_ENGINE_H
+#endif // HEIMDALL_ENGINE_H

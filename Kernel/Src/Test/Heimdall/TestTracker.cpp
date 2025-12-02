@@ -14,11 +14,17 @@
  *  limitations under the License.
  */
 
-#include <Test/Heimdall/TestTracker.h>
+#include <Test/Heimdall/Test.h>
 
-#include <KRE/CppRuntimeSupport.h>
+/// atexit will be automatically generated when static local variables are declared
+/// This function will be provided by the heimdall runtime environment but a forward declaration
+/// is needed for the compiler
+auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
+    DEFINE_ENUM(TestResult, TEST_RESULTS, 0x0)
+
+
     auto get_test_tracker() -> TestTracker& {
         static TestTracker test_registry;
         return test_registry;

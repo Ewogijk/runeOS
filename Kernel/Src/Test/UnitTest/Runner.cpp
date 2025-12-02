@@ -17,7 +17,7 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
-#include <Test/KernelTest/tests/Dummy.h>
+#include <Test/UnitTest/tests/Dummy.h>
 
 namespace Rune::Test {
 
@@ -25,6 +25,6 @@ namespace Rune::Test {
     auto run_kernel_tests() -> Heimdall::TestResult {
         Heimdall::HStringList options;
         options.insert("e9-reporter");
-        return Heimdall::execute_tests(options);
+        return Heimdall::execute_tests(options).result;
     }
 }

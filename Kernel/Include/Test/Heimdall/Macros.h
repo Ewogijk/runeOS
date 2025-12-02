@@ -19,7 +19,7 @@
 #define RUNEOS_MACROS_H
 
 #include <Test/Heimdall/AssertionHandler.h>
-#include <Test/Heimdall/TestTracker.h>
+#include <Test/Heimdall/Test.h>
 
 namespace Heimdall {
 #define ACTUAL_CONCAT(a, b) a##b

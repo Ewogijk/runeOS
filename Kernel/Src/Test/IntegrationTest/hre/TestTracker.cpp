@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Test/Heimdall/TestTracker.h>
+#include <Test/Heimdall/Test.h>
 
 #include <string>
 #include <unordered_map>

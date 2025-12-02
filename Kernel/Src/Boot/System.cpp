@@ -41,7 +41,7 @@
 
 #include <Boot/DetailedLogLayout.h>
 
-#include <Test/KernelTest/Runner.h>
+#include <Test/UnitTest/Runner.h>
 
 namespace Rune {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");

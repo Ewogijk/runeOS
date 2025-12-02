@@ -10,6 +10,7 @@ sources = [
     'Heimdall/AssertionHandler.cpp',
     'Heimdall/Engine.cpp',
     'Heimdall/TestTracker.cpp',
+    'IntegrationTest/hre/ANSIWriter.cpp',
     'IntegrationTest/hre/HRE.cpp',
     'IntegrationTest/hre/HString.cpp',
     'IntegrationTest/hre/ReporterRegistry.cpp',

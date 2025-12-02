@@ -18,7 +18,7 @@
 
 #include <CPU/E9Stream.h>
 
-#include <Test/KernelTest/hre/E9Reporter.h>
+#include <Test/UnitTest/hre/E9Reporter.h>
 
 namespace Heimdall {
     void hre_emergency_log(const HString& message) {

@@ -20,12 +20,30 @@
 
 #include <Test/Heimdall/HString.h>
 
-namespace Heimdall {
+#include <Ember/Enum.h>
 
+namespace Heimdall {
     /// @brief Information about a test.
     struct Test {
         HString name;
         void    (*test_function)();
+    };
+
+#define TEST_RESULTS(X)                                                                            \
+    X(TestResult, PASS, 0x1)                                                                       \
+    X(TestResult, FAIL, 0x2)                                                                       \
+    X(TestResult, CONFIG_ERROR, 0x3)
+
+    /// @brief All possible test results.
+    ///
+    /// PASS: A single or the overall test is pass.<br>
+    /// FAIL: A single or the overall test is fail.<br>
+    /// CONFIG_ERROR: Heimdall could not be configured.<br>
+    DECLARE_ENUM(TestResult, TEST_RESULTS, 0x0) // NOLINT
+
+    /// @brief The overall test report.
+    struct TestReport {
+        TestResult result; // Overall result of running all tests.
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -38,7 +56,7 @@ namespace Heimdall {
         struct TestListDetail;
         TestListDetail* _list_detail;
 
-    public:
+      public:
         TestList();
         ~TestList();
 
@@ -64,7 +82,7 @@ namespace Heimdall {
         struct DictDetail;
         DictDetail* _dict_detail;
 
-    public:
+      public:
         TestTracker();
         ~TestTracker();
 
