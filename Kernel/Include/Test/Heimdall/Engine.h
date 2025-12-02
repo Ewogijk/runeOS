@@ -32,6 +32,7 @@ namespace Heimdall {
     enum class TestResult {
         PASS,
         FAIL,
+        CONFIGURATION_FAIL
     };
 
     /// @brief The test engine configures the library and executes all tests.
@@ -67,8 +68,12 @@ namespace Heimdall {
         /// Kernel Test Options:
         ///     - e9-reporter: Log the test report to the E9 port.
         ///
+        /// Integration Test Options:
+        ///     - std-reporter: Log the test report to std::cout.
+        ///
         /// @param options List of options.
-        void execute(const HStringList& options);
+        /// @return True: All tests are pass, False: At least one test is fail.
+        auto execute(const HStringList& options) -> TestResult;
     };
 
     /// @brief
@@ -80,7 +85,7 @@ namespace Heimdall {
     /// A convenience method for 'Heimdall::get_engine.execute(options)'
     ///
     /// @param options List of options.
-    void execute_tests(const HStringList& options);
+    auto execute_tests(const HStringList& options) -> TestResult;
 } // namespace Heimdall
 
 #endif // RUNEOS_ENGINE_H

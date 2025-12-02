@@ -15,13 +15,17 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_RUNNER_H
-#define RUNEOS_RUNNER_H
+#ifndef RUNEOS_DUMMY_H
+#define RUNEOS_DUMMY_H
 
 #include <Test/Heimdall/Heimdall.h>
 
-namespace Rune::Test {
-    auto run_kernel_tests() -> Heimdall::TestResult;
+TEST("Integration Test 1", "A Suite") {
+    REQUIRE(1 + 1 == 2)
 }
 
-#endif // RUNEOS_RUNNER_H
+TEST("Integration Test 2", "A Suite") {
+    REQUIRE(1 + 1 == 3)
+}
+
+#endif // RUNEOS_DUMMY_H
