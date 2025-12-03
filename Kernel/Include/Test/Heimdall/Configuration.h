@@ -21,9 +21,37 @@
 #include <Test/Heimdall/Reporter.h>
 
 namespace Heimdall {
+    /// @brief A configuration setting.
+    struct Option {
+        HString name;
+        HString value;
+    };
+
+    /// @brief A portable list of options.
+    ///
+    /// Note: The class is part of the heimdall runtime environment (hre).
+    class OptionList {
+        struct OptionListDetail;
+        OptionListDetail* _list_detail;
+    public:
+        OptionList();
+        ~OptionList();
+
+        OptionList(const OptionList& other);
+        OptionList(OptionList&& other) noexcept;
+        auto operator=(const OptionList& other) -> OptionList&;
+        auto operator=(OptionList&& other) noexcept -> OptionList&;
+
+        friend void swap(OptionList& fst, OptionList& sec) noexcept;
+
+        [[nodiscard]] auto size() const -> size_t;
+        void               insert(const Option& test);
+        auto               operator[](size_t index) const -> Option;
+    };
+
     /// @brief Configuration of the heimdall engine.
     struct Configuration {
-        HStringList options;
+        OptionList options;
         ReporterRegistry reporter_registry;
     };
 }

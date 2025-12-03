@@ -19,8 +19,11 @@
 #include <Test/IntegrationTest/hre/StdReporter.h>
 
 #include <iostream>
+#include <fstream>
 
 namespace Heimdall {
+    auto hre_get_runtime_name() -> HString { return "Rune"; }
+
     void hre_emergency_log(const HString& message) {
         std::cout << "\033[38;2;" << static_cast<int>(VSCODE_RED.red) << ";"
                   << static_cast<int>(VSCODE_RED.green) << ";" << static_cast<int>(VSCODE_RED.blue)
@@ -29,8 +32,14 @@ namespace Heimdall {
 
     void hre_configure(Configuration& config) {
         for (size_t i = 0; i < config.options.size(); i++) {
-            std::string opt(config.options[i].to_c_str());
+            std::string opt(config.options[i].name.to_c_str());
             if (opt == "std-reporter") config.reporter_registry.insert(new Heimdall::StdReporter());
         }
+    }
+
+    void hre_save_test_report(const HString& path, const TestReport& test_report) {
+        std::ofstream test_report_file(path.to_c_str());
+        test_report_file << test_report.result.to_string();
+        test_report_file.close();
     }
 } // namespace Heimdall

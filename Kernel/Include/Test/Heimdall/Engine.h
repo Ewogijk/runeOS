@@ -34,9 +34,11 @@ namespace Heimdall {
         TestResult    _test_result; // Result of the currently running test.
         Configuration _configuration;
 
-        auto configure(const HStringList& options) -> bool;
+        auto configure(const OptionList& options) -> bool;
 
       public:
+        static HString TEST_REPORT_LOCATION;
+
         [[nodiscard]] auto get_current_test_result() const -> TestResult;
 
         /**
@@ -57,7 +59,8 @@ namespace Heimdall {
         /// Options are either general or heimdall runtime environment specific.
         ///
         /// General options:
-        ///     - None
+        ///     - test-report-location: Absolute path to location where the test report will be
+        ///                             saved.
         ///
         /// Kernel Test Options:
         ///     - e9-reporter: Log the test report to the E9 port.
@@ -67,7 +70,7 @@ namespace Heimdall {
         ///
         /// @param options List of options.
         /// @return True: All tests are pass, False: At least one test is fail.
-        auto execute(const HStringList& options) -> TestReport;
+        auto execute(const OptionList& options) -> TestReport;
     };
 
     /// @brief
@@ -79,7 +82,7 @@ namespace Heimdall {
     /// A convenience method for 'Heimdall::get_engine.execute(options)'
     ///
     /// @param options List of options.
-    auto execute_tests(const HStringList& options) -> TestReport;
+    auto execute_tests(const OptionList& options) -> TestReport;
 } // namespace Heimdall
 
 #endif // HEIMDALL_ENGINE_H

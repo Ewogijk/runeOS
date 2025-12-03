@@ -19,8 +19,10 @@
 #include <Test/IntegrationTest/tests/Dummy.h>
 
 int main(const int argc, char* argv[]) {
-    Heimdall::HStringList options;
-    options.insert("std-reporter");
+    Heimdall::OptionList options;
+    options.insert({.name = "std-reporter", .value = ""});
+    options.insert(
+            {.name = "test-report-location", .value = "/System/Heimdall/IntegrationTestReport.txt"});
     Heimdall::TestResult tr = Heimdall::execute_tests(options).result;
     switch (tr) {
         case Heimdall::TestResult::PASS: return 0;

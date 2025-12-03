@@ -27,11 +27,22 @@ auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
 
-    auto Engine::configure(const HStringList& options) -> bool {
+    HString Engine::TEST_REPORT_LOCATION = "test-report-location";
+
+    auto Engine::configure(const OptionList& options) -> bool {
         _configuration.options = options;
         hre_configure(_configuration);
         if (_configuration.reporter_registry.is_empty()) {
             hre_emergency_log("ERROR: No reporters have been configured! Aborting test run...\n");
+            return false;
+        }
+        bool has_test_report_location = false;
+        for (size_t i = 0; i < _configuration.options.size(); i++) {
+            Option opt = _configuration.options[i];
+            if (opt.name == TEST_REPORT_LOCATION) has_test_report_location = true;
+        }
+        if (!has_test_report_location) {
+            hre_emergency_log("ERROR: Missing test report location option.");
             return false;
         }
         return true;
@@ -50,8 +61,8 @@ namespace Heimdall {
         _test_result = assert_stats.result ? TestResult::PASS : TestResult::FAIL;
     }
 
-    auto Engine::execute(const HStringList& options) -> TestReport {
-        if (!configure(options)) return { TestResult::CONFIG_ERROR };
+    auto Engine::execute(const OptionList& options) -> TestReport {
+        if (!configure(options)) return {TestResult::CONFIG_ERROR};
 
         auto&  test_tracker         = get_test_tracker();
         size_t overall_total_tests  = 0;
@@ -61,9 +72,20 @@ namespace Heimdall {
         HStringList reporter_names;
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             reporter_names.insert(_configuration.reporter_registry[i]->get_name());
+        HStringList str_options;
+        for (size_t i = 0; i < _configuration.options.size(); i++) {
+            if (_configuration.options[i].value.is_empty())
+                str_options.insert(_configuration.options[i].name);
+            else
+                str_options.insert(_configuration.options[i].name + "="
+                                   + _configuration.options[i].value);
+        }
+
         TestRunInfo test_run_info{.heimdall_major = 0,
                                   .heimdall_minor = 1,
                                   .heimdall_patch = 0,
+                                  .hre            = hre_get_runtime_name(),
+                                  .options        = str_options,
                                   .reporter_names = reporter_names};
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_begin(test_run_info);
@@ -116,7 +138,14 @@ namespace Heimdall {
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_end(test_run_stats);
 
-        return {overall_tests_passed == overall_total_tests ? TestResult::PASS : TestResult::FAIL};
+        TestReport tr = {overall_tests_passed == overall_total_tests ? TestResult::PASS
+                                                                     : TestResult::FAIL};
+
+        for (size_t i = 0; i < _configuration.options.size(); i++) {
+            Option opt = _configuration.options[i];
+            if (opt.name == TEST_REPORT_LOCATION) hre_save_test_report(opt.value, tr);
+        }
+        return tr;
     }
 
     auto get_engine() -> Engine& {
@@ -124,7 +153,7 @@ namespace Heimdall {
         return engine;
     }
 
-    auto execute_tests(const HStringList& options) -> TestReport {
+    auto execute_tests(const OptionList& options) -> TestReport {
         return get_engine().execute(options);
     }
 } // namespace Heimdall

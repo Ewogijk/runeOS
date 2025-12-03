@@ -105,8 +105,6 @@ namespace Rune {
     auto boot_phase3(CPU::StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info);
 
-        Test::run_kernel_tests();
-
         auto& system = System::instance();
         if (system._is_booted) {
             LOGGER->warn(
@@ -128,6 +126,8 @@ namespace Rune {
             "detailed-layout",
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
+
+        Test::run_kernel_tests();
 
         // Pass control to the system loader
         auto*         vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);

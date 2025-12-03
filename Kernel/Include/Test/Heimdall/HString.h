@@ -56,6 +56,9 @@ namespace Heimdall {
         auto operator+(char o) const -> HString;
 
         [[nodiscard]] auto to_c_str() const -> const char*;
+
+        friend auto operator==(const HString& fst, const HString& sec) -> bool;
+        friend auto operator!=(const HString& fst, const HString& sec) -> bool;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -83,6 +86,6 @@ namespace Heimdall {
         void               insert(const HString& str);
         auto               operator[](size_t index) const -> HString;
     };
-}
+} // namespace Heimdall
 
 #endif // HEIMDALL_HSTRING_H

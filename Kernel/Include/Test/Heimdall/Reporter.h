@@ -20,8 +20,8 @@
 
 #include <Ember/Ember.h>
 
-#include <Test/Heimdall/SourceCodeLocation.h>
 #include <Test/Heimdall/HString.h>
+#include <Test/Heimdall/SourceCodeLocation.h>
 
 namespace Heimdall {
 
@@ -31,9 +31,11 @@ namespace Heimdall {
 
     /// @brief Info about the starting test run.
     struct TestRunInfo {
-        U8                             heimdall_major;
-        U8                             heimdall_minor;
-        U8                             heimdall_patch;
+        U8          heimdall_major;
+        U8          heimdall_minor;
+        U8          heimdall_patch;
+        HString     hre;
+        HStringList options;
         HStringList reporter_names;
     };
 
@@ -52,34 +54,34 @@ namespace Heimdall {
     /// @brief The results of executing a test.
     struct TestStats {
         HString name;
-        bool         result;
+        bool    result;
     };
 
     /// @brief Info about the starting test suite.
     struct TestSuiteInfo {
         HString name;
-        size_t       total_tests;
+        size_t  total_tests;
     };
 
     /// @brief The results of executing the test suite.
     struct TestSuiteStats {
         HString name;
-        size_t       total_tests;
-        size_t       passed_tests;
-        size_t       failed_tests;
+        size_t  total_tests;
+        size_t  passed_tests;
+        size_t  failed_tests;
     };
 
     /// @brief Info about the starting assertion.
     struct AssertionInfo {
         SourceCodeLocation scl;
-        HString       assert;
+        HString            assert;
     };
 
     /// @brief The results of evaluating the assertion.
     struct AssertionStats {
         SourceCodeLocation scl;
-        HString       assert;
-        HString       expanded_assert;
+        HString            assert;
+        HString            expanded_assert;
         bool               result;
     };
 
@@ -110,8 +112,8 @@ namespace Heimdall {
         /// @param test_run_stats
         virtual void on_test_run_end(const TestRunStats& test_run_stats) = 0;
 
-
-        /// @brief The function will be called by the test engine before the first test case of a test
+        /// @brief The function will be called by the test engine before the first test case of a
+        /// test
         ///         suite is executed.
         /// @param test_suite_info
         virtual void on_test_suite_begin(const TestSuiteInfo& test_suite_info) = 0;
@@ -148,7 +150,7 @@ namespace Heimdall {
         struct ReporterListDetail;
         ReporterListDetail* _list_detail;
 
-    public:
+      public:
         ReporterRegistry();
         ~ReporterRegistry();
 

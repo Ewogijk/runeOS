@@ -13,6 +13,7 @@ sources = [
     'IntegrationTest/hre/ANSIWriter.cpp',
     'IntegrationTest/hre/HRE.cpp',
     'IntegrationTest/hre/HString.cpp',
+    'IntegrationTest/hre/OptionList.cpp',
     'IntegrationTest/hre/ReporterRegistry.cpp',
     'IntegrationTest/hre/StdReporter.cpp',
     'IntegrationTest/hre/TestList.cpp',
