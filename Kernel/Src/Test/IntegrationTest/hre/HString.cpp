@@ -29,7 +29,8 @@ namespace Heimdall {
     };
 
     HString::HString() : _str_detail(new StringDetail{std::string()}) {}
-    HString::HString(const char* c_str) : _str_detail(new StringDetail{std::string(c_str)}) {}
+    HString::HString(const char* c_str)
+        : _str_detail(new StringDetail{std::string(c_str)}) {}
     HString::~HString() { delete _str_detail; }
 
     HString::HString(const HString& other)
@@ -85,6 +86,13 @@ namespace Heimdall {
     }
 
     const char* HString::to_c_str() const { return _str_detail->str.c_str(); }
+
+    auto operator==(const HString& fst, const HString& sec) -> bool {
+        return fst._str_detail->str == sec._str_detail->str;
+    }
+    auto operator!=(const HString& fst, const HString& sec) -> bool {
+        return fst._str_detail->str != sec._str_detail->str;
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  HString List

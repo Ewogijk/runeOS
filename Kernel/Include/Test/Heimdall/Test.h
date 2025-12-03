@@ -77,6 +77,7 @@ namespace Heimdall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /// @brief The test tracker contains all test suites and their tests.
+    ///
     /// Note: The class is part of the heimdall runtime environment (hre).
     class TestTracker {
         struct DictDetail;

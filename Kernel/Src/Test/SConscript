@@ -35,6 +35,7 @@ sources = [
     target_env.File("UnitTest/hre/E9Reporter.cpp"),
     target_env.File("UnitTest/hre/HRE.cpp"),
     target_env.File("UnitTest/hre/HString.cpp"),
+    target_env.File("UnitTest/hre/OptionList.cpp"),
     target_env.File("UnitTest/hre/ReporterRegistry.cpp"),
     target_env.File("UnitTest/hre/TestList.cpp"),
     target_env.File("UnitTest/hre/TestTracker.cpp"),

@@ -40,7 +40,19 @@ namespace Heimdall {
                             test_run_info.heimdall_major,
                             test_run_info.heimdall_minor,
                             test_run_info.heimdall_patch);
-        _e9.write_formatted("Registered reports: ");
+
+        _e9.write_formatted("Heimdall Runtime Environment: {}\n", test_run_info.hre.to_c_str());
+
+        _e9.write_formatted("Options: ");
+        for (size_t i = 0; i < test_run_info.options.size(); ++i) {
+            if (i < test_run_info.options.size() - 1)
+                _e9.write_formatted("{}, ", test_run_info.options[i].to_c_str());
+            else
+                _e9.write_formatted("{}", test_run_info.options[i].to_c_str());
+        }
+        _e9.write_line("");
+
+        _e9.write_formatted("Reporters: ");
         for (size_t i = 0; i < test_run_info.reporter_names.size(); ++i) {
             if (i < test_run_info.reporter_names.size() - 1)
                 _e9.write_formatted("{}, ", test_run_info.reporter_names[i].to_c_str());
@@ -106,4 +118,4 @@ namespace Heimdall {
             _e9.reset_style();
         }
     }
-}
+} // namespace Heimdall

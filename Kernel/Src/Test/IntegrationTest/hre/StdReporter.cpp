@@ -26,6 +26,7 @@ namespace Heimdall {
 
     void StdReporter::write_tag(const HString& tag, const HString& text, Pixel pixel) {
         ansi_write_text(std::format("[{:<10}] {}", tag.to_c_str(), text.to_c_str()), pixel);
+        std::cout << std::endl;
     }
 
     void StdReporter::write_divider(char div_char, const HString& text) {
@@ -34,7 +35,7 @@ namespace Heimdall {
         write_tag(div, text);
     }
 
-    auto StdReporter::get_name() const -> HString { return "E9Reporter"; }
+    auto StdReporter::get_name() const -> HString { return "StdReporter"; }
 
     void StdReporter::on_test_run_begin(const TestRunInfo& test_run_info) {
 
@@ -43,7 +44,19 @@ namespace Heimdall {
                                   test_run_info.heimdall_minor,
                                   test_run_info.heimdall_patch);
         std::cout << header << std::endl << std::endl;
-        std::cout << "Registered reports: ";
+
+        std::cout << "Heimdall Runtime Environment: " << test_run_info.hre.to_c_str() << std::endl;
+
+        std::cout << "Options: ";
+        for (size_t i = 0; i < test_run_info.options.size(); ++i) {
+            if (i < test_run_info.options.size() - 1)
+                std::cout << test_run_info.options[i].to_c_str() << ", ";
+            else
+                std::cout << test_run_info.options[i].to_c_str();
+        }
+        std::cout << std::endl;
+
+        std::cout << "Reporters: ";
         for (size_t i = 0; i < test_run_info.reporter_names.size(); ++i) {
             if (i < test_run_info.reporter_names.size() - 1)
                 std::cout << test_run_info.reporter_names[i].to_c_str() << ", ";
@@ -67,6 +80,7 @@ namespace Heimdall {
                   HString::number_to_string(test_run_stats.failed_tests)
                       + (test_run_stats.failed_tests > 1 ? " Tests" : " Test"),
                   VSCODE_RED);
+        std::cout.flush();
     }
 
     void StdReporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {
@@ -88,7 +102,6 @@ namespace Heimdall {
             write_tag("PASS", test_stats.name, GREEN);
         else
             write_tag("FAIL", test_stats.name, VSCODE_RED);
-        std::cout << std::endl;
     }
 
     void StdReporter::on_assertion_begin(const AssertionInfo& assertion_info) {
@@ -98,11 +111,10 @@ namespace Heimdall {
 
     void StdReporter::on_assertion_end(const AssertionStats& assertion_stats) {
         if (!assertion_stats.result) {
-            ansi_write_text(std::format("             FAIL at {}:{}",
+            ansi_write_text(std::format("             FAIL at {}:{}\n",
                                         assertion_stats.scl.file.to_c_str(),
                                         assertion_stats.scl.line),
                             VSCODE_RED);
-            std::cout << std::endl;
 
             ansi_write_text(
                 std::format("                       {}\n", assertion_stats.assert.to_c_str()),
@@ -110,7 +122,6 @@ namespace Heimdall {
             ansi_write_text(std::format("                 With: {}\n",
                                         assertion_stats.expanded_assert.to_c_str()),
                             VSCODE_CYAN);
-            std::cout << std::endl;
         }
     }
 } // namespace Heimdall

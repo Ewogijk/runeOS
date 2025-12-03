@@ -85,6 +85,13 @@ namespace Heimdall {
 
     const char* HString::to_c_str() const { return _str_detail->str.to_cstr(); }
 
+    auto operator==(const HString& fst, const HString& sec) -> bool {
+        return fst._str_detail->str == sec._str_detail->str;
+    }
+    auto operator!=(const HString& fst, const HString& sec) -> bool {
+        return fst._str_detail->str != sec._str_detail->str;
+    }
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  HString List
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
