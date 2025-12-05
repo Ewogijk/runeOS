@@ -1,6 +1,12 @@
 # Target architecture of the kernel. One of: [x86_64]
 arch: x86_64
-# The build type. One of: [debug, release]
+# The build type. One of: [release, debug, test, ci]
+# Type      Packaging                               Testing
+# ===============================================================================
+# release   No scripts and binaries for debugging   No unit and integration tests are run
+# debug     With scripts and binaries for debugging No unit and integration tests are run
+# test      No scripts and binaries for debugging   Run unit and integration testing then halt
+# ci        No scripts and binaries for debugging   Run unit and integration testing then shutdown
 build: debug
 # If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
 # related debugging features.

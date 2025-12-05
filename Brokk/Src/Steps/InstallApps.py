@@ -36,13 +36,17 @@ class InstallAppsStep(Build.BuildStep):
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """
+        app_list = build_conf[BuildConfig.APPS.to_yaml_key()]
+        if len(app_list) == 0:
+            print("No apps to install")
+            return True
 
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
         rune_os_image = project_root / "Brokk" / "runeOS.image"
         app_dir = project_root / "App"
-        for app in build_conf[BuildConfig.APPS.to_yaml_key()]:
+        for app in app_list:
             app_proj = app_dir / app
-            if not Build.meson_build(app_proj):
+            if not Build.meson_build(app_proj, app_proj / "Build"):
                 return False
             install_app_cmd = [
                 "Src/Copy-File-To-Image.sh",

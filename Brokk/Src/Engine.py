@@ -21,27 +21,18 @@ from Steps.FileCopy import FileCopyStep
 from Steps.ImageBuild import ImageBuildStep
 from Steps.Install import InstallStep
 from Steps.InstallApps import InstallAppsStep
+from Steps.IntegrationTestBuild import IntegrationTestBuildStep
 from Steps.KernelBuild import KernelBuildStep
 from Steps.CrucibleBuild import CrucibleBuildStep
 from Steps.SystemLoaderBuild import SystemLoaderBuildStep
 
-from typing import List
+from typing import List, Dict, Any
 from pathlib import Path
 from Build import BuildStep
 from Config import BrokkConfig, BuildConfig
 
 VERSION = "0.2.0"
 MIN_IMAGE_SIZE = 256
-STEPS_BUILD_ALL: List[BuildStep] = [
-    KernelBuildStep(),
-    SystemLoaderBuildStep(),
-    CrucibleBuildStep(),
-    ImageBuildStep(),
-    InstallAppsStep(),
-    FileCopyStep(),
-    InstallStep(),
-]
-
 
 def print_banner() -> None:
     print(f"----------------------------- Brokk v{VERSION} -----------------------------\n")
@@ -59,6 +50,30 @@ def print_msg(msg: str) -> None:
 
 def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
+
+def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
+    build = build_conf[BuildConfig.BUILD.to_yaml_key()]
+    if build == "test" or build == "ci":
+        return [
+            KernelBuildStep(),
+            SystemLoaderBuildStep(),
+            IntegrationTestBuildStep(),
+            ImageBuildStep(),
+            InstallAppsStep(),
+            FileCopyStep(),
+            InstallStep(),
+        ]
+    else:
+        return [
+            KernelBuildStep(),
+            SystemLoaderBuildStep(),
+            CrucibleBuildStep(),
+            ImageBuildStep(),
+            InstallAppsStep(),
+            FileCopyStep(),
+            InstallStep(),
+        ]
+
 
 
 def configure(brokk_config_yaml: str) -> bool:
@@ -91,6 +106,7 @@ def configure(brokk_config_yaml: str) -> bool:
         print_err(f"Image size must be greater than {MIN_IMAGE_SIZE}")
         return False
 
+    apps = brokk_config[BrokkConfig.APPS.to_yaml_key()]
     build_config = {
         BuildConfig.PROJECT_ROOT.to_yaml_key(): str(Path("..").resolve()),
         BuildConfig.ARCH.to_yaml_key(): arch,
@@ -108,7 +124,7 @@ def configure(brokk_config_yaml: str) -> bool:
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
         BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[BrokkConfig.SYSTEM_LOADER.to_yaml_key()],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
-        BuildConfig.APPS.to_yaml_key(): brokk_config[BrokkConfig.APPS.to_yaml_key()],
+        BuildConfig.APPS.to_yaml_key(): apps if apps else []
     }
 
     build_settings_file = build_dir / Config.BUILD_CONFIG_YAML
@@ -137,7 +153,7 @@ def build_all(arch: str, build: str) -> bool:
     for config, value in build_config.items():
         print(f"    {config}: {value}")
 
-    for build_step in STEPS_BUILD_ALL:
+    for build_step in get_build_steps(build_config):
         print_step(build_step.name())
         if not build_step.execute(build_config):
             print_err(f"'{build_step.name()}': Build step failed.")
