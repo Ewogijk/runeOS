@@ -41,11 +41,6 @@ namespace Heimdall {
     /// CONFIG_ERROR: Heimdall could not be configured.<br>
     DECLARE_ENUM(TestResult, TEST_RESULTS, 0x0) // NOLINT
 
-    /// @brief The overall test report.
-    struct TestReport {
-        TestResult result; // Overall result of running all tests.
-    };
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  List Wrapper for Test
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

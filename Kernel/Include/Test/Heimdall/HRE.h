@@ -20,7 +20,6 @@
 
 #include <Test/Heimdall/Configuration.h>
 #include <Test/Heimdall/HString.h>
-#include <Test/Heimdall/Test.h>
 
 namespace Heimdall {
 
@@ -35,11 +34,6 @@ namespace Heimdall {
     /// @brief Perform engine configuration of the heimdall runtime environment.
     /// @param config Configuration provided by the engine.
     void hre_configure(Configuration& config);
-
-    /// @brief Save the test report to path.
-    /// @param path Absolute path to the save location of the test report.
-    /// @param test_report A test report.
-    void hre_save_test_report(const HString& path, const TestReport& test_report);
 }
 
 #endif // HEIMDALL_HRE_H

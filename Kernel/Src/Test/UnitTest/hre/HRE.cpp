@@ -47,31 +47,4 @@ namespace Heimdall {
             if (opt == "e9-reporter") config.reporter_registry.insert(new Heimdall::E9Reporter());
         }
     }
-
-    void hre_save_test_report(const HString& path, const TestReport& test_report) {
-        Rune::System& sys        = Rune::System::instance();
-        auto          vfs_module = sys.get_module<Rune::VFS::VFSModule>(Rune::ModuleSelector::VFS);
-        Rune::Path    test_report_file(path.to_c_str());
-        Rune::VFS::IOStatus st =
-            vfs_module->create(test_report_file, Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
-        if (st != Rune::VFS::IOStatus::CREATED && st != Rune::VFS::IOStatus::FOUND) {
-            log_red(path + ": Could not create test report file. Reason: " + st.to_string() + "\n");
-            return;
-        }
-
-        Rune::SharedPointer<Rune::VFS::Node> node;
-        st = vfs_module->open(test_report_file, Ember::IOMode::WRITE, node);
-        if (st != Rune::VFS::IOStatus::OPENED) {
-            log_red(path + ": Could not open test report file. Reason: " + st.to_string()+ "\n");
-            return;
-        }
-
-        Rune::String tr = test_report.result.to_string();
-        Rune::VFS::NodeIOResult io_res = node->write(const_cast<char*>(tr.to_cstr()), tr.size());
-        if (io_res.status != Rune::VFS::NodeIOStatus::OKAY) {
-            log_red(path + ": Could not write test report. Reason: " + io_res.status.to_string()+ "\n");
-            return;
-        }
-        node->close();
-    }
 } // namespace Heimdall

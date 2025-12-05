@@ -70,7 +70,7 @@ namespace Heimdall {
         ///
         /// @param options List of options.
         /// @return True: All tests are pass, False: At least one test is fail.
-        auto execute(const OptionList& options) -> TestReport;
+        void execute(const OptionList& options);
     };
 
     /// @brief
@@ -82,7 +82,7 @@ namespace Heimdall {
     /// A convenience method for 'Heimdall::get_engine.execute(options)'
     ///
     /// @param options List of options.
-    auto execute_tests(const OptionList& options) -> TestReport;
+    void execute_tests(const OptionList& options);
 } // namespace Heimdall
 
 #endif // HEIMDALL_ENGINE_H

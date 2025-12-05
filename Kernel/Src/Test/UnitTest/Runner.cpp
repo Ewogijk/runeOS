@@ -22,11 +22,11 @@
 namespace Rune::Test {
 
     /// @brief Configure the E9 reporter and execute the kernel tests.
-    auto run_kernel_tests() -> Heimdall::TestResult {
+    void run_kernel_tests() {
         Heimdall::OptionList options;
         options.insert({.name = "e9-reporter", .value = ""});
         options.insert(
             {.name = "test-report-location", .value = "/System/Heimdall/UnitTestReport.txt"});
-        return Heimdall::execute_tests(options).result;
+        Heimdall::execute_tests(options);
     }
 } // namespace Rune::Test
