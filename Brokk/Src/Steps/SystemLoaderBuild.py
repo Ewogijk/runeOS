@@ -37,4 +37,5 @@ class SystemLoaderBuildStep(Build.BuildStep):
         :return: True: The build step was successful, False: Otherwise.
         """
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        return Build.meson_build(project_root / "App" / "Freya")
+        system_loader_proj = project_root / "App" / "Freya"
+        return Build.meson_build(system_loader_proj, system_loader_proj / "Build")

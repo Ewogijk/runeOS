@@ -23,18 +23,21 @@ from Config import BuildConfig
 import Build
 
 
-class CrucibleBuildStep(Build.BuildStep):
+class IntegrationTestBuildStep(Build.BuildStep):
     def name(self) -> str:
         """
         :return: Name of the build step.
         """
 
-        return "Crucible Build"
+        return "Integration Test Build"
 
     def execute(self, build_conf: Dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        src_dir = project_root / "App" / "Crucible"
-        return Build.meson_build(src_dir, src_dir / 'Build')
+        arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
+        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
+        src_dir = project_root / "Kernel" / "Src" / "Test"
+        build_dir = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "IntegrationTest"
+        return Build.meson_build(src_dir, build_dir)

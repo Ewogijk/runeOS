@@ -64,11 +64,6 @@ rune_os_image=$3
 kernel_elf=$4
 os_elf=$5
 
-if [ "$build" != "debug" ] && [ "$build" != "release" ]; then
-  echo "Error - Unknown build type: ${build}, Expected one of: [debug, release]"
-  exit 1
-fi
-
 echo
 echo Install Configuration:
 echo ------------------------
