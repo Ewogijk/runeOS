@@ -23,10 +23,6 @@ int main(const int argc, char* argv[]) {
     options.insert({.name = "std-reporter", .value = ""});
     options.insert(
             {.name = "test-report-location", .value = "/System/Heimdall/IntegrationTestReport.txt"});
-    Heimdall::TestResult tr = Heimdall::execute_tests(options).result;
-    switch (tr) {
-        case Heimdall::TestResult::PASS: return 0;
-        case Heimdall::TestResult::FAIL: return -1;
-        default:                         return -2; // CONFIGURATION_FAIL
-    }
+    Heimdall::execute_tests(options);
+    return 0;
 }

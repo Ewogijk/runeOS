@@ -21,7 +21,7 @@
 #include <Test/Heimdall/Heimdall.h>
 
 namespace Rune::Test {
-    auto run_kernel_tests() -> Heimdall::TestResult;
+    void run_kernel_tests();
 }
 
 #endif // RUNEOS_RUNNER_H

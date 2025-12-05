@@ -21,7 +21,7 @@ sources = [
     'IntegrationTest/main.cpp',
 ]
 
-executable('rune_integration_test.app',
+executable('IntegrationTest.app',
            sources,
            cpp_args : '-std=c++20',
            include_directories : inc)

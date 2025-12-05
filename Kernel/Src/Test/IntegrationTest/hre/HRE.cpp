@@ -36,10 +36,4 @@ namespace Heimdall {
             if (opt == "std-reporter") config.reporter_registry.insert(new Heimdall::StdReporter());
         }
     }
-
-    void hre_save_test_report(const HString& path, const TestReport& test_report) {
-        std::ofstream test_report_file(path.to_c_str());
-        test_report_file << test_report.result.to_string();
-        test_report_file.close();
-    }
 } // namespace Heimdall

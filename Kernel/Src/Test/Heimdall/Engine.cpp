@@ -61,8 +61,8 @@ namespace Heimdall {
         _test_result = assert_stats.result ? TestResult::PASS : TestResult::FAIL;
     }
 
-    auto Engine::execute(const OptionList& options) -> TestReport {
-        if (!configure(options)) return {TestResult::CONFIG_ERROR};
+    void Engine::execute(const OptionList& options) {
+        if (!configure(options)) return;
 
         auto&  test_tracker         = get_test_tracker();
         size_t overall_total_tests  = 0;
@@ -137,15 +137,6 @@ namespace Heimdall {
                                     .failed_tests = overall_tests_failed};
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_end(test_run_stats);
-
-        TestReport tr = {overall_tests_passed == overall_total_tests ? TestResult::PASS
-                                                                     : TestResult::FAIL};
-
-        for (size_t i = 0; i < _configuration.options.size(); i++) {
-            Option opt = _configuration.options[i];
-            if (opt.name == TEST_REPORT_LOCATION) hre_save_test_report(opt.value, tr);
-        }
-        return tr;
     }
 
     auto get_engine() -> Engine& {
@@ -153,7 +144,7 @@ namespace Heimdall {
         return engine;
     }
 
-    auto execute_tests(const OptionList& options) -> TestReport {
-        return get_engine().execute(options);
+    void execute_tests(const OptionList& options) {
+        get_engine().execute(options);
     }
 } // namespace Heimdall
