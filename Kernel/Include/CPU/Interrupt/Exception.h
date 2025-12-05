@@ -48,7 +48,10 @@ namespace Rune::CPU {
      * address.</li>
      * </ul>
      */
-#define EXCEPTION_TYPES(X) X(ExceptionType, PageFault, 0x1)
+#define EXCEPTION_TYPES(X)                                                                         \
+    X(ExceptionType, DIVISION_BY_ZERO, 0x1)                                                        \
+    X(ExceptionType, DOUBLE_FAULT, 0x2)                                                            \
+    X(ExceptionType, PageFault, 0x3)
 
     DECLARE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0) // NOLINT
 
@@ -82,6 +85,9 @@ namespace Rune::CPU {
      * @return
      */
     LinkedList<ExceptionTableEntry> exception_get_table();
+
+    bool exception_is_enabled(ExceptionType type);
+    void exception_set_enabled(ExceptionType type, bool enabled);
 
     /**
      * Panic handling involves two steps:

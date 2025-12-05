@@ -41,7 +41,9 @@
 
 #include <Boot/DetailedLogLayout.h>
 
+#ifdef RUN_UNIT_TESTS
 #include <Test/UnitTest/Runner.h>
+#endif
 
 namespace Rune {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");
@@ -127,7 +129,10 @@ namespace Rune {
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
 
+#ifdef RUN_UNIT_TESTS
+        LOGGER->info("Run kernel unit tests");
         Test::run_kernel_tests();
+#endif
 
         // Pass control to the system loader
         auto*         vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
@@ -210,6 +215,16 @@ namespace Rune {
                                         CPU::SchedulingPolicy::LOW_LATENCY,
                                         {nullptr, 0x0, 0x0});
         cpu_subsys->get_scheduler()->unlock(); // Boot thread is scheduled after unlock
+    }
+
+    void System::shutdown() {
+        // Workaround solution to shut down the system
+        //  -> Disable DIVISION_BY_ZERO and DOUBLE_FAULT interrupt vectors to force a triple fault
+        //     instead a kernel panic.
+        // TODO Remove the workaround and perform an orderly shutdown by firmware
+        CPU::exception_set_enabled(CPU::ExceptionType::DIVISION_BY_ZERO, false);
+        CPU::exception_set_enabled(CPU::ExceptionType::DOUBLE_FAULT, false);
+        int a = 1 / 0;
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

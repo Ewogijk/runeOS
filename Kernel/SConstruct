@@ -31,7 +31,7 @@ vars.Add(
         "build",
         "The build type determines if compiler optimizations are used, release builds have compiler optimizations.",
         "debug",
-        allowed_values=["debug", "release"],
+        allowed_values=["release", "debug", "test", "ci"],
     )
 )
 vars.Add(
@@ -160,7 +160,6 @@ target_env.Replace(
 )
 Export("target_env")
 
-
 ######################################################################################################
 #                                           Code Generation                                          #
 ######################################################################################################
@@ -169,12 +168,25 @@ Export("target_env")
 def create_build_h_replacements(out_file: str):
     macro_defs = {
         "$ARCH": f"#define ARCH {arch} // Target architecture of the kernel.",
-        "$SYSTEM_LOADER" : target_env["system_loader"]
+        "$SYSTEM_LOADER": target_env["system_loader"]
     }
     if "64" in arch:
         macro_defs["$BIT"] = "#define BIT64 //Activate 64-bit related features"
+
     if target_env["qemu_build"]:
         macro_defs["$QEMU"] = "#define QEMU_HOST // Enable Qemu related debugging features."
+
+    if build == "test" or build == "ci":
+        macro_defs["$RUN_UNIT_TESTS"] = "#define RUN_UNIT_TESTS // Execute the kernel unit tests."
+    else:
+        macro_defs["$RUN_UNIT_TESTS"] = ""
+
+    if build == "ci":
+        macro_defs[
+            "$SHUTDOWN_ON_SYSTEM_LOADER_EXIT"] = "#define SHUTDOWN_ON_SYSTEM_LOADER_EXIT // Shutdown the system when the system loader exits unexpectedly."
+    else:
+        macro_defs["$SHUTDOWN_ON_SYSTEM_LOADER_EXIT"] = ""
+
     with open(out_file, "w") as f:
         json.dump(macro_defs, f, indent=4)
 
@@ -259,11 +271,6 @@ target_env.SConscript(
     duplicate=0,
 )
 target_env.SConscript(
-    str(Path("Src") / "Test" / "SConscript"),
-    variant_dir=str(build_dir / "Test" / "Heimdall"),
-    duplicate=0,
-)
-target_env.SConscript(
     str(Path("Src") / "BuiltInPlugin" / "SConscript"),
     variant_dir=str(build_dir / "BuiltInPlugin"),
     duplicate=0,
@@ -274,6 +281,13 @@ target_env.SConscript(
     duplicate=0,
 )
 
+if build == "test" or build == "ci":
+    target_env.SConscript(
+        str(Path("Src") / "Test" / "SConscript"),
+        variant_dir=str(build_dir / "Test" / "Heimdall"),
+        duplicate=0,
+    )
+    Import("Heimdall")
 
 Import("Ember")
 Import("KRE")
@@ -284,29 +298,48 @@ Import("Device")
 Import("VirtualFileSystem")
 Import("App")
 Import("SystemCall")
-Import("Heimdall")
 Import("BuiltInPlugin")
 Import("Boot")
 Import("crti")
 Import("crtn")
-objects = [
-    crti,
-    target_env["crt_begin"],
-    Boot,
-    BuiltInPlugin,
-    Heimdall,
-    SystemCall,
-    App,
-    VirtualFileSystem,
-    Device,
-    CPU,
-    Memory,
-    Arch,
-    KRE,
-    Ember,
-    target_env["crt_end"],
-    crtn,
-]
+
+if build == "test" or build == "ci":
+    objects = [
+        crti,
+        target_env["crt_begin"],
+        Boot,
+        BuiltInPlugin,
+        Heimdall,
+        SystemCall,
+        App,
+        VirtualFileSystem,
+        Device,
+        CPU,
+        Memory,
+        Arch,
+        KRE,
+        Ember,
+        target_env["crt_end"],
+        crtn,
+    ]
+else:
+    objects = [
+        crti,
+        target_env["crt_begin"],
+        Boot,
+        BuiltInPlugin,
+        SystemCall,
+        App,
+        VirtualFileSystem,
+        Device,
+        CPU,
+        Memory,
+        Arch,
+        KRE,
+        Ember,
+        target_env["crt_end"],
+        crtn,
+    ]
 
 target_env.Append(LINKFLAGS=["-T", target_env.File("Kernel.ld").srcnode().path])
 

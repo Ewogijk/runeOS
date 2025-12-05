@@ -195,6 +195,9 @@ namespace Rune {
                                            String::format(panic_msg_fmt, arg_array, arg_size));
             while (true) CPU::halt();
         }
+
+        /// @brief
+        void shutdown();
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
