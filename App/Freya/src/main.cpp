@@ -16,6 +16,7 @@
 
 #include "yaml-cpp/yaml.h"
 
+#include <Freya/Version.h>
 #include <Freya/DependencyGraph.h>
 #include <Freya/ExitCode.h>
 #include <Freya/Service.h>
@@ -26,8 +27,15 @@
 
 #include <filesystem>
 #include <iostream>
+#include <format>
+#include <string>
 
 int main(const int argc, char* argv[]) {
+    std::cout << std::format("Freya v{}.{}.{}", MINOR, MAJOR, PATCH);
+    if (!std::string(RELEASE).empty())
+        std::cout << std::format("-{}", RELEASE);
+    std::cout << std::endl;
+
     // Load Services
     Freya::ServiceLoader   service_loader;
     auto                   services = service_loader.load_services("/System/Freya/Services");
