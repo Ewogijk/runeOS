@@ -51,7 +51,8 @@ build_h_template = """
 $ARCH
 $BIT
 $QEMU
-
+$RUN_UNIT_TESTS
+$SHUTDOWN_ON_SYSTEM_LOADER_EXIT
 
 #endif //RUNEOS_BUILD_INFO_H
 """

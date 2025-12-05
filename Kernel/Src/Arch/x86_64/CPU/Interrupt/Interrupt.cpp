@@ -26,9 +26,7 @@ namespace Rune::CPU {
     static constexpr U8 EXCEPTION_COUNT = 32;
     static constexpr U8 IRQ_COUNT       = 224;
 
-    /**
-     * Mapping of the first 32 interrupt codes (0..31) to exception names.
-     */
+    /// Mapping of the first 32 interrupt codes (0..31) to exception names.
     static const char* const EXCEPTIONS[EXCEPTION_COUNT] = {"Divide by zero error",
                                                             "Debug",
                                                             "Non-maskable Interrupt",
@@ -61,6 +59,15 @@ namespace Rune::CPU {
                                                             "VMM Communication Exception",
                                                             "Security Exception",
                                                             ""};
+
+    static const U8 EXCEPTION_TYPE_TO_ID[4] = {
+        255, // NONE
+        0,   // DIVISION_BY_ZERO
+        8,   // DOUBLE_FAULT
+        14   // PAGE_FAULT
+    };
+
+    DEFINE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0)
 
     struct x86InterruptContext {
         x86CoreState core_state;
@@ -132,10 +139,11 @@ namespace Rune::CPU {
                         ->dump_core_state(PANIC_STREAM, x64_i_ctx->core_state);
                     PANIC_STREAM->reset_style();
                 }
-                while (true) __asm__ ("hlt");
+                while (true) __asm__("hlt");
             }
             InterruptContext i_ctx = {x64_i_ctx->i_error_code, x64_i_ctx->i_vector};
-                             (*EXCEPTION_HANDLER_TABLE[vector])(forward<InterruptContext*>(&i_ctx),
+
+            (*EXCEPTION_HANDLER_TABLE[vector])(forward<InterruptContext*>(&i_ctx),
                                                forward<const char*>(exception_name));
         } else {
             // Handle IRQ
@@ -177,8 +185,7 @@ namespace Rune::CPU {
         idt_load();
         init_interrupt_service_routines();
         // Enable CPU exceptions
-        for (int i = 0; i < EXCEPTION_COUNT; i++)
-            idt_get()->entry[i].flags.p = true;
+        for (int i = 0; i < EXCEPTION_COUNT; i++) idt_get()->entry[i].flags.p = true;
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -187,6 +194,14 @@ namespace Rune::CPU {
 
     void exception_install_panic_stream(SharedPointer<TextStream> panic_stream) {
         PANIC_STREAM = move(panic_stream);
+    }
+
+    bool exception_is_enabled(ExceptionType type) {
+        return idt_get()->entry[EXCEPTION_TYPE_TO_ID[type.to_value()]].flags.p;
+    }
+
+    void exception_set_enabled(ExceptionType type, bool enabled) {
+        idt_get()->entry[EXCEPTION_TYPE_TO_ID[type.to_value()]].flags.p = enabled;
     }
 
     bool exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler) {
@@ -227,8 +242,7 @@ namespace Rune::CPU {
         IRQTable table;
         table.irq_line = irq_line;
         table.raised = RAISED_COUNT[irq_line + PIC->get_irq_line_offset()]; // Need offset into IDT
-        for (auto& c : IRQ_HANDLER_TABLE[irq_line])
-            table.entry.add_back(c.entry);
+        for (auto& c : IRQ_HANDLER_TABLE[irq_line]) table.entry.add_back(c.entry);
         return table;
     }
 

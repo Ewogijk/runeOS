@@ -21,15 +21,14 @@
 
 namespace Rune::CPU {
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Interrupt Controller
     //
     // Design note: As this is extremely low level code nearly down to assembly, we will not use
-    // classes
-    //              here to simplify the code, meaning less intermediate functions called or having
-    //              to figure out how to call member functions from assembly which results in a
-    //              simpler stack to debug. Same applies to Exception.h and IRQ.h
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // classes here to simplify the code, meaning less intermediate functions called or having to
+    // figure out how to call member functions from assembly which results in a simpler stack to
+    // debug. Same applies to Exception.h and IRQ.h
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
      * @brief Load and initialize the interrupt vector table (IVT) and any additional infrastructure
