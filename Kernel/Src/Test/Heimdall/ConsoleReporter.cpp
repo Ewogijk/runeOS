@@ -23,9 +23,9 @@ namespace Heimdall {
         HString out;
         if (left) {
             out = text;
-            for (size_t i = 0; i < size_diff; i++) out = out + fill;
+            for (int i = 0; i < size_diff; i++) out = out + fill;
         } else {
-            for (size_t i = 0; i < size_diff; i++) out = out + fill;
+            for (int i = 0; i < size_diff; i++) out = out + fill;
             out = out + text;
         }
         return out;
@@ -33,7 +33,8 @@ namespace Heimdall {
 
     void
     ConsoleReporter::write_tag(const HString& tag, const HString& text, Color color, bool pad_pos) {
-        hre_log_console(HString("[") + pad(tag, ' ', pad_pos) + "] " + text + "\n", color);
+        hre_log_console(HString("[") + pad(tag, ' ', pad_pos) + "] ", color);
+        hre_log_console(text + "\n");
     }
 
     void ConsoleReporter::write_tag(const HString& tag, const HString& text, bool pad_pos) {
@@ -123,11 +124,11 @@ namespace Heimdall {
     void ConsoleReporter::on_assertion_end(const AssertionStats& assertion_stats) {
         if (!assertion_stats.result) {
             hre_log_console(HString("             FAIL at ") + assertion_stats.scl.file + ":"
-                                + assertion_stats.scl.line + "\n",
+                                + HString::number_to_string(assertion_stats.scl.line) + "\n",
                             VSCODE_RED);
-            hre_log_console(HString("                       ") + assertion_stats.assert + "\n",
+            hre_log_console(HString("                       ") + assertion_stats.expanded_assert + "\n",
                             VSCODE_CYAN);
-            hre_log_console(HString("                 With: ") + assertion_stats.expanded_assert
+            hre_log_console(HString("                 With: ") + assertion_stats.assert
                                 + "\n",
                             VSCODE_CYAN);
         }

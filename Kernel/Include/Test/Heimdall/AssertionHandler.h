@@ -41,7 +41,7 @@ namespace Heimdall {
         /// @return Boolean result of evaluating the expression.
         template <typename LHS, typename RHS>
         auto handle_expr(BinaryExprEvaluation<LHS, RHS> expr,
-                         const HString&            expr_str,
+                         const HString&                 expr_str,
                          const SourceCodeLocation&      scl) -> bool {
             if (_engine->get_current_test_result() == TestResult::FAIL) return false;
 
@@ -51,8 +51,8 @@ namespace Heimdall {
             bool result = expr.get_result();
 
             AssertionStats stats{.scl             = scl,
-                                 .assert          = expr_str,
-                                 .expanded_assert = HString("REQUIRE(") + expr_str + ")",
+                                 .assert          = HString("REQUIRE(") + expr_str + ")",
+                                 .expanded_assert = expr.get_expanded_expr(),
                                  .result          = result};
             _engine->report_assertion_end(stats);
             return result;
@@ -64,7 +64,7 @@ namespace Heimdall {
         /// @param scl File name and code line of the REQUIRE.
         /// @return Boolean result of evaluating the expression.
         auto handle_expr(UnaryExpr<bool>           expr,
-                         const HString&       expr_str,
+                         const HString&            expr_str,
                          const SourceCodeLocation& scl) -> bool;
     };
 } // namespace Heimdall

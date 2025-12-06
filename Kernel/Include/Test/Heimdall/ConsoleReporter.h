@@ -23,7 +23,7 @@
 
 namespace Heimdall {
 
-    /// @brief
+    /// @brief The ConsoleReporter prints a test report in a human-readable format to the console
     class ConsoleReporter : public Reporter {
         static constexpr size_t TAG_WIDTH = 10;
 
