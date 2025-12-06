@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-
+#include <Test/Heimdall/ConsoleReporter.h>
 #include <Test/Heimdall/Engine.h>
 #include <Test/Heimdall/HRE.h>
+#include <Test/Heimdall/JUnitReporter.h>
 #include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/Test.h>
-#include <Test/Heimdall/ConsoleReporter.h>
 
 /// atexit will be automatically generated when static local variables are declared
 /// This function will be provided by the heimdall runtime environment but a forward declaration
@@ -28,16 +28,20 @@ auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
 
-    HString Engine::CONSOLE_REPORTER = "console-reporter";
+    HString Engine::CONSOLE_REPORTER     = "console-reporter";
+    HString Engine::JUNIT_REPORTER       = "junit-reporter";
     HString Engine::TEST_REPORT_LOCATION = "test-report-location";
 
     auto Engine::configure(const OptionList& options) -> bool {
-        _configuration.options = options;
+        _configuration.options        = options;
         bool has_test_report_location = false;
         for (size_t i = 0; i < _configuration.options.size(); i++) {
             Option opt = _configuration.options[i];
+            if (opt.name == CONSOLE_REPORTER)
+                _configuration.reporter_registry.insert(new ConsoleReporter());
+            if (opt.name == JUNIT_REPORTER)
+                _configuration.reporter_registry.insert(new JUnitReporter());
             if (opt.name == TEST_REPORT_LOCATION) has_test_report_location = true;
-            if (opt.name == CONSOLE_REPORTER) _configuration.reporter_registry.insert(new ConsoleReporter());
         }
         if (_configuration.reporter_registry.is_empty()) {
             hre_log_emergency("ERROR: No reporters have been configured! Aborting test run...\n");
@@ -66,29 +70,36 @@ namespace Heimdall {
     void Engine::execute(const OptionList& options) {
         if (!configure(options)) return;
 
-        auto&  test_tracker         = get_test_tracker();
-        size_t overall_total_tests  = 0;
-        size_t overall_tests_passed = 0;
-        size_t overall_tests_failed = 0;
+        auto&   test_tracker         = get_test_tracker();
+        size_t  overall_total_tests  = 0;
+        size_t  overall_tests_passed = 0;
+        size_t  overall_tests_failed = 0;
+        HString test_report_file;
 
         HStringList reporter_names;
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             reporter_names.insert(_configuration.reporter_registry[i]->get_name());
         HStringList str_options;
         for (size_t i = 0; i < _configuration.options.size(); i++) {
-            if (_configuration.options[i].value.is_empty())
+            if (_configuration.options[i].value.is_empty()) {
                 str_options.insert(_configuration.options[i].name);
-            else
+            } else {
                 str_options.insert(_configuration.options[i].name + "="
                                    + _configuration.options[i].value);
+                if (_configuration.options[i].name == TEST_REPORT_LOCATION)
+                    test_report_file = _configuration.options[i].value;
+            }
         }
 
-        TestRunInfo test_run_info{.heimdall_major = 0,
-                                  .heimdall_minor = 1,
-                                  .heimdall_patch = 0,
-                                  .hre            = hre_get_runtime_name(),
-                                  .options        = str_options,
-                                  .reporter_names = reporter_names};
+        TestRunInfo test_run_info{
+            .heimdall_major   = 0,
+            .heimdall_minor   = 1,
+            .heimdall_patch   = 0,
+            .hre              = hre_get_runtime_name(),
+            .options          = str_options,
+            .reporter_names   = reporter_names,
+            .test_report_file = test_report_file,
+        };
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_begin(test_run_info);
 
@@ -106,7 +117,7 @@ namespace Heimdall {
 
             for (size_t i = 0; i < tests.size(); i++) {
                 auto     test = tests[i];
-                TestInfo test_info{.name = test.name};
+                TestInfo test_info{.name = test.name, .file = test.scl.file, .line = test.scl.line};
                 for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
                     _configuration.reporter_registry[i]->on_test_begin(test_info);
 
@@ -120,6 +131,8 @@ namespace Heimdall {
                     passed_tests++;
                 else
                     failed_tests++;
+
+                _test_result = TestResult::PASS;
             }
 
             TestSuiteStats test_suite_stats{.name         = suite_name,
@@ -146,7 +159,5 @@ namespace Heimdall {
         return engine;
     }
 
-    void execute_tests(const OptionList& options) {
-        get_engine().execute(options);
-    }
+    void execute_tests(const OptionList& options) { get_engine().execute(options); }
 } // namespace Heimdall

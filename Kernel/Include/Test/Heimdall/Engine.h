@@ -38,6 +38,7 @@ namespace Heimdall {
 
       public:
         static HString CONSOLE_REPORTER;
+        static HString JUNIT_REPORTER;
         static HString TEST_REPORT_LOCATION;
 
         [[nodiscard]] auto get_current_test_result() const -> TestResult;

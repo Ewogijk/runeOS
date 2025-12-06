@@ -18,15 +18,25 @@
 #include <Test/Heimdall/Heimdall.h>
 
 #include <Test/UnitTest/tests/Dummy.h>
+#include <Test/UnitTest/tests/Dummy2.h>
+
+#include <KRE/Build.h>
 
 namespace Rune::Test {
 
     /// @brief Configure the E9 reporter and execute the kernel tests.
     void run_kernel_tests() {
         Heimdall::OptionList options;
+#ifdef SHUTDOWN_ON_SYSTEM_LOADER_EXIT
+        // This flag comes from Build.h and is only defined when the kernel is build for CI
+        // -> Use the JUnitReporter to create a JUnit test report to be displayed by some GitHub
+        //      action
+        options.insert({.name = Heimdall::Engine::JUNIT_REPORTER, .value = ""});
+#else
         options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
-        options.insert(
-            {.name = Heimdall::Engine::TEST_REPORT_LOCATION, .value = "/System/Heimdall/UnitTestReport.txt"});
+#endif
+        options.insert({.name  = Heimdall::Engine::TEST_REPORT_LOCATION,
+                        .value = "/System/Heimdall/UnitTestReport.txt"});
         Heimdall::execute_tests(options);
     }
 } // namespace Rune::Test

@@ -37,6 +37,7 @@ namespace Heimdall {
         HString     hre;
         HStringList options;
         HStringList reporter_names;
+        HString     test_report_file;
     };
 
     /// @brief The results of executing the test run.
@@ -49,6 +50,8 @@ namespace Heimdall {
     /// @brief Info about the starting test.
     struct TestInfo {
         HString name;
+        HString file;
+        size_t  line;
     };
 
     /// @brief The results of executing a test.
