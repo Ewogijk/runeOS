@@ -16,24 +16,22 @@
 
 #include <Test/Heimdall/HRE.h>
 
-#include <Test/IntegrationTest/hre/StdReporter.h>
-
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 namespace Heimdall {
     auto hre_get_runtime_name() -> HString { return "Rune"; }
 
-    void hre_emergency_log(const HString& message) {
-        std::cout << "\033[38;2;" << static_cast<int>(VSCODE_RED.red) << ";"
-                  << static_cast<int>(VSCODE_RED.green) << ";" << static_cast<int>(VSCODE_RED.blue)
-                  << "m" << message.to_c_str() << "\033[0m" << std::endl;
+    void hre_log_console(const HString& message, Color color) {
+        std::cout << "\033[38;2;" << static_cast<int>(color.red) << ";"
+                  << static_cast<int>(color.green) << ";" << static_cast<int>(color.blue) << "m";
+
+        std::cout << message.to_c_str();
+
+        std::cout << "\033[0m";
     }
 
-    void hre_configure(Configuration& config) {
-        for (size_t i = 0; i < config.options.size(); i++) {
-            std::string opt(config.options[i].name.to_c_str());
-            if (opt == "std-reporter") config.reporter_registry.insert(new Heimdall::StdReporter());
-        }
-    }
+    void hre_log_console(const HString& message) { std::cout << message.to_c_str(); }
+
+    void hre_log_emergency(const HString& message) { hre_log_console(message, VSCODE_RED); }
 } // namespace Heimdall

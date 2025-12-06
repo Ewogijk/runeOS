@@ -45,6 +45,7 @@ namespace Heimdall {
 
         static auto number_to_string(size_t count) -> HString;
 
+        [[nodiscard]] auto size() const -> size_t;
         [[nodiscard]] auto is_empty() const -> bool;
 
         auto operator+(const HString& o) const -> HString;

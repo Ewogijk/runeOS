@@ -15,27 +15,24 @@
  *  limitations under the License.
  */
 
-#ifndef HEIMDALL_STDREPORTER_H
-#define HEIMDALL_STDREPORTER_H
+#ifndef HEIMDALL_CONSOLEREPORTER_H
+#define HEIMDALL_CONSOLEREPORTER_H
 
 #include <Test/Heimdall/Reporter.h>
-
-#include <Test/IntegrationTest/hre/ANSIWriter.h>
+#include <Test/Heimdall/HRE.h>
 
 namespace Heimdall {
-    /// @brief Reports on the E9 port so that Qemu can forward the test results to the console of
-    /// the
-    ///         host machine.
-    class StdReporter : public Reporter {
+
+    /// @brief
+    class ConsoleReporter : public Reporter {
         static constexpr size_t TAG_WIDTH = 10;
 
-        void write_tag(const HString& tag, const HString& text, Pixel pixel);
-        void write_tag(const HString& tag, const HString& text);
+        auto pad(const HString& text, unsigned char fill, bool left) -> HString;
+        void write_tag(const HString& tag, const HString& text, Color color, bool pad_pos);
+        void write_tag(const HString& tag, const HString& text, bool pad_pos);
         void write_divider(char div_char, const HString& text);
 
-    public:
-        StdReporter() = default;
-
+        public:
         [[nodiscard]] auto get_name() const -> HString override;
         void               on_test_run_begin(const TestRunInfo& test_run_info) override;
         void               on_test_run_end(const TestRunStats& test_run_stats) override;
@@ -48,4 +45,4 @@ namespace Heimdall {
     };
 }
 
-#endif // HEIMDALL_STDREPORTER_H
+#endif // HEIMDALL_CONSOLEREPORTER_H

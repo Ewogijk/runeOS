@@ -65,6 +65,8 @@ namespace Heimdall {
         return HString(num_str.to_cstr());
     }
 
+    auto HString::size() const -> size_t { return _str_detail->str.size(); }
+
     auto HString::is_empty() const -> bool { return _str_detail->str.is_empty(); }
 
     HString HString::operator+(const char* o) const {

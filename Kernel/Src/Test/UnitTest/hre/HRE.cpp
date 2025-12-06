@@ -25,26 +25,19 @@
 #include <VirtualFileSystem/Path.h>
 #include <VirtualFileSystem/VFSModule.h>
 
-#include <Test/UnitTest/hre/E9Reporter.h>
-
 namespace Heimdall {
-    void log_red(const HString& msg) {
-        Rune::CPU::E9Stream e9;
-        e9.set_foreground_color(Rune::Pixie::VSCODE_RED);
-        e9.write_formatted(msg.to_c_str());
-        e9.reset_style();
-    }
+    Rune::CPU::E9Stream e9;
 
     auto hre_get_runtime_name() -> HString { return "Rune Kernel"; }
 
-    void hre_emergency_log(const HString& message) {
-        log_red(message);
+    void hre_log_console(const HString& message, Color color) {
+        Rune::Pixel px(color.red, color.green, color.blue);
+        e9.set_foreground_color(px);
+        e9.write_formatted(message.to_c_str());
+        e9.reset_style();
     }
 
-    void hre_configure(Configuration& config) {
-        for (size_t i = 0; i < config.options.size(); i++) {
-            Rune::String opt(config.options[i].name.to_c_str());
-            if (opt == "e9-reporter") config.reporter_registry.insert(new Heimdall::E9Reporter());
-        }
-    }
+    void hre_log_console(const HString& message) { e9.write_formatted(message.to_c_str()); }
+
+    void hre_log_emergency(const HString& message) { hre_log_console(message, VSCODE_RED); }
 } // namespace Heimdall

@@ -23,17 +23,32 @@
 
 namespace Heimdall {
 
+    /// @brief RGB color
+    struct Color {
+        unsigned char red;
+        unsigned char green;
+        unsigned char blue;
+    };
+
+    constexpr Color GREEN       = {.red = 0, .green = 255, .blue = 0};
+    constexpr Color VSCODE_RED  = {.red = 205, .green = 49, .blue = 49};
+    constexpr Color VSCODE_CYAN = {.red = 17, .green = 168, .blue = 205};
+
     /// @brief Name of the heimdall runtime environment for informational purposes.
     /// @return HRE name.
     auto hre_get_runtime_name() -> HString;
 
+    /// @brief
+    /// @param message
+    /// @param color
+    void hre_log_console(const HString& message, Color color);
+
+
+    void hre_log_console(const HString& message);
+
     /// @brief Log a message in case something terrible happened.
     /// @param message
-    void hre_emergency_log(const HString& message);
-
-    /// @brief Perform engine configuration of the heimdall runtime environment.
-    /// @param config Configuration provided by the engine.
-    void hre_configure(Configuration& config);
+    void hre_log_emergency(const HString& message);
 }
 
 #endif // HEIMDALL_HRE_H

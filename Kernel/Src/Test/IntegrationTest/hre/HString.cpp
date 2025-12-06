@@ -16,6 +16,7 @@
 
 #include <Test/Heimdall/HString.h>
 
+#include <format>
 #include <string>
 #include <vector>
 
@@ -29,8 +30,7 @@ namespace Heimdall {
     };
 
     HString::HString() : _str_detail(new StringDetail{std::string()}) {}
-    HString::HString(const char* c_str)
-        : _str_detail(new StringDetail{std::string(c_str)}) {}
+    HString::HString(const char* c_str) : _str_detail(new StringDetail{std::string(c_str)}) {}
     HString::~HString() { delete _str_detail; }
 
     HString::HString(const HString& other)
@@ -66,6 +66,8 @@ namespace Heimdall {
         std::string num_str = std::to_string(count);
         return HString(num_str.c_str());
     }
+
+    auto HString::size() const -> size_t { return _str_detail->str.size(); }
 
     auto HString::is_empty() const -> bool { return _str_detail->str.empty(); }
 
