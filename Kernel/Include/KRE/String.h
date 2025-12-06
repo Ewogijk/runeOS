@@ -171,7 +171,7 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     class String {
-        static constexpr U16 FMT_BUF_SIZE = 256;
+        static constexpr U16 FMT_BUF_SIZE = 4096;
 
         // Small string optimization (SSO)
         // If a c string is smaller the BufSize we allocate it in the stack buffer else we make a

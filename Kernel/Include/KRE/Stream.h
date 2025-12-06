@@ -129,7 +129,7 @@ namespace Rune {
      * to a stream.
      */
     class TextStream : public Stream {
-        static constexpr size_t BUF_SIZE = 256;
+        static constexpr size_t BUF_SIZE = 4096;
         /**
          * @brief Formatted strings are temporarily stored in this buffer.
          */
