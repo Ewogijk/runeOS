@@ -18,15 +18,17 @@
 #ifndef RUNEOS_TEST_H
 #define RUNEOS_TEST_H
 
-#include <Test/Heimdall/HString.h>
-
 #include <Ember/Enum.h>
+
+#include <Test/Heimdall/HString.h>
+#include <Test/Heimdall/SourceCodeLocation.h>
 
 namespace Heimdall {
     /// @brief Information about a test.
     struct Test {
         HString name;
         void    (*test_function)();
+        SourceCodeLocation scl;
     };
 
 #define TEST_RESULTS(X)                                                                            \
@@ -110,7 +112,7 @@ namespace Heimdall {
     /// @param test_suite Name of the test's test suite.
     /// @param test_function Test function.
     /// @return Always true.
-    auto register_test(const HString& name, const HString& test_suite, void (*test_function)())
+    auto register_test(const HString& name, const HString& test_suite, void (*test_function)(), const char* source_file, size_t line)
         -> bool;
 } // namespace Heimdall
 
