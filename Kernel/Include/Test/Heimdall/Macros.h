@@ -28,16 +28,16 @@ namespace Heimdall {
 #define TEST_WITH_SUITE(name, test_suite)                                                          \
     namespace CONCAT(Test_, __LINE__) {                                                            \
         void       test_function();                                                                \
-        const bool CONCAT(reg_test_,                                                               \
-                          __LINE__) = Heimdall::register_test(name, test_suite, &test_function);   \
+        const bool CONCAT(reg_test_, __LINE__) =                                                   \
+            Heimdall::register_test(name, test_suite, &test_function, __FILE__, __LINE__);         \
     };                                                                                             \
     void CONCAT(Test_, __LINE__)::test_function()
 
 #define TEST_NO_SUITE(name)                                                                        \
     namespace CONCAT(Test_, __LINE__) {                                                            \
         void       test_function();                                                                \
-        const bool CONCAT(reg_test_,                                                               \
-                          __LINE__) = Heimdall::register_test(name, "", &test_function);           \
+        const bool CONCAT(reg_test_, __LINE__) =                                                   \
+            Heimdall::register_test(name, "", &test_function, __FILE__, __LINE__);                 \
     };                                                                                             \
     void CONCAT(Test_, __LINE__)::test_function()
 

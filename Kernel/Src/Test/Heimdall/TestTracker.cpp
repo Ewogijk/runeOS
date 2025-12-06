@@ -24,14 +24,16 @@ auto atexit(void (*func)()) -> int;
 namespace Heimdall {
     DEFINE_ENUM(TestResult, TEST_RESULTS, 0x0)
 
-
     auto get_test_tracker() -> TestTracker& {
         static TestTracker test_registry;
         return test_registry;
     }
 
-    auto register_test(const HString& name, const HString& test_suite, void (*test_function)())
-        -> bool {
+    auto register_test(const HString& name,
+                       const HString& test_suite,
+                       void           (*test_function)(),
+                       const char*    source_file,
+                       size_t            line) -> bool {
         auto& test_tracker = get_test_tracker();
 
         // All tests must belong to a test suite and a test suite name cannot be the empty string
@@ -41,7 +43,12 @@ namespace Heimdall {
 
         // Add test suite if it is missing
         if (!test_tracker.contains(test_suite)) test_tracker.create_test_suite(test_suite);
-        test_tracker.insert_test(test_suite, Test{.name = name, .test_function = test_function});
+        test_tracker.insert_test(test_suite,
+                                 Test{
+                                 .name          = name,
+                                 .test_function = test_function,
+                                 .scl           = {source_file, line}
+        });
         return true;
     }
 } // namespace Heimdall
