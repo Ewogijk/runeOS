@@ -18,9 +18,46 @@
 
 #include <Test/IntegrationTest/tests/Dummy.h>
 
+#include <iostream>
+#include <string>
+
+struct CLIArgs {
+    bool use_junit_reporter = false;
+};
+
+bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg.size() == 0) continue;
+
+        if (arg[0] == '-') {
+            for (size_t j = 1; j < arg.size(); j++) {
+                switch (arg[j]) {
+                    case 'j': args_out.use_junit_reporter = true; break;
+                    default:  {
+                        std::cerr << "Unknown option '" << arg << "'" << std::endl;
+                        return false;
+                    }
+                }
+            }
+        } else {
+            std::cerr << "Not a flag: '" << arg << "'" << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(const int argc, char* argv[]) {
+    CLIArgs args;
+    if (!parse_cli_args(argc, argv, args)) return -1;
+
     Heimdall::OptionList options;
-    options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
+    if (args.use_junit_reporter) {
+        options.insert({.name = Heimdall::Engine::JUNIT_REPORTER, .value = ""});
+    } else {
+        options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
+    }
     options.insert({.name  = Heimdall::Engine::TEST_REPORT_LOCATION,
                     .value = "/System/Heimdall/IntegrationTestReport.txt"});
     Heimdall::execute_tests(options);

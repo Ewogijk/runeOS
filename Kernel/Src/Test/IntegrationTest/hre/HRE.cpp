@@ -34,4 +34,10 @@ namespace Heimdall {
     void hre_log_console(const HString& message) { std::cout << message.to_c_str(); }
 
     void hre_log_emergency(const HString& message) { hre_log_console(message, VSCODE_RED); }
+
+    void hre_save_test_report(const HString& file, const HString& test_report) {
+        std::ofstream test_report_file(file.to_c_str());
+        test_report_file << test_report.to_c_str();
+        test_report_file.close();
+    }
 } // namespace Heimdall

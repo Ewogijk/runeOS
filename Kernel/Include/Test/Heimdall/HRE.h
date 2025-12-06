@@ -38,17 +38,23 @@ namespace Heimdall {
     /// @return HRE name.
     auto hre_get_runtime_name() -> HString;
 
-    /// @brief
-    /// @param message
-    /// @param color
+    /// @brief Log the message in the requested color to the console.
+    /// @param message Log message.
+    /// @param color Color of the message.
     void hre_log_console(const HString& message, Color color);
 
-
+    /// @brief Log the message in the requested color to the console.
+    /// @param message Log message.
     void hre_log_console(const HString& message);
 
     /// @brief Log a message in case something terrible happened.
     /// @param message
     void hre_log_emergency(const HString& message);
-}
+
+    /// @brief Save the given test_report to the file.
+    /// @param file Absolute path to a file.
+    /// @param test_report Test report.
+    void hre_save_test_report(const HString& file, const HString& test_report);
+} // namespace Heimdall
 
 #endif // HEIMDALL_HRE_H
