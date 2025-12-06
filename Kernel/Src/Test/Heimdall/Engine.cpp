@@ -14,11 +14,12 @@
  *  limitations under the License.
  */
 
-#include <Test/Heimdall/Engine.h>
 
+#include <Test/Heimdall/Engine.h>
 #include <Test/Heimdall/HRE.h>
 #include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/Test.h>
+#include <Test/Heimdall/ConsoleReporter.h>
 
 /// atexit will be automatically generated when static local variables are declared
 /// This function will be provided by the heimdall runtime environment but a forward declaration
@@ -27,22 +28,23 @@ auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
 
+    HString Engine::CONSOLE_REPORTER = "console-reporter";
     HString Engine::TEST_REPORT_LOCATION = "test-report-location";
 
     auto Engine::configure(const OptionList& options) -> bool {
         _configuration.options = options;
-        hre_configure(_configuration);
-        if (_configuration.reporter_registry.is_empty()) {
-            hre_emergency_log("ERROR: No reporters have been configured! Aborting test run...\n");
-            return false;
-        }
         bool has_test_report_location = false;
         for (size_t i = 0; i < _configuration.options.size(); i++) {
             Option opt = _configuration.options[i];
             if (opt.name == TEST_REPORT_LOCATION) has_test_report_location = true;
+            if (opt.name == CONSOLE_REPORTER) _configuration.reporter_registry.insert(new ConsoleReporter());
+        }
+        if (_configuration.reporter_registry.is_empty()) {
+            hre_log_emergency("ERROR: No reporters have been configured! Aborting test run...\n");
+            return false;
         }
         if (!has_test_report_location) {
-            hre_emergency_log("ERROR: Missing test report location option.");
+            hre_log_emergency("ERROR: Missing test report location option.");
             return false;
         }
         return true;

@@ -8,14 +8,13 @@ inc = [
 
 sources = [
     'Heimdall/AssertionHandler.cpp',
+    'Heimdall/ConsoleReporter.cpp',
     'Heimdall/Engine.cpp',
     'Heimdall/TestTracker.cpp',
-    'IntegrationTest/hre/ANSIWriter.cpp',
     'IntegrationTest/hre/HRE.cpp',
     'IntegrationTest/hre/HString.cpp',
     'IntegrationTest/hre/OptionList.cpp',
     'IntegrationTest/hre/ReporterRegistry.cpp',
-    'IntegrationTest/hre/StdReporter.cpp',
     'IntegrationTest/hre/TestList.cpp',
     'IntegrationTest/hre/TestTracker.cpp',
     'IntegrationTest/main.cpp',

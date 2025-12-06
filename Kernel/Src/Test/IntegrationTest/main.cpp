@@ -20,9 +20,9 @@
 
 int main(const int argc, char* argv[]) {
     Heimdall::OptionList options;
-    options.insert({.name = "std-reporter", .value = ""});
-    options.insert(
-            {.name = "test-report-location", .value = "/System/Heimdall/IntegrationTestReport.txt"});
+    options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
+    options.insert({.name  = Heimdall::Engine::TEST_REPORT_LOCATION,
+                    .value = "/System/Heimdall/IntegrationTestReport.txt"});
     Heimdall::execute_tests(options);
     return 0;
 }
