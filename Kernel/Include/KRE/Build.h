@@ -32,6 +32,6 @@
 #define BIT64 //Activate 64-bit related features
 #define QEMU_HOST // Enable Qemu related debugging features.
 #define RUN_UNIT_TESTS // Execute the kernel unit tests.
-
+#define SHUTDOWN_ON_SYSTEM_LOADER_EXIT // Shutdown the system when the system loader exits unexpectedly.
 
 #endif //RUNEOS_BUILD_INFO_H
