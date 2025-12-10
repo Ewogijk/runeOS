@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "Test/Heimdall/HRE.h"
+#include <Test/Heimdall/HRE.h>
 
 #include <Test/Heimdall/JUnitReporter.h>
 
@@ -22,7 +22,7 @@ namespace Heimdall {
     auto JUnitReporter::get_name() const -> HString { return "JUnitReporter"; }
 
     void JUnitReporter::on_test_run_begin(const TestRunInfo& test_run_info) {
-        _test_report_file = test_run_info.test_report_file;
+        _test_report_directory = test_run_info.test_report_directory;
     }
 
     void JUnitReporter::on_test_run_end(const TestRunStats& test_run_stats) {
@@ -56,7 +56,7 @@ namespace Heimdall {
         }
         xml = xml + "</testsuites>\n";
         hre_log_console(xml);
-        hre_save_test_report(_test_report_file, xml);
+        hre_save_test_report(_test_report_directory + "JUnitReport.xml", xml);
     }
 
     void JUnitReporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {
