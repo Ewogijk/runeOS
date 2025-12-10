@@ -28,11 +28,12 @@ jobs:
           tar -xzf Freestanding.tar.gz
           ls -l
           cd ${{ github.workspace }}
-      - name: Prepare Brokk
-        run: sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' Brokk/CI/CI.yaml
       - name: Build Project
         run: |
+          pwd
           cd Brokk
+          ls -l
+          sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' CI/CI.yaml
           ./Brokk.py configure CI/CI.yml
           ./Brokk.py build x86_64 ci
           cd ${{ github.workspace }}
