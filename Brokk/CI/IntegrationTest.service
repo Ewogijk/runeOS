@@ -1,0 +1,17 @@
+# Unique name of the service/home/ewogijk/CLionProjects/runeOS/Kernel/Src/Test/Heimdall
+Name: IntegrationTest
+# Short description of the service
+Description: The kernel integration tests.
+# The command line input to start the app. Note that the input is simply split by ' '
+ExecStart: /System/Heimdall/IntegrationTest.app -j
+# Boolean value that indicates if Freya should wait for the service to finish
+WaitForExit: yes
+# The expected exit code when the service finished. The value is only used when 'WaitForExit==true'
+# Intentionally set to a value that is never returned to make Freya exit
+ExpectedExitCode: -100
+# A mandatory service must finish with the expected service code for the system to be considered
+# started successful. The value is only used when 'WaitForExit==true'
+Mandatory: yes
+# A list of services that this service depends on. These services will be started before this
+# service
+Requires:
