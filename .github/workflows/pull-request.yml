@@ -33,7 +33,7 @@ jobs:
         run: |
           cd Brokk
           sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' CI/CI.yaml
-          ./Brokk.py configure CI/CI.yml
+          ./Brokk.py configure CI/CI.yaml
           ./Brokk.py build x86_64 ci
           cd ${{ github.workspace }}
       - name: Run Tests
