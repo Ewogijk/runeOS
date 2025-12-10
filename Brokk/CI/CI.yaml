@@ -1,0 +1,33 @@
+# Target architecture of the kernel. One of: [x86_64]
+arch: x86_64
+# The build type. One of: [release, debug, test, ci]
+# Type      Packaging                               Testing
+# ===============================================================================
+# release   No scripts and binaries for debugging   No unit and integration tests are run
+# debug     With scripts and binaries for debugging No unit and integration tests are run
+# test      No scripts and binaries for debugging   Run unit and integration testing then halt
+# ci        No scripts and binaries for debugging   Run unit and integration testing then shutdown
+build: ci
+# If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
+# related debugging features.
+qemu-host: yes
+# The path to the installation directory of the freestanding compiler from the runeToolchain. It
+# will be used to compile the kernel.
+freestanding-compiler: PROJECT_ROOT/Brokk/Resource/runeToolchain/x86_64-elf
+# The runeOS image size in MiB
+image-size: 256
+# The absolute path to the system loader on the runeOS image
+# During boot the kernel will look for the system loader and panic if it cannot find it
+system-loader: /System/Freya/Freya.app
+# A list of local files that should be copied to the runeOS image
+# Src is the local file that will be copied to Dest/Src on the runeOS image
+# e.g. given /my/local/file: /on/the/image would be copied to the /on/the/image/file path on the
+# image
+# Note: Make sure to copy at least the system loader to the image!
+files:
+  PROJECT_ROOT/App/Freya/Build/Freya.app: /System/Freya
+  PROJECT_ROOT/Kernel/Build/x86_64-ci/IntegrationTest/IntegrationTest.app: /System/Heimdall/
+  PROJECT_ROOT/Brokk/CI/IntegrationTest.service: /System/Freya/Services
+# A list of apps that will be preinstalled in the /Apps directory on the runeOS image
+# The apps will be build if necessary and then copied to /Apps on the image
+apps:
