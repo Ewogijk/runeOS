@@ -29,7 +29,7 @@ jobs:
           ls -l
           cd ${{ github.workspace }}
       - name: Prepare Brokk
-        run: sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' Brokk
+        run: sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' Brokk/CI/CI.yaml
       - name: Build Project
         run: |
           cd Brokk
