@@ -11,6 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Debug Directory
+        run: |
+          echo Project Directory
+          ls -al
+          echo Brokk/
+          ls -al Brokk
+          echo Brokk/Resource
+          ls -al Brokk/Resource
       - name: Install System & Python Dependencies
         run: |
           sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86=1:8.2.2+ds-0ubuntu1.10 dosfstools gdb
