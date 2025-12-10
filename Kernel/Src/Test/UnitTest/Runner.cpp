@@ -32,11 +32,12 @@ namespace Rune::Test {
         // -> Use the JUnitReporter to create a JUnit test report to be displayed by some GitHub
         //      action
         options.insert({.name = Heimdall::Engine::JUNIT_REPORTER, .value = ""});
+        options.insert({.name = Heimdall::Engine::GNOME_REPORTER, .value = ""});
 #else
         options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
 #endif
-        options.insert({.name  = Heimdall::Engine::TEST_REPORT_LOCATION,
-                        .value = "/System/Heimdall/UnitTestReport.txt"});
+        options.insert({.name  = Heimdall::Engine::TEST_REPORT_DIRECTORY,
+                        .value = "/System/Heimdall/UnitTest/"});
         Heimdall::execute_tests(options);
     }
 } // namespace Rune::Test
