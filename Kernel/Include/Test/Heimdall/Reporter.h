@@ -37,7 +37,7 @@ namespace Heimdall {
         HString     hre;
         HStringList options;
         HStringList reporter_names;
-        HString     test_report_file;
+        HString     test_report_directory;
     };
 
     /// @brief The results of executing the test run.

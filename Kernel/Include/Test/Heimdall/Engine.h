@@ -39,7 +39,8 @@ namespace Heimdall {
       public:
         static HString CONSOLE_REPORTER;
         static HString JUNIT_REPORTER;
-        static HString TEST_REPORT_LOCATION;
+        static HString GNOME_REPORTER;
+        static HString TEST_REPORT_DIRECTORY;
 
         [[nodiscard]] auto get_current_test_result() const -> TestResult;
 
@@ -58,17 +59,12 @@ namespace Heimdall {
         /// @brief Configure heimdall according to the options and then execute all registered
         ///         tests.
         ///
-        /// Options are either general or heimdall runtime environment specific.
-        ///
-        /// General options:
-        ///     - test-report-location: Absolute path to location where the test report will be
-        ///                             saved.
-        ///
-        /// Kernel Test Options:
-        ///     - e9-reporter: Log the test report to the E9 port.
-        ///
-        /// Integration Test Options:
-        ///     - std-reporter: Log the test report to std::cout.
+        /// Options:
+        ///     - console-reporter: Writes test results in a human-readable format to the console.
+        ///     - junit-reporter: Saves the test results in a JUnit XML file.
+        ///     - gnome-reporter: Creates a "Pass.txt" when all tests are pass.
+        ///     - test-report-directory: Absolute path to directory where test reports will be
+        ///         saved.
         ///
         /// @param options List of options.
         /// @return True: All tests are pass, False: At least one test is fail.

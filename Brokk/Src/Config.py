@@ -24,6 +24,7 @@ class BrokkConfig(Enum):
     BUILD = (auto(),)
     QEMU_HOST = (auto(),)
     FREESTANDING_COMPILER = (auto(),)
+    HOSTED_COMPILER = (auto(),)
     IMAGE_SIZE = (auto(),)
     SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)

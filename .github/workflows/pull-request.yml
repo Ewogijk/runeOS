@@ -1,0 +1,78 @@
+name: pull-request.yml
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Debug Directory
+        run: |
+          echo Project Directory
+          ls -al
+          echo Brokk/
+          ls -al Brokk
+          echo Brokk/Resource
+          ls -al Brokk/Resource
+      - name: Install System & Python Dependencies
+        run: |
+          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86=1:8.2.2+ds-0ubuntu1.10 dosfstools gdb
+          pip install scons click meson pyyaml
+      - name: Download runeToolchain
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'Ewogijk/runeToolchain'
+          latest: true
+          fileName: '*.tar.gz'
+          out-file-path: 'Brokk/Resource/runeToolchain'
+      - name: Install runeToolchain
+        run: |
+          cd Brokk/Resource/runeToolchain
+          tar -xzf Hosted.tar.gz
+          tar -xzf Freestanding.tar.gz
+          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-rune/bin:$PATH
+          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-elf/bin:$PATH
+          cd ${{ github.workspace }}
+      - name: Build Project
+        run: |
+          cd Brokk
+          sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' CI/CI.yaml
+          ./Brokk.py configure CI/CI.yaml
+          ./Brokk.py build x86_64 ci
+          cd ${{ github.workspace }}
+      - name: Run Tests
+        run: |
+          cd Brokk/Build/x86_64-test
+          ./Start.py
+          cd ${{ github.workspace }}
+      - name: Mount runeOS Image
+        run: |
+          cd Brokk/Build/x86_64-test/bin
+          sudo losetup -P /dev/loop0 runeOS.image
+          mkdir tmp
+          sudo mount /dev/loop0p2 tmp
+      - name: Evaluate Tests
+        run: |
+          if [! -e tmp/System/Heimdall/UnitTest/Pass.txt && ! -e tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
+            exit -1
+          fi
+      - name: Upload Unit Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: tmp/System/Heimdall/UnitTest/JUnitReport.xml
+      - name: Upload Integration Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: tmp/System/Heimdall/IntegrationTest/JUnitReport.xml
+      - name: Unmount runeOS Image
+        run: |
+          sudo umount tmp
+          sudo losetup -d /dev/loop0
+          cd ${{ github.workspace }}

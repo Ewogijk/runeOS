@@ -29,9 +29,9 @@ def exec_shell_cmd(cmd: list[str], wd: str) -> bool:
     return subprocess.run(cmd, cwd=wd).returncode == 0
 
 
-def meson_build(source_dir: Path, build_dir: Path):
+def meson_build(source_dir: Path, cross_file: Path, build_dir: Path):
     if not build_dir.exists() and not exec_shell_cmd(
-            ["meson", "setup", "--cross-file", "x86_64-rune.txt", str(build_dir)],
+            ["meson", "setup", "--cross-file", str(cross_file), str(build_dir)],
             str(source_dir),
     ):
         return False

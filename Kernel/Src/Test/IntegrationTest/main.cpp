@@ -55,11 +55,12 @@ int main(const int argc, char* argv[]) {
     Heimdall::OptionList options;
     if (args.use_junit_reporter) {
         options.insert({.name = Heimdall::Engine::JUNIT_REPORTER, .value = ""});
+        options.insert({.name = Heimdall::Engine::GNOME_REPORTER, .value = ""});
     } else {
         options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
     }
-    options.insert({.name  = Heimdall::Engine::TEST_REPORT_LOCATION,
-                    .value = "/System/Heimdall/IntegrationTestReport.txt"});
+    options.insert({.name  = Heimdall::Engine::TEST_REPORT_DIRECTORY,
+                    .value = "/System/Heimdall/IntegrationTest/"});
     Heimdall::execute_tests(options);
     return 0;
 }

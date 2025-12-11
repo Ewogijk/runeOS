@@ -16,6 +16,8 @@
 #  limitations under the License.
 #
 
+set -euo pipefail
+
 help() {
   echo Usage "./Install.sh [-h] BUILD INSTALL_DIRECTORY RUNE_OS_IMAGE KERNEL_ELF OS_ELF"
   echo
@@ -77,15 +79,15 @@ echo
 
 set -x  # Print all shell commands
 
-mkdir "${install_directory}"/bin
-cp Ressource/OVMF_CODE.fd "${install_directory}"/bin
-cp Ressource/OVMF_VARS.fd "${install_directory}"/bin
+mkdir -p "${install_directory}"/bin
+cp Resource/OVMF_CODE.fd "${install_directory}"/bin
+cp Resource/OVMF_VARS.fd "${install_directory}"/bin
 mv "$rune_os_image" "${install_directory}"/bin        # Created by us -> does not interfere with other tools so move it
-cp Ressource/requirements.txt "$install_directory"
-cp Ressource/Start.py "$install_directory"
+cp Resource/requirements.txt "$install_directory"
+cp Resource/Start.py "$install_directory"
 
 if [ "$build" = "debug" ]; then
-    cp Ressource/Debug.py "$install_directory"
+    cp Resource/Debug.py "$install_directory"
     cp "$kernel_elf" "${install_directory}"/bin
     cp "$os_elf" "${install_directory}"/bin
 fi
