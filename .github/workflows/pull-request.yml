@@ -8,8 +8,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latestMN
+    runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Debug Directory
+        run: |
+          echo Project Directory
+          ls -al
+          echo Brokk/
+          ls -al Brokk
+          echo Brokk/Resource
+          ls -al Brokk/Resource
       - name: Install System & Python Dependencies
         run: |
           sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86=1:8.2.2+ds-0ubuntu1.10 dosfstools gdb
@@ -26,14 +35,14 @@ jobs:
           cd Brokk/Resource/runeToolchain
           tar -xzf Hosted.tar.gz
           tar -xzf Freestanding.tar.gz
-          ls -l
+          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-rune/bin:$PATH
+          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-elf/bin:$PATH
           cd ${{ github.workspace }}
-      - name: Prepare Brokk
-        run: sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' Brokk
       - name: Build Project
         run: |
           cd Brokk
-          ./Brokk.py configure CI/CI.yml
+          sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' CI/CI.yaml
+          ./Brokk.py configure CI/CI.yaml
           ./Brokk.py build x86_64 ci
           cd ${{ github.workspace }}
       - name: Run Tests
