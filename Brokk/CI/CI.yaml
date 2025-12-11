@@ -14,6 +14,9 @@ qemu-host: yes
 # The path to the installation directory of the freestanding compiler from the runeToolchain. It
 # will be used to compile the kernel.
 freestanding-compiler: PROJECT_ROOT/Brokk/Resource/runeToolchain/x86_64-elf
+# The path to the installation directory of the hosted compiler from the runeToolchain. It will be
+# used to compile apps.
+hosted-compiler: PROJECT_ROOT/Brokk/Resource/runeToolchain/x86_64-rune
 # The runeOS image size in MiB
 image-size: 256
 # The absolute path to the system loader on the runeOS image
