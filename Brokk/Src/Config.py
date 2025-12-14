@@ -119,7 +119,6 @@ def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
         value = cfg[key]
         has_expected_type = False
         for et in expected_types:
-            print(et)
             if isinstance(value, et):
                 has_expected_type = True
                 break
