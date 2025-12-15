@@ -30,13 +30,16 @@ jobs:
           repository: 'Ewogijk/runeToolchain'
           latest: true
           fileName: '*.tar.gz'
-          out-file-path: 'Brokk/Resource/runeToolchain'
+          out-file-path: '/opt'
       - name: Install runeToolchain
         run: |
           echo Compiler Toolchain: runeToolchain ${{steps.rune_toolchain_download.outputs.tag_name}}
-          cd Brokk/Resource/runeToolchain
-          tar -xzf runeToolchain.tar.gz
-          ls -l
+          cd /opt
+          sudo tar -xzf runeToolchain.tar.gz
+          echo GCC x86_64-elf is
+          /opt/runeToolchain/x86_64-elf/bin/x86_64-elf-g++ -v
+          echo GCC x86_64-rune is
+          /opt/runeToolchain/x86_64-rune/bin/x86_64-rune-g++ -v
           cd ${{ github.workspace }}
       - name: Build Project
         run: |
