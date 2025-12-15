@@ -61,9 +61,7 @@ jobs:
           sudo mount /dev/loop0p2 tmp
       - name: Evaluate Tests
         run: |
-          pwd
-          ls -l
-          ls -l tmp
+          cd Brokk/Build/x86_64-ci/bin
           echo \> Heimdall directory:
           ls tmp/System/Heimdall
           echo \> Heimdall/UnitTest directory:
