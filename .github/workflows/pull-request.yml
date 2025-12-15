@@ -61,7 +61,18 @@ jobs:
           sudo mount /dev/loop0p2 tmp
       - name: Evaluate Tests
         run: |
-          if [! -e tmp/System/Heimdall/UnitTest/Pass.txt && ! -e tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
+          echo \> Heimdall directory:
+          ls tmp/System/Heimdall
+          echo \> Heimdall/UnitTest directory:
+          ls tmp/System/Heimdall/UnitTest
+          echo \> Heimdall/IntegrationTest directory:
+          ls tmp/System/Heimdall/IntegrationTest
+          if [! -f tmp/System/Heimdall/UnitTest/Pass.txt]; then
+            echo \> ERROR: Unit tests failed.
+            exit -1
+          fi
+          if [! -f tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
+            echo \> ERROR: Integration tests failed.
             exit -1
           fi
       - name: Upload Unit Test Report
