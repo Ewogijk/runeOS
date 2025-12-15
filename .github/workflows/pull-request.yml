@@ -33,13 +33,13 @@ jobs:
           out-file-path: '/opt'
       - name: Install runeToolchain
         run: |
-          echo Compiler Toolchain: runeToolchain ${{steps.rune_toolchain_download.outputs.tag_name}}
+          echo \> Compiler Toolchain: runeToolchain ${{steps.rune_toolchain_download.outputs.tag_name}}
           cd /opt
           sudo tar -xzf runeToolchain.tar.gz
-          echo GCC x86_64-elf is
-          /opt/runeToolchain/x86_64-elf/bin/x86_64-elf-g++ -v
-          echo GCC x86_64-rune is
-          /opt/runeToolchain/x86_64-rune/bin/x86_64-rune-g++ -v
+          echo \> GCC x86_64-elf is
+          /opt/runeToolchain/x86_64-elf/bin/x86_64-elf-g++ --version
+          echo \> GCC x86_64-rune is
+          /opt/runeToolchain/x86_64-rune/bin/x86_64-rune-g++ --version
           cd ${{ github.workspace }}
       - name: Build Project
         run: |
@@ -50,12 +50,12 @@ jobs:
           cd ${{ github.workspace }}
       - name: Run Tests
         run: |
-          cd Brokk/Build/x86_64-test
+          cd Brokk/Build/x86_64-ci
           ./Start.py
           cd ${{ github.workspace }}
       - name: Mount runeOS Image
         run: |
-          cd Brokk/Build/x86_64-test/bin
+          cd Brokk/Build/x86_64-ci/bin
           sudo losetup -P /dev/loop0 runeOS.image
           mkdir tmp
           sudo mount /dev/loop0p2 tmp
