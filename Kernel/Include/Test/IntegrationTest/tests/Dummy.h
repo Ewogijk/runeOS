@@ -24,8 +24,8 @@ TEST("Integration Test 1", "A Suite") {
     REQUIRE(1 + 1 == 2)
 }
 
-TEST("Integration Test 2", "A Suite") {
-    REQUIRE(1 + 1 == 3)
-}
+// TEST("Integration Test 2", "A Suite") {
+//     REQUIRE(1 + 1 == 3)
+// }
 
 #endif // RUNEOS_DUMMY_H
