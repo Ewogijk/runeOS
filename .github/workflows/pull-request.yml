@@ -67,11 +67,13 @@ jobs:
           ls tmp/System/Heimdall/IntegrationTest
           if [ ! -f tmp/System/Heimdall/UnitTest/Pass.txt ] 
           then
+            cat tmp/System/Heimdall/UnitTest/JUnitReport.xml
             echo \> ERROR: Unit tests failed.
             exit 255
           fi
           if [ ! -f tmp/System/Heimdall/IntegrationTest/Pass.txt ] 
           then
+            cat tmp/System/Heimdall/IntegrationTest/JUnitReport.xml
             echo \> ERROR: Integration tests failed.
             exit 255
           fi
