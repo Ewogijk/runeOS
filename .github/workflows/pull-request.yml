@@ -65,12 +65,12 @@ jobs:
           ls tmp/System/Heimdall/UnitTest
           echo \> Heimdall/IntegrationTest directory:
           ls tmp/System/Heimdall/IntegrationTest
-          if [ ! -f tmp/System/Heimdall/UnitTest/Pass.txt] 
+          if [ ! -f tmp/System/Heimdall/UnitTest/Pass.txt ] 
           then
             echo \> ERROR: Unit tests failed.
             exit 255
           fi
-          if [ ! -f tmp/System/Heimdall/IntegrationTest/Pass.txt] 
+          if [ ! -f tmp/System/Heimdall/IntegrationTest/Pass.txt ] 
           then
             echo \> ERROR: Integration tests failed.
             exit 255
@@ -81,6 +81,9 @@ jobs:
           sudo umount tmp
           sudo losetup -d /dev/loop0
           cd ${{ github.workspace }}
+          ls -l ${{ github.workspace }}/TestResults
+          ls -l ${{ github.workspace }}/TestResults/UnitTest
+          ls -l ${{ github.workspace }}/TestResults/IntegrationTest
       - name: Upload Unit Test Report
         uses: actions/upload-artifact@v4
         with:
