@@ -17,71 +17,99 @@
 import click
 import subprocess
 
+from typing import List
 
 OVMF_CODE = "bin/OVMF_CODE.fd"
 OVMF_VARS = "bin/OVMF_VARS.fd"
 RUNE_OS_IMAGE = "bin/runeOS.image"
 
 
+class QemuOption:
+    """List of space separated qemu options that belong together, e.g. -m 128M"""
+
+    def __init__(self, options: List[str]):
+        self.options = options
+
+    def as_list(self) -> List[str]:
+        """
+
+        :return: Options as a list.
+        """
+        return self.options
+
+    def as_string(self):
+        """
+
+        :return: Options joined by space.
+        """
+        return " ".join(self.options)
+
+
 @click.command()
+@click.option("--log", default="", help="Path to a file for the qemu logs.")
+@click.option("--no-reboot", is_flag=True, help="Do not reboot when a triple fault occurs.")
+@click.option("--no-graphics", is_flag=True, help="Do not display a graphics window.")
 @click.option(
     "--debug", is_flag=True, help="Make qemu wait for a GDB connection on localhost:1234."
 )
-@click.option("--qemu-log", default="", help="Path to a file for the qemu logs.")
-def run_qemu(debug: bool, qemu_log: str) -> None:
-    """Start qemu with an ich9-ahci controller and two drives: Boot drive as drive0 and a FAT32
+def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
+    """
+    Start qemu with an ich9-ahci controller and two drives: Boot drive as drive0 and a FAT32
     formatted drive as drive1.
 
-    :param debug:    True if a GDB session should be enabled.
-    :param qemu_log: Path to a file where the Qemu logs will be saved.
-    :return: -
+    :param log:         Path to a file where the Qemu logs will be saved.
+    :param no_reboot:
+    :param no_graphics:
+    :param debug:       True if a GDB session should be enabled.
+    :return:
     """
-    qemu_settings = []
+    qemu_options = []
+    # UEFI binaries
+    qemu_options.append(QemuOption(
+        ["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"]))
+    qemu_options.append(QemuOption(["-drive", f"if=pflash,format=raw,unit=1,file={OVMF_VARS}"]))
+    qemu_options.append(QemuOption(["-net", f"none"]))
 
-    # Redirect logs written on port E9 to stdout
-    qemu_settings += ["-debugcon", "stdio"]
-    # Set qemu RAM amount
-    qemu_settings += ["-m", "128M"]
+    # AHCI Device
+    qemu_options.append(QemuOption(["-device", "ich9-ahci,id=ahci"]))
+    # AHCI Port 0 -> runeOS.image
+    qemu_options.append(QemuOption(["-drive", f"file={RUNE_OS_IMAGE},id=boot,if=none"]))
+    qemu_options.append(QemuOption(["-device", "ide-hd,drive=boot,bus=ahci.0"]))
 
-    # Configure Pflash's with UEFI code
-    qemu_settings += [
-        "-drive",
-        f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on",
-        "-drive",
-        f"if=pflash,format=raw,unit=1,file={OVMF_VARS}",
-        "-net",
-        "none",
-    ]
-    # Setup AHCI device
-    qemu_settings += ["-device", "ich9-ahci,id=ahci"]
-    # Add drive with runeOS image at AHCI port 0
-    qemu_settings += [
-        "-drive",
-        f"file={RUNE_OS_IMAGE},id=boot,if=none",
-        "-device",
-        "ide-hd,drive=boot,bus=ahci.0",
-    ]
+    # RAM -> 128 MiBi
+    qemu_options.append(QemuOption(["-m", "128M"]))
+
+    if len(log) > 0:
+        # Log interrupts and triple faults
+        qemu_options.append(QemuOption(["-D", log]))
+        qemu_options.append(QemuOption(["-d", "int,cpu_reset"]))
+
+    if no_reboot:
+        # Do not reboot on triple fault but exit
+        qemu_options.append(QemuOption(["-no-reboot"]))
+
+    if no_graphics:
+        # Do not display the Qemu window
+        # Also: debugcon is used by something else, dunno what because of bad docs
+        qemu_options.append(QemuOption(["-nographic"]))
+    else:
+        # Enable port E9 forwarding to stdio
+        qemu_options.append(QemuOption(["-debugcon", "stdio"]))
 
     if debug:
         # -S: Do not start CPU -> Wait until gdb is connected
         # -s: Shorthand for -gdb tcp::1234 -> Open a gdb server on localhost:1234
-        qemu_settings += ["-S", "-s"]
+        qemu_options.append(QemuOption(["-S", "-s"]))
 
-    if len(qemu_log) > 0:
-        # Log interrupts and triple faults
-        qemu_settings += ["-D", qemu_log]
-        qemu_settings += ["-d", "int,cpu_reset"]
-        qemu_settings += ["-no-reboot"]
+    # Print shell call for debugging
+    print(f"qemu-system-x86_64 {qemu_options[0].as_string()}", )
+    for i in range(1, len(qemu_options)):
+        print(f"                   {qemu_options[i].as_string()}")
 
-    # print the shell call for debugging
-    print(f"qemu-system-x86_64 {qemu_settings[0]} {qemu_settings[1]}")
-    for i in range(2, len(qemu_settings), 2):
-        print(f"                   {qemu_settings[i]} {qemu_settings[i + 1]}")
-    if debug:
-        print("                   -no-reboot")
-
+    # Execute qemu
     cmd = ["qemu-system-x86_64"]
-    cmd += qemu_settings
+    for option in qemu_options:
+        cmd += option.as_list()
     subprocess.run(cmd)
 
 
