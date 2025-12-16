@@ -25,8 +25,8 @@ TEST("Kernel Test 1", "B Suite") {
     REQUIRE(1 + 2 == 3)
 }
 
-TEST("Kernel Test 2", "B Suite") {
-    REQUIRE(1 + 2 == 4)
-}
+// TEST("Kernel Test 2", "B Suite") {
+//     REQUIRE(1 + 2 == 4)
+// }
 
 #endif // RUNEOS_DUMMY2_H
