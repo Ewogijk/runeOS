@@ -21,7 +21,7 @@ jobs:
           ls -al Brokk/Resource
       - name: Install System & Python Dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86=1:8.2.2+ds-0ubuntu1.10 dosfstools gdb
+          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb
           pip install scons click meson pyyaml
       - name: Download runeToolchain
         id: rune_toolchain_download
