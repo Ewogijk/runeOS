@@ -21,22 +21,25 @@ jobs:
           ls -al Brokk/Resource
       - name: Install System & Python Dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86=1:8.2.2+ds-0ubuntu1.10 dosfstools gdb
+          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb
           pip install scons click meson pyyaml
       - name: Download runeToolchain
+        id: rune_toolchain_download
         uses: robinraju/release-downloader@v1
         with:
           repository: 'Ewogijk/runeToolchain'
           latest: true
           fileName: '*.tar.gz'
-          out-file-path: 'Brokk/Resource/runeToolchain'
+          out-file-path: '/opt'
       - name: Install runeToolchain
         run: |
-          cd Brokk/Resource/runeToolchain
-          tar -xzf Hosted.tar.gz
-          tar -xzf Freestanding.tar.gz
-          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-rune/bin:$PATH
-          PATH=${{ github.workspace }}/Brokk/Resource/runeToolchain/x86_64-elf/bin:$PATH
+          echo \> Compiler Toolchain: runeToolchain ${{steps.rune_toolchain_download.outputs.tag_name}}
+          cd /opt
+          sudo tar -xzf runeToolchain.tar.gz
+          echo \> GCC x86_64-elf is
+          /opt/runeToolchain/x86_64-elf/bin/x86_64-elf-g++ --version
+          echo \> GCC x86_64-rune is
+          /opt/runeToolchain/x86_64-rune/bin/x86_64-rune-g++ --version
           cd ${{ github.workspace }}
       - name: Build Project
         run: |
@@ -47,32 +50,49 @@ jobs:
           cd ${{ github.workspace }}
       - name: Run Tests
         run: |
-          cd Brokk/Build/x86_64-test
-          ./Start.py
+          cd Brokk/Build/x86_64-ci
+          ./Start.py --no-reboot --no-graphics
           cd ${{ github.workspace }}
-      - name: Mount runeOS Image
+      - name: Evaluate Tests
         run: |
-          cd Brokk/Build/x86_64-test/bin
+          cd Brokk/Build/x86_64-ci/bin
           sudo losetup -P /dev/loop0 runeOS.image
           mkdir tmp
           sudo mount /dev/loop0p2 tmp
-      - name: Evaluate Tests
-        run: |
-          if [! -e tmp/System/Heimdall/UnitTest/Pass.txt && ! -e tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
-            exit -1
+          echo \> Heimdall directory:
+          ls tmp/System/Heimdall
+          echo \> Heimdall/UnitTest directory:
+          ls tmp/System/Heimdall/UnitTest
+          echo \> Heimdall/IntegrationTest directory:
+          ls tmp/System/Heimdall/IntegrationTest
+          if [ ! -f tmp/System/Heimdall/UnitTest/Pass.txt ] 
+          then
+            cat tmp/System/Heimdall/UnitTest/JUnitReport.xml
+            echo \> ERROR: Unit tests failed.
+            exit 255
           fi
+          if [ ! -f tmp/System/Heimdall/IntegrationTest/Pass.txt ] 
+          then
+            cat tmp/System/Heimdall/IntegrationTest/JUnitReport.xml
+            echo \> ERROR: Integration tests failed.
+            exit 255
+          fi
+          mkdir ${{ github.workspace }}/TestResults
+          cp -r tmp/System/Heimdall/UnitTest ${{ github.workspace }}/TestResults
+          cp -r tmp/System/Heimdall/IntegrationTest ${{ github.workspace }}/TestResults
+          sudo umount tmp
+          sudo losetup -d /dev/loop0
+          cd ${{ github.workspace }}
+          ls -l ${{ github.workspace }}/TestResults
+          ls -l ${{ github.workspace }}/TestResults/UnitTest
+          ls -l ${{ github.workspace }}/TestResults/IntegrationTest
       - name: Upload Unit Test Report
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-report
-          path: tmp/System/Heimdall/UnitTest/JUnitReport.xml
+          path: ${{ github.workspace }}/TestResults/UnitTest/JunitReport.xml
       - name: Upload Integration Test Report
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-report
-          path: tmp/System/Heimdall/IntegrationTest/JUnitReport.xml
-      - name: Unmount runeOS Image
-        run: |
-          sudo umount tmp
-          sudo losetup -d /dev/loop0
-          cd ${{ github.workspace }}
+          path: ${{ github.workspace }}/TestResults/IntegrationTest/JunitReport.xml
