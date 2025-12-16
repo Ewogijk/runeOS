@@ -53,41 +53,39 @@ jobs:
           cd Brokk/Build/x86_64-ci
           ./Start.py --no-reboot --no-graphics
           cd ${{ github.workspace }}
-      - name: Mount runeOS Image
+      - name: Evaluate Tests
         run: |
           cd Brokk/Build/x86_64-ci/bin
           sudo losetup -P /dev/loop0 runeOS.image
           mkdir tmp
           sudo mount /dev/loop0p2 tmp
-      - name: Evaluate Tests
-        run: |
-          cd Brokk/Build/x86_64-ci/bin
           echo \> Heimdall directory:
           ls tmp/System/Heimdall
           echo \> Heimdall/UnitTest directory:
           ls tmp/System/Heimdall/UnitTest
           echo \> Heimdall/IntegrationTest directory:
           ls tmp/System/Heimdall/IntegrationTest
-          if [! -f tmp/System/Heimdall/UnitTest/Pass.txt]; then
+          if ! [ -f tmp/System/Heimdall/UnitTest/Pass.txt]; then
             echo \> ERROR: Unit tests failed.
             exit -1
           fi
-          if [! -f tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
+          if ! [-f tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
             echo \> ERROR: Integration tests failed.
             exit -1
           fi
+          mkdir ${{ github.workspace }}/TestResults
+          cp -r tmp/System/Heimdall/UnitTest ${{ github.workspace }}/TestResults
+          cp -r tmp/System/Heimdall/IntegrationTest ${{ github.workspace }}/TestResults
+          sudo umount tmp
+          sudo losetup -d /dev/loop0
+          cd ${{ github.workspace }}
       - name: Upload Unit Test Report
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-report
-          path: tmp/System/Heimdall/UnitTest/JUnitReport.xml
+          path: ${{ github.workspace }}/TestResults/UnitTest/JunitReport.xml
       - name: Upload Integration Test Report
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-report
-          path: tmp/System/Heimdall/IntegrationTest/JUnitReport.xml
-      - name: Unmount runeOS Image
-        run: |
-          sudo umount tmp
-          sudo losetup -d /dev/loop0
-          cd ${{ github.workspace }}
+          path: ${{ github.workspace }}/TestResults/IntegrationTest/JunitReport.xml
