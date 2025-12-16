@@ -51,7 +51,7 @@ jobs:
       - name: Run Tests
         run: |
           cd Brokk/Build/x86_64-ci
-          ./Start.py
+          ./Start.py --no-reboot --no-graphics
           cd ${{ github.workspace }}
       - name: Mount runeOS Image
         run: |
