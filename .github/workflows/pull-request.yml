@@ -65,13 +65,15 @@ jobs:
           ls tmp/System/Heimdall/UnitTest
           echo \> Heimdall/IntegrationTest directory:
           ls tmp/System/Heimdall/IntegrationTest
-          if ! [ -f tmp/System/Heimdall/UnitTest/Pass.txt]; then
+          if [ ! -f tmp/System/Heimdall/UnitTest/Pass.txt] 
+          then
             echo \> ERROR: Unit tests failed.
-            exit -1
+            exit 255
           fi
-          if ! [-f tmp/System/Heimdall/IntegrationTest/Pass.txt]; then
+          if [ ! -f tmp/System/Heimdall/IntegrationTest/Pass.txt] 
+          then
             echo \> ERROR: Integration tests failed.
-            exit -1
+            exit 255
           fi
           mkdir ${{ github.workspace }}/TestResults
           cp -r tmp/System/Heimdall/UnitTest ${{ github.workspace }}/TestResults
