@@ -15,12 +15,13 @@
  */
 
 #include <Test/Heimdall/ConsoleReporter.h>
-#include <Test/Heimdall/GnomeReporter.h>
 #include <Test/Heimdall/Engine.h>
+#include <Test/Heimdall/GnomeReporter.h>
 #include <Test/Heimdall/HRE.h>
 #include <Test/Heimdall/JUnitReporter.h>
 #include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/Test.h>
+#include <Test/Heimdall/TestRunInfoReporter.h>
 
 /// atexit will be automatically generated when static local variables are declared
 /// This function will be provided by the heimdall runtime environment but a forward declaration
@@ -29,16 +30,19 @@ auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
 
-    HString Engine::CONSOLE_REPORTER      = "console-reporter";
-    HString Engine::JUNIT_REPORTER        = "junit-reporter";
-    HString Engine::GNOME_REPORTER        = "gnome-reporter";
-    HString Engine::TEST_REPORT_DIRECTORY = "test-report-directory";
+    HString Engine::CONSOLE_REPORTER       = "console-reporter";
+    HString Engine::JUNIT_REPORTER         = "junit-reporter";
+    HString Engine::GNOME_REPORTER         = "gnome-reporter";
+    HString Engine::TEST_RUN_INFO_REPORTER = "hre-reporter";
+    HString Engine::TEST_REPORT_DIRECTORY  = "test-report-directory";
 
     auto Engine::configure(const OptionList& options) -> bool {
         _configuration.options        = options;
         bool has_test_report_location = false;
         for (size_t i = 0; i < _configuration.options.size(); i++) {
             Option opt = _configuration.options[i];
+            if (opt.name == TEST_RUN_INFO_REPORTER)
+                _configuration.reporter_registry.insert(new TestRunInfoReporter());
             if (opt.name == CONSOLE_REPORTER)
                 _configuration.reporter_registry.insert(new ConsoleReporter());
             if (opt.name == JUNIT_REPORTER)

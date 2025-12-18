@@ -34,6 +34,7 @@ sources = [
     target_env.File("Heimdall/Engine.cpp"),
     target_env.File("Heimdall/GnomeReporter.cpp"),
     target_env.File("Heimdall/JUnitReporter.cpp"),
+    target_env.File("Heimdall/TestRunInfoReporter.cpp"),
     target_env.File("Heimdall/TestTracker.cpp"),
     target_env.File("UnitTest/hre/HRE.cpp"),
     target_env.File("UnitTest/hre/HString.cpp"),
