@@ -185,11 +185,11 @@ namespace Rune::VFS {
         void update_state();
 
       public:
-        explicit FATDirectoryStream(const Function<void()>&     on_close,
+        explicit FATDirectoryStream(const Function<void()>& on_close,
 
                                     const FATDirectoryIterator& fat_it);
 
-        auto     next() -> Expected<NodeInfo, DirectoryStreamStatus> override;
+        auto next() -> Expected<NodeInfo, DirectoryStreamStatus> override;
     };
 } // namespace Rune::VFS
 

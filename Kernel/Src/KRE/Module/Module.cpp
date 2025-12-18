@@ -58,8 +58,8 @@ namespace Rune {
     }
 
     U16 Module::install_event_handler(const String&       event_hook,
-                                         const String&       evt_handler_name,
-                                         const EventHandler& handler) {
+                                      const String&       evt_handler_name,
+                                      const EventHandler& handler) {
         if (!_event_hook_handle_counter.has_more()) return 0;
 
         auto it = _event_hook_table.find(event_hook);

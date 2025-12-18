@@ -35,8 +35,6 @@ namespace Rune {
         U8*         glyphs;
     };
 
-
-
     /**
      * @brief 2D position in the frame buffer.
      */
@@ -163,6 +161,6 @@ namespace Rune {
 
         void draw_line(Coord2D start, Coord2D end, Pixel color, double thickness) const;
     };
-}
+} // namespace Rune
 
 #endif // RUNEOS_FRAMEBUFFER_H

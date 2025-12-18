@@ -69,8 +69,7 @@ namespace Rune::CPU {
 
         // XMM0-XMM15, 16 registers 128bit wide. but we can only push 64 bit values
         // therefore push 2*16 zeroes
-        for (int i = 0; i < 32; i++)
-            *(--s_top) = 0;
+        for (int i = 0; i < 32; i++) *(--s_top) = 0;
 
         return memory_pointer_to_addr(s_top);
     }

@@ -37,9 +37,9 @@ namespace Rune::BuiltInPlugin {
 
     bool FATDriverPlugin::load() {
         System& system = System::instance();
-        auto* fs = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        auto* ds = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        bool  r  = fs->install_driver(UniquePointer<VFS::Driver>(
+        auto*   fs     = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
+        auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        bool    r      = fs->install_driver(UniquePointer<VFS::Driver>(
             new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()),
                                ds->get_ahic_driver())));
         return r;

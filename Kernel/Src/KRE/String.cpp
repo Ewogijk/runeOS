@@ -58,8 +58,7 @@ namespace Rune {
                          int          len,
                          const int    limit) {
         size_t buf_pos = off;
-        while (--len >= limit && buf_pos < buf_len)
-            buf[buf_pos++] = msg[len];
+        while (--len >= limit && buf_pos < buf_len) buf[buf_pos++] = msg[len];
         return buf_pos;
     }
 
@@ -160,8 +159,7 @@ namespace Rune {
                 buf[buf_pos++] = 'x';
             }
         }
-        for (size_t i = 0; i < pad_left && buf_pos < buf_len; i++)
-            buf[buf_pos++] = fill;
+        for (size_t i = 0; i < pad_left && buf_pos < buf_len; i++) buf[buf_pos++] = fill;
 
         if (use_prefix && align != '=') {
             if (radix == 2) {
@@ -178,8 +176,7 @@ namespace Rune {
 
         buf_pos = write_reverse(buf, buf_pos, buf_len, b, pos, 0);
 
-        for (size_t i = 0; i < pad_right && buf_pos < buf_len; i++)
-            buf[buf_pos++] = fill;
+        for (size_t i = 0; i < pad_right && buf_pos < buf_len; i++) buf[buf_pos++] = fill;
 
         return buf_pos;
     }
@@ -264,8 +261,7 @@ namespace Rune {
         }
 
         // Skip trailing zeroes
-        while (frac_buf[frac_limit] == '0' && frac_limit < frac_pos)
-            frac_limit++;
+        while (frac_buf[frac_limit] == '0' && frac_limit < frac_pos) frac_limit++;
 
         const size_t padding   = width > whole_pos + 1 + frac_pos - frac_limit
                                      ? width - whole_pos - 1 - frac_pos + frac_limit
@@ -281,8 +277,7 @@ namespace Rune {
             pad_left = padding;
         }
 
-        for (size_t i = 0; i < pad_left && buf_pos < buf_len; i++)
-            buf[buf_pos++] = fill;
+        for (size_t i = 0; i < pad_left && buf_pos < buf_len; i++) buf[buf_pos++] = fill;
 
         buf_pos = write_reverse(buf, buf_pos, buf_len, whole_buf, static_cast<int>(whole_pos), 0);
         if (buf_pos < buf_len) buf[buf_pos++] = '.';
@@ -296,8 +291,7 @@ namespace Rune {
                                 static_cast<int>(frac_pos),
                                 static_cast<int>(frac_limit));
 
-        for (size_t i = 0; i < pad_right && buf_pos < buf_len; i++)
-            buf[buf_pos++] = fill;
+        for (size_t i = 0; i < pad_right && buf_pos < buf_len; i++) buf[buf_pos++] = fill;
 
         return buf_pos;
     }
@@ -822,8 +816,7 @@ namespace Rune {
     String String::replace(const char c, const char replacement) {
         const char* buf = get_buf();
         char        new_buf[_size];
-        for (size_t i = 0; i < _size; i++)
-            new_buf[i] = buf[i] == c ? replacement : buf[i];
+        for (size_t i = 0; i < _size; i++) new_buf[i] = buf[i] == c ? replacement : buf[i];
 
         // When the replacement is the null terminator we must recalculate the size of the new
         // string
@@ -945,4 +938,4 @@ namespace Rune {
     }
 
     bool operator!=(const String& a, const String& b) { return !(a == b); }
-}
+} // namespace Rune

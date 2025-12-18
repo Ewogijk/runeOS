@@ -33,7 +33,7 @@ namespace Heimdall {
                        const HString& test_suite,
                        void           (*test_function)(),
                        const char*    source_file,
-                       size_t            line) -> bool {
+                       size_t         line) -> bool {
         auto& test_tracker = get_test_tracker();
 
         // All tests must belong to a test suite and a test suite name cannot be the empty string

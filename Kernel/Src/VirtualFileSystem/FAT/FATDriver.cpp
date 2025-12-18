@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FATDriver.h>
 
-#include <KRE/Utility.h>
 #include <KRE/Math.h>
+#include <KRE/Utility.h>
 
 #include <Device/AHCI/AHCI.h>
 

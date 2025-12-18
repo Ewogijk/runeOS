@@ -41,7 +41,6 @@ namespace Rune {
          */
         Version version = {.major = 0, .minor = 0, .patch = 0, .pre_release = ""};
 
-
         [[nodiscard]] auto to_string() const -> String;
     };
 

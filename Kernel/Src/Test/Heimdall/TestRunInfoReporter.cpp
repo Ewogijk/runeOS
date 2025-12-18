@@ -17,9 +17,7 @@
 #include <Test/Heimdall/TestRunInfoReporter.h>
 
 namespace Heimdall {
-    auto TestRunInfoReporter::get_name() const -> HString {
-        return "TestRunInfoReporter";
-    }
+    auto TestRunInfoReporter::get_name() const -> HString { return "TestRunInfoReporter"; }
 
     void TestRunInfoReporter::on_test_run_begin(const TestRunInfo& test_run_info) {
         SILENCE_UNUSED(test_run_info);
@@ -47,8 +45,7 @@ namespace Heimdall {
                 env_info = env_info + test_run_info.reporter_names[i];
         }
         env_info = env_info + "\n\n";
-        hre_save_to_file(test_run_info.test_report_directory + "TestRunInfo.txt",
-                         env_info);
+        hre_save_to_file(test_run_info.test_report_directory + "TestRunInfo.txt", env_info);
     }
 
     void TestRunInfoReporter::on_test_run_end(const TestRunStats& test_run_stats) {

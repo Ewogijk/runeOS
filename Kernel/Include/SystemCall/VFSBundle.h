@@ -30,7 +30,7 @@ namespace Rune::SystemCall {
      * @brief The context for all virtual file system related system calls.
      */
     struct VFSSystemCallContext {
-        KernelGuardian*    k_guard    = nullptr;
+        KernelGuardian* k_guard    = nullptr;
         VFS::VFSModule* vfs_module = nullptr;
         App::AppModule* app_module = nullptr;
     };

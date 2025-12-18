@@ -18,15 +18,16 @@
 #ifndef HEIMDALL_ENVIRONMENTREPORTER_H
 #define HEIMDALL_ENVIRONMENTREPORTER_H
 
-#include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/HRE.h>
+#include <Test/Heimdall/Reporter.h>
 
 namespace Heimdall {
 
     /// @brief The ConsoleReporter prints a test report in a human-readable format to the console
     class TestRunInfoReporter : public Reporter {
         HString _test_report_directory;
-    public:
+
+      public:
         [[nodiscard]] auto get_name() const -> HString override;
         void               on_test_run_begin(const TestRunInfo& test_run_info) override;
         void               on_test_run_end(const TestRunStats& test_run_stats) override;
@@ -37,5 +38,5 @@ namespace Heimdall {
         void               on_assertion_begin(const AssertionInfo& assertion_info) override;
         void               on_assertion_end(const AssertionStats& assertion_stats) override;
     };
-}
+} // namespace Heimdall
 #endif // HEIMDALL_ENVIRONMENTREPORTER_H

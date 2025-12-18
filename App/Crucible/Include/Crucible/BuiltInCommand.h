@@ -61,6 +61,6 @@ namespace Crucible {
      * @param shell_env
      */
     void register_builtin_commands(Environment& shell_env);
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_BUILTINCOMMAND_H

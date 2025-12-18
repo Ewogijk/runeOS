@@ -337,7 +337,8 @@ namespace Rune::App {
             .print(stream);
     }
 
-    LoadStatus AppModule::start_system_loader(const Path& system_loader_executable, const Path& working_directory) {
+    LoadStatus AppModule::start_system_loader(const Path& system_loader_executable,
+                                              const Path& working_directory) {
         if (!_app_handle_counter.has_more()) return LoadStatus::LOAD_ERROR;
         ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
@@ -345,8 +346,12 @@ namespace Rune::App {
         VirtualAddr start_info_addr;
         LOGGER->info("Loading OS: {}", system_loader_executable.to_string());
         char*      dummy_args[1] = {nullptr};
-        LoadStatus load_status =
-            loader.load(system_loader_executable, dummy_args, app, user_stack, start_info_addr, true);
+        LoadStatus load_status   = loader.load(system_loader_executable,
+                                             dummy_args,
+                                             app,
+                                             user_stack,
+                                             start_info_addr,
+                                             true);
         if (load_status != LoadStatus::LOADED) {
             LOGGER->warn("Failed to load OS. Status: {}", load_status.to_string());
             return load_status;
@@ -363,11 +368,11 @@ namespace Rune::App {
         // Hook up the stdin to the keyboard
         app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard().get());
 
-
-        _system_loader_handle = schedule_for_start(app,
-                           user_stack,
-                           memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
-                           move(working_directory));
+        _system_loader_handle =
+            schedule_for_start(app,
+                               user_stack,
+                               memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
+                               move(working_directory));
         return LoadStatus::RUNNING;
     }
 

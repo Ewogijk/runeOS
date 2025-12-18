@@ -18,9 +18,9 @@
 #ifndef FREYA_VERSION_H
 #define FREYA_VERSION_H
 
-#define MINOR 0
-#define MAJOR 1
-#define PATCH 0
+#define MINOR   0
+#define MAJOR   1
+#define PATCH   0
 #define RELEASE ""
 
 #endif // FREYA_VERSION_H

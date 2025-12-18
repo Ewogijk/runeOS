@@ -93,8 +93,7 @@ namespace Rune::Device {
         return ld;
     }
 
-    AHCIDriver::AHCIDriver(Memory::SlabAllocator*      heap,
-                           CPU::Timer*                 timer)
+    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer)
         : _hba(nullptr),
           _port_engine(),
           _heap(heap),

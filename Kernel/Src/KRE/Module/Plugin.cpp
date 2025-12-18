@@ -21,4 +21,4 @@ namespace Rune {
         return String::format("{} v{} by {}", name, version.to_string(), vendor);
     }
 
-}
+} // namespace Rune

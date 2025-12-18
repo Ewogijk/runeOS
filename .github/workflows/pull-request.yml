@@ -20,9 +20,9 @@ jobs:
       - name: Check C/C++ Code Formatting
         run: |
           echo \> Check Kernel code
-          find Kernel/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format-19 --dry-run -Werror
+          find Kernel/ -name '*.h' -o -name '*.cpp' | xargs clang-format-19 --dry-run -Werror
           echo \> Check App code
-          find App/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format-19 --dry-run -Werror
+          find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
       - name: Check Python Code
         run: |
           echo \> Check Kernel code

@@ -34,7 +34,7 @@ namespace Rune::SystemCall {
      * @brief The context for all app management system calls.
      */
     struct AppSystemCallContext {
-        KernelGuardian*          k_guard       = nullptr;
+        KernelGuardian*       k_guard       = nullptr;
         App::AppModule*       app_module    = nullptr;
         Device::DeviceModule* device_module = nullptr;
         CPU::CPUModule*       cpu_module    = nullptr;

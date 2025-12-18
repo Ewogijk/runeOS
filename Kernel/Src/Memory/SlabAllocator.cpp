@@ -56,8 +56,7 @@ namespace Rune::Memory {
         auto* free_list =
             memory_addr_to_pointer<U8>(page + get_page_size() - sizeof(Slab) - free_list_size);
         slab->free_buf.free_object = 0;
-        for (size_t i = 0; i < objects - 1; i++)
-            free_list[i] = i + 1;
+        for (size_t i = 0; i < objects - 1; i++) free_list[i] = i + 1;
         free_list[objects - 1] = MAX_OBJECT_COUNT;
 
         memset(slab->page, 0, get_page_size() - sizeof(Slab) - free_list_size);
