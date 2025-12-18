@@ -77,7 +77,7 @@ jobs:
             exit 255
           fi
           mkdir ${{ github.workspace }}/TestResults
-          echo \> Copy: runeOS.image@/System/Heimdall/UnitTest -> ${{ github.workspace }}/TestResults
+          echo \> Copy: runeOS.image@/System/Heimdall/UnitTest -\> ${{ github.workspace }}/TestResults
           cp -r tmp/System/Heimdall/UnitTest ${{ github.workspace }}/TestResults
           echo \> Copy: runeOS.image@/System/Heimdall/IntegrationTest -> ${{ github.workspace }}/TestResults
           cp -r tmp/System/Heimdall/IntegrationTest ${{ github.workspace }}/TestResults
