@@ -12,6 +12,7 @@ sources = [
     'Heimdall/Engine.cpp',
     'Heimdall/GnomeReporter.cpp',
     'Heimdall/JUnitReporter.cpp',
+    'Heimdall/TestRunInfoReporter.cpp',
     'Heimdall/TestTracker.cpp',
     'IntegrationTest/hre/HRE.cpp',
     'IntegrationTest/hre/HString.cpp',

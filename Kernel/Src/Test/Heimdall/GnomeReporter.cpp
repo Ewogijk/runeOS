@@ -28,7 +28,7 @@ namespace Heimdall {
     void GnomeReporter::on_test_run_end(const TestRunStats& test_run_stats) {
         SILENCE_UNUSED(test_run_stats)
         if (test_run_stats.failed_tests == 0)
-            hre_save_test_report(_test_report_directory + "Pass.txt", "");
+            hre_save_to_file(_test_report_directory + "Pass.txt", "");
     }
 
     void GnomeReporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {

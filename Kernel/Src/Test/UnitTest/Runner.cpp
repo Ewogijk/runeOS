@@ -36,6 +36,7 @@ namespace Rune::Test {
 #else
         options.insert({.name = Heimdall::Engine::CONSOLE_REPORTER, .value = ""});
 #endif
+        options.insert({.name = Heimdall::Engine::TEST_RUN_INFO_REPORTER, .value = ""});
         options.insert({.name  = Heimdall::Engine::TEST_REPORT_DIRECTORY,
                         .value = "/System/Heimdall/UnitTest/"});
         Heimdall::execute_tests(options);

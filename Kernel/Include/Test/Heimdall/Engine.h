@@ -40,6 +40,7 @@ namespace Heimdall {
         static HString CONSOLE_REPORTER;
         static HString JUNIT_REPORTER;
         static HString GNOME_REPORTER;
+        static HString TEST_RUN_INFO_REPORTER;
         static HString TEST_REPORT_DIRECTORY;
 
         [[nodiscard]] auto get_current_test_result() const -> TestResult;
