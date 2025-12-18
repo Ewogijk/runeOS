@@ -26,8 +26,8 @@
 namespace Heimdall {
     /// @brief Information about a test.
     struct Test {
-        HString name;
-        void    (*test_function)();
+        HString            name;
+        void               (*test_function)();
         SourceCodeLocation scl;
     };
 
@@ -112,8 +112,11 @@ namespace Heimdall {
     /// @param test_suite Name of the test's test suite.
     /// @param test_function Test function.
     /// @return Always true.
-    auto register_test(const HString& name, const HString& test_suite, void (*test_function)(), const char* source_file, size_t line)
-        -> bool;
+    auto register_test(const HString& name,
+                       const HString& test_suite,
+                       void           (*test_function)(),
+                       const char*    source_file,
+                       size_t         line) -> bool;
 } // namespace Heimdall
 
 #endif // RUNEOS_TEST_H

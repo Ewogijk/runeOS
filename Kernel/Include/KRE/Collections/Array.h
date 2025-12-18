@@ -9,7 +9,8 @@
 #include <KRE/Utility.h>
 
 namespace Rune {
-    template <typename T> class ArrayIterator {
+    template <typename T>
+    class ArrayIterator {
         T*     _data_buffer;
         size_t _position;
         size_t _arr_size;
@@ -64,7 +65,8 @@ namespace Rune {
      * @tparam N
      * @tparam T
      */
-    template <typename T, size_t N> class Array {
+    template <typename T, size_t N>
+    class Array {
         T _array[N]; // NOLINT
 
         void copy(const Array<T, N>& other) {

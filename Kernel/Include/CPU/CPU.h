@@ -399,7 +399,6 @@ namespace Rune::CPU {
      */
     CLINK auto get_page_fault_address() -> Register;
 
-
 } // namespace Rune::CPU
 
 #endif // RUNEOS_CPU_H

@@ -272,8 +272,7 @@ namespace Rune::VFS {
     FATDirectoryStream::FATDirectoryStream(const Function<void()>&     on_close,
                                            const FATDirectoryIterator& fat_it)
         : DirectoryStream(move(on_close)),
-          _fat_it(move(fat_it)) {
-    }
+          _fat_it(move(fat_it)) {}
 
     Expected<NodeInfo, DirectoryStreamStatus> FATDirectoryStream::next() {
         switch (_fat_it.get_state()) {
@@ -282,8 +281,7 @@ namespace Rune::VFS {
             case DirectoryIteratorState::CORRUPT_LFN_ENTRY:
             case DirectoryIteratorState::DEV_ERROR:
                 return Unexpected<DirectoryStreamStatus>(DirectoryStreamStatus::IO_ERROR);
-            default:
-                break; // ITERATING -> continue get node info
+            default: break; // ITERATING -> continue get node info
         }
 
         U8 node_attr = 0;

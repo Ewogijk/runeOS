@@ -25,8 +25,7 @@ namespace Rune::CPU {
         LinkedList<Thread*> l;
         auto*               c_thread_q = this;
         while (c_thread_q != nullptr) {
-            for (auto& t : c_thread_q->_threads)
-                l.add_back(t.get());
+            for (auto& t : c_thread_q->_threads) l.add_back(t.get());
             c_thread_q = c_thread_q->_lower_policy_queue;
         }
         return l;

@@ -37,8 +37,8 @@ namespace Rune::Device {
         static constexpr U8 LOGICAL_DRIVE_LIMIT = 255;
         static constexpr U8 PORT_LIMIT          = 32;
 
-        volatile HBAMemory*   _hba;
-        PortEngine            _port_engine[PORT_LIMIT];
+        volatile HBAMemory* _hba;
+        PortEngine          _port_engine[PORT_LIMIT];
 
         Memory::SlabAllocator* _heap;
         CPU::Timer*            _timer;

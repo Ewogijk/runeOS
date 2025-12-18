@@ -59,7 +59,5 @@ namespace Heimdall {
 
     void JUnitTestList::insert(const JUnitTest& test) { _list_detail->list.push_back(test); }
 
-    auto JUnitTestList::operator[](size_t idx) -> JUnitTest {
-        return _list_detail->list[idx];
-    }
+    auto JUnitTestList::operator[](size_t idx) -> JUnitTest { return _list_detail->list[idx]; }
 } // namespace Heimdall

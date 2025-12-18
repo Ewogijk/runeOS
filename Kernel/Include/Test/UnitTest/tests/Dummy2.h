@@ -20,10 +20,7 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
-
-TEST("Kernel Test 1", "B Suite") {
-    REQUIRE(1 + 2 == 3)
-}
+TEST("Kernel Test 1", "B Suite") { REQUIRE(1 + 2 == 3) }
 
 // TEST("Kernel Test 2", "B Suite") {
 //     REQUIRE(1 + 2 == 4)

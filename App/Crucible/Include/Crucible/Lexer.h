@@ -115,6 +115,6 @@ namespace Crucible {
 
         Token peek_token();
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_LEXER_H

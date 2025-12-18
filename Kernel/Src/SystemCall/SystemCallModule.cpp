@@ -38,14 +38,13 @@ namespace Rune::SystemCall {
         SILENCE_UNUSED(boot_info)
         System& system = System::instance();
 
-        auto* mem_module = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
+        auto* mem_module     = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto  user_space_end = mem_module->get_virtual_memory_manager()->get_user_space_end();
         LOGGER->debug("Kernel memory start: {:0=#16x}", user_space_end);
         _k_guard.set_kernel_memory_start(user_space_end);
         system_call_init(&_k_guard);
 
-        LinkedList<Bundle> native_sys_calls =
-            system_call_get_native_bundles(&_k_guard);
+        LinkedList<Bundle> native_sys_calls = system_call_get_native_bundles(&_k_guard);
         for (auto& bundle : native_sys_calls) {
             LOGGER->debug(R"(Installing the "{}" system call bundle.)", bundle.name);
             for (auto& def : bundle.system_call_definitions)

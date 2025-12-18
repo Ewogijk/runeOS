@@ -160,16 +160,16 @@ namespace Rune::Device {
             if (header.vendor_id == 0xFFFF) return;
 
             PCI_LOGGER->debug("Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class Code: "
-                          "{:#x} - Sub Class: {:#x} "
-                          "- Programming Interface: {:#x}",
-                          bus,
-                          device,
-                          0,
-                          header.vendor_id,
-                          header.device_id,
-                          header.base_class_code,
-                          header.sub_class_code,
-                          header.programming_interface);
+                              "{:#x} - Sub Class: {:#x} "
+                              "- Programming Interface: {:#x}",
+                              bus,
+                              device,
+                              0,
+                              header.vendor_id,
+                              header.device_id,
+                              header.base_class_code,
+                              header.sub_class_code,
+                              header.programming_interface);
 
             if (header.base_class_code == 0x1 && header.sub_class_code == 0x6
                 && header.vendor_id == 0x8086 && header.device_id == 0x2922) {
@@ -208,17 +208,18 @@ namespace Rune::Device {
                     header = read_header(bus, device, 0);
                     if (header.vendor_id == 0xFFFF) continue;
 
-                    PCI_LOGGER->debug("Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class "
-                                  "Code: {:#x} - Sub "
-                                  "Class: {:#x} - Programming Interface: {:#x}",
-                                  bus,
-                                  device,
-                                  func,
-                                  header.vendor_id,
-                                  header.device_id,
-                                  header.base_class_code,
-                                  header.sub_class_code,
-                                  header.programming_interface);
+                    PCI_LOGGER->debug(
+                        "Bus: {}, Device: {}, Function: {} - {:#x}:{:#x} - Base Class "
+                        "Code: {:#x} - Sub "
+                        "Class: {:#x} - Programming Interface: {:#x}",
+                        bus,
+                        device,
+                        func,
+                        header.vendor_id,
+                        header.device_id,
+                        header.base_class_code,
+                        header.sub_class_code,
+                        header.programming_interface);
                 }
             }
         }

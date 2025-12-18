@@ -242,7 +242,8 @@ namespace Rune {
         friend auto operator!=(const Path& first, const Path& second) -> bool;
     };
 
-    template <> struct Hash<Path> {
+    template <>
+    struct Hash<Path> {
         Hash<String> str_hash;
 
         auto operator=(Hash&& other) -> Hash& = default;

@@ -42,4 +42,4 @@ namespace Rune::CPU {
         cpuid_make_request(0x80000008, &cpuid_response);
         return cpuid_response.rax & 0xFF;
     }
-}
+} // namespace Rune::CPU

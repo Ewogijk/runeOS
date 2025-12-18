@@ -19,7 +19,8 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.PhysicalMemoryManager");
+    const SharedPointer<Logger> LOGGER =
+        LogContext::instance().get_logger("Memory.PhysicalMemoryManager");
 
     DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 

@@ -139,4 +139,4 @@ namespace Crucible {
             "help [command]\n"
             "    Display information about the shell or a built-in command.\n";
     }
-} // namespace Rune::Shell
+} // namespace Crucible

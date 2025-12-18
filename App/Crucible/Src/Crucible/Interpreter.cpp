@@ -39,10 +39,8 @@ namespace Crucible {
             // Print some error information that hopefully helps to resolve the issue
             const std::string error_prefix = "Error parsing: ";
             std::string       highlight("");
-            for (size_t i = 0; i < actual.position + error_prefix.size(); i++)
-                highlight += ' ';
-            for (size_t i = 0; i < actual.text.size(); i++)
-                highlight += '^';
+            for (size_t i = 0; i < actual.position + error_prefix.size(); i++) highlight += ' ';
+            for (size_t i = 0; i < actual.text.size(); i++) highlight += '^';
 
             std::cerr << error_prefix << input << std::endl;
             std::cerr << highlight << std::endl;
@@ -64,8 +62,7 @@ namespace Crucible {
         register_hotkey_actions(_env);
 
         std::vector<std::string> b_cmd_list;
-        for (auto& [fst, snd] : _env.command_table)
-            b_cmd_list.push_back(fst);
+        for (auto& [fst, snd] : _env.command_table) b_cmd_list.push_back(fst);
         return _env.auto_completion.init_vocabulary(
             b_cmd_list,
             str_split(_env.env_var_table.find("PATH")->second, ':'));
@@ -137,4 +134,4 @@ namespace Crucible {
             }
         }
     }
-} // namespace Rune::Shell
+} // namespace Crucible

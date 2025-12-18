@@ -18,8 +18,8 @@
 #ifndef HEIMDALL_CONSOLEREPORTER_H
 #define HEIMDALL_CONSOLEREPORTER_H
 
-#include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/HRE.h>
+#include <Test/Heimdall/Reporter.h>
 
 namespace Heimdall {
 
@@ -32,7 +32,7 @@ namespace Heimdall {
         void write_tag(const HString& tag, const HString& text, bool pad_pos);
         void write_divider(char div_char, const HString& text);
 
-        public:
+      public:
         [[nodiscard]] auto get_name() const -> HString override;
         void               on_test_run_begin(const TestRunInfo& test_run_info) override;
         void               on_test_run_end(const TestRunStats& test_run_stats) override;
@@ -43,6 +43,6 @@ namespace Heimdall {
         void               on_assertion_begin(const AssertionInfo& assertion_info) override;
         void               on_assertion_end(const AssertionStats& assertion_stats) override;
     };
-}
+} // namespace Heimdall
 
 #endif // HEIMDALL_CONSOLEREPORTER_H

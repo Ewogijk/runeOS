@@ -21,8 +21,8 @@
 #include <string>
 #include <vector>
 
-#include <Freya/Service.h>
 #include <Freya/ExitCode.h>
+#include <Freya/Service.h>
 
 namespace Freya {
 

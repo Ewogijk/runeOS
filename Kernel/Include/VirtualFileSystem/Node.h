@@ -33,7 +33,6 @@ namespace Rune::VFS {
     X(NodeIOStatus, DEV_ERROR, 0x5)                                                                \
     X(NodeIOStatus, CLOSED, 0x6)
 
-
     /// @brief End result of a node IO operation.
     ///
     /// Okay: The operation was finished without errors.<br>

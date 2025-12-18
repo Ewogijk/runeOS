@@ -198,11 +198,11 @@ namespace Rune {
         }
 
         System::instance().boot_phase2({LIMINE_BOOTLOADER_INFO.response->name,
-                     LIMINE_BOOTLOADER_INFO.response->version,
-                     p_map,
-                     frame_buffer,
-                     Memory::get_base_page_table_address(),
-                     CPU::get_stack_pointer(),
-                     CPU::get_physical_address_width()});
+                                        LIMINE_BOOTLOADER_INFO.response->version,
+                                        p_map,
+                                        frame_buffer,
+                                        Memory::get_base_page_table_address(),
+                                        CPU::get_stack_pointer(),
+                                        CPU::get_physical_address_width()});
     }
 } // namespace Rune

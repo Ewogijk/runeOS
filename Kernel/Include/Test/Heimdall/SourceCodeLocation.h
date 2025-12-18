@@ -26,7 +26,7 @@ namespace Heimdall {
     /// @brief Location of a line of source code.
     struct SourceCodeLocation {
         HString file;
-        size_t       line;
+        size_t  line;
     };
 } // namespace Heimdall
 
