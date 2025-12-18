@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from typing import Dict, Any
@@ -21,6 +22,7 @@ from Config import BuildConfig
 
 import Build
 
+
 class ImageBuildStep(Build.BuildStep):
     def name(self) -> str:
         """
@@ -28,7 +30,6 @@ class ImageBuildStep(Build.BuildStep):
         """
 
         return "Image Build"
-
 
     def execute(self, build_conf: Dict[str, Any]) -> bool:
         """Execute this build step.

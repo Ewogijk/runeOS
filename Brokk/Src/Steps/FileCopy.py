@@ -40,12 +40,7 @@ class FileCopyStep(Build.BuildStep):
         project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
         rune_os_image = project_root / "Brokk" / "runeOS.image"
         for src, dest in build_conf[BuildConfig.FILES.to_yaml_key()].items():
-            install_app_cmd = [
-                "Src/Copy-File-To-Image.sh",
-                str(rune_os_image),
-                dest,
-                src
-            ]
+            install_app_cmd = ["Src/Copy-File-To-Image.sh", str(rune_os_image), dest, src]
             if not Build.exec_shell_cmd(install_app_cmd, "."):
                 return False
 
