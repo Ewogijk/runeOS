@@ -40,4 +40,4 @@ class CrucibleBuildStep(Build.BuildStep):
         build = build_conf[BuildConfig.BUILD.to_yaml_key()]
         cross_file = project_root / "Brokk" / "Build" / f"{arch}-{build}" / "x86_64-rune.txt"
         src_dir = project_root / "App" / "Crucible"
-        return Build.meson_build(src_dir, cross_file, src_dir / 'Build')
+        return Build.meson_build(src_dir, cross_file, src_dir / "Build")

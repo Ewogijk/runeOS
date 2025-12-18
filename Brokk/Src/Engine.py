@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 import os, sys
+
 sys.path.append(os.path.dirname(__file__))
 
 import yaml
@@ -34,6 +35,7 @@ from Config import BrokkConfig, BuildConfig
 VERSION = "0.2.0"
 MIN_IMAGE_SIZE = 256
 
+
 def print_banner() -> None:
     print(f"----------------------------- Brokk v{VERSION} -----------------------------\n")
 
@@ -44,12 +46,14 @@ def print_step(build_step: str) -> None:
     print(build_step.center(len(divider)))
     print(divider)
 
+
 def print_msg(msg: str) -> None:
     print(f"> {msg}")
 
 
 def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
+
 
 def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
     build = build_conf[BuildConfig.BUILD.to_yaml_key()]
@@ -73,7 +77,6 @@ def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
             FileCopyStep(),
             InstallStep(),
         ]
-
 
 
 def configure(brokk_config_yaml: str) -> bool:
@@ -135,8 +138,9 @@ def configure(brokk_config_yaml: str) -> bool:
         BuildConfig.PROJECT_ROOT.to_yaml_key(): str(Path("..").resolve()),
         BuildConfig.ARCH.to_yaml_key(): arch,
         BuildConfig.BUILD.to_yaml_key(): build,
-        BuildConfig.QEMU_HOST.to_yaml_key(): True if brokk_config[
-            BrokkConfig.QEMU_HOST.to_yaml_key()] else False,
+        BuildConfig.QEMU_HOST.to_yaml_key(): True
+        if brokk_config[BrokkConfig.QEMU_HOST.to_yaml_key()]
+        else False,
         BuildConfig.C.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-gcc"),
         BuildConfig.CPP.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-g++"),
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(
@@ -146,9 +150,11 @@ def configure(brokk_config_yaml: str) -> bool:
             freestanding_compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
         ),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
-        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[BrokkConfig.SYSTEM_LOADER.to_yaml_key()],
+        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[
+            BrokkConfig.SYSTEM_LOADER.to_yaml_key()
+        ],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
-        BuildConfig.APPS.to_yaml_key(): apps if apps else []
+        BuildConfig.APPS.to_yaml_key(): apps if apps else [],
     }
 
     build_settings_file = build_dir / Config.BUILD_CONFIG_YAML

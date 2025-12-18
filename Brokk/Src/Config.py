@@ -18,8 +18,10 @@ from types import NoneType
 
 import yaml
 
+
 class BrokkConfig(Enum):
     """Keys of the settings in the Brokk config file."""
+
     ARCH = (auto(),)
     BUILD = (auto(),)
     QEMU_HOST = (auto(),)
@@ -42,8 +44,10 @@ class BrokkConfig(Enum):
 
 BUILD_CONFIG_YAML = "build-config.yaml"
 
+
 class BuildConfig(Enum):
     """Keys of the settings in 'build-config.yaml'"""
+
     PROJECT_ROOT = (auto(),)
     ARCH = (auto(),)
     BUILD = (auto(),)
@@ -56,7 +60,6 @@ class BuildConfig(Enum):
     SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)
     APPS = (auto(),)
-
 
     def to_yaml_key(self) -> str:
         """
@@ -90,6 +93,7 @@ def verify_config(config: str, value: Any) -> bool:
     elif config == "image-size":
         return value >= 256
     return True
+
 
 def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
     """Load and check that the brokk config contains a configuration keys and values of the expected
@@ -133,6 +137,7 @@ def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
             print(f"Key '{key}' has unexpected value: {value}")
             return {}
     return cfg
+
 
 def load_build_config(build_config_yaml: str) -> Dict[str, Any]:
     """Load and check that the build config contains a configuration keys and values of the expected

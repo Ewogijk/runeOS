@@ -7,18 +7,34 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ruff and clang-format-19
+        run: |
+          echo \> Installing clang-format-19
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19
+          echo \> Installing ruff
+          pip install ruff
+      - name: Check C/C++ Code Formatting
+        run: |
+          echo \> Check Kernel code
+          find Kernel/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format-19 --dry-run -Werror
+          echo \> Check App code
+          find App/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format-19 --dry-run -Werror
+      - name: Check Python Code
+        run: |
+          echo \> Check Kernel code
+          ruff format --check Kernel/
+          echo \> Check Brokk code
+          ruff format --check Brokk/
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Debug Directory
-        run: |
-          echo Project Directory
-          ls -al
-          echo Brokk/
-          ls -al Brokk
-          echo Brokk/Resource
-          ls -al Brokk/Resource
       - name: Install System & Python Dependencies
         run: |
           sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb

@@ -65,8 +65,9 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
     """
     qemu_options = []
     # UEFI binaries
-    qemu_options.append(QemuOption(
-        ["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"]))
+    qemu_options.append(
+        QemuOption(["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"])
+    )
     qemu_options.append(QemuOption(["-drive", f"if=pflash,format=raw,unit=1,file={OVMF_VARS}"]))
     qemu_options.append(QemuOption(["-net", f"none"]))
 
@@ -102,7 +103,9 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
         qemu_options.append(QemuOption(["-S", "-s"]))
 
     # Print shell call for debugging
-    print(f"qemu-system-x86_64 {qemu_options[0].as_string()}", )
+    print(
+        f"qemu-system-x86_64 {qemu_options[0].as_string()}",
+    )
     for i in range(1, len(qemu_options)):
         print(f"                   {qemu_options[i].as_string()}")
 
