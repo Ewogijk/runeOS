@@ -24,7 +24,7 @@ namespace Rune::CPU {
      * A recursive mutex implementation.
      */
     class Mutex {
-        Scheduler*            _scheduler;
+        Scheduler* _scheduler;
 
         SharedPointer<Thread>             _owner;
         LinkedList<SharedPointer<Thread>> _wait_queue;

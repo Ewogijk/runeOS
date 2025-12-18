@@ -52,7 +52,6 @@ namespace Freya {
         auto create_service() -> Service;
 
       public:
-
         /// @brief Load and verify all service configurations in the given directory.
         ///
         /// A service configuration is considered valid if it is valid YAML and follows the schema:

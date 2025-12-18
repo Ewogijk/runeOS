@@ -120,7 +120,6 @@ namespace Crucible {
 
     void Environment::input_set(const std::string& str) {
         input_delete_all(true);
-        for (const char ch : str)
-            input_append(ch);
+        for (const char ch : str) input_append(ch);
     }
-} // namespace Rune::Shell
+} // namespace Crucible

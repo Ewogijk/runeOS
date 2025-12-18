@@ -51,7 +51,7 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(TestList& fst, TestList& sec) noexcept{
+    void swap(TestList& fst, TestList& sec) noexcept {
         using std::swap;
         swap(fst._list_detail->list, sec._list_detail->list);
     }
@@ -60,7 +60,5 @@ namespace Heimdall {
 
     void TestList::insert(const Test& test) { _list_detail->list.push_back(test); }
 
-    auto TestList::operator[](size_t index) const -> Test {
-        return _list_detail->list[index];
-    }
+    auto TestList::operator[](size_t index) const -> Test { return _list_detail->list[index]; }
 } // namespace Heimdall

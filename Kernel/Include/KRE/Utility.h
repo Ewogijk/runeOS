@@ -661,11 +661,10 @@ namespace Rune {
             new (&_data) T(obj);
         }
 
-        Optional(const NullOptional& null_opt) noexcept {
-            SILENCE_UNUSED(null_opt)
-        }
+        Optional(const NullOptional& null_opt) noexcept {SILENCE_UNUSED(null_opt)}
 
-        Optional(const Optional& other) : _has_value(other._has_value) {
+        Optional(const Optional& other)
+            : _has_value(other._has_value) {
             if (other._has_value) {
                 new (&_data) T(other.value());
             }

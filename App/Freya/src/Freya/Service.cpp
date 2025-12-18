@@ -44,7 +44,6 @@ namespace Freya {
         return _services[service];
     }
 
-
     auto ServiceRegistry::begin() const -> ConstIterator {
         return ConstIterator(_services.begin());
     }

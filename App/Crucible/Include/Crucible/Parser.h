@@ -99,6 +99,6 @@ namespace Crucible {
 
         ParsedInput parse_shell_input(const std::string& input);
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_PARSER_H

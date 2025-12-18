@@ -45,7 +45,7 @@ namespace Ember {
     /// PIPE: -<br>
     struct StdIOConfig {
         StdIOTarget target;
-        char        argument[STRING_SIZE_LIMIT] = {}; //NOLINT
+        char        argument[STRING_SIZE_LIMIT] = {}; // NOLINT
     };
 
     /**

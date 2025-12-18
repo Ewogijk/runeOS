@@ -16,8 +16,8 @@
 
 #include <Test/Heimdall/Test.h>
 
-#include <KRE/String.h>
 #include <KRE/Collections/HashMap.h>
+#include <KRE/String.h>
 
 namespace Heimdall {
 

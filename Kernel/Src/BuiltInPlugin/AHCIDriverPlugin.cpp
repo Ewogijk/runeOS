@@ -36,11 +36,11 @@ namespace Rune::BuiltInPlugin {
 
     bool AHCIDriverPlugin::load() {
         System& system = System::instance();
-        auto* ms = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto* cs = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        auto* ds = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        ds->set_ahci_driver(UniquePointer(
-            new Device::AHCIDriver(ms->get_heap(), cs->get_system_timer())));
+        auto*   ms     = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
+        auto*   cs     = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
+        auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        ds->set_ahci_driver(
+            UniquePointer(new Device::AHCIDriver(ms->get_heap(), cs->get_system_timer())));
         return true;
     }
 } // namespace Rune::BuiltInPlugin

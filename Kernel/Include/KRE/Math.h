@@ -21,19 +21,25 @@
 #include <KRE/TypeTraits.h>
 
 namespace Rune {
-    template <Number TNum> auto div_round_up(TNum num, TNum divisor) -> TNum {
+    template <Number TNum>
+    auto div_round_up(TNum num, TNum divisor) -> TNum {
         return (num + divisor - 1) / divisor;
     }
 
-    template <Number TNum> auto min(TNum num1, TNum num2) -> TNum {
+    template <Number TNum>
+    auto min(TNum num1, TNum num2) -> TNum {
         return num1 < num2 ? num1 : num2;
     }
 
-    template <Number TNum> auto max(TNum num1, TNum num2) -> TNum {
+    template <Number TNum>
+    auto max(TNum num1, TNum num2) -> TNum {
         return num1 > num2 ? num1 : num2;
     }
 
-    template <Number TNum> auto abs(TNum num) -> TNum { return num >= 0 ? num : -num; }
+    template <Number TNum>
+    auto abs(TNum num) -> TNum {
+        return num >= 0 ? num : -num;
+    }
 } // namespace Rune
 
 #endif // RUNEOS_MATH_H

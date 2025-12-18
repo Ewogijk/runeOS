@@ -18,7 +18,7 @@
 #ifndef RUNEOS_HEIMDALL_H
 #define RUNEOS_HEIMDALL_H
 
-#include <Test/Heimdall/Macros.h>
 #include <Test/Heimdall/Engine.h>
+#include <Test/Heimdall/Macros.h>
 
 #endif // RUNEOS_HEIMDALL_H

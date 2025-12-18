@@ -92,7 +92,8 @@ namespace Rune::CPU {
     // CLINK void make_cpuid_request(U64 request, CPUIDResponse* resp);
     //
     // /**
-    //  * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the
+    //  * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after
+    //  the
     //  * call to this function.
     //  *
     //  * @param buf A char buffer of size 13.

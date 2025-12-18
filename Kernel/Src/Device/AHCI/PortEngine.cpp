@@ -48,7 +48,7 @@ namespace Rune::Device {
     bool PortEngine::is_active() const { return _port && _port->CMD.ST && _port->CMD.FRE; }
 
     bool PortEngine::scan_device(volatile HBAPort* port) {
-        _port   = port;
+        _port = port;
         DeviceDetection          dev_detect(_port->SSTS.DET);
         InterfacePowerManagement ipm(_port->SSTS.IPM);
         if (dev_detect != DeviceDetection::DEVICE_ACTIVE
