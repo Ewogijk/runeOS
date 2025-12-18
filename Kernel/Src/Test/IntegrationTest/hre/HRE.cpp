@@ -36,10 +36,11 @@ namespace Heimdall {
 
     void hre_log_emergency(const HString& message) { hre_log_console(message, VSCODE_RED); }
 
-    void hre_save_test_report(const HString& file, const HString& test_report) {
-        hre_log_console(file + ": Save test report.\n");
+    void hre_save_to_file(const HString& file, const HString& test_report) {
+        hre_log_console(file + ": Save to file.\n");
         std::filesystem::path file_path(file.to_c_str());
-        if (!std::filesystem::create_directories(file_path.parent_path())) {
+        if (!std::filesystem::exists(file_path.parent_path())
+            && !std::filesystem::create_directory(file_path.parent_path())) {
             hre_log_console(HString(file_path.parent_path().c_str())
                             + ": Failed to create test report directory.\n");
             return;

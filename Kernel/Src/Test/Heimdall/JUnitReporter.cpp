@@ -55,8 +55,7 @@ namespace Heimdall {
             xml = xml + HString("  </testsuite>\n");
         }
         xml = xml + "</testsuites>\n";
-        hre_log_console(xml);
-        hre_save_test_report(_test_report_directory + "JUnitReport.xml", xml);
+        hre_save_to_file(_test_report_directory + "JUnitReport.xml", xml);
     }
 
     void JUnitReporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {
