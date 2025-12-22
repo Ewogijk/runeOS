@@ -16,6 +16,8 @@
 #  limitations under the License.
 #
 
+set -euo pipefail
+
 help() {
   echo Usage "./Copy-File-To-Image.sh [-h] RUNE_OS_IMAGE IMAGE_DIR FILE"
   echo

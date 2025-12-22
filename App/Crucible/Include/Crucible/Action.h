@@ -62,6 +62,6 @@ namespace Crucible {
      * @param shell_env
      */
     void register_hotkey_actions(Environment& shell_env);
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_ACTION_H

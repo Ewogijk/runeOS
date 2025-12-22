@@ -65,7 +65,7 @@ namespace Rune::Memory {
 
     String MemoryModule::get_name() const { return "Memory"; }
 
-    bool MemoryModule::load(const BootInfo&    boot_info) {
+    bool MemoryModule::load(const BootInfo& boot_info) {
         _p_map = boot_info.physical_memory_map;
         _v_map = create_virtual_memory_map();
 

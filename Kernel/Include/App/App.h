@@ -17,7 +17,7 @@
 #ifndef RUNEOS_APP_H
 #define RUNEOS_APP_H
 
-#include <limits.h>
+#include <limits.h> //NOLINT climits does not exist
 
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
@@ -106,35 +106,34 @@ namespace Rune::App {
         /**
          * Running threads of the app
          */
-        LinkedList<int> thread_table = LinkedList<int>();
+        LinkedList<U16> thread_table;
 
         /**
          * @brief All threads that are joining with this application, meaning waiting for it to
          * exit.
          */
-        LinkedList<SharedPointer<CPU::Thread>> joining_thread_table =
-            LinkedList<SharedPointer<CPU::Thread>>();
+        LinkedList<SharedPointer<CPU::Thread>> joining_thread_table;
 
         /**
          * @brief All open nodes of the app.
          */
-        LinkedList<U16> node_table = LinkedList<U16>();
+        LinkedList<U16> node_table;
 
         /**
          * @brief All open directory streams of the app.
          */
-        LinkedList<U16> directory_stream_table = LinkedList<U16>();
+        LinkedList<U16> directory_stream_table;
 
         /**
          * @brief stdio streams.
          */
-        SharedPointer<TextStream> std_in  = SharedPointer<TextStream>();
-        SharedPointer<TextStream> std_out = SharedPointer<TextStream>();
-        SharedPointer<TextStream> std_err = SharedPointer<TextStream>();
+        SharedPointer<TextStream> std_in;
+        SharedPointer<TextStream> std_out;
+        SharedPointer<TextStream> std_err;
 
-        friend bool operator==(const Info& one, const Info& two);
+        friend auto operator==(const Info& one, const Info& two) -> bool;
 
-        friend bool operator!=(const Info& one, const Info& two);
+        friend auto operator!=(const Info& one, const Info& two) -> bool;
     };
 
     /**

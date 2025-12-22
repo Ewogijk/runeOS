@@ -64,14 +64,17 @@ namespace Rune::CPU {
      *          "AMD64 Architecture Programmer's Manual Volume 2, Page 102, Figure 4-24"
      */
     struct GateDescriptor {
-        U16                 offset_low;
-        U16                 segment_selector;
+        U16                 offset_low{};
+        U16                 segment_selector{};
         GateDescriptorIST   ist;
         GateDescriptorFlags flags;
-        U16                 offset_mid;
-        U32                 offset_high;
-        U32                 reserved_1;
+        U16                 offset_mid{};
+        U32                 offset_high{};
+        U32                 reserved_1{};
     } PACKED;
+
+    /// @brief The number of interrupt vectors and therefore gate descriptors.
+    constexpr U16 INTERRUPT_VECTOR_COUNT = 256;
 
     /**
      * @brief Interrupt descriptor table as defined in
@@ -86,7 +89,7 @@ namespace Rune::CPU {
      * @brief Get the globally defined IDT for all CPU cores.
      * @return Interrupt descriptor table.
      */
-    InterruptDescriptorTable* idt_get();
+    auto idt_get() -> InterruptDescriptorTable*;
 
     /**
      * @brief Load the IDT into the IDT register.

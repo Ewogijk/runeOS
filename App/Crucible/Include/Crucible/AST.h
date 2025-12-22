@@ -144,6 +144,6 @@ namespace Crucible {
 
         std::string evaluate(Environment& shell_env) override;
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_AST_H

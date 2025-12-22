@@ -27,8 +27,7 @@ std::vector<std::string> str_split(const std::string& s, const char delimiter) {
     std::vector<std::string> tokens;
     std::istringstream       tokenStream(s);
     std::string              token;
-    while (std::getline(tokenStream, token, delimiter))
-        tokens.push_back(token);
+    while (std::getline(tokenStream, token, delimiter)) tokens.push_back(token);
     return tokens;
 }
 

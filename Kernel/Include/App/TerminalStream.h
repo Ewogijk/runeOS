@@ -110,7 +110,7 @@ namespace Rune::App {
         // Buffer of all text that was ever written to the terminal, the buffer is used to implement
         // scroll back thus not all lines in the buffer will be rendered all the time Optimization
         // note: Should use array list for random access
-        LinkedList<TextLine> scroll_back_buffer = LinkedList<TextLine>();
+        LinkedList<TextLine> scroll_back_buffer;
         // Cursor position relative to the scroll back buffer
         TerminalCursor cursor_sbb = {};
 
@@ -153,7 +153,7 @@ namespace Rune::App {
         CPU::Timer* timer = nullptr; // For sleeping purposes
 
         // For synchronization between the render thread and others
-        SharedPointer<CPU::Mutex> mutex = SharedPointer<CPU::Mutex>();
+        SharedPointer<CPU::Mutex> mutex;
         // Blink speed of the cursor in milliseconds
         U16 cursor_blink_freq_ms = 0;
         // True: The cursor is visible, False: It is not.
@@ -180,8 +180,12 @@ namespace Rune::App {
      * providing an text output for applications.
      */
     class TerminalStream : public TextStream {
-        // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger than
-        // the limit the oldest text lines must be discarded
+        static constexpr uintptr_t HEX_RADIX       = 16;
+        static constexpr U8        ASCII_DIGIT_MIN = 0x30;
+        static constexpr U8        ASCII_DIGIT_MAX = 0x39;
+
+        // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger
+        // than the limit the oldest text lines must be discarded
         static constexpr U8 SCROLL_BACK_BUFFER_LIMIT = 128;
 
         // The amount of time in millis the cursor render thread sleeps before redrawing the cursor
@@ -193,8 +197,8 @@ namespace Rune::App {
 
         U16            _render_thread_ID;
         String         _render_thread_arg;
-        char*          _render_thread_argv[2];
-        CPU::StartInfo _render_thread_start_info;
+        char*          _render_thread_argv[2]; // NOLINT argv is part of the kernel ABI
+        CPU::StartInfo _render_thread_start_info{};
 
         bool _initialized;
 
@@ -202,19 +206,22 @@ namespace Rune::App {
         //                                          ANSI Interpreter
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        static constexpr U8 CSI_ARGV_BUF_SIZE = 5;      // Max number of csi args that can be parsed
-        static constexpr U8 DIGIT_BUF_SIZE    = 3;      // Max number of digits a csi arg can have
-        static constexpr U8 ESC               = '\033'; // csi command escape character
-        static constexpr U8 TAB_STOP          = 4;      // Size of a tab
+        static constexpr U8 CSI_ARGV_BUF_SIZE  = 5; // Max number of csi args that can be parsed
+        static constexpr U8 DIGIT_BUF_SIZE     = 3; // Max number of digits a csi arg can have
+        static constexpr U8 ESC                = '\033'; // csi command escape character
+        static constexpr U8 TAB_STOP           = 4;      // Size of a tab
+        // Select Graphic Rendition parameters
+        static constexpr U8 SGR_SET_FOREGROUND = 38;
+        static constexpr U8 SGR_SET_BACKGROUND = 48;
 
         ANSIInterpreterState _interpreter_state; // Current state of the interpreter
 
-        U8   _csi_argv[CSI_ARGV_BUF_SIZE]; // Buffer for the csi args
-        U8   _csi_argc;                    // Number of parsed csi args
-        char _csi_cmd_selector;            // The parsed csi command selector
+        Array<U8, CSI_ARGV_BUF_SIZE> _csi_argv;         // Buffer for the csi args
+        U8                           _csi_argc;         // Number of parsed csi args
+        char                         _csi_cmd_selector; // The parsed csi command selector
 
-        char _digit_buf[DIGIT_BUF_SIZE]; // Buffer of digits for the currently parsed csi arg
-        U8   _digit_buf_offset;
+        Array<char, DIGIT_BUF_SIZE> _digit_buf; // Buffer of digits for the currently parsed csi arg
+        U8                          _digit_buf_offset;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Text Buffering Functions
@@ -224,7 +231,7 @@ namespace Rune::App {
          * @brief Get the last line in the scroll back buffer.
          * @return
          */
-        TextLine* scroll_back_buffer_get_last_line();
+        auto scroll_back_buffer_get_last_line() -> TextLine*;
 
         /**
          * @brief Set the style of the last line in the scroll back buffer to the current fg and bg
@@ -262,8 +269,7 @@ namespace Rune::App {
          * @brief
          * @return True: The cursor is visible on the screen, False: It is not.
          */
-        [[nodiscard]]
-        bool is_cursor_visible() const;
+        [[nodiscard]] auto is_cursor_visible() const -> bool;
 
         /**
          * If the cursor is below the viewport it is scrolled until the cursor is in the last line
@@ -277,10 +283,10 @@ namespace Rune::App {
         //                                          ANSI Interpreter Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        static bool is_csi_command_selector(char ch);
+        static auto is_csi_command_selector(char ch) -> bool;
 
         // Parse an U8 from string
-        U8 parse_csi_arg();
+        auto parse_csi_arg() -> U8;
 
         // Modify the display render settings base on parsed CSI command
         void exec_csi_command();
@@ -291,7 +297,7 @@ namespace Rune::App {
          * @return True: The char belongs to an ANSI escape sequence -> do not render!,
          *          False: The char is not ANSI -> render it!
          */
-        bool interpret_char(char ch);
+        auto interpret_char(char ch) -> bool;
 
       public:
         TerminalStream(CPU::CPUModule* cpu_module,
@@ -302,19 +308,19 @@ namespace Rune::App {
 
         using TextStream::write;
 
-        bool is_read_supported() override;
+        auto is_read_supported() -> bool override;
 
-        int read() override;
+        auto read() -> int override;
 
-        bool is_write_supported() override;
+        auto is_write_supported() -> bool override;
 
-        bool write(U8 value) override;
+        auto write(U8 value) -> bool override;
 
         void flush() override;
 
         void close() override;
 
-        bool is_ansi_supported() override;
+        auto is_ansi_supported() -> bool override;
     };
 } // namespace Rune::App
 

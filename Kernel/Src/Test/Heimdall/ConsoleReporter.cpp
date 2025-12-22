@@ -126,10 +126,10 @@ namespace Heimdall {
             hre_log_console(HString("             FAIL at ") + assertion_stats.scl.file + ":"
                                 + HString::number_to_string(assertion_stats.scl.line) + "\n",
                             VSCODE_RED);
-            hre_log_console(HString("                       ") + assertion_stats.expanded_assert + "\n",
-                            VSCODE_CYAN);
-            hre_log_console(HString("                 With: ") + assertion_stats.assert
+            hre_log_console(HString("                       ") + assertion_stats.expanded_assert
                                 + "\n",
+                            VSCODE_CYAN);
+            hre_log_console(HString("                 With: ") + assertion_stats.assert + "\n",
                             VSCODE_CYAN);
         }
     }

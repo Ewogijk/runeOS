@@ -19,13 +19,10 @@
 #include <Ember/Enum.h>
 
 namespace Ember {
-    /**
-     * @brief Page protection define how memory can be interacted with.
-     * <ul>
-     *  <li>READ: The pages will be readonly.</li>
-     *  <li>WRITE: The pages will be readable and writable.</li>
-     * </ul>
-     */
+
+    ///@brief Page protection define how memory can be interacted with.
+    /// - READ: The pages will be readonly.
+    /// - WRITE: The pages will be readable and writable.
 #define PAGE_PROTECTIONS(X)                                                                        \
     X(PageProtection, READ, 0x1)                                                                   \
     X(PageProtection, WRITE, 0x2)

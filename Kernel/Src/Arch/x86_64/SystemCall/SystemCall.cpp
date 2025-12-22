@@ -18,6 +18,7 @@
 
 #include <KRE/Collections/HashMap.h>
 #include <KRE/Utility.h>
+#include <KRE/BitsAndBytes.h>
 
 #include "../CPU/X64Core.h"
 

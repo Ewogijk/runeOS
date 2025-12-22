@@ -33,7 +33,8 @@ namespace Heimdall {
     class OptionList {
         struct OptionListDetail;
         OptionListDetail* _list_detail;
-    public:
+
+      public:
         OptionList();
         ~OptionList();
 
@@ -51,9 +52,9 @@ namespace Heimdall {
 
     /// @brief Configuration of the heimdall engine.
     struct Configuration {
-        OptionList options;
+        OptionList       options;
         ReporterRegistry reporter_registry;
     };
-}
+} // namespace Heimdall
 
 #endif // HEIMDALL_CONFIGURATION_H

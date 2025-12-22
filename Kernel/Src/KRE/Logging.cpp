@@ -157,12 +157,12 @@ namespace Rune {
         LinkedList<SharedPointer<Logger>> filter_list;
         if (selector.the_namespace == "*") {
             // Select all loggers
-            for (const auto& logger : _loggers) filter_list.add_back(*logger.value);
+            for (const auto& logger : _loggers) filter_list.add_back(*logger.value); // NOLINT
         } else {
             if (selector.name == "*") {
                 // Select all loggers in a namespace
                 for (const auto& logger : _loggers) {
-                    if (logger.key->starts_with(selector.the_namespace))
+                    if (logger.key->starts_with(selector.the_namespace)) // NOLINT
                         filter_list.add_back(*logger.value);
                 }
             } else {

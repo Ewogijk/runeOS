@@ -22,6 +22,7 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/Collections/Array.h>
 #include <KRE/Logging.h>
 
 namespace Rune::Device {
@@ -31,13 +32,19 @@ namespace Rune::Device {
     struct GUID {
         static constexpr U8 SIZE = 16;
 
-        U8 buf[SIZE];
+        static constexpr U8 TIME_LOW_OFFSET = 0;
+        static constexpr U8 TIME_MID_OFFSET = 4;
+        static constexpr U8 TIME_HIGH_AND_VERSION_OFFSET = 6;
+        static constexpr U8 CLOCK_SEQ_OFFSET = 8;
+        static constexpr U8 NODE_OFFSET = 10;
+
+        Array<U8, SIZE> buf;
 
         /**
          * @brief Print string representation the GUID
          * @return
          */
-        String to_string();
+        auto to_string() -> String;
     };
 
     /**
@@ -48,20 +55,38 @@ namespace Rune::Device {
      * @brief The GPT header contains information about all partitions on a drive.
      */
     struct GPTHeader {
-        U64  signature        = 0;
-        U32  revision         = 0;
-        U32  header_size      = 0;
-        U32  header_crc_32    = 0;
-        U8   reserved[4]      = {};
-        U64  my_lba           = 0;
-        U64  alternate_lba    = 0;
-        U64  first_usable_lba = 0; // Little-endian
-        U64  last_usable_lba  = 0; // Little-endian
-        GUID disk_guid;
-        U64  partition_entry_lba          = 0; // Little-endian
-        U32  number_of_partition_entries  = 0;
-        U32  size_of_partition_entry      = 0;
-        U32  partition_entry_array_crc_32 = 0;
+        /// @brief "EFI PART" signature in ASCII hex representation.
+        static constexpr U64 SIGNATURE_HEX                      = 0x5452415020494645;
+        static constexpr U8  SIGNATURE_OFFSET                   = 0;
+        static constexpr U8  REVISION_OFFSET                    = 8;
+        static constexpr U8  HEADER_SIZE_OFFSET                 = 12;
+        static constexpr U8  HEADER_CRC32_OFFSET                = 16;
+        static constexpr U8  RESERVED_OFFSET                    = 20;
+        static constexpr U8  MY_LBA_OFFSET                      = 24;
+        static constexpr U8  ALTERNATE_LBA_OFFSET               = 32;
+        static constexpr U8  FIRST_USABLE_LBA_OFFSET            = 40;
+        static constexpr U8  LAST_USABLE_LBA_OFFSET             = 48;
+        static constexpr U8  DISK_GUID_OFFSET                   = 56;
+        static constexpr U8  PARTITION_ENTRY_LBA_OFFSET         = 72;
+        static constexpr U8  NUMBER_OF_PARTITION_ENTRIES_OFFSET = 80;
+        static constexpr U8  SIZE_OF_PARTITION_ENTRY_OFFSET     = 84;
+        static constexpr U8  PARTITION_ENTRY_ARRAY_CRC32_OFFSET = 88;
+        static constexpr U8  DISK_GUID_SIZE                     = 16;
+
+        U64          signature     = 0;
+        U32          revision      = 0;
+        U32          header_size   = 0;
+        U32          header_crc_32 = 0;
+        Array<U8, 4> reserved;
+        U64          my_lba           = 0;
+        U64          alternate_lba    = 0;
+        U64          first_usable_lba = 0; // Little-endian
+        U64          last_usable_lba  = 0; // Little-endian
+        GUID         disk_guid;
+        U64          partition_entry_lba          = 0; // Little-endian
+        U32          number_of_partition_entries  = 0;
+        U32          size_of_partition_entry      = 0;
+        U32          partition_entry_array_crc_32 = 0;
     };
 
     /**
@@ -71,18 +96,30 @@ namespace Rune::Device {
      * @brief An entry in the GPT partition table represents a single partition on a drive.
      */
     struct GPTPartitionTableEntry {
-        GUID partition_type_guid;
-        GUID unique_partition_guid;
-        U64  starting_lba = 0; // Little-endian
-        U64  ending_lba   = 0; // Inclusive, Little-endian
-        U64  attributes   = 0;
-        U16  name_buf[36] = {}; // UTF-16LE
+        /// @brief Actual length is 72 bytes, but for better decoding we define the buffer as U16
+        ///         therefore the size is 36
+        static constexpr U8 PARTITION_NAME_SIZE = 36;
+        static constexpr U8 LBA_AND_ATTRIBUTES_SIZE = 8;
+
+        static constexpr U8 PARTITION_TYPE_GUID_OFFSET   = 0;
+        static constexpr U8 UNIQUE_PARTITION_GUID_OFFSET = 16;
+        static constexpr U8 FIRST_LBA_OFFSET             = 32;
+        static constexpr U8 LAST_LBA_OFFSET              = 40;
+        static constexpr U8 ATTRIBUTES_OFFSET            = 48;
+        static constexpr U8 PARTITION_NAME_OFFSET        = 56;
+
+        GUID                            partition_type_guid;
+        GUID                            unique_partition_guid;
+        U64                             starting_lba = 0; // Little-endian
+        U64                             ending_lba   = 0; // Inclusive, Little-endian
+        U64                             attributes   = 0;
+        Array<U16, PARTITION_NAME_SIZE> name_buf; // UTF-16LE
 
         /**
          * @brief Note: Only ASCII characters are supported.
          * @return Name of the partition.
          */
-        String get_name();
+        auto get_name() -> String;
     };
 
 #define GPT_SCAN_STATUSES(X)                                                                       \
@@ -117,8 +154,10 @@ namespace Rune::Device {
         LinkedList<GPTPartitionTableEntry> partition_table;
     };
 
+    // NOLINTBEGIN Array size is dynamic
     auto gpt_scan_device(Function<size_t(U8[], size_t, U64)>& sector_reader, size_t sector_size)
         -> GPTScanResult;
+    // NOLINTEND
 } // namespace Rune::Device
 
 #endif // RUNEOS_GPT_H

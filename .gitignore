@@ -14,4 +14,4 @@ OS/BuildTools/*.json
 **/.sconsign.dblite
 
 # Brokk files
-Brokk/Configurations/
+Brokk/LocalConfig/

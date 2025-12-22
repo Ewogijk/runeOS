@@ -16,6 +16,8 @@
 
 #include <CPU/Time/PIT.h>
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
 
@@ -24,29 +26,27 @@ namespace Rune::CPU {
     enum Mode { SQUARE_WAVE_GENERATOR = 0x36 };
 
     PIT::PIT()
-        : CPU::Timer(),
-          _scheduler(nullptr),
+        : _scheduler(nullptr),
           _irq_handler([] { return IRQState::PENDING; }),
-          _sleeping_threads(),
           _count(0),
           _quantum_remaining(0),
           _time_between_irq(0) {}
 
-    String PIT::get_name() const { return "PIT"; }
+    auto PIT::get_name() const -> String { return "PIT"; }
 
-    U64 PIT::get_time_since_start() const { return _count * _time_between_irq; }
+    auto PIT::get_time_since_start() const -> U64 { return _count * _time_between_irq; }
 
-    LinkedList<SleepingThread> PIT::get_sleeping_threads() const {
+    auto PIT::get_sleeping_threads() const -> LinkedList<SleepingThread> {
         LinkedList<SleepingThread> l;
         DQNode*                    c = _sleeping_threads.first();
-        while (c) {
-            l.add_back({c->sleeping_thread.get(), c->wake_time});
+        while (c != nullptr) {
+            l.add_back({.sleeper = c->sleeping_thread.get(), .wake_time = c->wake_time});
             c = c->next;
         }
         return l;
     }
 
-    bool PIT::start(CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) {
+    auto PIT::start(CPU::Scheduler* scheduler, TimerMode mode, U64 frequency, U64 quantum) -> bool {
         _scheduler         = scheduler;
         _mode              = mode;
         _freq_hz           = frequency;
@@ -72,13 +72,14 @@ namespace Rune::CPU {
         U64 pit_divider = QUARTZ_FREQUENCY_HZ / _freq_hz;
         // Frequency formula: _freq_hz = 1 / _time_between_irq -> _time_between_irq = 1 / _freq_hz.
         // We want nanoseconds therefore we use 1000000000 instead of 1
-        _time_between_irq = 1000000000 / _freq_hz;
+        constexpr U32 NANO_SECOND = 1000000000;
+        _time_between_irq         = NANO_SECOND / _freq_hz;
         LOGGER->debug("Time between IRQs will be ~{}ns", _time_between_irq);
 
         // Configure the frequency divider
         out_b(Channel::COMMAND, Mode::SQUARE_WAVE_GENERATOR);
-        out_b(Channel::ZERO, pit_divider & 0xFF); // Transmit low byte first
-        out_b(Channel::ZERO, pit_divider >> 8);   // Then high byte
+        out_b(Channel::ZERO, byte_get(pit_divider, 0)); // Transmit low byte first
+        out_b(Channel::ZERO, byte_get(pit_divider, 1)); // Then high byte
 
         _irq_handler = [this] {
             _count++;
@@ -114,7 +115,7 @@ namespace Rune::CPU {
         return irq_install_handler(0, 0, "PIT", _irq_handler);
     }
 
-    bool PIT::remove_sleeping_thread(int t_id) {
+    auto PIT::remove_sleeping_thread(int t_id) -> bool {
         return _sleeping_threads.remove_waiting_thread(t_id);
     }
 

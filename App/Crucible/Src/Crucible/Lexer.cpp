@@ -79,11 +79,9 @@ namespace Crucible {
         while (has_more() && peek() != ' ' && b_pos < static_cast<int>(BUF_SIZE)) {
             // Add all identifier characters to the buffer
             if (is_path)
-                while (is_path_element(peek()))
-                    b[b_pos++] = advance();
+                while (is_path_element(peek())) b[b_pos++] = advance();
             else
-                while (is_identifier(peek()))
-                    b[b_pos++] = advance();
+                while (is_identifier(peek())) b[b_pos++] = advance();
 
             if (char peek_a_boo = peek(); peek_a_boo == '\0' || peek_a_boo == '\''
                                           || peek_a_boo == '\\' || peek_a_boo == '='
@@ -93,8 +91,7 @@ namespace Crucible {
                 break;
             } else if (peek_a_boo == ' ') {
                 if (include_ws)
-                    while (peek() == ' ')
-                        b[b_pos++] = advance();
+                    while (peek() == ' ') b[b_pos++] = advance();
                 // else break the outer loop
             } else if (!is_identifier(peek_a_boo)) {
                 is_path = true;
@@ -128,8 +125,7 @@ namespace Crucible {
     }
 
     void Lexer::scan_token() {
-        while (peek() == ' ')
-            advance(); // skip leading white space
+        while (peek() == ' ') advance(); // skip leading white space
 
         switch (char c = advance()) {
             case '\0': _token_buffer.push_back({TokenType::END, "", _cursor}); break;
@@ -179,4 +175,4 @@ namespace Crucible {
         if (_token_buffer.empty()) scan_token();
         return _token_buffer.front();
     }
-} // namespace Rune::Shell
+} // namespace Crucible

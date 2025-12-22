@@ -18,10 +18,10 @@
 #ifndef FREYA_SERVICE_H
 #define FREYA_SERVICE_H
 
-#include <unordered_map>
 #include <expected>
 #include <iterator>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace Freya {
@@ -125,7 +125,6 @@ namespace Freya {
         /// @brief Search for dependencies that are not registered as a service.
         /// @return A list of the missing dependencies.
         auto detect_missing_dependencies() -> std::vector<MissingDependency>;
-
 
         auto operator[](const std::string& service) -> Service&;
 

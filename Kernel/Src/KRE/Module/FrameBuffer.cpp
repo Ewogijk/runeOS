@@ -16,30 +16,24 @@
 
 #include <KRE/System/FrameBuffer.h>
 
+#include <limits.h> // NOLINT climits does not exist
+
 #include <KRE/CppRuntimeSupport.h>
 #include <KRE/Math.h>
 #include <KRE/Utility.h>
 
 namespace Rune {
-    bool Pixel::operator==(const Pixel& o) const {
+    auto Pixel::operator==(const Pixel& o) const -> bool {
         return red == o.red && green == o.green && blue == o.blue && alpha == o.alpha;
     }
 
-    bool Pixel::operator!=(const Pixel& o) const {
-        return !(red == o.red && green == o.green && blue == o.blue && alpha == o.alpha);
+    auto Pixel::operator!=(const Pixel& o) const -> bool {
+        return red != o.red || green != o.green || blue != o.blue || alpha != o.alpha;
     }
 
     FrameBuffer FrameBuffer::_instance = FrameBuffer();
 
-    FrameBuffer::FrameBuffer()
-        : _address(nullptr),
-          _width(0),
-          _height(0),
-          _pitch(0),
-          _bpp(0),
-          _red_shift(0),
-          _green_shift(0),
-          _blue_shift(0) {}
+    FrameBuffer::FrameBuffer() = default;
 
     FrameBuffer::FrameBuffer(U8*       address,
                              const U64 width,
@@ -56,9 +50,8 @@ namespace Rune {
           _bpp(bpp),
           _red_shift(red_shift),
           _green_shift(green_shift),
-          _blue_shift(blue_shift) {
-        _bytes_per_pixel = _bpp / BITS_PER_TYPE;
-    }
+          _blue_shift(blue_shift),
+          _bytes_per_pixel(_bpp / BITS_PER_BYTE) {}
 
     void FrameBuffer::set_global(const FrameBuffer& frame_buffer) {
         if (_instance._address == nullptr) {
@@ -66,30 +59,32 @@ namespace Rune {
         }
     }
 
-    FrameBuffer* FrameBuffer::get_global() {
+    auto FrameBuffer::get_global() -> FrameBuffer* {
         return _instance._address == nullptr ? nullptr : &_instance;
     }
 
-    U8* FrameBuffer::get_address() const { return _address; }
+    auto FrameBuffer::get_address() const -> U8* { return _address; }
 
-    U64 FrameBuffer::get_width() const { return _width; }
+    auto FrameBuffer::get_width() const -> U64 { return _width; }
 
-    U64 FrameBuffer::get_height() const { return _height; }
+    auto FrameBuffer::get_height() const -> U64 { return _height; }
 
-    U64 FrameBuffer::get_pitch() const { return _pitch; }
+    auto FrameBuffer::get_pitch() const -> U64 { return _pitch; }
 
-    U16 FrameBuffer::get_bits_per_pixel() const { return _bpp; }
+    auto FrameBuffer::get_bits_per_pixel() const -> U16 { return _bpp; }
 
-    void FrameBuffer::to_raw_pixel(const Pixel& pixel, U8* raw_pixel_out) const {
+    void FrameBuffer::to_raw_pixel(const Pixel& pixel, Array<U8, 4>& raw_pixel_out) const {
         U32 temp_px  = 0;
         temp_px     |= (pixel.red << _red_shift);
         temp_px     |= (pixel.green << _green_shift);
         temp_px     |= (pixel.blue << _blue_shift);
-        if (_bpp == 32) temp_px |= (pixel.alpha << 24);
-        raw_pixel_out[0] = temp_px & 0xFF;
-        raw_pixel_out[1] = (temp_px >> 8) & 0xFF;
-        raw_pixel_out[2] = (temp_px >> 16) & 0xFF;
-        raw_pixel_out[3] = (temp_px >> 24) & 0xFF;
+
+        constexpr U8 rgba_px_size = 32;
+        if (_bpp == rgba_px_size) temp_px |= (pixel.alpha << RGBA_OFFSET_A);
+        raw_pixel_out[0] = temp_px & BYTE_MASK;
+        raw_pixel_out[1] = (temp_px >> RGBA_OFFSET_G) & BYTE_MASK;
+        raw_pixel_out[2] = (temp_px >> RGBA_OFFSET_B) & BYTE_MASK;
+        raw_pixel_out[3] = (temp_px >> RGBA_OFFSET_A) & BYTE_MASK;
     }
 
     void FrameBuffer::draw_glyph(const BitMapFont* font,
@@ -99,35 +94,35 @@ namespace Rune {
                                  const Pixel       fg_color,
                                  const char        ch) const {
         // Look up the bitmap of the glyph to render
-        U8 glyph[font->glyph_size];
+        U8 glyph[font->glyph_size]; // NOLINT is dynamic size so keep as is
         for (U32 i = 0; i < font->glyph_size; i++) {
             glyph[i] = font->glyphs[(static_cast<U8>(ch) * font->glyph_size) + i];
         }
-        U8 row_width = font->pixel_width / 8;
-        if (font->pixel_width - row_width * 8 > 0) row_width++;
+        U8 row_width = font->pixel_width / BITS_PER_BYTE;
+        if (font->pixel_width - row_width * BITS_PER_BYTE > 0) row_width++;
 
-        U8 bg_c[4];
+        Array<U8, 4> bg_c{};
         to_raw_pixel(bg_color, bg_c);
-        U8 fg_c[4];
+        Array<U8, 4> fg_c{};
         to_raw_pixel(fg_color, fg_c);
 
-        const U64 fb_x_reset = x * _bytes_per_pixel;
+        const U64 fb_x_reset = x * static_cast<U64>(_bytes_per_pixel);
         U64       fb_x_off   = fb_x_reset;
         U64       fb_y_off   = (y * _pitch);
 
         for (U64 fy = 0; fy < font->glyph_size; fy += row_width) {
             U8 row_pos = fy;
             for (U64 fx = 0; fx < font->pixel_width; fx++) {
-                if (fx > 0 && fx % BITS_PER_TYPE == 0) row_pos++;
-                if (((glyph[row_pos] >> (BITS_PER_TYPE - 1 - fx)) & 0x1) == 1)
+                if (fx > 0 && fx % BITS_PER_BYTE == 0) row_pos++;
+                if (((glyph[row_pos] >> (BITS_PER_BYTE - 1 - fx)) & 0x1) == 1)
                     memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off
                                                    + fb_x_off),
-                           fg_c,
+                           fg_c.data(),
                            4);
                 else
                     memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + fb_y_off
                                                    + fb_x_off),
-                           bg_c,
+                           bg_c.data(),
                            4);
                 fb_x_off += _bytes_per_pixel;
             }
@@ -137,12 +132,12 @@ namespace Rune {
         }
     }
 
-    double sqrt(const double num) {
+    auto sqrt(const double num) -> double {
         if (num < 0) return -1.0;
-
-        double left  = 0;
-        double right = num + 1;
-        for (int i = 0; i < 20; i++) {
+        constexpr U8 precision = 20;
+        double       left      = 0;
+        double       right     = num + 1;
+        for (U8 i = 0; i < precision; i++) {
             if (const double middle = (left + right) / 2; middle * middle < num) {
                 left = middle;
             } else {
@@ -166,7 +161,7 @@ namespace Rune {
                                          U8*          raw_pixel) const -> void {
         // These values somehow define the width of the perpendicular line, but I have no clue
         // what's going on
-        const double w_threshold = 2 * width * sqrt(dx * dx + dy * dy);
+        const double w_threshold = 2 * width * sqrt((dx * dx) + (dy * dy));
         int          tk          = dx + dy - w_init;
         int          x           = x0;
         int          y           = y0;
@@ -208,7 +203,7 @@ namespace Rune {
         }
     }
 
-    void FrameBuffer::draw_line(Coord2D      start,
+    void FrameBuffer::draw_line(Coord2D      start, // NOLINT it works do not refactor
                                 Coord2D      end,
                                 const Pixel  color,
                                 const double thickness) const {
@@ -216,7 +211,7 @@ namespace Rune {
             // Negative thickness is garbage and if thickness=0 -> Line is invisible
             return;
         // Bresenham's algorithm
-        U8 raw_color[_bytes_per_pixel];
+        Array<U8, 4> raw_color{};
         to_raw_pixel(color, raw_color);
 
         // General note on x and y coords
@@ -241,7 +236,7 @@ namespace Rune {
             for (U32 x = x_start; x < x_end; x += _bytes_per_pixel)
                 for (U32 y = start.y * _pitch; y < end.y * _pitch; y += _pitch)
                     memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
-                           raw_color,
+                           raw_color.data(),
                            _bytes_per_pixel);
         } else if (start.y == end.y) {
             // Horizontal line -> Can simplify the loop
@@ -263,7 +258,7 @@ namespace Rune {
                 for (U32 x  = start.x * _bytes_per_pixel; x < end.x * _bytes_per_pixel;
                      x     += _bytes_per_pixel)
                     memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
-                           raw_color,
+                           raw_color.data(),
                            _bytes_per_pixel);
         } else {
             // Draw line in any other direction using the line equation
@@ -311,12 +306,12 @@ namespace Rune {
             // and be done, but this is slower because it uses floating point arithmetic Using this
             // threshold, e_diag and e_square values we make it integer arithmetic only which is
             // better but more complex and I don't know what's going on
-            const int threshold = dx - 2 * dy;
+            const int threshold = dx - (2 * dy);
             const int e_diag    = -2 * dx;
             const int e_square  = 2 * dy;
             for (int i = 0; i < dx; i++) {
                 memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
-                       (void*) raw_color,
+                       (void*) raw_color.data(),
                        4);
                 // To make diagonal lines thicker we will draw perpendicular lines to the left and
                 // right of the center line, this will be done whenever a pixel of the center line
@@ -341,7 +336,7 @@ namespace Rune {
                                    thickness,
                                    error,
                                    sy,
-                                   raw_color);
+                                   raw_color.data());
                 if (error > threshold) {
                     y      = sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
                     error += e_diag;
@@ -368,7 +363,7 @@ namespace Rune {
                                            thickness,
                                            error,
                                            sy,
-                                           raw_color);
+                                           raw_color.data());
                         p_error += e_diag;
                     }
                     p_error += e_square;

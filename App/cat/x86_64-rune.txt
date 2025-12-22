@@ -1,7 +1,7 @@
 [binaries]
-c = 'x86_64-rune-gcc'
-cpp = 'x86_64-rune-g++'
-strip = 'x86_64-rune-strip'
+c = '/home/ewogijk/Dev/Cross-Compiler/x86_64-rune/bin/x86_64-rune-gcc'
+cpp = '/home/ewogijk/Dev/Cross-Compiler/x86_64-rune/bin/x86_64-rune-g++'
+strip = '/home/ewogijk/Dev/Cross-Compiler/x86_64-rune/bin/x86_64-rune-strip'
 
 [host_machine]
 system = 'rune'

@@ -96,8 +96,7 @@ namespace Crucible {
                         Path(has_ws_suffix ? "" : last_arg));
 
                     std::string input_pref;
-                    for (size_t i = 0; i < parts.size() - 1; i++)
-                        input_pref += parts[i] + ' ';
+                    for (size_t i = 0; i < parts.size() - 1; i++) input_pref += parts[i] + ' ';
 
                     if (has_ws_suffix) input_pref += last_arg + ' ';
                     shell_env.ac_prefix = input_pref;
@@ -132,4 +131,4 @@ namespace Crucible {
         // Tab
         shell_env.action_table[Ember::VirtualKey::build(2, 0, false)] = &perform_auto_completion;
     }
-} // namespace Rune::Shell
+} // namespace Crucible

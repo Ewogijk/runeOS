@@ -25,21 +25,21 @@ namespace Ember {
     //                                          VFSNodeInfo
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool NodeInfo::is_readonly() const {
-        return attributes & static_cast<int>(NodeAttribute::READONLY);
+    auto NodeInfo::is_readonly() const -> bool {
+        return (attributes & static_cast<int>(NodeAttribute::READONLY)) != 0;
     }
 
-    bool NodeInfo::is_hidden() const {
-        return attributes & static_cast<int>(NodeAttribute::HIDDEN);
+    auto NodeInfo::is_hidden() const -> bool {
+        return (attributes & static_cast<int>(NodeAttribute::HIDDEN)) != 0;
     }
 
-    bool NodeInfo::is_system_node() const {
-        return attributes & static_cast<int>(NodeAttribute::SYSTEM);
+    auto NodeInfo::is_system_node() const -> bool {
+        return (attributes & static_cast<int>(NodeAttribute::SYSTEM)) != 0;
     }
 
-    bool NodeInfo::is_directory() const {
-        return attributes & static_cast<int>(NodeAttribute::DIRECTORY);
+    auto NodeInfo::is_directory() const -> bool {
+        return (attributes & static_cast<int>(NodeAttribute::DIRECTORY)) != 0;
     }
 
-    bool NodeInfo::is_file() const { return attributes & static_cast<int>(NodeAttribute::FILE); }
+    auto NodeInfo::is_file() const -> bool { return (attributes & static_cast<int>(NodeAttribute::FILE)) != 0; }
 } // namespace Ember

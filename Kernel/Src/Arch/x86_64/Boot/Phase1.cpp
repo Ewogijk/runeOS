@@ -27,7 +27,6 @@
 
 #include <CPU/CPU.h>
 
-
 LIMINE_BASE_REVISION(1)
 
 limine_bootloader_info_request LIMINE_BOOTLOADER_INFO = {.id       = LIMINE_BOOTLOADER_INFO_REQUEST,

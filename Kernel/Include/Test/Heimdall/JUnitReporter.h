@@ -87,7 +87,7 @@ namespace Heimdall {
         JUnitTestSuite _c_test_suite;
         JUnitTest      _c_test;
 
-        HString _test_report_file;
+        HString _test_report_directory;
 
       public:
         [[nodiscard]] auto get_name() const -> HString override;

@@ -31,7 +31,7 @@ namespace Rune::SystemCall {
      * @brief The context for all threading related system calls.
      */
     struct ThreadingSystemCallContext {
-        KernelGuardian*    k_guard    = nullptr;
+        KernelGuardian* k_guard    = nullptr;
         CPU::CPUModule* cpu_module = nullptr;
         App::AppModule* app_module = nullptr;
     };

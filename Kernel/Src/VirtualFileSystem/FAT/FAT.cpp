@@ -16,8 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FAT.h>
 
-#include <KRE/Utility.h>
 #include <KRE/Memory.h>
+#include <KRE/BitsAndBytes.h>
 
 namespace Rune::VFS {
     DEFINE_ENUM(FATType, FAT_TYPES, 0x0)

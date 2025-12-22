@@ -59,7 +59,7 @@ void operator delete[](void* ptr, size_t size) noexcept;
 // (should not happen because compiler cries)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-CLINK void __cxa_pure_virtual(); //NOLINT
+CLINK void __cxa_pure_virtual(); // NOLINT
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                               Stack smash protection

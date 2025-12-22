@@ -16,14 +16,21 @@
 #include <Ember/AppBits.h>
 
 namespace Ember {
+    constexpr U8 ROW_MASK = 0x7;
+    constexpr U8 COL_MASK = 0x1F;
+
+    constexpr U8 COl_SHIFT      = 3;
+    constexpr U8 RELEASED_SHIFT = 14;
+    constexpr U8 NONE_SHIFT     = 15;
+
     DEFINE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0)
 
     const VirtualKey VirtualKey::NONE = VirtualKey();
 
     auto VirtualKey::build(const U8 row, const U8 col, bool released) -> VirtualKey {
-        U16 key_code  = (row & 0x7);
-        key_code     |= (col & 0x1F) << 3;
-        key_code     |= (released << 14);
+        U16 key_code  = (row & ROW_MASK);
+        key_code     |= (col & COL_MASK) << COl_SHIFT;
+        key_code     |= (static_cast<int>(released) << RELEASED_SHIFT);
         return VirtualKey(key_code);
     }
 
@@ -31,39 +38,41 @@ namespace Ember {
         return build(row, col, false);
     }
 
-    VirtualKey VirtualKey::build_released(const U8 row, const U8 col) {
+    auto VirtualKey::build_released(const U8 row, const U8 col) -> VirtualKey {
         return build(row, col, true);
     }
 
-    VirtualKey::VirtualKey() : _key_code(0x8000) {}
+    VirtualKey::VirtualKey() : _key_code(NONE_KEY_CODE) {}
 
     VirtualKey::VirtualKey(const U16 key_code) : _key_code(key_code) {}
 
-    U16 VirtualKey::get_key_code() const { return _key_code; }
+    auto VirtualKey::get_key_code() const -> U16 { return _key_code; }
 
-    U8 VirtualKey::get_row() const {
-        return _key_code & 0x7; // key_code & 00000000000000111
+    auto VirtualKey::get_row() const -> U8 {
+        return _key_code & ROW_MASK; // key_code & 00000000000000111
     }
 
-    U8 VirtualKey::get_col() const {
-        return (_key_code >> 3) & 0x1F; // key_code & 00000000001111000
+    auto VirtualKey::get_col() const -> U8 {
+        return (_key_code >> COl_SHIFT) & COL_MASK; // key_code & 00000000001111000
     }
 
-    bool VirtualKey::is_pressed() const { return ((_key_code >> 14) & 0x1) == 0; }
-
-    bool VirtualKey::is_released() const {
-        return ((_key_code >> 14) & 0x1) == 1; // key_code & 010000000000000000
+    auto VirtualKey::is_pressed() const -> bool {
+        return ((_key_code >> RELEASED_SHIFT) & 0x1) == 0;
     }
 
-    bool VirtualKey::is_none() const {
-        return (_key_code >> 15) & 0x1; // key_code & 100000000000000000
+    auto VirtualKey::is_released() const -> bool {
+        return ((_key_code >> RELEASED_SHIFT) & 0x1) == 1; // key_code & 010000000000000000
     }
 
-    bool operator==(const VirtualKey& one, const VirtualKey& two) {
+    auto VirtualKey::is_none() const -> bool {
+        return ((_key_code >> NONE_SHIFT) & 0x1) != 0; // key_code & 100000000000000000
+    }
+
+    auto operator==(const VirtualKey& one, const VirtualKey& two) -> bool {
         return one.get_row() == two.get_row() && one.get_col() == two.get_col();
     }
 
-    bool operator!=(const VirtualKey& one, const VirtualKey& two) {
+    auto operator!=(const VirtualKey& one, const VirtualKey& two) -> bool {
         return one.get_row() != two.get_row() || one.get_col() != two.get_col();
     }
 } // namespace Ember

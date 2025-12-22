@@ -17,61 +17,32 @@
 #include <KRE/Stream.h>
 
 namespace Rune {
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      Stream
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    size_t Stream::read(U8* buffer, const size_t offset, const size_t size) {
-        size_t bytes_read = 0;
-        while (bytes_read < size) {
-            const int byte = read();
-            if (byte < 0) break;
-            buffer[offset + bytes_read] = byte;
-            bytes_read++;
-        }
-        return bytes_read;
-    }
-
-    size_t Stream::read(U8* buffer, const size_t size) { return read(buffer, 0, size); }
-
-    size_t Stream::write(U8* buffer, const size_t offset, const size_t size) {
-        size_t bytes_written = 0;
-        while (bytes_written < size) {
-            if (!write(buffer[offset + bytes_written])) break;
-            bytes_written++;
-        }
-        return bytes_written;
-    }
-
-    size_t Stream::write(U8* buffer, const size_t size) { return write(buffer, 0, size); }
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      TextStream API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     TextStream::TextStream() : _formatted_buf() {}
 
-    void TextStream::clear_buf() { memset(_formatted_buf, 0, BUF_SIZE); }
+    void TextStream::clear_buf() { memset(_formatted_buf.data(), 0, BUF_SIZE); }
 
-    size_t TextStream::write(const String& msg) {
+    auto TextStream::write(const String& msg) -> size_t {
         size_t chars_written = 0;
-        for (auto& ch : msg) {
+        for (const auto& ch : msg) {
             if (!write(static_cast<U8>(ch))) break;
             chars_written++;
         }
         return chars_written;
     }
 
-    size_t TextStream::write_line(const String& msg) {
+    auto TextStream::write_line(const String& msg) -> size_t {
         const size_t chars_written = write(msg);
         if (chars_written == msg.size()) write('\n');
         return chars_written + 1;
     }
 
-    size_t TextStream::write_formatted(const String& format, Argument* arg_list, size_t arg_size) {
-        interpolate(format.to_cstr(), _formatted_buf, BUF_SIZE, arg_list, arg_size);
-        const size_t out = write(_formatted_buf);
+    auto TextStream::write_formatted(const String& format, Argument* arg_list, size_t arg_size) -> size_t {
+        interpolate(format.to_cstr(), _formatted_buf.data(), BUF_SIZE, arg_list, arg_size);
+        const size_t out = write(_formatted_buf.data());
         clear_buf();
         return out;
     }

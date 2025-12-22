@@ -39,8 +39,7 @@ namespace Rune::CPU {
       public:
         explicit DeltaQueue();
 
-        [[nodiscard]]
-        DQNode* first() const;
+        [[nodiscard]] auto first() const -> DQNode*;
 
         // Decrement the wake time of the first thread in the queue.
         void update_wake_time(U64 time_decrement);
@@ -49,10 +48,10 @@ namespace Rune::CPU {
         void enqueue(const SharedPointer<Thread>& thread, U64 wake_time);
 
         // Dequeue the first thread if it has a wake time of zero.
-        SharedPointer<Thread> dequeue();
+        auto dequeue() -> SharedPointer<Thread>;
 
         // Remove a waiting thread at any position from the queue.
-        bool remove_waiting_thread(int t_id);
+        auto remove_waiting_thread(U16 t_id) -> bool;
     };
 } // namespace Rune::CPU
 

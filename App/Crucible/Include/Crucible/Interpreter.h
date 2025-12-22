@@ -126,6 +126,6 @@ namespace Crucible {
          */
         void run();
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_INTERPRETER_H

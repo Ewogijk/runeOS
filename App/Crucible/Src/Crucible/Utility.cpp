@@ -21,8 +21,7 @@ namespace Crucible {
         std::vector<std::string> tokens;
         std::istringstream       tokenStream(s);
         std::string              token;
-        while (std::getline(tokenStream, token, delimiter))
-            tokens.push_back(token);
+        while (std::getline(tokenStream, token, delimiter)) tokens.push_back(token);
         return tokens;
     }
 
@@ -30,4 +29,4 @@ namespace Crucible {
         auto [fst, snd] = std::mismatch(prefix.begin(), prefix.end(), word.begin());
         return fst == prefix.end();
     }
-} // namespace Rune
+} // namespace Crucible

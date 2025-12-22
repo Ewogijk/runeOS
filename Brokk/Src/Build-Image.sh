@@ -16,6 +16,8 @@
 #  limitations under the License.
 #
 
+set -euo pipefail
+
 help() {
   echo Usage "./Build-Image.sh [-h] KERNEL_ELF IMAGE_SIZE"
   echo
@@ -151,8 +153,8 @@ sudo mount -o uid="${uid}",gid="${gid}" ${LOOP_DEVICE}p2 $TMP_DATA_DIR
 # Copy kernel elf and limine files to kernel partition
 mkdir -p ${TMP_KERNEL_DIR}/EFI/BOOT
 cp "$kernel_elf" $TMP_KERNEL_DIR
-cp Ressource/BOOTX64.EFI ${TMP_KERNEL_DIR}/EFI/BOOT
-cp Ressource/limine.conf $TMP_KERNEL_DIR
+cp Resource/BOOTX64.EFI ${TMP_KERNEL_DIR}/EFI/BOOT
+cp Resource/limine.conf $TMP_KERNEL_DIR
 
 # Clean up
 sudo umount $TMP_KERNEL_DIR

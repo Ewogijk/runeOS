@@ -30,7 +30,8 @@ namespace Freya {
     class DependencyGraph {
         std::unordered_map<std::string, std::vector<std::string>> _graph;
 
-        explicit DependencyGraph(const std::unordered_map<std::string, std::vector<std::string>>& graph);
+        explicit DependencyGraph(
+            const std::unordered_map<std::string, std::vector<std::string>>& graph);
 
       public:
         ~DependencyGraph()                                         = default;

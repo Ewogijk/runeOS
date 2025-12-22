@@ -44,12 +44,18 @@ def create_gdb_conf(break_instruction: str):
 
         # Add libc sources
         f.write("directory /home/ewogijk/CLionProjects/runeToolchain/LibC/options/posix/generic\n")
-        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/LibC/sysdeps/rune/mlibc-integration\n")
+        f.write(
+            "directory /home/ewogijk/CLionProjects/runeToolchain/LibC/sysdeps/rune/mlibc-integration\n"
+        )
 
         # Add libstdc++-v3 sources
         f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/src/c++17\n")
-        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/include/bits\n")
-        f.write("directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/src/filesystem\n")
+        f.write(
+            "directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/include/bits\n"
+        )
+        f.write(
+            "directory /home/ewogijk/CLionProjects/runeToolchain/GCC/libstdc++-v3/src/filesystem\n"
+        )
 
         f.write("target remote localhost:1234\n")
         f.write("lay next\n")

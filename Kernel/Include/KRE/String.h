@@ -30,7 +30,7 @@ namespace Rune {
 
     class String;
 
-    const char* string_to_cstr(const String& str);
+    auto string_to_cstr(const String& str) -> const char*;
 
     struct Argument {
         enum AType {
@@ -163,8 +163,9 @@ namespace Rune {
      * meanings no character was actually placed or an error while parsing the format string
      * happened.
      */
-    size_t
-    interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size);
+    auto
+    interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size)
+        -> size_t;
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          String class
@@ -179,14 +180,14 @@ namespace Rune {
         static constexpr size_t BUF_SIZE = 24;
         union {
             char* _heapBuf = nullptr;
-            char  _stackBuf[BUF_SIZE];
+            char  _stackBuf[BUF_SIZE]; // NOLINT Array makes problems, keep as is
         } _storage;
 
-        size_t _size;     // size of the string without null terminator
-        size_t _capacity; // size of the buffer
+        size_t _size{};     // size of the string without null terminator
+        size_t _capacity{}; // size of the buffer
 
         [[nodiscard]]
-        const char* get_buf() const;
+        auto get_buf() const -> const char*;
 
         void init(const char* c_str, size_t offset, size_t size);
 
@@ -195,11 +196,13 @@ namespace Rune {
         String(const char* arr_one, const char* arr_two, size_t size_one, size_t size_two);
 
       public:
-        static size_t get_cstr_size(const char* c_str);
+        static auto get_cstr_size(const char* c_str) -> size_t;
 
         String();
 
         explicit String(char ch);
+
+        String(std::initializer_list<char> il);
 
         String(const char* c_str);
 
@@ -212,7 +215,7 @@ namespace Rune {
         // Copy constructor and assignment
         String(const String& o);
 
-        String& operator=(const String& o);
+        auto operator=(const String& o) -> String&;
 
         /**
          * Replace all placeholders in the format string with the provided arguments.
@@ -223,7 +226,7 @@ namespace Rune {
          *
          * @return Formatted string.
          */
-        static String format(const String& fmt_str, const Argument* args, size_t arg_size);
+        static auto format(const String& fmt_str, const Argument* args, size_t arg_size) -> String;
 
         /**
          * Replace all placeholders in the format string with the provided arguments.
@@ -235,8 +238,8 @@ namespace Rune {
          * @return Formatted string.
          */
         template <typename... Args>
-        static String format(const String& fmt_str, Args... args) {
-            const Argument arg_array[] = {args...};
+        static auto format(const String& fmt_str, Args... args) -> String {
+            const Argument arg_array[] = {args...}; // NOLINT unknown size, cannot size Array
             const size_t   arg_size    = sizeof...(Args);
             return format(fmt_str, arg_array, arg_size);
         }
@@ -245,34 +248,31 @@ namespace Rune {
          *
          * @return The number of characters without the null terminator.
          */
-        [[nodiscard]]
-        size_t size() const;
+        [[nodiscard]] auto size() const -> size_t;
 
         /**
          *
          * @return True if the string contains no characters.
          */
-        [[nodiscard]]
-        bool is_empty() const;
+        [[nodiscard]] auto is_empty() const -> bool;
 
         /**
          *
          * @return The string in c string representation.
          */
-        [[nodiscard]]
-        const char* to_cstr() const;
+        [[nodiscard]] auto to_cstr() const -> const char*;
 
         /**
          *
          * @return A copy of the string where all characters are upper case.
          */
-        String lower() const;
+        [[nodiscard]] auto lower() const -> String;
 
         /**
          *
          * @return A copy of the string where all characters are upper case.
          */
-        String upper() const;
+        [[nodiscard]] auto upper() const -> String;
 
         /**
          * Split the string along all occurrences of the separator and return a list of all
@@ -282,8 +282,7 @@ namespace Rune {
          *
          * @return A list of substrings.
          */
-        [[nodiscard]]
-        LinkedList<String> split(char separator) const;
+        [[nodiscard]] auto split(char separator) const -> LinkedList<String>;
 
         /**
          *
@@ -292,7 +291,7 @@ namespace Rune {
          *
          * @return A string where all occurrences of c are replaced with the replacement char.
          */
-        String replace(char c, char replacement);
+        auto replace(char c, char replacement) -> String;
 
         /**
          *
@@ -300,16 +299,14 @@ namespace Rune {
          *
          * @return Index of the last occurrence of ch.
          */
-        [[nodiscard]]
-        int last_index_of(char ch) const;
+        [[nodiscard]] auto last_index_of(char ch) const -> int;
 
         /**
          * @brief
          * @param prefix
          * @return True: The string starts with prefix, False: It does not.
          */
-        [[nodiscard]]
-        bool starts_with(const String& prefix) const;
+        [[nodiscard]] auto starts_with(const String& prefix) const -> bool;
 
         /**
          *
@@ -317,8 +314,7 @@ namespace Rune {
          *
          * @return A substring starting at the char from startIdx to the end of the this string.
          */
-        [[nodiscard]]
-        String substring(size_t start_idx) const;
+        [[nodiscard]] auto substring(size_t start_idx) const -> String;
 
         /**
          *
@@ -328,30 +324,29 @@ namespace Rune {
          * @return A substring starting at the char from startIdx containing the next len number of
          *         characters of this string.
          */
-        [[nodiscard]]
-        String substring(size_t start_idx, size_t len) const;
+        [[nodiscard]] auto substring(size_t start_idx, size_t len) const -> String;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  String concatenation overloads
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        String operator+(const String& o) const;
+        auto operator+(const String& o) const -> String;
 
-        String operator+(const String&& o) const;
+        auto operator+(const String&& o) const -> String;
 
-        String operator+(const char* o) const;
+        auto operator+(const char* o) const -> String;
 
-        String operator+(char ch) const;
+        auto operator+(char ch) const -> String;
 
-        friend String operator+(const char* c_string, String str);
+        friend auto operator+(const char* c_string, String str) -> String;
 
-        String& operator+=(const String& o);
+        auto operator+=(const String& o) -> String&;
 
-        String& operator+=(const String&& o);
+        auto operator+=(const String&& o) -> String&;
 
-        String& operator+=(const char* o);
+        auto operator+=(const char* o) -> String&;
 
-        String& operator+=(char ch);
+        auto operator+=(char ch) -> String&;
 
         /**
          *
@@ -359,17 +354,15 @@ namespace Rune {
          *
          * @return The character at given index.
          */
-        char operator[](size_t index) const;
+        auto operator[](size_t index) const -> char;
 
-        friend bool operator==(const String& a, const String& b);
+        friend auto operator==(const String& a, const String& b) -> bool;
 
-        friend bool operator!=(const String& a, const String& b);
+        friend auto operator!=(const String& a, const String& b) -> bool;
 
-        [[nodiscard]]
-        const char* begin() const;
+        [[nodiscard]] auto begin() const -> const char*;
 
-        [[nodiscard]]
-        const char* end() const;
+        [[nodiscard]] auto end() const -> const char*;
     };
 
     template <>
@@ -383,25 +376,31 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     template <class TNum>
-    String int_to_string(TNum num, int radix) {
-        constexpr char hex_chars[] = "0123456789ABCDEF";
-        char           buf[32];
-        memset(buf, 0, 32);
+    auto int_to_string(TNum num, int radix) -> String {
+        constexpr char hex_chars[] = "0123456789ABCDEF"; // NOLINT String shall not depend on Array
+        constexpr U8   BUF_SIZE    = 32;
+        char           buf[BUF_SIZE]; // NOLINT String shall not depend on Array
+        memset(buf, 0, BUF_SIZE);
         size_t pos = 0;
-        do {
+        do { // NOLINT is tested
             TNum rem = num % radix;
             // Fill the buffer in reverse order
-            buf[31 - pos]  = hex_chars[rem];
-            num           /= radix;
+            buf[BUF_SIZE - 1 - pos]  = hex_chars[rem]; // NOLINT is tested
+            num                     /= radix;
             pos++;
-        } while (num > 0 && pos < 32);
+        } while (num > 0 && pos < BUF_SIZE);
 
-        return {buf, 32 - pos, pos};
+        return {buf, BUF_SIZE - pos, pos};
     }
 
     template <class TNum>
-    bool parse_int(const String& str, TNum radix, TNum& out) {
-        if (radix < 0 || 16 < radix)
+    auto parse_int(const String& str, TNum radix, TNum& out) -> bool {
+        constexpr U8 RADIX_HEX         = 16;
+        constexpr U8 DIGIT_MIN         = 48;
+        constexpr U8 DIGIT_MAX         = 57;
+        constexpr U8 UPPER_TO_NUM_DIFF = 55; // 65 - 10 -> to get decimal 10 for 'A', etc.
+        constexpr U8 LOWER_TO_NUM_DIFF = 87; // 97 - 10 -> to get decimal 10 for 'a', etc.
+        if (radix < 0 || RADIX_HEX < radix)
             // Only radixes 0-16 are supported
             return false;
         if (str.is_empty()) return false;
@@ -421,12 +420,12 @@ namespace Rune {
         for (int i = (int) str.size() - 1; i >= limit; i--) {
             char ch  = str[i];
             TNum val = 0;
-            if (48 <= ch && ch <= 57) {
-                val = ch - 48;
+            if (DIGIT_MIN <= ch && ch <= DIGIT_MAX) {
+                val = ch - DIGIT_MIN;
             } else if ('A' <= ch && ch <= 'F') {
-                val = ch - 55; // 65 - 10 -> to get decimal 10 for 'A', etc.
+                val = ch - UPPER_TO_NUM_DIFF;
             } else if ('a' <= ch && ch <= 'f') {
-                val = ch - 87; // 97 - 10 -> to get decimal 10 for 'A', etc.
+                val = ch - LOWER_TO_NUM_DIFF;
             } else {
                 // Non digit character encountered
                 return false;

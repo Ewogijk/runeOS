@@ -19,7 +19,7 @@
 namespace Rune::App {
     DEFINE_ENUM(LoadStatus, LOAD_STATUSES, 0x0)
 
-    bool operator==(const Info& one, const Info& two) { return one.handle == two.handle; }
+    auto operator==(const Info& one, const Info& two) -> bool { return one.handle == two.handle; }
 
-    bool operator!=(const Info& one, const Info& two) { return one.handle != two.handle; }
+    auto operator!=(const Info& one, const Info& two) -> bool { return one.handle != two.handle; }
 } // namespace Rune::App

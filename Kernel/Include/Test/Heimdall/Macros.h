@@ -25,23 +25,23 @@ namespace Heimdall {
 #define ACTUAL_CONCAT(a, b) a##b
 #define CONCAT(a, b)        ACTUAL_CONCAT(a, b)
 
-#define TEST_WITH_SUITE(name, test_suite)                                                          \
-    namespace CONCAT(Test_, __LINE__) {                                                            \
+#define DEF_TEST_IN_SUITE(ID, name, test_suite)                                                    \
+    namespace CONCAT(Test_, ID) {                                                                  \
         void       test_function();                                                                \
-        const bool CONCAT(reg_test_, __LINE__) =                                                   \
+        const bool CONCAT(reg_test_, ID) =                                                         \
             Heimdall::register_test(name, test_suite, &test_function, __FILE__, __LINE__);         \
     };                                                                                             \
-    void CONCAT(Test_, __LINE__)::test_function()
+    void CONCAT(Test_, ID)::test_function()
 
-#define TEST_NO_SUITE(name)                                                                        \
-    namespace CONCAT(Test_, __LINE__) {                                                            \
+#define DEF_TEST(ID, name)                                                                         \
+    namespace CONCAT(Test_, ID) {                                                                  \
         void       test_function();                                                                \
-        const bool CONCAT(reg_test_, __LINE__) =                                                   \
+        const bool CONCAT(reg_test_, ID) =                                                         \
             Heimdall::register_test(name, "", &test_function, __FILE__, __LINE__);                 \
     };                                                                                             \
-    void CONCAT(Test_, __LINE__)::test_function()
+    void CONCAT(Test_, ID)::test_function()
 
-#define DELEGATE_TEST(_1, _2, name, ...) name
+#define GET_MACRO(_1, _2, name, ...) name
 
     /// @brief
     /// Define a test case in an optional test suite. If no test suite is declared the test will
@@ -57,7 +57,7 @@ namespace Heimdall {
     /// TEST("My Test") {
     ///      // test code goes here
     /// }
-#define TEST(...) DELEGATE_TEST(__VA_ARGS__, TEST_WITH_SUITE, TEST_NO_SUITE)(__VA_ARGS__)
+#define TEST(...) GET_MACRO(__VA_ARGS__, DEF_TEST_IN_SUITE, DEF_TEST)(__COUNTER__, __VA_ARGS__)
 
     /// @brief
     /// Define an expression that will be evaluated and reported. If the expression fails, the test

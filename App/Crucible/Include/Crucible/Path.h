@@ -246,6 +246,6 @@ namespace Crucible {
          */
         friend bool operator!=(const Path& first, const Path& b);
     };
-} // namespace Rune
+} // namespace Crucible
 
 #endif // CRUCIBLE_PATH_H

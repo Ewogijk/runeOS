@@ -145,4 +145,4 @@ namespace Crucible {
 
         return node_suggestions;
     }
-} // namespace Rune::Shell
+} // namespace Crucible

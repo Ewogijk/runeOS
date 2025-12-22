@@ -266,4 +266,4 @@ namespace Crucible {
         SILENCE_UNUSED(shell_env)
         return _value;
     }
-} // namespace Rune::Shell
+} // namespace Crucible

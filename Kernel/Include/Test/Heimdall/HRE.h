@@ -54,7 +54,7 @@ namespace Heimdall {
     /// @brief Save the given test_report to the file.
     /// @param file Absolute path to a file.
     /// @param test_report Test report.
-    void hre_save_test_report(const HString& file, const HString& test_report);
+    void hre_save_to_file(const HString& file, const HString& test_report);
 } // namespace Heimdall
 
 #endif // HEIMDALL_HRE_H

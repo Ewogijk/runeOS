@@ -23,15 +23,15 @@
 #include <CPU/Time/PIT.h>
 
 namespace Rune::BuiltInPlugin {
-    PluginInfo PIT_INFO = {
-        "PIT",
-        "Ewogijk",
-        {1, 0, 0, ""}
+    const PluginInfo PIT_INFO = {
+        .name    = "PIT",
+        .vendor  = "Ewogijk",
+        .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
-    PluginInfo PITDriverPlugin::get_info() const { return PIT_INFO; }
+    auto PITDriverPlugin::get_info() const -> PluginInfo { return PIT_INFO; }
 
-    bool PITDriverPlugin::load() {
+    auto PITDriverPlugin::load() -> bool {
         auto* cs = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cs->install_timer_driver(UniquePointer<CPU::Timer>(new CPU::PIT()));
 

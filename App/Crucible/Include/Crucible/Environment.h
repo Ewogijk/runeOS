@@ -27,7 +27,8 @@
 #include <Crucible/AutoCompletion.h>
 #include <Crucible/Path.h>
 
-template <> struct std::hash<Ember::VirtualKey> {
+template <>
+struct std::hash<Ember::VirtualKey> {
     std::size_t operator()(const Ember::VirtualKey& s) const noexcept {
         return std::hash<U16>{}(s.get_key_code());
     }
@@ -142,6 +143,6 @@ namespace Crucible {
          */
         void input_set(const std::string& str);
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_ENVIRONMENT_H

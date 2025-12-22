@@ -19,6 +19,7 @@
 
 #include <Device/AHCI/Port.h>
 
+#include <KRE/Collections/Array.h>
 #include <KRE/Memory.h>
 
 #include <Memory/SlabAllocator.h>
@@ -53,58 +54,58 @@ namespace Rune::Device {
     };
 
     // runeOS PartitionType GUID: 8fa4455d-2d55-45ba-8bca-cbcedf48bdf6
-    constexpr U8 PARTITION_TYPE_GUID[16] = {0x5d,
-                                            0x45,
-                                            0xa4,
-                                            0x8f,
-                                            0x55,
-                                            0x2d,
-                                            0xba,
-                                            0x45,
-                                            0x8b,
-                                            0xca,
-                                            0xcb,
-                                            0xce,
-                                            0xdf,
-                                            0x48,
-                                            0xbd,
-                                            0xf6};
+    constexpr Array<U8, 16> PARTITION_TYPE_GUID = {0x5d,
+                                                   0x45,
+                                                   0xa4,
+                                                   0x8f,
+                                                   0x55,
+                                                   0x2d,
+                                                   0xba,
+                                                   0x45,
+                                                   0x8b,
+                                                   0xca,
+                                                   0xcb,
+                                                   0xce,
+                                                   0xdf,
+                                                   0x48,
+                                                   0xbd,
+                                                   0xf6};
 
     // Kernel Partition GUID: 4d3f0533-902a-4642-b125-728c910c1f79
-    constexpr U8 KERNEL_PARTITION_GUID[16] = {0x33,
-                                              0x05,
-                                              0x3f,
-                                              0x4d,
-                                              0x2a,
-                                              0x90,
-                                              0x42,
-                                              0x46,
-                                              0xb1,
-                                              0x25,
-                                              0x72,
-                                              0x8c,
-                                              0x91,
-                                              0x0c,
-                                              0x1f,
-                                              0x79};
+    constexpr Array<U8, 16> KERNEL_PARTITION_GUID = {0x33,
+                                                     0x05,
+                                                     0x3f,
+                                                     0x4d,
+                                                     0x2a,
+                                                     0x90,
+                                                     0x42,
+                                                     0x46,
+                                                     0xb1,
+                                                     0x25,
+                                                     0x72,
+                                                     0x8c,
+                                                     0x91,
+                                                     0x0c,
+                                                     0x1f,
+                                                     0x79};
 
     // Data Partition GUID: 7574b273-9503-4d83-8617-678d4c2d30c0
-    constexpr U8 DATA_PARTITION_GUID[16] = {0x73,
-                                            0xb2,
-                                            0x74,
-                                            0x75,
-                                            0x03,
-                                            0x95,
-                                            0x83,
-                                            0x4d,
-                                            0x86,
-                                            0x17,
-                                            0x67,
-                                            0x8d,
-                                            0x4c,
-                                            0x2d,
-                                            0x30,
-                                            0xc0};
+    constexpr Array<U8, 16> DATA_PARTITION_GUID = {0x73,
+                                                   0xb2,
+                                                   0x74,
+                                                   0x75,
+                                                   0x03,
+                                                   0x95,
+                                                   0x83,
+                                                   0x4d,
+                                                   0x86,
+                                                   0x17,
+                                                   0x67,
+                                                   0x8d,
+                                                   0x4c,
+                                                   0x2d,
+                                                   0x30,
+                                                   0xc0};
 
 #define PARTITION_TYPES(X)                                                                         \
     X(PartitionType, KERNEL, 0x1)                                                                  \
@@ -149,28 +150,26 @@ namespace Rune::Device {
       public:
         explicit PortEngine();
 
-        [[nodiscard]]
-        HardDrive get_hard_drive_info() const;
+        [[nodiscard]] auto get_hard_drive_info() const -> HardDrive;
 
-        [[nodiscard]]
-        bool is_active() const;
+        [[nodiscard]] auto is_active() const -> bool;
 
-        bool scan_device(volatile HBAPort* port);
+        auto scan_device(volatile HBAPort* port) -> bool;
 
-        bool start(SystemMemory*          system_memory,
+        auto start(SystemMemory*          system_memory,
                    bool                   s_64a,
                    Memory::SlabAllocator* heap,
-                   CPU::Timer*            timer);
+                   CPU::Timer*            timer) -> bool;
 
-        bool stop();
+        auto stop() -> bool;
 
-        bool reset();
+        auto reset() -> bool;
 
-        size_t send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis);
+        auto send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis) -> size_t;
 
-        size_t read(void* buf, size_t bufSize, size_t lba);
+        auto read(void* buf, size_t bufSize, size_t lba) -> size_t;
 
-        size_t write(void* buf, size_t buf_size, size_t lba);
+        auto write(void* buf, size_t buf_size, size_t lba) -> size_t;
     };
 } // namespace Rune::Device
 

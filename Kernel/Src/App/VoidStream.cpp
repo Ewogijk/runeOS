@@ -17,13 +17,13 @@
 #include <App/VoidStream.h>
 
 namespace Rune::App {
-    bool VoidStream::is_read_supported() { return false; }
+    auto VoidStream::is_read_supported() -> bool { return false; }
 
-    int VoidStream::read() { return -1; }
+    auto VoidStream::read() -> int { return -1; }
 
-    bool VoidStream::is_write_supported() { return false; }
+    auto VoidStream::is_write_supported() -> bool { return false; }
 
-    bool VoidStream::write(U8 value) {
+    auto VoidStream::write(U8 value) -> bool {
         SILENCE_UNUSED(value)
         return false;
     }
@@ -32,5 +32,5 @@ namespace Rune::App {
 
     void VoidStream::close() {}
 
-    bool VoidStream::is_ansi_supported() { return false; }
+    auto VoidStream::is_ansi_supported() -> bool { return false; }
 } // namespace Rune::App

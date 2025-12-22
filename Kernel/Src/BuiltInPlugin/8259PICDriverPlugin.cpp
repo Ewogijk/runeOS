@@ -23,15 +23,15 @@
 #include <CPU/Interrupt/8259PIC.h>
 
 namespace Rune::BuiltInPlugin {
-    PluginInfo _8259_PIC_INFO = {
-        "8259 PIC",
-        "Ewogijk",
-        {1, 0, 0, ""}
+    const PluginInfo _8259_PIC_INFO = {
+        .name="8259 PIC",
+        .vendor="Ewogijk",
+        .version={.major=1, .minor=0, .patch=0, .pre_release=""}
     };
 
-    PluginInfo _8259PICDriverPlugin::get_info() const { return _8259_PIC_INFO; }
+    auto _8259PICDriverPlugin::get_info() const -> PluginInfo { return _8259_PIC_INFO; }
 
-    bool _8259PICDriverPlugin::load() {
+    auto _8259PICDriverPlugin::load() -> bool {
         auto* cs = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cs->install_pic_driver(UniquePointer<CPU::PICDriver>(new CPU::_8259PIC()));
 

@@ -49,8 +49,7 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
         const String            k_msg(k_buf_msg);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_module->get_active_app()->std_out->write((U8*) k_buf_msg,
-                                                                          k_msg.size()));
+            app_syscall_ctx->app_module->get_active_app()->std_out->write(k_msg));
         delete[] k_buf_msg;
         return byte_out;
     }
@@ -70,8 +69,7 @@ namespace Rune::SystemCall {
 
         std_err->set_foreground_color(Pixie::VSCODE_RED);
         const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
-            app_syscall_ctx->app_module->get_active_app()->std_err->write((U8*) k_buf_msg,
-                                                                          k_msg.size()));
+            app_syscall_ctx->app_module->get_active_app()->std_err->write(k_msg));
         std_err->reset_style();
         delete[] k_buf_msg;
         return byte_out;

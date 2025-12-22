@@ -20,37 +20,10 @@
 
 #include "Interrupt/IDT.h"
 
-namespace Rune::CPU {
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          CPUID Features
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //
-    // String get_vendor() {
-    //     CPUIDResponse cpuid_response;
-    //     make_cpuid_request(0x0, &cpuid_response);
-    //     char buf[13];
-    //     buf[0]  = (char) ((cpuid_response.rbx >> 0) & 0xFF);
-    //     buf[1]  = (char) ((cpuid_response.rbx >> 8) & 0xFF);
-    //     buf[2]  = (char) ((cpuid_response.rbx >> 16) & 0xFF);
-    //     buf[3]  = (char) ((cpuid_response.rbx >> 24) & 0xFF);
-    //     buf[4]  = (char) ((cpuid_response.rdx >> 0) & 0xFF);
-    //     buf[5]  = (char) ((cpuid_response.rdx >> 8) & 0xFF);
-    //     buf[6]  = (char) ((cpuid_response.rdx >> 16) & 0xFF);
-    //     buf[7]  = (char) ((cpuid_response.rdx >> 24) & 0xFF);
-    //     buf[8]  = (char) ((cpuid_response.rcx >> 0) & 0xFF);
-    //     buf[9]  = (char) ((cpuid_response.rcx >> 8) & 0xFF);
-    //     buf[10] = (char) ((cpuid_response.rcx >> 16) & 0xFF);
-    //     buf[11] = (char) ((cpuid_response.rcx >> 24) & 0xFF);
-    //     buf[12] = 0;
-    //     return {buf};
-    // }
-    //
-    // U8 get_physical_address_width() {
-    //     CPUIDResponse cpuid_response;
-    //     make_cpuid_request(0x80000008, &cpuid_response);
-    //     return cpuid_response.rax & 0xFF;
-    // }
+#include <KRE/BitsAndBytes.h>
+#include <KRE/Collections/Array.h>
 
+namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Model Specific Registers
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -64,13 +37,15 @@ namespace Rune::CPU {
     // when implementing SMP I need to figure out how to properly store multiple GDT (on per core)
     // storage as class member does not work, probably due to padding bytes added by compiler (did
     // not debug that detailed)
-    SegmentDescriptor     SD[7];
-    GlobalDescriptorTable GDT;
-    TaskStateSegment64    TSS;
+    // NOLINTBEGIN
+    Array<SegmentDescriptor, 7> SD;
+    GlobalDescriptorTable       GDT;
+    TaskStateSegment64          TSS;
+    // NOLINTEND
 
     X64Core::X64Core(U8 core_id) : _core_id(core_id), _kgs_base(0), _gs_base(0) {}
 
-    bool X64Core::init() {
+    auto X64Core::init() -> bool {
         if (!cpuid_is_supported()) return false;
 
         // NOTE: comment not valid anymore but too lazy to remove
@@ -83,7 +58,7 @@ namespace Rune::CPU {
         // init the values in the constructor, but this is also works, so we just use it for
         // all cores.
         GDT.limit = sizeof(SD) - 1;
-        GDT.entry = SD;
+        GDT.entry = SD.data();
 
         enable_sse(); // Enable floating point instructions
         init_gdt(&GDT, &TSS);
@@ -106,30 +81,29 @@ namespace Rune::CPU {
         return true;
     }
 
-    U8 X64Core::get_id() { return _core_id; }
+    auto X64Core::get_id() -> U8 { return _core_id; }
 
-    TechSpec X64Core::get_tech_spec() { return {cpuid_get_vendor(), "", ""}; }
-
-    ArchSpec X64Core::get_arch_details() { return {cpuid_get_physical_address_width()}; }
-
-    PrivilegeLevel X64Core::get_current_privilege_level() {
-        U8 ring = read_cs() & 0x3; // Bits 0-1 encode the current privilege level
-        if (ring == 3)
-            return PrivilegeLevel::USER;
-        else if (ring == 0)
-            return PrivilegeLevel::KERNEL;
-        else
-            return PrivilegeLevel::NONE;
+    auto X64Core::get_tech_spec() -> TechSpec {
+        return {.vendor = cpuid_get_vendor(), .family = "", .model = ""};
     }
 
-    LinkedList<InterruptVector> X64Core::get_interrupt_vector_table() {
+    auto X64Core::get_arch_details() -> ArchSpec { return {cpuid_get_physical_address_width()}; }
+
+    auto X64Core::get_current_privilege_level() -> PrivilegeLevel {
+        U8 ring = read_cs() & 0x3; // Bits 0-1 encode the current privilege level
+        if (ring == 3) return PrivilegeLevel::USER;
+        if (ring == 0) return PrivilegeLevel::KERNEL;
+        return PrivilegeLevel::NONE;
+    }
+
+    auto X64Core::get_interrupt_vector_table() -> LinkedList<InterruptVector> {
         LinkedList<InterruptVector> ivt;
 
-        for (int i = 0; i < 256; i++) {
+        for (U16 i = 0; i < INTERRUPT_VECTOR_COUNT; i++) {
             GateDescriptor gd = idt_get()->entry[i];
 
-            auto handler_addr = ((VirtualAddr) gd.offset_high) << 32
-                                | ((VirtualAddr) gd.offset_mid) << 16 | gd.offset_low;
+            auto handler_addr = ((VirtualAddr) gd.offset_high) << SHIFT_32
+                                | ((VirtualAddr) gd.offset_mid) << SHIFT_16 | gd.offset_low;
 
             PrivilegeLevel pl = PrivilegeLevel::NONE;
 
@@ -138,7 +112,10 @@ namespace Rune::CPU {
             else if (gd.flags.dpl == 3)
                 pl = PrivilegeLevel::USER;
 
-            ivt.add_back({(U8) i, handler_addr, pl, gd.flags.p > 0
+            ivt.add_back({.vector       = (U8) i,
+                          .handler_addr = handler_addr,
+                          .level        = pl,
+                          .active       = gd.flags.p > 0
 
             });
         }
@@ -184,7 +161,7 @@ namespace Rune::CPU {
     void X64Core::execute_in_kernel_mode(Thread* t, const Register thread_exit) {
         // threadExit will be pushed onto the stack so t->Main returns to it
         // -> adjust the kernel stack in the thread struct manually
-        t->kernel_stack_top -= 8;
+        t->kernel_stack_top -= 8; // NOLINT
         exec_kernel_mode(reinterpret_cast<Register>(t->start_info),
                          reinterpret_cast<Register>(t->start_info->main),
                          thread_exit);
@@ -208,7 +185,7 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void X64Core::dump_core_state(const SharedPointer<TextStream>& stream,
-                                  const x86CoreState&              state) {
+                                  const x86CoreState&              state) const {
         stream->write_formatted("-------------------------------------------- CPU{} Core Dump "
                                 "--------------------------------------------\n",
                                 _core_id);
@@ -254,15 +231,15 @@ namespace Rune::CPU {
         InterruptDescriptorTable* idt = idt_get();
         stream->write_formatted("");
         stream->write_formatted("GDT={:0=#16x}, Limit={:0=#4x}\n",
-                                (uintptr_t) &GDT.entry,
+                                memory_pointer_to_addr(&GDT.entry),
                                 GDT.limit);
         stream->write_formatted("IDT={:0=#16x}, Limit={:0=#4x}\n",
-                                (uintptr_t) &idt->entry,
+                                memory_pointer_to_addr(&idt->entry),
                                 idt->limit);
         stream->write_formatted(
 
             "TSS={:0=#16x}, RSP0={:0=#16x}\n",
-            (uintptr_t) &TSS,
+            memory_pointer_to_addr(&TSS),
             TSS.rsp_0);
         stream->write_formatted("");
 
@@ -282,9 +259,9 @@ namespace Rune::CPU {
 
         stream->write_formatted("------------------ Global Descriptor Table -----------------\n");
         stream->write_formatted("  Sel           Base         Limit  A RW DC E S DPL P L DB G\n");
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) { //NOLINT Number of GDT entries defined in GDT.cpp
             SegmentDescriptor sd    = GDT.entry[i];
-            U32               limit = (U32) sd.limit_flags.limit_high << 16 | (U32) sd.limit_low;
+            U32               limit = (U32) sd.limit_flags.limit_high << SHIFT_16 | (U32) sd.limit_low;
             stream->write_formatted(
                 " {:0=#2x}    {:0=#16x} {:0=#5x} {} {}  {}  {} {}  {}  {} {} {}  {}\n",
                 i * sizeof(SegmentDescriptor),

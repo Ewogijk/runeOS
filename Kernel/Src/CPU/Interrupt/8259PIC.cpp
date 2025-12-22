@@ -16,6 +16,7 @@
 
 #include <CPU/Interrupt/8259PIC.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Utility.h>
 
 #include <CPU/IO.h>
@@ -55,15 +56,15 @@ namespace Rune::CPU {
         READ_ISR = 0x0B
     };
 
-    bool _8259PIC::probe() {
-        U16 test_mask = 0x1337;
+    auto _8259PIC::probe() -> bool {
+        constexpr U16 TEST_MASK = 0x1337;
 
         // Invalidate cached imr to get the current imr content of the pic's
         _imr_invalid = true;
         U16 pic_mask = get_imr_0();
 
         // Try to send the test mask to the pic's
-        _imr = test_mask;
+        _imr = TEST_MASK;
         update_both_8259_imr();
 
         // Invalidate again to get the pic's imr content
@@ -75,26 +76,26 @@ namespace Rune::CPU {
         _imr = pic_mask;
         update_both_8259_imr();
 
-        return maybe_test_mask == test_mask;
+        return maybe_test_mask == TEST_MASK;
     }
 
-    _8259PIC::_8259PIC() : _imr(0xFFFF), _imr_invalid(true) {}
+    _8259PIC::_8259PIC() : _imr(MASK_ALL_INTERRUPTS), _imr_invalid(true) {}
 
-    String _8259PIC::get_name() { return "8259 PIC"; }
+    auto _8259PIC::get_name() -> String { return "8259 PIC"; }
 
-    U8 _8259PIC::get_irq_line_offset() { return ICW2::PIC1_IRQ_OFFSET; }
+    auto _8259PIC::get_irq_line_offset() -> U8 { return ICW2::PIC1_IRQ_OFFSET; }
 
-    bool _8259PIC::is_irq_requested(U8 irq_line) {
+    auto _8259PIC::is_irq_requested(U8 irq_line) -> bool {
         return bit_check(read_pic_register(READ_IRR), irq_line);
     }
 
-    bool _8259PIC::is_irq_serviced(U8 irq_line) {
+    auto _8259PIC::is_irq_serviced(U8 irq_line) -> bool {
         return bit_check(read_pic_register(READ_ISR), irq_line);
     }
 
-    bool _8259PIC::is_irq_masked(U8 irq_line) { return bit_check(get_imr_0(), irq_line); }
+    auto _8259PIC::is_irq_masked(U8 irq_line) -> bool { return bit_check(get_imr_0(), irq_line); }
 
-    bool _8259PIC::start() {
+    auto _8259PIC::start() -> bool {
         if (_fully_init) return true;
 
         if (!probe()) return false;
@@ -110,7 +111,7 @@ namespace Rune::CPU {
 
         out_b(Port::COMMAND2, ICW1::REQUIRE_ICW4 | ICW1::INIT);
         io_wait();
-        out_b(Port::DATA2, ICW2::PIC1_IRQ_OFFSET + 8);
+        out_b(Port::DATA2, ICW2::PIC1_IRQ_OFFSET + PIC2_IRQ_BOUNDARY);
         io_wait();
         out_b(Port::DATA2, ICW3::PIC2_ID);
         io_wait();
@@ -133,49 +134,49 @@ namespace Rune::CPU {
     }
 
     void _8259PIC::mask_all() {
-        _imr = 0xFFFF;
+        _imr = MASK_ALL_INTERRUPTS;
         update_both_8259_imr();
     }
 
     void _8259PIC::send_end_of_interrupt(U8 irq_line) {
-        if (irq_line >= 8) out_b(Port::COMMAND2, Command::EOI);
+        if (irq_line >= PIC2_IRQ_BOUNDARY) out_b(Port::COMMAND2, Command::EOI);
         out_b(Port::COMMAND1, Command::EOI);
     }
 
     void _8259PIC::update_selected_8259_imr(U8 irq_line) const {
         U16 port;
         U8  out;
-        if (irq_line < 8) {
+        if (irq_line < PIC2_IRQ_BOUNDARY) {
             port = Port::DATA1;
-            out  = _imr & 0xFF;
+            out  = _imr & MASK_BYTE;
         } else {
             port = Port::DATA2;
-            out  = _imr >> 8;
+            out  = _imr >> SHIFT_8;
         }
         out_b(port, out);
     }
 
     void _8259PIC::update_both_8259_imr() const {
-        out_b(Port::DATA1, _imr & 0xFF);
+        out_b(Port::DATA1, _imr & MASK_BYTE);
         io_wait();
-        out_b(Port::DATA2, _imr >> 8);
+        out_b(Port::DATA2, _imr >> SHIFT_8);
         io_wait();
     }
 
-    U16 _8259PIC::get_imr_0() {
+    auto _8259PIC::get_imr_0() -> U16 {
         if (_imr_invalid) {
-            _imr         = in_b(Port::DATA1) | (in_b(Port::DATA2) << 8);
+            _imr         = in_b(Port::DATA1) | (in_b(Port::DATA2) << SHIFT_8);
             _imr_invalid = false;
         }
         return _imr;
     }
 
-    U16 _8259PIC::read_pic_register(U8 read_cmd) {
+    auto _8259PIC::read_pic_register(U8 read_cmd) -> U16 {
         out_b(Port::COMMAND1, read_cmd);
         io_wait();
         out_b(Port::COMMAND1, read_cmd);
         io_wait();
-        return (in_b(Port::DATA2) << 8) & in_b(Port::DATA1);
+        return (in_b(Port::DATA2) << SHIFT_8) & in_b(Port::DATA1);
     }
 
 } // namespace Rune::CPU

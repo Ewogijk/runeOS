@@ -21,6 +21,8 @@
 #include <KRE/String.h>
 #include <KRE/Utility.h>
 
+#include <KRE/Collections/Array.h>
+
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Stream API
@@ -53,7 +55,17 @@ namespace Rune {
          * @param size
          * @return The number of bytes that have been read from the stream.
          */
-        auto read(U8 buffer[], size_t offset, size_t size) -> size_t;
+        template <size_t N>
+        auto read(Array<U8, N> buffer, size_t offset) -> size_t {
+            size_t bytes_read = 0;
+            while (bytes_read < buffer.size()) {
+                const int byte = read();
+                if (byte < 0) break;
+                buffer[offset + bytes_read] = byte;
+                bytes_read++;
+            }
+            return bytes_read;
+        }
 
         /**
          * @brief Read at most size bytes to the beginning of the buffer.
@@ -61,7 +73,10 @@ namespace Rune {
          * @param size
          * @return The number of bytes that have been read from the stream.
          */
-        auto read(U8 buffer[], size_t size) -> size_t;
+        template <size_t N>
+        auto read(Array<U8, N> buffer) -> size_t {
+            return read(buffer, 0);
+        }
 
         /**
          * @brief
@@ -83,15 +98,25 @@ namespace Rune {
          * @param size
          * @return The number of bytes written.
          */
-        auto write(U8 buffer[], size_t offset, size_t size) -> size_t;
-
+        template <size_t N>
+        auto write(Array<U8, N> buffer, size_t offset) -> size_t {
+            size_t bytes_written = 0;
+            while (bytes_written < buffer.size()) {
+                if (!write(buffer[offset + bytes_written])) break;
+                bytes_written++;
+            }
+            return bytes_written;
+        }
         /**
          * @brief Write size number of bytes from the beginning of the buffer to the stream.
          * @param buffer
          * @param size
-         * * @return The number of bytes written.
+         * @return The number of bytes written.
          */
-        auto write(U8 buffer[], size_t size) -> size_t;
+        template <size_t N>
+        auto write(Array<U8, N> buffer) -> size_t {
+            return write(buffer, 0);
+        }
 
         /**
          * @brief If the stream supports buffering, write any bytes in the buffer immediately to the
@@ -133,7 +158,8 @@ namespace Rune {
         /**
          * @brief Formatted strings are temporarily stored in this buffer.
          */
-        char _formatted_buf[BUF_SIZE];
+        // char _formatted_buf[BUF_SIZE];
+        Array<char, BUF_SIZE> _formatted_buf;
 
         /**
          * @brief Zero out _formattedBuf.
@@ -198,9 +224,9 @@ namespace Rune {
          */
         template <typename... Args>
         auto write_formatted(const String& fmt, Args... args) -> size_t {
-            Argument arg_array[] = {args...};
-            interpolate(fmt.to_cstr(), _formatted_buf, BUF_SIZE, arg_array, sizeof...(Args));
-            size_t out = write(_formatted_buf);
+            Argument arg_array[] = {args...}; // NOLINT size is dynamic
+            interpolate(fmt.to_cstr(), _formatted_buf.data(), BUF_SIZE, arg_array, sizeof...(Args));
+            size_t out = write(_formatted_buf.data());
             clear_buf();
             return out;
         }

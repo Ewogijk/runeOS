@@ -18,8 +18,8 @@
 
 #include <Forge/App.h>
 
-#include <Crucible/Interpreter.h>
 #include <Crucible/BuiltInCommand.h>
+#include <Crucible/Interpreter.h>
 
 #include <Build.h>
 
@@ -53,4 +53,4 @@ namespace Crucible {
         interpreter.run();
         return 0;
     }
-} // namespace Rune
+} // namespace Crucible

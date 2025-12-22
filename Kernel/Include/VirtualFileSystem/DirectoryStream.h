@@ -36,13 +36,12 @@ namespace Rune::VFS {
 
     DECLARE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0) // NOLINT
 
-
     /**
      * @brief The directory stream returns node infos until the end of directory is reached.
      */
     class DirectoryStream {
       protected:
-        bool                 _closed;
+        bool _closed;
 
         Function<void()> _on_close;
 

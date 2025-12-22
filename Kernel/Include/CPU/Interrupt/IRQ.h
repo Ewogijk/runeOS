@@ -55,7 +55,7 @@ namespace Rune::CPU {
         U8                        irq_line     = 0;
         U64                       raised       = 0; // Number of times the IRQ was raised
         U64                       left_pending = 0; // Number of times the IRQ could not be handled
-        LinkedList<IRQTableEntry> entry        = LinkedList<IRQTableEntry>();
+        LinkedList<IRQTableEntry> entry;
     };
 
     /**
@@ -69,7 +69,7 @@ namespace Rune::CPU {
      * @return -1 if no PIC device was detected else the index of the PIC driver that has detected
      * it's device.
      */
-    int irq_init(const LinkedList<PICDriver*>& pic_drivers);
+    auto irq_init(const LinkedList<PICDriver*>& pic_drivers) -> int;
 
     /**
      * @brief Get the highest possible IRQ line.
@@ -79,7 +79,7 @@ namespace Rune::CPU {
      *
      * @return Highest IRQ line.
      */
-    U8 irq_get_line_limit();
+    auto irq_get_line_limit() -> U8;
 
     /**
      * @brief Get the IRQ table for an IRQ line which contains general information about an IRQ and
@@ -87,7 +87,7 @@ namespace Rune::CPU {
      * @param irq_line
      * @return IRQ table of an IRQ line.
      */
-    IRQTable irq_get_table_for(U8 irq_line);
+    auto irq_get_table_for(U8 irq_line) -> IRQTable;
 
     /**
      * @brief Install the IRQ handler for a device on the specified IRQ line.
@@ -97,8 +97,9 @@ namespace Rune::CPU {
      * @param handler
      * @return True: The IRQ handler is installed. False: Installation failed.
      */
-    bool
-    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler);
+    auto
+    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler)
+        -> bool;
 
     /**
      * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
@@ -106,14 +107,14 @@ namespace Rune::CPU {
      * @param dev_handle
      * @return True: The IRQ handler is uninstalled. False: Uninstalling failed.
      */
-    bool irq_uninstall_handler(U8 irq_line, U16 dev_handle);
+    auto irq_uninstall_handler(U8 irq_line, U16 dev_handle) -> bool;
 
     /**
      * @brief Send an "End of Interrupt" signal through the PIC driver.
      * @return True: The EOI was sent, False: It was not send because IRQ are not initialized or no
      * IRQ is currently pending.
      */
-    bool irq_send_eoi();
+    auto irq_send_eoi() -> bool;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_IRQ_H

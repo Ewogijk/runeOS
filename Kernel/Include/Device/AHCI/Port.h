@@ -19,6 +19,8 @@
 
 #include <Ember/Enum.h>
 
+#include <KRE/Collections/Array.h>
+
 #include <Device/AHCI/FIS.h>
 
 namespace Rune::Device {
@@ -247,41 +249,41 @@ namespace Rune::Device {
      */
     struct HBAPort {
         CommandListBaseAddress   CLB;
-        uint32_t                 CLBU;
+        uint32_t                 CLBU{};
         FISBaseAddress           FB;
-        uint32_t                 FBU;
-        InterruptStatus          IS;
+        uint32_t                 FBU{};
+        InterruptStatus          IS{};
         InterruptEnable          IE;
-        CommandAndStatus         CMD;
-        uint32_t                 Reserved;
-        TaskFileData             TFD;
+        CommandAndStatus         CMD{};
+        uint32_t                 Reserved{};
+        TaskFileData             TFD{};
         Signature                SIG;
-        SerialATAStatus          SSTS;
-        SerialATAControl         SCTL;
+        SerialATAStatus          SSTS{};
+        SerialATAControl         SCTL{};
         SerialATAError           SERR;
-        uint32_t                 SACT; // Serial ATA Active
-        uint32_t                 CI;   // Command Issue
-        SerialATANotification    SNTF;
-        FISBasedSwitchingControl FBS;
-        DeviceSleep              DEVSLP;
-        uint32_t                 Reserved2[10]; // Registers 0x48-0x6F
-        uint32_t                 VS[4];         // Vendor specific
+        uint32_t                 SACT{}; // Serial ATA Active
+        uint32_t                 CI{};   // Command Issue
+        SerialATANotification    SNTF{};
+        FISBasedSwitchingControl FBS{};
+        DeviceSleep              DEVSLP{};
+        Array<U32, 10>           Reserved2; // Registers 0x48-0x6F // NOLINT
+        Array<U32, 4>            VS;        // Vendor specific
     };
 
     struct ReceivedFIS {
-        DMASetupFIS DMA;
-        U8          Reserved0[4];
+        DMASetupFIS  DMA;
+        Array<U8, 4> Reserved0;
 
-        PIOSetupFIS PIO;
-        U8          Reserved1[12];
+        PIOSetupFIS   PIO;
+        Array<U8, 12> Reserved1; // NOLINT
 
         RegisterDevice2HostFIS D2H;
-        U8                     Reserved3[4];
+        Array<U8, 4>           Reserved3;
 
         SetDeviceBitsFIS dBits;
 
-        U8 UnknownFIS[64];
-        U8 Reserved4[96];
+        Array<U8, 64> UnknownFIS; // NOLINT
+        Array<U8, 96> Reserved4; // NOLINT
     };
 
     union CommandTableBaseAddress {
@@ -293,25 +295,25 @@ namespace Rune::Device {
     };
 
     struct CommandHeader {
-        uint32_t CFL       : 5; // Command FIS Length, In DW. Range: 2 <= L <= 16
-        uint32_t A         : 1; // ATAPI
-        uint32_t W         : 1; // 1: Write, 0: Read
-        uint32_t P         : 1; // Prefetchable
-        uint32_t R         : 1; // Reset
-        uint32_t B         : 1; // BIST
-        uint32_t C         : 1; // Clear
-        uint32_t Reserved0 : 1;
-        uint32_t PMP       : 4; // Port Multiplier Port
-        uint32_t PRDTL : 16; // Physical Region Descriptor Table Length, in entries where each entry
-                             // is 4 DW
+        uint32_t CFL       : 5 {}; // Command FIS Length, In DW. Range: 2 <= L <= 16
+        uint32_t A         : 1 {}; // ATAPI
+        uint32_t W         : 1 {}; // 1: Write, 0: Read
+        uint32_t P         : 1 {}; // Prefetchable
+        uint32_t R         : 1 {}; // Reset
+        uint32_t B         : 1 {}; // BIST
+        uint32_t C         : 1 {}; // Clear
+        uint32_t Reserved0 : 1 {};
+        uint32_t PMP       : 4 {}; // Port Multiplier Port
+        uint32_t PRDTL : 16 {};    // Physical Region Descriptor Table Length, in entries where each
+                                   // entry is 4 DW
 
-        uint32_t PRDBC; // Physical Region Descriptor Byte Count, number of bytes transferred
+        uint32_t PRDBC{}; // Physical Region Descriptor Byte Count, number of bytes transferred
 
         CommandTableBaseAddress
-                 CTBA;  // Command Table Descriptor Base Address, physical, 128 byte aligned
-        uint32_t CTBAU; // Upper 32 Bits
+                 CTBA;    // Command Table Descriptor Base Address, physical, 128 byte aligned
+        uint32_t CTBAU{}; // Upper 32 Bits
 
-        uint32_t Reserved1[4];
+        Array<U8, 4> Reserved1;
     };
 
     union DataBaseAddress {
@@ -324,25 +326,25 @@ namespace Rune::Device {
 
     struct PRDTEntry {
         DataBaseAddress DBA;
-        uint32_t        DBAU;
-        uint32_t        Reserved0;
+        uint32_t        DBAU{};
+        uint32_t        Reserved0{};
 
-        uint32_t DBC       : 22;
-        uint32_t Reserved1 : 9;
-        uint32_t I         : 1;
+        uint32_t DBC       : 22 {};
+        uint32_t Reserved1 : 9 {};
+        uint32_t I         : 1 {};
     };
 
     struct CommandTable {
         RegisterHost2DeviceFIS CFIS; // Command FIS
-        U8                     CFISPadding[44];
+        Array<U8, 44>          CFISPadding; // NOLINT
 
-        U8 ACMD[16]; // ATAPI Command
+        Array<U8, 16> ACMD; // ATAPI Command // NOLINT
 
-        U8 Reserved[48];
+        Array<U8, 48> Reserved; // NOLINT
 
-        PRDTEntry PRDT[1]; // Physical Region Descriptor Table
+        Array<PRDTEntry, 1> PRDT; // Physical Region Descriptor Table // NOLINT
 
-        U8 Reserved1[112]; // Pad to 256 bytes to ensure 128 byte alignment.
+        Array<U8, 112> Reserved1; // Pad to 256 bytes to ensure 128 byte alignment. // NOLINT
     };
 } // namespace Rune::Device
 

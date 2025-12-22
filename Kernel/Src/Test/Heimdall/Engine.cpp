@@ -16,10 +16,12 @@
 
 #include <Test/Heimdall/ConsoleReporter.h>
 #include <Test/Heimdall/Engine.h>
+#include <Test/Heimdall/GnomeReporter.h>
 #include <Test/Heimdall/HRE.h>
 #include <Test/Heimdall/JUnitReporter.h>
 #include <Test/Heimdall/Reporter.h>
 #include <Test/Heimdall/Test.h>
+#include <Test/Heimdall/TestRunInfoReporter.h>
 
 /// atexit will be automatically generated when static local variables are declared
 /// This function will be provided by the heimdall runtime environment but a forward declaration
@@ -28,20 +30,26 @@ auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
 
-    HString Engine::CONSOLE_REPORTER     = "console-reporter";
-    HString Engine::JUNIT_REPORTER       = "junit-reporter";
-    HString Engine::TEST_REPORT_LOCATION = "test-report-location";
+    HString Engine::CONSOLE_REPORTER       = "console-reporter";
+    HString Engine::JUNIT_REPORTER         = "junit-reporter";
+    HString Engine::GNOME_REPORTER         = "gnome-reporter";
+    HString Engine::TEST_RUN_INFO_REPORTER = "hre-reporter";
+    HString Engine::TEST_REPORT_DIRECTORY  = "test-report-directory";
 
     auto Engine::configure(const OptionList& options) -> bool {
         _configuration.options        = options;
         bool has_test_report_location = false;
         for (size_t i = 0; i < _configuration.options.size(); i++) {
             Option opt = _configuration.options[i];
+            if (opt.name == TEST_RUN_INFO_REPORTER)
+                _configuration.reporter_registry.insert(new TestRunInfoReporter());
             if (opt.name == CONSOLE_REPORTER)
                 _configuration.reporter_registry.insert(new ConsoleReporter());
             if (opt.name == JUNIT_REPORTER)
                 _configuration.reporter_registry.insert(new JUnitReporter());
-            if (opt.name == TEST_REPORT_LOCATION) has_test_report_location = true;
+            if (opt.name == GNOME_REPORTER)
+                _configuration.reporter_registry.insert(new GnomeReporter());
+            if (opt.name == TEST_REPORT_DIRECTORY) has_test_report_location = true;
         }
         if (_configuration.reporter_registry.is_empty()) {
             hre_log_emergency("ERROR: No reporters have been configured! Aborting test run...\n");
@@ -74,7 +82,7 @@ namespace Heimdall {
         size_t  overall_total_tests  = 0;
         size_t  overall_tests_passed = 0;
         size_t  overall_tests_failed = 0;
-        HString test_report_file;
+        HString test_report_directory;
 
         HStringList reporter_names;
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
@@ -86,19 +94,19 @@ namespace Heimdall {
             } else {
                 str_options.insert(_configuration.options[i].name + "="
                                    + _configuration.options[i].value);
-                if (_configuration.options[i].name == TEST_REPORT_LOCATION)
-                    test_report_file = _configuration.options[i].value;
+                if (_configuration.options[i].name == TEST_REPORT_DIRECTORY)
+                    test_report_directory = _configuration.options[i].value;
             }
         }
 
         TestRunInfo test_run_info{
-            .heimdall_major   = 0,
-            .heimdall_minor   = 1,
-            .heimdall_patch   = 0,
-            .hre              = hre_get_runtime_name(),
-            .options          = str_options,
-            .reporter_names   = reporter_names,
-            .test_report_file = test_report_file,
+            .heimdall_major        = 0,
+            .heimdall_minor        = 1,
+            .heimdall_patch        = 0,
+            .hre                   = hre_get_runtime_name(),
+            .options               = str_options,
+            .reporter_names        = reporter_names,
+            .test_report_directory = test_report_directory,
         };
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_test_run_begin(test_run_info);

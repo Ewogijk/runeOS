@@ -16,22 +16,28 @@
 
 #include "IDT.h"
 
+#include <KRE/BitsAndBytes.h>
+#include <KRE/Memory.h>
+
+#include <KRE/Collections/Array.h>
+
 namespace Rune::CPU {
     DEFINE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)
 
-    GateDescriptor GD[256];
+    Array<GateDescriptor, INTERRUPT_VECTOR_COUNT> GD; // NOLINT compiler error when declared const
     /**
      * @brief The IDT will be shared by all CPU cores therefore we define it globally.
      */
-    InterruptDescriptorTable IDT = {sizeof(GD) - 1, GD};
+    InterruptDescriptorTable IDT = {.limit = sizeof(GD) - 1, // NOLINT must be mutable
+                                    .entry = GD.data()};
 
-    InterruptDescriptorTable* idt_get() { return &IDT; }
+    auto idt_get() -> InterruptDescriptorTable* { return &IDT; }
 
     CLINK void idt_load_ass(InterruptDescriptorTable* idt);
 
     void idt_load() {
         IDT.limit = sizeof(GD) - 1;
-        IDT.entry = GD;
+        IDT.entry = GD.data();
 
         idt_load_ass(&IDT);
     }
@@ -43,10 +49,11 @@ namespace Rune::CPU {
                  GateType gt,
                  U8       dpl,
                  bool     present) {
-        auto offset                        = (uintptr_t) handler;
-        IDT.entry[vector].offset_low       = offset & 0xFFFF;
-        IDT.entry[vector].offset_mid       = offset >> 16 & 0xFFFF;
-        IDT.entry[vector].offset_high      = offset >> 32;
+        auto offset = memory_pointer_to_addr(handler);
+
+        IDT.entry[vector].offset_low       = word_get(offset, 0);
+        IDT.entry[vector].offset_mid       = word_get(offset, 1);
+        IDT.entry[vector].offset_high      = offset >> SHIFT_32;
         IDT.entry[vector].segment_selector = segment_selector;
         IDT.entry[vector].ist.ist          = ist;
         IDT.entry[vector].flags.type       = gt;

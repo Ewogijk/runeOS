@@ -19,14 +19,14 @@
 #include <CPU/IO.h>
 
 namespace Rune::CPU {
-    bool E9Stream::is_read_supported() { return false; }
+    auto E9Stream::is_read_supported() -> bool { return false; }
 
-    int E9Stream::read() { return -1; }
+    auto E9Stream::read() -> int { return -1; }
 
-    bool E9Stream::is_write_supported() { return true; }
+    auto E9Stream::is_write_supported() -> bool { return true; }
 
-    bool E9Stream::write(U8 value) {
-        out_b(0xE9, value);
+    auto E9Stream::write(U8 value) -> bool {
+        out_b(E9, value);
         return true;
     }
 
@@ -38,5 +38,5 @@ namespace Rune::CPU {
         // Unmanaged resource
     }
 
-    bool E9Stream::is_ansi_supported() { return true; }
+    auto E9Stream::is_ansi_supported() -> bool { return true; }
 } // namespace Rune::CPU

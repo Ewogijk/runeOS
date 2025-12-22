@@ -18,16 +18,21 @@
 #include "IDT.h"
 #include "ISR_Stubs.h"
 
+#include <KRE/Collections/Array.h>
+
 #include <CPU/Interrupt/Exception.h>
 #include <CPU/Interrupt/IRQ.h>
 #include <CPU/Interrupt/Interrupt.h>
 
 namespace Rune::CPU {
-    static constexpr U8 EXCEPTION_COUNT = 32;
-    static constexpr U8 IRQ_COUNT       = 224;
+    constexpr U8 EXCEPTION_COUNT = 32;
+    constexpr U8 IRQ_COUNT       = 224;
+    constexpr U8 IRQ_NOT_PENDING = 255;
+
+    constexpr U8 PAGE_FAULT_VECTOR = 14;
 
     /// Mapping of the first 32 interrupt codes (0..31) to exception names.
-    static const char* const EXCEPTIONS[EXCEPTION_COUNT] = {"Divide by zero error",
+    const Array<const char*, EXCEPTION_COUNT> EXCEPTIONS = {"Divide by zero error",
                                                             "Debug",
                                                             "Non-maskable Interrupt",
                                                             "Breakpoint",
@@ -60,7 +65,7 @@ namespace Rune::CPU {
                                                             "Security Exception",
                                                             ""};
 
-    static const U8 EXCEPTION_TYPE_TO_ID[4] = {
+    const Array<U8, 4> EXCEPTION_TYPE_TO_ID = {
         255, // NONE
         0,   // DIVISION_BY_ZERO
         8,   // DOUBLE_FAULT
@@ -87,30 +92,34 @@ namespace Rune::CPU {
         IRQTableEntry entry;
         IRQHandler    handler = [] { return IRQState::PENDING; };
 
-        friend bool operator==(const IRQContainer& a, const IRQContainer& b) {
+        friend auto operator==(const IRQContainer& a, const IRQContainer& b) -> bool {
             return a.entry.device_handle == b.entry.device_handle;
         }
 
-        friend bool operator!=(const IRQContainer& a, const IRQContainer& b) {
+        friend auto operator!=(const IRQContainer& a, const IRQContainer& b) -> bool {
             return a.entry.device_handle != b.entry.device_handle;
         }
     };
 
     // The panic stream serves as output for debugging information when an exception has no
     // installed handler
-    SharedPointer<TextStream> PANIC_STREAM;
-    ExceptionHandler*         EXCEPTION_HANDLER_TABLE[EXCEPTION_COUNT]; // ISR 0-31
-    LinkedList<IRQContainer>  IRQ_HANDLER_TABLE[IRQ_COUNT];             // ISR 32-255
-    U64 RAISED_COUNT[EXCEPTION_COUNT + IRQ_COUNT]; // Number of times an ISR was raised
-    U64 PENDING_COUNT[IRQ_COUNT];                  // Number of times an IRQ was left
+    // NOLINTBEGIN cannot be const, as arrays are modified. Should these be put in a struct?
+    SharedPointer<TextStream>                  PANIC_STREAM;
+    Array<ExceptionHandler*, EXCEPTION_COUNT>  EXCEPTION_HANDLER_TABLE; // ISR 0-31
+    Array<LinkedList<IRQContainer>, IRQ_COUNT> IRQ_HANDLER_TABLE;       // ISR 32-255
+    Array<U64, EXCEPTION_COUNT + IRQ_COUNT>    RAISED_COUNT;  // Number of times an ISR was raised
+    Array<U64, IRQ_COUNT>                      PENDING_COUNT; // Number of times an IRQ was left
     // pending
 
     PICDriver* PIC;
-    U8         CURRENT_IRQ     = 255;
+    U8         CURRENT_IRQ     = IRQ_NOT_PENDING;
     bool       MANUAL_EOI_SENT = false;
+    // NOLINTEND
 
     CLINK void interrupt_dispatch(x86InterruptContext* x64_i_ctx) {
         U8 vector = x64_i_ctx->i_vector;
+        // NOLINTBEGIN vector is CPU provided and irq_line is provided by the PIC -> indexes are
+        // fine
         RAISED_COUNT[vector]++;
         if (vector < EXCEPTION_COUNT) {
             // Handle exception
@@ -161,10 +170,10 @@ namespace Rune::CPU {
                 }
                 if (irq_state == IRQState::PENDING) PENDING_COUNT[irq_line]++;
             }
-
+            // NOLINTEND
             if (!MANUAL_EOI_SENT) PIC->send_end_of_interrupt(irq_line);
 
-            CURRENT_IRQ     = 255;
+            CURRENT_IRQ     = IRQ_NOT_PENDING;
             MANUAL_EOI_SENT = false;
         }
     }
@@ -173,11 +182,15 @@ namespace Rune::CPU {
     //                                          Interrupt API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<ExceptionTableEntry> exception_get_table() {
+    auto exception_get_table() -> LinkedList<ExceptionTableEntry> {
         LinkedList<ExceptionTableEntry> table;
         for (size_t i = 0; i < EXCEPTION_COUNT; i++)
-            table.add_back(
-                {(U8) i, EXCEPTIONS[i], RAISED_COUNT[i], EXCEPTION_HANDLER_TABLE[i] != nullptr});
+            // NOLINTBEGIN iterating -> i is always in bounds
+            table.add_back({.vector  = (U8) i,
+                            .name    = EXCEPTIONS[i],
+                            .raised  = RAISED_COUNT[i],
+                            .handled = EXCEPTION_HANDLER_TABLE[i] != nullptr});
+        // NOLINTEND
         return table;
     }
 
@@ -185,7 +198,7 @@ namespace Rune::CPU {
         idt_load();
         init_interrupt_service_routines();
         // Enable CPU exceptions
-        for (int i = 0; i < EXCEPTION_COUNT; i++) idt_get()->entry[i].flags.p = true;
+        for (U8 i = 0; i < EXCEPTION_COUNT; i++) idt_get()->entry[i].flags.p = true;
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -196,7 +209,7 @@ namespace Rune::CPU {
         PANIC_STREAM = move(panic_stream);
     }
 
-    bool exception_is_enabled(ExceptionType type) {
+    auto exception_is_enabled(ExceptionType type) -> bool {
         return idt_get()->entry[EXCEPTION_TYPE_TO_ID[type.to_value()]].flags.p;
     }
 
@@ -204,12 +217,14 @@ namespace Rune::CPU {
         idt_get()->entry[EXCEPTION_TYPE_TO_ID[type.to_value()]].flags.p = enabled;
     }
 
-    bool exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler) {
-        if (!exception_handler) return false;
+    auto exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler)
+        -> bool {
+        if (exception_handler == nullptr) return false;
 
         switch (type) {
-            case ExceptionType::PageFault:
-                if (!EXCEPTION_HANDLER_TABLE[14]) EXCEPTION_HANDLER_TABLE[14] = exception_handler;
+            case ExceptionType::PAGE_FAULT:
+                if (EXCEPTION_HANDLER_TABLE[PAGE_FAULT_VECTOR] == nullptr)
+                    EXCEPTION_HANDLER_TABLE[PAGE_FAULT_VECTOR] = exception_handler;
                 return true;
             default: return false;
         }
@@ -219,10 +234,10 @@ namespace Rune::CPU {
     //                                          IRQ API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    int irq_init(const LinkedList<PICDriver*>& pic_drivers) {
+    auto irq_init(const LinkedList<PICDriver*>& pic_drivers) -> int {
         int pic_idx = -1;
         for (size_t i = 0; i < pic_drivers.size(); i++) {
-            auto driver = *pic_drivers[i];
+            auto* driver = *pic_drivers[i];
             if (driver->start()) {
                 PIC     = driver;
                 pic_idx = (int) i;
@@ -235,20 +250,27 @@ namespace Rune::CPU {
         return pic_idx;
     }
 
-    U8 irq_get_line_limit() { return IRQ_COUNT; }
+    auto irq_get_line_limit() -> U8 { return IRQ_COUNT; }
 
-    IRQTable irq_get_table_for(U8 irq_line) {
-        if (irq_line >= IRQ_COUNT || !PIC) return {0, 0, 0, LinkedList<IRQTableEntry>()};
+    auto irq_get_table_for(U8 irq_line) -> IRQTable {
+        if (irq_line >= IRQ_COUNT || (PIC == nullptr))
+            return {.irq_line     = 0,
+                    .raised       = 0,
+                    .left_pending = 0,
+                    .entry        = LinkedList<IRQTableEntry>()};
         IRQTable table;
         table.irq_line = irq_line;
+        // NOLINTBEGIN done bounds check on irq_line
         table.raised = RAISED_COUNT[irq_line + PIC->get_irq_line_offset()]; // Need offset into IDT
+        // NOLINTEND
         for (auto& c : IRQ_HANDLER_TABLE[irq_line]) table.entry.add_back(c.entry);
         return table;
     }
 
-    bool
-    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler) {
-        if (irq_line >= IRQ_COUNT || !PIC) return false;
+    auto
+    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler)
+        -> bool {
+        if (irq_line >= IRQ_COUNT || (PIC == nullptr)) return false;
 
         interrupt_disable();
         for (auto& c : IRQ_HANDLER_TABLE[irq_line]) {
@@ -257,10 +279,10 @@ namespace Rune::CPU {
                 return false; // An IRQ handler for the device is already installed
             }
         }
-
+        // NOLINTBEGIN done bounds check on irq_line
         IRQ_HANDLER_TABLE[irq_line].add_back({
-            {dev_handle, dev_name, 0},
-            move(handler)
+            .entry   = {.device_handle = dev_handle, .device_name = dev_name, .handled = 0},
+            .handler = move(handler)
         });
         if (IRQ_HANDLER_TABLE[irq_line].size() == 1) {
             U8 vector = PIC->get_irq_line_offset() + irq_line;
@@ -268,12 +290,13 @@ namespace Rune::CPU {
                 true;                  // Enable interrupt when first handler is installed
             PIC->clear_mask(irq_line); // Enable IRQ on PIC
         }
+        // NOLINTEND
         interrupt_enable();
         return true;
     }
 
-    bool irq_uninstall_handler(U8 irq_line, U16 dev_handle) {
-        if (irq_line >= IRQ_COUNT || !PIC) return false;
+    auto irq_uninstall_handler(U8 irq_line, U16 dev_handle) -> bool {
+        if (irq_line >= IRQ_COUNT || (PIC == nullptr)) return false;
 
         interrupt_disable();
         IRQContainer to_remove;
@@ -286,7 +309,7 @@ namespace Rune::CPU {
             interrupt_disable();
             return false; // No IRQ handler installed for device
         }
-
+        // NOLINTBEGIN done bounds check on irq_line
         IRQ_HANDLER_TABLE[irq_line].remove(to_remove);
         if (IRQ_HANDLER_TABLE[irq_line].is_empty()) {
             U8 vector = PIC->get_irq_line_offset() + irq_line;
@@ -294,12 +317,13 @@ namespace Rune::CPU {
             idt_get()->entry[vector].flags.p =
                 false; // Disable interrupt when last handler is uninstalled
         }
+        // NOLINTEND
         interrupt_enable();
         return true;
     }
 
-    bool irq_send_eoi() {
-        if (!PIC || CURRENT_IRQ >= IRQ_COUNT) return false;
+    auto irq_send_eoi() -> bool {
+        if ((PIC == nullptr) || CURRENT_IRQ >= IRQ_COUNT) return false;
 
         PIC->send_end_of_interrupt(CURRENT_IRQ);
         MANUAL_EOI_SENT = true;

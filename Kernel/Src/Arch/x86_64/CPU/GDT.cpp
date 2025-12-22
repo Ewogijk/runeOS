@@ -17,6 +17,7 @@
 #include "GDT.h"
 
 #include <KRE/Memory.h>
+#include <KRE/BitsAndBytes.h>
 
 namespace Rune::CPU {
     DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
@@ -54,8 +55,8 @@ namespace Rune::CPU {
         kernel_code.base_low               = 0;
         kernel_code.base_middle            = 0;
         kernel_code.base_high              = 0;
-        kernel_code.limit_low              = 0xFFFF;
-        kernel_code.limit_flags.limit_high = 0xF;
+        kernel_code.limit_low              = MASK_WORD;
+        kernel_code.limit_flags.limit_high = MASK_NIBBLE;
 
         // Access Byte
         kernel_code.access_byte.accessed                   = 1;
@@ -79,8 +80,8 @@ namespace Rune::CPU {
         kernel_data.base_low               = 0;
         kernel_data.base_middle            = 0;
         kernel_data.base_high              = 0;
-        kernel_data.limit_low              = 0xFFFF;
-        kernel_data.limit_flags.limit_high = 0xF;
+        kernel_data.limit_low              = MASK_WORD;
+        kernel_data.limit_flags.limit_high = MASK_NIBBLE;
 
         // Access Byte
         kernel_data.access_byte.accessed                   = 1;
@@ -104,8 +105,8 @@ namespace Rune::CPU {
         user_code.base_low               = 0;
         user_code.base_middle            = 0;
         user_code.base_high              = 0;
-        user_code.limit_low              = 0xFFFF;
-        user_code.limit_flags.limit_high = 0xF;
+        user_code.limit_low              = MASK_WORD;
+        user_code.limit_flags.limit_high = MASK_NIBBLE;
 
         // Access Byte
         user_code.access_byte.accessed                   = 1;
@@ -129,8 +130,8 @@ namespace Rune::CPU {
         user_data.base_low               = 0;
         user_data.base_middle            = 0;
         user_data.base_high              = 0;
-        user_data.limit_low              = 0xFFFF;
-        user_data.limit_flags.limit_high = 0xF;
+        user_data.limit_low              = MASK_WORD;
+        user_data.limit_flags.limit_high = MASK_NIBBLE;
 
         // Access Byte
         user_data.access_byte.accessed                   = 1;
@@ -151,18 +152,21 @@ namespace Rune::CPU {
         // Task State Segment
         //////////////////////////////////
         // TSS system segment descriptor is updated in-place
-        auto* ssd = (SystemSegmentDescriptor64*) &gdt->entry[5];
+        auto* ssd = reinterpret_cast<SystemSegmentDescriptor64*>(&gdt->entry[5]); // NOLINT
 
-        ssd->base_low               = ((uintptr_t) tss >> 0) & 0xFFFF;
-        ssd->base_middle            = ((uintptr_t) tss >> 16) & 0xFF;
-        ssd->base_high              = ((uintptr_t) tss >> 24) & 0xFF;
-        ssd->base_super_high        = ((uintptr_t) tss >> 32) & 0xFFFFFFFF;
-        ssd->limit_low              = sizeof(TaskStateSegment64) & 0xFFFF;
-        ssd->limit_flags.limit_high = (sizeof(TaskStateSegment64) >> 16) & 0xF;
+        auto tss_addr = memory_pointer_to_addr(tss);
+        auto tss_size = sizeof(TaskStateSegment64);
+        ssd->base_low               = word_get(tss_addr, 0);
+        ssd->base_middle            = byte_get(tss_addr, 2);
+        ssd->base_high              = byte_get(tss_addr, 3);
+        ssd->base_super_high        = dword_get(tss_addr, 1);
+        ssd->limit_low              = word_get(tss_size, 0);
+        ssd->limit_flags.limit_high = nibble_get(tss_size, 4);
         ssd->reserved_1             = 0;
 
         // Access Byte
-        ssd->access_byte.type                       = 0x9;
+        constexpr U8 TYPE_AVAILABLE = 0x9;
+        ssd->access_byte.type                       = TYPE_AVAILABLE;
         ssd->access_byte.s                          = 0;
         ssd->access_byte.descriptor_privilege_level = 0;
         ssd->access_byte.present                    = 1;

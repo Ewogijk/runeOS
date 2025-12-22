@@ -21,27 +21,30 @@ namespace Rune::CPU {
 
     Timer::Timer() : _mode(TimerMode::NONE), _freq_hz(0), _quantum(0) {}
 
-    U64 Timer::get_frequency() const { return _freq_hz; }
+    auto Timer::get_frequency() const -> U64 { return _freq_hz; }
 
-    TimerMode Timer::get_mode() const { return _mode; }
+    auto Timer::get_mode() const -> TimerMode { return _mode; }
 
-    U64 Timer::get_quantum() const { return _quantum; }
+    auto Timer::get_quantum() const -> U64 { return _quantum; }
 
     void Timer::sleep_nano(U64 time_nanos) { sleep_until(get_time_since_start() + time_nanos); }
 
     void Timer::sleep_micro(U64 time_micros) {
-        U64 time_nanos = time_micros * 1000;
+        constexpr U16 MICRO_TO_NANO = 1000;
+        U64 time_nanos = time_micros * MICRO_TO_NANO;
         sleep_until(get_time_since_start() + time_nanos);
     }
 
     void Timer::sleep_milli(U64 time_millis) {
-        U64 time_nanos = time_millis * 1000000;
+        constexpr U32 MILLI_TO_NANO = 1000000;
+        U64 time_nanos = time_millis * MILLI_TO_NANO;
         U64 res        = get_time_since_start() + time_nanos;
         sleep_until(res);
     }
 
     void Timer::sleep_second(U64 time_seconds) {
-        U64 time_nanos = time_seconds * 1000000000;
+        constexpr U32 SECOND_TO_NANO = 1000000000;
+        U64 time_nanos = time_seconds * SECOND_TO_NANO;
         sleep_until(get_time_since_start() + time_nanos);
     }
 } // namespace Rune::CPU

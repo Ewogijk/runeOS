@@ -267,7 +267,7 @@ namespace Rune {
             return false;
         }
 
-        auto find0(const K& key) const -> HashMapIterator<K, V> {
+        [[nodiscard]] auto find0(const K& key) const -> HashMapIterator<K, V> {
             int             hash = calc_hash(key, _bucket_count);
             HashNode<K, V>* node = _bucket[hash];
             while (node) {
@@ -469,7 +469,7 @@ namespace Rune {
          *
          * @return A view of the values in the hashmap.
          */
-        auto values() const -> HashMapValueView<K, V> {
+        [[nodiscard]] auto values() const -> HashMapValueView<K, V> {
             return HashMapValueView<K, V>(_bucket, _bucket_count);
         }
 
@@ -535,7 +535,7 @@ namespace Rune {
          * @return If the key is found, an iterator pointing to the mapping else an iterator
          * pointing to "end()".
          */
-        auto find(const K& key) const -> HashMapIterator<K, V> {
+        [[nodiscard]] auto find(const K& key) const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();
             }
@@ -550,7 +550,7 @@ namespace Rune {
          * @return If the key is found, an iterator pointing to the mapping else an iterator
          * pointing to "end()".
          */
-        auto find(K&& key) const -> HashMapIterator<K, V> {
+        [[nodiscard]] auto find(K&& key) const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();
             }
@@ -565,7 +565,7 @@ namespace Rune {
             return *maybe_value->value;
         }
 
-        auto begin() const -> HashMapIterator<K, V> {
+        [[nodiscard]] auto begin() const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();
             }
@@ -578,7 +578,7 @@ namespace Rune {
             return end();
         }
 
-        auto end() const -> HashMapIterator<K, V> {
+        [[nodiscard]] auto end() const -> HashMapIterator<K, V> {
             return HashMapIterator<K, V>(_bucket, _bucket_count, _bucket_count, nullptr);
         }
     };

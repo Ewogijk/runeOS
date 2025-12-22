@@ -75,24 +75,19 @@ namespace Ember {
      * @brief General information about a node.
      */
     struct NodeInfo {
-        char   node_path[STRING_SIZE_LIMIT] = {};
+        char   node_path[STRING_SIZE_LIMIT] = {}; //NOLINT Is ABI -> Must use C-style array
         size_t size                         = 0;
         U8     attributes                   = 0;
 
-        [[nodiscard]]
-        bool is_readonly() const;
+        [[nodiscard]] auto is_readonly() const -> bool;
 
-        [[nodiscard]]
-        bool is_hidden() const;
+        [[nodiscard]] auto is_hidden() const -> bool;
 
-        [[nodiscard]]
-        bool is_system_node() const;
+        [[nodiscard]] auto is_system_node() const -> bool;
 
-        [[nodiscard]]
-        bool is_directory() const;
+        [[nodiscard]] auto is_directory() const -> bool;
 
-        [[nodiscard]]
-        bool is_file() const;
+        [[nodiscard]] auto is_file() const -> bool;
     };
 } // namespace Ember
 

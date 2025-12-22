@@ -30,7 +30,7 @@ namespace Rune::SystemCall {
      * @brief The context for all memory management system calls.
      */
     struct MemorySystemCallContext {
-        KernelGuardian*          k_guard    = nullptr;
+        KernelGuardian*       k_guard    = nullptr;
         Memory::MemoryModule* mem_module = nullptr;
         App::AppModule*       app_module = nullptr;
     };

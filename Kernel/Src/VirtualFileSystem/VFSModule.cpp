@@ -523,8 +523,8 @@ namespace Rune::VFS {
         if (maybe_node == _node_table.end()) return IOStatus::NOT_FOUND;
 
         SharedPointer<Node> node = *maybe_node->value;
-        out.node_path = node->get_node_path().to_string();
-        out.size = node->get_size();
+        out.node_path            = node->get_node_path().to_string();
+        out.size                 = node->get_size();
 
         U8 node_attr = 0;
         if (node->has_attribute(Ember::NodeAttribute::READONLY))

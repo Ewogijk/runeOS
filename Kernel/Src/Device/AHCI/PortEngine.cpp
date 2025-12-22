@@ -48,7 +48,7 @@ namespace Rune::Device {
     bool PortEngine::is_active() const { return _port && _port->CMD.ST && _port->CMD.FRE; }
 
     bool PortEngine::scan_device(volatile HBAPort* port) {
-        _port   = port;
+        _port = port;
         DeviceDetection          dev_detect(_port->SSTS.DET);
         InterfacePowerManagement ipm(_port->SSTS.IPM);
         if (dev_detect != DeviceDetection::DEVICE_ACTIVE
@@ -149,8 +149,8 @@ namespace Rune::Device {
         LOGGER->debug("GPT Scan Status: {}", scan_res.status.to_string());
         if (scan_res.status == GPTScanStatus::DETECTED) {
             for (auto& partition : scan_res.partition_table) {
-                bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf,
-                                                  (void*) KERNEL_PARTITION_GUID,
+                bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf.data(),
+                                                  KERNEL_PARTITION_GUID.data(),
                                                   GUID::SIZE)
                                            == 0;
                 _disk_info.partition_table.add_back(

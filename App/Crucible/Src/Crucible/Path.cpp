@@ -181,4 +181,4 @@ namespace Crucible {
     bool operator==(const Path& a, const Path& b) { return a._path == b._path; }
 
     bool operator!=(const Path& first, const Path& b) { return first._path != b._path; }
-} // namespace Rune
+} // namespace Crucible

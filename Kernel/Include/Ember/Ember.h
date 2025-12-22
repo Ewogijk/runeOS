@@ -17,8 +17,8 @@
 #ifndef EMBER_EMBER_H
 #define EMBER_EMBER_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h> // NOLINT cstddef does not exist
+#include <stdint.h> // NOLINT cstdint does not exist
 
 #include <Ember/Enum.h>
 
@@ -47,7 +47,7 @@ using S64 = int64_t;
 #define PACKED __attribute__((packed))
 
 // Silence the unused parameter compiler warning
-#define SILENCE_UNUSED(x) (void) x;
+#define SILENCE_UNUSED(x) (void) (x);
 
 namespace Ember {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

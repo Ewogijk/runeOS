@@ -50,6 +50,6 @@ namespace Crucible {
         std::vector<std::string> auto_complete_node(const Path& working_dir,
                                                     const Path& node_prefix);
     };
-} // namespace Rune::Shell
+} // namespace Crucible
 
 #endif // CRUCIBLE_AUTOCOMPLETION_H

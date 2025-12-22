@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 import os, sys
+
 sys.path.append(os.path.dirname(__file__))
 
 import yaml
@@ -34,6 +35,7 @@ from Config import BrokkConfig, BuildConfig
 VERSION = "0.2.0"
 MIN_IMAGE_SIZE = 256
 
+
 def print_banner() -> None:
     print(f"----------------------------- Brokk v{VERSION} -----------------------------\n")
 
@@ -44,12 +46,14 @@ def print_step(build_step: str) -> None:
     print(build_step.center(len(divider)))
     print(divider)
 
+
 def print_msg(msg: str) -> None:
     print(f"> {msg}")
 
 
 def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
+
 
 def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
     build = build_conf[BuildConfig.BUILD.to_yaml_key()]
@@ -75,7 +79,6 @@ def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
         ]
 
 
-
 def configure(brokk_config_yaml: str) -> bool:
     print_banner()
     brokk_config = Config.load_brokk_config(brokk_config_yaml)
@@ -96,9 +99,14 @@ def configure(brokk_config_yaml: str) -> bool:
         print_err(f"'{build_dir}': Cannot create build directory.")
         return False
 
-    compiler = Path(brokk_config[BrokkConfig.FREESTANDING_COMPILER.to_yaml_key()])
-    if not compiler.exists():
-        print_err(f"'{compiler}': Freestanding compiler not found.")
+    freestanding_compiler = Path(brokk_config[BrokkConfig.FREESTANDING_COMPILER.to_yaml_key()])
+    if not freestanding_compiler.exists():
+        print_err(f"'{freestanding_compiler}': Freestanding compiler not found.")
+        return False
+
+    hosted_compiler = Path(brokk_config[BrokkConfig.HOSTED_COMPILER.to_yaml_key()])
+    if not hosted_compiler.exists():
+        print_err(f"'{hosted_compiler}': Hosted compiler not found.")
         return False
 
     image_size = brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()]
@@ -106,25 +114,47 @@ def configure(brokk_config_yaml: str) -> bool:
         print_err(f"Image size must be greater than {MIN_IMAGE_SIZE}")
         return False
 
+    cross_file = build_dir / "x86_64-rune.txt"
+    cross_file_content = [
+        "[binaries]\n",
+        f"c = '{hosted_compiler}/bin/x86_64-rune-gcc'\n",
+        f"cpp = '{hosted_compiler}/bin/x86_64-rune-g++'\n",
+        f"strip = '{hosted_compiler}/bin/x86_64-rune-strip'\n",
+        "\n",
+        "[host_machine]\n",
+        "system = 'rune'\n",
+        "cpu_family = 'x86_64'\n",
+        "cpu = 'x86_64'\n",
+        "endian = 'little'\n",
+    ]
+    print_msg(f"Create meson cross file: {cross_file}")
+    for line in cross_file_content:
+        print(f"    {line}", end="")
+    with open(cross_file, "w") as f:
+        f.writelines(cross_file_content)
+
     apps = brokk_config[BrokkConfig.APPS.to_yaml_key()]
     build_config = {
         BuildConfig.PROJECT_ROOT.to_yaml_key(): str(Path("..").resolve()),
         BuildConfig.ARCH.to_yaml_key(): arch,
         BuildConfig.BUILD.to_yaml_key(): build,
-        BuildConfig.QEMU_HOST.to_yaml_key(): True if brokk_config[
-            BrokkConfig.QEMU_HOST.to_yaml_key()] else False,
-        BuildConfig.C.to_yaml_key(): str(compiler / "bin" / "x86_64-elf-gcc"),
-        BuildConfig.CPP.to_yaml_key(): str(compiler / "bin" / "x86_64-elf-g++"),
+        BuildConfig.QEMU_HOST.to_yaml_key(): True
+        if brokk_config[BrokkConfig.QEMU_HOST.to_yaml_key()]
+        else False,
+        BuildConfig.C.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-gcc"),
+        BuildConfig.CPP.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-g++"),
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(
-            compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtbegin.o"
+            freestanding_compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtbegin.o"
         ),
         BuildConfig.CRT_END.to_yaml_key(): str(
-            compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
+            freestanding_compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
         ),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
-        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[BrokkConfig.SYSTEM_LOADER.to_yaml_key()],
+        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[
+            BrokkConfig.SYSTEM_LOADER.to_yaml_key()
+        ],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
-        BuildConfig.APPS.to_yaml_key(): apps if apps else []
+        BuildConfig.APPS.to_yaml_key(): apps if apps else [],
     }
 
     build_settings_file = build_dir / Config.BUILD_CONFIG_YAML

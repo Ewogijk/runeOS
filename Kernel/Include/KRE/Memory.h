@@ -22,6 +22,7 @@
 #include <Ember/Enum.h>
 
 #include <KRE/Build.h>
+#include <KRE/Collections/Array.h>
 #include <KRE/Utility.h>
 
 namespace Rune {
@@ -161,7 +162,7 @@ namespace Rune {
             return *this;
         }
 
-        auto get() const -> T* { return _refs ? _refs->ptr : nullptr; }
+        [[nodiscard]] auto get() const -> T* { return _refs ? _refs->ptr : nullptr; }
 
         auto get_ref_count() -> size_t { return _refs ? _refs->strong_ref_count : 0; }
 
@@ -273,34 +274,27 @@ namespace Rune {
      */
     auto memory_align(MemoryAddr mem_addr, MemoryAddr page_boundary, bool round_up) -> MemoryAddr;
 
-    /**
-     *
-     * @tparam T Pointer type.
-     * @param v_addr
-     * @return Pointer to the numerical value of the virtual address.
-     */
+    /// @brief
+    /// @tparam T Pointer type.
+    /// @param v_addr
+    /// @return Pointer to the numerical value of the virtual address.
     template <typename T>
-    auto memory_addr_to_pointer(VirtualAddr v_addr) -> T* {
+    constexpr auto memory_addr_to_pointer(VirtualAddr v_addr) -> T* {
         return reinterpret_cast<T*>(v_addr); // NOLINT
     }
 
-    /**
-     *
-     * @tparam T Pointer type.
-     * @param pointer
-     *
-     * @return Virtual address of the pointer as numerical value.
-     */
+    /// @brief
+    /// @tparam T Pointer type.
+    /// @param pointer
+    /// @return Memory address of the pointer as numerical value.
     template <typename T>
-    auto memory_pointer_to_addr(T* pointer) -> MemoryAddr {
+    constexpr auto memory_pointer_to_addr(T* pointer) -> MemoryAddr {
         return reinterpret_cast<uintptr_t>(pointer); // NOLINT
     }
 
-    /**
-     * Describes if a memory region is free to use or reserved for something else. If further
-     * information is available the type may also describe which type of data is stored in the
-     * region (e.g. kernel code).
-     */
+    /// Describes if a memory region is free to use or reserved for something else. If further
+    /// information is available the type may also describe which type of data is stored in the
+    /// region (e.g. kernel code).
 #define MEMORY_REGION_TYPES(X)                                                                     \
     X(MemoryRegionType, USABLE, 0x1)                                                               \
     X(MemoryRegionType, USED, 0x2)                                                                 \
@@ -348,7 +342,7 @@ namespace Rune {
         static constexpr size_t LIMIT = 64;
 
       private:
-        MemoryRegion _map[LIMIT];
+        Array<MemoryRegion, LIMIT> _map;
 
         U64 _free_mem;
 
@@ -357,7 +351,7 @@ namespace Rune {
         size_t _num_regions;
 
       public:
-        explicit MemoryMap(MemoryRegion regions[LIMIT]);
+        explicit MemoryMap(Array<MemoryRegion, LIMIT> regions);
 
         MemoryMap(std::initializer_list<MemoryRegion> regions);
 

@@ -16,8 +16,8 @@
 
 #include <Test/Heimdall/Reporter.h>
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace Heimdall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -66,7 +66,7 @@ namespace Heimdall {
     auto ReporterRegistry::size() const -> size_t { return _list_detail->list.size(); }
 
     void ReporterRegistry::insert(Reporter* reporter) {
-        _list_detail->list.push_back( std::shared_ptr<Reporter>(reporter));
+        _list_detail->list.push_back(std::shared_ptr<Reporter>(reporter));
     }
 
     auto ReporterRegistry::operator[](size_t index) const -> Reporter* {

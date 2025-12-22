@@ -23,6 +23,6 @@ namespace Crucible {
     std::vector<std::string> str_split(const std::string& s, char delimiter);
 
     bool str_is_prefix(const std::string& prefix, const std::string& word);
-} // namespace Rune
+} // namespace Crucible
 
 #endif // CRUCIBLE_UTILITY_H

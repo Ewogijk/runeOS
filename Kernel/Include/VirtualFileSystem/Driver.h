@@ -18,8 +18,8 @@
 #define RUNEOS_DRIVER_H
 
 #include <Ember/Enum.h>
-#include <VirtualFileSystem/Path.h>
 #include <KRE/String.h>
+#include <VirtualFileSystem/Path.h>
 
 #include <KRE/Memory.h>
 #include <VirtualFileSystem/DirectoryStream.h>
