@@ -88,19 +88,19 @@ namespace Rune::CPU {
      * @brief 64-bit system segment descriptor for TSS or LDT entries.
      */
     struct SystemSegmentDescriptor64 {
-        U16 limit_low;
-        U16 base_low;
+        U16 limit_low{};
+        U16 base_low{};
 
-        U8 base_middle;
+        U8 base_middle{};
 
-        SysSegD64AccessByte access_byte;
+        SysSegD64AccessByte access_byte{};
 
         LimitHighAndFlags limit_flags;
 
-        U8 base_high;
+        U8 base_high{};
 
-        U32 base_super_high;
-        U32 reserved_1;
+        U32 base_super_high{};
+        U32 reserved_1{};
     } PACKED;
 
     /**

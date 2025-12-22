@@ -205,9 +205,9 @@ namespace Rune::CPU {
          */
         void* thread_control_block = nullptr;
 
-        friend bool operator==(const Thread& one, const Thread& two);
+        friend auto operator==(const Thread& one, const Thread& two) -> bool;
 
-        friend bool operator!=(const Thread& one, const Thread& two);
+        friend auto operator!=(const Thread& one, const Thread& two) -> bool;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -218,9 +218,9 @@ namespace Rune::CPU {
      * @brief Technical specs of the CPU.
      */
     struct TechSpec {
-        const String vendor = "";
-        const String family = "";
-        const String model  = "";
+        String vendor = "";
+        String family = "";
+        String model  = "";
     };
 
     /**
@@ -249,12 +249,12 @@ namespace Rune::CPU {
      * @brief General information about an entry in the interrupt vector table of the processor.
      */
     struct InterruptVector {
-        const U8 vector = 0; // The ID of the interrupt vector
-        const VirtualAddr
-            handler_addr; // Virtual address of the function handling this interrupt vector
-        const PrivilegeLevel
-                   level;  // The privilege level at which this interrupt can be manually triggered
-        const bool active; // True: The interrupt handler is used, False: It is unused.
+        U8 vector = 0; // The ID of the interrupt vector
+        VirtualAddr
+            handler_addr{}; // Virtual address of the function handling this interrupt vector
+        PrivilegeLevel
+             level;    // The privilege level at which this interrupt can be manually triggered
+        bool active{}; // True: The interrupt handler is used, False: It is unused.
     };
 
     /**

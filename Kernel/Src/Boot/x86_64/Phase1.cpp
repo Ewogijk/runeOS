@@ -27,8 +27,9 @@
 
 #include <CPU/CPU.h>
 
-LIMINE_BASE_REVISION(1)
+LIMINE_BASE_REVISION(1) // NOLINT
 
+// NOLINTBEGIN limine cannot set the values when declared const
 limine_bootloader_info_request LIMINE_BOOTLOADER_INFO = {.id       = LIMINE_BOOTLOADER_INFO_REQUEST,
                                                          .revision = 0,
                                                          .response = nullptr};
@@ -40,12 +41,12 @@ limine_memmap_request LIMINE_MEM_MAP = {.id       = LIMINE_MEMMAP_REQUEST,
 limine_framebuffer_request LIMINE_FRAME_BUFFERS = {.id       = LIMINE_FRAMEBUFFER_REQUEST,
                                                    .revision = 0,
                                                    .response = nullptr};
-
+// NOLINTEND
 namespace Rune {
     /**
      * This is the "main" function of the kernel, it will be called by the bootloader.
      */
-    CLINK void boot_phase1() {
+    CLINK void boot_phase1() { // NOLINT
         if (!CPU::init_boot_core())
             while (true) CPU::halt();
 
@@ -59,9 +60,9 @@ namespace Rune {
             while (true) CPU::halt();
 
         // Create the physical memory map
-        MemoryRegion regions[MemoryMap::LIMIT];
-        size_t       regions_end         = 0;
-        U32          page_frame_boundary = Memory::get_page_size();
+        Array<MemoryRegion, MemoryMap::LIMIT> regions;
+        size_t                                regions_end         = 0;
+        U32                                   page_frame_boundary = Memory::get_page_size();
 
         // Convert limine memory map to memory regions
         for (size_t i = 0; i < LIMINE_MEM_MAP.response->entry_count; i++) {
@@ -70,7 +71,7 @@ namespace Rune {
 
             auto*            l_mem_map_entry = LIMINE_MEM_MAP.response->entries[i];
             MemoryRegionType t               = MemoryRegionType::NONE;
-            switch (l_mem_map_entry->type) {
+            switch (l_mem_map_entry->type) { // NOLINT All possible values are used
                 case LIMINE_MEMMAP_USABLE: t = MemoryRegionType::USABLE; break;
                 case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
                     t = MemoryRegionType::BOOTLOADER_RECLAIMABLE;
@@ -82,16 +83,18 @@ namespace Rune {
                 case LIMINE_MEMMAP_FRAMEBUFFER:        t = MemoryRegionType::RESERVED; break;
                 case LIMINE_MEMMAP_KERNEL_AND_MODULES: t = MemoryRegionType::KERNEL_CODE;
             }
-            regions[regions_end++] = {l_mem_map_entry->base, l_mem_map_entry->length, t};
+            regions[regions_end++] = {.start       = l_mem_map_entry->base,
+                                      .size        = l_mem_map_entry->length,
+                                      .memory_type = t};
         }
-        sort(regions, regions_end);
+        sort(regions.data(), regions_end);
 
         // Fix overlapping memory regions
         for (size_t i = 0; i < regions_end; i++) {
             MemoryRegion& current = regions[i];
             if (current.size == 0) {
                 // MemoryRegion size is zero -> Delete
-                array_delete(regions, i, regions_end);
+                array_delete(regions.data(), i, regions_end);
                 i--;
             } else if (i < (regions_end - 1)) {
                 MemoryRegion& next = regions[i + 1];
@@ -99,7 +102,7 @@ namespace Rune {
                     && (uintptr_t) current.start + current.size >= (uintptr_t) next.start) {
                     // Same type and overlapping -> Merge!
                     current.size += next.size;
-                    array_delete(regions, i + 1, regions_end);
+                    array_delete(regions.data(), i + 1, regions_end);
                     i--;
                 } else if (current.memory_type != next.memory_type
                            && (uintptr_t) current.start + current.size >= (uintptr_t) next.start) {
@@ -117,7 +120,7 @@ namespace Rune {
                             next.size  -= overlap;
                         } else {
                             // Reserved region completely overlaps next -> Delete next
-                            array_delete(regions, i + 1, regions_end);
+                            array_delete(regions.data(), i + 1, regions_end);
                             i--;
                         }
                     } else if (overlap < next.size) {
@@ -127,7 +130,7 @@ namespace Rune {
                     } else {
                         // Free region completely overlaps (maybe overshoots) reserved region
                         // Can this even happen?
-                        array_delete(regions, i, regions_end);
+                        array_delete(regions.data(), i, regions_end);
                         i--;
                     }
                 }
@@ -135,7 +138,7 @@ namespace Rune {
         }
 
         for (size_t i = regions_end; i < MemoryMap::LIMIT; i++) {
-            regions[i] = {0x0, 0x0, MemoryRegionType::NONE};
+            regions[i] = {.start = 0x0, .size = 0x0, .memory_type = MemoryRegionType::NONE};
         }
 
         // Fix alignment
@@ -177,7 +180,7 @@ namespace Rune {
 
         for (U64 i = 0; i < LIMINE_FRAME_BUFFERS.response->framebuffer_count; i++) {
             limine_framebuffer* fb               = LIMINE_FRAME_BUFFERS.response->framebuffers[i];
-            auto                addr             = (VirtualAddr) (uintptr_t) fb->address;
+            auto                addr             = reinterpret_cast<uintptr_t>(fb->address);
             U64                 width            = fb->width;
             U64                 height           = fb->height;
             U64                 pitch            = fb->pitch;
@@ -197,12 +200,13 @@ namespace Rune {
             break;
         }
 
-        System::instance().boot_phase2({LIMINE_BOOTLOADER_INFO.response->name,
-                                        LIMINE_BOOTLOADER_INFO.response->version,
-                                        p_map,
-                                        frame_buffer,
-                                        Memory::get_base_page_table_address(),
-                                        CPU::get_stack_pointer(),
-                                        CPU::get_physical_address_width()});
+        System::instance().boot_phase2(
+            {.boot_loader_name       = LIMINE_BOOTLOADER_INFO.response->name,
+             .boot_loader_version    = LIMINE_BOOTLOADER_INFO.response->version,
+             .physical_memory_map    = p_map,
+             .framebuffer            = frame_buffer,
+             .base_page_table_addr   = Memory::get_base_page_table_address(),
+             .stack                  = CPU::get_stack_pointer(),
+             .physical_address_width = CPU::get_physical_address_width()});
     }
 } // namespace Rune

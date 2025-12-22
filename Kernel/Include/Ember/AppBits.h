@@ -50,7 +50,7 @@ namespace Ember {
 
     /**
      * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of
-     * keys. Each key is defined by it's keycode which is an 16 bit unsigned integer defined as
+     * keys. Each key is defined by its keycode which is an 16-bit unsigned integer defined as
      * followed:
      *
      * <p>
@@ -63,10 +63,6 @@ namespace Ember {
      *  Col     : Column of the key.<br>
      *  Released: 1 - Key is released, 0 - Key is pressed<br>
      *  None    : 1 - This key represents a "null" key, 0 - This key represents an actual key press.
-     * </p>
-     *
-     * <p>
-     *  Note: This is a duplication of the struct in Device/Keyboard/Keyboard.h.
      * </p>
      */
     class VirtualKey {
@@ -86,7 +82,7 @@ namespace Ember {
          * @param released  True if the key has been released, false if pressed.
          * @return A virtual key code.
          */
-        static VirtualKey build(U8 row, U8 col, bool released);
+        static auto build(U8 row, U8 col, bool released) -> VirtualKey;
 
         /**
          * Create virtual key code in the given row and col that has been pressed.
@@ -95,7 +91,7 @@ namespace Ember {
          * @param col       Column.
          * @return A virtual key code.
          */
-        static VirtualKey build_pressed(U8 row, U8 col);
+        static auto build_pressed(U8 row, U8 col) -> VirtualKey;
 
         /**
          * Create virtual key code in the given row and col that has been released.
@@ -104,7 +100,7 @@ namespace Ember {
          * @param col       Column.
          * @return A virtual key code.
          */
-        static VirtualKey build_released(U8 row, U8 col);
+        static auto build_released(U8 row, U8 col) -> VirtualKey;
 
         VirtualKey();
 
@@ -114,47 +110,41 @@ namespace Ember {
          *
          * @return The integer representation of the key code.
          */
-        [[nodiscard]]
-        U16 get_key_code() const;
+        [[nodiscard]] auto get_key_code() const -> U16;
 
         /**
          *
          * @return Row position of the pressed key.
          */
-        [[nodiscard]]
-        U8 get_row() const;
+        [[nodiscard]] auto get_row() const -> U8;
 
         /**
          *
          * @return Column position of the pressed key.
          */
-        [[nodiscard]]
-        U8 get_col() const;
+        [[nodiscard]] auto get_col() const -> U8;
 
         /**
          *
          * @return True if the key is currently pressed.
          */
-        [[nodiscard]]
-        bool is_pressed() const;
+        [[nodiscard]] auto is_pressed() const -> bool;
 
         /**
          *
          * @return True if the key has been released.
          */
-        [[nodiscard]]
-        bool is_released() const;
+        [[nodiscard]] auto is_released() const -> bool;
 
         /**
          *
          * @return True if this virtual key code represents a "null" key.
          */
-        [[nodiscard]]
-        bool is_none() const;
+        [[nodiscard]] auto is_none() const -> bool;
 
-        friend bool operator==(const VirtualKey& one, const VirtualKey& two);
+        friend auto operator==(const VirtualKey& one, const VirtualKey& two) -> bool;
 
-        friend bool operator!=(const VirtualKey& one, const VirtualKey& two);
+        friend auto operator!=(const VirtualKey& one, const VirtualKey& two) -> bool;
     };
 } // namespace Ember
 

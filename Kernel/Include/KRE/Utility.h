@@ -18,7 +18,7 @@
 #ifndef RUNEOS_UTILITY_H
 #define RUNEOS_UTILITY_H
 
-#include <stddef.h>
+#include <stddef.h> // NOLINT cstddef does not exist
 
 #include <KRE/CppRuntimeSupport.h>
 #include <KRE/TypeTraits.h>
@@ -129,7 +129,7 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     template <typename T>
-    auto partition(T array[], int left, int high) -> int {
+    auto partition(T array[], int left, int high) -> int { // NOLINT has dynamic size
         T   pivot = array[high];
         int idx   = left - 1;
         for (int j = left; j <= high - 1; j++) {
@@ -143,7 +143,7 @@ namespace Rune {
     }
 
     template <typename T>
-    void quick_sort(T array[], int low, int high) {
+    void quick_sort(T array[], int low, int high) { // NOLINT has dynamic size
         if (low < high) {
             const int pivot = partition(array, low, high);
             quick_sort(array, low, pivot - 1);
@@ -159,7 +159,7 @@ namespace Rune {
      * @param arr_size   Size of the array.
      */
     template <typename T>
-    void sort(T array[], const size_t arr_size) {
+    void sort(T array[], const size_t arr_size) { // NOLINT has dynamic size
         quick_sort(array, 0, arr_size - 1);
     }
 
@@ -172,51 +172,9 @@ namespace Rune {
      * @param count Number of elements to delete.
      */
     template <typename T>
-    void array_delete(T arr[], size_t idx, size_t& count) {
+    void array_delete(T arr[], size_t idx, size_t& count) { // NOLINT has dynamic size
         memmove(arr + idx, arr + idx + 1, sizeof(T) * (count - idx - 1));
         count--;
-    }
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                               Bit Manipulation
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    /**
-     *
-     * @tparam T     Number type.
-     * @param num
-     * @param offset Bit offset.
-     * @return True: The bit at offset is set, False: The bit is not set.
-     */
-    template <Integer T>
-    auto bit_check(T num, size_t offset) -> bool {
-        return num >> offset & 1;
-    }
-
-    /**
-     * Set the bit at offset and leave all other bits as they are.
-     *
-     * @tparam T     Number type.
-     * @param num
-     * @param offset Bit offset.
-     * @return The number with the bit at offset set.
-     */
-    template <Integer T>
-    auto bit_set(T num, const size_t offset) -> T {
-        return num | 1 << offset;
-    }
-
-    /**
-     * Clear the bit at offset and leave all other bits as they are.
-     *
-     * @tparam T     Number type.
-     * @param num
-     * @param offset Bit offset.
-     * @return The number with the bit at offset cleared.
-     */
-    template <Integer T>
-    auto bit_clear(T num, const size_t offset) -> T {
-        return num & ~(1 << offset);
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -355,6 +313,35 @@ namespace Rune {
     //                               std::hash Port
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      FNV
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    /// @brief Fowler–Noll–Vo hash function.
+    namespace FNV {
+        constexpr size_t PRIME        = 0x01000193;
+        constexpr size_t OFFSET_BASIS = 0x811c9dc5;
+
+        /// @brief
+        /// @param value
+        /// @return FNV-1a hash on the value.
+        template <Integer TNum>
+        auto do_hash(TNum value) -> size_t {
+            return (OFFSET_BASIS ^ value) * PRIME;
+        }
+
+        /// @brief
+        /// @param values
+        /// @param count
+        /// @return FNV-1a hash  on the array of values.
+        template <Integer TNum>
+        auto do_hash(const TNum* values, size_t count) -> size_t {
+            size_t hash = OFFSET_BASIS;
+            for (size_t i = 0; i < count; i++) hash = (hash ^ values[i]) * PRIME;
+            return hash;
+        }
+    }; // namespace FNV
+
     /**
      * @brief Provides hash support for a type.
      *
@@ -374,101 +361,62 @@ namespace Rune {
 
     template <>
     struct Hash<signed char> {
-        auto operator()(const signed char& key) const -> size_t { return key; }
+        auto operator()(const signed char& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<char> {
-        auto operator()(const char& key) const -> size_t { return key; }
+        auto operator()(const char& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<short> {
-        auto operator()(const short& key) const -> size_t { return key; }
+        auto operator()(const short& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<int> {
-        auto operator()(const int& key) const -> size_t { return key; }
+        auto operator()(const int& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<long> {
-        auto operator()(const long& key) const -> size_t { return key; }
+        auto operator()(const long& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<long long> {
-        auto operator()(const long long& key) const -> size_t { return key; }
+        auto operator()(const long long& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<unsigned char> {
-        auto operator()(const unsigned char& key) const -> size_t { return key; }
+        auto operator()(const unsigned char& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<unsigned short> {
-        auto operator()(const unsigned short& key) const -> size_t { return key; }
+        auto operator()(const unsigned short& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<unsigned int> {
-        auto operator()(const unsigned int& key) const -> size_t { return key; }
+        auto operator()(const unsigned int& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<unsigned long> {
-        auto operator()(const unsigned long& key) const -> size_t { return key; }
+        auto operator()(const unsigned long& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<unsigned long long> {
-        auto operator()(const unsigned long long& key) const -> size_t { return key; }
-    };
-
-    template <>
-    struct Hash<float> {
-        auto operator()(const float& key) const -> size_t {
-            // Calc hash for floats up to 10 digit precision
-            float            num   = key;
-            static const int pow10 = 1000000000;
-            long             whole = (long) num;
-            float            frac  = (num - (float) whole) * (float) pow10;
-            size_t           hash  = 7 * whole + (size_t) (7 * frac);
-            return hash;
-        }
-    };
-
-    template <>
-    struct Hash<double> {
-        auto operator()(const double& key) const -> size_t {
-            // Calc hash for floats up to 10 digit precision
-            double           num   = key;
-            static const int pow10 = 1000000000;
-            long             whole = (long) num;
-            double           frac  = (num - (double) whole) * (double) pow10;
-            size_t           hash  = 7 * whole + (size_t) (7 * frac);
-            return hash;
-        }
-    };
-
-    template <>
-    struct Hash<long double> {
-        auto operator()(const long double& key) const -> size_t {
-            // Calc hash for floats up to 10 digit precision
-            long double      num   = key;
-            static const int pow10 = 1000000000;
-            long             whole = (long) num;
-            long double      frac  = (num - (long double) whole) * (long double) pow10;
-            size_t           hash  = 7 * whole + (size_t) (7 * frac);
-            return hash;
-        }
+        auto operator()(const unsigned long long& key) const -> size_t { return FNV::do_hash(key); }
     };
 
     template <>
     struct Hash<bool> {
-        auto operator()(const bool& key) const -> size_t { return (size_t) key; }
+        auto operator()(const bool& key) const -> size_t { return FNV::do_hash((size_t) key); }
     };
 
     template <>
@@ -480,10 +428,7 @@ namespace Rune {
                 c_pos++;
                 size++;
             }
-
-            size_t hash = 2383;
-            for (size_t i = 0; i < size; i++) hash += 101 * key[i];
-            return hash;
+            return FNV::do_hash(key, size);
         }
     };
 
@@ -525,7 +470,7 @@ namespace Rune {
         static constexpr size_t STACK_LIMIT = 24;
 
         ICallable<R, A...>* _function;
-        unsigned char       _stack_ptr[STACK_LIMIT];
+        unsigned char       _stack_ptr[STACK_LIMIT]; // NOLINT Array.h depends on this header
 
       public:
         template <typename Func>
@@ -559,6 +504,8 @@ namespace Rune {
         }
 
         auto operator=(const Function& other) -> Function& {
+            if (this == &other) return *this;
+
             if (_function != nullptr) {
                 if (_function == (decltype(_function)) &_stack_ptr) {
                     _function->~ICallable();
@@ -722,7 +669,7 @@ namespace Rune {
          * defined.
          * @return A reference to the contained value.
          */
-        auto value() const -> const T& { return _data; }
+        [[nodiscard]] auto value() const -> const T& { return _data; }
 
         /**
          * If the optional does not contain a value, empty() == true, then the behavior is not
@@ -1217,8 +1164,8 @@ namespace Rune {
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 namespace std {
-    template <class _E>
-    class initializer_list { // NOLINT
+    template <class _E> // NOLINT std impl -> ignore
+    class initializer_list {
       public:
         typedef _E        value_type;      // NOLINT
         typedef const _E& reference;       // NOLINT
@@ -1249,12 +1196,12 @@ namespace std {
         constexpr const_iterator end() const noexcept { return begin() + size(); } // NOLINT
     };
 
-    template <class _Tp>
+    template <class _Tp>                                               // NOLINT std impl -> ignore
     constexpr const _Tp* begin(initializer_list<_Tp> __ils) noexcept { // NOLINT
         return __ils.begin();
     }
 
-    template <class _Tp>
+    template <class _Tp>                                             // NOLINT std impl -> ignore
     constexpr const _Tp* end(initializer_list<_Tp> __ils) noexcept { // NOLINT
         return __ils.end();
     }

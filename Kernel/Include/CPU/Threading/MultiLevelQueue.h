@@ -38,19 +38,19 @@ namespace Rune::CPU {
          * @brief Get a list of all enqueued threads across all policy levels..
          * @return All queued threads.
          */
-        LinkedList<Thread*> get_queued_threads();
+        auto get_queued_threads() -> LinkedList<Thread*>;
 
         /**
          *
          * @return Scheduling policy of the queue.
          */
-        SchedulingPolicy get_policy();
+        auto get_policy() -> SchedulingPolicy;
 
         /**
          *
          * @return Queue of the next lower priority policy.
          */
-        MultiLevelQueue* get_lower_policy_queue();
+        auto get_lower_policy_queue() -> MultiLevelQueue*;
 
         /**
          * Search through all queues starting from the queue with the highest scheduling policy
@@ -58,7 +58,7 @@ namespace Rune::CPU {
          *
          * @return The next thread in line or a null pointer if all queues are empty.
          */
-        Thread* peek();
+        auto peek() -> Thread*;
 
         /**
          * Try to enqueue the thread in the queue with the same scheduling policy
@@ -68,7 +68,7 @@ namespace Rune::CPU {
          * @return True if the thread got enqueued, false if not queue with the same scheduling
          * policy got found.
          */
-        bool enqueue(SharedPointer<Thread> t);
+        auto enqueue(SharedPointer<Thread> t) -> bool;
 
         /**
          * Search through all queues starting from the queue with the highest scheduling policy
@@ -76,14 +76,14 @@ namespace Rune::CPU {
          *
          * @return The next thread in line or a null pointer if all queues are empty.
          */
-        SharedPointer<Thread> dequeue();
+        auto dequeue() -> SharedPointer<Thread>;
 
         /**
          * @brief Search in all queues for a thread with the given ID and remove it if found.
          * @param thread_id ID of a thread.
          * @return If removed: The pointer to the thread, If not found: A null pointer.
          */
-        SharedPointer<Thread> remove(int thread_id);
+        auto remove(U16 thread_id) -> SharedPointer<Thread>;
     };
 } // namespace Rune::CPU
 

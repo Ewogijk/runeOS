@@ -20,54 +20,35 @@
 #include <Ember/Ember.h>
 
 namespace Rune::CPU {
-    /**
-     * Send a byte through a port.
-     *
-     * @param port Port number.
-     * @param value A byte value.
-     */
+
+    /// @brief Send a byte through a port.
+    /// @param port Port number.
+    /// @param value A byte value.
     CLINK void out_b(U16 port, U8 value);
 
-    /**
-     * Receive a byte from a port.
-     *
-     * @param port Port number.
-     */
-    CLINK U8 in_b(U16 port);
+    /// @brief Receive a byte from a port.
+    /// @param port Port number.
+    CLINK auto in_b(U16 port) -> U8;
 
-    /**
-     * Send a word through a port.
-     *
-     * @param port Port number.
-     * @param value A word value.
-     */
+    /// @brief Send a word through a port.
+    /// @param port Port number.
+    /// @param value A word value.
     CLINK void out_w(U16 port, U16 value);
 
-    /**
-     * Receive a word from a port.
-     *
-     * @param port Port number.
-     */
-    CLINK U16 in_w(U16 port);
+    /// @brief Receive a word from a port.
+    /// @param port Port number.
+    CLINK auto in_w(U16 port) -> U16;
 
-    /**
-     * Send a double word through a port.
-     *
-     * @param port Port number.
-     * @param value A double word value.
-     */
+    /// @brief Send a double word through a port.
+    /// @param port Port number.
+    /// @param value A double word value.
     CLINK void out_dw(U16 port, U32 value);
 
-    /**
-     * Receive a double word from a port.
-     *
-     * @param port Port number.
-     */
-    CLINK U32 in_dw(U16 port);
+    /// @brief Receive a double word from a port.
+    /// @param port Port number.
+    CLINK auto in_dw(U16 port) -> U32;
 
-    /**
-     * Wait for an unspecified amount of time.
-     */
+    /// @brief Wait for an unspecified amount of time.
     CLINK void io_wait();
 } // namespace Rune::CPU
 

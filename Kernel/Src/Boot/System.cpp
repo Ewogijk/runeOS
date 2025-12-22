@@ -27,6 +27,7 @@
 #include <CPU/CPUModule.h>
 #include <CPU/E9Stream.h>
 #include <CPU/Interrupt/Exception.h>
+#include <CPU/Interrupt/IRQ.h>
 
 #include <Memory/MemoryModule.h>
 
@@ -123,6 +124,9 @@ namespace Rune {
         for (auto& module_loader : module_loaders) module_loader->load();
 
         auto* cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
+
+
+
         auto* app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         LogContext::instance().register_layout(
             "detailed-layout",
@@ -204,27 +208,28 @@ namespace Rune {
         auto* cpu_subsys = get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cpu_subsys->get_scheduler()->lock();
         cpu_subsys->get_scheduler()->terminate(); // Schedule bootstrap termination after unlock
-        char*          dummy_args[1] = {nullptr};
-        CPU::StartInfo start_info;
+        char*          dummy_args[1] = {nullptr}; // NOLINT
+        CPU::StartInfo start_info{};
         start_info.argc = 0;
         start_info.argv = dummy_args;
         start_info.main = &boot_phase3;
-        cpu_subsys->schedule_new_thread(BOOT_THREAD_NAME,
-                                        &start_info,
-                                        Memory::get_base_page_table_address(),
-                                        CPU::SchedulingPolicy::LOW_LATENCY,
-                                        {nullptr, 0x0, 0x0});
+        cpu_subsys->schedule_new_thread(
+            BOOT_THREAD_NAME,
+            &start_info,
+            Memory::get_base_page_table_address(),
+            CPU::SchedulingPolicy::LOW_LATENCY,
+            {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
         cpu_subsys->get_scheduler()->unlock(); // Boot thread is scheduled after unlock
     }
 
-    void System::shutdown() {
+    void System::shutdown() { // NOLINT
         // Workaround solution to shut down the system
         //  -> Disable DIVISION_BY_ZERO and DOUBLE_FAULT interrupt vectors to force a triple fault
         //     instead a kernel panic.
         // TODO Remove the workaround and perform an orderly shutdown by firmware
         CPU::exception_set_enabled(CPU::ExceptionType::DIVISION_BY_ZERO, false);
         CPU::exception_set_enabled(CPU::ExceptionType::DOUBLE_FAULT, false);
-        int a = 1 / 0;
+        int a = 1 / 0; // NOLINT
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -237,7 +242,7 @@ namespace Rune {
 
     size_t ModuleLoader::plugin_index = 0;
 
-    void ModuleLoader::load_plugin(Plugin* plugin) {
+    void ModuleLoader::load_plugin(Plugin* plugin) { // NOLINT
         System::instance()._builtin_plugin_registry[plugin_index++] = plugin;
         String plugin_info = plugin->get_info().to_string() + " ...";
         if (!plugin->load()) {

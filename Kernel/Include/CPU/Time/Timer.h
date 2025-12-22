@@ -50,14 +50,14 @@ namespace Rune::CPU {
      */
     class Timer {
       protected:
-        TimerMode _mode;
+        TimerMode _mode; // NOLINT
 
         // In order to avoid using floating point values we measure everything in hertz e.g. 1MHz ->
         // 1000000Hz
-        U64 _freq_hz;
+        U64 _freq_hz; // NOLINT
 
         // Time in nanoseconds a thread can run before being preempted
-        U64 _quantum;
+        U64 _quantum; // NOLINT
 
       public:
         explicit Timer();

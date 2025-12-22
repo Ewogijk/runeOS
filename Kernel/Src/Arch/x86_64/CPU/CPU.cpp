@@ -30,19 +30,19 @@ namespace Rune::CPU {
     // We need to declare it globally because we cannot allocate it on the kernel heap
     // this early, since the core init is the first thing we do after the bootloader gives
     // control to us
-    X64Core           BOOTSTRAP_CORE = X64Core(0);
-    LinkedList<Core*> CORES;
+    X64Core           BOOTSTRAP_CORE = X64Core(0); // NOLINT
+    LinkedList<Core*> CORES;                       // NOLINT
 
-    bool init_boot_core() { return BOOTSTRAP_CORE.init(); }
+    auto init_boot_core() -> bool { return BOOTSTRAP_CORE.init(); }
 
-    bool init_other_cores() {
+    auto init_other_cores() -> bool {
         CORES.add_back(&BOOTSTRAP_CORE);
         return true;
     }
 
-    Core* current_core() { return &BOOTSTRAP_CORE; }
+    auto current_core() -> Core* { return &BOOTSTRAP_CORE; }
 
-    LinkedList<Core*> get_core_table() { return CORES; }
+    auto get_core_table() -> LinkedList<Core*> { return CORES; }
 
     auto get_physical_address_width() -> U8 { return cpuid_get_physical_address_width(); }
 

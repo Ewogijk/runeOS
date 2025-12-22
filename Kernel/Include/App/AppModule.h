@@ -83,6 +83,11 @@ namespace Rune::App {
                                 CPU::StartInfo*            start_info,
                                 const Path&                working_directory) -> int;
 
+        auto setup_file_stream(const SharedPointer<Info>& app,
+                               StdStream                  std_stream,
+                               const Path& file_path)
+            -> SharedPointer<TextStream>;
+
         /**
          * @brief Setup a standard stream of the application.
          * @param std_stream stdin, stdout or stderr.
@@ -110,6 +115,11 @@ namespace Rune::App {
         AppModule();
 
         ~AppModule() override = default;
+
+        AppModule(const AppModule&)                    = default;
+        AppModule(AppModule&&)                         = default;
+        auto operator=(const AppModule&) -> AppModule& = default;
+        auto operator=(AppModule&&) -> AppModule&      = default;
 
         /**
          *
@@ -182,7 +192,7 @@ namespace Rune::App {
          * happened.
          */
         auto start_new_app(const Path&               executable,
-                           char*                     argv[],
+                           char*                     argv[], // NOLINT argv is part of the kernel ABI
                            const Path&               working_directory,
                            const Ember::StdIOConfig& stdin_config,
                            const Ember::StdIOConfig& stdout_config,
@@ -209,7 +219,7 @@ namespace Rune::App {
          * @return INT_MAX: No app with the handle was found, Else: The exit code of the
          * application.
          */
-        auto join(int handle) -> int;
+        auto join(U16 handle) -> int;
     };
 } // namespace Rune::App
 
