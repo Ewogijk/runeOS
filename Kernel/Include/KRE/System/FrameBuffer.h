@@ -20,6 +20,7 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/Collections/Array.h>
 #include <KRE/Utility.h>
 
 namespace Rune {
@@ -47,7 +48,13 @@ namespace Rune {
      * @brief A frame buffer implementation which provides basic glyph rendering.
      */
     class FrameBuffer {
-        static constexpr U8 BITS_PER_TYPE = 8;
+        static constexpr U8 BITS_PER_BYTE = 8;
+        static constexpr U8 BYTE_MASK = 0xFF;
+        static constexpr U8 RGBA_OFFSET_R = 0;
+        static constexpr U8 RGBA_OFFSET_G = 8;
+        static constexpr U8 RGBA_OFFSET_B = 16;
+        static constexpr U8 RGBA_OFFSET_A = 24;
+
 
         U8* _address         = nullptr;
         U64 _width           = 0;
@@ -97,42 +104,37 @@ namespace Rune {
          *
          * @return The bootloader provided framebuffer.
          */
-        static FrameBuffer* get_global();
+        static auto get_global() -> FrameBuffer*;
 
         /**
          *
          * @return Pointer to the framebuffer.
          */
-        [[nodiscard]]
-        U8* get_address() const;
+        [[nodiscard]] auto get_address() const -> U8*;
 
         /**
          *
          * @return Number of pixels in a line.
          */
-        [[nodiscard]]
-        U64 get_width() const;
+        [[nodiscard]] auto get_width() const -> U64;
 
         /**
          *
          * @return Number of pixels in a column.
          */
-        [[nodiscard]]
-        U64 get_height() const;
+        [[nodiscard]] auto get_height() const -> U64;
 
         /**
          *
          * @return Number of bytes in a line.
          */
-        [[nodiscard]]
-        U64 get_pitch() const;
+        [[nodiscard]] auto get_pitch() const -> U64;
 
         /**
          *
          * @return Number of bits in a pixel.
          */
-        [[nodiscard]]
-        U16 get_bits_per_pixel() const;
+        [[nodiscard]] auto get_bits_per_pixel() const -> U16;
 
         /**
          * Convert the pixel to it's physical layout in memory, e.g. rgb or rbg.
@@ -140,7 +142,7 @@ namespace Rune {
          * @param pixel Virtual pixel.
          * @param raw_pixel_out Output buffer for the physical pixel.
          */
-        void to_raw_pixel(const Pixel& pixel, U8 raw_pixel_out[4]) const;
+        void to_raw_pixel(const Pixel& pixel, Array<U8, 4>& raw_pixel_out) const;
 
         /**
          * Draw the bitmap font glyph of a character.

@@ -20,6 +20,9 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/BitsAndBytes.h>
+#include <KRE/Collections/Array.h>
+
 namespace Rune::Device {
 #define FIS_TYPES(X)                                                                               \
     X(FISType, DMA_SETUP, 0x41)                                                                    \
@@ -49,7 +52,7 @@ namespace Rune::Device {
         U8 Interrupt    : 1; // 1: Generate Interrupt on finish
         U8 AutoActivate : 1;
 
-        U8 Reserved1[2];
+        Array<U8, 2> Reserved1;
 
         U32 DMABufferID; // Physical Address
         U32 DMABufferIDUpper;
@@ -100,6 +103,9 @@ namespace Rune::Device {
      * Sent a command to a device.
      */
     struct RegisterHost2DeviceFIS {
+        /// @brief Definition ACS-4, Chapter 7.21: set bit 6 -> 1, rest -> 0
+        static constexpr U8 DEVICE_READ_DMA_EXT = 0x40;
+
         U8 FISType = FISType::REG_H2D;
 
         union {
@@ -134,42 +140,43 @@ namespace Rune::Device {
         U8 Auxiliary2 = 0;
         U8 Auxiliary3 = 0;
 
-        static RegisterHost2DeviceFIS IdentifyDevice() {
+        static auto IdentifyDevice() -> RegisterHost2DeviceFIS {
             RegisterHost2DeviceFIS fis;
             fis.DW0B1.C = 1;
             fis.Command = H2DCommand::IDENTIFY_DEVICE;
             return fis;
         }
 
-        static RegisterHost2DeviceFIS ReadDMAExtended(size_t lba, U16 sectors) {
+        static auto ReadDMAExtended(size_t lba, U16 sectors) -> RegisterHost2DeviceFIS {
             RegisterHost2DeviceFIS fis;
             fis.DW0B1.C  = 1;
             fis.Command  = H2DCommand::READ_DMA_EXTENDED;
-            fis.LBALow   = lba & 0xFF;
-            fis.LBAMid   = (lba >> 8) & 0xFF;
-            fis.LBAHigh  = (lba >> 16) & 0xFF;
-            fis.Device   = 0x40;
-            fis.LBALowE  = (lba >> 24) & 0xFF;
-            fis.LBAMidE  = (lba >> 32) & 0xFF;
-            fis.LBAHighE = (lba >> 40) & 0xFF;
-            fis.Count    = sectors & 0xFF;
-            fis.CountE   = (sectors >> 8) & 0xFF;
+            fis.LBALow   = byte_get(lba, 0);
+            fis.LBAMid   = byte_get(lba, 1);
+            fis.LBAHigh  = byte_get(lba, 2);
+            fis.Device   = DEVICE_READ_DMA_EXT;
+            fis.LBALowE  = byte_get(lba, 3);
+            fis.LBAMidE  = byte_get(lba, 4);
+            fis.LBAHighE = byte_get(lba, 5); // NOLINT
+            fis.Count    = byte_get(sectors, 0);
+            fis.CountE   = byte_get(sectors, 1);
+
             return fis;
         }
 
-        static RegisterHost2DeviceFIS WriteDMAExtended(size_t lba, U16 sectors) {
+        static auto WriteDMAExtended(size_t lba, U16 sectors) -> RegisterHost2DeviceFIS {
             RegisterHost2DeviceFIS fis;
             fis.DW0B1.C  = 1;
             fis.Command  = H2DCommand::WRITE_DMA_EXTENDED;
-            fis.LBALow   = lba & 0xFF;
-            fis.LBAMid   = (lba >> 8) & 0xFF;
-            fis.LBAHigh  = (lba >> 16) & 0xFF;
-            fis.Device   = 0x40;
-            fis.LBALowE  = (lba >> 24) & 0xFF;
-            fis.LBAMidE  = (lba >> 32) & 0xFF;
-            fis.LBAHighE = (lba >> 40) & 0xFF;
-            fis.Count    = sectors & 0xFF;
-            fis.CountE   = (sectors >> 8) & 0xFF;
+            fis.LBALow   = byte_get(lba, 0);
+            fis.LBAMid   = byte_get(lba, 1);
+            fis.LBAHigh  = byte_get(lba, 2);
+            fis.Device   = DEVICE_READ_DMA_EXT;
+            fis.LBALowE  = byte_get(lba, 3);
+            fis.LBAMidE  = byte_get(lba, 4);
+            fis.LBAHighE = byte_get(lba, 5); // NOLINT
+            fis.Count    = byte_get(sectors, 0);
+            fis.CountE   = byte_get(sectors, 1);
             return fis;
         }
     };
@@ -198,9 +205,9 @@ namespace Rune::Device {
         U8 LBAHighS;
         U8 Reserved2;
 
-        U8 Count;  // Content of the count register of the command block
-        U8 CountS; // Content of the count register of the shadow register block
-        U8 Reserved3[6];
+        U8           Count;     // Content of the count register of the command block
+        U8           CountS;    // Content of the count register of the shadow register block
+        Array<U8, 6> Reserved3; // NOLINT See
     };
 
     /**
@@ -221,7 +228,7 @@ namespace Rune::Device {
 
         U8 Error; // Error of the error register of shadow register block
 
-        U8 ProtocolSpecific[4];
+        Array<U8, 4> ProtocolSpecific;
     };
 } // namespace Rune::Device
 

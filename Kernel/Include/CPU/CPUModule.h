@@ -62,9 +62,9 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
         static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
         static constexpr char const* IDLE_THREAD_NAME       = "Idle";
-        static char*                 DUMMY_ARGS[1];
-        static StartInfo             TERMINATOR_THREAD_START_INFO;
-        static StartInfo             IDLE_THREAD_START_INFO;
+        static char*     DUMMY_ARGS[1]; // NOLINT Array disallowed! Is part of Kernel ABI
+        static StartInfo TERMINATOR_THREAD_START_INFO;
+        static StartInfo IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt Properties

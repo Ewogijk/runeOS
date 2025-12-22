@@ -22,20 +22,21 @@
 namespace Rune::CPU {
 
     class E9Stream : public TextStream {
+        static constexpr U8 E9 = 0xE9;
       public:
-        bool is_read_supported() override;
+        auto is_read_supported() -> bool override;
 
-        int read() override;
+        auto read() -> int override;
 
-        bool is_write_supported() override;
+        auto is_write_supported() -> bool override;
 
-        bool write(U8 value) override;
+        auto write(U8 value) -> bool override;
 
         void flush() override;
 
         void close() override;
 
-        bool is_ansi_supported() override;
+        auto is_ansi_supported() -> bool override;
     };
 } // namespace Rune::CPU
 

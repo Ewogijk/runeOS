@@ -16,30 +16,35 @@
 
 #include "CPUID.h"
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::CPU {
-    String cpuid_get_vendor() {
+    auto cpuid_get_vendor() -> String {
         CPUIDResponse cpuid_response;
         cpuid_make_request(0x0, &cpuid_response);
+        // NOLINTBEGIN
         char buf[13];
-        buf[0]  = (char) ((cpuid_response.rbx >> 0) & 0xFF);
-        buf[1]  = (char) ((cpuid_response.rbx >> 8) & 0xFF);
-        buf[2]  = (char) ((cpuid_response.rbx >> 16) & 0xFF);
-        buf[3]  = (char) ((cpuid_response.rbx >> 24) & 0xFF);
-        buf[4]  = (char) ((cpuid_response.rdx >> 0) & 0xFF);
-        buf[5]  = (char) ((cpuid_response.rdx >> 8) & 0xFF);
-        buf[6]  = (char) ((cpuid_response.rdx >> 16) & 0xFF);
-        buf[7]  = (char) ((cpuid_response.rdx >> 24) & 0xFF);
-        buf[8]  = (char) ((cpuid_response.rcx >> 0) & 0xFF);
-        buf[9]  = (char) ((cpuid_response.rcx >> 8) & 0xFF);
-        buf[10] = (char) ((cpuid_response.rcx >> 16) & 0xFF);
-        buf[11] = (char) ((cpuid_response.rcx >> 24) & 0xFF);
+        buf[0]  = (char) byte_get(cpuid_response.rbx, 0);
+        buf[1]  = (char) byte_get(cpuid_response.rbx, 1);
+        buf[2]  = (char) byte_get(cpuid_response.rbx, 2);
+        buf[3]  = (char) byte_get(cpuid_response.rbx, 3);
+        buf[4]  = (char) byte_get(cpuid_response.rdx, 0);
+        buf[5]  = (char) byte_get(cpuid_response.rdx, 1);
+        buf[6]  = (char) byte_get(cpuid_response.rdx, 2);
+        buf[7]  = (char) byte_get(cpuid_response.rdx, 3);
+        buf[8]  = (char) byte_get(cpuid_response.rcx, 0);
+        buf[9]  = (char) byte_get(cpuid_response.rcx, 1);
+        buf[10] = (char) byte_get(cpuid_response.rcx, 2);
+        buf[11] = (char) byte_get(cpuid_response.rcx, 3);
         buf[12] = 0;
+        // NOLINTEND
         return {buf};
     }
 
-    U8 cpuid_get_physical_address_width() {
+    auto cpuid_get_physical_address_width() -> U8 {
+        constexpr U32 GET_PHYSICAL_VIRTUAL_ADDRESS_SIZES = 0x80000008;
         CPUIDResponse cpuid_response;
-        cpuid_make_request(0x80000008, &cpuid_response);
-        return cpuid_response.rax & 0xFF;
+        cpuid_make_request(GET_PHYSICAL_VIRTUAL_ADDRESS_SIZES, &cpuid_response);
+        return byte_get(cpuid_response.rax, 0);
     }
 } // namespace Rune::CPU

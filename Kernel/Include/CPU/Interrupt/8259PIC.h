@@ -24,6 +24,9 @@ namespace Rune::CPU {
      * Driver for the 8259 PIC.
      */
     class _8259PIC : public PICDriver {
+        static constexpr U16 MASK_ALL_INTERRUPTS = 0xFFFF;
+        static constexpr U8  PIC2_IRQ_BOUNDARY   = 8;
+
         bool _fully_init{};
         U16  _imr;
         bool _imr_invalid;
@@ -32,28 +35,28 @@ namespace Rune::CPU {
 
         void update_both_8259_imr() const;
 
-        U16 get_imr_0();
+        auto get_imr_0() -> U16;
 
-        static U16 read_pic_register(U8 read_cmd);
+        static auto read_pic_register(U8 read_cmd) -> U16;
 
-        bool probe();
+        auto probe() -> bool;
 
       public:
         _8259PIC();
 
         ~_8259PIC() override = default;
 
-        String get_name() override;
+        auto get_name() -> String override;
 
-        U8 get_irq_line_offset() override;
+        auto get_irq_line_offset() -> U8 override;
 
-        bool is_irq_requested(U8 irq_line) override;
+        auto is_irq_requested(U8 irq_line) -> bool override;
 
-        bool is_irq_serviced(U8 irq_li) override;
+        auto is_irq_serviced(U8 irq_li) -> bool override;
 
-        bool is_irq_masked(U8 irq_line) override;
+        auto is_irq_masked(U8 irq_line) -> bool override;
 
-        bool start() override;
+        auto start() -> bool override;
 
         void mask(U8 irq_line) override;
 

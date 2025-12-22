@@ -34,14 +34,15 @@ namespace Rune::CPU {
         // Context switches will only ever happen between kernel stacks that's
         // why we have to set it up, so it jumps to the thread startup function
         auto* stack_bottom = new U8[Thread::KERNEL_STACK_SIZE];
-        auto  stack_top =
-            setup_trampoline_kernel_stack((uintptr_t) stack_bottom + Thread::KERNEL_STACK_SIZE,
-                                          (VirtualAddr) (uintptr_t) _thread_enter);
+        auto  stack_top    = setup_trampoline_kernel_stack(memory_pointer_to_addr(stack_bottom)
+                                                           + Thread::KERNEL_STACK_SIZE,
+                                                       memory_pointer_to_addr(_thread_enter));
+
         thread->kernel_stack_top    = stack_top;
         thread->kernel_stack_bottom = stack_bottom;
     }
 
-    SharedPointer<Thread> Scheduler::next_scheduled_thread() {
+    auto Scheduler::next_scheduled_thread() -> SharedPointer<Thread> {
         if (!_terminated_threads.is_empty()) // Clean up terminated threads whenever possible
             return _thread_terminator;
 
@@ -53,7 +54,6 @@ namespace Rune::CPU {
     Scheduler::Scheduler()
         : _running_thread(nullptr),
           _ready_threads(nullptr),
-          _terminated_threads(),
           _irq_disable_counter(0),
           _postpone_ctx_switches(0),
           _ctx_switches_postponed(false),
@@ -67,19 +67,19 @@ namespace Rune::CPU {
     //                                          Properties
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MultiLevelQueue* Scheduler::get_ready_queue() { return _ready_threads; }
+    auto Scheduler::get_ready_queue() -> MultiLevelQueue* { return _ready_threads; }
 
-    LinkedList<SharedPointer<Thread>>* Scheduler::get_terminated_threads() {
+    auto Scheduler::get_terminated_threads() -> LinkedList<SharedPointer<Thread>>* {
         return &_terminated_threads;
     }
 
-    SharedPointer<Thread> Scheduler::get_running_thread() { return _running_thread; }
+    auto Scheduler::get_running_thread() -> SharedPointer<Thread> { return _running_thread; }
 
-    SharedPointer<Thread> Scheduler::get_idle_thread() { return _idle_thread; }
+    auto Scheduler::get_idle_thread() -> SharedPointer<Thread> { return _idle_thread; }
 
-    SharedPointer<Thread> Scheduler::get_thread_terminator() { return _thread_terminator; }
+    auto Scheduler::get_thread_terminator() -> SharedPointer<Thread> { return _thread_terminator; }
 
-    bool Scheduler::is_preemption_allowed() const { return _allow_preemption; }
+    auto Scheduler::is_preemption_allowed() const -> bool { return _allow_preemption; }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Event Hooks
@@ -93,11 +93,11 @@ namespace Rune::CPU {
     //                                          General Stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool Scheduler::init(PhysicalAddr                 base_pt_addr,
+    auto Scheduler::init(PhysicalAddr                 base_pt_addr,
                          Register                     stack_top,
                          const SharedPointer<Thread>& idle_thread,
                          const SharedPointer<Thread>& thread_terminator,
-                         void                         (*thread_enter)()) {
+                         void                         (*thread_enter)()) -> bool {
         auto* back_ground_threads = new MultiLevelQueue(SchedulingPolicy::BACKGROUND, nullptr);
         auto* normal_threads = new MultiLevelQueue(SchedulingPolicy::NORMAL, back_ground_threads);
         _ready_threads       = new MultiLevelQueue(SchedulingPolicy::LOW_LATENCY, normal_threads);
@@ -149,7 +149,7 @@ namespace Rune::CPU {
         if (_irq_disable_counter == 0) interrupt_enable();
     }
 
-    bool Scheduler::schedule_new_thread(const SharedPointer<CPU::Thread>& thread) {
+    auto Scheduler::schedule_new_thread(const SharedPointer<CPU::Thread>& thread) -> bool {
         if (thread->policy == SchedulingPolicy::NONE) {
             LOGGER->error(R"(Attempt to schedule a thread with policy "None")");
             return false;
@@ -168,7 +168,7 @@ namespace Rune::CPU {
         return true;
     }
 
-    bool Scheduler::schedule(const SharedPointer<CPU::Thread>& thread) {
+    auto Scheduler::schedule(const SharedPointer<CPU::Thread>& thread) -> bool {
         if (!thread || thread == _running_thread) return false;
 
         if (!_ready_threads->enqueue(thread)) {

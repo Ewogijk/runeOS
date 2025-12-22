@@ -57,12 +57,14 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
         file.write("namespace Rune::CPU {\n")
 
         file.write("    void init_interrupt_service_routines() {\n")
-        file.write("        U8 gdt_offset = 0x08;\n")
+        file.write("        constexpr U8 GDT_OFFSET = 0x08;\n")
+        file.write("        //NOLINTBEGIN\n")
         for i in range(0, 256):
             file.write(
-                f"        idt_set({i}, (void*) ISR{i}, gdt_offset, 0, GateType::INTERRUPT_GATE, 0,"
+                f"        idt_set({i}, reinterpret_cast<void*>(ISR{i}), GDT_OFFSET, 0, GateType::INTERRUPT_GATE, 0,"
                 " false);\n"
             )
+        file.write("        //NOLINTEND\n")
         file.write("    }\n")
 
         file.write("}\n\n")

@@ -21,7 +21,7 @@ namespace Rune::CPU {
         : _policy(policy),
           _lower_policy_queue(lower_policy_queue) {}
 
-    LinkedList<Thread*> MultiLevelQueue::get_queued_threads() {
+    auto MultiLevelQueue::get_queued_threads() -> LinkedList<Thread*> {
         LinkedList<Thread*> l;
         auto*               c_thread_q = this;
         while (c_thread_q != nullptr) {
@@ -31,11 +31,11 @@ namespace Rune::CPU {
         return l;
     }
 
-    SchedulingPolicy MultiLevelQueue::get_policy() { return _policy; }
+    auto MultiLevelQueue::get_policy() -> SchedulingPolicy { return _policy; }
 
-    MultiLevelQueue* MultiLevelQueue::get_lower_policy_queue() { return _lower_policy_queue; }
+    auto MultiLevelQueue::get_lower_policy_queue() -> MultiLevelQueue* { return _lower_policy_queue; }
 
-    Thread* MultiLevelQueue::peek() {
+    auto MultiLevelQueue::peek() -> Thread* {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             if (!c_thread_q->_threads.is_empty()) return (*c_thread_q->_threads.head()).get();
@@ -44,7 +44,7 @@ namespace Rune::CPU {
         return nullptr;
     }
 
-    bool MultiLevelQueue::enqueue(SharedPointer<Thread> t) {
+    auto MultiLevelQueue::enqueue(SharedPointer<Thread> t) -> bool {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             if (c_thread_q->get_policy() == t->policy) {
@@ -56,7 +56,7 @@ namespace Rune::CPU {
         return false;
     }
 
-    SharedPointer<Thread> MultiLevelQueue::dequeue() {
+    auto MultiLevelQueue::dequeue() -> SharedPointer<Thread> {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             if (!c_thread_q->_threads.is_empty()) {
@@ -69,7 +69,7 @@ namespace Rune::CPU {
         return SharedPointer<Thread>(nullptr);
     }
 
-    SharedPointer<Thread> MultiLevelQueue::remove(int thread_id) {
+    auto MultiLevelQueue::remove(U16 thread_id) -> SharedPointer<Thread> {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             SharedPointer<Thread> to_delete(nullptr);

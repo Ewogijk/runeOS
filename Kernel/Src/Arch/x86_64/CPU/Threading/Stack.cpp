@@ -17,7 +17,7 @@
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::CPU {
-    VirtualAddr setup_empty_stack(VirtualAddr stack_top) {
+    auto setup_empty_stack(VirtualAddr stack_top) -> VirtualAddr {
         auto* s_top = reinterpret_cast<U64*>(stack_top);
         // Push the null frame marking the end of the stack
         *(--s_top) = 0;
@@ -25,7 +25,8 @@ namespace Rune::CPU {
         return memory_pointer_to_addr(s_top);
     }
 
-    VirtualAddr setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter) {
+    auto setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter)
+        -> VirtualAddr {
         // Set up the stack so that the CPU jumps to the thread_enter function on context switch
         // with a null frame at the bottom.
         //
@@ -61,7 +62,7 @@ namespace Rune::CPU {
         // Init stack frame
         *(--s_top) = thread_enter;   // Return addr
         *(--s_top) = 0;              // RBX
-        *(--s_top) = stack_top - 24; // RBP
+        *(--s_top) = stack_top - 24; // RBP NOLINT
         *(--s_top) = 0;              // R12
         *(--s_top) = 0;              // R13
         *(--s_top) = 0;              // R14
@@ -69,7 +70,7 @@ namespace Rune::CPU {
 
         // XMM0-XMM15, 16 registers 128bit wide. but we can only push 64 bit values
         // therefore push 2*16 zeroes
-        for (int i = 0; i < 32; i++) *(--s_top) = 0;
+        for (int i = 0; i < 32; i++) *(--s_top) = 0; // NOLINT
 
         return memory_pointer_to_addr(s_top);
     }

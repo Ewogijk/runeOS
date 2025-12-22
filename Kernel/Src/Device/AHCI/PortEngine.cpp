@@ -149,8 +149,8 @@ namespace Rune::Device {
         LOGGER->debug("GPT Scan Status: {}", scan_res.status.to_string());
         if (scan_res.status == GPTScanStatus::DETECTED) {
             for (auto& partition : scan_res.partition_table) {
-                bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf,
-                                                  (void*) KERNEL_PARTITION_GUID,
+                bool is_kernel_partition = memcmp(partition.unique_partition_guid.buf.data(),
+                                                  KERNEL_PARTITION_GUID.data(),
                                                   GUID::SIZE)
                                            == 0;
                 _disk_info.partition_table.add_back(

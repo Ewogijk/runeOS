@@ -31,11 +31,17 @@ namespace Rune::App {
      * The ELF loader loads an ELF64 executable into memory.
      */
     class ELFLoader {
+        // ELF file signature
+        static constexpr unsigned char ELF_SIG0 = 0x7F;
+        static constexpr unsigned char ELF_SIG1 = 'E';
+        static constexpr unsigned char ELF_SIG2 = 'L';
+        static constexpr unsigned char ELF_SIG3 = 'F';
+
         // File content buffering
         static constexpr U16 BUF_SIZE = 8192;
         U16                  _buf_pos;
         U16                  _buf_limit;
-        U8                   _file_buf[BUF_SIZE];
+        Array<U8, BUF_SIZE>  _file_buf;
 
         Memory::MemoryModule* _memory_subsys;
         VFS::VFSModule*       _vfs_subsys;
@@ -52,14 +58,19 @@ namespace Rune::App {
         // Skip the requested amount of bytes from the file start.
         auto seek(U64 byte_count) -> bool;
 
+        auto parse_vendor_information(ELF64File&          elf_file,
+                                      ELF64ProgramHeader& note_ph,
+                                      ByteOrder           byte_order) -> LoadStatus;
+
         auto load_elf_file(ELF64File& elf_file) -> LoadStatus;
 
         auto allocate_segments(const ELF64File& elf64_file, VirtualAddr& heap_start) -> bool;
 
         auto load_segments(const ELF64File& elf_file) -> bool;
 
-        auto setup_bootstrap_area(const ELF64File& elf_file, char* args[], size_t stack_size)
-            -> CPU::StartInfo*;
+        auto setup_bootstrap_area(const ELF64File& elf_file,
+                                  char*            args[], // NOLINT argv is part of the kernel ABI
+                                  size_t           stack_size) -> CPU::StartInfo*;
 
       public:
         ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys);
@@ -102,7 +113,7 @@ namespace Rune::App {
          * @return The final status of the ELF loading.
          */
         auto load(const Path&                executable,
-                  char*                      args[],
+                  char*                      args[], // NOLINT argv is part of the kernel ABI
                   const SharedPointer<Info>& entry_out,
                   CPU::Stack&                user_stack_out,
                   VirtualAddr&               start_info_addr_out,

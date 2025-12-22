@@ -26,15 +26,15 @@
 #include <Device/DeviceModule.h>
 
 namespace Rune::BuiltInPlugin {
-    PluginInfo AHCI_INFO = {
-        "AHCI",
-        "Ewogijk",
-        {1, 0, 0, ""}
+    const PluginInfo AHCI_INFO = {
+        .name    = "AHCI",
+        .vendor  = "Ewogijk",
+        .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
-    PluginInfo AHCIDriverPlugin::get_info() const { return AHCI_INFO; }
+    auto AHCIDriverPlugin::get_info() const -> PluginInfo { return AHCI_INFO; }
 
-    bool AHCIDriverPlugin::load() {
+    auto AHCIDriverPlugin::load() -> bool {
         System& system = System::instance();
         auto*   ms     = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto*   cs     = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);

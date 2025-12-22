@@ -17,18 +17,18 @@
 #ifndef EMBER_ENUM_H
 #define EMBER_ENUM_H
 
-#include <stddef.h>
+#include <stddef.h> // NOLINT cstddef does not exist
 
 /**
  * @brief
  * @param str C string.
  * @return Length of the c string.
  */
-size_t e_strlen(const char* str);
+auto e_strlen(const char* str) -> size_t;
 
-int e_memcmp(const void* lhs, const void* rhs, size_t count);
+auto e_memcmp(const void* lhs, const void* rhs, size_t count) -> int;
 
-#define ENUM_VALUE(ClassName, Name, Value) Name = Value,
+#define ENUM_VALUE(ClassName, Name, Value) Name = Value, // NOLINT
 
 #define ENUM_TO_STRING(ClassName, Name, Value)                                                     \
     if (_value == ClassName::Name) return #Name;
@@ -40,10 +40,10 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
     if (e_memcmp(str, #Name, e_strlen(str)) == 0) _value = ClassName::Name;
 
 #define ENUM_FROM_VALUE(ClassName, Name, Value)                                                    \
-    if (value == Value) return ClassName::Name;
+    if (value == Value) return ClassName::Name; // NOLINT
 
 #define ENUM_CONSTRUCT_FROM_VALUE(ClassName, Name, Value)                                          \
-    if (value == Value) _value = ClassName::Name;
+    if (value == Value) _value = ClassName::Name; // NOLINT
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Typed Enum
@@ -94,6 +94,8 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
  *  DEFINE_TYPED_ENUM(Fruit, U8, FRUITS, 0)
  * </p>
  */
+// NOLINTBEGIN macro parameters cannot be in parentheses because then the code is not declared
+// correctly
 #define DECLARE_TYPED_ENUM(ClassName, EnumType, EnumDefs, NoneValue)                               \
     class ClassName {                                                                              \
       public:                                                                                      \
@@ -235,5 +237,5 @@ int e_memcmp(const void* lhs, const void* rhs, size_t count);
     auto ClassName::from_value(int value) -> ClassName {                                           \
         EnumDefs(ENUM_FROM_VALUE) return ClassName::NONE;                                          \
     }
-
+// NOLINTEND
 #endif // EMBER_ENUM_H

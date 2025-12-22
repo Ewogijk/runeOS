@@ -27,15 +27,15 @@
 
 namespace Rune::BuiltInPlugin {
 
-    PluginInfo FAT_INFO = {
-        "FAT",
-        "Ewogijk",
-        {1, 0, 0, ""}
+    const PluginInfo FAT_INFO = {
+        .name    = "FAT",
+        .vendor  = "Ewogijk",
+        .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
-    PluginInfo FATDriverPlugin::get_info() const { return FAT_INFO; }
+    auto FATDriverPlugin::get_info() const -> PluginInfo { return FAT_INFO; }
 
-    bool FATDriverPlugin::load() {
+    auto FATDriverPlugin::load() -> bool {
         System& system = System::instance();
         auto*   fs     = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
         auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);

@@ -110,22 +110,25 @@ namespace Rune::Device {
     };
 
     struct HBAMemory {
-        HBACapabilities                    CAP;
-        GlobalHBAControl                   GHC;
-        uint32_t                           IS;
-        uint32_t                           PI;
-        AHCIVersion                        VS;
-        CommandCompletionCoalescingControl CCC_CTL;
-        uint32_t                           CCC_PORTS;
-        EnclosureManagementLocation        EM_LOC;
-        EnclosureManagementControl         EM_CTL;
-        HBACapabilitiesExtended            CAP2;
-        BIOSOSHandoffControlAndStatus      BOHC;
+        /// @brief Up to 32 ports are supported.
+        static constexpr U8 MAX_PORT_COUNT = 32;
 
-        U8 Reserved[116]; // Registers 0x2C-0x9F
-        U8 Vendor[96];    // Registers 0xA0-0xFF
+        HBACapabilities                    CAP{};
+        GlobalHBAControl                   GHC{};
+        uint32_t                           IS{};
+        uint32_t                           PI{};
+        AHCIVersion                        VS{};
+        CommandCompletionCoalescingControl CCC_CTL{};
+        uint32_t                           CCC_PORTS{};
+        EnclosureManagementLocation        EM_LOC{};
+        EnclosureManagementControl         EM_CTL{};
+        HBACapabilitiesExtended            CAP2{};
+        BIOSOSHandoffControlAndStatus      BOHC{};
 
-        HBAPort Port[32]; // Can support up to 32
+        Array<U8, 116> Reserved{}; // NOLINT Registers 0x2C-0x9F
+        Array<U8, 96>  Vendor{};   // NOLINT Registers 0xA0-0xFF
+
+        HBAPort Port[MAX_PORT_COUNT]; // NOLINT HBAMemory needs to be volatile -> Must be C-Array
     };
 } // namespace Rune::Device
 

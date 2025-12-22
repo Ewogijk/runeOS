@@ -22,12 +22,8 @@
 
 namespace Ember {
 
-    /**
-     * @brief The memory system call IDs.
-     * <ul>
-     *  <li>TODO describe enum values</li>
-     * </ul>
-     */
+
+    ///@brief The memory system call IDs.
 #define MEMORY_SYSCALLS(X)                                                                         \
     X(Memory, GET_PAGE_SIZE, 100)                                                                  \
     X(Memory, ALLOCATE_PAGE, 101)                                                                  \
@@ -35,12 +31,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(Memory, ResourceID, MEMORY_SYSCALLS, 0x0) // NOLINT
 
-    /**
-     * @brief The threading system call IDs.
-     * <ul>
-     *  <li>TODO describe enum values</li>
-     * </ul>
-     */
+    /// @brief @brief The threading system call IDs.
 #define THREADING_SYSCALLS(X)                                                                      \
     X(Threading, MUTEX_CREATE, 200)                                                                \
     X(Threading, MUTEX_LOCK, 201)                                                                  \
@@ -51,12 +42,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(Threading, ResourceID, THREADING_SYSCALLS, 0x0) // NOLINT
 
-    /**
-     * @brief The VFS system call IDs.
-     * <ul>
-     *  <li>TODO describe enum values</li>
-     * </ul>
-     */
+    ///@brief The VFS system call IDs.
 #define VFS_SYSCALLS(X)                                                                            \
     X(VFS, GET_NODE_INFO, 300)                                                                     \
     X(VFS, GET_NODE_INFO_BY_ID, 301)                                                               \
@@ -73,12 +59,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(VFS, ResourceID, VFS_SYSCALLS, 0x0) // NOLINT
 
-    /**
-     * @brief The app system call IDs.
-     * <ul>
-     *  <li>TODO describe enum values</li>
-     * </ul>
-     */
+    ///@brief The app system call IDs.
 #define APP_SYSCALLS(X)                                                                            \
     X(App, READ_STDIN, 400)                                                                        \
     X(App, WRITE_STDOUT, 401)                                                                      \

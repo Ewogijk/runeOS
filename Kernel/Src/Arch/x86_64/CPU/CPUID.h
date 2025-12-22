@@ -31,28 +31,19 @@ namespace Rune::CPU {
         Register rdx = 0;
     };
 
-    /**
-     * @brief True: CPU ID features are supported. False: Not.
-     */
+    /// @brief True: CPU ID features are supported. False: Not.
     CLINK auto cpuid_is_supported() -> bool;
 
-    /**
-     * @brief Make a CPU ID request and store the result in "resp"
-     */
+    /// @brief Make a CPU ID request and store the result in "resp"
     CLINK void cpuid_make_request(U64 request, CPUIDResponse* resp);
 
-    /**
-     * Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated after the
-     * call to this function.
-     *
-     * @param buf A char buffer of size 13.
-     */
+    /// @brief Read the 12 byte ASCII CPU vendor into the char `buf` which will be null terminated
+    /// after the call to this function.
+    /// @return
     auto cpuid_get_vendor() -> String;
 
-    /**
-     *
-     * @return The size of a physical address in bits.
-     */
+    /// @brief
+    /// @return The size of a physical address in bits.
     auto cpuid_get_physical_address_width() -> U8;
 
 } // namespace Rune::CPU

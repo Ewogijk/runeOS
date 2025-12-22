@@ -21,7 +21,7 @@ namespace Rune {
     //                                          Version
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    String Version::to_string() const {
+    auto Version::to_string() const -> String {
         return pre_release.is_empty()
                    ? String::format("{}.{}.{}", major, minor, patch)
                    : String::format("{}.{}.{}-{}", major, minor, patch, pre_release);
@@ -41,15 +41,16 @@ namespace Rune {
         }
     }
 
-    Module::Module() : _event_hook_table(), _event_hook_handle_counter() {}
+    Module::Module() = default;
 
-    LinkedList<EventHookTableEntry> Module::get_event_hook_table() {
+    auto Module::get_event_hook_table() -> LinkedList<EventHookTableEntry> {
         LinkedList<EventHookTableEntry> evt_hook_tbl;
-        for (auto& e : _event_hook_table) {
+        for (const auto& e : _event_hook_table) {
             EventHookTableEntry evt_hook_tbl_e;
-            evt_hook_tbl_e.event_hook = *e.key;
+            evt_hook_tbl_e.event_hook = *e.key; // NOLINT only end() will be null
             for (auto& ee : *e.value) {
-                evt_hook_tbl_e.event_handler_table.add_back({ee.handle, ee.name, ee.notified});
+                evt_hook_tbl_e.event_handler_table.add_back(
+                    {.handle = ee.handle, .name = ee.name, .notified = ee.notified});
             }
             evt_hook_tbl.add_back(evt_hook_tbl_e);
         }
@@ -57,20 +58,23 @@ namespace Rune {
         return evt_hook_tbl;
     }
 
-    U16 Module::install_event_handler(const String&       event_hook,
-                                      const String&       evt_handler_name,
-                                      const EventHandler& handler) {
+    auto Module::install_event_handler(const String&       event_hook,
+                                       const String&       evt_handler_name,
+                                       const EventHandler& handler) -> U16 {
         if (!_event_hook_handle_counter.has_more()) return 0;
 
         auto it = _event_hook_table.find(event_hook);
         if (it == _event_hook_table.end()) return 0;
 
         U16 evt_handler_id = _event_hook_handle_counter.acquire();
-        it->value->add_back({evt_handler_id, evt_handler_name, 0, handler});
+        it->value->add_back({.handle   = evt_handler_id,
+                             .name     = evt_handler_name,
+                             .notified = 0,
+                             .handler  = handler});
         return evt_handler_id;
     }
 
-    bool Module::uninstall_event_handler(const String& event_hook, U16 evt_handler_id) {
+    auto Module::uninstall_event_handler(const String& event_hook, U16 evt_handler_id) -> bool {
         auto it = _event_hook_table.find(event_hook);
         if (it == _event_hook_table.end()) return false;
 

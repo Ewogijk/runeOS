@@ -19,10 +19,10 @@
 namespace Rune::CPU {
     DeltaQueue::DeltaQueue() : _first(nullptr), _last(nullptr) {}
 
-    DQNode* DeltaQueue::first() const { return _first; }
+    auto DeltaQueue::first() const -> DQNode* { return _first; }
 
     void DeltaQueue::update_wake_time(U64 time_decrement) {
-        if (_first) _first->wake_time -= time_decrement;
+        if (_first != nullptr) _first->wake_time -= time_decrement;
     }
 
     void DeltaQueue::enqueue(const SharedPointer<Thread>& thread, U64 wake_time) {
@@ -65,7 +65,7 @@ namespace Rune::CPU {
         }
     }
 
-    SharedPointer<Thread> DeltaQueue::dequeue() {
+    auto DeltaQueue::dequeue() -> SharedPointer<Thread> {
         if (_first == nullptr) return SharedPointer<Thread>(nullptr);
 
         if (_first->wake_time == 0) {
@@ -85,21 +85,21 @@ namespace Rune::CPU {
         return SharedPointer<Thread>(nullptr);
     }
 
-    bool DeltaQueue::remove_waiting_thread(int t_id) {
+    auto DeltaQueue::remove_waiting_thread(U16 t_id) -> bool {
         if (_first == nullptr) return false;
 
         DQNode* c_node  = _first;
         bool    removed = false;
-        while (c_node) {
+        while (c_node != nullptr) {
             if (c_node->sleeping_thread->handle == t_id) {
                 DQNode* next = c_node->next;
-                if (next) {
+                if (next != nullptr) {
                     next->wake_time += c_node->wake_time;
                     next->prev       = c_node->prev;
                 }
 
                 DQNode* prev = c_node->prev;
-                if (prev) prev->next = next;
+                if (prev != nullptr) prev->next = next;
 
                 removed                 = true;
                 c_node->prev            = nullptr;

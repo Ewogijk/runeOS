@@ -16,6 +16,7 @@
 
 #include <Device/AHCI/GPT.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Utility.h>
 
 #include <KRE/Memory.h>
@@ -23,14 +24,14 @@
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.GPT");
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          CRC32 Implementation
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      CRC32
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    U32 reverse_bits(U32 data, U8 bit_count) {
+    auto reverse_bits(U32 data, U8 bit_count) -> U32 {
         U32 reflection = 0;
         for (U8 bit = 0; bit < bit_count; bit++) {
-            if (data & 0x01) {
+            if ((data & 0x01) != 0) {
                 reflection |= (1 << ((bit_count - 1) - bit));
             }
             data = data >> 1;
@@ -38,108 +39,123 @@ namespace Rune::Device {
         return reflection;
     }
 
-    U32 compute_crc_32_checksum(const U8 data[], size_t size) {
-        U32 remainder  = 0xFFFFFFFF;
-        U32 polynomial = 0x04C11DB7;
-        U8  width      = 32;
+    // NOLINTBEGIN C-Style array is intentional as we can cast a GPTHeader instance to byte array,
+    //  with the Array class we would need to memcpy in said array first
+    auto compute_crc_32_checksum(const U8 data[], size_t size) -> U32 {
+        U32           remainder  = MASK_DWORD;
+        constexpr U32 POLYNOMIAL = 0x04C11DB7;
+        constexpr U8  WIDTH      = 32;
         for (size_t i = 0; i < size; i++) {
-            remainder ^= (reverse_bits(data[i], 8) << (width - 8));
+            remainder ^= (reverse_bits(data[i], BIT_COUNT_BYTE) << (WIDTH - BIT_COUNT_BYTE));
             // Optimization: Use lookup table for all 256 possible byte values
-            for (U8 bit = 8; bit > 0; bit--) {
-                if (remainder & (1 << (width - 1))) {
-                    remainder = (remainder << 1) ^ polynomial;
+            for (U8 bit = BIT_COUNT_BYTE; bit > 0; bit--) {
+                if ((remainder & (1 << (WIDTH - 1))) != 0) {
+                    remainder = (remainder << 1) ^ POLYNOMIAL;
                 } else {
                     remainder = (remainder << 1);
                 }
             }
         }
-        return reverse_bits(remainder ^ 0xFFFFFFFF, 32);
+        return reverse_bits(remainder ^ MASK_DWORD, BIT_COUNT_DWORD);
     }
 
-    bool verify_crc_32_checksum(const U8 data[], size_t size, U32 expected_crc_32) {
+    auto verify_crc_32_checksum(const U8 data[], size_t size, U32 expected_crc_32) -> bool {
         return compute_crc_32_checksum(data, size) == expected_crc_32;
     }
+    // NOLINTEND
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          GUID Impl
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          GUID
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    String GUID::to_string() {
+    auto GUID::to_string() -> String {
+        // Node must be converted in two steps as it is a 6 byte value
         return String::format("{:0=8x}-{:0=4x}-{:0=4x}-{:0=4x}-{:0=8x}{:0=4x}",
-                              LittleEndian::to_U32(buf),
-                              LittleEndian::to_U16(&buf[4]),
-                              LittleEndian::to_U16(&buf[6]),
-                              BigEndian::to_U16(&buf[8]),
-                              BigEndian::to_U32(&buf[10]),
-                              BigEndian::to_U16(&buf[14]));
+                              LittleEndian::to_U32(buf.data()),
+                              LittleEndian::to_U16(&buf[GUID::TIME_MID_OFFSET]),
+                              LittleEndian::to_U16(&buf[GUID::TIME_HIGH_AND_VERSION_OFFSET]),
+                              BigEndian::to_U16(&buf[GUID::CLOCK_SEQ_OFFSET]),
+                              BigEndian::to_U32(&buf[GUID::NODE_OFFSET]),
+                              BigEndian::to_U16(&buf[GUID::NODE_OFFSET + 4]));
     }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      GPTPartitionTableEntry Impl
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      GPTPartitionTableEntry
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     DEFINE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0)
 
-    String GPTPartitionTableEntry::get_name() {
-        U8 buf[18];
-        for (int i = 0; i < 18; i++) {
-            buf[i] = name_buf[i] & 0x00FF;
+    auto GPTPartitionTableEntry::get_name() -> String {
+        Array<U8, GPTPartitionTableEntry::PARTITION_NAME_SIZE> buf{};
+        for (U8 i = 0; i < GPTPartitionTableEntry::PARTITION_NAME_SIZE; i++) {
+            buf[i] = name_buf[i] & MASK_BYTE;
             if (buf[i] == 0) break;
         }
-        return {(const char*) buf};
+        return {reinterpret_cast<const char*>(buf.data())};
     }
 
-    GPTScanStatus parse_header(Function<size_t(U8[], size_t, U64)>& sector_reader,
-                               size_t                               sector_size,
-                               U64                                  lba,
-                               GPTHeader&                           out) {
+    // NOLINTBEGIN U8[] of sector_buf and sector_reader is required by PortEngine
+    auto parse_header(Function<size_t(U8[], size_t, U64)>& sector_reader,
+                      size_t                               sector_size,
+                      U64                                  lba,
+                      GPTHeader&                           out) -> GPTScanStatus {
         U8     sector_buf[sector_size];
         size_t read = sector_reader(sector_buf, forward<size_t>(sector_size), forward<U64>(lba));
         if (read != sector_size) return GPTScanStatus::STORAGE_DEV_ERROR;
-        out.signature        = LittleEndian::to_U64(sector_buf);
-        out.revision         = LittleEndian::to_U32(&sector_buf[8]);
-        out.header_size      = LittleEndian::to_U32(&sector_buf[12]);
-        out.header_crc_32    = LittleEndian::to_U32(&sector_buf[16]);
-        out.reserved[0]      = 0;
-        out.reserved[1]      = 0;
-        out.reserved[2]      = 0;
-        out.reserved[3]      = 0;
-        out.my_lba           = LittleEndian::to_U64(&sector_buf[24]);
-        out.alternate_lba    = LittleEndian::to_U64(&sector_buf[32]);
-        out.first_usable_lba = LittleEndian::to_U64(&sector_buf[40]);
-        out.last_usable_lba  = LittleEndian::to_U64(&sector_buf[48]);
-        memcpy(out.disk_guid.buf, &sector_buf[56], 16);
-        out.partition_entry_lba          = LittleEndian::to_U64(&sector_buf[72]);
-        out.number_of_partition_entries  = LittleEndian::to_U32(&sector_buf[80]);
-        out.size_of_partition_entry      = LittleEndian::to_U32(&sector_buf[84]);
-        out.partition_entry_array_crc_32 = LittleEndian::to_U32(&sector_buf[88]);
+        out.signature     = LittleEndian::to_U64(&sector_buf[GPTHeader::SIGNATURE_OFFSET]);
+        out.revision      = LittleEndian::to_U32(&sector_buf[GPTHeader::REVISION_OFFSET]);
+        out.header_size   = LittleEndian::to_U32(&sector_buf[GPTHeader::HEADER_SIZE_OFFSET]);
+        out.header_crc_32 = LittleEndian::to_U32(&sector_buf[GPTHeader::HEADER_CRC32_OFFSET]);
+        out.reserved[0]   = 0;
+        out.reserved[1]   = 0;
+        out.reserved[2]   = 0;
+        out.reserved[3]   = 0;
+        out.my_lba        = LittleEndian::to_U64(&sector_buf[GPTHeader::MY_LBA_OFFSET]);
+        out.alternate_lba = LittleEndian::to_U64(&sector_buf[GPTHeader::ALTERNATE_LBA_OFFSET]);
+        out.first_usable_lba =
+            LittleEndian::to_U64(&sector_buf[GPTHeader::FIRST_USABLE_LBA_OFFSET]);
+        out.last_usable_lba = LittleEndian::to_U64(&sector_buf[GPTHeader::LAST_USABLE_LBA_OFFSET]);
+        memcpy(out.disk_guid.buf.data(),
+               &sector_buf[GPTHeader::DISK_GUID_OFFSET],
+               GPTHeader::DISK_GUID_SIZE);
+        out.partition_entry_lba =
+            LittleEndian::to_U64(&sector_buf[GPTHeader::PARTITION_ENTRY_LBA_OFFSET]);
+        out.number_of_partition_entries =
+            LittleEndian::to_U32(&sector_buf[GPTHeader::NUMBER_OF_PARTITION_ENTRIES_OFFSET]);
+        out.size_of_partition_entry =
+            LittleEndian::to_U32(&sector_buf[GPTHeader::SIZE_OF_PARTITION_ENTRY_OFFSET]);
+        out.partition_entry_array_crc_32 =
+            LittleEndian::to_U32(&sector_buf[GPTHeader::PARTITION_ENTRY_ARRAY_CRC32_OFFSET]);
 
         // 0x5452415020494645 -> ASCII: "EFI PART"
-        if (out.signature != 0x5452415020494645) return GPTScanStatus::NOT_DETECTED;
+        if (out.signature != GPTHeader::SIGNATURE_HEX) return GPTScanStatus::NOT_DETECTED;
 
         U32 crc_back_up   = out.header_crc_32;
         out.header_crc_32 = 0;
-        bool result       = verify_crc_32_checksum((U8*) &out, out.header_size, crc_back_up);
+        bool result =
+            verify_crc_32_checksum(reinterpret_cast<U8*>(&out), out.header_size, crc_back_up);
         out.header_crc_32 = crc_back_up;
         return result ? GPTScanStatus::DETECTED : GPTScanStatus::CORRUPT_HEADER;
     }
 
-    GPTScanResult gpt_scan_device(Function<size_t(U8[], size_t, U64)>& sector_reader,
-                                  size_t                               sector_size) {
+    auto gpt_scan_device(Function<size_t(U8[], size_t, U64)>& sector_reader, size_t sector_size)
+        -> GPTScanResult {
 
         GPTHeader     header;
         GPTScanStatus gpt_scan_status = parse_header(sector_reader, sector_size, 1, header);
         if (gpt_scan_status != GPTScanStatus::DETECTED) {
             if (gpt_scan_status != GPTScanStatus::NOT_DETECTED)
                 LOGGER->warn("Failed to parse GPT header: {} (LBA 1)", gpt_scan_status.to_string());
-            return {gpt_scan_status, {}, LinkedList<GPTPartitionTableEntry>()};
+            return {.status          = gpt_scan_status,
+                    .header          = {},
+                    .partition_table = LinkedList<GPTPartitionTableEntry>()};
         }
 
         // Read whole partition table
-        size_t buf_size = header.size_of_partition_entry * header.number_of_partition_entries;
+        auto buf_size = header.size_of_partition_entry * header.number_of_partition_entries;
         if (!memory_is_aligned(buf_size, sector_size))
             buf_size = memory_align(buf_size, sector_size, true);
-        U8  partition_table_buf[buf_size];
+        U8  partition_table_buf[buf_size]; // NOLINT size is dynamic -> cannot use Array
         U32 b_pos = 0;
         U64 c_lba = header.partition_entry_lba;
         while (b_pos < buf_size) {
@@ -148,7 +164,9 @@ namespace Rune::Device {
                                               forward<U64>(c_lba));
             if (bytes_read != sector_size) {
                 LOGGER->warn("Failed to read partition table entry at sector {}.", c_lba);
-                return {GPTScanStatus::STORAGE_DEV_ERROR, {}, LinkedList<GPTPartitionTableEntry>()};
+                return {.status          = GPTScanStatus::STORAGE_DEV_ERROR,
+                        .header          = {},
+                        .partition_table = LinkedList<GPTPartitionTableEntry>()};
             }
             b_pos += sector_size;
             c_lba++;
@@ -156,13 +174,13 @@ namespace Rune::Device {
 
         // Compute partition table CRC
         U32 p_t_crc_32 = compute_crc_32_checksum(partition_table_buf,
-                                                 header.size_of_partition_entry
+                                                 static_cast<size_t>(header.size_of_partition_entry)
                                                      * header.number_of_partition_entries);
         if (p_t_crc_32 != header.partition_entry_array_crc_32) {
             LOGGER->warn("Wrong partition table CRC detected.");
-            return {GPTScanStatus::CORRUPT_PARTITION_TABLE,
-                    {},
-                    LinkedList<GPTPartitionTableEntry>()};
+            return {.status          = GPTScanStatus::CORRUPT_PARTITION_TABLE,
+                    .header          = {},
+                    .partition_table = LinkedList<GPTPartitionTableEntry>()};
         }
 
         GPTHeader back_up_header;
@@ -174,35 +192,56 @@ namespace Rune::Device {
                 if (bu_gpt_scan_status != GPTScanStatus::NOT_DETECTED)
                     LOGGER->warn("Failed to parse backup GPT header: {} (LBA 1)",
                                  bu_gpt_scan_status.to_string());
-                return {bu_gpt_scan_status, {}, LinkedList<GPTPartitionTableEntry>()};
+                return {.status          = bu_gpt_scan_status,
+                        .header          = {},
+                        .partition_table = LinkedList<GPTPartitionTableEntry>()};
             }
         }
 
         // Parse partition table
-        U8 zeroes[16];
-        memset(zeroes, 0, 16);
+        Array<U8, GUID::SIZE> zeroes{};
+        memset(zeroes.data(), 0, GUID::SIZE);
         LinkedList<GPTPartitionTableEntry> p_e_table;
         U32                                p_e_buf_idx = 0;
         while (p_e_buf_idx < header.number_of_partition_entries) {
             size_t byte_offset = p_e_buf_idx * sizeof(GPTPartitionTableEntry);
-            if (memcmp(zeroes, &partition_table_buf[byte_offset], 16) == 0) {
+            if (memcmp(zeroes.data(), &partition_table_buf[byte_offset], GUID::SIZE) == 0) {
                 // Unused entry
                 p_e_buf_idx++;
                 continue;
             }
             GPTPartitionTableEntry pt_e;
-            memcpy(pt_e.partition_type_guid.buf, &partition_table_buf[byte_offset], 16);
-            memcpy(pt_e.unique_partition_guid.buf, &partition_table_buf[byte_offset + 16], 16);
-            pt_e.starting_lba = LittleEndian::to_U64(&partition_table_buf[byte_offset + 32]);
-            pt_e.ending_lba   = LittleEndian::to_U64(&partition_table_buf[byte_offset + 40]);
-            pt_e.attributes   = LittleEndian::to_U64(&partition_table_buf[byte_offset + 48]);
-            memcpy(pt_e.name_buf, &partition_table_buf[byte_offset + 56], 72);
-            p_e_table.add_back(pt_e);
+            size_t                 pte_offset = 0;
+            memcpy(pt_e.partition_type_guid.buf.data(),
+                   &partition_table_buf[byte_offset],
+                   GUID::SIZE);
 
+            pte_offset += GUID::SIZE;
+            memcpy(pt_e.unique_partition_guid.buf.data(),
+                   &partition_table_buf[byte_offset + pte_offset],
+                   GUID::SIZE);
+
+            pte_offset += GUID::SIZE;
+            pt_e.starting_lba =
+                LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+
+            pte_offset      += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
+            pt_e.ending_lba  = LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+
+            pte_offset      += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
+            pt_e.attributes  = LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+
+            pte_offset += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
+            memcpy(pt_e.name_buf.data(),
+                   &partition_table_buf[byte_offset + pte_offset],
+                   static_cast<size_t>(GPTPartitionTableEntry::PARTITION_NAME_SIZE) * 2);
+
+            p_e_table.add_back(pt_e);
             p_e_buf_idx++;
         }
 
-        return {GPTScanStatus::DETECTED, header, p_e_table};
+        return {.status = GPTScanStatus::DETECTED, .header = header, .partition_table = p_e_table};
     }
+    // NOLINTEND
 
 } // namespace Rune::Device
