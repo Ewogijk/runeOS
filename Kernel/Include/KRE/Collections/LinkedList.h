@@ -382,9 +382,13 @@ namespace Rune {
             return curr ? &(curr->element) : nullptr;
         }
 
-        auto begin() const -> LinkedListIterator<T> { return LinkedListIterator<T>(_head); }
+        [[nodiscard]] auto begin() const -> LinkedListIterator<T> {
+            return LinkedListIterator<T>(_head);
+        }
 
-        auto end() const -> LinkedListIterator<T> { return LinkedListIterator<T>(nullptr); }
+        [[nodiscard]] auto end() const -> LinkedListIterator<T> {
+            return LinkedListIterator<T>(nullptr);
+        }
     };
 } // namespace Rune
 

@@ -16,7 +16,7 @@
 
 #include <SystemCall/MemoryBundle.h>
 
-#include <KRE/Utility.h>
+#include <KRE/BitsAndBytes.h>
 
 #include <Ember/Ember.h>
 #include <Ember/MemoryBits.h>

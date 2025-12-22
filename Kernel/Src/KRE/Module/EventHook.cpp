@@ -17,11 +17,11 @@
 #include <KRE/System/EventHook.h>
 
 namespace Rune {
-    bool operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) {
+    auto operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) -> bool {
         return a.handle == b.handle;
     }
 
-    bool operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) {
+    auto operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) -> bool {
         return a.handle != b.handle;
     }
 
@@ -39,11 +39,11 @@ namespace Rune {
             .print(stream);
     }
 
-    bool operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) {
+    auto operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) -> bool {
         return a.event_hook == b.event_hook;
     }
 
-    bool operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b) {
+    auto operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b) -> bool {
         return a.event_hook != b.event_hook;
     }
 } // namespace Rune

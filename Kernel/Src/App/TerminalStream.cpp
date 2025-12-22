@@ -16,6 +16,8 @@
 
 #include <App/TerminalStream.h>
 
+#include <limits.h> //NOLINT climits does not exist
+
 #include <KRE/Math.h>
 
 #include <CPU/Time/Timer.h>
@@ -30,13 +32,14 @@ namespace Rune::App {
     //                                          Cursor Renderer
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    int render_cursor(CPU::StartInfo* start_info) {
+    auto render_cursor(CPU::StartInfo* start_info) -> int {
         if (start_info->argc != 1) return -1;
-        uintptr_t ptr = 0;
-        if (!parse_int<uintptr_t>(start_info->argv[0], 16, ptr)) return -1;
-        auto*  state     = (TerminalState*) ptr;
+        uintptr_t           ptr       = 0;
+        constexpr uintptr_t HEX_RADIX = 16;
+        if (!parse_int<uintptr_t>(start_info->argv[0], HEX_RADIX, ptr)) return -1;
+        auto*  state     = reinterpret_cast<TerminalState*>(ptr);
         double thickness = 1.0;
-        while (state->keep_rendering_cursor) {
+        while (state->keep_rendering_cursor) { // NOLINT function exits if ptr cannot be parsed
             state->mutex->lock();
             if (!state->timeout_cursor_renderer) {
                 int screen_line = state->cursor_sbb.line - state->viewport;
@@ -47,7 +50,10 @@ namespace Rune::App {
                     U32   y_end   = y_start + state->font->pixel_height;
                     Pixel c       = state->is_cursor_rendered ? state->default_bg_color
                                                               : state->default_fg_color;
-                    state->frame_buffer->draw_line({x, y_start}, {x, y_end}, c, thickness);
+                    state->frame_buffer->draw_line({.x = x, .y = y_start},
+                                                   {.x = x, .y = y_end},
+                                                   c,
+                                                   thickness);
                     state->is_cursor_rendered = !state->is_cursor_rendered;
                 }
             } else {
@@ -63,7 +69,7 @@ namespace Rune::App {
     //                                          TextLine
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    TextLine::TextLine() : styled_text(), line_size(0) { styled_text.add_back({}); }
+    TextLine::TextLine() : line_size(0) { styled_text.add_back({}); }
 
     void TextLine::append_char(char ch) {
         if (styled_text.is_empty()) styled_text.add_back({});
@@ -78,33 +84,32 @@ namespace Rune::App {
         styled_text.add_back({});
     }
 
-    void TextLine::erase(size_t off, size_t len) {
+    auto TextLine::erase(size_t off, size_t len) -> void { // NOLINT render code... it works
         if (off == 0) {
             if (len == line_size) {
                 // whole line was erased -> just clear the line buffer
                 clear();
                 append_char('\n'); // Add \n so the empty line is rendered
                 return;
-            } else {
-                // start of line until cursor was erased -> pad the start of the line with spaces
-                size_t line_offset = 0;
-                for (auto& st : styled_text) {
-                    if (line_offset > len)
-                        // All erased strings are replaced with spaces
-                        break;
+            }
+            // start of line until cursor was erased -> pad the start of the line with spaces
+            size_t line_offset = 0;
+            for (auto& st : styled_text) {
+                if (line_offset > len)
+                    // All erased strings are replaced with spaces
+                    break;
 
-                    size_t num_spaces = min(st.text.size(), len - line_offset);
-                    String spaces;
-                    for (size_t i = 0; i < num_spaces; i++) spaces += ' ';
+                size_t num_spaces = min(st.text.size(), len - line_offset);
+                String spaces;
+                for (size_t i = 0; i < num_spaces; i++) spaces += ' ';
 
-                    if (num_spaces < st.text.size())
-                        // We are in the last text slice and only part of it got deleted -> Add the
-                        // end of the text
-                        st.text = spaces + st.text.substring(num_spaces);
-                    else
-                        st.text = spaces;
-                    line_offset += st.text.size();
-                }
+                if (num_spaces < st.text.size())
+                    // We are in the last text slice and only part of it got deleted -> Add the
+                    // end of the text
+                    st.text = spaces + st.text.substring(num_spaces);
+                else
+                    st.text = spaces;
+                line_offset += st.text.size();
             }
         } else {
             // cursor until end of line was erased
@@ -139,7 +144,7 @@ namespace Rune::App {
     //                                          Text Buffering Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    TextLine* TerminalStream::scroll_back_buffer_get_last_line() {
+    auto TerminalStream::scroll_back_buffer_get_last_line() -> TextLine* {
         if (_state.scroll_back_buffer.is_empty()) _state.scroll_back_buffer.add_back({});
         return _state.scroll_back_buffer.tail();
     }
@@ -189,7 +194,7 @@ namespace Rune::App {
 
             if (scroll_dist >= _state.screen_height) {
                 // Scrolled past the whole current screen -> Just clear the whole screen
-                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                memset(static_cast<void*>(_state.frame_buffer->get_address()),
                        0,
                        _state.screen_height * terminal_line_pixels);
             } else {
@@ -197,16 +202,18 @@ namespace Rune::App {
                 // "first line"             "second line"
                 // "second line"    --->    "third line"
                 // "third line"             "third line"
-                memcpy((void*) ((uintptr_t) _state.frame_buffer->get_address()),
-                       (void*) ((uintptr_t) _state.frame_buffer->get_address()
-                                + terminal_line_pixels * scroll_dist),
+                memcpy(static_cast<void*>(_state.frame_buffer->get_address()),
+                       reinterpret_cast<void*>(
+                           reinterpret_cast<uintptr_t>(_state.frame_buffer->get_address())
+                           + (terminal_line_pixels * scroll_dist)),
                        (_state.screen_height - scroll_dist) * terminal_line_pixels);
                 // Clear the last "lines" lines
                 // "second line"            "second line"
                 // "third line"     --->    "third line"
                 // "third line"
-                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()
-                                + (_state.screen_height - scroll_dist) * terminal_line_pixels),
+                memset(reinterpret_cast<void*>(
+                           reinterpret_cast<uintptr_t>(_state.frame_buffer->get_address())
+                           + ((_state.screen_height - scroll_dist) * terminal_line_pixels)),
                        0,
                        scroll_dist * terminal_line_pixels);
             }
@@ -232,7 +239,7 @@ namespace Rune::App {
 
             if (scroll_dist >= _state.screen_height) {
                 // Scrolled past the whole current screen -> Just clear the whole screen
-                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                memset(static_cast<void*>(_state.frame_buffer->get_address()),
                        0,
                        _state.screen_height * terminal_line_pixels);
             } else {
@@ -241,15 +248,16 @@ namespace Rune::App {
                 // "first line"             "second line"
                 // "second line"    --->    "first line"
                 // "third line"             "second line"
-                memmove((void*) ((uintptr_t) _state.frame_buffer->get_address()
-                                 + terminal_line_pixels * scroll_dist),
-                        (void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                memmove(reinterpret_cast<void*>(
+                            reinterpret_cast<uintptr_t>(_state.frame_buffer->get_address())
+                            + (terminal_line_pixels * scroll_dist)),
+                        static_cast<void*>(_state.frame_buffer->get_address()),
                         (_state.screen_height - scroll_dist) * terminal_line_pixels);
                 // Clear the first "lines" lines
                 // "second line"
                 // "first line"    --->     "first line"
                 // "second line"            "second line"
-                memset((void*) ((uintptr_t) _state.frame_buffer->get_address()),
+                memset(static_cast<void*>(_state.frame_buffer->get_address()),
                        0,
                        scroll_dist * terminal_line_pixels);
             }
@@ -321,7 +329,10 @@ namespace Rune::App {
         U32 y_start = (U32) (_state.cursor_sbb.line - _state.viewport) * _state.font->pixel_height;
         U32 y_end   = y_start + _state.font->pixel_height;
         int thickness = 1.0;
-        _state.frame_buffer->draw_line({x, y_start}, {x, y_end}, color, thickness);
+        _state.frame_buffer->draw_line({.x = x, .y = y_start},
+                                       {.x = x, .y = y_end},
+                                       color,
+                                       thickness);
     }
 
     void TerminalStream::start_cursor_movement() {
@@ -341,7 +352,7 @@ namespace Rune::App {
     //                                          Cursor Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool TerminalStream::is_cursor_visible() const {
+    auto TerminalStream::is_cursor_visible() const -> bool {
         int screen_line = _state.cursor_sbb.line - _state.viewport;
         return 0 <= screen_line && screen_line < _state.screen_height;
     }
@@ -361,14 +372,14 @@ namespace Rune::App {
     //                                          ANSI Interpreter Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool TerminalStream::is_csi_command_selector(char ch) {
+    auto TerminalStream::is_csi_command_selector(char ch) -> bool {
         return ch == 'A' || ch == 'B' || ch == 'C' || ch == 'D' || ch == 'H' || ch == 'J'
                || ch == 'K' || ch == 'S' || ch == 'T' || ch == 'm';
     }
 
-    U8 TerminalStream::parse_csi_arg() {
+    auto TerminalStream::parse_csi_arg() -> U8 {
         int val         = 0;
-        int power_ten[] = {100, 10, 1};
+        int power_ten[] = {100, 10, 1}; // NOLINT
         // _digit_buf_offset is filled from left to right, we parse from right to left
         // If the number has three digits then "digit * powerTen[pos]" is its actual numerical value
         // but if the number has less then we need "digit * powerTen[pos + diffToPTen]" where
@@ -384,31 +395,35 @@ namespace Rune::App {
         //      = _digit_buf_offset - 1
         int pos = _digit_buf_offset - 1;
         while (pos >= 0) {
-            U8 digit  = _digit_buf[pos] > 0 ? ((int) _digit_buf[pos] - 0x30) : 0;
-            val      += digit * power_ten[pos + diff_to_p_ten];
+            U8 digit  = _digit_buf[pos] > 0 ? ((int) _digit_buf[pos] - ASCII_DIGIT_MIN) : 0;
+            val      += digit * power_ten[pos + diff_to_p_ten]; // NOLINT
             pos--;
         }
         // Only bytes allowed here!
-        if (val > 255) val = 255;
+        if (val > UINT8_MAX) val = UINT8_MAX;
 
-        memset(_digit_buf, 0, DIGIT_BUF_SIZE);
+        memset(_digit_buf.data(), 0, DIGIT_BUF_SIZE);
         _digit_buf_offset = 0;
         return val;
     }
 
-    void TerminalStream::exec_csi_command() {
+    auto TerminalStream::exec_csi_command() -> void { // NOLINT TODO refactor if it will be expanded
         _state.mutex->lock();
         switch (_csi_cmd_selector) {
             case 'm':
                 // First append raw text buffer content with current color
                 scroll_back_buffer_get_last_line()->style_raw_text(_state.bg_color,
                                                                    _state.fg_color);
-                if (_csi_argv[0] == 38 && _csi_argv[1] == 2) {
+                if (_csi_argv[0] == SGR_SET_FOREGROUND && _csi_argv[1] == 2) {
                     // Change foreground color
-                    _state.fg_color = {_csi_argv[2], _csi_argv[3], _csi_argv[4]};
-                } else if (_csi_argv[0] == 48 && _csi_argv[1] == 2) {
+                    _state.fg_color = {.red   = _csi_argv[2],
+                                       .green = _csi_argv[3],
+                                       .blue  = _csi_argv[4]};
+                } else if (_csi_argv[0] == SGR_SET_BACKGROUND && _csi_argv[1] == 2) {
                     // Change background color
-                    _state.bg_color = {_csi_argv[2], _csi_argv[3], _csi_argv[4]};
+                    _state.bg_color = {.red   = _csi_argv[2],
+                                       .green = _csi_argv[3],
+                                       .blue  = _csi_argv[4]};
                 } else if (_csi_argv[0] == 0) {
                     // Reset all render settings
                     _state.fg_color = _state.default_fg_color;
@@ -594,13 +609,13 @@ namespace Rune::App {
         }
 
         // Reset CSI args and command selector
-        memset(_csi_argv, 0, CSI_ARGV_BUF_SIZE);
+        memset(_csi_argv.data(), 0, CSI_ARGV_BUF_SIZE);
         _csi_argc         = 0;
         _csi_cmd_selector = '\0';
         _state.mutex->unlock();
     }
 
-    bool TerminalStream::interpret_char(char ch) {
+    auto TerminalStream::interpret_char(char ch) -> bool { // NOLINT typical parser
         switch (_interpreter_state) {
             case ANSIInterpreterState::CHARACTER:
                 if (ch == ESC) {
@@ -660,17 +675,16 @@ namespace Rune::App {
                     return false;
                 }
             case ANSIInterpreterState::CSI_ARG:
-                if (0x30 <= ch && ch <= 0x39) {
+                if (ASCII_DIGIT_MIN <= ch && ch <= ASCII_DIGIT_MAX) {
                     // Try parse a digit
                     if (_digit_buf_offset < DIGIT_BUF_SIZE && _csi_argc < CSI_ARGV_BUF_SIZE) {
                         // We have enough space in the digit buf and the CSI argument buf
                         _digit_buf[_digit_buf_offset++] = ch;
                         return true;
-                    } else {
-                        // Argument too long or too many arguments -> Start printing again
-                        _interpreter_state = ANSIInterpreterState::CHARACTER;
-                        return false;
                     }
+                    // Argument too long or too many arguments -> Start printing again
+                    _interpreter_state = ANSIInterpreterState::CHARACTER;
+                    return false;
                 } else if (ch == ';' || is_csi_command_selector(ch)) {
                     // Either end of an argument or end of the CSI command
                     // Convert string to U8
@@ -729,8 +743,9 @@ namespace Rune::App {
         // The arguments to the cursor render thread have to be maintained until the thread actually
         // is running else they are stack allocated and gone after the constructor is finished and
         // then boom
-        _render_thread_arg             = int_to_string((uintptr_t) &_state, 16);
-        _render_thread_argv[0]         = (char*) _render_thread_arg.to_cstr();
+        _render_thread_arg = int_to_string(reinterpret_cast<uintptr_t>(&_state), HEX_RADIX);
+        _render_thread_argv[0] =
+            const_cast<char*>(_render_thread_arg.to_cstr()); // NOLINT required for argv
         _render_thread_argv[1]         = nullptr;
         _render_thread_start_info.argc = 1;
         _render_thread_start_info.argv = _render_thread_argv;
@@ -738,23 +753,23 @@ namespace Rune::App {
         if (_state.mutex) _initialized = true;
     }
 
-    bool TerminalStream::is_read_supported() { return false; }
+    auto TerminalStream::is_read_supported() -> bool { return false; }
 
-    int TerminalStream::read() { return -1; }
+    auto TerminalStream::read() -> int { return -1; }
 
-    bool TerminalStream::is_write_supported() { return true; }
+    auto TerminalStream::is_write_supported() -> bool { return true; }
 
-    bool TerminalStream::write(U8 value) {
+    auto TerminalStream::write(U8 value) -> bool {
         if (!_initialized) return false;
 
         if (_render_thread_ID == 0) {
             _cpu_module->get_scheduler()->lock();
-            _render_thread_ID =
-                _cpu_module->schedule_new_thread("Terminal-Cursor Render Thread",
-                                                 &_render_thread_start_info,
-                                                 Memory::get_base_page_table_address(),
-                                                 CPU::SchedulingPolicy::LOW_LATENCY,
-                                                 {nullptr, 0x0, 0x0});
+            _render_thread_ID = _cpu_module->schedule_new_thread(
+                "Terminal-Cursor Render Thread",
+                &_render_thread_start_info,
+                Memory::get_base_page_table_address(),
+                CPU::SchedulingPolicy::LOW_LATENCY,
+                {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
             if (_render_thread_ID == 0) _initialized = false;
             _cpu_module->get_scheduler()->unlock();
         }
@@ -775,5 +790,5 @@ namespace Rune::App {
         // No resources to free
     }
 
-    bool TerminalStream::is_ansi_supported() { return true; }
+    auto TerminalStream::is_ansi_supported() -> bool { return true; }
 } // namespace Rune::App

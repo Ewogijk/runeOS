@@ -34,8 +34,8 @@ namespace Rune::CPU {
       public:
         // Per requirement of the "Column::make_handle_column_table" these properties must be
         // publicly accessible
-        U16    handle;
-        String name;
+        U16    handle; // NOLINT
+        String name;   // NOLINT
 
         // Per definition of the "ResourceTable" a default constructor must be provided
         Mutex();
@@ -86,7 +86,7 @@ namespace Rune::CPU {
          * @return True: The thread got removed from the wait queue., False: No thread with the
          * requested ID was found.
          */
-        auto remove_waiting_thread(int t_id) -> bool;
+        auto remove_waiting_thread(U16 t_id) -> bool;
     };
 } // namespace Rune::CPU
 

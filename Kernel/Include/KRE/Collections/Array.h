@@ -78,7 +78,7 @@ namespace Rune {
         }
 
       public:
-        explicit Array() = default;
+        Array() = default;
 
         constexpr Array(const Array<T, N>& other) noexcept { copy(other); }
 
@@ -122,6 +122,12 @@ namespace Rune {
          * @return Pointer to the data buffer.
          */
         auto data() -> T* { return _array; }
+
+        /**
+         *
+         * @return Pointer to the data buffer.
+         */
+        auto data() const -> const T* { return _array; }
 
         /**
          * If index>=N the behavior is undefined.

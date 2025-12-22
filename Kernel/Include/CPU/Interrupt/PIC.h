@@ -32,13 +32,13 @@ namespace Rune::CPU {
          *
          * @return Name of the PIC.
          */
-        virtual String get_name() = 0;
+        virtual auto get_name() -> String = 0;
 
         /**
          * @brief The offset into the interrupt vector table where the first IRQ line starts.
          * @return The IRQ line offset.
          */
-        virtual U8 get_irq_line_offset() = 0;
+        virtual auto get_irq_line_offset() -> U8 = 0;
 
         /**
          * @brief Check if an IRQ on the line has been raised.
@@ -48,7 +48,7 @@ namespace Rune::CPU {
          * @param irq_line
          * @return True: An IRQ on this line was raised, False: No IRQ was raised.
          */
-        virtual bool is_irq_requested(U8 irq_line) = 0;
+        virtual auto is_irq_requested(U8 irq_line) -> bool = 0;
 
         /**
          * @brief Check if an IRQ on the line was forwarded to the CPU and is currently being
@@ -57,7 +57,7 @@ namespace Rune::CPU {
          * @return True: An IRQ is currently being handle by the CPU, False: The IRQ is ot handled
          * by the CPU.
          */
-        virtual bool is_irq_serviced(U8 irq_line) = 0;
+        virtual auto is_irq_serviced(U8 irq_line) -> bool = 0;
 
         /**
          * @brief Check if IRQs on the line are masked, if an IRQ is masked it will be ignored by
@@ -65,14 +65,14 @@ namespace Rune::CPU {
          * @param irq_line
          * @return True: The IRQ line is masked, False: It is not masked.
          */
-        virtual bool is_irq_masked(U8 irq_line) = 0;
+        virtual auto is_irq_masked(U8 irq_line) -> bool = 0;
 
         /**
          * @brief Initialize the PIC device with all IRQs being masked initially.
          * @return True: The PIC is ready service IRQs, False: The PIC device could not be
          * initialized, IRQs are not available.
          */
-        virtual bool start() = 0;
+        virtual auto start() -> bool = 0;
 
         /**
          * mask a requested irq line so that no IRQs will be send anymore until they are unmasked.

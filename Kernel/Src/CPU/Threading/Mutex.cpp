@@ -51,9 +51,9 @@ namespace Rune::CPU {
           handle(0),
           name(move(name)) {}
 
-    Thread* Mutex::get_owner() const { return _owner ? _owner.get() : nullptr; }
+    auto Mutex::get_owner() const -> Thread* { return _owner ? _owner.get() : nullptr; }
 
-    LinkedList<Thread*> Mutex::get_waiting_threads() const {
+    auto Mutex::get_waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
         for (auto& t : _wait_queue) copy.add_back(t.get());
         return copy;
@@ -104,7 +104,7 @@ namespace Rune::CPU {
         _scheduler->unlock();
     }
 
-    bool Mutex::remove_waiting_thread(int t_id) {
+    auto Mutex::remove_waiting_thread(U16 t_id) -> bool {
         _scheduler->lock();
         if (!_owner) return false;
 

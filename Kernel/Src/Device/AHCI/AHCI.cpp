@@ -154,7 +154,7 @@ namespace Rune::Device {
         U32  command_slots      = _hba->CAP.NCS;
         bool s64_a              = _hba->CAP.S64A;
         U8   c_logical_drive_id = 0;
-        for (int i = 0; i < 32; i++) {
+        for (size_t i = 0; i < 32; i++) {
             if (c_logical_drive_id == 255) {
                 LOGGER->warn("Limit of 255 logical drives reached. Stopping port scan... ");
                 break;

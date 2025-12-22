@@ -87,6 +87,7 @@ vars.Add(
 
 
 target_env = Environment(
+    tools=['default', 'compilation_db'],
     variables=vars,
     AS="nasm",
 )
@@ -343,4 +344,5 @@ else:
 
 target_env.Append(LINKFLAGS=["-T", target_env.File("Kernel.ld").srcnode().path])
 
+target_env.CompilationDatabase(build_dir / "compile_commands")
 target_env.Program(build_dir / "runeKernel.elf", objects)

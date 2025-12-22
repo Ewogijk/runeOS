@@ -132,12 +132,12 @@ namespace Rune::CPU {
     /**
      * @brief Read the current value from the MSR with the given ID:
      */
-    CLINK Register read_msr(Register msr_id);
+    CLINK auto read_msr(Register msr_id) -> Register;
 
     /**
      * @brief Read the value of the pointer that GS is currently pointed at.
      */
-    CLINK Register read_gs();
+    CLINK auto read_gs() -> Register;
 
     /**
      * @brief Call the "swapgs" instruction. If GS was currently pointing to KernelGSBase is will be
@@ -186,7 +186,7 @@ namespace Rune::CPU {
     /**
      * @brief Get the content of the CS register.
      */
-    CLINK Register read_cs();
+    CLINK auto read_cs() -> Register;
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          x64Core Class
@@ -204,17 +204,17 @@ namespace Rune::CPU {
         //                                          Core API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        bool init() override;
+        auto init() -> bool override;
 
-        U8 get_id() override;
+        auto get_id() -> U8 override;
 
-        TechSpec get_tech_spec() override;
+        auto get_tech_spec() -> TechSpec override;
 
-        ArchSpec get_arch_details() override;
+        auto get_arch_details() -> ArchSpec override;
 
-        PrivilegeLevel get_current_privilege_level() override;
+        auto get_current_privilege_level() -> PrivilegeLevel override;
 
-        LinkedList<InterruptVector> get_interrupt_vector_table() override;
+        auto get_interrupt_vector_table() -> LinkedList<InterruptVector> override;
 
         void dump_core_state(const SharedPointer<TextStream>& stream) override;
 
@@ -230,7 +230,7 @@ namespace Rune::CPU {
         //                                      x64 core specific API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        void dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state);
+        void dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state) const;
     };
 } // namespace Rune::CPU
 
