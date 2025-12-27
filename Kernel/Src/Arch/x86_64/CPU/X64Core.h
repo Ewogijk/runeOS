@@ -194,8 +194,8 @@ namespace Rune::CPU {
 
     class X64Core : public Core {
         U8       _core_id;
-        Register _kgs_base; // Current thread's kernel stack pointer
-        Register _gs_base;  // Current thread's user stack pointer
+        Register _kgs_base{0}; // Current thread's kernel stack pointer
+        Register _gs_base{0};  // Current thread's user stack pointer
 
       public:
         explicit X64Core(U8 core_id);
@@ -230,7 +230,8 @@ namespace Rune::CPU {
         //                                      x64 core specific API
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        void dump_core_state(const SharedPointer<TextStream>& stream, const x86CoreState& state) const;
+        void dump_core_state(const SharedPointer<TextStream>& stream,
+                             const x86CoreState&              state) const;
     };
 } // namespace Rune::CPU
 

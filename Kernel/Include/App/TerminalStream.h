@@ -55,7 +55,7 @@ namespace Rune::App {
     struct TextLine {
         // The last entry in the list is the currently entered text
         LinkedList<StyledText> styled_text;
-        size_t line_size; // Size of the line in characters as if it was a single string
+        size_t line_size{0}; // Size of the line in characters as if it was a single string
 
         TextLine();
 
@@ -195,33 +195,33 @@ namespace Rune::App {
         CPU::CPUModule* _cpu_module;
         TerminalState   _state;
 
-        U16            _render_thread_ID;
+        U16            _render_thread_ID{0};
         String         _render_thread_arg;
         char*          _render_thread_argv[2]; // NOLINT argv is part of the kernel ABI
         CPU::StartInfo _render_thread_start_info{};
 
-        bool _initialized;
+        bool _initialized{false};
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          ANSI Interpreter
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        static constexpr U8 CSI_ARGV_BUF_SIZE  = 5; // Max number of csi args that can be parsed
-        static constexpr U8 DIGIT_BUF_SIZE     = 3; // Max number of digits a csi arg can have
-        static constexpr U8 ESC                = '\033'; // csi command escape character
-        static constexpr U8 TAB_STOP           = 4;      // Size of a tab
+        static constexpr U8 CSI_ARGV_BUF_SIZE = 5;      // Max number of csi args that can be parsed
+        static constexpr U8 DIGIT_BUF_SIZE    = 3;      // Max number of digits a csi arg can have
+        static constexpr U8 ESC               = '\033'; // csi command escape character
+        static constexpr U8 TAB_STOP          = 4;      // Size of a tab
         // Select Graphic Rendition parameters
         static constexpr U8 SGR_SET_FOREGROUND = 38;
         static constexpr U8 SGR_SET_BACKGROUND = 48;
 
         ANSIInterpreterState _interpreter_state; // Current state of the interpreter
 
-        Array<U8, CSI_ARGV_BUF_SIZE> _csi_argv;         // Buffer for the csi args
-        U8                           _csi_argc;         // Number of parsed csi args
-        char                         _csi_cmd_selector; // The parsed csi command selector
+        Array<U8, CSI_ARGV_BUF_SIZE> _csi_argv;               // Buffer for the csi args
+        U8                           _csi_argc{0};            // Number of parsed csi args
+        char                         _csi_cmd_selector{'\0'}; // The parsed csi command selector
 
         Array<char, DIGIT_BUF_SIZE> _digit_buf; // Buffer of digits for the currently parsed csi arg
-        U8                          _digit_buf_offset;
+        U8                          _digit_buf_offset{0};
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Text Buffering Functions

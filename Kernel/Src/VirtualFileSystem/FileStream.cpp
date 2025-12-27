@@ -19,13 +19,8 @@
 namespace Rune::VFS {
     FileStream::FileStream(SharedPointer<Node> node)
         : _node(move(node)),
-          _can_read(false),
           _read_buf(),
-          _read_buf_size(0),
-          _read_buf_cursor(0),
-          _write_buf(),
-          _write_buf_size(0),
-          _can_write(false) {
+          _write_buf() {
 
         if (_node && _node->has_attribute(Ember::NodeAttribute::FILE)) {
             _can_read  = _node->get_io_mode() == Ember::IOMode::READ;
@@ -34,9 +29,9 @@ namespace Rune::VFS {
         }
     }
 
-    bool FileStream::is_read_supported() { return _can_read; }
+    auto FileStream::is_read_supported() -> bool { return _can_read; }
 
-    int FileStream::read() {
+    auto FileStream::read() -> int {
         if (!_can_read || _node->is_closed()) return -1;
 
         if (_read_buf_size == 0 || _read_buf_cursor >= _read_buf_size) {
@@ -44,8 +39,8 @@ namespace Rune::VFS {
             if (_read_buf_size < BUF_SIZE)
                 // whole file read
                 return -1;
-            memset(_read_buf, '\0', BUF_SIZE);
-            NodeIOResult io_res = _node->read(_read_buf, BUF_SIZE);
+            memset(_read_buf.data(), '\0', BUF_SIZE);
+            NodeIOResult io_res = _node->read(_read_buf.data(), BUF_SIZE);
             if (io_res.status != NodeIOStatus::OKAY) return -1;
             _read_buf_cursor = 0;
             _read_buf_size   = io_res.byte_count;
@@ -53,16 +48,16 @@ namespace Rune::VFS {
         return _read_buf[_read_buf_cursor++];
     }
 
-    bool FileStream::is_write_supported() { return _can_write; }
+    auto FileStream::is_write_supported() -> bool { return _can_write; }
 
-    bool FileStream::write(U8 value) {
+    auto FileStream::write(U8 value) -> bool {
         if (!_can_write || _node->is_closed()) return false;
 
         if (_write_buf_size >= BUF_SIZE) {
             // buffer is full -> write to disk
-            NodeIOResult io_res = _node->write(_write_buf, _write_buf_size);
+            NodeIOResult io_res = _node->write(_write_buf.data(), _write_buf_size);
             if (io_res.status != NodeIOStatus::OKAY) return false;
-            memset(_write_buf, '\0', _write_buf_size);
+            memset(_write_buf.data(), '\0', _write_buf_size);
             _write_buf_size = 0;
         }
         _write_buf[_write_buf_size++] = (char) value;
@@ -72,8 +67,8 @@ namespace Rune::VFS {
     void FileStream::flush() {
         if (_node->is_closed()) return;
         // no return value -> just write to disk without checking
-        _node->write(_write_buf, _write_buf_size);
-        memset(_write_buf, '\0', _write_buf_size);
+        _node->write(_write_buf.data(), _write_buf_size);
+        memset(_write_buf.data(), '\0', _write_buf_size);
         _write_buf_size = 0;
     }
 
@@ -83,5 +78,5 @@ namespace Rune::VFS {
         _node->close();
     }
 
-    bool FileStream::is_ansi_supported() { return false; }
+    auto FileStream::is_ansi_supported() -> bool { return false; }
 } // namespace Rune::VFS

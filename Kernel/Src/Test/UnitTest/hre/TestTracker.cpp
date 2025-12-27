@@ -33,7 +33,7 @@ namespace Heimdall {
         : _dict_detail(new DictDetail{other._dict_detail->map}) {}
 
     TestTracker::TestTracker(TestTracker&& other) noexcept
-        : _dict_detail(new DictDetail{other._dict_detail->map}) {
+        : _dict_detail(new DictDetail{other._dict_detail->map}) { // NOLINT cannot throw
         delete other._dict_detail;
         other._dict_detail = nullptr;
     }
@@ -52,22 +52,23 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(TestTracker& fst, TestTracker& sec) {
+    void swap(TestTracker& fst, TestTracker& sec) noexcept {
         using Rune::swap;
         swap(fst._dict_detail->map, sec._dict_detail->map);
     }
 
     auto TestTracker::keys() const -> HStringList {
         HStringList result;
-        for (auto entry : _dict_detail->map) result.insert(HString(entry.key->to_cstr()));
+        for (auto entry : _dict_detail->map)
+            result.insert(HString(entry.key->to_cstr())); // NOLINT is never null..
         return result;
     }
 
     auto TestTracker::find(const HString& test_suite) const -> TestList {
         auto maybe_list = _dict_detail->map.find(Rune::String(test_suite.to_c_str()));
-        if (maybe_list == _dict_detail->map.end()) return TestList();
+        if (maybe_list == _dict_detail->map.end()) return {};
         TestList result;
-        for (auto t : *maybe_list->value) result.insert(t);
+        for (const auto& t : *maybe_list->value) result.insert(t);
         return result;
     }
 

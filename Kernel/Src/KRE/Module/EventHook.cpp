@@ -17,17 +17,17 @@
 #include <KRE/System/EventHook.h>
 
 namespace Rune {
-    auto operator==(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) -> bool {
-        return a.handle == b.handle;
+    auto operator==(const EventHandlerTableEntry& one, const EventHandlerTableEntry& two) -> bool {
+        return one.handle == two.handle;
     }
 
-    auto operator!=(const EventHandlerTableEntry& a, const EventHandlerTableEntry& b) -> bool {
-        return a.handle != b.handle;
+    auto operator!=(const EventHandlerTableEntry& one, const EventHandlerTableEntry& two) -> bool {
+        return one.handle != two.handle;
     }
 
     void EventHookTableEntry::dump(const SharedPointer<TextStream>& stream) const {
         Table<EventHandlerStats, 2>::make_table(
-            [this](const EventHandlerStats stats) -> Array<String, 2> {
+            [](const EventHandlerStats stats) -> Array<String, 2> {
                 return {String::format("{}-{}", stats.handle, stats.name),
                         String::format("{}", stats.notified)};
             })
@@ -39,11 +39,11 @@ namespace Rune {
             .print(stream);
     }
 
-    auto operator==(const EventHookTableEntry& a, const EventHookTableEntry& b) -> bool {
-        return a.event_hook == b.event_hook;
+    auto operator==(const EventHookTableEntry& one, const EventHookTableEntry& two) -> bool {
+        return one.event_hook == two.event_hook;
     }
 
-    auto operator!=(const EventHookTableEntry& a, const EventHookTableEntry& b) -> bool {
-        return a.event_hook != b.event_hook;
+    auto operator!=(const EventHookTableEntry& one, const EventHookTableEntry& two) -> bool {
+        return one.event_hook != two.event_hook;
     }
 } // namespace Rune

@@ -379,9 +379,7 @@ namespace Rune::App {
     }
 
     ELFLoader::ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys)
-        : _buf_pos(0),
-          _buf_limit(0),
-          _file_buf(),
+        : _file_buf(),
           _memory_subsys(memory_module),
           _vfs_subsys(vfs_subsys) {}
 
@@ -408,7 +406,7 @@ namespace Rune::App {
         // running app
         const PhysicalAddr            curr_app_vas = Memory::get_base_page_table_address();
         Memory::VirtualMemoryManager* vmm          = _memory_subsys->get_virtual_memory_manager();
-        PhysicalAddr                  base_pt_addr;
+        PhysicalAddr                  base_pt_addr{0};
         if (keep_vas) {
             base_pt_addr = curr_app_vas;
         } else {

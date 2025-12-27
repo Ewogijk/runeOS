@@ -29,12 +29,12 @@ namespace Rune {
         /**
          * Unique kernel plugin name.
          */
-        const String name;
+        String name;
 
         /**
          * Creator of the kernel plugin.
          */
-        const String vendor;
+        String vendor;
 
         /**
          * @brief The version of the kernel plugin.

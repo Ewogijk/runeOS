@@ -34,66 +34,66 @@ namespace Rune::VFS {
         VolumeManager    _volume_manager;
         FileEntryManager _file_entry_manager;
 
-        Device::AHCIDriver& _ahci_driver;
+        Device::AHCIDriver* _ahci_driver;
 
-        [[nodiscard]]
-        SharedPointer<StorageDevRef> find_storage_dev_ref(U16 storage_dev) const;
+        [[nodiscard]] auto find_storage_dev_ref(U16 storage_dev) const
+            -> SharedPointer<StorageDevRef>;
 
-        static U8 node_attributes_to_fat_file_attributes(U8 node_attr);
+        static auto node_attributes_to_fat_file_attributes(U8 node_attr) -> U8;
 
-        [[nodiscard]]
-        IOStatus exists(const SharedPointer<StorageDevRef>& md, const Path& path) const;
+        [[nodiscard]] auto exists(const SharedPointer<StorageDevRef>& md, const Path& path) const
+            -> IOStatus;
 
-        IOStatus make_long_file_name_entries(const SharedPointer<StorageDevRef>& md,
-                                             const Path&                         path,
-                                             LinkedList<LocationAwareFileEntry>& out);
+        auto make_long_file_name_entries(const SharedPointer<StorageDevRef>& md,
+                                         const Path&                         path,
+                                         LinkedList<LocationAwareFileEntry>& out) -> IOStatus;
 
-        IOStatus
-        create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
+        auto create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes)
+            -> IOStatus;
 
-        IOStatus
-        create_directory(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes);
+        auto create_directory(const SharedPointer<StorageDevRef>& md,
+                              const Path&                         path,
+                              U8                                  attributes) -> IOStatus;
 
-        IOStatus delete_file(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& file);
+        auto delete_file(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& file)
+            -> IOStatus;
 
-        IOStatus delete_directory(const SharedPointer<StorageDevRef>& md,
-                                  LocationAwareFileEntry&             dir,
-                                  const Path&                         path);
+        auto delete_directory(const SharedPointer<StorageDevRef>& md,
+                              LocationAwareFileEntry&             dir,
+                              const Path&                         path) -> IOStatus;
 
       public:
-        explicit FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver& ahci_driver);
+        explicit FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver* ahci_driver);
 
         ~FATDriver() override = default;
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
-        FormatStatus format(U16 storage_dev) override;
+        auto format(U16 storage_dev) -> FormatStatus override;
 
-        MountStatus mount(U16 storage_dev) override;
+        auto mount(U16 storage_dev) -> MountStatus override;
 
-        MountStatus unmount(U16 storage_dev) override;
+        auto unmount(U16 storage_dev) -> MountStatus override;
 
-        [[nodiscard]]
-        bool is_valid_file_path(const Path& path) const override;
+        [[nodiscard]] auto is_valid_file_path(const Path& path) const -> bool override;
 
-        IOStatus create(U16 storage_dev, const Path& path, U8 attributes) override;
+        auto create(U16 storage_dev, const Path& path, U8 attributes) -> IOStatus override;
 
-        IOStatus open(U16                  storage_dev,
-                      const Path&          mount_point,
-                      const Path&          path,
-                      Ember::IOMode        node_io_mode,
-                      Function<void()>     on_close,
-                      SharedPointer<Node>& out) override;
+        auto open(U16                  storage_dev,
+                  const Path&          mount_point,
+                  const Path&          path,
+                  Ember::IOMode        node_io_mode,
+                  Function<void()>     on_close,
+                  SharedPointer<Node>& out) -> IOStatus override;
 
-        IOStatus find_node(U16 storage_dev, const Path& path, NodeInfo& out) override;
+        auto find_node(U16 storage_dev, const Path& path, NodeInfo& out) -> IOStatus override;
 
-        IOStatus delete_node(U16 storage_dev, const Path& path) override;
+        auto delete_node(U16 storage_dev, const Path& path) -> IOStatus override;
 
-        IOStatus open_directory_stream(U16                             storage_dev,
-                                       const Path&                     path,
-                                       const Function<void()>&         on_close,
-                                       SharedPointer<DirectoryStream>& out) override;
+        auto open_directory_stream(U16                             storage_dev,
+                                   const Path&                     path,
+                                   const Function<void()>&         on_close,
+                                   SharedPointer<DirectoryStream>& out) -> IOStatus override;
     };
 } // namespace Rune::VFS
 

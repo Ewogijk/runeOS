@@ -125,8 +125,6 @@ namespace Rune {
 
         auto* cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
 
-
-
         auto* app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         LogContext::instance().register_layout(
             "detailed-layout",

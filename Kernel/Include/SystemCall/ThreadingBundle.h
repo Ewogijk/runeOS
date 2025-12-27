@@ -46,7 +46,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The mutex name is null or exceeds the string size limit.<br>
      *          FAULT:   Failed to create the mutex.
      */
-    Ember::StatusCode mutex_create(void* sys_call_ctx, U64 mutex_name);
+    auto mutex_create(void* sys_call_ctx, U64 mutex_name) -> Ember::StatusCode;
 
     /**
      * If the mutex is already locked the system call will block the calling thread until the mutex
@@ -59,7 +59,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The ID is zero.<br>
      *          UNKNOWN_ID:  No mutex with the requested ID was found.
      */
-    Ember::StatusCode mutex_lock(void* sys_call_ctx, U64 ID);
+    auto mutex_lock(void* sys_call_ctx, U64 ID) -> Ember::StatusCode;
 
     /**
      * If the mutex is not locked by the calling thread then this system call will do nothing.
@@ -71,7 +71,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The ID is zero.<br>
      *          UNKNOWN_ID:  No mutex with the requested ID was found.
      */
-    Ember::StatusCode mutex_unlock(void* sys_call_ctx, U64 ID);
+    auto mutex_unlock(void* sys_call_ctx, U64 ID) -> Ember::StatusCode;
 
     /**
      * @brief Free all resources associated with the requested mutex.
@@ -81,14 +81,14 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The ID is zero.<br>
      *          UNKNOWN_ID:  Failed to free the mutex.
      */
-    Ember::StatusCode mutex_free(void* sys_call_ctx, U64 ID);
+    auto mutex_free(void* sys_call_ctx, U64 ID) -> Ember::StatusCode;
 
     /**
      * @brief Get the ID of the currently running thread.
      * @param sys_call_ctx A pointer to the thread management context.
      * @return Success: The thread ID.
      */
-    Ember::StatusCode get_thread_ID(void* sys_call_ctx);
+    auto get_thread_ID(void* sys_call_ctx) -> Ember::StatusCode;
 
     /**
      * @brief Set the current thread's thread control block.
@@ -97,7 +97,7 @@ namespace Rune::SystemCall {
      * @return OKAY:     Success.<br>
      *          BAD_ARG: The tcb buffer is null or in kernel memory.
      */
-    Ember::StatusCode set_thread_control_block(void* sys_call_ctx, U64 tcb);
+    auto set_thread_control_block(void* sys_call_ctx, U64 tcb) -> Ember::StatusCode;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_THREADMODULE_H

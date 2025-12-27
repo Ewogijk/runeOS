@@ -46,8 +46,7 @@ namespace Rune::Device {
     // The scan code set defines 6 rows and 21 columns of keys
     constexpr U8 SCAN_SET_ONE_ROWS = 6;
     constexpr U8 SCAN_SET_ONE_COLS = 21;
-
-    // Note that a single key may span multiple rows or columns e.g. the space bar
+    // NOLINTBEGIN Note that a single key may span multiple rows or columns e.g. the space bar
     U8 SCAN_CODES[SCAN_SET_ONE_ROWS * SCAN_SET_ONE_COLS] = {
         0x01, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,
         0x57, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Row 0 end
@@ -80,40 +79,44 @@ namespace Rune::Device {
     };
 
     // Keycode decoder maps a scan code to it's virtual keycode
-    constexpr U8      SCANCODE_MAX_SIZE = 255;
-    Ember::VirtualKey SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
-    Ember::VirtualKey E_0_SCAN_CODE_DECODER[SCANCODE_MAX_SIZE];
+    constexpr U8                                SCANCODE_MAX_SIZE = 255;
+    Array<Ember::VirtualKey, SCANCODE_MAX_SIZE> SCAN_CODE_DECODER;
+    Array<Ember::VirtualKey, SCANCODE_MAX_SIZE> E_0_SCAN_CODE_DECODER;
+    // NOLINTEND
 
-    void insert_key_code(Ember::VirtualKey decoder[], U8 scan_code, U8 row, U8 col) {
-        decoder[scan_code]        = Ember::VirtualKey::build_pressed(row, col);
-        decoder[scan_code | 0x80] = Ember::VirtualKey::build_released(row, col);
+    void insert_key_code(Array<Ember::VirtualKey, SCANCODE_MAX_SIZE>& decoder,
+                         U8                                           scan_code,
+                         U8                                           row,
+                         U8                                           col) {
+        constexpr U8 KEY_RELEASED_PREFIX         = 0x80;
+        decoder[scan_code]                       = Ember::VirtualKey::build_pressed(row, col);
+        decoder[scan_code | KEY_RELEASED_PREFIX] = Ember::VirtualKey::build_released(row, col);
     }
 
     void init_scan_set_one() {
-        for (int i = 0; i < SCAN_SET_ONE_ROWS; i++) {
-            for (int j = 0; j < SCAN_SET_ONE_COLS; j++) {
-                U8 pos       = i * SCAN_SET_ONE_COLS + j;
+        for (U8 i = 0; i < SCAN_SET_ONE_ROWS; i++) {
+            for (U8 j = 0; j < SCAN_SET_ONE_COLS; j++) {
+                U8 pos = (i * SCAN_SET_ONE_COLS) + j;
+                // NOLINTBEGIN
                 U8 scan_code = SCAN_CODES[pos];
                 if (scan_code > 0) insert_key_code(SCAN_CODE_DECODER, scan_code, i, j);
                 U8 e_0_scan_code = E0_SCAN_CODES[pos];
                 if (e_0_scan_code > 0) insert_key_code(E_0_SCAN_CODE_DECODER, e_0_scan_code, i, j);
+                // NOLINTEND
             }
         }
     }
 
     PS2Keyboard::PS2Keyboard()
         : _key_code_cache(),
-          _start(0),
-          _end(0),
-          _wait_key_e0(false),
           _irq_handler([] { return CPU::IRQState::PENDING; }) {}
 
-    bool PS2Keyboard::start() {
+    auto PS2Keyboard::start() -> bool {
         init_scan_set_one();
 
         _irq_handler = [this] {
-            U8 scan_code = CPU::in_b(0x60);
-            if (scan_code == 0xE0) {
+            U8 scan_code = CPU::in_b(DATA_REGISTER);
+            if (scan_code == EXTENDED_BYTE) {
                 _wait_key_e0 = true;
                 return CPU::IRQState::HANDLED;
             }
@@ -122,7 +125,7 @@ namespace Rune::Device {
                 _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
             if (!key.is_none()) {
                 _key_code_cache[_end] = key.get_key_code();
-                _end                  = (_end + 1) % 256;
+                _end                  = (_end + 1) % RING_BUFFER_SIZE;
 
                 if (_wait_key_e0) _wait_key_e0 = false;
             }
@@ -132,10 +135,10 @@ namespace Rune::Device {
         return true;
     }
 
-    int PS2Keyboard::read() {
+    auto PS2Keyboard::read() -> int {
         if (_start == _end) return Ember::VirtualKey::NONE_KEY_CODE;
         int key_code = _key_code_cache[_start];
-        _start       = (_start + 1) % 256;
+        _start       = (_start + 1) % RING_BUFFER_SIZE;
         return key_code;
     }
 

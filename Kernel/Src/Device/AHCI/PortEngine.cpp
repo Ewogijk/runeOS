@@ -25,29 +25,17 @@ namespace Rune::Device {
 
     DEFINE_ENUM(PartitionType, PARTITION_TYPES, 0x0) // NOLINT
 
-    HardDrive::HardDrive()
-        : serial_number(),
-          firmware_revision(0),
-          model_number(),
-          additional_product_identifier(0),
-          current_media_serial_number(),
-          sector_size(0),
-          sector_count(0),
-          partition_table() {}
+    HardDrive::HardDrive() : serial_number(), model_number(), current_media_serial_number() {}
 
-    PortEngine::PortEngine()
-        : _port(nullptr),
-          _internal_buf_cache(nullptr),
-          _system_memory(nullptr),
-          _s64_a(false),
-          _heap(nullptr),
-          _timer(nullptr) {}
+    PortEngine::PortEngine() = default;
 
-    HardDrive PortEngine::get_hard_drive_info() const { return _disk_info; }
+    auto PortEngine::get_hard_drive_info() const -> HardDrive { return _disk_info; }
 
-    bool PortEngine::is_active() const { return _port && _port->CMD.ST && _port->CMD.FRE; }
+    auto PortEngine::is_active() const -> bool {
+        return (_port != nullptr) && _port->CMD.ST && _port->CMD.FRE;
+    }
 
-    bool PortEngine::scan_device(volatile HBAPort* port) {
+    auto PortEngine::scan_device(volatile HBAPort* port) -> bool {
         _port = port;
         DeviceDetection          dev_detect(_port->SSTS.DET);
         InterfacePowerManagement ipm(_port->SSTS.IPM);
@@ -67,29 +55,29 @@ namespace Rune::Device {
         return true;
     }
 
-    bool PortEngine::start(SystemMemory*          system_memory,
-                           bool                   s_64_a,
+    auto PortEngine::start(SystemMemory*          system_memory,
+                           bool                   s_64a,
                            Memory::SlabAllocator* heap,
-                           CPU::Timer*            timer) {
+                           CPU::Timer*            timer) -> bool {
         _system_memory = system_memory;
-        _s64_a         = s_64_a;
+        _s64a          = s_64a;
         _heap          = heap;
         _timer         = timer;
 
         _internal_buf_cache = _heap->create_new_cache(Request::INTERNAL_BUF_SIZE, 2, true);
-        if (!_internal_buf_cache) {
+        if (_internal_buf_cache == nullptr) {
             LOGGER->error("Failed to allocate object cache for internal buffers.");
             return false;
         }
 
-        PhysicalAddr p_clb;
+        PhysicalAddr p_clb{0};
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL),
                                                  p_clb)) {
             LOGGER->error("Failed to get physical address of command list...");
             return false;
         }
 
-        PhysicalAddr p_fb;
+        PhysicalAddr p_fb{0};
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS),
                                                  p_fb)) {
             LOGGER->error("Failed to get physical address of received FIS...");
@@ -107,7 +95,7 @@ namespace Rune::Device {
             return false;
         }
 #ifdef IS_64_BIT
-        if (_s64_a) {
+        if (_s64a) {
             _port->CLBU = (U32) (p_clb >> 32);
             _port->FBU  = (U32) (p_fb >> 32);
         }
@@ -119,32 +107,46 @@ namespace Rune::Device {
         _port->CMD.FRE       = 1;
         _port->CMD.ST        = 1;
 
-        U16 buf[256];
-        if (send_ata_command(buf, 512, RegisterHost2DeviceFIS::IdentifyDevice()) == 0) {
+        Array<U16, HardDrive::IDENTIFY_DEVICE_BUFFER_SIZE> buf{};
+        if (send_ata_command(buf.data(),
+                             HardDrive::IDENTIFY_DEVICE_BUFFER_SIZE * 2,
+                             RegisterHost2DeviceFIS::IdentifyDevice())
+            == 0) {
             LOGGER->error("Failed to get disk info.");
             stop();
             return false;
         }
-        memcpy(_disk_info.serial_number, &buf[10], 20);
-        _disk_info.firmware_revision = (U64) buf[23];
-        memcpy(_disk_info.model_number, &buf[27], 40);
-        _disk_info.additional_product_identifier = (U64) buf[170];
-        memcpy(_disk_info.current_media_serial_number, &buf[176], 60);
+        memcpy(_disk_info.serial_number.data(),
+               &buf[HardDrive::SERIAL_NUMBER_OFFSET],
+               2 * HardDrive::SERIAL_NUMBER_SIZE);
+        _disk_info.firmware_revision = (U64) buf[HardDrive::FIRMWARE_REVISION_OFFSET];
+        memcpy(_disk_info.model_number.data(),
+               &buf[HardDrive::MODEL_NUMBER_OFFSET],
+               2 * HardDrive::MODEL_NUMBER_SIZE);
+        _disk_info.additional_product_identifier =
+            (U64) buf[HardDrive::ADDITIONAL_PRODUCT_IDENTIFIER_OFFSET];
+        memcpy(_disk_info.current_media_serial_number.data(),
+               &buf[HardDrive::CURRENT_MEDIA_SERIAL_NUMBER_OFFSET],
+               2 * HardDrive::MEDIA_SERIAL_NUMBER_SIZE);
 
-        bool s48_bit = buf[83] >> 10 & 1;
-        if (s48_bit) {
-            _disk_info.sector_count = ((U64) buf[103] << 48) | ((U64) buf[102] << 32)
-                                      | ((U64) buf[101] << 16) | (U64) buf[100];
+        if (bit_check(buf[HardDrive::COMMAND_AND_FEATURE_SET_OFFSET],
+                      HardDrive::CAF_48_BIT_ADDR_BIT)) {
+            _disk_info.sector_count = LittleEndian::to_U32(
+                reinterpret_cast<U8*>(&buf[HardDrive::SECTOR_COUNT_48BIT_OFFSET]));
         } else {
-            _disk_info.sector_count = (buf[61] << 16) | buf[60];
+            _disk_info.sector_count = LittleEndian::to_U32(
+                reinterpret_cast<U8*>(&buf[HardDrive::SECTOR_COUNT_28BIT_OFFSET]));
         }
-
-        bool s_long_sector_size = buf[106] >> 12 & 1;
-        _disk_info.sector_size  = s_long_sector_size ? (U32) buf[117] : 512;
+        _disk_info.sector_size = bit_check(buf[HardDrive::PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET],
+                                           HardDrive::LOGICAL_SECTOR_SIZE_SUPPORTED_BIT)
+                                     ? static_cast<U32>(buf[HardDrive::LOGICAL_SECTOR_SIZE_OFFSET])
+                                     : HardDrive::DEFAULT_SECTOR_SIZE;
 
         // Scan for partitions
+        // NOLINTBEGIN read function requires C-Array
         Function<size_t(U8[], size_t, U64)> sectorReader =
             [this](U8 buf[], size_t bufSize, U64 lba) { return read(buf, bufSize, lba); };
+        // NOLINTEND
         GPTScanResult scan_res = gpt_scan_device(sectorReader, _disk_info.sector_size);
         LOGGER->debug("GPT Scan Status: {}", scan_res.status.to_string());
         if (scan_res.status == GPTScanStatus::DETECTED) {
@@ -154,29 +156,32 @@ namespace Rune::Device {
                                                   GUID::SIZE)
                                            == 0;
                 _disk_info.partition_table.add_back(
-                    {partition.get_name(),
-                     partition.starting_lba,
-                     partition.ending_lba,
-                     is_kernel_partition ? PartitionType::KERNEL : PartitionType::DATA});
+                    {.name      = partition.get_name(),
+                     .start_lba = partition.starting_lba,
+                     .end_lba   = partition.ending_lba,
+                     .type = is_kernel_partition ? PartitionType::KERNEL : PartitionType::DATA});
             }
         } else {
             // Fixing the GPT is not supported for now, therefore we treat a corrupted GPT as if
             // there is no GPT at all
             // -> Create the implicit partition over the whole disk
-            _disk_info.partition_table.add_back(
-                {"Disk", 0, _disk_info.sector_count - 1, PartitionType::DATA});
+            _disk_info.partition_table.add_back({.name      = "Disk",
+                                                 .start_lba = 0,
+                                                 .end_lba   = _disk_info.sector_count - 1,
+                                                 .type      = PartitionType::DATA});
         }
         return true;
     }
 
-    bool PortEngine::stop() {
+    auto PortEngine::stop() -> bool {
         if (_port->CMD.ST == 0 && _port->CMD.CR == 0 && _port->CMD.FRE == 0 && _port->CMD.FR == 0)
             return true;
 
-        int spin_lock = 0;
-        _port->CMD.ST = 0;
+        constexpr int MILLIS_500 = 500;
+        int           spin_lock  = 0;
+        _port->CMD.ST            = 0;
         while (_port->CMD.CR) {
-            if (spin_lock >= 500) break;
+            if (spin_lock >= MILLIS_500) break;
             _timer->sleep_milli(1);
             spin_lock++;
         }
@@ -185,16 +190,15 @@ namespace Rune::Device {
         _port->CMD.FRE = 0;
         spin_lock      = 0;
         while (_port->CMD.FR) {
-            if (spin_lock >= 500) break;
+            if (spin_lock >= MILLIS_500) break;
             _timer->sleep_milli(1);
             spin_lock++;
         }
-        if (_port->CMD.FRE) return false; // Port hung
 
-        return true;
+        return !_port->CMD.FRE; // !_port->Cmd.FRE -> Port hung
     }
 
-    bool PortEngine::reset() {
+    auto PortEngine::reset() -> bool {
         _port->SCTL.DET = 1;
         _timer->sleep_milli(1);
         _port->SCTL.DET = 0;
@@ -204,7 +208,8 @@ namespace Rune::Device {
         return true;
     }
 
-    size_t PortEngine::send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis) {
+    auto PortEngine::send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis)
+        -> size_t {
         int slot  = -1;
         U32 slots = _port->SACT | _port->CI;
         for (int i = 0; i < _system_memory->CommandSlots; i++) {
@@ -213,7 +218,7 @@ namespace Rune::Device {
                 break;
             }
         }
-        if (slot == -1) return false;
+        if (slot == -1) return 0;
 
         Request& request           = _request_table[slot];
         request.buf                = buf;
@@ -221,21 +226,21 @@ namespace Rune::Device {
         request.status.CommandSlot = slot;
 
         request.internal_buf = _internal_buf_cache->allocate();
-        if (!request.internal_buf) return false;
+        if (request.internal_buf == nullptr) return 0;
 
-        PhysicalAddr p_internal_buf;
+        PhysicalAddr p_internal_buf{0};
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(request.internal_buf),
                                                  p_internal_buf))
-            return false;
+            return 0;
 
         CommandTable& ct        = _system_memory->CT[slot];
         ct.PRDT[0].DBA.AsUInt32 = (U32) p_internal_buf;
         if (ct.PRDT[0].DBA.Reserved != 0) {
             _internal_buf_cache->free(request.internal_buf);
-            return false;
+            return 0;
         }
 #ifdef IS_64_BIT
-        if (_s64_a) ct.PRDT[0].DBAU = (U32) (p_internal_buf >> 32);
+        if (_s64a) ct.PRDT[0].DBAU = (U32) (p_internal_buf >> 32);
 #endif
         ct.PRDT[0].DBC = Request::INTERNAL_BUF_SIZE - 1;
         ct.PRDT[0].I   = 1;
@@ -251,7 +256,7 @@ namespace Rune::Device {
         request.status.Issued  = 1;
         _port->CI             |= 1 << slot;
 
-        while (_port->CI && !_port->IS.TFES);
+        while ((_port->CI != 0) && !_port->IS.TFES);
 
         if (!_port->IS.TFES && !_system_memory->CL[slot].W)
             memcpy(request.buf, request.internal_buf, request.buf_size);
@@ -264,7 +269,7 @@ namespace Rune::Device {
         return _port->IS.TFES ? 0 : _system_memory->CL[slot].PRDBC;
     }
 
-    size_t PortEngine::read(void* buf, size_t buf_size, size_t lba) {
+    auto PortEngine::read(void* buf, size_t buf_size, size_t lba) -> size_t {
         return send_ata_command(buf,
                                 buf_size,
                                 RegisterHost2DeviceFIS::ReadDMAExtended(
@@ -272,7 +277,7 @@ namespace Rune::Device {
                                     div_round_up(buf_size, (size_t) _disk_info.sector_size)));
     }
 
-    size_t PortEngine::write(void* buf, size_t buf_size, size_t lba) {
+    auto PortEngine::write(void* buf, size_t buf_size, size_t lba) -> size_t {
         return send_ata_command(buf,
                                 buf_size,
                                 RegisterHost2DeviceFIS::WriteDMAExtended(

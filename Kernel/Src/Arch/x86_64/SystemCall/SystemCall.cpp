@@ -16,9 +16,9 @@
 
 #include <SystemCall/SystemCall.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Collections/HashMap.h>
 #include <KRE/Utility.h>
-#include <KRE/BitsAndBytes.h>
 
 #include "../CPU/X64Core.h"
 
@@ -26,13 +26,13 @@ namespace Rune::SystemCall {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCall");
 
     struct SystemCallContainer {
-        SystemCallInfo info             = {0, "", 0};
+        SystemCallInfo info             = {.handle = 0, .name = "", .requested = 0};
         Handler        sys_call_handler = SYS_CALL_HANDLER_NONE;
         void*          context          = nullptr;
     };
 
-    HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE;
-    KernelGuardian*                                 K_GUARD;
+    HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE; // NOLINT
+    KernelGuardian*                                 K_GUARD;                   // NOLINT
 
     /**
      * @brief On "syscall" the CPU will jump to this assembly stub. It loads the kernel stack and
@@ -41,13 +41,13 @@ namespace Rune::SystemCall {
      */
     CLINK void system_call_accept();
 
-    CLINK Ember::StatusCode system_call_dispatch(Ember::ResourceID         ID,
-                                                 Ember::SystemCallArgument arg1,
-                                                 Ember::SystemCallArgument arg2,
-                                                 Ember::SystemCallArgument arg3,
-                                                 Ember::SystemCallArgument arg4,
-                                                 Ember::SystemCallArgument arg5,
-                                                 Ember::SystemCallArgument arg6) {
+    CLINK auto system_call_dispatch(Ember::ResourceID         ID,
+                                    Ember::SystemCallArgument arg1,
+                                    Ember::SystemCallArgument arg2,
+                                    Ember::SystemCallArgument arg3,
+                                    Ember::SystemCallArgument arg4,
+                                    Ember::SystemCallArgument arg5,
+                                    Ember::SystemCallArgument arg6) -> Ember::StatusCode {
         Ember::StatusCode ret     = -1;
         auto              handler = SYSTEM_CALL_HANDLER_TABLE.find(ID);
         if (handler != SYSTEM_CALL_HANDLER_TABLE.end()) {
@@ -72,25 +72,30 @@ namespace Rune::SystemCall {
     //                                          System Call API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool system_call_init(KernelGuardian* kGuard) {
-        K_GUARD                   = kGuard;
+    auto system_call_init(KernelGuardian* k_guard) -> bool {
+        K_GUARD                   = k_guard;
         SYSTEM_CALL_HANDLER_TABLE = HashMap<U16, SystemCallContainer>();
         // Init the model specific registers for sysret/syscall, they act as caches for important
-        // values CS/SS selectors syscall: CS = STAR[47:32], SS = STAR[63:48] + 8, RPL bits 48:49
-        // are 00 as syscall goes to CPL=0 sysret:  CS = STAR[63:48] + 16, SS = STAR[63:48] + 8, RPL
-        // bits 48:49 are 11 as sysret goes to CPL=3
-        CPU::write_msr(CPU::ModelSpecificRegister::STAR, 0x0013000800000000);
+        // values CS/SS selectors
+        // syscall: CS = STAR[47:32], SS = STAR[63:48] + 8, RPL bits 48:49 are 00 as syscall goes
+        //          to CPL=0
+        // sysret:  CS = STAR[63:48] + 16, SS = STAR[63:48] + 8, RPL bits 48:49 are 11 as sysret
+        //          goes to CPL=3
+        constexpr CPU::Register STAR = 0x0013000800000000;
+        CPU::write_msr(CPU::ModelSpecificRegister::STAR, STAR);
 
         // Contains the address of the system call handler
         // Initialized with null, must be set later to correct address
-        CPU::write_msr(CPU::ModelSpecificRegister::LSTAR, (uintptr_t) &system_call_accept);
+        CPU::write_msr(CPU::ModelSpecificRegister::LSTAR,
+                       memory_pointer_to_addr(&system_call_accept));
 
         // Syscall flag mask specifies which rflags bits are to be cleared during a syscall
         // If a bit here is set to one, the rflags bit is cleared
         // If a bit here is set to zero, the rflags bit is set
         // This mask will clear all rflags bits except bit 1 which is reserved and always 1
         // Importantly it deactivates interrupts during a syscall!
-        CPU::write_msr(CPU::ModelSpecificRegister::FMASK, 0xFFFFFFFFFFFFFFFD);
+        constexpr CPU::Register FMASK_NO_INTERRUPTS = 0xFFFFFFFFFFFFFFFD;
+        CPU::write_msr(CPU::ModelSpecificRegister::FMASK, FMASK_NO_INTERRUPTS);
 
         // Enable the syscall and sysret instructions
         CPU::Register efer = CPU::read_msr(CPU::ModelSpecificRegister::EFER);
@@ -98,40 +103,41 @@ namespace Rune::SystemCall {
         return true;
     }
 
-    LinkedList<SystemCallInfo> system_call_get_table() {
+    auto system_call_get_table() -> LinkedList<SystemCallInfo> {
         LinkedList<SystemCallInfo> sys_call_table;
-        for (auto& sys_con : SYSTEM_CALL_HANDLER_TABLE)
-            sys_call_table.add_back(sys_con.value->info);
+        for (const auto& sys_con : SYSTEM_CALL_HANDLER_TABLE)
+            sys_call_table.add_back(sys_con.value->info); // NOLINT only end() can be null
         return sys_call_table;
     }
 
-    bool system_call_install(const Definition& sys_call_def) {
+    auto system_call_install(const Definition& sys_call_def) -> bool {
         if (SYSTEM_CALL_HANDLER_TABLE.find(sys_call_def.ID) != SYSTEM_CALL_HANDLER_TABLE.end()) {
             LOGGER->warn("Cannot install system call {}. It is already installed...",
                          sys_call_def.ID);
             return false;
         }
         LOGGER->trace(R"(Installing system call "{}-{}".)", sys_call_def.ID, sys_call_def.name);
-        SYSTEM_CALL_HANDLER_TABLE.put(sys_call_def.ID,
-                                      {
-                                      {sys_call_def.ID, sys_call_def.name, 0},
-                                      sys_call_def.sys_call_handler,
-                                      sys_call_def.context
+        SYSTEM_CALL_HANDLER_TABLE.put(
+            sys_call_def.ID,
+            {
+            .info = {.handle = sys_call_def.ID, .name = sys_call_def.name, .requested = 0},
+            .sys_call_handler = sys_call_def.sys_call_handler,
+            .context          = sys_call_def.context
         });
         return true;
     }
 
-    bool system_call_uninstall(U16 system_call_handle) {
-        if (SYSTEM_CALL_HANDLER_TABLE.find(system_call_handle) == SYSTEM_CALL_HANDLER_TABLE.end()) {
+    auto system_call_uninstall(U16 system_call_id) -> bool {
+        if (SYSTEM_CALL_HANDLER_TABLE.find(system_call_id) == SYSTEM_CALL_HANDLER_TABLE.end()) {
             LOGGER->trace("System call {} is not installed. No need to uninstall...",
-                          system_call_handle);
+                          system_call_id);
             return false;
         }
 
-        auto sys_call = SYSTEM_CALL_HANDLER_TABLE.find(system_call_handle);
+        auto sys_call = SYSTEM_CALL_HANDLER_TABLE.find(system_call_id);
         LOGGER->trace(R"(Uninstalling system call "{}-{}".)",
                       sys_call->value->info.handle,
                       sys_call->value->info.name);
-        return SYSTEM_CALL_HANDLER_TABLE.remove(system_call_handle);
+        return SYSTEM_CALL_HANDLER_TABLE.remove(system_call_id);
     }
 } // namespace Rune::SystemCall

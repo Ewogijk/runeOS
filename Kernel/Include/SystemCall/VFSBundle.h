@@ -45,7 +45,8 @@ namespace Rune::SystemCall {
      * string size limit or the node path contains illegal characters.<br> NODE_NOT_FOUND:    The
      * node does not exist.<br> IO_ERROR:          IO error.
      */
-    Ember::StatusCode vfs_get_node_info(void* sys_call_ctx, U64 node_path, U64 node_info_out);
+    auto vfs_get_node_info(void* sys_call_ctx, U64 node_path, U64 node_info_out)
+        -> Ember::StatusCode;
 
     /// @brief Search for the node with the given ID and get the node info if found.
     /// @param sys_call_ctx  A pointer to the VFS context.
@@ -54,7 +55,8 @@ namespace Rune::SystemCall {
     /// @return OKAY: The node was found and the node_info_out buffer contains the node info.<br>
     ///         BAD_ARG: An argument is null, intersects kernel memory or the node ID is zero.<br>
     ///         NODE_NOT_FOUND: The node does not exist.<br>
-    Ember::StatusCode vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out);
+    auto vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out)
+        -> Ember::StatusCode;
 
     /**
      * Note: Creating a node does not open it.
@@ -68,7 +70,7 @@ namespace Rune::SystemCall {
      * the string size limit, the node path contains an illegal character or an IO mode is
      * invalid.<br> NODE_EXISTS: The node already exists.<br> IO_ERROR:    An IO error happened.
      */
-    Ember::StatusCode vfs_create(void* sys_call_ctx, U64 node_path, U64 node_attr);
+    auto vfs_create(void* sys_call_ctx, U64 node_path, U64 node_attr) -> Ember::StatusCode;
 
     /**
      * @brief Search for a node with the given path and try to open it in the requested node IO
@@ -86,7 +88,7 @@ namespace Rune::SystemCall {
      * invalid.<br> NODE_NOT_FOUND: The node path does not exist.<br> IO_ERROR:       An IO error
      * happened.
      */
-    Ember::StatusCode vfs_open(void* sys_call_ctx, U64 node_path, U64 io_mode);
+    auto vfs_open(void* sys_call_ctx, U64 node_path, U64 io_mode) -> Ember::StatusCode;
 
     /**
      * Note: Deleting a node does not open it.
@@ -100,7 +102,7 @@ namespace Rune::SystemCall {
      * another application.<br> NODE_NOT_FOUND: The node was not found.<br> IO_ERROR:       An IO
      * error happened.
      */
-    Ember::StatusCode vfs_delete(void* sys_call_ctx, U64 node_path);
+    auto vfs_delete(void* sys_call_ctx, U64 node_path) -> Ember::StatusCode;
 
     /**
      * @brief Try to close the node identified by the given node ID.
@@ -110,7 +112,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG:    The node ID is 0.<br>
      *          UNKNOWN_ID: No node with the given ID was found.
      */
-    Ember::StatusCode vfs_close(void* sys_call_ctx, U64 ID);
+    auto vfs_close(void* sys_call_ctx, U64 ID) -> Ember::StatusCode;
 
     /**
      * @brief Try to read u_buf_size bytes into uBuf from the node referenced by the ID.
@@ -125,7 +127,7 @@ namespace Rune::SystemCall {
      * already been closed.<br> IO_ERROR:          An IO error happened.<br> FAULT:             The
      * bytes could not be copied to the user mode buffer.
      */
-    Ember::StatusCode vfs_read(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size);
+    auto vfs_read(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size) -> Ember::StatusCode;
 
     /**
      * @brief Try to write uBufSize bytes in the uBuf to the file referenced by the ID.
@@ -140,7 +142,7 @@ namespace Rune::SystemCall {
      * already been closed.<br> ACCESS_DENIED:     The node is in read mode.<br> IO_ERROR: An IO
      * error happened.
      */
-    Ember::StatusCode vfs_write(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size);
+    auto vfs_write(void* sys_call_ctx, U64 ID, U64 buf, U64 buf_size) -> Ember::StatusCode;
 
     /**
      * @brief Try to skip 'offset' bytes in a file depending on the requested 'seek_mode'.
@@ -154,7 +156,7 @@ namespace Rune::SystemCall {
      * The node is a directory.<br> NODE_CLOSED:       The node ID is invalid, because the node has
      * already been closed.<br> IO_ERROR:          An IO error happened.
      */
-    Ember::StatusCode vfs_seek(void* sys_call_ctx, U64 ID, U64 seek_mode, U64 offset);
+    auto vfs_seek(void* sys_call_ctx, U64 ID, U64 seek_mode, U64 offset) -> Ember::StatusCode;
 
     /**
      * @brief Try to open a stream over the content of a directory.
@@ -165,7 +167,7 @@ namespace Rune::SystemCall {
      * contains an illegal character.<br> NODE_NOT_FOUND: The node was not found.<br> NODE_IS_FILE:
      * The node is a file<br> IO_ERROR:       An IO error happened.
      */
-    Ember::StatusCode vfs_directory_stream_open(void* sys_call_ctx, U64 dir_path);
+    auto vfs_directory_stream_open(void* sys_call_ctx, U64 dir_path) -> Ember::StatusCode;
 
     /**
      * @brief Try to get the next directory node.
@@ -178,8 +180,8 @@ namespace Rune::SystemCall {
      * intersects kernel memory.<br> UNKNOWN_ID:               No directory stream with the
      * requested ID exists.<br> IO_ERROR: An IO error occurred while getting the next node info.
      */
-    Ember::StatusCode
-    vfs_directory_stream_next(void* sys_call_ctx, U64 dir_stream_ID, U64 node_info_ptr);
+    auto vfs_directory_stream_next(void* sys_call_ctx, U64 dir_stream_ID, U64 node_info_ptr)
+        -> Ember::StatusCode;
 
     /**
      * @brief Try to close the directory stream with the given ID.
@@ -189,7 +191,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The ID is zero.
      *          UNKNOWN_ID:  No directory stream with the requested ID exists.
      */
-    Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, U64 dir_stream_ID);
+    auto vfs_directory_stream_close(void* sys_call_ctx, U64 dir_stream_ID) -> Ember::StatusCode;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_VFSBUNDLE_H

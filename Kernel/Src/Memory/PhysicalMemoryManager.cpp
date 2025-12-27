@@ -24,16 +24,14 @@ namespace Rune::Memory {
 
     DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
-    bool PhysicalMemoryManager::detect_memory_range() {
+    auto PhysicalMemoryManager::detect_memory_range() -> bool {
         _mem_base            = (PhysicalAddr) -1;
         PhysicalAddr mem_end = 0;
 
-        for (auto& reg : *_mem_map) {
+        for (const auto& reg : *_mem_map) {
             if (reg.memory_type == MemoryRegionType::NONE) continue;
-
-            if (reg.start < _mem_base) _mem_base = reg.start;
-
-            if (reg.end() > mem_end) mem_end = reg.end();
+            _mem_base = min(_mem_base, reg.start);
+            mem_end   = max(mem_end, reg.end());
         }
 
         if (mem_end == 0) return false;
@@ -41,17 +39,17 @@ namespace Rune::Memory {
         return true;
     }
 
-    PageFrameIndex PhysicalMemoryManager::to_page_frame(PhysicalAddr addr) const {
+    auto PhysicalMemoryManager::to_page_frame(PhysicalAddr addr) const -> PageFrameIndex {
         return (addr - _mem_base) / _page_size;
     }
 
-    PageFrameIndex PhysicalMemoryManager::to_page_frame_round_up(PhysicalAddr addr) const {
+    auto PhysicalMemoryManager::to_page_frame_round_up(PhysicalAddr addr) const -> PageFrameIndex {
         return div_round_up((addr - _mem_base), _page_size);
     }
 
-    PhysicalAddr PhysicalMemoryManager::to_address(PageFrameIndex page_frame) const {
+    auto PhysicalMemoryManager::to_address(PageFrameIndex page_frame) const -> PhysicalAddr {
 
-        return _mem_base + page_frame * _page_size;
+        return _mem_base + (page_frame * _page_size);
     }
 
     PhysicalMemoryManager::PhysicalMemoryManager()
@@ -63,10 +61,9 @@ namespace Rune::Memory {
           _start_fail(PMMStartFailure::NONE),
           _largest_free_block(0) {}
 
-    PMMStartFailure
-    PhysicalMemoryManager::start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset
-
-    ) {
+    auto PhysicalMemoryManager::start(MemoryMap*  mem_map,
+                                      U64         page_size,
+                                      VirtualAddr memory_index_offset) -> PMMStartFailure {
         _page_size = page_size;
         _mem_map   = mem_map;
         if (!detect_memory_range()) {
@@ -75,15 +72,15 @@ namespace Rune::Memory {
         }
 
         MemorySize pmm_b_mem_req    = compute_memory_index_size();
-        auto       pmm_data_start_p = (PhysicalAddr) -1;
-        for (auto& reg : *_mem_map) {
+        auto       pmm_data_start_p = static_cast<PhysicalAddr>(-1);
+        for (const auto& reg : *_mem_map) {
             if (reg.memory_type == MemoryRegionType::USABLE && reg.size >= pmm_b_mem_req) {
                 pmm_data_start_p = reg.start;
                 break;
             }
-            if (reg.size > _largest_free_block) _largest_free_block = reg.size;
+            _largest_free_block = max(_largest_free_block, reg.size);
         }
-        if (pmm_data_start_p == (PhysicalAddr) -1) {
+        if (pmm_data_start_p == static_cast<PhysicalAddr>(-1)) { // NOLINT is cast to same type...
             _start_fail = PMMStartFailure::OUT_OF_MEMORY;
             return _start_fail;
         }
@@ -96,19 +93,19 @@ namespace Rune::Memory {
         return PMMStartFailure::NONE;
     }
 
-    MemoryRegion PhysicalMemoryManager::get_managed_memory() const {
-        return MemoryRegion{_mem_base,
-                            _mem_base - 1
-                                + _mem_size * _page_size, // will overflow because it will be max
-                                                          // value of some type e.g. U32
-                            MemoryRegionType::RESERVED};
+    auto PhysicalMemoryManager::get_managed_memory() const -> MemoryRegion {
+        return MemoryRegion{.start = _mem_base,
+                            .size  = _mem_base - 1
+                                    + (_mem_size * _page_size), // will overflow because it will be
+                                                                // max value of some type e.g. U32
+                            .memory_type = MemoryRegionType::RESERVED};
     }
 
     void PhysicalMemoryManager::log_start_routine_phases() const {
         LOGGER->info("Detected physical memory range: {:0=#16x}-{:0=#16x}",
                      _mem_base,
-                     _mem_base - 1 + _mem_size * _page_size // will overflow because it will be max
-                                                            // value of some type e.g. U32
+                     _mem_base - 1 + (_mem_size * _page_size) // will overflow because it will be
+                                                              // max value of some type e.g. U32
         );
         MemoryRegion mem_idx = get_memory_index_region();
         LOGGER->info("Physical memory index region: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
@@ -119,11 +116,13 @@ namespace Rune::Memory {
                      get_memory_index());
     }
 
-    bool PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) { return allocate(p_addr, 1); }
+    auto PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) -> bool {
+        return allocate(p_addr, 1);
+    }
 
-    bool PhysicalMemoryManager::allocate_explicit(PhysicalAddr p_addr) {
+    auto PhysicalMemoryManager::allocate_explicit(PhysicalAddr p_addr) -> bool {
         return allocate_explicit(p_addr, 1);
     }
 
-    bool PhysicalMemoryManager::free(PhysicalAddr p_addr) { return free(p_addr, 1); }
+    auto PhysicalMemoryManager::free(PhysicalAddr p_addr) -> bool { return free(p_addr, 1); }
 } // namespace Rune::Memory

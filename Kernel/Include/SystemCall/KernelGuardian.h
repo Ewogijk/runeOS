@@ -21,7 +21,7 @@
 
 namespace Rune::SystemCall {
     class KernelGuardian {
-        VirtualAddr _kernel_memory_start;
+        VirtualAddr _kernel_memory_start{0};
 
       public:
         KernelGuardian();
@@ -37,7 +37,7 @@ namespace Rune::SystemCall {
          * @return True: The user mode buffer has passed the checks, False: The user mode buffer is
          * bad.
          */
-        bool verify_user_buffer(void* user_buf, size_t user_buf_size) const;
+        auto verify_user_buffer(void* user_buf, size_t user_buf_size) const -> bool;
 
         /**
          * @brief Verify the user and kernel memory buffer and then copy the content of the user
@@ -64,9 +64,9 @@ namespace Rune::SystemCall {
          * buffer are null pointers or does intersect with kernel memory, no memory was copied to
          * the kernel buffer.
          */
-        bool copy_byte_buffer_user_to_kernel(void*  user_buf,
+        auto copy_byte_buffer_user_to_kernel(void*  user_buf,
                                              size_t user_buf_size,
-                                             void*  kernel_buf) const;
+                                             void*  kernel_buf) const -> bool;
 
         /**
          * @brief Verify the user and kernel memory buffer and then copy the content of the kernel
@@ -88,9 +88,9 @@ namespace Rune::SystemCall {
          * null pointer or does intersect with kernel memory, no memory was copied to the kernel
          * buffer.
          */
-        bool copy_byte_buffer_kernel_to_user(void*  kernel_buf,
+        auto copy_byte_buffer_kernel_to_user(void*  kernel_buf,
                                              void*  user_buf,
-                                             size_t user_buf_size) const;
+                                             size_t user_buf_size) const -> bool;
 
         /**
          * @brief Verify that the c string is null terminated and copy it into the kernel_str
@@ -113,9 +113,9 @@ namespace Rune::SystemCall {
          * to the kernel_str. False: The user mode string is not null terminated or has an invalid
          * size, it was not copied to kernel_str.
          */
-        bool copy_string_user_to_kernel(const char* user_str,
+        auto copy_string_user_to_kernel(const char* user_str,
                                         int         max_size,
-                                        const char* kernel_str) const;
+                                        const char* kernel_str) const -> bool;
     };
 } // namespace Rune::SystemCall
 

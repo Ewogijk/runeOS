@@ -17,7 +17,7 @@
 #include <CPU/Time/DeltaQueue.h>
 
 namespace Rune::CPU {
-    DeltaQueue::DeltaQueue() : _first(nullptr), _last(nullptr) {}
+    DeltaQueue::DeltaQueue() = default;
 
     auto DeltaQueue::first() const -> DQNode* { return _first; }
 

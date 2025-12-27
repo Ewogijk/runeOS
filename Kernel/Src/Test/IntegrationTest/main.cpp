@@ -25,10 +25,10 @@ struct CLIArgs {
     bool use_junit_reporter = false;
 };
 
-bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+auto parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) -> bool { // NOLINT
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0) continue;
+        if (arg.empty()) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
@@ -48,7 +48,7 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
     return true;
 }
 
-int main(const int argc, char* argv[]) {
+auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

@@ -40,7 +40,7 @@ namespace Rune::SystemCall {
      * @param sys_call_ctx The memory management context.
      * @return Page size.
      */
-    Ember::StatusCode memory_get_page_size(const void* sys_call_ctx);
+    auto memory_get_page_size(const void* sys_call_ctx) -> Ember::StatusCode;
 
     /**
      * If v_addr is zero then the location of the memory region will be chosen by the kernel. When
@@ -63,8 +63,8 @@ namespace Rune::SystemCall {
      *                   flag is invalid.<br>
      *          FAULT:   The memory allocation failed.
      */
-    Ember::StatusCode
-    memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection);
+    auto memory_allocate_page(void* sys_call_ctx, U64 v_addr, U64 num_pages, U64 page_protection)
+        -> Ember::StatusCode;
 
     /**
      * If v_addr is not page aligned it will be aligned to a page boundary.
@@ -77,7 +77,7 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The requested memory region intersects kernel memory.<br>
      *          FAULT:   The memory free failed.
      */
-    Ember::StatusCode memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages);
+    auto memory_free_page(void* sys_call_ctx, U64 v_addr, U64 num_pages) -> Ember::StatusCode;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_MEMORYMODULE_H

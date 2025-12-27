@@ -147,18 +147,18 @@ namespace Rune {
         return left;
     }
 
-    auto FrameBuffer::draw_perpendicular(const int    x0,
-                                         const int    y0,
-                                         const int    dx,
-                                         const int    dy,
-                                         const int    threshold,
-                                         const int    e_diag,
-                                         const int    e_square,
-                                         const int    e_init,
-                                         const double width,
-                                         const int    w_init,
-                                         const bool   sy,
-                                         U8*          raw_pixel) const -> void {
+    auto FrameBuffer::draw_perpendicular(int    x0,
+                                         int    y0,
+                                         int    threshold,
+                                         int    e_diag,
+                                         int    e_square,
+                                         int    dx,
+                                         int    dy,
+                                         int    e_init,
+                                         double width,
+                                         int    w_init,
+                                         bool   sy,
+                                         U8*    raw_pixel) const -> void {
         // These values somehow define the width of the perpendicular line, but I have no clue
         // what's going on
         const double w_threshold = 2 * width * sqrt((dx * dx) + (dy * dy));
@@ -275,8 +275,8 @@ namespace Rune {
                 // have easier math, this means essentially we allow drawing in quadrant 3
                 swap(start, end);
             const int dx = static_cast<int>(end.x) - static_cast<int>(start.x);
-            int       dy;
-            bool      sy;
+            int       dy{0};
+            bool      sy{false};
             // We keep track of the sign of dy, this allows to not only draw from top to bottom but
             // also the other way end.y > start.y -> increment y, end.y < start.y -> decrement y
             // Swapping will mess things up, so we have to live with harder math, the bright side is

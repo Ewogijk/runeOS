@@ -41,7 +41,7 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
         SharedPointer<Thread> _running_thread;
-        MultiLevelQueue*      _ready_threads;
+        MultiLevelQueue*      _ready_threads{nullptr};
 
         /**
          * @brief Whenever this thread contains at least one thread, the thread terminator will be
@@ -52,26 +52,26 @@ namespace Rune::CPU {
         /**
          * @brief If (_irqDisableCounter != 0), IRQs are disabled.
          */
-        int _irq_disable_counter;
+        int _irq_disable_counter{0};
 
         /**
          * @brief If (_postPoneCtxSwitches != 0), then no context switch will be done.
          */
-        int  _postpone_ctx_switches;
-        bool _ctx_switches_postponed;
+        int  _postpone_ctx_switches{0};
+        bool _ctx_switches_postponed{false};
 
         /**
          * @brief If (_allowPreemption == true) threads can be preempted. Note: We cannot know if a
          * schedule() call happens as part preemption, thus we cannot enforce this rule and must
          * hope preemption is implemented properly.
          */
-        bool _allow_preemption;
+        bool _allow_preemption{false};
 
         SharedPointer<Thread>   _idle_thread;
         SharedPointer<Thread>   _thread_terminator;
         Function<void(Thread*)> _on_context_switch;
 
-        void (*_thread_enter)();
+        void (*_thread_enter)(){nullptr};
 
         /**
          * @brief allocate the kernel stacks for the given stack.

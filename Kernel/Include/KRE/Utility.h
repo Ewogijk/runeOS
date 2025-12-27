@@ -445,7 +445,7 @@ namespace Rune {
 
         virtual void copy_to(void* dest) const = 0;
 
-        virtual auto clone() const -> ICallable<R, A...>* = 0;
+        [[nodiscard]] virtual auto clone() const -> ICallable<R, A...>* = 0;
     };
 
     template <typename F, typename R, typename... A>
@@ -453,13 +453,15 @@ namespace Rune {
         F _function;
 
       public:
-        explicit Callable(F function) : _function(function) {}
+        explicit Callable(F function) : _function(move(function)) {}
 
         auto operator()(A... args) const -> R override { return _function(forward<A>(args)...); }
 
         void copy_to(void* destination) const override { new (destination) Callable(_function); }
 
-        auto clone() const -> ICallable<R, A...>* override { return new Callable(_function); }
+        [[nodiscard]] auto clone() const -> ICallable<R, A...>* override {
+            return new Callable(_function);
+        }
     };
 
     template <typename>
@@ -563,7 +565,9 @@ namespace Rune {
             return *this;
         }
 
-        auto operator()(A... args) const -> R { return (*_function)(forward<A>(args)...); }
+        auto operator()(A... args) const -> R {
+            return (*_function)(forward<A>(args)...); // NOLINT _function != nullptr
+        }
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -844,7 +848,7 @@ namespace Rune {
          *
          * @return The error value.
          */
-        constexpr auto error() const& -> const E& { return _error; }
+        [[nodiscard]] constexpr auto error() const& -> const E& { return _error; }
 
         /**
          *
@@ -856,7 +860,7 @@ namespace Rune {
          *
          * @return The error value.
          */
-        constexpr auto error() const&& -> const E&& { return _error; }
+        [[nodiscard]] constexpr auto error() const&& -> const E&& { return _error; }
 
         friend void swap(Unexpected& fst, Unexpected& sec) noexcept {
             using Rune::swap;
@@ -907,6 +911,7 @@ namespace Rune {
 
         template <typename... Args>
         Expected(UnexpectTag unexpected, Args&&... args) {
+            SILENCE_UNUSED(unexpected)
             new (&_error) E(forward<Args>(args)...);
         }
 
@@ -976,7 +981,7 @@ namespace Rune {
          * If the expected does not contain a value the behavior is undefined.
          * @return A reference to the value.
          */
-        constexpr auto value() const -> const T& { return _value; }
+        [[nodiscard]] constexpr auto value() const -> const T& { return _value; }
 
         /**
          * Return the value of the expected or the default value if it does not have a value.
@@ -997,7 +1002,7 @@ namespace Rune {
          * If the expected does contain a value the behavior is undefined.
          * @return A reference to the error.
          */
-        constexpr auto error() const -> const E& { return _error; }
+        [[nodiscard]] constexpr auto error() const -> const E& { return _error; }
 
         /**
          * Return the error of the expected or the default error if it does have a value.
@@ -1163,8 +1168,9 @@ namespace Rune {
 // initializer_list needs to be in the "std" namespace because this is a compiler requirement
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+// NOLINTBEGIN std impl -> ignore
 namespace std {
-    template <class _E> // NOLINT std impl -> ignore
+    template <class _E>
     class initializer_list {
       public:
         typedef _E        value_type;      // NOLINT
@@ -1206,5 +1212,5 @@ namespace std {
         return __ils.end();
     }
 } // namespace std
-
+// NOLINTEND
 #endif // RUNEOS_UTILITY_H

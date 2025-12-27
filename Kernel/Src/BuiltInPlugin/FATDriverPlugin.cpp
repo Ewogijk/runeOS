@@ -41,7 +41,7 @@ namespace Rune::BuiltInPlugin {
         auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         bool    r      = fs->install_driver(UniquePointer<VFS::Driver>(
             new VFS::FATDriver(SharedPointer<VFS::FATEngine>(new VFS::FAT32Engine()),
-                               ds->get_ahic_driver())));
+                               ds->get_ahci_driver())));
         return r;
     }
 } // namespace Rune::BuiltInPlugin

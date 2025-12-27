@@ -20,11 +20,11 @@
 #include <Ember/VFSBits.h>
 
 namespace Rune::SystemCall {
-    Ember::StatusCode
-    vfs_get_node_info(void* sys_call_ctx, const U64 node_path, const U64 node_info_out) {
+    auto vfs_get_node_info(void* sys_call_ctx, const U64 node_path, const U64 node_info_out)
+        -> Ember::StatusCode {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
-        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
+        const auto* u_node_path = reinterpret_cast<const char*>(node_path);
+        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
 
@@ -37,15 +37,16 @@ namespace Rune::SystemCall {
         if (!vfs_ctx->vfs_module->is_valid_file_path(k_node_path)) return Ember::Status::BAD_ARG;
 
         VFS::NodeInfo k_node_info_buf;
-        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel((void*) node_info_out,
-                                                               sizeof(VFS::NodeInfo),
-                                                               (void*) &k_node_info_buf))
+        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(
+                reinterpret_cast<void*>(node_info_out),
+                sizeof(VFS::NodeInfo),
+                (void*) &k_node_info_buf))
             return Ember::Status::BAD_ARG;
 
         switch (VFS::IOStatus io_status =
                     vfs_ctx->vfs_module->get_node_info(k_node_path, k_node_info_buf)) {
             case VFS::IOStatus::FOUND: {
-                const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
+                auto* const u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
                 // The node info will only contain the node name -> set it to the path the caller
                 // has provided
                 if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
@@ -67,21 +68,23 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out) {
+    auto vfs_get_node_info_by_ID(void* sys_call_ctx, U64 node_ID, U64 node_info_out)
+        -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
 
         if (node_ID == 0) return Ember::Status::BAD_ARG;
 
         VFS::NodeInfo k_node_info_buf;
-        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel((void*) node_info_out,
-                                                               sizeof(VFS::NodeInfo),
-                                                               (void*) &k_node_info_buf))
+        if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(
+                reinterpret_cast<void*>(node_info_out),
+                sizeof(VFS::NodeInfo),
+                (void*) &k_node_info_buf))
             return Ember::Status::BAD_ARG;
 
         VFS::IOStatus io_status = vfs_ctx->vfs_module->get_node_info(node_ID, k_node_info_buf);
         if (io_status == VFS::IOStatus::NOT_FOUND) return Ember::Status::NODE_NOT_FOUND;
 
-        const auto u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
+        auto* const u_node_info = memory_addr_to_pointer<Ember::NodeInfo>(node_info_out);
         // The node info will only contain the node name -> set it to the path the caller
         // has provided
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
@@ -96,10 +99,11 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode vfs_create(void* sys_call_ctx, const U64 node_path, const U64 node_attr) {
+    auto vfs_create(void* sys_call_ctx, const U64 node_path, const U64 node_attr)
+        -> Ember::StatusCode {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
-        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
+        const auto* u_node_path = reinterpret_cast<const char*>(node_path);
+        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
 
@@ -125,10 +129,10 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_open(void* sys_call_ctx, const U64 node_path, const U64 io_mode) {
+    auto vfs_open(void* sys_call_ctx, const U64 node_path, const U64 io_mode) -> Ember::StatusCode {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
-        auto*       u_node_path = reinterpret_cast<const char*>(node_path);
-        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
+        const auto* u_node_path = reinterpret_cast<const char*>(node_path);
+        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
 
@@ -146,18 +150,18 @@ namespace Rune::SystemCall {
         SharedPointer<VFS::Node> node;
 
         switch (VFS::IOStatus io_status = vfs_ctx->vfs_module->open(k_node_path, k_io_mode, node)) {
-            case VFS::IOStatus::OPENED:         return node->handle;
-            case VFS::IOStatus::NOT_FOUND:      return Ember::Status::NODE_NOT_FOUND;
-            case VFS::IOStatus::OUT_OF_HANDLES: return Ember::Status::IO_ERROR;
-            default:                            return Ember::Status::IO_ERROR; // DEV_ERROR or StorageDevUnknown
+            case VFS::IOStatus::OPENED:    return node->handle;
+            case VFS::IOStatus::NOT_FOUND: return Ember::Status::NODE_NOT_FOUND;
+            default:
+                return Ember::Status::IO_ERROR; // OUT_OF_HANDLES, DEV_ERROR or StorageDevUnknown
         }
     }
 
-    Ember::StatusCode vfs_delete(void* sys_call_ctx, const U64 node_path) {
+    auto vfs_delete(void* sys_call_ctx, const U64 node_path) -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
 
-        auto* u_node_path                               = reinterpret_cast<const char*>(node_path);
-        char  k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
+        const auto* u_node_path = reinterpret_cast<const char*>(node_path);
+        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
 
@@ -177,7 +181,7 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_close(void* sys_call_ctx, const U64 ID) {
+    auto vfs_close(void* sys_call_ctx, const U64 ID) -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const auto  node_ID = static_cast<U16>(ID);
         if (node_ID == 0) return Ember::Status::BAD_ARG;
@@ -189,8 +193,8 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode
-    vfs_read(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
+    auto vfs_read(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size)
+        -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
@@ -201,11 +205,11 @@ namespace Rune::SystemCall {
         if (!node->has_attribute(Ember::NodeAttribute::FILE))
             return Ember::Status::NODE_IS_DIRECTORY;
 
-        const auto   u_buf      = reinterpret_cast<void*>(buf);
+        auto* const  u_buf      = reinterpret_cast<void*>(buf);
         const size_t u_buf_size = buf_size;
         if (!vfs_ctx->k_guard->verify_user_buffer(u_buf, u_buf_size)) return Ember::Status::BAD_ARG;
 
-        U8 k_buf[u_buf_size];
+        U8 k_buf[u_buf_size]; // NOLINT Is Kernel ABI
         memset(k_buf, 0, u_buf_size);
         auto [status, byte_count] = node->read(k_buf, u_buf_size);
         if (status == VFS::NodeIOStatus::NOT_SUPPORTED) return Ember::Status::ACCESS_DENIED;
@@ -218,8 +222,8 @@ namespace Rune::SystemCall {
         return static_cast<Ember::StatusCode>(byte_count);
     }
 
-    Ember::StatusCode
-    vfs_write(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size) {
+    auto vfs_write(void* sys_call_ctx, const U64 ID, const U64 buf, const U64 buf_size)
+        -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_ID = ID;
         if (node_ID == 0) return Ember::Status::BAD_ARG;
@@ -230,9 +234,9 @@ namespace Rune::SystemCall {
         if (!node->has_attribute(Ember::NodeAttribute::FILE))
             return Ember::Status::NODE_IS_DIRECTORY;
 
-        const auto   u_buf      = reinterpret_cast<void*>(buf);
+        auto* const  u_buf      = reinterpret_cast<void*>(buf);
         const size_t u_buf_size = buf_size;
-        U8           k_buf[u_buf_size];
+        U8           k_buf[u_buf_size]; // NOLINT Is Kernel ABI
         memset(k_buf, 0, u_buf_size);
         if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_buf, u_buf_size, k_buf))
             return Ember::Status::BAD_ARG;
@@ -246,8 +250,8 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode
-    vfs_seek(void* sys_call_ctx, const U64 ID, const U64 seek_mode, const U64 offset) {
+    auto vfs_seek(void* sys_call_ctx, const U64 ID, const U64 seek_mode, const U64 offset)
+        -> Ember::StatusCode {
         const auto* vfs_ctx     = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   node_handle = ID;
         if (node_handle == 0) return Ember::Status::BAD_ARG;
@@ -270,11 +274,11 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode vfs_directory_stream_open(void* sys_call_ctx, const U64 dir_path) {
+    auto vfs_directory_stream_open(void* sys_call_ctx, const U64 dir_path) -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
 
-        auto* u_node_path                               = reinterpret_cast<const char*>(dir_path);
-        char  k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {};
+        const auto* u_node_path = reinterpret_cast<const char*>(dir_path);
+        char        k_node_path_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!vfs_ctx->k_guard->copy_string_user_to_kernel(u_node_path, -1, k_node_path_buf))
             return Ember::Status::BAD_ARG;
 
@@ -299,13 +303,14 @@ namespace Rune::SystemCall {
         }
     }
 
-    Ember::StatusCode
-    vfs_directory_stream_next(void* sys_call_ctx, const U64 dir_stream_ID, U64 node_info_ptr) {
+    auto vfs_directory_stream_next(void* sys_call_ctx, const U64 dir_stream_ID, U64 node_info_ptr)
+        -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   k_ID    = static_cast<U16>(dir_stream_ID);
         if (k_ID == 0) return Ember::Status::BAD_ARG;
 
-        if (!vfs_ctx->k_guard->verify_user_buffer((void*) node_info_ptr, sizeof(Ember::NodeInfo)))
+        if (!vfs_ctx->k_guard->verify_user_buffer(reinterpret_cast<void*>(node_info_ptr),
+                                                  sizeof(Ember::NodeInfo)))
             return Ember::Status::BAD_ARG;
 
         const SharedPointer<VFS::DirectoryStream> dir_stream =
@@ -319,8 +324,8 @@ namespace Rune::SystemCall {
                        : Ember::Status::IO_ERROR;
         }
 
-        auto  k_node_info = maybe_node_info.value();
-        auto* u_node_info = reinterpret_cast<Ember::NodeInfo*>(node_info_ptr);
+        const auto& k_node_info = maybe_node_info.value();
+        auto*       u_node_info = reinterpret_cast<Ember::NodeInfo*>(node_info_ptr);
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
                 (void*) k_node_info.node_path.to_cstr(),
                 &u_node_info->node_path,
@@ -332,7 +337,8 @@ namespace Rune::SystemCall {
         return Ember::Status::DIRECTORY_STREAM_HAS_MORE;
     }
 
-    Ember::StatusCode vfs_directory_stream_close(void* sys_call_ctx, const U64 dir_stream_ID) {
+    auto vfs_directory_stream_close(void* sys_call_ctx, const U64 dir_stream_ID)
+        -> Ember::StatusCode {
         const auto* vfs_ctx = static_cast<VFSSystemCallContext*>(sys_call_ctx);
         const U16   k_ID    = static_cast<U16>(dir_stream_ID);
         if (k_ID == 0) return Ember::Status::BAD_ARG;

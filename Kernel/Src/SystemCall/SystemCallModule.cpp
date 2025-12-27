@@ -30,11 +30,11 @@ namespace Rune::SystemCall {
     //                                          Subsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    SystemCallModule::SystemCallModule() : Module(), _k_guard() {}
+    SystemCallModule::SystemCallModule() = default;
 
-    String SystemCallModule::get_name() const { return "SystemCall"; }
+    auto SystemCallModule::get_name() const -> String { return "SystemCall"; }
 
-    bool SystemCallModule::load(const BootInfo& boot_info) {
+    auto SystemCallModule::load(const BootInfo& boot_info) -> bool {
         SILENCE_UNUSED(boot_info)
         System& system = System::instance();
 
@@ -64,7 +64,8 @@ namespace Rune::SystemCall {
     //                                          System Call API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<SystemCallInfo> SystemCallModule::get_system_call_table() const {
+    // NOLINTBEGIN Should be member functions for consistent API
+    auto SystemCallModule::get_system_call_table() const -> LinkedList<SystemCallInfo> {
         return system_call_get_table();
     }
 
@@ -78,11 +79,12 @@ namespace Rune::SystemCall {
             .print(stream);
     }
 
-    bool SystemCallModule::install_system_call(const Definition& system_call_definition) {
+    auto SystemCallModule::install_system_call(const Definition& system_call_definition) -> bool {
         return system_call_install(system_call_definition);
     }
 
-    bool SystemCallModule::uninstall_system_call(U16 system_call_id) {
+    auto SystemCallModule::uninstall_system_call(U16 system_call_id) -> bool {
         return system_call_uninstall(system_call_id);
     }
+    // NOLINTEND
 } // namespace Rune::SystemCall

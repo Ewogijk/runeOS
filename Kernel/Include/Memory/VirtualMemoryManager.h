@@ -51,7 +51,7 @@ namespace Rune::Memory {
     class VirtualMemoryManager {
         PhysicalMemoryManager* _pmm;
 
-        VirtualAddr _user_space_end;
+        VirtualAddr _user_space_end{0};
 
         VMMStartFailure             _start_fail;
         KernelSpaceEntryAllocResult _ksear;
@@ -69,7 +69,7 @@ namespace Rune::Memory {
         auto free_virtual_address_space_rec(const PageTableEntry& pte) -> bool;
 
       public:
-        VirtualMemoryManager(PhysicalMemoryManager* pmm);
+        explicit VirtualMemoryManager(PhysicalMemoryManager* pmm);
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //

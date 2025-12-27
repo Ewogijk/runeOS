@@ -37,7 +37,7 @@ namespace Heimdall {
         : _list_detail(new ReporterListDetail{other._list_detail->list}) {}
 
     ReporterRegistry::ReporterRegistry(ReporterRegistry&& other) noexcept
-        : _list_detail(new ReporterListDetail{other._list_detail->list}) {
+        : _list_detail(new ReporterListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -56,7 +56,7 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(ReporterRegistry& fst, ReporterRegistry& sec) {
+    void swap(ReporterRegistry& fst, ReporterRegistry& sec) noexcept {
         using Rune::swap;
         swap(fst._list_detail->list, sec._list_detail->list);
     }
@@ -72,6 +72,6 @@ namespace Heimdall {
 
     auto ReporterRegistry::operator[](size_t index) const -> Reporter* {
         Rune::SharedPointer<Reporter>* reporter = _list_detail->list[index];
-        return reporter ? reporter->get() : nullptr;
+        return (reporter != nullptr) ? reporter->get() : nullptr;
     }
 } // namespace Heimdall

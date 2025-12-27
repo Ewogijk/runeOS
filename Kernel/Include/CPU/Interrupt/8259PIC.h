@@ -28,8 +28,8 @@ namespace Rune::CPU {
         static constexpr U8  PIC2_IRQ_BOUNDARY   = 8;
 
         bool _fully_init{};
-        U16  _imr;
-        bool _imr_invalid;
+        U16  _imr{0};
+        bool _imr_invalid{true};
 
         void update_selected_8259_imr(U8 irq_line) const;
 

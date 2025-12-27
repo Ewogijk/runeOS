@@ -22,7 +22,6 @@
 
 namespace Ember {
 
-
     ///@brief The memory system call IDs.
 #define MEMORY_SYSCALLS(X)                                                                         \
     X(Memory, GET_PAGE_SIZE, 100)                                                                  \

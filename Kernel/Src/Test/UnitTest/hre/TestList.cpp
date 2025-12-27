@@ -32,7 +32,7 @@ namespace Heimdall {
         : _list_detail(new TestListDetail{other._list_detail->list}) {}
 
     TestList::TestList(TestList&& other) noexcept
-        : _list_detail(new TestListDetail{other._list_detail->list}) {
+        : _list_detail(new TestListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -51,7 +51,7 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(TestList& fst, TestList& sec) {
+    void swap(TestList& fst, TestList& sec) noexcept {
         using Rune::swap;
         swap(fst._list_detail->list, sec._list_detail->list);
     }
@@ -62,6 +62,6 @@ namespace Heimdall {
 
     auto TestList::operator[](size_t index) const -> Test {
         Test* t = _list_detail->list[index];
-        return t ? *t : Test();
+        return (t != nullptr) ? *t : Test();
     }
 } // namespace Heimdall

@@ -23,6 +23,7 @@ namespace Rune::CPU {
 
     class E9Stream : public TextStream {
         static constexpr U8 E9 = 0xE9;
+
       public:
         auto is_read_supported() -> bool override;
 

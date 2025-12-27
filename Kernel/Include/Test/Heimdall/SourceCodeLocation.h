@@ -20,7 +20,7 @@
 
 #include <Test/Heimdall/HString.h>
 
-#include <stddef.h>
+#include <stddef.h> // NOLINT cstddef is missing
 
 namespace Heimdall {
     /// @brief Location of a line of source code.

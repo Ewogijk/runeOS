@@ -55,11 +55,14 @@ namespace Heimdall {
         RHS     _rhs;
 
       public:
-        BinaryExprEvaluation(bool result, LHS lhs, HString op, RHS rhs)
+        BinaryExprEvaluation(bool    result,
+                             LHS     lhs,
+                             HString op, // NOLINT cannot move, is env independant
+                             RHS     rhs)
             : ExprBase<BinaryExprEvaluation<LHS, RHS>>(),
               _result(result),
               _lhs(lhs),
-              _op(op),
+              _op(op), // NOLINT cannot move, is env independant
               _rhs(rhs) {}
 
         auto get_result() -> bool { return _result; }
@@ -85,7 +88,9 @@ namespace Heimdall {
         LHS_OR_Value _value;
 
       public:
-        UnaryExpr(LHS_OR_Value value) : ExprBase<UnaryExpr<LHS_OR_Value>>(), _value(value) {}
+        explicit UnaryExpr(LHS_OR_Value value)
+            : ExprBase<UnaryExpr<LHS_OR_Value>>(),
+              _value(value) {}
 
         auto get_result() -> bool { return static_cast<bool>(_value); }
 

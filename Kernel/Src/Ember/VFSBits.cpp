@@ -41,5 +41,7 @@ namespace Ember {
         return (attributes & static_cast<int>(NodeAttribute::DIRECTORY)) != 0;
     }
 
-    auto NodeInfo::is_file() const -> bool { return (attributes & static_cast<int>(NodeAttribute::FILE)) != 0; }
+    auto NodeInfo::is_file() const -> bool {
+        return (attributes & static_cast<int>(NodeAttribute::FILE)) != 0;
+    }
 } // namespace Ember

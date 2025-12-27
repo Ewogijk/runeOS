@@ -39,7 +39,8 @@ namespace Rune::CPU {
      * execution.
      * @return The new top of the kernel stack.
      */
-    auto setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter) -> VirtualAddr;
+    auto setup_trampoline_kernel_stack(VirtualAddr stack_top, VirtualAddr thread_enter)
+        -> VirtualAddr;
 
 } // namespace Rune::CPU
 

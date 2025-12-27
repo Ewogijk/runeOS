@@ -32,13 +32,13 @@ namespace Rune::Memory {
      * @return The starting addresses of the virtual kernel regions. The exact size of each regions
      * is defined by the actual memory consumption of the region which is determined during runtime.
      */
-    KernelSpaceLayout get_virtual_kernel_space_layout();
+    auto get_virtual_kernel_space_layout() -> KernelSpaceLayout;
 
     /**
      *
      * @return The layout of the computer's virtual memory.
      */
-    MemoryMap create_virtual_memory_map();
+    auto create_virtual_memory_map() -> MemoryMap;
 } // namespace Rune::Memory
 
 #endif // RUNEOS_VIRTUALMEMORY_H

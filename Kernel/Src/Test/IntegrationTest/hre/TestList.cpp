@@ -32,7 +32,7 @@ namespace Heimdall {
         : _list_detail(new TestListDetail{other._list_detail->list}) {}
 
     TestList::TestList(TestList&& other) noexcept
-        : _list_detail(new TestListDetail{other._list_detail->list}) {
+        : _list_detail(new(std::nothrow) TestListDetail{other._list_detail->list}) {
         delete other._list_detail;
         other._list_detail = nullptr;
     }

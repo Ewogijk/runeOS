@@ -71,7 +71,7 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         LinkedList<UniquePointer<PICDriver>> _pic_driver_table;
-        PICDriver*                           _active_pic;
+        PICDriver*                           _active_pic{nullptr};
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Threading Properties

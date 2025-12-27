@@ -64,7 +64,7 @@ namespace Heimdall {
 
     auto Engine::get_current_test_result() const -> TestResult { return _test_result; }
 
-    void Engine::report_assertion_begin(const AssertionInfo& assert_info) {
+    void Engine::report_assertion_begin(const AssertionInfo& assert_info) { // NOLINT
         for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
             _configuration.reporter_registry[i]->on_assertion_begin(assert_info);
     }
@@ -75,7 +75,7 @@ namespace Heimdall {
         _test_result = assert_stats.result ? TestResult::PASS : TestResult::FAIL;
     }
 
-    void Engine::execute(const OptionList& options) {
+    void Engine::execute(const OptionList& options) { // NOLINT
         if (!configure(options)) return;
 
         auto&   test_tracker         = get_test_tracker();
@@ -120,20 +120,20 @@ namespace Heimdall {
             size_t failed_tests = 0;
 
             TestSuiteInfo test_suite_info{.name = suite_name, .total_tests = total_tests};
-            for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
-                _configuration.reporter_registry[i]->on_test_suite_begin(test_suite_info);
+            for (size_t j = 0; j < _configuration.reporter_registry.size(); j++)
+                _configuration.reporter_registry[j]->on_test_suite_begin(test_suite_info);
 
-            for (size_t i = 0; i < tests.size(); i++) {
-                auto     test = tests[i];
+            for (size_t j = 0; j < tests.size(); j++) {
+                auto     test = tests[j];
                 TestInfo test_info{.name = test.name, .file = test.scl.file, .line = test.scl.line};
-                for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
-                    _configuration.reporter_registry[i]->on_test_begin(test_info);
+                for (size_t k = 0; k < _configuration.reporter_registry.size(); k++)
+                    _configuration.reporter_registry[k]->on_test_begin(test_info);
 
                 test.test_function();
 
                 TestStats test_stats{.name = test.name, .result = _test_result == TestResult::PASS};
-                for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
-                    _configuration.reporter_registry[i]->on_test_end(test_stats);
+                for (size_t k = 0; k < _configuration.reporter_registry.size(); k++)
+                    _configuration.reporter_registry[k]->on_test_end(test_stats);
 
                 if (_test_result == TestResult::PASS)
                     passed_tests++;
@@ -147,8 +147,8 @@ namespace Heimdall {
                                             .total_tests  = total_tests,
                                             .passed_tests = passed_tests,
                                             .failed_tests = failed_tests};
-            for (size_t i = 0; i < _configuration.reporter_registry.size(); i++)
-                _configuration.reporter_registry[i]->on_test_suite_end(test_suite_stats);
+            for (size_t j = 0; j < _configuration.reporter_registry.size(); j++)
+                _configuration.reporter_registry[j]->on_test_suite_end(test_suite_stats);
 
             overall_total_tests  += total_tests;
             overall_tests_passed += passed_tests;
