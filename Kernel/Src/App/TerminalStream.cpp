@@ -69,7 +69,7 @@ namespace Rune::App {
     //                                          TextLine
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    TextLine::TextLine() : line_size(0) { styled_text.add_back({}); }
+    TextLine::TextLine() { styled_text.add_back({}); }
 
     void TextLine::append_char(char ch) {
         if (styled_text.is_empty()) styled_text.add_back({});
@@ -378,7 +378,7 @@ namespace Rune::App {
     }
 
     auto TerminalStream::parse_csi_arg() -> U8 {
-        int val         = 0;
+        U8  val         = 0;
         int power_ten[] = {100, 10, 1}; // NOLINT
         // _digit_buf_offset is filled from left to right, we parse from right to left
         // If the number has three digits then "digit * powerTen[pos]" is its actual numerical value
@@ -399,8 +399,6 @@ namespace Rune::App {
             val      += digit * power_ten[pos + diff_to_p_ten]; // NOLINT
             pos--;
         }
-        // Only bytes allowed here!
-        if (val > UINT8_MAX) val = UINT8_MAX;
 
         memset(_digit_buf.data(), 0, DIGIT_BUF_SIZE);
         _digit_buf_offset = 0;
@@ -716,16 +714,11 @@ namespace Rune::App {
                                    Pixel           def_fg_color)
         : _cpu_module(cpu_module),
           _state(),
-          _render_thread_ID(0),
           _render_thread_arg(""),
           _render_thread_argv(),
-          _initialized(false),
           _interpreter_state(ANSIInterpreterState::CHARACTER),
           _csi_argv(),
-          _csi_argc(0),
-          _csi_cmd_selector('\0'),
-          _digit_buf(),
-          _digit_buf_offset(0) {
+          _digit_buf() {
 
         _state.frame_buffer         = frame_buffer;
         _state.font                 = font;

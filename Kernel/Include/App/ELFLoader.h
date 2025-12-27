@@ -39,8 +39,8 @@ namespace Rune::App {
 
         // File content buffering
         static constexpr U16 BUF_SIZE = 8192;
-        U16                  _buf_pos;
-        U16                  _buf_limit;
+        U16                  _buf_pos{0};
+        U16                  _buf_limit{0};
         Array<U8, BUF_SIZE>  _file_buf;
 
         Memory::MemoryModule* _memory_subsys;

@@ -31,7 +31,7 @@ namespace Heimdall {
         : _list_detail(new OptionListDetail{other._list_detail->list}) {}
 
     OptionList::OptionList(OptionList&& other) noexcept
-        : _list_detail(new OptionListDetail{other._list_detail->list}) {
+        : _list_detail(new OptionListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -50,7 +50,7 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(OptionList& fst, OptionList& sec) {
+    void swap(OptionList& fst, OptionList& sec) noexcept {
         using Rune::swap;
         swap(fst._list_detail->list, sec._list_detail->list);
     }
@@ -61,6 +61,6 @@ namespace Heimdall {
 
     auto OptionList::operator[](size_t index) const -> Option {
         Option* t = _list_detail->list[index];
-        return t ? *t : Option();
+        return (t != nullptr) ? *t : Option();
     }
 } // namespace Heimdall

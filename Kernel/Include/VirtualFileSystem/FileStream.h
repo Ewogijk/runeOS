@@ -20,32 +20,33 @@
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 
+#include <KRE/Collections/Array.h>
+
 #include <VirtualFileSystem/Node.h>
 
 namespace Rune::VFS {
     class FileStream : public TextStream {
         static constexpr U16 BUF_SIZE = 512;
 
-        SharedPointer<Node> _node;
-        bool                _can_read;
-        char                _read_buf[BUF_SIZE];
-        size_t              _read_buf_size;
-        size_t              _read_buf_cursor;
-        char                _write_buf[BUF_SIZE];
-        size_t              _write_buf_size;
-
-        bool _can_write;
+        SharedPointer<Node>   _node;
+        bool                  _can_read{false};
+        Array<char, BUF_SIZE> _read_buf;
+        size_t                _read_buf_size{0};
+        size_t                _read_buf_cursor{0};
+        bool                  _can_write{false};
+        Array<char, BUF_SIZE> _write_buf;
+        size_t                _write_buf_size{0};
 
       public:
         explicit FileStream(SharedPointer<Node> node);
 
-        bool is_read_supported() override;
+        auto is_read_supported() -> bool override;
 
-        int read() override;
+        auto read() -> int override;
 
-        bool is_write_supported() override;
+        auto is_write_supported() -> bool override;
 
-        bool write(U8 value) override;
+        auto write(U8 value) -> bool override;
 
         void flush() override;
 
@@ -54,7 +55,7 @@ namespace Rune::VFS {
          */
         void close() override;
 
-        bool is_ansi_supported() override;
+        auto is_ansi_supported() -> bool override;
     };
 } // namespace Rune::VFS
 

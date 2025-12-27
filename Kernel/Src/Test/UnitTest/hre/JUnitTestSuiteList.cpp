@@ -32,7 +32,8 @@ namespace Heimdall {
         : _list_detail(new JUnitTestSuiteListDetail{other._list_detail->list}) {}
 
     JUnitTestSuiteList::JUnitTestSuiteList(JUnitTestSuiteList&& other) noexcept
-        : _list_detail(new JUnitTestSuiteListDetail{other._list_detail->list}) {
+        : _list_detail(
+              new JUnitTestSuiteListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -64,6 +65,6 @@ namespace Heimdall {
 
     auto JUnitTestSuiteList::operator[](size_t idx) -> JUnitTestSuite {
         auto* test_suite = _list_detail->list[idx];
-        return test_suite ? *test_suite : JUnitTestSuite();
+        return (test_suite != nullptr) ? *test_suite : JUnitTestSuite();
     }
 } // namespace Heimdall

@@ -17,20 +17,21 @@
 #include <SystemCall/MemoryBundle.h>
 
 #include <KRE/BitsAndBytes.h>
+#include <KRE/Math.h>
 
 #include <Ember/Ember.h>
 #include <Ember/MemoryBits.h>
 
 namespace Rune::SystemCall {
-    Ember::StatusCode memory_get_page_size(const void* sys_call_ctx) {
+    auto memory_get_page_size(const void* sys_call_ctx) -> Ember::StatusCode {
         SILENCE_UNUSED(sys_call_ctx)
         return static_cast<Ember::StatusCode>(Memory::get_page_size());
     }
 
-    Ember::StatusCode memory_allocate_page(void*     sys_call_ctx,
-                                           const U64 v_addr,
-                                           const U64 num_pages,
-                                           U64       page_protection) {
+    auto memory_allocate_page(void*     sys_call_ctx, // NOLINT is complex, what you do?
+                              const U64 v_addr,
+                              const U64 num_pages,
+                              U64       page_protection) -> Ember::StatusCode {
         const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
         auto*       vmm     = mem_ctx->mem_module->get_virtual_memory_manager();
 
@@ -77,7 +78,8 @@ namespace Rune::SystemCall {
             // needed) and verify that the requested memory region does not intersect kernel memory
             if (!memory_is_aligned(kv_addr, page_size))
                 kv_addr = memory_align(kv_addr, page_size, true);
-            if (!mem_ctx->k_guard->verify_user_buffer((void*) kv_addr, num_pages * page_size))
+            if (!mem_ctx->k_guard->verify_user_buffer(reinterpret_cast<void*>(kv_addr),
+                                                      num_pages * page_size))
                 return Ember::Status::BAD_ARG;
         }
 
@@ -93,7 +95,7 @@ namespace Rune::SystemCall {
 
         // Zero init the memory region
         // TODO allow init with buffer
-        memset((void*) kv_addr, 0, num_pages * page_size);
+        memset(reinterpret_cast<void*>(kv_addr), 0, num_pages * page_size);
 
         if (!bit_check(page_protection, 1)) {
             // Memory was requested as readonly -> remove the write allowed flag
@@ -107,14 +109,15 @@ namespace Rune::SystemCall {
                 if (pta.status != Memory::PageTableAccessStatus::OKAY) return Ember::Status::FAULT;
             }
         }
-        if (VirtualAddr maybe_new_heap_limit = kv_addr + num_pages * page_size;
-            maybe_new_heap_limit > app->heap_limit)
-            app->heap_limit = maybe_new_heap_limit;
+        // Extend the heap limit if it got bigger
+        // maybe_new_heap_limit = kv_addr + (num_pages * page_size)
+        app->heap_limit = max(kv_addr + (num_pages * page_size), app->heap_limit);
 
         return static_cast<Ember::StatusCode>(kv_addr);
     }
 
-    Ember::StatusCode memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages) {
+    auto memory_free_page(void* sys_call_ctx, const U64 v_addr, const U64 num_pages)
+        -> Ember::StatusCode {
         const auto* mem_ctx = static_cast<MemorySystemCallContext*>(sys_call_ctx);
         auto*       vmm     = mem_ctx->mem_module->get_virtual_memory_manager();
         auto*       app     = mem_ctx->app_module->get_active_app();
@@ -126,12 +129,13 @@ namespace Rune::SystemCall {
         // region does not intersect kernel memory
         if (!memory_is_aligned(kv_addr, page_size))
             kv_addr = memory_align(kv_addr, page_size, true);
-        if (!mem_ctx->k_guard->verify_user_buffer((void*) kv_addr, num_pages * page_size))
+        if (!mem_ctx->k_guard->verify_user_buffer(reinterpret_cast<void*>(kv_addr),
+                                                  num_pages * page_size))
             return Ember::Status::BAD_ARG;
 
         if (!vmm->free(kv_addr, num_pages)) return Ember::Status::FAULT;
 
-        if (const VirtualAddr mem_region_end = kv_addr + num_pages * page_size;
+        if (const VirtualAddr mem_region_end = kv_addr + (num_pages * page_size);
             mem_region_end == app->heap_limit)
             app->heap_limit = kv_addr;
 

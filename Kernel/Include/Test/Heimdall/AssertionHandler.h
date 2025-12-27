@@ -30,7 +30,7 @@ namespace Heimdall {
         Engine* _engine;
 
       public:
-        AssertionHandler(Engine* engine);
+        explicit AssertionHandler(Engine* engine);
 
         /// @brief Evaluate a binary expression.
         /// @tparam LHS

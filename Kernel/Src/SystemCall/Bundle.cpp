@@ -39,15 +39,19 @@ namespace Rune::SystemCall {
     //                                          App System Call Bundle
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    AppSystemCallContext APP_SYSCALL_CTX;
+    AppSystemCallContext APP_SYSCALL_CTX; // NOLINT
 
-    Bundle make_app_bundle(KernelGuardian* k_guard) {
+    auto make_app_bundle(KernelGuardian* k_guard) -> Bundle {
         System& system     = System::instance();
         auto*   app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   dev_module = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         auto*   cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
         auto*   vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        APP_SYSCALL_CTX    = {k_guard, app_module, dev_module, cpu_module, vfs_module};
+        APP_SYSCALL_CTX    = {.k_guard       = k_guard,
+                              .app_module    = app_module,
+                              .device_module = dev_module,
+                              .cpu_module    = cpu_module,
+                              .vfs_module    = vfs_module};
 
         LinkedList<Definition> defs;
         defs.add_back(define1(Ember::App::READ_STDIN,
@@ -87,23 +91,23 @@ namespace Rune::SystemCall {
                               &app_change_directory,
                               &APP_SYSCALL_CTX));
 
-        return {"App", defs};
+        return {.name = "App", .system_call_definitions = defs};
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          VFS System Call Bundle
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    VFSSystemCallContext VFS_SYSCALL_CTX;
+    VFSSystemCallContext VFS_SYSCALL_CTX; // NOLINT
 
-    Bundle make_vfs_bundle(KernelGuardian* k_guard) {
+    auto make_vfs_bundle(KernelGuardian* k_guard) -> Bundle {
         System& system     = System::instance();
         auto*   app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
         VFS_SYSCALL_CTX    = {
-            k_guard,
-            vfs_module,
-            app_module,
+               .k_guard    = k_guard,
+               .vfs_module = vfs_module,
+               .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
@@ -156,23 +160,23 @@ namespace Rune::SystemCall {
                               Ember::VFS(Ember::VFS::DIRECTORY_STREAM_CLOSE).to_string(),
                               &vfs_directory_stream_close,
                               &VFS_SYSCALL_CTX));
-        return {"VFS", defs};
+        return {.name = "VFS", .system_call_definitions = defs};
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Memory System Call Bundle
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MemorySystemCallContext MM_SYSCALL_CTX;
+    MemorySystemCallContext MM_SYSCALL_CTX; // NOLINT
 
-    Bundle make_memory_bundle(KernelGuardian* k_guard) {
+    auto make_memory_bundle(KernelGuardian* k_guard) -> Bundle {
         System& system        = System::instance();
         auto*   app_module    = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   memory_module = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         MM_SYSCALL_CTX        = {
-            k_guard,
-            memory_module,
-            app_module,
+                   .k_guard    = k_guard,
+                   .mem_module = memory_module,
+                   .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
@@ -188,23 +192,23 @@ namespace Rune::SystemCall {
                               Ember::Memory(Ember::Memory::FREE_PAGE).to_string(),
                               &memory_free_page,
                               &MM_SYSCALL_CTX));
-        return {"Memory", defs};
+        return {.name = "Memory", .system_call_definitions = defs};
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Threading System Call Context
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    ThreadingSystemCallContext T_SYSCALL_CTX;
+    ThreadingSystemCallContext T_SYSCALL_CTX; // NOLINT
 
-    Bundle make_threading_bundle(KernelGuardian* k_guard) {
+    auto make_threading_bundle(KernelGuardian* k_guard) -> Bundle {
         System& system     = System::instance();
         auto*   app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
         T_SYSCALL_CTX      = {
-            k_guard,
-            cpu_module,
-            app_module,
+                 .k_guard    = k_guard,
+                 .cpu_module = cpu_module,
+                 .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
@@ -233,10 +237,10 @@ namespace Rune::SystemCall {
                     Ember::Threading(Ember::Threading::THREAD_CONTROL_BLOCK_SET).to_string(),
                     &set_thread_control_block,
                     &T_SYSCALL_CTX));
-        return {"Threading", defs};
+        return {.name = "Threading", .system_call_definitions = defs};
     }
 
-    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian* k_guard) {
+    auto system_call_get_native_bundles(KernelGuardian* k_guard) -> LinkedList<Bundle> {
         LinkedList<Bundle> bundles;
         bundles.add_back(make_app_bundle(k_guard));
         bundles.add_back(make_vfs_bundle(k_guard));

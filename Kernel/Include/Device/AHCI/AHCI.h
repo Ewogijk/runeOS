@@ -17,6 +17,7 @@
 #ifndef RUNEOS_AHCI_H
 #define RUNEOS_AHCI_H
 
+#include <KRE/Collections/Array.h>
 #include <KRE/Collections/LinkedList.h>
 
 #include <Device/AHCI/HBAMemory.h>
@@ -37,38 +38,39 @@ namespace Rune::Device {
         static constexpr U8 LOGICAL_DRIVE_LIMIT = 255;
         static constexpr U8 PORT_LIMIT          = 32;
 
-        volatile HBAMemory* _hba;
-        PortEngine          _port_engine[PORT_LIMIT];
+        volatile HBAMemory*           _hba{nullptr};
+        Array<PortEngine, PORT_LIMIT> _port_engine;
 
         Memory::SlabAllocator* _heap;
         CPU::Timer*            _timer;
 
-        LogicalDrive _logical_drive_table[LOGICAL_DRIVE_LIMIT];
-        size_t       _logical_drive_count;
+        Array<LogicalDrive, LOGICAL_DRIVE_LIMIT> _logical_drive_table;
+        size_t                                   _logical_drive_count{0};
 
-        SystemMemory* alloc_system_memory(U32 ct_count);
+        auto alloc_system_memory(U32 ct_count) -> SystemMemory*;
 
-        LogicalDrive resolve_logical_drive(U8 logicalDrive);
+        auto resolve_logical_drive(U8 logicalDrive) -> LogicalDrive;
 
       public:
         AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer);
 
-        LinkedList<HardDrive> get_discovered_hard_drives();
+        auto get_discovered_hard_drives() -> LinkedList<HardDrive>;
 
-        LinkedList<Partition> get_logical_drives();
+        auto get_logical_drives() -> LinkedList<Partition>;
 
-        HardDrive get_hard_drive_info(U8 hard_drive);
+        auto get_hard_drive_info(U8 hard_drive) -> HardDrive;
 
-        bool start(volatile HBAMemory* hba);
+        auto start(volatile HBAMemory* hba) -> bool;
 
-        bool stop();
+        auto stop() -> bool;
 
-        size_t
-        send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2dFIS);
+        auto
+        send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2d_fis)
+            -> size_t;
 
-        size_t read(U8 hard_drive, void* buf, size_t buf_size, size_t lba);
+        auto read(U8 hard_drive, void* buf, size_t buf_size, size_t lba) -> size_t;
 
-        size_t write(U8 hard_drive, void* buf, size_t buf_size, size_t lba);
+        auto write(U8 hard_drive, void* buf, size_t buf_size, size_t lba) -> size_t;
     };
 } // namespace Rune::Device
 

@@ -47,7 +47,7 @@ namespace Heimdall {
                                  Test{
                                  .name          = name,
                                  .test_function = test_function,
-                                 .scl           = {source_file, line}
+                                 .scl           = {.file = source_file, .line = line}
         });
         return true;
     }

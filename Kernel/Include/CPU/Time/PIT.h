@@ -34,17 +34,17 @@ namespace Rune::CPU {
          */
         static constexpr U64 QUARTZ_FREQUENCY_HZ = 1193182;
 
-        Scheduler* _scheduler;
+        Scheduler* _scheduler{nullptr};
         IRQHandler _irq_handler;
 
         DeltaQueue _sleeping_threads;
-        U64        _count; // Ticks since boot
+        U64        _count{0}; // Ticks since boot
 
         // Remaining time in nanoseconds the thread can run before being preempted
-        U32 _quantum_remaining;
+        U32 _quantum_remaining{0};
 
         // Time in nanoseconds between two IRQs
-        U64 _time_between_irq;
+        U64 _time_between_irq{0};
 
       public:
         PIT();

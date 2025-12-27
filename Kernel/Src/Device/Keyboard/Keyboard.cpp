@@ -21,11 +21,11 @@ namespace Rune::Device {
     //                                          KeyStream
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool VirtualKeyboard::is_read_supported() { return true; }
+    auto VirtualKeyboard::is_read_supported() -> bool { return true; }
 
-    bool VirtualKeyboard::is_write_supported() { return false; }
+    auto VirtualKeyboard::is_write_supported() -> bool { return false; }
 
-    bool VirtualKeyboard::write(U8 value) {
+    auto VirtualKeyboard::write(U8 value) -> bool {
         SILENCE_UNUSED(value)
         return false;
     }
@@ -34,5 +34,5 @@ namespace Rune::Device {
         // The keyboard is not a managed resource
     }
 
-    bool VirtualKeyboard::is_ansi_supported() { return false; }
+    auto VirtualKeyboard::is_ansi_supported() -> bool { return false; }
 } // namespace Rune::Device

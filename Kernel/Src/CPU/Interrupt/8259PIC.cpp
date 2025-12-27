@@ -79,7 +79,7 @@ namespace Rune::CPU {
         return maybe_test_mask == TEST_MASK;
     }
 
-    _8259PIC::_8259PIC() : _imr(MASK_ALL_INTERRUPTS), _imr_invalid(true) {}
+    _8259PIC::_8259PIC() : _imr(MASK_ALL_INTERRUPTS) {}
 
     auto _8259PIC::get_name() -> String { return "8259 PIC"; }
 
@@ -144,8 +144,8 @@ namespace Rune::CPU {
     }
 
     void _8259PIC::update_selected_8259_imr(U8 irq_line) const {
-        U16 port;
-        U8  out;
+        U16 port{0};
+        U8  out{0};
         if (irq_line < PIC2_IRQ_BOUNDARY) {
             port = Port::DATA1;
             out  = _imr & MASK_BYTE;

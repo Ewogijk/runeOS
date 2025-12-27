@@ -27,10 +27,10 @@ namespace Heimdall {
     class ConsoleReporter : public Reporter {
         static constexpr size_t TAG_WIDTH = 10;
 
-        auto pad(const HString& text, unsigned char fill, bool left) -> HString;
-        void write_tag(const HString& tag, const HString& text, Color color, bool pad_pos);
-        void write_tag(const HString& tag, const HString& text, bool pad_pos);
-        void write_divider(char div_char, const HString& text);
+        static auto pad(const HString& text, unsigned char fill, bool left) -> HString;
+        static void write_tag(const HString& tag, const HString& text, Color color, bool pad_pos);
+        static void write_tag(const HString& tag, const HString& text, bool pad_pos);
+        static void write_divider(char div_char, const HString& text);
 
       public:
         [[nodiscard]] auto get_name() const -> HString override;

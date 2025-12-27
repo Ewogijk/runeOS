@@ -75,7 +75,7 @@ namespace Ember {
      * @brief General information about a node.
      */
     struct NodeInfo {
-        char   node_path[STRING_SIZE_LIMIT] = {}; //NOLINT Is ABI -> Must use C-style array
+        char   node_path[STRING_SIZE_LIMIT] = {}; // NOLINT Is ABI -> Must use C-style array
         size_t size                         = 0;
         U8     attributes                   = 0;
 

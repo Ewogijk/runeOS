@@ -36,24 +36,24 @@ namespace Rune::Device {
          * @brief
          * @return
          */
-        virtual bool start() = 0;
+        virtual auto start() -> bool = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Stream functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        bool is_read_supported() override;
+        auto is_read_supported() -> bool override;
 
         /**
          * @brief Read a single virtual key press from the buffer.
          * @return NoneKeyCode: The buffer is empty, Else: A virtual key code of the oldest pressed
          * key.
          */
-        int read() override = 0;
+        auto read() -> int override = 0;
 
-        bool is_write_supported() override;
+        auto is_write_supported() -> bool override;
 
-        bool write(U8 value) override;
+        auto write(U8 value) -> bool override;
 
         /**
          * @brief Flush a virtual keys in the buffer.
@@ -62,7 +62,7 @@ namespace Rune::Device {
 
         void close() override;
 
-        bool is_ansi_supported() override;
+        auto is_ansi_supported() -> bool override;
     };
 } // namespace Rune::Device
 

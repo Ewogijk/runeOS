@@ -20,7 +20,7 @@
 #include <Ember/Ember.h>
 
 namespace Rune::SystemCall {
-    Ember::StatusCode read_stdin(void* sys_call_ctx, const U64 key_code_out) {
+    auto read_stdin(void* sys_call_ctx, const U64 key_code_out) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         auto*       timer           = app_syscall_ctx->cpu_module->get_system_timer();
 
@@ -38,29 +38,29 @@ namespace Rune::SystemCall {
                    : Ember::Status::BAD_ARG;
     }
 
-    Ember::StatusCode write_stdout(void* sys_call_ctx, const U64 msg, const U64 msg_size) {
+    auto write_stdout(void* sys_call_ctx, const U64 msg, const U64 msg_size) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
         const char* k_buf_msg = new char[msg_size + 1];
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(
                 reinterpret_cast<const char*>(msg),
-                msg_size,
+                static_cast<int>(msg_size),
                 k_buf_msg))
             return Ember::Status::BAD_ARG;
-        const String            k_msg(k_buf_msg);
-        const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
+        const String k_msg(k_buf_msg);
+        const auto   byte_out = static_cast<Ember::StatusCode>(
             app_syscall_ctx->app_module->get_active_app()->std_out->write(k_msg));
         delete[] k_buf_msg;
         return byte_out;
     }
 
-    Ember::StatusCode write_stderr(void* sys_call_ctx, const U64 msg, const U64 msg_size) {
+    auto write_stderr(void* sys_call_ctx, const U64 msg, const U64 msg_size) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
 
         const char* k_buf_msg = new char[msg_size + 1];
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(
                 reinterpret_cast<const char*>(msg),
-                msg_size,
+                static_cast<int>(msg_size),
                 k_buf_msg))
             return Ember::Status::BAD_ARG;
         const String                    k_msg(k_buf_msg);
@@ -68,33 +68,33 @@ namespace Rune::SystemCall {
             app_syscall_ctx->app_module->get_active_app()->std_err;
 
         std_err->set_foreground_color(Pixie::VSCODE_RED);
-        const Ember::StatusCode byte_out = static_cast<Ember::StatusCode>(
+        const auto byte_out = static_cast<Ember::StatusCode>(
             app_syscall_ctx->app_module->get_active_app()->std_err->write(k_msg));
         std_err->reset_style();
         delete[] k_buf_msg;
         return byte_out;
     }
 
-    Ember::StatusCode get_ID(void* sys_call_ctx) {
+    auto get_ID(void* sys_call_ctx) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         return app_syscall_ctx->app_module->get_active_app()->handle;
     }
 
-    Ember::StatusCode app_start(void*     sys_call_ctx,
-                                const U64 app_path,
-                                const U64 argv,
-                                const U64 working_dir,
-                                const U64 stdin_config,
-                                const U64 stdout_config,
-                                const U64 stderr_config) {
+    auto app_start(void*     sys_call_ctx,
+                   const U64 app_path,
+                   const U64 argv,
+                   const U64 working_dir,
+                   const U64 stdin_config,
+                   const U64 stdout_config,
+                   const U64 stderr_config) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        auto*       u_app_path      = reinterpret_cast<const char*>(app_path);
+        auto*       u_app_path      = reinterpret_cast<const char*>(app_path); // NOLINT kernel ABI
         auto*       u_app_argv      = reinterpret_cast<const char**>(argv);
-        auto*       u_app_wd        = reinterpret_cast<const char*>(working_dir);
-        auto*       u_stdin_config  = reinterpret_cast<void*>(stdin_config);
-        auto*       u_stdout_config = reinterpret_cast<void*>(stdout_config);
-        auto*       u_stderr_config = reinterpret_cast<void*>(stderr_config);
-        char        k_str_buf[Ember::STRING_SIZE_LIMIT] = {};
+        auto*       u_app_wd = reinterpret_cast<const char*>(working_dir); // NOLINT kernel ABI
+        auto*       u_stdin_config                      = reinterpret_cast<void*>(stdin_config);
+        auto*       u_stdout_config                     = reinterpret_cast<void*>(stdout_config);
+        auto*       u_stderr_config                     = reinterpret_cast<void*>(stderr_config);
+        char        k_str_buf[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT kernel ABI
 
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_app_path, -1, k_str_buf))
             return Ember::Status::BAD_ARG;
@@ -125,20 +125,21 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
 
         // Copy uAppArgv to kernel memory
-        char* k_app_argv[Ember::ARG_COUNT_LIMIT];
-        memset(k_app_argv, '\0', Ember::ARG_COUNT_LIMIT);
+        char* k_app_argv[Ember::ARG_COUNT_LIMIT]; // NOLINT kernel ABI
+        memset(reinterpret_cast<void*>(k_app_argv), '\0', Ember::ARG_COUNT_LIMIT);
 
         // We will just copy over the maximum amount of arguments uAppArgv can have
         // This will likely be way more than we need, but we really don't want to access user memory
         // before it is copied over to kernel memory
-        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(u_app_argv,
-                                                                       sizeof(k_app_argv),
-                                                                       k_app_argv))
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_user_to_kernel(
+                reinterpret_cast<void*>(u_app_argv),
+                sizeof(k_app_argv),
+                reinterpret_cast<void*>(k_app_argv)))
             return Ember::Status::BAD_ARG;
 
         int    argc     = 0;
         char** tmp_argv = k_app_argv;
-        while (*tmp_argv) {
+        while (*tmp_argv != nullptr) {
             ++tmp_argv;
             ++argc;
         }
@@ -150,20 +151,24 @@ namespace Rune::SystemCall {
         // The app args are still in user memory (we only copied the pointers to them over to
         // kernel) The array will hold the copies of the actual strings, which can hold the maximum
         // number of allowed arguments that have the maximum allowed size of a user memory string.
-        char   k_app_args[Ember::ARG_COUNT_LIMIT * Ember::STRING_SIZE_LIMIT];
+        char   k_app_args[Ember::ARG_COUNT_LIMIT * Ember::STRING_SIZE_LIMIT]; // NOLINT kernel ABI
         size_t k_app_args_offset = 0;
         U8     i                 = 0;
 
+        // NOLINTBEGIN bounds check is performed on k_app_argv[i]
         // Move all arguments up by one
-        memmove(&k_app_argv[1], &k_app_argv[0], sizeof(char**) * (argc + 1));
+        memmove(reinterpret_cast<void*>(&k_app_argv[1]),
+                reinterpret_cast<void*>(&k_app_argv[0]),
+                sizeof(char**) * (argc + 1));
         // Make k_app_argv[0] the app path
-        memcpy(&k_app_args[k_app_args_offset],
+        memcpy(reinterpret_cast<void*>(&k_app_args[k_app_args_offset]),
                (void*) k_app_path.to_string().to_cstr(),
                k_app_path.to_string().size() + 1);
         k_app_argv[i]      = &k_app_args[k_app_args_offset];
         k_app_args_offset += k_app_path.to_string().size() + 1;
         i++;
-        while (k_app_argv[i] && i < Ember::ARG_COUNT_LIMIT) {
+
+        while ((k_app_argv[i] != nullptr) && i < Ember::ARG_COUNT_LIMIT) {
             if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(k_app_argv[i], -1, k_str_buf))
                 return Ember::Status::BAD_ARG;
             String arg_tmp(k_str_buf);
@@ -176,7 +181,7 @@ namespace Rune::SystemCall {
             k_app_args_offset += arg_tmp.size() + 1;
             i++;
         }
-
+        // NOLINTEND
         VFS::NodeInfo dummy;
         if (!k_app_path.is_absolute())
             k_app_path = k_app_path.resolve(
@@ -203,22 +208,22 @@ namespace Rune::SystemCall {
         return ID;
     }
 
-    Ember::StatusCode app_exit(void* sys_call_ctx, const U64 exit_code) {
+    auto app_exit(void* sys_call_ctx, const U64 exit_code) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         const int   k_exit_code     = static_cast<int>(exit_code);
         app_syscall_ctx->app_module->exit_running_app(k_exit_code);
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode app_join(void* sys_call_ctx, U64 ID) {
+    auto app_join(void* sys_call_ctx, U64 ID) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         const int   app_ID          = static_cast<int>(ID);
         const int   app_exit_code   = app_syscall_ctx->app_module->join(app_ID);
         return app_exit_code == INT_MAX ? Ember::Status::UNKNOWN_ID : app_exit_code;
     }
 
-    Ember::StatusCode
-    app_current_directory(void* sys_call_ctx, const U64 wd_out, const U64 wd_out_size) {
+    auto app_current_directory(void* sys_call_ctx, const U64 wd_out, const U64 wd_out_size)
+        -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         auto*       u_wd_out        = reinterpret_cast<char*>(wd_out);
         const auto  b_size          = static_cast<size_t>(wd_out_size);
@@ -234,10 +239,10 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode app_change_directory(void* sys_call_ctx, const U64 wd) {
+    auto app_change_directory(void* sys_call_ctx, const U64 wd) -> Ember::StatusCode {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
-        auto*       u_str           = reinterpret_cast<const char*>(wd);
-        char        k_str[Ember::STRING_SIZE_LIMIT] = {};
+        auto*       u_str           = reinterpret_cast<const char*>(wd); // NOLINT kernel ABI
+        char        k_str[Ember::STRING_SIZE_LIMIT] = {};                // NOLINT kernel ABI
         if (!app_syscall_ctx->k_guard->copy_string_user_to_kernel(u_str, -1, k_str)) {
             return Ember::Status::BAD_ARG;
         }

@@ -22,13 +22,13 @@
 //                                   Kernel Runtime Support
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-Rune::Memory::MemoryModule* MEM_MODULE;
+Rune::Memory::MemoryModule* MEM_MODULE; // NOLINT
 
-void* operator new(size_t size) { return MEM_MODULE->get_heap()->allocate(size); }
+auto operator new(size_t size) -> void* { return MEM_MODULE->get_heap()->allocate(size); }
 
-void* operator new[](size_t size) { return MEM_MODULE->get_heap()->allocate(size); }
+auto operator new[](size_t size) -> void* { return MEM_MODULE->get_heap()->allocate(size); }
 
-void* operator new(size_t count, void* ptr) {
+auto operator new(size_t count, void* ptr) -> void* {
     SILENCE_UNUSED(count)
     return ptr;
 }
@@ -55,17 +55,14 @@ namespace Rune::Memory {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     MemoryModule::MemoryModule()
-        : Module(),
-          _p_map({}),
+        : _p_map({}),
           _v_map({}),
-          _pmm(),
           _vmm(&_pmm),
-          _heap(),
           _boot_loader_mem_claim_failed(false) {}
 
-    String MemoryModule::get_name() const { return "Memory"; }
+    auto MemoryModule::get_name() const -> String { return "Memory"; }
 
-    bool MemoryModule::load(const BootInfo& boot_info) {
+    auto MemoryModule::load(const BootInfo& boot_info) -> bool {
         _p_map = boot_info.physical_memory_map;
         _v_map = create_virtual_memory_map();
 
@@ -77,7 +74,7 @@ namespace Rune::Memory {
 
         // Init vmm
         init_paging(boot_info.physical_address_width);
-        if (_vmm.start(&_p_map, &_v_map, k_space_layout, 128 * (MemorySize) MemoryUnit::MiB)
+        if (_vmm.start(&_p_map, &_v_map, k_space_layout, HEAP_SIZE * (MemorySize) MemoryUnit::MiB)
             != VMMStartFailure::NONE)
             return false;
 
@@ -95,15 +92,15 @@ namespace Rune::Memory {
         return true;
     }
 
-    MemoryMap& MemoryModule::get_physical_memory_map() { return _p_map; }
+    auto MemoryModule::get_physical_memory_map() -> MemoryMap& { return _p_map; }
 
-    MemoryMap& MemoryModule::get_virtual_memory_map() { return _v_map; }
+    auto MemoryModule::get_virtual_memory_map() -> MemoryMap& { return _v_map; }
 
-    PhysicalMemoryManager* MemoryModule::get_physical_memory_manager() { return &_pmm; }
+    auto MemoryModule::get_physical_memory_manager() -> PhysicalMemoryManager* { return &_pmm; }
 
-    VirtualMemoryManager* MemoryModule::get_virtual_memory_manager() { return &_vmm; }
+    auto MemoryModule::get_virtual_memory_manager() -> VirtualMemoryManager* { return &_vmm; }
 
-    SlabAllocator* MemoryModule::get_heap() { return &_heap; }
+    auto MemoryModule::get_heap() -> SlabAllocator* { return &_heap; }
 
     void MemoryModule::log_post_load() const {
         LOGGER->debug("The bootloader reclaimable memory has been claimed.");

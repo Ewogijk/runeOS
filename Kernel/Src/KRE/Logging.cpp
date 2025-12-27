@@ -222,7 +222,7 @@ namespace Rune {
     }
 
     auto LogContext::set_log_level(const String& selector, LogLevel level) -> bool {
-        auto change_level = [this, &selector, level](Selector sel) -> Optional<bool> {
+        auto change_level = [this, level](Selector sel) -> Optional<bool> {
             LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
             if (filter_list.is_empty()) return NULL_OPT;
             for (auto& logger : filter_list) logger->set_log_level(level);
@@ -232,7 +232,7 @@ namespace Rune {
     }
 
     auto LogContext::set_layout_ref(const String& selector, const String& layout_ref) -> bool {
-        auto change_layout_ref = [this, &selector, &layout_ref](Selector sel) -> Optional<bool> {
+        auto change_layout_ref = [this, &layout_ref](Selector sel) -> Optional<bool> {
             LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
             if (filter_list.is_empty()) return NULL_OPT;
             for (auto& logger : filter_list) logger->set_layout_ref(layout_ref);

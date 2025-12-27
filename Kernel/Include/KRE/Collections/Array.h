@@ -70,11 +70,11 @@ namespace Rune {
         T _array[N]; // NOLINT
 
         void copy(const Array<T, N>& other) {
-            for (size_t i = 0; i < N; i++) _array[i] = other._array[i];
+            for (size_t i = 0; i < N; i++) _array[i] = other._array[i]; // NOLINT
         }
 
         void move_array(const Array<T, N>& other) {
-            for (size_t i = 0; i < N; i++) _array[i] = move(other._array[i]);
+            for (size_t i = 0; i < N; i++) _array[i] = move(other._array[i]); // NOLINT
         }
 
       public:
@@ -86,7 +86,7 @@ namespace Rune {
             size_t idx = 0;
             for (auto ele : init) {
                 if (idx > N) break;
-                _array[idx++] = ele;
+                _array[idx++] = ele; // NOLINT
             }
         }
 
@@ -127,7 +127,7 @@ namespace Rune {
          *
          * @return Pointer to the data buffer.
          */
-        auto data() const -> const T* { return _array; }
+        [[nodiscard]] auto data() const -> const T* { return _array; }
 
         /**
          * If index>=N the behavior is undefined.

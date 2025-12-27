@@ -37,7 +37,7 @@ namespace Heimdall {
         : _str_detail(new StringDetail{other._str_detail->str}) {}
 
     HString::HString(HString&& other) noexcept
-        : _str_detail(new StringDetail{other._str_detail->str}) {
+        : _str_detail(new(std::nothrow) StringDetail{other._str_detail->str}) {
 
         delete other._str_detail;
         other._str_detail = nullptr;
@@ -64,30 +64,30 @@ namespace Heimdall {
 
     auto HString::number_to_string(size_t count) -> HString {
         std::string num_str = std::to_string(count);
-        return HString(num_str.c_str());
+        return {num_str.c_str()};
     }
 
     auto HString::size() const -> size_t { return _str_detail->str.size(); }
 
     auto HString::is_empty() const -> bool { return _str_detail->str.empty(); }
 
-    HString HString::operator+(const char* o) const {
-        return HString(std::string(_str_detail->str + o).c_str());
+    auto HString::operator+(const char* o) const -> HString {
+        return {std::string(_str_detail->str + o).c_str()};
     }
 
-    HString HString::operator+(const HString& o) const {
-        return HString(std::string(_str_detail->str + o._str_detail->str).c_str());
+    auto HString::operator+(const HString& o) const -> HString {
+        return {std::string(_str_detail->str + o._str_detail->str).c_str()};
     }
 
-    HString HString::operator+(const HString&& o) const {
-        return HString(std::string(_str_detail->str + o._str_detail->str).c_str());
+    auto HString::operator+(const HString&& o) const -> HString {
+        return {std::string(_str_detail->str + o._str_detail->str).c_str()};
     }
 
-    HString HString::operator+(char o) const {
-        return HString(std::string(_str_detail->str + o).c_str());
+    auto HString::operator+(char o) const -> HString {
+        return {std::string(_str_detail->str + o).c_str()};
     }
 
-    const char* HString::to_c_str() const { return _str_detail->str.c_str(); }
+    auto HString::to_c_str() const -> const char* { return _str_detail->str.c_str(); }
 
     auto operator==(const HString& fst, const HString& sec) -> bool {
         return fst._str_detail->str == sec._str_detail->str;
@@ -112,7 +112,7 @@ namespace Heimdall {
         : _list_detail(new HStringListDetail{other._list_detail->list}) {}
 
     HStringList::HStringList(HStringList&& other) noexcept
-        : _list_detail(new HStringListDetail{other._list_detail->list}) {
+        : _list_detail(new(std::nothrow) HStringListDetail{other._list_detail->list}) {
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -138,7 +138,9 @@ namespace Heimdall {
 
     auto HStringList::size() const -> size_t { return _list_detail->list.size(); }
 
-    void HStringList::insert(const HString& str) { _list_detail->list.push_back(str.to_c_str()); }
+    void HStringList::insert(const HString& str) {
+        _list_detail->list.emplace_back(str.to_c_str());
+    }
 
     auto HStringList::operator[](size_t index) const -> HString {
         return _list_detail->list[index];

@@ -31,20 +31,20 @@ namespace Rune::CPU {
 
     void Timer::sleep_micro(U64 time_micros) {
         constexpr U16 MICRO_TO_NANO = 1000;
-        U64 time_nanos = time_micros * MICRO_TO_NANO;
+        U64           time_nanos    = time_micros * MICRO_TO_NANO;
         sleep_until(get_time_since_start() + time_nanos);
     }
 
     void Timer::sleep_milli(U64 time_millis) {
         constexpr U32 MILLI_TO_NANO = 1000000;
-        U64 time_nanos = time_millis * MILLI_TO_NANO;
-        U64 res        = get_time_since_start() + time_nanos;
+        U64           time_nanos    = time_millis * MILLI_TO_NANO;
+        U64           res           = get_time_since_start() + time_nanos;
         sleep_until(res);
     }
 
     void Timer::sleep_second(U64 time_seconds) {
         constexpr U32 SECOND_TO_NANO = 1000000000;
-        U64 time_nanos = time_seconds * SECOND_TO_NANO;
+        U64           time_nanos     = time_seconds * SECOND_TO_NANO;
         sleep_until(get_time_since_start() + time_nanos);
     }
 } // namespace Rune::CPU

@@ -39,8 +39,7 @@ namespace Rune::VFS {
         /**
          * @return Name of the filesystem specification.
          */
-        [[nodiscard]]
-        virtual String get_name() const = 0;
+        [[nodiscard]] virtual auto get_name() const -> String = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                     Storage Device Functions
@@ -61,7 +60,7 @@ namespace Rune::VFS {
          * Failure reason is specific to the file system implementation, check the logs.
          *          StorageDevError:    An IO error happened.
          */
-        virtual FormatStatus format(U16 storage_dev) = 0;
+        virtual auto format(U16 storage_dev) -> FormatStatus = 0;
 
         /**
          * A filesystem driver implementation shall be able to mount multiple storage devices at
@@ -78,7 +77,7 @@ namespace Rune::VFS {
          *          NotSupported:      The storage device is not formatted or uses an unknown
          * filesystem. StorageDevError:   An IO error happened.
          */
-        virtual MountStatus mount(U16 storage_dev) = 0;
+        virtual auto mount(U16 storage_dev) -> MountStatus = 0;
 
         /**
          *
@@ -93,7 +92,7 @@ namespace Rune::VFS {
          *          MountError:        The storage device could not be unmounted.
          *          StorageDevError:   An IO error happened.
          */
-        virtual MountStatus unmount(U16 storage_dev) = 0;
+        virtual auto unmount(U16 storage_dev) -> MountStatus = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          File Manipulations
@@ -105,8 +104,7 @@ namespace Rune::VFS {
          * @return True: The path does not contain any illegal character, False: The path contains
          * at least one illegal character.
          */
-        [[nodiscard]]
-        virtual bool is_valid_file_path(const Path& path) const = 0;
+        [[nodiscard]] virtual auto is_valid_file_path(const Path& path) const -> bool = 0;
 
         /**
          * @brief Create a new file or directory on the storage device.
@@ -121,7 +119,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual IOStatus create(U16 storage_dev, const Path& path, U8 attributes) = 0;
+        virtual auto create(U16 storage_dev, const Path& path, U8 attributes) -> IOStatus = 0;
 
         /**
          * If the path is empty the root node of the filesystem shall be returned.
@@ -138,12 +136,12 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual IOStatus open(U16                  storage_dev,
-                              const Path&          mount_point,
-                              const Path&          path,
-                              Ember::IOMode        io_mode,
-                              Function<void()>     on_close,
-                              SharedPointer<Node>& out) = 0;
+        virtual auto open(U16                  storage_dev,
+                          const Path&          mount_point,
+                          const Path&          path,
+                          Ember::IOMode        io_mode,
+                          Function<void()>     on_close,
+                          SharedPointer<Node>& out) -> IOStatus = 0;
 
         /**
          * This operation will not create a node handle.
@@ -159,7 +157,7 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN: The storage device is unknown to the driver.
          *          DEV_ERROR:   An IO error happened.
          */
-        virtual IOStatus find_node(U16 storage_dev, const Path& path, NodeInfo& out) = 0;
+        virtual auto find_node(U16 storage_dev, const Path& path, NodeInfo& out) -> IOStatus = 0;
 
         /**
          * @brief Delete a file on the storage device.
@@ -171,7 +169,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual IOStatus delete_node(U16 storage_dev, const Path& path) = 0;
+        virtual auto delete_node(U16 storage_dev, const Path& path) -> IOStatus = 0;
 
         /**
          * @brief Open a stream over the content of the directory.
@@ -184,10 +182,10 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual IOStatus open_directory_stream(U16                             storage_dev,
-                                               const Path&                     path,
-                                               const Function<void()>&         on_close,
-                                               SharedPointer<DirectoryStream>& out) = 0;
+        virtual auto open_directory_stream(U16                             storage_dev,
+                                           const Path&                     path,
+                                           const Function<void()>&         on_close,
+                                           SharedPointer<DirectoryStream>& out) -> IOStatus = 0;
     };
 } // namespace Rune::VFS
 

@@ -53,15 +53,9 @@ namespace Rune::CPU {
 
     Scheduler::Scheduler()
         : _running_thread(nullptr),
-          _ready_threads(nullptr),
-          _irq_disable_counter(0),
-          _postpone_ctx_switches(0),
-          _ctx_switches_postponed(false),
-          _allow_preemption(false),
           _idle_thread(nullptr),
           _thread_terminator(nullptr),
-          _on_context_switch([](Thread* next) { SILENCE_UNUSED(next) }),
-          _thread_enter(nullptr) {}
+          _on_context_switch([](Thread* next) { SILENCE_UNUSED(next) }) {}
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Properties

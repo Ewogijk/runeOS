@@ -51,7 +51,7 @@ namespace Rune::Device {
 
         void set_ahci_driver(UniquePointer<AHCIDriver> ahci_driver);
 
-        auto get_ahic_driver() -> AHCIDriver&;
+        auto get_ahci_driver() -> AHCIDriver*;
 
         auto get_keyboard() -> SharedPointer<VirtualKeyboard>;
     };

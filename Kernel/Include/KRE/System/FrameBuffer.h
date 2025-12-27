@@ -49,12 +49,11 @@ namespace Rune {
      */
     class FrameBuffer {
         static constexpr U8 BITS_PER_BYTE = 8;
-        static constexpr U8 BYTE_MASK = 0xFF;
+        static constexpr U8 BYTE_MASK     = 0xFF;
         static constexpr U8 RGBA_OFFSET_R = 0;
         static constexpr U8 RGBA_OFFSET_G = 8;
         static constexpr U8 RGBA_OFFSET_B = 16;
         static constexpr U8 RGBA_OFFSET_A = 24;
-
 
         U8* _address         = nullptr;
         U64 _width           = 0;

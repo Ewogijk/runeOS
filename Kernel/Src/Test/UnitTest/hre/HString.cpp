@@ -35,7 +35,7 @@ namespace Heimdall {
         : _str_detail(new StringDetail{other._str_detail->str}) {}
 
     HString::HString(HString&& other) noexcept
-        : _str_detail(new StringDetail{other._str_detail->str}) {
+        : _str_detail(new StringDetail{other._str_detail->str}) { // NOLINT cannot throw
 
         delete other._str_detail;
         other._str_detail = nullptr;
@@ -55,37 +55,37 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(HString& fst, HString& sec) {
+    void swap(HString& fst, HString& sec) noexcept {
         using Rune::swap;
         swap(fst._str_detail->str, sec._str_detail->str);
     }
 
     auto HString::number_to_string(size_t count) -> HString {
         Rune::String num_str = Rune::String::format("{}", count);
-        return HString(num_str.to_cstr());
+        return {num_str.to_cstr()};
     }
 
     auto HString::size() const -> size_t { return _str_detail->str.size(); }
 
     auto HString::is_empty() const -> bool { return _str_detail->str.is_empty(); }
 
-    HString HString::operator+(const char* o) const {
-        return HString(Rune::String(_str_detail->str + o).to_cstr());
+    auto HString::operator+(const char* o) const -> HString {
+        return {Rune::String(_str_detail->str + o).to_cstr()};
     }
 
-    HString HString::operator+(const HString& o) const {
-        return HString(Rune::String(_str_detail->str + o._str_detail->str).to_cstr());
+    auto HString::operator+(const HString& o) const -> HString {
+        return {Rune::String(_str_detail->str + o._str_detail->str).to_cstr()};
     }
 
-    HString HString::operator+(const HString&& o) const {
-        return HString(Rune::String(_str_detail->str + o._str_detail->str).to_cstr());
+    auto HString::operator+(const HString&& o) const -> HString {
+        return {Rune::String(_str_detail->str + o._str_detail->str).to_cstr()};
     }
 
-    HString HString::operator+(char o) const {
-        return HString(Rune::String(_str_detail->str + o).to_cstr());
+    auto HString::operator+(char o) const -> HString {
+        return {Rune::String(_str_detail->str + o).to_cstr()};
     }
 
-    const char* HString::to_c_str() const { return _str_detail->str.to_cstr(); }
+    auto HString::to_c_str() const -> const char* { return _str_detail->str.to_cstr(); }
 
     auto operator==(const HString& fst, const HString& sec) -> bool {
         return fst._str_detail->str == sec._str_detail->str;
@@ -110,7 +110,7 @@ namespace Heimdall {
         : _list_detail(new HStringListDetail{other._list_detail->list}) {}
 
     HStringList::HStringList(HStringList&& other) noexcept
-        : _list_detail(new HStringListDetail{other._list_detail->list}) {
+        : _list_detail(new HStringListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -129,7 +129,7 @@ namespace Heimdall {
         return *this;
     }
 
-    void swap(HStringList& fst, HStringList& sec) {
+    void swap(HStringList& fst, HStringList& sec) noexcept {
         using Rune::swap;
         swap(fst._list_detail->list, sec._list_detail->list);
     }
@@ -140,6 +140,6 @@ namespace Heimdall {
 
     auto HStringList::operator[](size_t index) const -> HString {
         HString* str = _list_detail->list[index];
-        return str ? *str : HString();
+        return (str != nullptr) ? *str : HString();
     }
 } // namespace Heimdall

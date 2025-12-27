@@ -25,8 +25,7 @@ namespace Rune::VFS {
       public:
         virtual ~FATEngine() = default;
 
-        [[nodiscard]]
-        virtual String get_name() const = 0;
+        [[nodiscard]] virtual auto get_name() const -> String = 0;
 
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
@@ -44,7 +43,7 @@ namespace Rune::VFS {
          *
          * @return True: The boot record is created. False: It is not.
          */
-        virtual bool make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) = 0;
+        virtual auto make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) -> bool = 0;
 
         /**
          *
@@ -52,7 +51,7 @@ namespace Rune::VFS {
          *
          * @return True: The storage can be mounted by the FAT driver
          */
-        virtual bool can_mount(U32 total_clusters) = 0;
+        virtual auto can_mount(U32 total_clusters) -> bool = 0;
 
         /**
          *
@@ -60,7 +59,7 @@ namespace Rune::VFS {
          *
          * @return The backup boot record sector.
          */
-        virtual U16 get_backup_boot_record_sector(BIOSParameterBlock* bpb) = 0;
+        virtual auto get_backup_boot_record_sector(BIOSParameterBlock* bpb) -> U16 = 0;
 
         /**
          *
@@ -68,13 +67,13 @@ namespace Rune::VFS {
          *
          * @return The root directory cluster.
          */
-        virtual uint32_t get_root_directory_cluster(BIOSParameterBlock* bpb) = 0;
+        virtual auto get_root_directory_cluster(BIOSParameterBlock* bpb) -> uint32_t = 0;
 
         /**
          *
          * @return The maximum number of clusters a storage device can have.
          */
-        virtual uint32_t get_max_cluster_count() = 0;
+        virtual auto get_max_cluster_count() -> uint32_t = 0;
 
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
@@ -88,13 +87,13 @@ namespace Rune::VFS {
          *
          * @return The size of a single FAT in sectors.
          */
-        virtual uint32_t fat_get_size(BIOSParameterBlock* bpb) = 0;
+        virtual auto fat_get_size(BIOSParameterBlock* bpb) -> uint32_t = 0;
 
         /**
          *
          * @return The EOF marker in the FAT.
          */
-        virtual uint32_t fat_get_eof_marker() = 0;
+        virtual auto fat_get_eof_marker() -> uint32_t = 0;
 
         /**
          *
@@ -103,7 +102,7 @@ namespace Rune::VFS {
          * @return Offset into the FAT for a cluster, that is the number of bytes that need to be
          * skipped to read the FAT entry for the cluster.
          */
-        virtual uint32_t fat_offset(uint32_t cluster) = 0;
+        virtual auto fat_offset(uint32_t cluster) -> uint32_t = 0;
 
         /**
          *
@@ -112,7 +111,7 @@ namespace Rune::VFS {
          *
          * @return The FAT entry in the given FAT buffer.
          */
-        virtual uint32_t fat_get_entry(U8* fat, uint32_t entry_offset) = 0;
+        virtual auto fat_get_entry(U8* fat, uint32_t entry_offset) -> uint32_t = 0;
 
         /**
          * Set the FAT entry at the given offset in the FAT buffer to the new value.
@@ -132,7 +131,7 @@ namespace Rune::VFS {
          *
          * @return A free cluster or MaxClusterCount() + 1 if no free cluster was found.
          */
-        virtual uint32_t fat_find_free_cluster(U8* fat, uint32_t fat_sector_idx) = 0;
+        virtual auto fat_find_free_cluster(U8* fat, uint32_t fat_sector_idx) -> uint32_t = 0;
     };
 } // namespace Rune::VFS
 

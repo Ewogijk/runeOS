@@ -19,6 +19,8 @@
 
 #include <Device/Keyboard/Keyboard.h>
 
+#include <KRE/Collections/Array.h>
+
 #include <CPU/Interrupt/IRQ.h>
 
 namespace Rune::Device {
@@ -26,20 +28,24 @@ namespace Rune::Device {
      * A PS2 keyboard driver converting the scancode set 2 to virtual keys.
      */
     class PS2Keyboard : public VirtualKeyboard {
-        U16 _key_code_cache[256];
-        U8  _start;
-        U8  _end;
+        static constexpr size_t RING_BUFFER_SIZE = 256;
+        static constexpr U8     EXTENDED_BYTE    = 0xE0;
+        static constexpr U8     DATA_REGISTER    = 0x60;
 
-        bool _wait_key_e0;
+        Array<U16, RING_BUFFER_SIZE> _key_code_cache;
+        U8                           _start{0};
+        U8                           _end{0};
+
+        bool _wait_key_e0{false};
 
         CPU::IRQHandler _irq_handler;
 
       public:
         PS2Keyboard();
 
-        bool start() override;
+        auto start() -> bool override;
 
-        int read() override;
+        auto read() -> int override;
 
         void flush() override;
     };

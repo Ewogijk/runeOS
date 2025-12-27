@@ -23,12 +23,19 @@ namespace Rune::VFS {
 
     class FAT32Engine : public FATEngine {
         static constexpr U16 FAT_16_MAX_CLUSTERS = 65525;
+        static constexpr U32 EOF                 = 0xFFFFFFFF;
+        ///@brief The 4 high bits are reserved, they must be preserved on modification.
+        static constexpr U32 RESERVED_BITS_MASK = 0xF0000000;
+        ///@brief Mask to get non-reserved bits of an entry.
+        static constexpr U32 ENTRY_MASK = 0x0FFFFFFF;
+        ///@brief Max cluster count per spec is 0x0FFFFFF7, don't remember why this was chosen.
+        static constexpr U32 MAX_CLUSTER_COUNT        = 0x0FFFFFF0;
+        static constexpr U8  CLUSTER_COUNT_PER_SECTOR = 128;
 
       public:
         ~FAT32Engine() override = default;
 
-        [[nodiscard]]
-        String get_name() const override;
+        [[nodiscard]] auto get_name() const -> String override;
 
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
@@ -36,15 +43,15 @@ namespace Rune::VFS {
         //                                                                              //
         //////////////////////////////////////////////////////////////////////////////////
 
-        bool make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) override;
+        auto make_new_boot_record(U8* buf, U32 sector_size, U32 sector_count) -> bool override;
 
-        bool can_mount(U32 total_clusters) override;
+        auto can_mount(U32 total_clusters) -> bool override;
 
-        U16 get_backup_boot_record_sector(BIOSParameterBlock* bpb) override;
+        auto get_backup_boot_record_sector(BIOSParameterBlock* bpb) -> U16 override;
 
-        U32 get_root_directory_cluster(BIOSParameterBlock* bpb) override;
+        auto get_root_directory_cluster(BIOSParameterBlock* bpb) -> U32 override;
 
-        U32 get_max_cluster_count() override;
+        auto get_max_cluster_count() -> U32 override;
 
         //////////////////////////////////////////////////////////////////////////////////
         //                                                                              //
@@ -52,17 +59,17 @@ namespace Rune::VFS {
         //                                                                              //
         //////////////////////////////////////////////////////////////////////////////////
 
-        U32 fat_get_size(BIOSParameterBlock* bpb) override;
+        auto fat_get_size(BIOSParameterBlock* bpb) -> U32 override;
 
-        U32 fat_get_eof_marker() override;
+        auto fat_get_eof_marker() -> U32 override;
 
-        U32 fat_offset(U32 cluster) override;
+        auto fat_offset(U32 cluster) -> U32 override;
 
-        U32 fat_get_entry(U8* fat, U32 entry_offset) override;
+        auto fat_get_entry(U8* fat, U32 entry_offset) -> U32 override;
 
         void fat_set_entry(U8* fat, U32 entry_offset, U32 new_entry) override;
 
-        U32 fat_find_free_cluster(U8* fat, U32 fat_sector_idx) override;
+        auto fat_find_free_cluster(U8* fat, U32 fat_sector_idx) -> U32 override;
     };
 
 } // namespace Rune::VFS

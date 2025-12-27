@@ -121,14 +121,33 @@ namespace Rune::Device {
     };
 
     struct HardDrive {
-        U16 serial_number[10];
-        U64 firmware_revision;
-        U16 model_number[20];
-        U64 additional_product_identifier;
-        U16 current_media_serial_number[30];
+        static constexpr size_t SERIAL_NUMBER_SIZE          = 10;
+        static constexpr size_t MODEL_NUMBER_SIZE           = 20;
+        static constexpr size_t MEDIA_SERIAL_NUMBER_SIZE    = 30;
+        static constexpr size_t IDENTIFY_DEVICE_BUFFER_SIZE = 256;
+        static constexpr size_t DEFAULT_SECTOR_SIZE         = 512;
 
-        U32 sector_size;
-        U64 sector_count;
+        static constexpr U8 SERIAL_NUMBER_OFFSET                 = 10;
+        static constexpr U8 FIRMWARE_REVISION_OFFSET             = 23;
+        static constexpr U8 MODEL_NUMBER_OFFSET                  = 27;
+        static constexpr U8 COMMAND_AND_FEATURE_SET_OFFSET       = 83;
+        static constexpr U8 ADDITIONAL_PRODUCT_IDENTIFIER_OFFSET = 170;
+        static constexpr U8 CURRENT_MEDIA_SERIAL_NUMBER_OFFSET   = 176;
+        static constexpr U8 CAF_48_BIT_ADDR_BIT                  = 10;
+        static constexpr U8 SECTOR_COUNT_28BIT_OFFSET            = 60;
+        static constexpr U8 SECTOR_COUNT_48BIT_OFFSET            = 100;
+        static constexpr U8 PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET  = 106;
+        static constexpr U8 LOGICAL_SECTOR_SIZE_SUPPORTED_BIT    = 12;
+        static constexpr U8 LOGICAL_SECTOR_SIZE_OFFSET           = 117;
+
+        Array<U16, SERIAL_NUMBER_SIZE>       serial_number;
+        U64                                  firmware_revision{0};
+        Array<U16, MODEL_NUMBER_SIZE>        model_number;
+        U64                                  additional_product_identifier{0};
+        Array<U16, MEDIA_SERIAL_NUMBER_SIZE> current_media_serial_number;
+
+        U32 sector_size{0};
+        U64 sector_count{0};
 
         LinkedList<Partition> partition_table;
 
@@ -136,16 +155,16 @@ namespace Rune::Device {
     };
 
     class PortEngine {
-        volatile HBAPort*    _port;
-        Memory::ObjectCache* _internal_buf_cache;
-        SystemMemory*        _system_memory;
+        volatile HBAPort*    _port{nullptr};
+        Memory::ObjectCache* _internal_buf_cache{nullptr};
+        SystemMemory*        _system_memory{nullptr};
 
-        bool      _s64_a;
-        Request   _request_table[SystemMemory::COMMAND_LIST_SIZE];
-        HardDrive _disk_info;
+        bool                                            _s64a{false};
+        Array<Request, SystemMemory::COMMAND_LIST_SIZE> _request_table;
+        HardDrive                                       _disk_info;
 
-        Memory::SlabAllocator* _heap;
-        CPU::Timer*            _timer;
+        Memory::SlabAllocator* _heap{nullptr};
+        CPU::Timer*            _timer{nullptr};
 
       public:
         explicit PortEngine();
@@ -167,7 +186,7 @@ namespace Rune::Device {
 
         auto send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis) -> size_t;
 
-        auto read(void* buf, size_t bufSize, size_t lba) -> size_t;
+        auto read(void* buf, size_t buf_size, size_t lba) -> size_t;
 
         auto write(void* buf, size_t buf_size, size_t lba) -> size_t;
     };

@@ -19,10 +19,10 @@
 #include <Ember/Ember.h>
 
 namespace Rune::SystemCall {
-    Ember::StatusCode mutex_create(void* sys_call_ctx, const U64 mutex_name) {
+    auto mutex_create(void* sys_call_ctx, const U64 mutex_name) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
 
-        char km_name[Ember::STRING_SIZE_LIMIT] = {};
+        char km_name[Ember::STRING_SIZE_LIMIT] = {}; // NOLINT Is Kernel ABI
         if (!t_ctx->k_guard->copy_string_user_to_kernel(reinterpret_cast<const char*>(mutex_name),
                                                         -1,
                                                         km_name))
@@ -36,7 +36,7 @@ namespace Rune::SystemCall {
         return m ? m->handle : Ember::Status(Ember::Status::FAULT).to_value();
     }
 
-    Ember::StatusCode mutex_lock(void* sys_call_ctx, const U64 ID) {
+    auto mutex_lock(void* sys_call_ctx, const U64 ID) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
@@ -47,7 +47,7 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode mutex_unlock(void* sys_call_ctx, const U64 ID) {
+    auto mutex_unlock(void* sys_call_ctx, const U64 ID) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
@@ -58,7 +58,7 @@ namespace Rune::SystemCall {
         return Ember::Status::OKAY;
     }
 
-    Ember::StatusCode mutex_free(void* sys_call_ctx, const U64 ID) {
+    auto mutex_free(void* sys_call_ctx, const U64 ID) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         if (ID == 0) return Ember::Status::BAD_ARG;
 
@@ -66,12 +66,12 @@ namespace Rune::SystemCall {
                                                     : Ember::Status::UNKNOWN_ID;
     }
 
-    Ember::StatusCode get_thread_ID(void* sys_call_ctx) {
+    auto get_thread_ID(void* sys_call_ctx) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         return t_ctx->cpu_module->get_scheduler()->get_running_thread()->handle;
     }
 
-    Ember::StatusCode set_thread_control_block(void* sys_call_ctx, const U64 tcb) {
+    auto set_thread_control_block(void* sys_call_ctx, const U64 tcb) -> Ember::StatusCode {
         const auto* t_ctx   = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
         auto*       tcb_ptr = memory_addr_to_pointer<void>(tcb);
         if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(void*)))
