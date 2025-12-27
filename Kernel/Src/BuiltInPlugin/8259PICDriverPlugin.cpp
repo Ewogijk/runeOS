@@ -24,9 +24,9 @@
 
 namespace Rune::BuiltInPlugin {
     const PluginInfo _8259_PIC_INFO = {
-        .name="8259 PIC",
-        .vendor="Ewogijk",
-        .version={.major=1, .minor=0, .patch=0, .pre_release=""}
+        .name    = "8259 PIC",
+        .vendor  = "Ewogijk",
+        .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
     auto _8259PICDriverPlugin::get_info() const -> PluginInfo { return _8259_PIC_INFO; }

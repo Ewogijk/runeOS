@@ -69,6 +69,7 @@ namespace Rune::VFS {
         // Call back to the subsystem that will remove this node from the node table.
         Function<void()> _on_close;
 
+        // NOLINTBEGIN
       protected:
         bool _closed;
 
@@ -81,6 +82,7 @@ namespace Rune::VFS {
          * empty.
          */
         String name;
+        // NOLINTEND
 
         explicit Node(Function<void()> on_close);
 
@@ -89,29 +91,25 @@ namespace Rune::VFS {
         /**
          * @brief True: The node is open. False: The node has been closed.
          */
-        [[nodiscard]]
-        bool is_closed() const;
+        [[nodiscard]] auto is_closed() const -> bool;
 
         /**
          * @brief
          * @return Absolute path to the node.
          */
-        [[nodiscard]]
-        virtual Path get_node_path() const = 0;
+        [[nodiscard]] virtual auto get_node_path() const -> Path = 0;
 
         /**
          * @brief
          * @return The node IO mode that was requested when the node was opened.
          */
-        [[nodiscard]]
-        virtual Ember::IOMode get_io_mode() const = 0;
+        [[nodiscard]] virtual auto get_io_mode() const -> Ember::IOMode = 0;
 
         /**
          * @brief
          * @return Files: The size of the content in bytes, Directories: Always zero.
          */
-        [[nodiscard]]
-        virtual size_t get_size() const = 0;
+        [[nodiscard]] virtual auto get_size() const -> size_t = 0;
 
         /**
          * <p>
@@ -121,8 +119,7 @@ namespace Rune::VFS {
          * @brief
          * @return Files: True: More bytes can be read, False: Not, Directories: Always false.
          */
-        [[nodiscard]]
-        virtual bool has_more() const = 0;
+        [[nodiscard]] virtual auto has_more() const -> bool = 0;
 
         /**
          * A node supports reading when following conditions are met:
@@ -147,7 +144,7 @@ namespace Rune::VFS {
          * node has been closed, no more content can be read. StorageDevError:    An IO error
          * happened.
          */
-        virtual NodeIOResult read(void* buf, size_t buf_size) = 0;
+        virtual auto read(void* buf, size_t buf_size) -> NodeIOResult = 0;
 
         /**
          * A node supports writing when following conditions are met:
@@ -173,7 +170,7 @@ namespace Rune::VFS {
          * null. Closed:             The node has been closed, no more content can be written.
          *          StorageDevError:    An IO error happened.
          */
-        virtual NodeIOResult write(void* buf, size_t buf_size) = 0;
+        virtual auto write(void* buf, size_t buf_size) -> NodeIOResult = 0;
 
         /**
          * A node supports seeking  when following conditions are met:
@@ -196,7 +193,7 @@ namespace Rune::VFS {
          * new cursor position would be <0 or >get_size(). Closed:             The node has been
          * closed, no more seeking allowed. StorageDevError:    An IO error happened.
          */
-        virtual NodeIOResult seek(Ember::SeekMode seek_mode, int offset) = 0;
+        virtual auto seek(Ember::SeekMode seek_mode, int offset) -> NodeIOResult = 0;
 
         // TODO implement creation, modification and last access date/time support
 
@@ -209,8 +206,7 @@ namespace Rune::VFS {
          * @param n_attr The node attribute to check.
          * @return True: The node attribute is set, False: It is not or the node is closed.
          */
-        [[nodiscard]]
-        virtual bool has_attribute(Ember::NodeAttribute n_attr) const = 0;
+        [[nodiscard]] virtual auto has_attribute(Ember::NodeAttribute n_attr) const -> bool = 0;
 
         /**
          * Note: The "File" and "Directory" attributes cannot be changed.
@@ -225,7 +221,7 @@ namespace Rune::VFS {
          * @param val   New value of the node attribute.
          * @return True: The node attribute got changed, False: It was not or the node is closed.
          */
-        virtual bool set_attribute(Ember::NodeAttribute n_attr, bool val) = 0;
+        virtual auto set_attribute(Ember::NodeAttribute n_attr, bool val) -> bool = 0;
 
         /**
          * @brief Remove the node from the node table. If this is the last node pointing to the node

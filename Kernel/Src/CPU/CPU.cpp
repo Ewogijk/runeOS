@@ -25,9 +25,13 @@ namespace Rune::CPU {
 
     DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
 
-    auto operator==(const Thread& one, const Thread& two) -> bool { return one.handle == two.handle; }
+    auto operator==(const Thread& one, const Thread& two) -> bool {
+        return one.handle == two.handle;
+    }
 
-    auto operator!=(const Thread& one, const Thread& two) -> bool { return one.handle != two.handle; }
+    auto operator!=(const Thread& one, const Thread& two) -> bool {
+        return one.handle != two.handle;
+    }
 
     DEFINE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)
 } // namespace Rune::CPU

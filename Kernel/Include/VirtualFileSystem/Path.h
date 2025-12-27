@@ -56,22 +56,19 @@ namespace Rune {
          *
          * @return The name of the file with file extension.
          */
-        [[nodiscard]]
-        auto get_file_name() const -> String;
+        [[nodiscard]] auto get_file_name() const -> String;
 
         /**
          *
          * @return The name of the file without the file extension.
          */
-        [[nodiscard]]
-        auto get_file_name_without_extension() const -> String;
+        [[nodiscard]] auto get_file_name_without_extension() const -> String;
 
         /**
          *
          * @return The file extension without the dot.
          */
-        [[nodiscard]]
-        auto get_file_extension() const -> String;
+        [[nodiscard]] auto get_file_extension() const -> String;
 
         /**
          * The most top level parent of each absolute path is "/" and of an relative path is "."
@@ -85,22 +82,19 @@ namespace Rune {
          * @brief Get the parent of the path.
          * @return The parent of the path e.g. for /a/b the parent is /a.
          */
-        [[nodiscard]]
-        auto get_parent() const -> Path;
+        [[nodiscard]] auto get_parent() const -> Path;
 
         /**
          *
          * @return True if this path is the root directory, meaning "/".
          */
-        [[nodiscard]]
-        auto is_root() const -> bool;
+        [[nodiscard]] auto is_root() const -> bool;
 
         /**
          *
          * @return True if the path is absolute, e.g. /a/b.
          */
-        [[nodiscard]]
-        auto is_absolute() const -> bool;
+        [[nodiscard]] auto is_absolute() const -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Functions
@@ -114,8 +108,7 @@ namespace Rune {
          *
          * @return Common path of this and the other path.
          */
-        [[nodiscard]]
-        auto common_path(const Path& path) const -> Path;
+        [[nodiscard]] auto common_path(const Path& path) const -> Path;
 
         /**
          * A new path describing this path relative to the given path. The new path is still an
@@ -126,16 +119,14 @@ namespace Rune {
          *
          * @return This path relative to the given path.
          */
-        [[nodiscard]]
-        auto relative_to(const Path& path) const -> Path;
+        [[nodiscard]] auto relative_to(const Path& path) const -> Path;
 
         /**
          * split this path along the unix path seperator.
          *
          * @return List of path components.
          */
-        [[nodiscard]]
-        auto split() const -> LinkedList<String>;
+        [[nodiscard]] auto split() const -> LinkedList<String>;
 
         /**
          * append the given part to this path. E.g. /a append with b will give the path /a/b.
@@ -150,8 +141,7 @@ namespace Rune {
          *
          * @return A new path with the part appended.
          */
-        [[nodiscard]]
-        auto append(const String& part) const -> Path;
+        [[nodiscard]] auto append(const String& part) const -> Path;
 
         /**
          * Dot and dotdot entries are also expanded.
@@ -160,14 +150,12 @@ namespace Rune {
          * @param working_dir Current working directory.
          * @return An absolute path.
          */
-        [[nodiscard]]
-        auto resolve(const Path& working_dir) const -> Path;
+        [[nodiscard]] auto resolve(const Path& working_dir) const -> Path;
 
         /**
          * @return This path as a string.
          */
-        [[nodiscard]]
-        auto to_string() const -> String;
+        [[nodiscard]] auto to_string() const -> String;
 
         /**
          * @see append(constString&) const

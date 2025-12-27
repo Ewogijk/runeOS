@@ -22,18 +22,18 @@
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.AHCI");
 
-    SystemMemory* AHCIDriver::alloc_system_memory(U32 ct_count) {
+    auto AHCIDriver::alloc_system_memory(U32 ct_count) -> SystemMemory* {
         auto* sys_mem = reinterpret_cast<SystemMemory*>(_heap->allocate(sizeof(SystemMemory)));
 
         void* clb = _heap->allocate_dma(SystemMemory::COMMAND_LIST_SIZE * sizeof(CommandHeader));
-        if (!clb) {
+        if (clb == nullptr) {
             LOGGER->error("Failed to allocate command list.");
             return nullptr;
         }
         sys_mem->CL = reinterpret_cast<CommandHeader*>(clb);
 
         void* fb = _heap->allocate_dma(sizeof(ReceivedFIS));
-        if (!fb) {
+        if (fb == nullptr) {
             LOGGER->error("Failed to allocate received FIS...");
             _heap->free(clb);
             return nullptr;
@@ -41,7 +41,7 @@ namespace Rune::Device {
         sys_mem->RFIS = reinterpret_cast<ReceivedFIS*>(fb);
 
         void* ct = _heap->allocate_dma(ct_count * sizeof(CommandTable));
-        if (!ct) {
+        if (ct == nullptr) {
             LOGGER->error("Failed to allocate command tables...");
             _heap->free(clb);
             _heap->free(fb);
@@ -51,7 +51,7 @@ namespace Rune::Device {
         sys_mem->CommandSlots = (int8_t) ct_count;
 
         for (U32 j = 0; j < ct_count; j++) {
-            PhysicalAddr p_ctba;
+            PhysicalAddr p_ctba{0};
             if (!Memory::virtual_to_physical_address(
                     memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
                     p_ctba)) {
@@ -79,7 +79,7 @@ namespace Rune::Device {
         return sys_mem;
     }
 
-    LogicalDrive AHCIDriver::resolve_logical_drive(U8 logicalDrive) {
+    auto AHCIDriver::resolve_logical_drive(U8 logicalDrive) -> LogicalDrive {
         if (logicalDrive > LOGICAL_DRIVE_LIMIT) {
             LOGGER->warn("Invalid logical drive ID: {}", logicalDrive);
             return {};
@@ -94,22 +94,19 @@ namespace Rune::Device {
     }
 
     AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer)
-        : _hba(nullptr),
-          _port_engine(),
-          _heap(heap),
-          _timer(timer),
-          _logical_drive_table(),
-          _logical_drive_count(0) {}
+        : _heap(heap),
+          _timer(timer) {}
 
-    LinkedList<HardDrive> AHCIDriver::get_discovered_hard_drives() {
+    auto AHCIDriver::get_discovered_hard_drives() -> LinkedList<HardDrive> {
         LinkedList<HardDrive> hd;
-        for (const auto& p : _port_engine) {
+        for (size_t i = 0; i < PORT_LIMIT; i++) {
+            auto& p = _port_engine[i];
             if (p.is_active()) hd.add_back(p.get_hard_drive_info());
         }
         return hd;
     }
 
-    LinkedList<Partition> AHCIDriver::get_logical_drives() {
+    auto AHCIDriver::get_logical_drives() -> LinkedList<Partition> {
         LinkedList<Partition> p_list;
         for (size_t i = 0; i < _logical_drive_count; i++) {
             LogicalDrive ld = _logical_drive_table[i];
@@ -120,7 +117,7 @@ namespace Rune::Device {
         return p_list;
     }
 
-    HardDrive AHCIDriver::get_hard_drive_info(U8 hard_drive) {
+    auto AHCIDriver::get_hard_drive_info(U8 hard_drive) -> HardDrive {
         LogicalDrive ld = resolve_logical_drive(hard_drive);
         if (ld.port_index == LogicalDrive::INVALID_PORT) return {};
         U8 port_idx = ld.port_index;
@@ -131,22 +128,8 @@ namespace Rune::Device {
         return _port_engine[port_idx].get_hard_drive_info();
     }
 
-    bool AHCIDriver::start(volatile HBAMemory* hba) {
+    auto AHCIDriver::start(volatile HBAMemory* hba) -> bool {
         _hba = hba;
-        LOGGER->info("Initializing AHCI...");
-        //    LOGGER->info( "Disable caching for HBA memory...");
-        //    // Disable cpu caching for the HBA Memory
-        //    Memory::ModifyPageFlags(
-        //            Memory::BasePageTable(),
-        //            (uintptr_t) hba,
-        //            Memory::PageFlagAsValue(Memory::PageFlag::Present)
-        //            | Memory::PageFlagAsValue(Memory::PageFlag::WriteAllowed)
-        //            | Memory::PageFlagAsValue(Memory::PageFlag::WriteThrough)
-        //            | Memory::PageFlagAsValue(Memory::PageFlag::CacheDisable),
-        //            true
-        //    );
-        //    Memory::InvalidatePage(Memory::AsAddress(hba));
-
         LOGGER->info("Enabling AHCI.");
         _hba->GHC.AE = 1;
 
@@ -154,19 +137,20 @@ namespace Rune::Device {
         U32  command_slots      = _hba->CAP.NCS;
         bool s64_a              = _hba->CAP.S64A;
         U8   c_logical_drive_id = 0;
-        for (size_t i = 0; i < 32; i++) {
-            if (c_logical_drive_id == 255) {
+        for (size_t i = 0; i < PORT_LIMIT; i++) {
+            if (c_logical_drive_id == LOGICAL_DRIVE_LIMIT) {
                 LOGGER->warn("Limit of 255 logical drives reached. Stopping port scan... ");
                 break;
             }
 
-            if (!(pi >> i & 1)) continue;
+            if (!bit_check(pi, i)) continue;
 
             LOGGER->debug("------------------------------------- Scanning Port {} "
                           "-------------------------------------",
                           i);
+            // NOLINTBEGIN iterating -> index is in bounds
             if (!_port_engine[i].scan_device(&_hba->Port[i])) continue;
-
+            // NOLINTEND
             if (!_port_engine[i].stop()) {
                 LOGGER->error("Stopping the port failed. Trying port reset...");
                 _port_engine[i].reset();
@@ -192,30 +176,28 @@ namespace Rune::Device {
                               partition->type.to_string(),
                               partition->start_lba,
                               partition->end_lba);
-                _logical_drive_table[c_logical_drive_id++] = {(U8) i, (U8) j};
+                _logical_drive_table[c_logical_drive_id++] = {.port_index            = (U8) i,
+                                                              .partition_table_index = (U8) j};
             }
         }
         _logical_drive_count = c_logical_drive_id;
         return true;
     }
 
-    bool AHCIDriver::stop() {
-        if (!_hba) return true;
-        return false;
-    }
+    auto AHCIDriver::stop() -> bool { return _hba == nullptr; }
 
-    size_t AHCIDriver::send_ata_command(U8                     hard_drive,
-                                        void*                  buf,
-                                        size_t                 buf_size,
-                                        RegisterHost2DeviceFIS h2d_fis) {
+    auto AHCIDriver::send_ata_command(U8                     hard_drive,
+                                      void*                  buf,
+                                      size_t                 buf_size,
+                                      RegisterHost2DeviceFIS h2d_fis) -> size_t {
         if (!_port_engine[hard_drive].is_active()) {
             LOGGER->warn("Cannot send ATA command. No hard drive on port {} detected.", hard_drive);
-            return false;
+            return 0;
         }
         return _port_engine[hard_drive].send_ata_command(buf, buf_size, h2d_fis);
     }
 
-    size_t AHCIDriver::read(U8 hard_drive, void* buf, size_t buf_size, size_t lba) {
+    auto AHCIDriver::read(U8 hard_drive, void* buf, size_t buf_size, size_t lba) -> size_t {
         LogicalDrive ld = resolve_logical_drive(hard_drive);
         if (ld.port_index == LogicalDrive::INVALID_PORT) return 0;
         U8 port_idx              = ld.port_index;
@@ -239,7 +221,7 @@ namespace Rune::Device {
         return _port_engine[port_idx].read(buf, buf_size, t_lba);
     }
 
-    size_t AHCIDriver::write(U8 hard_drive, void* buf, size_t buf_size, size_t lba) {
+    auto AHCIDriver::write(U8 hard_drive, void* buf, size_t buf_size, size_t lba) -> size_t {
         LogicalDrive ld = resolve_logical_drive(hard_drive);
         if (ld.port_index == LogicalDrive::INVALID_PORT) return 0;
         U8 port_idx              = ld.port_index;

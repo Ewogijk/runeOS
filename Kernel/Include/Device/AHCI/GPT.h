@@ -32,11 +32,11 @@ namespace Rune::Device {
     struct GUID {
         static constexpr U8 SIZE = 16;
 
-        static constexpr U8 TIME_LOW_OFFSET = 0;
-        static constexpr U8 TIME_MID_OFFSET = 4;
+        static constexpr U8 TIME_LOW_OFFSET              = 0;
+        static constexpr U8 TIME_MID_OFFSET              = 4;
         static constexpr U8 TIME_HIGH_AND_VERSION_OFFSET = 6;
-        static constexpr U8 CLOCK_SEQ_OFFSET = 8;
-        static constexpr U8 NODE_OFFSET = 10;
+        static constexpr U8 CLOCK_SEQ_OFFSET             = 8;
+        static constexpr U8 NODE_OFFSET                  = 10;
 
         Array<U8, SIZE> buf;
 
@@ -77,12 +77,12 @@ namespace Rune::Device {
         U32          revision      = 0;
         U32          header_size   = 0;
         U32          header_crc_32 = 0;
-        Array<U8, 4> reserved;
+        Array<U8, 4> reserved{};
         U64          my_lba           = 0;
         U64          alternate_lba    = 0;
         U64          first_usable_lba = 0; // Little-endian
         U64          last_usable_lba  = 0; // Little-endian
-        GUID         disk_guid;
+        GUID         disk_guid{};
         U64          partition_entry_lba          = 0; // Little-endian
         U32          number_of_partition_entries  = 0;
         U32          size_of_partition_entry      = 0;
@@ -98,7 +98,7 @@ namespace Rune::Device {
     struct GPTPartitionTableEntry {
         /// @brief Actual length is 72 bytes, but for better decoding we define the buffer as U16
         ///         therefore the size is 36
-        static constexpr U8 PARTITION_NAME_SIZE = 36;
+        static constexpr U8 PARTITION_NAME_SIZE     = 36;
         static constexpr U8 LBA_AND_ATTRIBUTES_SIZE = 8;
 
         static constexpr U8 PARTITION_TYPE_GUID_OFFSET   = 0;
@@ -108,12 +108,12 @@ namespace Rune::Device {
         static constexpr U8 ATTRIBUTES_OFFSET            = 48;
         static constexpr U8 PARTITION_NAME_OFFSET        = 56;
 
-        GUID                            partition_type_guid;
-        GUID                            unique_partition_guid;
+        GUID                            partition_type_guid{};
+        GUID                            unique_partition_guid{};
         U64                             starting_lba = 0; // Little-endian
         U64                             ending_lba   = 0; // Inclusive, Little-endian
         U64                             attributes   = 0;
-        Array<U16, PARTITION_NAME_SIZE> name_buf; // UTF-16LE
+        Array<U16, PARTITION_NAME_SIZE> name_buf{}; // UTF-16LE
 
         /**
          * @brief Note: Only ASCII characters are supported.

@@ -350,7 +350,7 @@ namespace Rune::App {
         ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
-        VirtualAddr start_info_addr;
+        VirtualAddr start_info_addr = 0;
         LOGGER->info("Loading OS: {}", system_loader_executable.to_string());
         char*      dummy_args[1] = {nullptr}; // NOLINT syscall arg, must use ptr
         LoadStatus load_status   = loader.load(system_loader_executable,
@@ -394,7 +394,7 @@ namespace Rune::App {
         ELFLoader   loader(_memory_module, _vfs_module);
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
-        VirtualAddr start_info_addr;
+        VirtualAddr start_info_addr = 0;
         LOGGER->info("Loading executable: {}", executable.to_string());
         LoadStatus load_status =
             loader.load(executable, argv, app, user_stack, start_info_addr, false);

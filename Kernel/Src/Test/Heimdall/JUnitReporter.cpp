@@ -35,13 +35,13 @@ namespace Heimdall {
             xml = xml + HString("  <testsuite name=\"") + test_suite.name + "\" tests=\""
                   + HString::number_to_string(test_suite.tests) + "\" failures=\""
                   + HString::number_to_string(test_suite.failures)
-                  + "\" errors=\"0\" skipped=\"0\" assertions=\""
+                  + R"(" errors="0" skipped="0" assertions=")"
                   + HString::number_to_string(test_suite.assertions) + "\" time=\"0\">\n";
 
             for (size_t j = 0; j < test_suite.test_list.size(); j++) {
                 JUnitTest test = test_suite.test_list[j];
                 xml            = xml + "    <testcase name=\"" + test.name + "\" assertions=\""
-                      + HString::number_to_string(test.assertions) + "\" time=\"0\" file=\""
+                      + HString::number_to_string(test.assertions) + R"(" time="0" file=")"
                       + test.file + "\" line=\"" + HString::number_to_string(test.line) + "\"";
 
                 if (!test.passed) {

@@ -122,7 +122,9 @@ namespace Rune {
             return _iter.has_next();
         }
 
-        auto operator*() const -> const V& { return *(*_iter).value; }
+        auto operator*() const -> const V& {
+            return *(*_iter).value; // NOLINT
+        }
 
         auto operator->() const -> const V* { return _iter.has_next() ? _iter->value : nullptr; }
 
@@ -163,7 +165,7 @@ namespace Rune {
             : _bucket(bucket),
               _bucket_count(bucket_count) {}
 
-        auto begin() const -> HashMapValueIterator<K, V> {
+        [[nodiscard]] auto begin() const -> HashMapValueIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();
             }
@@ -177,7 +179,7 @@ namespace Rune {
             return end();
         }
 
-        auto end() const -> HashMapValueIterator<K, V> {
+        [[nodiscard]] auto end() const -> HashMapValueIterator<K, V> {
             return HashMapValueIterator<K, V>(
                 HashMapIterator<K, V>(_bucket, _bucket_count, _bucket_count, nullptr));
         }
@@ -201,7 +203,9 @@ namespace Rune {
 
         Hash<K> _hash;
 
-        auto calc_hash(const K& key, size_t size) const -> size_t { return _hash(key) % size; }
+        [[nodiscard]] auto calc_hash(const K& key, size_t size) const -> size_t {
+            return _hash(key) % size;
+        }
 
         // Create a bigger bucket array and rehash all entries.
         void rehash(size_t new_bucket_count) {
@@ -331,7 +335,7 @@ namespace Rune {
         void perform_lazy_init() {
             if (_bucket == nullptr) {
                 _bucket = new HashNode<K, V>*[_bucket_count];
-                memset(_bucket, 0, sizeof(_bucket) * _bucket_count);
+                memset(reinterpret_cast<void*>(_bucket), 0, sizeof(_bucket) * _bucket_count);
             }
         }
 

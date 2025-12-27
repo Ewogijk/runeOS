@@ -17,6 +17,8 @@
 #ifndef RUNEOS_SLABALLOCATOR_H
 #define RUNEOS_SLABALLOCATOR_H
 
+#include <KRE/Collections/Array.h>
+
 #include <Memory/Paging.h>
 #include <Memory/VirtualMemoryManager.h>
 
@@ -83,7 +85,7 @@ namespace Rune::Memory {
      * See above.
      */
     struct Slab {
-        static constexpr U8 MAX_OBJECT_COUNT =
+        static constexpr size_t MAX_OBJECT_COUNT =
             255; // And marker of the end of the free list (Object at index 255)
 
         Slab* next;
@@ -105,7 +107,7 @@ namespace Rune::Memory {
          * @param page
          * @return
          */
-        static Slab* create_on_slab(size_t object_size, VirtualAddr page);
+        static auto create_on_slab(size_t object_size, VirtualAddr page) -> Slab*;
 
         /**
          * Creates an OffSlab cache that stores slab data externally.
@@ -118,40 +120,40 @@ namespace Rune::Memory {
          * @param slab_size
          * @return
          */
-        static Slab* create_off_slab(ObjectCache*          slab_cache,
-                                     ObjectCache*          object_buf_node_cache,
-                                     ObjectBufNodeHashMap* object_buf_node_hashmap,
-                                     size_t                object_size,
-                                     VirtualAddr           page,
-                                     size_t                slab_size);
+        static auto create_off_slab(ObjectCache*          slab_cache,
+                                    ObjectCache*          object_buf_node_cache,
+                                    ObjectBufNodeHashMap* object_buf_node_hashmap,
+                                    size_t                object_size,
+                                    VirtualAddr           page,
+                                    size_t                slab_size) -> Slab*;
 
         /**
          * Make an OnSlab allocation.
          *
          * @return Pointer to the allocated object.
          */
-        void* alloc_on_slab();
+        auto alloc_on_slab() -> void*;
 
         /**
          * Make an OffSlab allocation.
          *
          * @return Pointer to the allocated object.
          */
-        void* alloc_off_slab();
+        auto alloc_off_slab() -> void*;
 
         /**
          * Make an OnSlab free.
          *
          * @return True: The object is freed, False: Not.
          */
-        bool free_on_slab(void* obj);
+        auto free_on_slab(void* obj) -> bool;
 
         /**
          * Make an OffSlab free.
          *
          * @return True: The object is freed, False: Not.
          */
-        bool free_off_slab(ObjectBufNode* obj_buf);
+        auto free_off_slab(ObjectBufNode* obj_buf) -> bool;
     };
 
     /**
@@ -168,56 +170,56 @@ namespace Rune::Memory {
      */
     class ObjectCache {
         // Memory management
-        VirtualMemoryManager* _vmm;
-        ObjectCache*          _memory_node_cache;
+        VirtualMemoryManager* _vmm{nullptr};
+        ObjectCache*          _memory_node_cache{nullptr};
         MemoryRegion          _managed;
-        VirtualAddr           _limit;
-        U16                   _page_flags;
-        MemoryNode*           _free_page_list;
+        VirtualAddr           _limit{0};
+        U16                   _page_flags{0};
+        MemoryNode*           _free_page_list{nullptr};
 
         // Object management
-        ObjectCache*          _object_buf_node_cache;
-        ObjectBufNodeHashMap* _object_buf_node_hash_map;
-        size_t                _object_size;
-        size_t                _align;
+        ObjectCache*          _object_buf_node_cache{nullptr};
+        ObjectBufNodeHashMap* _object_buf_node_hash_map{nullptr};
+        size_t                _object_size{0};
+        size_t                _align{0};
 
         // Slab management
-        ObjectCache* _slab_cache;
-        Slab*        _full_list;
-        Slab*        _partial_list;
-        Slab*        _empty_list;
-        size_t       _slab_count;
+        ObjectCache* _slab_cache{nullptr};
+        Slab*        _full_list{nullptr};
+        Slab*        _partial_list{nullptr};
+        Slab*        _empty_list{nullptr};
+        size_t       _slab_count{0};
 
         // Debug information
         CacheType _type;
 
-        bool grow();
+        auto grow() -> bool;
 
       public:
+        static constexpr U8 ON_OFF_SLAB_BOUNDARY_DIVIDER = 8;
+
         ObjectCache();
 
-        [[nodiscard]]
-        MemoryRegion get_managed() const;
+        [[nodiscard]] auto get_managed() const -> MemoryRegion;
 
-        [[nodiscard]]
-        CacheType get_type() const;
+        [[nodiscard]] auto get_type() const -> CacheType;
 
-        int8_t init(VirtualMemoryManager* vmm,
-                    ObjectCache*          memory_node_cache,
-                    MemoryRegion          managed,
-                    U16                   page_flags,
-                    ObjectCache*          object_buf_node_cache,
-                    ObjectBufNodeHashMap* object_buf_node_hash_map,
-                    size_t                object_size,
-                    size_t                align,
-                    ObjectCache*          slab_cache);
+        auto init(VirtualMemoryManager* vmm,
+                  ObjectCache*          memory_node_cache,
+                  MemoryRegion          managed,
+                  U16                   page_flags,
+                  ObjectCache*          object_buf_node_cache,
+                  ObjectBufNodeHashMap* object_buf_node_hash_map,
+                  size_t                object_size,
+                  size_t                align,
+                  ObjectCache*          slab_cache) -> int8_t;
 
         /**
          * allocate an object in the cache, the object cache will grow if needed.
          *
          * @return A pointer to the allocated object.
          */
-        void* allocate();
+        auto allocate() -> void*;
 
         /**
          * free an object in the cache, it is assumed that the given object is allocated in the
@@ -234,7 +236,7 @@ namespace Rune::Memory {
          *
          * @return A pointer to the object.
          */
-        void* object_at(U8 idx);
+        auto object_at(U8 idx) -> void*;
 
         /**
          * free all claimed memory of the object cache.
@@ -258,8 +260,8 @@ namespace Rune::Memory {
         // Prime number to minimize hash collisions
         static constexpr U8 BUCKET_COUNT = 37;
 
-        HashNode*    _nodes[BUCKET_COUNT];
-        ObjectCache* _hash_node_cache;
+        Array<HashNode*, BUCKET_COUNT> _nodes;
+        ObjectCache*                   _hash_node_cache;
 
       public:
         explicit ObjectBufNodeHashMap();
@@ -270,7 +272,7 @@ namespace Rune::Memory {
 
         void remove(void* key);
 
-        ObjectBufNode* get(void* key);
+        auto get(void* key) -> ObjectBufNode*;
 
         void destroy(ObjectCache* object_buf_cache);
     };
@@ -281,10 +283,10 @@ namespace Rune::Memory {
      * caches of custom size and specific alignment can be requested.
      */
     class SlabAllocator {
-        static constexpr U8         MIN_SIZE_POWER        = 4;
-        static constexpr U8         STATIC_CACHE_COUNT    = 13;
-        static constexpr U8         MIN_OBJ_SIZE          = 16;
-        static constexpr MemorySize CACHE_SIZE            = 2 * 1048576; // 2 MiB
+        static constexpr U8         MIN_SIZE_POWER     = 4;
+        static constexpr U8         STATIC_CACHE_COUNT = 13;
+        static constexpr size_t     MIN_OBJ_SIZE       = 16;
+        static constexpr MemorySize CACHE_SIZE = static_cast<MemorySize>(2) * 1048576; // 2 MiB
         static constexpr U8         BOOTSTRAP_CACHE_COUNT = 6;
 
         ObjectCache _object_cache_cache;
@@ -294,22 +296,22 @@ namespace Rune::Memory {
         ObjectCache _hash_node_cache;
         ObjectCache _memory_node_cache;
 
-        ObjectCache* _general_purpose_cache[STATIC_CACHE_COUNT];
-        ObjectCache* _dma_cache[STATIC_CACHE_COUNT];
+        Array<ObjectCache*, STATIC_CACHE_COUNT> _general_purpose_cache;
+        Array<ObjectCache*, STATIC_CACHE_COUNT> _dma_cache;
 
-        VirtualMemoryManager* _vmm;
+        VirtualMemoryManager* _vmm{nullptr};
         MemoryRegion          _heap_memory;
-        VirtualAddr           _limit;
-        MemoryNode*           _free_list;
+        VirtualAddr           _limit{0};
+        MemoryNode*           _free_list{nullptr};
 
         HeapStartFailureCode _start_failure_code;
 
-        int8_t init_cache(ObjectCache*          cache,
-                          size_t                obj_size,
-                          size_t                align,
-                          uint16_t              page_flags,
-                          bool                  force_off_slab,
-                          ObjectBufNodeHashMap* object_buf_node_hash_map);
+        auto init_cache(ObjectCache*          cache,
+                        size_t                obj_size,
+                        size_t                align,
+                        uint16_t              page_flags,
+                        bool                  force_off_slab,
+                        ObjectBufNodeHashMap* object_buf_node_hashmap) -> int8_t;
 
       public:
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -330,15 +332,13 @@ namespace Rune::Memory {
          *
          * @return Size of the smallest general purpose/DMA cache.
          */
-        [[nodiscard]]
-        U32 get_min_cache_size() const;
+        [[nodiscard]] auto get_min_cache_size() const -> U32;
 
         /**
          *
          * @return Size of the biggest general purpose/DMA cache.
          */
-        [[nodiscard]]
-        U32 get_max_cache_size() const;
+        [[nodiscard]] auto get_max_cache_size() const -> U32;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //
@@ -346,8 +346,8 @@ namespace Rune::Memory {
         //
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        HeapStartFailureCode start(MemoryMap* v_map, VirtualMemoryManager* vmm);
+        [[nodiscard]] auto start(MemoryMap* v_map, VirtualMemoryManager* vmm)
+            -> HeapStartFailureCode;
 
         /**
          * allocate an object in a general purpose cache. The object size will rounded up to the
@@ -358,7 +358,7 @@ namespace Rune::Memory {
          *
          * @return Pointer to the allocated object.
          */
-        void* allocate(size_t size);
+        auto allocate(size_t size) -> void*;
 
         /**
          * allocate an object in a DMA cache. The object size will rounded up to the next power of 2
@@ -368,7 +368,7 @@ namespace Rune::Memory {
          *
          * @return Pointer to the allocated object.
          */
-        void* allocate_dma(size_t size);
+        auto allocate_dma(size_t size) -> void*;
 
         /**
          * free the object. The cache of the object is determined based on the pointer address and
@@ -389,7 +389,7 @@ namespace Rune::Memory {
          *
          * @return A pointer to the object cache.
          */
-        ObjectCache* create_new_cache(size_t object_size, size_t align, bool dma);
+        auto create_new_cache(size_t object_size, size_t align, bool dma) -> ObjectCache*;
 
         /**
          * free all claimed memory of the object cache.

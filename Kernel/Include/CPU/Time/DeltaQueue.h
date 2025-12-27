@@ -33,8 +33,8 @@ namespace Rune::CPU {
      * time than others will be put before threads that are woken at a later time.
      */
     class DeltaQueue {
-        DQNode* _first;
-        DQNode* _last;
+        DQNode* _first{nullptr};
+        DQNode* _last{nullptr};
 
       public:
         explicit DeltaQueue();

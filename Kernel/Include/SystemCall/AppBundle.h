@@ -49,7 +49,7 @@ namespace Rune::SystemCall {
      * @return OKAY:     A key code is returned in the given key buffer.<br>
      *          BAD_ARG: The key code buffer is null or intersects kernel memory.
      */
-    Ember::StatusCode read_stdin(void* sys_call_ctx, U64 key_code_out);
+    auto read_stdin(void* sys_call_ctx, U64 key_code_out) -> Ember::StatusCode;
 
     /**
      * @brief Write at most msg_size characters of the msg to the stdout stream of the running app.
@@ -59,7 +59,7 @@ namespace Rune::SystemCall {
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    Ember::StatusCode write_stdout(void* sys_call_ctx, U64 msg, U64 msg_size);
+    auto write_stdout(void* sys_call_ctx, U64 msg, U64 msg_size) -> Ember::StatusCode;
 
     /**
      * @brief Write at most msg_size characters of the msg to the stderr stream of the running app.
@@ -72,14 +72,14 @@ namespace Rune::SystemCall {
      * @return >=0:      The number of written characters.<br>
      *          BAD_ARG: The msg is null, intersects kernel memory or exceeds the string size limit.
      */
-    Ember::StatusCode write_stderr(void* sys_call_ctx, U64 msg, U64 msg_size);
+    auto write_stderr(void* sys_call_ctx, U64 msg, U64 msg_size) -> Ember::StatusCode;
 
     /**
      * @brief Get the ID of the currently running application.
      * @param sys_call_ctx A pointer to the app system call context.
      * @return The ID of the currently running application.
      */
-    Ember::StatusCode get_ID(void* sys_call_ctx);
+    auto get_ID(void* sys_call_ctx) -> Ember::StatusCode;
 
     /**
      * @brief Start an application with the given arguments.
@@ -110,13 +110,13 @@ namespace Rune::SystemCall {
      *          NODE_NOT_FOUND: The path to the application or the working directory does not
      * exist.<br> FAULT:          The app could not be started.
      */
-    Ember::StatusCode app_start(void* sys_call_ctx,
-                                U64   app_path,
-                                U64   argv,
-                                U64   working_dir,
-                                U64   stdin_config,
-                                U64   stdout_config,
-                                U64   stderr_config);
+    auto app_start(void* sys_call_ctx,
+                   U64   app_path,
+                   U64   argv,
+                   U64   working_dir,
+                   U64   stdin_config,
+                   U64   stdout_config,
+                   U64   stderr_config) -> Ember::StatusCode;
 
     /**
      * @brief Exit the currently running app with the given exit code.
@@ -126,7 +126,7 @@ namespace Rune::SystemCall {
      * @return OKAY: For the sake of the ABI but this function will never exit anyway and there is
      * no app that can use the return value.
      */
-    Ember::StatusCode app_exit(void* sys_call_ctx, U64 exit_code);
+    auto app_exit(void* sys_call_ctx, U64 exit_code) -> Ember::StatusCode;
 
     /**
      * @brief Wait until the application with the requested ID has exited.
@@ -135,7 +135,7 @@ namespace Rune::SystemCall {
      * @return UNKNOWN_ID: No application with the requested ID was running.<br>
      *          Else:  The exit code of the application.
      */
-    Ember::StatusCode app_join(void* sys_call_ctx, U64 ID);
+    auto app_join(void* sys_call_ctx, U64 ID) -> Ember::StatusCode;
 
     /**
      * @brief Get the current working directory of the active app and copy it to the char buffer.
@@ -146,7 +146,8 @@ namespace Rune::SystemCall {
      *          BAD_ARG: The char buffer is null, intersects kernel memory or is too small to fit
      * the working directory.
      */
-    Ember::StatusCode app_current_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size);
+    auto app_current_directory(void* sys_call_ctx, U64 wd_out, U64 wd_out_size)
+        -> Ember::StatusCode;
 
     /**
      * @brief Change the working directory of the active app to the requested working directory.
@@ -158,7 +159,7 @@ namespace Rune::SystemCall {
      *          NODE_IS_FILE:   The node is not a directory.<br>
      *          IO:             An IO error happened.
      */
-    Ember::StatusCode app_change_directory(void* sys_call_ctx, U64 wd);
+    auto app_change_directory(void* sys_call_ctx, U64 wd) -> Ember::StatusCode;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_APPBUNDLE_H

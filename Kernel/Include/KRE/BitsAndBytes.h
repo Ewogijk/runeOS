@@ -71,6 +71,8 @@ namespace Rune {
     constexpr U8 BIT_COUNT_WORD = 16;
     /// @brief Number of bits in a double word.
     constexpr U8 BIT_COUNT_DWORD = 32;
+    /// @brief Number of bits in a quad word.
+    constexpr U8 BIT_COUNT_QWORD = 64;
 
     /// @brief Check if a bit in a number is set.
     /// @tparam T Number type.

@@ -33,7 +33,9 @@ namespace Rune::CPU {
 
     auto MultiLevelQueue::get_policy() -> SchedulingPolicy { return _policy; }
 
-    auto MultiLevelQueue::get_lower_policy_queue() -> MultiLevelQueue* { return _lower_policy_queue; }
+    auto MultiLevelQueue::get_lower_policy_queue() -> MultiLevelQueue* {
+        return _lower_policy_queue;
+    }
 
     auto MultiLevelQueue::peek() -> Thread* {
         auto* c_thread_q = this;

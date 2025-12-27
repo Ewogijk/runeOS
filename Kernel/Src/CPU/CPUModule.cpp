@@ -128,7 +128,7 @@ namespace Rune::CPU {
         return new_thread;
     }
 
-    CPUModule::CPUModule() : _active_pic(nullptr) {}
+    CPUModule::CPUModule() = default;
 
     auto CPUModule::get_name() const -> String { return "CPU"; }
 
@@ -270,10 +270,10 @@ namespace Rune::CPU {
 
     // NOLINTBEGIN For consistency, these are members
     auto CPUModule::install_irq_handler(U8                irq_line,
-                                        U16               dev_id,
+                                        U16               dev_handle,
                                         const String&     dev_name,
                                         const IRQHandler& handler) -> bool {
-        return irq_install_handler(irq_line, dev_id, dev_name, handler);
+        return irq_install_handler(irq_line, dev_handle, dev_name, handler);
     }
 
     auto CPUModule::uninstall_irq_handler(U8 irq_line, U16 dev_handle) -> bool {
@@ -452,7 +452,8 @@ namespace Rune::CPU {
                     waiting_threads += String::format("{}-{}, ", t->handle, t->name);
                 if (waiting_threads.is_empty()) waiting_threads = "-";
                 return {String::format("{}-{}", mutex->handle, mutex->name),
-                        owner ? String::format("{}-{}", owner->handle, owner->name) : "-",
+                        owner != nullptr ? String::format("{}-{}", owner->handle, owner->name)
+                                         : "-",
                         waiting_threads};
             })
             .with_headers({"ID-Name", "Owner", "WaitQueue"})

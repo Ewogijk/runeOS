@@ -18,9 +18,10 @@
 #define RUNEOS_ELF_H
 
 #include <Ember/Ember.h>
-#include <KRE/String.h>
-
 #include <Ember/Enum.h>
+
+#include <KRE/Collections/Array.h>
+#include <KRE/String.h>
 
 namespace Rune::App {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -126,16 +127,17 @@ namespace Rune::App {
      * Processor independent information about how to parse an ELF file.
      */
     struct ELFIdentification {
-        U8 mag_0       = 0;
-        U8 mag_1       = 0;
-        U8 mag_2       = 0;
-        U8 mag_3       = 0;
-        U8 clazz       = 0;
-        U8 data        = 0;
-        U8 version     = 0;
-        U8 osabi       = 0;
-        U8 abi_version = 0;
-        U8 pad[7]      = {};
+        static constexpr U8 PAD_SIZE    = 7;
+        U8                  mag_0       = 0;
+        U8                  mag_1       = 0;
+        U8                  mag_2       = 0;
+        U8                  mag_3       = 0;
+        U8                  clazz       = 0;
+        U8                  data        = 0;
+        U8                  version     = 0;
+        U8                  osabi       = 0;
+        U8                  abi_version = 0;
+        Array<U8, PAD_SIZE> pad         = {};
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -199,9 +201,9 @@ namespace Rune::App {
         ELF64Header                    header;
         LinkedList<ELF64ProgramHeader> program_headers;
         String                         vendor;
-        U16                            major;
-        U16                            minor;
-        U16                            patch;
+        U16                            major{0};
+        U16                            minor{0};
+        U16                            patch{0};
     };
 } // namespace Rune::App
 

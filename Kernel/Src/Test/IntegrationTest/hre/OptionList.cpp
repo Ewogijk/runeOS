@@ -31,7 +31,7 @@ namespace Heimdall {
         : _list_detail(new OptionListDetail{other._list_detail->list}) {}
 
     OptionList::OptionList(OptionList&& other) noexcept
-        : _list_detail(new OptionListDetail{other._list_detail->list}) {
+        : _list_detail(new(std::nothrow) OptionListDetail{other._list_detail->list}) {
         delete other._list_detail;
         other._list_detail = nullptr;
     }

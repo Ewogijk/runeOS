@@ -24,23 +24,23 @@ namespace Rune {
 
     Path::Path(const String& path) : _path(path) {}
 
-    char Path::get_path_separator() { return UNIX_PATH_SEPARATOR; }
+    auto Path::get_path_separator() -> char { return UNIX_PATH_SEPARATOR; }
 
-    String Path::get_file_name() const {
+    auto Path::get_file_name() const -> String {
         return _path.substring(_path.last_index_of(UNIX_PATH_SEPARATOR) + 1);
     }
 
-    String Path::get_file_name_without_extension() const {
+    auto Path::get_file_name_without_extension() const -> String {
         LinkedList<String> name_and_ext = get_file_name().split('.');
         return name_and_ext.size() > 0 ? *name_and_ext.head() : "";
     }
 
-    String Path::get_file_extension() const {
+    auto Path::get_file_extension() const -> String {
         LinkedList<String> name_and_ext = get_file_name().split('.');
         return name_and_ext.size() > 1 ? *name_and_ext.tail() : "";
     }
 
-    Path Path::get_parent() const {
+    auto Path::get_parent() const -> Path {
         if (_path.is_empty())
             // Parent of "" is ".".
             return Path(".");
@@ -59,11 +59,13 @@ namespace Rune {
         return Path(_path.substring(0, idx));
     }
 
-    bool Path::is_root() const { return _path == "/"; }
+    auto Path::is_root() const -> bool { return _path == "/"; }
 
-    bool Path::is_absolute() const { return !_path.is_empty() && _path[0] == UNIX_PATH_SEPARATOR; }
+    auto Path::is_absolute() const -> bool {
+        return !_path.is_empty() && _path[0] == UNIX_PATH_SEPARATOR;
+    }
 
-    Path Path::common_path(const Path& path) const {
+    auto Path::common_path(const Path& path) const -> Path {
         if (path.to_string().is_empty()) return {};
         if (is_absolute() != path.is_absolute()) return {};
         if (*this == path) return *this;
@@ -79,7 +81,7 @@ namespace Rune {
         return common;
     }
 
-    Path Path::relative_to(const Path& path) const {
+    auto Path::relative_to(const Path& path) const -> Path {
         if (path.to_string().is_empty()) return {};
         if (is_absolute() != path.is_absolute()) return {};
         if (*this == path) return {};
@@ -106,9 +108,9 @@ namespace Rune {
         return relative;
     }
 
-    LinkedList<String> Path::split() const { return _path.split(UNIX_PATH_SEPARATOR); }
+    auto Path::split() const -> LinkedList<String> { return _path.split(UNIX_PATH_SEPARATOR); }
 
-    Path Path::append(const String& part) const {
+    auto Path::append(const String& part) const -> Path {
         if (_path.size() == 0 && part.size() == 0) return {};
         if (_path.size() == 0) return Path(part);
         if (part.size() == 0) return Path(_path);
@@ -122,7 +124,7 @@ namespace Rune {
         return Path(r);
     }
 
-    Path Path::resolve(const Path& working_dir) const {
+    auto Path::resolve(const Path& working_dir) const -> Path {
         Path out(working_dir);
         for (auto& part : _path.split(UNIX_PATH_SEPARATOR)) {
             if (part == ".")
@@ -141,25 +143,25 @@ namespace Rune {
         return out;
     }
 
-    String Path::to_string() const { return _path; }
+    auto Path::to_string() const -> String { return _path; }
 
-    Path Path::operator/(const String& part) const { return append(part); }
+    auto Path::operator/(const String& part) const -> Path { return append(part); }
 
-    Path Path::operator/(String&& part) const { return append(part); }
+    auto Path::operator/(String&& part) const -> Path { return append(part); }
 
-    Path Path::operator/(const Path& part) const { return append(part.to_string()); }
+    auto Path::operator/(const Path& part) const -> Path { return append(part.to_string()); }
 
-    Path& Path::operator/=(const String& part) {
+    auto Path::operator/=(const String& part) -> Path& {
         _path = append(part).to_string();
         return *this;
     }
 
-    Path& Path::operator/=(String&& part) {
+    auto Path::operator/=(String&& part) -> Path& {
         _path = append(part).to_string();
         return *this;
     }
 
-    Path& Path::operator/=(const Path& part) {
+    auto Path::operator/=(const Path& part) -> Path& {
         _path = append(part.to_string()).to_string();
         return *this;
     }
@@ -168,8 +170,12 @@ namespace Rune {
     //                                          Operator Overloads
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool operator==(const Path& first, const Path& second) { return first._path == second._path; }
+    auto operator==(const Path& first, const Path& second) -> bool {
+        return first._path == second._path;
+    }
 
-    bool operator!=(const Path& a, const Path& second) { return a._path != second._path; }
+    auto operator!=(const Path& first, const Path& second) -> bool {
+        return first._path != second._path;
+    }
 
 } // namespace Rune

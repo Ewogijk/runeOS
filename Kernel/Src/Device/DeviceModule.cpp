@@ -22,11 +22,11 @@ namespace Rune::Device {
     const SharedPointer<Logger> LOGGER =
         LogContext::instance().get_logger("Device.DeviceSubsystem");
 
-    DeviceModule::DeviceModule() : Module(), _ahci_driver(nullptr), _keyboard(new PS2Keyboard()) {}
+    DeviceModule::DeviceModule() : _ahci_driver(nullptr), _keyboard(new PS2Keyboard()) {}
 
-    String DeviceModule::get_name() const { return "Device"; }
+    auto DeviceModule::get_name() const -> String { return "Device"; }
 
-    bool DeviceModule::load(const BootInfo& boot_info) {
+    auto DeviceModule::load(const BootInfo& boot_info) -> bool {
         SILENCE_UNUSED(boot_info)
         PCI::discover_devices(*_ahci_driver);
 
@@ -38,7 +38,7 @@ namespace Rune::Device {
         _ahci_driver = move(ahci_driver);
     }
 
-    AHCIDriver& DeviceModule::get_ahic_driver() { return *_ahci_driver; }
+    auto DeviceModule::get_ahci_driver() -> AHCIDriver* { return _ahci_driver.get(); }
 
-    SharedPointer<VirtualKeyboard> DeviceModule::get_keyboard() { return _keyboard; }
+    auto DeviceModule::get_keyboard() -> SharedPointer<VirtualKeyboard> { return _keyboard; }
 } // namespace Rune::Device

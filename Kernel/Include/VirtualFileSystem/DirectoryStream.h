@@ -40,6 +40,7 @@ namespace Rune::VFS {
      * @brief The directory stream returns node infos until the end of directory is reached.
      */
     class DirectoryStream {
+        // NOLINTBEGIN
       protected:
         bool _closed;
 
@@ -48,6 +49,7 @@ namespace Rune::VFS {
       public:
         U16    handle;
         String name;
+        // NOLINTEND
 
         explicit DirectoryStream(const Function<void()>& on_close);
 

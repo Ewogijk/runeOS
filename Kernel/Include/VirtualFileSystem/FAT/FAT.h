@@ -18,9 +18,9 @@
 #define RUNEOS_FAT_H
 
 #include <Ember/Ember.h>
-#include <KRE/String.h>
-
 #include <Ember/Enum.h>
+
+#include <KRE/String.h>
 
 namespace Rune::VFS {
 
@@ -38,54 +38,75 @@ namespace Rune::VFS {
     DECLARE_ENUM(FATType, FAT_TYPES, 0x0) // NOLINT
 
     struct BIOSParameterBlock {
-        U8 jmpboot[3];
+        static constexpr U8     ROOT_ENTRY_COUNT_FACTOR = 32;
+        static constexpr size_t JMPBOOT_SIZE            = 3;
+        static constexpr size_t OEMID_SIZE              = 8;
+        static const char*      RUNEOS_OEM;
 
-        U8 oemid[8];
+        static constexpr U8 JMPBOOT0 = 0xEB;
+        static constexpr U8 JMPBOOT1 = 0x3C;
+        static constexpr U8 JMPBOOT2 = 0x90;
 
-        U16 bytes_per_sector;    // 512, 1024, 2048 or 4096
-        U8  sectors_per_cluster; // 1-128, only power of 2's
-        U16 reserved_sector_count;
-        U8  fat_count;
-        U16 root_entry_count;
-        U16 total_sectors_16;
-        U8  media_descriptor_type;
-        U16 fat_size_16;
-        U16 sectors_per_track;
-        U16 head_count;
-        U32 hidden_sector_count;
-        U32 total_sectors_32;
+        U8 jmpboot[JMPBOOT_SIZE]; // NOLINT need binary compatibility with FAT spec
+
+        U8 oemid[OEMID_SIZE]; // NOLINT need binary compatibility with FAT spec
+
+        U16 bytes_per_sector{0};    // 512, 1024, 2048 or 4096
+        U8  sectors_per_cluster{0}; // 1-128, only power of 2's
+        U16 reserved_sector_count{0};
+        U8  fat_count{0};
+        U16 root_entry_count{0};
+        U16 total_sectors_16{0};
+        U8  media_descriptor_type{0};
+        U16 fat_size_16{0};
+        U16 sectors_per_track{0};
+        U16 head_count{0};
+        U32 hidden_sector_count{0};
+        U32 total_sectors_32{0};
 
         BIOSParameterBlock();
     } PACKED;
 
     struct ExtendedBIOSParameterBlock1216 {
-        U8  drive_number;
-        U8  reserved_1;
-        U8  boot_signature;
-        U32 volume_id;
-        U8  volume_label[11];
-        U8  file_system_type;
-        U8  boot_code[448];
+        static constexpr size_t VOLUME_LABEL_SIZE = 11;
+        static constexpr size_t BOOT_CODE_SIZE    = 448;
+
+        static constexpr U16 SIGNATURE_WORD = 0x55AA;
+
+        U8  drive_number{0};
+        U8  reserved_1{0};
+        U8  boot_signature{0};
+        U32 volume_id{0};
+        U8  volume_label[VOLUME_LABEL_SIZE]; // NOLINT need binary compatibility with FAT spec
+        U8  file_system_type{0};
+        U8  boot_code[BOOT_CODE_SIZE]; // NOLINT need binary compatibility with FAT spec
         U16 signature_word;
 
         ExtendedBIOSParameterBlock1216();
     } PACKED;
 
     struct ExtendedBIOSParameterBlock32 {
-        U32 fat_size_32;
-        U16 flags;
-        U16 fat_version;
-        U32 root_cluster;
-        U16 fs_info;
-        U16 backup_bs_sector;
-        U8  reserved_0[12];
-        U8  drive_number;
-        U8  reserved_1;
-        U8  signature;
-        U32 volume_id;
-        U8  volume_label[11];
-        U8  system_id[8];
-        U8  boot_code[420];
+        static constexpr size_t RESERVED0_SIZE    = 12;
+        static constexpr size_t VOLUME_LABEL_SIZE = 11;
+        static constexpr size_t SYSTEM_ID_SIZE    = 8;
+        static constexpr size_t BOOT_CODE_SIZE    = 420;
+
+        static constexpr U16 SIGNATURE_WORD = 0x55AA;
+
+        U32 fat_size_32{0};
+        U16 flags{0};
+        U16 fat_version{0};
+        U32 root_cluster{0};
+        U16 fs_info{0};
+        U16 backup_bs_sector{0};
+        U8  reserved_0[RESERVED0_SIZE]; // NOLINT need binary compatibility with FAT spec
+        U8  drive_number{0};
+        U8  reserved_1{0};
+        U8  signature{0};
+        U32 volume_id{0};
+        U8  volume_label[VOLUME_LABEL_SIZE]; // NOLINT need binary compatibility with FAT spec
+        U8  system_id[SYSTEM_ID_SIZE];       // NOLINT need binary compatibility with FAT spec
+        U8  boot_code[BOOT_CODE_SIZE];       // NOLINT need binary compatibility with FAT spec
         U16 signature_word;
 
         ExtendedBIOSParameterBlock32();
@@ -102,12 +123,20 @@ namespace Rune::VFS {
     };
 
     struct FileSystemInfo {
+        static constexpr size_t RESERVED1_SIZE = 480;
+        static constexpr size_t RESERVED2_SIZE = 12;
+
+        static constexpr U32 NO_INFO         = 0xFFFFFFFF;
+        static constexpr U32 LEAD_SIGNATURE  = 0x41615252;
+        static constexpr U32 STRUC_SIGNATURE = 0x61417272;
+        static constexpr U32 TRAIL_SIGNATURE = 0xAA550000;
+
         U32 lead_signature;
-        U8  reserved_1[480];
+        U8  reserved_1[RESERVED1_SIZE]; // NOLINT need binary compatibility with FAT spec
         U32 struc_signature;
         U32 free_count;
         U32 next_free;
-        U8  reserved_2[12];
+        U8  reserved_2[RESERVED2_SIZE]; // NOLINT need binary compatibility with FAT spec
         U32 trail_signature;
 
         FileSystemInfo();
@@ -125,16 +154,23 @@ namespace Rune::VFS {
     DECLARE_ENUM(FATFileAttribute, FAT_FILE_ATTRIBUTES, 0x0) // NOLINT
 
     struct FileEntry {
+        static constexpr U8 SHORT_NAME_SIZE      = 11;
+        static constexpr U8 SHORT_NAME_MAIN_SIZE = 8;
+        static constexpr U8 SHORT_NAME_EXT_SIZE  = 3;
+
         static constexpr U8 MARK_EMPTY_END    = 0x00;
         static constexpr U8 MARK_EMPTY_MIDDLE = 0xE5;
+        static constexpr U8 TRAILING_SPACE    = 0x20;
 
+        // NOLINTBEGIN need binary compatibility with FAT spec
         union {
-            U8 as_array[11] = {};
+            U8 as_array[SHORT_NAME_SIZE] = {};
             struct {
-                U8 name[8];
-                U8 extension[3];
+                U8 name[SHORT_NAME_MAIN_SIZE];
+                U8 extension[SHORT_NAME_EXT_SIZE];
             };
         } short_name;
+        // NOLINTEND
         U8 attributes           = 0;
         U8 nt_reserved          = 0;
         U8 creation_time_millis = 0; // Hundreds of a second (100ms), 0 <= MS <= 199
@@ -211,60 +247,59 @@ namespace Rune::VFS {
          *
          * @return True if the name is valid.
          */
-        static bool validate_name(const String& name, U8 allowed_length);
+        static auto validate_name(const String& name, U8 allowed_length) -> bool;
 
         /**
          *
          * @return True if this entry is unused and no more used entries follow after this one.
          */
-        [[nodiscard]]
-        bool is_empty_end() const;
+        [[nodiscard]] auto is_empty_end() const -> bool;
 
         /**
          *
          * @return True if this entry is unused but used entries will follow after this one.
          */
-        [[nodiscard]]
-        bool is_empty_middle() const;
+        [[nodiscard]] auto is_empty_middle() const -> bool;
 
         /**
          *
          * @return The dot separated short name and extension e.g. File.txt
          */
-        [[nodiscard]]
-        String make_short_name() const;
+        [[nodiscard]] auto make_short_name() const -> String;
 
         /**
          *
          * @return
          */
-        [[nodiscard]]
-        U8 compute_short_name_checksum() const;
+        [[nodiscard]] auto compute_short_name_checksum() const -> U8;
 
         /**
          *
          * @return cluster index of the file entry content.
          */
-        [[nodiscard]]
-        U32 cluster() const;
+        [[nodiscard]] auto cluster() const -> U32;
 
-        [[nodiscard]]
-        bool has_attribute(FATFileAttribute attr) const;
+        [[nodiscard]] auto has_attribute(FATFileAttribute attr) const -> bool;
     };
 
     struct LongFileNameEntry {
+        static constexpr U8 MASK_LAST_LFN_ENTRY = 0xF0;
+
+        static constexpr U8  FN1_SIZE           = 5;
+        static constexpr U8  FN2_SIZE           = 6;
+        static constexpr U8  FN3_SIZE           = 2;
         static constexpr U16 MAX_FILE_NAME_SIZE = 255;
         static constexpr U8  MAX_CHAR_PER_ENTRY = 13;
         static constexpr U8  LAST_LFN_ENTRY     = 0x40;
 
         U8  order;
-        U16 file_name_1[5];
+        U16 file_name_1[FN1_SIZE]; // NOLINT need binary compatibility with FAT spec
         U8  attributes;
         U8  long_entry_type;
         U8  short_file_name_checksum;
-        U16 file_name_2[6];
+        U16 file_name_2[FN2_SIZE]; // NOLINT need binary compatibility with FAT spec
         U16 reserved;
-        U16 file_name_3[2];
+        U16 file_name_3[FN3_SIZE]; // NOLINT need binary compatibility with FAT spec
 
         /**
          * Verify that the given name is valid.
@@ -283,7 +318,7 @@ namespace Rune::VFS {
          *
          * @return True if the name is valid.
          */
-        static bool validate_name(const String& name);
+        static auto validate_name(const String& name) -> bool;
     } PACKED;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -304,10 +339,13 @@ namespace Rune::VFS {
      * A file entry with it's position on the storage.
      */
     struct LocationAwareFileEntry {
-        String            file_name = "";     // Cache the file name in case it is a long file name
-        FileEntry         file      = {};     // Copy of the file entry on the storage
-        FileEntryLocation location  = {0, 0}; // Location of the file entry on the volume
-        FileEntryLocation first_lfn_entry = {0, 0}; // Location of the first LFN entry on the volume
+        String            file_name = ""; // Cache the file name in case it is a long file name
+        FileEntry         file      = {}; // Copy of the file entry on the storage
+        FileEntryLocation location  = {.cluster   = 0,
+                                       .entry_idx = 0}; // Location of the file entry on the volume
+        FileEntryLocation first_lfn_entry = {
+            .cluster   = 0,
+            .entry_idx = 0}; // Location of the first LFN entry on the volume
     };
 
     /**

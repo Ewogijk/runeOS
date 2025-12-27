@@ -22,28 +22,28 @@ namespace Rune::VFS {
     void FATDirectoryIterator::get_next_cluster() {
         // If the iterator has not started yet read the cluster mentioned in the directory file
         // entry else get the next cluster from the FAT
-        U32 next_cluster = _current_entry
-                               ? _volume_manager.fat_read(_storage_dev, _bpb, _current_cluster)
+        U32 next_cluster = (_current_entry != nullptr)
+                               ? _volume_manager->fat_read(_storage_dev, _bpb, _current_cluster)
                                : _current_cluster;
-        if (next_cluster > _volume_manager.get_max_cluster_count()) {
+        if (next_cluster > _volume_manager->get_max_cluster_count()) {
             _state = DirectoryIteratorState::END_OF_DIRECTORY;
             return;
         }
-        if (!_volume_manager.data_cluster_read(_storage_dev,
-                                               _bpb,
-                                               _cluster_buf.get(),
-                                               next_cluster)) {
+        if (!_volume_manager->data_cluster_read(_storage_dev,
+                                                _bpb,
+                                                _cluster_buf.get(),
+                                                next_cluster)) {
             _state = DirectoryIteratorState::DEV_ERROR;
             return;
         }
         _current_cluster = next_cluster;
         _entry_index     = 0;
-        _current_entry   = (FileEntry*) _cluster_buf.get();
+        _current_entry   = reinterpret_cast<FileEntry*>(_cluster_buf.get());
     }
 
     void FATDirectoryIterator::advance() {
         _entry_index++;
-        _current_entry = &((FileEntry*) _cluster_buf.get())[_entry_index];
+        _current_entry = &(reinterpret_cast<FileEntry*>(_cluster_buf.get()))[_entry_index];
         if (_it_mode == DirectoryIterationMode::LIST_DIRECTORY && _current_entry->is_empty_end()) {
             // We reached the end of the directory and want to stop here
             _state = DirectoryIteratorState::END_OF_DIRECTORY;
@@ -51,27 +51,105 @@ namespace Rune::VFS {
         }
         _current_entry_as_laf.file_name       = "";
         _current_entry_as_laf.file            = *_current_entry;
-        _current_entry_as_laf.location        = {_current_cluster, (U16) _entry_index};
+        _current_entry_as_laf.location        = {.cluster   = _current_cluster,
+                                                 .entry_idx = (U16) _entry_index};
         _current_entry_as_laf.first_lfn_entry = {};
     }
 
-    void FATDirectoryIterator::parse_used_file_entry() {
+    // auto FATDirectoryIterator::parse_used_file_entry() -> void { // NOLINT
+    //     String            file_name = "";
+    //     FileEntryLocation first_lfn_entry;
+    //     // The current file entry is a used file or directory
+    //     if (_current_entry->attributes == FATFileAttribute::LONG_FILE_NAME) {
+    //         // Parse it's long file name entries
+    //         if ((nibble_get(_current_entry->short_name.as_array[0], 1))
+    //             != LongFileNameEntry::LAST_LFN_ENTRY) {
+    //             _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
+    //             return;
+    //         }
+    //         first_lfn_entry = {.cluster = _current_cluster, .entry_idx = (U16) _entry_index};
+    //         U8 lfne_count   = nibble_get(_current_entry->short_name.as_array[0], 0);
+    //         U8 c_order      = lfne_count;
+    //         while (c_order > 0) {
+    //             auto* c_long_file_name_entry =
+    //             reinterpret_cast<LongFileNameEntry*>(_current_entry); if
+    //             (nibble_get(c_long_file_name_entry->order, 0) != c_order) {
+    //                 _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
+    //                 return;
+    //             }
+    //             // Copy file name to temp buffer
+    //             // Encoding is UCS-2/UTF-16, but we only get the first byte of each char
+    //             // because the kernel only supports ASCII (for ASCII the second byte is always 0
+    //             // padding) Should a non ASCII character be part of the name we will embrace
+    //             chaos
+    // // NOLINTBEGIN
+    // char tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
+    //          + LongFileNameEntry::FN3_SIZE];
+    // for (U8 i = 0; i < LongFileNameEntry::FN1_SIZE; i++)
+    //     tmp[i] = (char) (byte_get(c_long_file_name_entry->file_name_1[i], 0));
+    // for (U8 i = 0; i < LongFileNameEntry::FN2_SIZE; i++)
+    //     tmp[LongFileNameEntry::FN1_SIZE + i] =
+    //         (char) (byte_get(c_long_file_name_entry->file_name_2[i], 0));
+    // for (U8 i = 0; i < LongFileNameEntry::FN3_SIZE; i++)
+    //     tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE + i] =
+    //         (char) (byte_get(c_long_file_name_entry->file_name_3[i], 0));
+    //
+    // int pStart = 0;
+    // int pEnd   = LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
+    //            + LongFileNameEntry::FN3_SIZE;
+    // if (c_order == lfne_count) {
+    //     // Skip trailing whitespace
+    //     while (tmp[pEnd - 1] == MASK_BYTE
+    //            || tmp[pEnd - 1] == '\0') // string will implicitly be null terminated
+    //         pEnd--;
+    // } else if (c_order == 1) {
+    //     // Skip leading whitespace
+    //     while (tmp[pStart] == ' ') pStart++;
+    // }
+    // // NOLINTEND
+    //
+    //             // Long file name entries are in reverse order
+    //             file_name = String(tmp, pStart, pEnd) + file_name;
+    //             _current_entry++;
+    //             _entry_index++;
+    //             c_order--;
+    //             if (_entry_index >= _max_entries_per_cluster) {
+    //                 // The next long file name entry is located in the next directory cluster ->
+    //                 Get
+    //                 // it!
+    //                 get_next_cluster();
+    //                 if (_state != DirectoryIteratorState::ITERATING)
+    //                     return; // StorageError or EndOfDirectory
+    //             }
+    //         }
+    //     } else {
+    //         // It does not use a long file name entry
+    //         file_name = _current_entry->make_short_name();
+    //     }
+    //     _current_entry_as_laf.file_name       = file_name;
+    //     _current_entry_as_laf.file            = *_current_entry;
+    //     _current_entry_as_laf.location        = {.cluster   = _current_cluster,
+    //                                              .entry_idx = (U16) _entry_index};
+    //     _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
+    // }
+
+    auto FATDirectoryIterator::parse_used_file_entry() -> void { // NOLINT
         String            file_name = "";
         FileEntryLocation first_lfn_entry;
         // The current file entry is a used file or directory
         if (_current_entry->attributes == FATFileAttribute::LONG_FILE_NAME) {
             // Parse it's long file name entries
-            if ((_current_entry->short_name.as_array[0] & 0xF0)
+            if ((_current_entry->short_name.as_array[0] & LongFileNameEntry::MASK_LAST_LFN_ENTRY)
                 != LongFileNameEntry::LAST_LFN_ENTRY) {
                 _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
                 return;
             }
-            first_lfn_entry = {_current_cluster, (U16) _entry_index};
-            U8 lfne_count   = _current_entry->short_name.as_array[0] & 0x0F;
+            first_lfn_entry = {.cluster = _current_cluster, .entry_idx = (U16) _entry_index};
+            U8 lfne_count   = nibble_get(_current_entry->short_name.as_array[0], 0);
             U8 c_order      = lfne_count;
             while (c_order > 0) {
-                auto* c_long_file_name_entry = (LongFileNameEntry*) _current_entry;
-                if ((c_long_file_name_entry->order & 0x0F) != c_order) {
+                auto* c_long_file_name_entry = reinterpret_cast<LongFileNameEntry*>(_current_entry);
+                if ((nibble_get(c_long_file_name_entry->order, 0)) != c_order) {
                     _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
                     return;
                 }
@@ -79,25 +157,31 @@ namespace Rune::VFS {
                 // Encoding is UCS-2/UTF-16, but we only get the first byte of each char
                 // because the kernel only supports ASCII (for ASCII the second byte is always 0
                 // padding) Should a non ASCII character be part of the name we will embrace chaos
-                char tmp[13];
-                for (int i = 0; i < 5; i++)
-                    tmp[i] = (char) (c_long_file_name_entry->file_name_1[i] & 0x00FF);
-                for (int i = 0; i < 6; i++)
-                    tmp[5 + i] = (char) (c_long_file_name_entry->file_name_2[i] & 0x00FF);
-                for (int i = 0; i < 2; i++)
-                    tmp[11 + i] = (char) (c_long_file_name_entry->file_name_3[i] & 0x00FF);
+                // NOLINTBEGIN
+                char tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
+                         + LongFileNameEntry::FN3_SIZE];
+                for (U8 i = 0; i < LongFileNameEntry::FN1_SIZE; i++)
+                    tmp[i] = (char) (byte_get(c_long_file_name_entry->file_name_1[i], 0));
+                for (U8 i = 0; i < LongFileNameEntry::FN2_SIZE; i++)
+                    tmp[LongFileNameEntry::FN1_SIZE + i] =
+                        (char) (byte_get(c_long_file_name_entry->file_name_2[i], 0));
+                for (U8 i = 0; i < LongFileNameEntry::FN3_SIZE; i++)
+                    tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE + i] =
+                        (char) (byte_get(c_long_file_name_entry->file_name_3[i], 0));
 
                 int pStart = 0;
-                int pEnd   = 13;
+                int pEnd   = LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
+                           + LongFileNameEntry::FN3_SIZE;
                 if (c_order == lfne_count) {
                     // Skip trailing whitespace
-                    while (tmp[pEnd - 1] == (char) 0xFF
+                    while (tmp[pEnd - 1] == (char) MASK_BYTE
                            || tmp[pEnd - 1] == '\0') // string will implicitly be null terminated
                         pEnd--;
                 } else if (c_order == 1) {
                     // Skip leading whitespace
                     while (tmp[pStart] == ' ') pStart++;
                 }
+                // NOLINTEND
 
                 // Long file name entries are in reverse order
                 file_name = String(tmp, pStart, pEnd) + file_name;
@@ -118,23 +202,20 @@ namespace Rune::VFS {
         }
         _current_entry_as_laf.file_name       = file_name;
         _current_entry_as_laf.file            = *_current_entry;
-        _current_entry_as_laf.location        = {_current_cluster, (U16) _entry_index};
+        _current_entry_as_laf.location        = {.cluster   = _current_cluster,
+                                                 .entry_idx = (U16) _entry_index};
         _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
     }
 
     FATDirectoryIterator::FATDirectoryIterator(U16                    storage_dev,
                                                BIOSParameterBlock*    bpb,
-                                               const VolumeManager&   volume_manager,
+                                               const VolumeManager*   volume_manager,
                                                U32                    start_cluster,
                                                DirectoryIterationMode it_mode)
         : _storage_dev(storage_dev),
           _bpb(bpb),
           _volume_manager(volume_manager),
-          _current_cluster(0),
           _cluster_buf(nullptr),
-          _max_entries_per_cluster(0),
-          _current_entry(nullptr),
-          _entry_index(0),
           _current_entry_as_laf(),
           _state(DirectoryIteratorState::ITERATING),
           _it_mode(it_mode) {
@@ -158,11 +239,11 @@ namespace Rune::VFS {
         }
     }
 
-    NavigationResult FATDirectoryIterator::navigate_to(U16                         storage_dev,
-                                                       BIOSParameterBlock*         bpb,
-                                                       const VolumeManager&        volume_manager,
-                                                       U32                         start_cluster,
-                                                       LinkedListIterator<String>& path) {
+    auto FATDirectoryIterator::navigate_to(U16                         storage_dev,
+                                           BIOSParameterBlock*         bpb,
+                                           const VolumeManager*        volume_manager,
+                                           U32                         start_cluster,
+                                           LinkedListIterator<String>& path) -> NavigationResult {
         String wanted_file_entry = *path;
         ++path;
         FATDirectoryIterator d_it(storage_dev,
@@ -175,39 +256,42 @@ namespace Rune::VFS {
             if (c_entry.file_name == wanted_file_entry) {
                 if (!path.has_next()) {
                     // Reached end of patch and file entry found -> return file entry
-                    return {NavigationStatus::FOUND, c_entry};
-                } else {
-                    // More path left -> Recursively search for the next part in the directory found
-                    // here
-                    if (FATFileAttribute(c_entry.file.attributes & FATFileAttribute::DIRECTORY)
-                        == FATFileAttribute::DIRECTORY) {
-                        return navigate_to(storage_dev,
-                                           bpb,
-                                           volume_manager,
-                                           c_entry.file.cluster(),
-                                           path);
-                    }
-                    return {NavigationStatus::BAD_PATH, {}};
+                    return {.status = NavigationStatus::FOUND, .file = c_entry};
                 }
+                // More path left -> Recursively search for the next part in the directory found
+                // here
+                if (FATFileAttribute(c_entry.file.attributes & FATFileAttribute::DIRECTORY)
+                    == FATFileAttribute::DIRECTORY) {
+                    return navigate_to(storage_dev,
+                                       bpb,
+                                       volume_manager,
+                                       c_entry.file.cluster(),
+                                       path);
+                }
+                return {.status = NavigationStatus::BAD_PATH, .file = {}};
             }
             ++d_it;
         }
 
         if (d_it.get_state() == DirectoryIteratorState::END_OF_DIRECTORY)
-            return {NavigationStatus::NOT_FOUND, {}};
+            return {.status = NavigationStatus::NOT_FOUND, .file = {}};
 
-        return {NavigationStatus::DEV_ERROR, {}};
+        return {.status = NavigationStatus::DEV_ERROR, .file = {}};
     }
 
-    bool FATDirectoryIterator::has_next() const {
+    auto FATDirectoryIterator::has_next() const -> bool {
         return _state == DirectoryIteratorState::ITERATING;
     }
 
-    LocationAwareFileEntry& FATDirectoryIterator::operator*() { return _current_entry_as_laf; }
+    auto FATDirectoryIterator::operator*() -> LocationAwareFileEntry& {
+        return _current_entry_as_laf;
+    }
 
-    LocationAwareFileEntry* FATDirectoryIterator::operator->() { return &_current_entry_as_laf; }
+    auto FATDirectoryIterator::operator->() -> LocationAwareFileEntry* {
+        return &_current_entry_as_laf;
+    }
 
-    FATDirectoryIterator& FATDirectoryIterator::operator++() {
+    auto FATDirectoryIterator::operator++() -> FATDirectoryIterator& {
         if (_state != DirectoryIteratorState::ITERATING) return *this;
 
         if (_entry_index >= _max_entries_per_cluster - 1)
@@ -222,7 +306,7 @@ namespace Rune::VFS {
             // We reached the end of directory or an error happened
             return *this;
 
-        switch (_it_mode) {
+        switch (_it_mode) { // NOLINT All cases are handled
             case DirectoryIterationMode::LIST_DIRECTORY:
                 // Skip all empty file entries in between used entries
                 while (_current_entry->is_empty_middle()) {
@@ -247,23 +331,23 @@ namespace Rune::VFS {
         return *this;
     }
 
-    FATDirectoryIterator FATDirectoryIterator::operator++(int) {
+    auto FATDirectoryIterator::operator++(int) -> FATDirectoryIterator {
         FATDirectoryIterator tmp = *this;
         ++(*this);
         return tmp;
     }
 
-    bool FATDirectoryIterator::operator==(const FATDirectoryIterator& o) const {
+    auto FATDirectoryIterator::operator==(const FATDirectoryIterator& o) const -> bool {
         return _current_cluster == o._current_cluster && _entry_index == o._entry_index;
     }
 
-    bool FATDirectoryIterator::operator!=(const FATDirectoryIterator& o) const {
+    auto FATDirectoryIterator::operator!=(const FATDirectoryIterator& o) const -> bool {
         return _current_cluster != o._current_cluster || _entry_index != o._entry_index;
     }
 
-    DirectoryIteratorState FATDirectoryIterator::get_state() const { return _state; }
+    auto FATDirectoryIterator::get_state() const -> DirectoryIteratorState { return _state; }
 
-    U32 FATDirectoryIterator::get_current_cluster() const { return _current_cluster; }
+    auto FATDirectoryIterator::get_current_cluster() const -> U32 { return _current_cluster; }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      FAT Directory Stream
@@ -274,7 +358,7 @@ namespace Rune::VFS {
         : DirectoryStream(move(on_close)),
           _fat_it(move(fat_it)) {}
 
-    Expected<NodeInfo, DirectoryStreamStatus> FATDirectoryStream::next() {
+    auto FATDirectoryStream::next() -> Expected<NodeInfo, DirectoryStreamStatus> {
         switch (_fat_it.get_state()) {
             case DirectoryIteratorState::END_OF_DIRECTORY:
                 return Unexpected<DirectoryStreamStatus>(DirectoryStreamStatus::END_OF_DIRECTORY);
@@ -295,7 +379,9 @@ namespace Rune::VFS {
             node_attr |= Ember::NodeAttribute::DIRECTORY;
         if (_fat_it->file.has_attribute(FATFileAttribute::ARCHIVE))
             node_attr |= Ember::NodeAttribute::FILE;
-        NodeInfo node_info = NodeInfo{_fat_it->file_name, _fat_it->file.file_size, node_attr};
+        NodeInfo node_info = {.node_path  = _fat_it->file_name,
+                              .size       = _fat_it->file.file_size,
+                              .attributes = node_attr};
         ++_fat_it;
         return node_info;
     }

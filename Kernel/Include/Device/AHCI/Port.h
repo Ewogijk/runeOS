@@ -283,7 +283,7 @@ namespace Rune::Device {
         SetDeviceBitsFIS dBits;
 
         Array<U8, 64> UnknownFIS; // NOLINT
-        Array<U8, 96> Reserved4; // NOLINT
+        Array<U8, 96> Reserved4;  // NOLINT
     };
 
     union CommandTableBaseAddress {
@@ -335,7 +335,7 @@ namespace Rune::Device {
     };
 
     struct CommandTable {
-        RegisterHost2DeviceFIS CFIS; // Command FIS
+        RegisterHost2DeviceFIS CFIS;        // Command FIS
         Array<U8, 44>          CFISPadding; // NOLINT
 
         Array<U8, 16> ACMD; // ATAPI Command // NOLINT

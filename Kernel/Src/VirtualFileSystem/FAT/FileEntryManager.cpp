@@ -20,60 +20,66 @@ namespace Rune::VFS {
     DEFINE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0)
 
     FileEntryManager::FileEntryManager(SharedPointer<FATEngine> fat_engine,
-                                       Device::AHCIDriver&      ahci_driver,
-                                       VolumeManager&           volume_manager)
+                                       VolumeManager*           volume_manager)
         : _fat_engine(move(fat_engine)),
-          _ahci_driver(ahci_driver),
           _volume_manager(volume_manager) {}
 
-    VolumeAccessStatus FileEntryManager::search(U16                     storage_dev,
-                                                BIOSParameterBlock*     bpb,
-                                                const Path&             path,
-                                                LocationAwareFileEntry& out) const {
+    auto FileEntryManager::search(U16                     storage_dev,
+                                  BIOSParameterBlock*     bpb,
+                                  const Path&             path,
+                                  LocationAwareFileEntry& out) const -> VolumeAccessStatus {
         U32       root_cluster = _fat_engine->get_root_directory_cluster(bpb);
         FileEntry root_dummy;
         root_dummy.attributes         = FATFileAttribute::DIRECTORY;
-        root_dummy.first_cluster_low  = root_cluster & 0xFFFF;
-        root_dummy.first_cluster_high = (root_cluster >> 16) & 0xFFFF;
+        root_dummy.first_cluster_low  = word_get(root_cluster, 0);
+        root_dummy.first_cluster_high = word_get(root_cluster, 1);
 
         LinkedList<String> p_split = path.split();
         if (p_split.is_empty()
             || (p_split.size() == 1 && (*p_split.head() == "." || *p_split.head() == ".."))) {
-            out = {"", root_dummy, root_cluster, 0, 0};
+            out = {
+                .file_name       = "",
+                .file            = root_dummy,
+                .location        = {.cluster = root_cluster, .entry_idx = 0},
+                .first_lfn_entry = {           .cluster = 0, .entry_idx = 0}
+            };
             return VolumeAccessStatus::OKAY;
-        } else {
-            LinkedListIterator<String> p_it    = p_split.begin();
-            NavigationResult           nav_res = FATDirectoryIterator::navigate_to(storage_dev,
-                                                                         bpb,
-                                                                         _volume_manager,
-                                                                         root_dummy.cluster(),
-                                                                         p_it);
-            out                                = nav_res.file;
-            if (nav_res.status == NavigationStatus::FOUND)
-                return VolumeAccessStatus::OKAY;
-            else if (nav_res.status == NavigationStatus::NOT_FOUND)
-                return VolumeAccessStatus::NOT_FOUND;
-            else
-                return VolumeAccessStatus::DEV_ERROR;
         }
-    }
 
-    VolumeAccessStatus
-    FileEntryManager::find_empty_file_entries(U16                                 storage_dev,
-                                              BIOSParameterBlock*                 bpb,
-                                              const Path&                         path,
-                                              U16                                 range,
-                                              LinkedList<LocationAwareFileEntry>& out) {
+        LinkedListIterator<String> p_it    = p_split.begin();
+        NavigationResult           nav_res = FATDirectoryIterator::navigate_to(storage_dev,
+                                                                     bpb,
+                                                                     _volume_manager,
+                                                                     root_dummy.cluster(),
+                                                                     p_it);
+        out                                = nav_res.file;
+        if (nav_res.status == NavigationStatus::FOUND) return VolumeAccessStatus::OKAY;
+        if (nav_res.status == NavigationStatus::NOT_FOUND) return VolumeAccessStatus::NOT_FOUND;
+        return VolumeAccessStatus::DEV_ERROR;
+    }
+    // NOLINTBEGIN its complex, deal with it
+    auto FileEntryManager::find_empty_file_entries(U16                                 storage_dev,
+                                                   BIOSParameterBlock*                 bpb,
+                                                   const Path&                         path,
+                                                   U16                                 range,
+                                                   LinkedList<LocationAwareFileEntry>& out)
+        -> VolumeAccessStatus {
+        // NOLINTEND
         U32       root_cluster = _fat_engine->get_root_directory_cluster(bpb);
         FileEntry root_dummy;
         root_dummy.attributes         = FATFileAttribute::DIRECTORY;
-        root_dummy.first_cluster_low  = root_cluster & 0xFFFF;
-        root_dummy.first_cluster_high = (root_cluster >> 16) & 0xFFFF;
+        root_dummy.first_cluster_low  = word_get(root_cluster, 0);
+        root_dummy.first_cluster_high = word_get(root_cluster, 1);
 
         LinkedList<String>     p_split = path.split();
         LocationAwareFileEntry dir;
         if (p_split.is_empty()) {
-            dir = {"", root_dummy, root_cluster, 0, 0};
+            dir = {
+                .file_name       = "",
+                .file            = root_dummy,
+                .location        = {.cluster = root_cluster, .entry_idx = 0},
+                .first_lfn_entry = {           .cluster = 0, .entry_idx = 0}
+            };
         } else {
             // Get the directory file entry
             LinkedListIterator<String> p_it    = p_split.begin();
@@ -87,15 +93,15 @@ namespace Rune::VFS {
             if (nav_res.status != NavigationStatus::FOUND) {
                 if (nav_res.status == NavigationStatus::NOT_FOUND)
                     return VolumeAccessStatus::NOT_FOUND;
-                else
-                    return VolumeAccessStatus::DEV_ERROR;
+                return VolumeAccessStatus::DEV_ERROR;
             }
         }
 
         FATDirectoryIterator dIt(storage_dev,
                                  bpb,
                                  _volume_manager,
-                                 dir.file.first_cluster_high << 16 | dir.file.first_cluster_low,
+                                 dir.file.first_cluster_high << SHIFT_16
+                                     | dir.file.first_cluster_low,
                                  DirectoryIterationMode::LIST_ALL);
         bool                 last_e_5    = false;
         U16                  range_found = 0;
@@ -126,10 +132,11 @@ namespace Rune::VFS {
         }
 
         if (range_found < range) {
-            size_t required_space    = range - range_found;
-            size_t cluster_size      = bpb->bytes_per_sector * bpb->sectors_per_cluster;
-            U32    first_new_cluster = 0;
-            U32    current_cluster   = dIt.get_current_cluster();
+            size_t required_space = range - range_found;
+            auto   cluster_size =
+                static_cast<size_t>(bpb->bytes_per_sector * bpb->sectors_per_cluster);
+            U32 first_new_cluster = 0;
+            U32 current_cluster   = dIt.get_current_cluster();
             // Allocate new clusters until we have enough free space for the rest of the file
             // entries
             while (required_space > 0) {
@@ -144,7 +151,7 @@ namespace Rune::VFS {
                 // Underflow protection
                 required_space = required_space < cluster_size / sizeof(FileEntry)
                                      ? 0
-                                     : required_space - cluster_size / sizeof(FileEntry);
+                                     : required_space - (cluster_size / sizeof(FileEntry));
             }
 
             // Add more free entries to "out"
@@ -163,22 +170,22 @@ namespace Rune::VFS {
         return VolumeAccessStatus::OKAY;
     }
 
-    bool FileEntryManager::update(U16                           storage_dev,
+    auto FileEntryManager::update(U16                           storage_dev,
                                   BIOSParameterBlock*           bpb,
-                                  const LocationAwareFileEntry& entry) {
-        U8 buf[bpb->bytes_per_sector * bpb->sectors_per_cluster];
-        if (!_volume_manager.data_cluster_read(storage_dev, bpb, buf, entry.location.cluster))
+                                  const LocationAwareFileEntry& entry) -> bool {
+        U8 buf[bpb->bytes_per_sector * bpb->sectors_per_cluster]; // NOLINT
+        if (!_volume_manager->data_cluster_read(storage_dev, bpb, buf, entry.location.cluster))
             return false;
-        auto* file_cluster                     = (FileEntry*) buf;
+        auto* file_cluster                     = reinterpret_cast<FileEntry*>(buf);
         file_cluster[entry.location.entry_idx] = entry.file;
-        return _volume_manager.data_cluster_write(storage_dev, bpb, buf, entry.location.cluster);
+        return _volume_manager->data_cluster_write(storage_dev, bpb, buf, entry.location.cluster);
     }
 
-    U32 FileEntryManager::allocate_cluster(U16                     storage_dev,
-                                           BIOSParameterBlock*     bpb,
-                                           LocationAwareFileEntry& file,
-                                           U32                     last_file_cluster) {
-        U32 free_cluster = _volume_manager.fat_find_next_free_cluster(storage_dev, bpb);
+    auto FileEntryManager::allocate_cluster(U16                     storage_dev,
+                                            BIOSParameterBlock*     bpb,
+                                            LocationAwareFileEntry& file,
+                                            U32                     last_file_cluster) -> U32 {
+        U32 free_cluster = _volume_manager->fat_find_next_free_cluster(storage_dev, bpb);
         if (free_cluster == 0) return 0;
 
         if (last_file_cluster == 0) {
@@ -188,13 +195,13 @@ namespace Rune::VFS {
             //          in the BPB, therefore this case can never occur, and we will never
             //          accidentally update the non-existing root file entry, thus provoking the end
             //          of the world
-            file.file.first_cluster_low  = free_cluster & 0xFFFF;
-            file.file.first_cluster_high = (free_cluster >> 16) & 0xFFFF;
+            file.file.first_cluster_low  = word_get(free_cluster, 0);
+            file.file.first_cluster_high = word_get(free_cluster, 1);
             if (!update(storage_dev, bpb, file)) return 0;
-            if (!_volume_manager.fat_write(storage_dev,
-                                           bpb,
-                                           free_cluster,
-                                           _fat_engine->fat_get_eof_marker())) {
+            if (!_volume_manager->fat_write(storage_dev,
+                                            bpb,
+                                            free_cluster,
+                                            _fat_engine->fat_get_eof_marker())) {
                 file.file.first_cluster_low  = 0;
                 file.file.first_cluster_high = 0;
                 update(storage_dev, bpb, file);
@@ -203,16 +210,18 @@ namespace Rune::VFS {
         } else {
             // File has at least one cluster -> Update the last file cluster in the FAT to point to
             // the new cluster and update the new cluster in the FAT to the EOF marker
-            if (!_volume_manager.fat_write(storage_dev, bpb, last_file_cluster, free_cluster))
+            // NOLINTBEGIN
+            if (!_volume_manager->fat_write(storage_dev, bpb, last_file_cluster, free_cluster))
                 return 0;
-            if (!_volume_manager.fat_write(storage_dev,
+            // NOLINTEND
+            if (!_volume_manager->fat_write(storage_dev,
+                                            bpb,
+                                            free_cluster,
+                                            _fat_engine->fat_get_eof_marker())) {
+                _volume_manager->fat_write(storage_dev,
                                            bpb,
-                                           free_cluster,
-                                           _fat_engine->fat_get_eof_marker())) {
-                _volume_manager.fat_write(storage_dev,
-                                          bpb,
-                                          last_file_cluster,
-                                          _fat_engine->fat_get_eof_marker());
+                                           last_file_cluster,
+                                           _fat_engine->fat_get_eof_marker());
                 return 0;
             }
         }

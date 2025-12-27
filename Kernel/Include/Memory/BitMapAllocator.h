@@ -25,26 +25,26 @@ namespace Rune::Memory {
      * state of page frame i.
      */
     class BitMapAllocator : public PhysicalMemoryManager {
-        U8*          _bitmap;      // Base address where the bitmap is accessed.
-        PhysicalAddr _p_bitmap;    // Base address where the bitmap is stored.
-        uint32_t     _bitmap_size; // MemorySize of the bitmap in bytes.
+        U8*          _bitmap{nullptr}; // Base address where the bitmap is accessed.
+        PhysicalAddr _p_bitmap{0};     // Base address where the bitmap is stored.
+        uint32_t     _bitmap_size{0};  // MemorySize of the bitmap in bytes.
 
-        bool is_free(uint32_t page_frame);
+        auto is_free(uint32_t page_frame) -> bool;
 
         void mark(uint32_t page_frame, bool in_use);
 
-        bool mark_memory_block(uint32_t base, uint32_t size, bool in_use);
+        auto mark_memory_block(uint32_t base, uint32_t size, bool in_use) -> bool;
 
-        bool mark_memory_region(PhysicalAddr base_bytes, U64 size_bytes, bool in_use);
+        auto mark_memory_region(PhysicalAddr base_bytes, U64 size_bytes, bool in_use) -> bool;
 
-        uint32_t find_free_region(size_t frames);
+        auto find_free_region(size_t frames) -> uint32_t;
 
-        int is_reserved_or_bit_map_address(PhysicalAddr p_addr, size_t frames);
+        auto is_reserved_or_bit_map_address(PhysicalAddr p_addr, size_t frames) -> int;
 
       protected:
-        MemorySize compute_memory_index_size() override;
+        auto compute_memory_index_size() -> MemorySize override;
 
-        bool init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) override;
+        auto init0(VirtualAddr memory_index, PhysicalAddr p_memory_index) -> bool override;
 
       public:
         BitMapAllocator();
@@ -59,26 +59,24 @@ namespace Rune::Memory {
         using PhysicalMemoryManager::allocate_explicit;
         using PhysicalMemoryManager::free;
 
-        [[nodiscard]]
-        MemoryRegion get_memory_index_region() const override;
+        [[nodiscard]] auto get_memory_index_region() const -> MemoryRegion override;
 
-        [[nodiscard]]
-        VirtualAddr get_memory_index() const override;
+        [[nodiscard]] auto get_memory_index() const -> VirtualAddr override;
 
         void relocate_memory_index(VirtualAddr memory_index) override;
 
-        bool claim_boot_loader_reclaimable_memory() override;
+        auto claim_boot_loader_reclaimable_memory() -> bool override;
 
-        bool allocate(PhysicalAddr& p_addr, size_t frames) override;
+        auto allocate(PhysicalAddr& p_addr, size_t frames) -> bool override;
 
-        bool allocate_explicit(PhysicalAddr p_addr, size_t frames) override;
+        auto allocate_explicit(PhysicalAddr p_addr, size_t frames) -> bool override;
 
-        bool free(PhysicalAddr p_addr, size_t frames) override;
+        auto free(PhysicalAddr p_addr, size_t frames) -> bool override;
 
-        size_t read_page_frame_states(MemoryRegion* buf,
-                                      size_t        buf_size,
-                                      PhysicalAddr  start,
-                                      PhysicalAddr  end) override;
+        auto read_page_frame_states(MemoryRegion* buf,
+                                    size_t        buf_size,
+                                    PhysicalAddr  start,
+                                    PhysicalAddr  end) -> size_t override;
     };
 } // namespace Rune::Memory
 

@@ -16,8 +16,8 @@
 
 #include "GDT.h"
 
-#include <KRE/Memory.h>
 #include <KRE/BitsAndBytes.h>
+#include <KRE/Memory.h>
 
 namespace Rune::CPU {
     DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
@@ -154,8 +154,8 @@ namespace Rune::CPU {
         // TSS system segment descriptor is updated in-place
         auto* ssd = reinterpret_cast<SystemSegmentDescriptor64*>(&gdt->entry[5]); // NOLINT
 
-        auto tss_addr = memory_pointer_to_addr(tss);
-        auto tss_size = sizeof(TaskStateSegment64);
+        auto tss_addr               = memory_pointer_to_addr(tss);
+        auto tss_size               = sizeof(TaskStateSegment64);
         ssd->base_low               = word_get(tss_addr, 0);
         ssd->base_middle            = byte_get(tss_addr, 2);
         ssd->base_high              = byte_get(tss_addr, 3);
@@ -165,7 +165,7 @@ namespace Rune::CPU {
         ssd->reserved_1             = 0;
 
         // Access Byte
-        constexpr U8 TYPE_AVAILABLE = 0x9;
+        constexpr U8 TYPE_AVAILABLE                 = 0x9;
         ssd->access_byte.type                       = TYPE_AVAILABLE;
         ssd->access_byte.s                          = 0;
         ssd->access_byte.descriptor_privilege_level = 0;

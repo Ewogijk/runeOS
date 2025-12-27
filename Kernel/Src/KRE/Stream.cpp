@@ -40,7 +40,8 @@ namespace Rune {
         return chars_written + 1;
     }
 
-    auto TextStream::write_formatted(const String& format, Argument* arg_list, size_t arg_size) -> size_t {
+    auto TextStream::write_formatted(const String& format, Argument* arg_list, size_t arg_size)
+        -> size_t {
         interpolate(format.to_cstr(), _formatted_buf.data(), BUF_SIZE, arg_list, arg_size);
         const size_t out = write(_formatted_buf.data());
         clear_buf();

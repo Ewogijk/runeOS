@@ -32,7 +32,7 @@ namespace Heimdall {
         : _list_detail(new JUnitTestSuiteListDetail{other._list_detail->list}) {}
 
     JUnitTestSuiteList::JUnitTestSuiteList(JUnitTestSuiteList&& other) noexcept
-        : _list_detail(new JUnitTestSuiteListDetail{other._list_detail->list}) {
+        : _list_detail(new(std::nothrow) JUnitTestSuiteListDetail{other._list_detail->list}) {
         delete other._list_detail;
         other._list_detail = nullptr;
     }

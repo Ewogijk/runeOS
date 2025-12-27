@@ -34,7 +34,7 @@ namespace Heimdall {
         : _dict_detail(new DictDetail{other._dict_detail->map}) {}
 
     TestTracker::TestTracker(TestTracker&& other) noexcept
-        : _dict_detail(new DictDetail{other._dict_detail->map}) {
+        : _dict_detail(new(std::nothrow) DictDetail{other._dict_detail->map}) {
         delete other._dict_detail;
         other._dict_detail = nullptr;
     }
@@ -60,15 +60,15 @@ namespace Heimdall {
 
     auto TestTracker::keys() const -> HStringList {
         HStringList result;
-        for (auto entry : _dict_detail->map) result.insert(HString(entry.first.c_str()));
+        for (const auto& entry : _dict_detail->map) result.insert(HString(entry.first.c_str()));
         return result;
     }
 
     auto TestTracker::find(const HString& test_suite) const -> TestList {
         auto maybe_list = _dict_detail->map.find(std::string(test_suite.to_c_str()));
-        if (maybe_list == _dict_detail->map.end()) return TestList();
+        if (maybe_list == _dict_detail->map.end()) return {};
         TestList result;
-        for (auto t : maybe_list->second) result.insert(t);
+        for (const auto& t : maybe_list->second) result.insert(t);
         return result;
     }
 

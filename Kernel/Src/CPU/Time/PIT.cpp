@@ -25,12 +25,7 @@ namespace Rune::CPU {
 
     enum Mode { SQUARE_WAVE_GENERATOR = 0x36 };
 
-    PIT::PIT()
-        : _scheduler(nullptr),
-          _irq_handler([] { return IRQState::PENDING; }),
-          _count(0),
-          _quantum_remaining(0),
-          _time_between_irq(0) {}
+    PIT::PIT() : _irq_handler([] { return IRQState::PENDING; }) {}
 
     auto PIT::get_name() const -> String { return "PIT"; }
 

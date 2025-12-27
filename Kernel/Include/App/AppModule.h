@@ -85,8 +85,7 @@ namespace Rune::App {
 
         auto setup_file_stream(const SharedPointer<Info>& app,
                                StdStream                  std_stream,
-                               const Path& file_path)
-            -> SharedPointer<TextStream>;
+                               const Path&                file_path) -> SharedPointer<TextStream>;
 
         /**
          * @brief Setup a standard stream of the application.
@@ -116,10 +115,10 @@ namespace Rune::App {
 
         ~AppModule() override = default;
 
-        AppModule(const AppModule&)                    = default;
-        AppModule(AppModule&&)                         = default;
-        auto operator=(const AppModule&) -> AppModule& = default;
-        auto operator=(AppModule&&) -> AppModule&      = default;
+        AppModule(const AppModule&)                    = delete;
+        AppModule(AppModule&&)                         = delete;
+        auto operator=(const AppModule&) -> AppModule& = delete;
+        auto operator=(AppModule&&) -> AppModule&      = delete;
 
         /**
          *
@@ -191,9 +190,9 @@ namespace Rune::App {
          * the assigned app ID, otherwise the app ID is -1 and LoadStatus contains the error that
          * happened.
          */
-        auto start_new_app(const Path&               executable,
-                           char*                     argv[], // NOLINT argv is part of the kernel ABI
-                           const Path&               working_directory,
+        auto start_new_app(const Path& executable,
+                           char*       argv[], // NOLINT argv is part of the kernel ABI
+                           const Path& working_directory,
                            const Ember::StdIOConfig& stdin_config,
                            const Ember::StdIOConfig& stdout_config,
                            const Ember::StdIOConfig& stderr_config) -> StartStatus;

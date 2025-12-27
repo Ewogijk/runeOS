@@ -17,15 +17,15 @@
 #include <Test/Heimdall/ConsoleReporter.h>
 
 namespace Heimdall {
-    HString ConsoleReporter::pad(const HString& text, unsigned char fill, bool left) {
-        int size_diff = TAG_WIDTH - text.size();
+    auto ConsoleReporter::pad(const HString& text, unsigned char fill, bool left) -> HString {
+        size_t size_diff = TAG_WIDTH - text.size();
         if (size_diff < 0) return text;
         HString out;
         if (left) {
             out = text;
-            for (int i = 0; i < size_diff; i++) out = out + fill;
+            for (size_t i = 0; i < size_diff; i++) out = out + fill; // NOLINT
         } else {
-            for (int i = 0; i < size_diff; i++) out = out + fill;
+            for (size_t i = 0; i < size_diff; i++) out = out + fill; // NOLINT
             out = out + text;
         }
         return out;

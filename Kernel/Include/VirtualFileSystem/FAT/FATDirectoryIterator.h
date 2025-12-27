@@ -89,14 +89,14 @@ namespace Rune::VFS {
     class FATDirectoryIterator {
         U16                  _storage_dev;
         BIOSParameterBlock*  _bpb;
-        const VolumeManager& _volume_manager;
+        const VolumeManager* _volume_manager;
 
-        U32               _current_cluster;
+        U32               _current_cluster{0};
         SharedPointer<U8> _cluster_buf;
 
-        int                    _max_entries_per_cluster;
-        FileEntry*             _current_entry;
-        int                    _entry_index;
+        int                    _max_entries_per_cluster{0};
+        FileEntry*             _current_entry{nullptr};
+        int                    _entry_index{0};
         LocationAwareFileEntry _current_entry_as_laf;
 
         DirectoryIteratorState _state;
@@ -121,7 +121,7 @@ namespace Rune::VFS {
       public:
         FATDirectoryIterator(U16                    storage_dev,
                              BIOSParameterBlock*    bpb,
-                             const VolumeManager&   volume_manager,
+                             const VolumeManager*   volume_manager,
                              U32                    start_cluster,
                              DirectoryIterationMode it_mode);
 
@@ -129,32 +129,31 @@ namespace Rune::VFS {
         //                                          Static Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        static NavigationResult navigate_to(U16                         storage_dev,
-                                            BIOSParameterBlock*         bpb,
-                                            const VolumeManager&        volume_manager,
-                                            U32                         start_cluster,
-                                            LinkedListIterator<String>& path);
+        static auto navigate_to(U16                         storage_dev,
+                                BIOSParameterBlock*         bpb,
+                                const VolumeManager*        volume_manager,
+                                U32                         start_cluster,
+                                LinkedListIterator<String>& path) -> NavigationResult;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Iterator Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        bool has_next() const;
+        [[nodiscard]] auto has_next() const -> bool;
 
-        LocationAwareFileEntry& operator*();
+        auto operator*() -> LocationAwareFileEntry&;
 
-        LocationAwareFileEntry* operator->();
+        auto operator->() -> LocationAwareFileEntry*;
 
         // pre-increment
-        FATDirectoryIterator& operator++();
+        auto operator++() -> FATDirectoryIterator&;
 
         // post-increment
-        FATDirectoryIterator operator++(int);
+        auto operator++(int) -> FATDirectoryIterator;
 
-        bool operator==(const FATDirectoryIterator& o) const;
+        auto operator==(const FATDirectoryIterator& o) const -> bool;
 
-        bool operator!=(const FATDirectoryIterator& o) const;
+        auto operator!=(const FATDirectoryIterator& o) const -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Directory Iterator Specific Functions
@@ -164,15 +163,13 @@ namespace Rune::VFS {
          *
          * @return Current state of the iterator.
          */
-        [[nodiscard]]
-        DirectoryIteratorState get_state() const;
+        [[nodiscard]] auto get_state() const -> DirectoryIteratorState;
 
         /**
          *
          * @return Current cluster that is currently being iterated.
          */
-        [[nodiscard]]
-        U32 get_current_cluster() const;
+        [[nodiscard]] auto get_current_cluster() const -> U32;
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

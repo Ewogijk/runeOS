@@ -21,7 +21,7 @@
 #include <Device/DeviceModule.h>
 
 namespace Rune::VFS {
-    SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFS.VFSModule");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFS.VFSModule");
 
     DEFINE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
@@ -29,7 +29,7 @@ namespace Rune::VFS {
     //                                      KernelSubsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool VFSModule::load(const BootInfo& boot_info) {
+    auto VFSModule::load(const BootInfo& boot_info) -> bool {
         SILENCE_UNUSED(boot_info)
 
         // Init event hook table
@@ -45,10 +45,10 @@ namespace Rune::VFS {
         System& system        = System::instance();
         auto*   ds            = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         int     logical_drive = -1;
-        LinkedList<Device::Partition> p = ds->get_ahic_driver().get_logical_drives();
+        LinkedList<Device::Partition> p = ds->get_ahci_driver()->get_logical_drives();
         for (size_t i = 0; i < p.size(); i++) {
             if (p[i]->type == Device::PartitionType::DATA) {
-                logical_drive = i;
+                logical_drive = static_cast<int>(i);
                 break;
             }
         }
@@ -85,17 +85,17 @@ namespace Rune::VFS {
         return true;
     }
 
-    String VFSModule::get_name() const { return "VFS"; }
+    auto VFSModule::get_name() const -> String { return "VFS"; }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Filesystem specific functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MountPointInfo VFSModule::resolve(const Path& path) const {
+    auto VFSModule::resolve(const Path& path) const -> MountPointInfo {
         size_t         best_fit_len = 0;
         MountPointInfo best_fit;
-        for (auto& mp_pair : _mount_point_table) {
-            Path   mp     = *mp_pair.key;
+        for (const auto& mp_pair : _mount_point_table) {
+            Path   mp     = *mp_pair.key; // NOLINT only end() is null
             size_t mp_len = mp.split().size();
             if (path.common_path(mp) == mp && mp_len >= best_fit_len) {
                 best_fit_len = mp_len;
@@ -110,7 +110,7 @@ namespace Rune::VFS {
         return best_fit;
     }
 
-    bool VFSModule::create_system_directory(const Path& path) {
+    auto VFSModule::create_system_directory(const Path& path) -> bool {
         IOStatus st = create(path, Ember::NodeAttribute::DIRECTORY | Ember::NodeAttribute::SYSTEM);
         if (st != IOStatus::CREATED && st != IOStatus::FOUND) {
             LOGGER->critical("Failed to create the \"{}\" directory: {}",
@@ -125,27 +125,19 @@ namespace Rune::VFS {
         return true;
     }
 
-    VFSModule::VFSModule()
-        : Module(),
-          _driver_table(),
-          _mount_point_table(),
-          _node_ref_table(),
-          _node_table(),
-          _node_handle_counter(),
-          _dir_stream_table(),
-          _dir_stream_handle_counter() {}
+    VFSModule::VFSModule() = default;
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Filesystem Driver Registration
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<String> VFSModule::get_driver_table() const {
+    auto VFSModule::get_driver_table() const -> LinkedList<String> {
         auto dn = LinkedList<String>();
-        for (auto& mpi_p : _mount_point_table) dn.add_back(mpi_p.value->driver_name);
+        for (const auto& mpi_p : _mount_point_table) dn.add_back(mpi_p.value->driver_name);
         return dn;
     }
 
-    bool VFSModule::install_driver(UniquePointer<Driver> driver) {
+    auto VFSModule::install_driver(UniquePointer<Driver> driver) -> bool {
         if (!driver) return false;
 
         if (_driver_table.find(driver->get_name()) == _driver_table.end()) {
@@ -157,13 +149,12 @@ namespace Rune::VFS {
             else
                 LOGGER->warn(R"(Failed to register "{}" driver.)", d_name);
             return success;
-        } else {
-            LOGGER->info(R"("{}" driver is already registered.)", driver->get_name());
-            return false;
         }
+        LOGGER->info(R"("{}" driver is already registered.)", driver->get_name());
+        return false;
     }
 
-    bool VFSModule::uninstall_driver(UniquePointer<Driver> driver) {
+    auto VFSModule::uninstall_driver(UniquePointer<Driver> driver) -> bool {
         if (!driver) return false;
 
         bool success = _driver_table.remove(driver->get_name());
@@ -178,9 +169,9 @@ namespace Rune::VFS {
     //                                          Node Table Access
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<Node*> VFSModule::get_node_table() const {
+    auto VFSModule::get_node_table() const -> LinkedList<Node*> {
         LinkedList<Node*> files;
-        for (auto& fe : _node_table) files.add_back(fe.value->get());
+        for (const auto& fe : _node_table) files.add_back(fe.value->get());
         return files;
     }
 
@@ -220,7 +211,7 @@ namespace Rune::VFS {
             .print(stream);
     }
 
-    SharedPointer<Node> VFSModule::find_node(U16 handle) const {
+    auto VFSModule::find_node(U16 handle) const -> SharedPointer<Node> {
         auto it = _node_table.find(handle);
         return it != _node_table.end() ? *it->value : SharedPointer<Node>(nullptr);
     }
@@ -229,9 +220,9 @@ namespace Rune::VFS {
     //                                      Directory Stream Table Access
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<DirectoryStream*> VFSModule::get_directory_stream_table() const {
+    auto VFSModule::get_directory_stream_table() const -> LinkedList<DirectoryStream*> {
         LinkedList<DirectoryStream*> dir_streams;
-        for (auto& dse : _dir_stream_table) dir_streams.add_back(dse.value->get());
+        for (const auto& dse : _dir_stream_table) dir_streams.add_back(dse.value->get());
         return dir_streams;
     }
 
@@ -245,7 +236,7 @@ namespace Rune::VFS {
             .print(stream);
     }
 
-    SharedPointer<DirectoryStream> VFSModule::find_directory_stream(U16 handle) const {
+    auto VFSModule::find_directory_stream(U16 handle) const -> SharedPointer<DirectoryStream> {
         auto it = _dir_stream_table.find(handle);
         return it != _dir_stream_table.end() ? *it->value : SharedPointer<DirectoryStream>(nullptr);
     }
@@ -254,9 +245,9 @@ namespace Rune::VFS {
     //                                          Mounting and Formatting
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    LinkedList<MountPointInfo> VFSModule::get_mount_point_table() const {
+    auto VFSModule::get_mount_point_table() const -> LinkedList<MountPointInfo> {
         auto mpi = LinkedList<MountPointInfo>();
-        for (auto& mpip : _mount_point_table) mpi.add_back(*mpip.value);
+        for (const auto& mpip : _mount_point_table) mpi.add_back(*mpip.value);
         return mpi;
     }
 
@@ -271,9 +262,10 @@ namespace Rune::VFS {
             .print(stream);
     }
 
-    FormatStatus VFSModule::format(const String& driver_name, uint16_t storage_device) const {
+    auto VFSModule::format(const String& driver_name, uint16_t storage_device) const
+        -> FormatStatus {
         UniquePointer<Driver>* maybe_driver = _driver_table.find(driver_name)->value;
-        if (!maybe_driver) {
+        if (maybe_driver == nullptr) {
             LOGGER->warn("Unknown driver: {}. Cannot format storage device {}.",
                          driver_name,
                          storage_device);
@@ -290,7 +282,7 @@ namespace Rune::VFS {
         return st;
     }
 
-    MountStatus VFSModule::mount(const Path& mount_point, U16 storage_device) {
+    auto VFSModule::mount(const Path& mount_point, U16 storage_device) -> MountStatus {
         if (!mount_point.is_absolute()) return MountStatus::BAD_PATH;
 
         if (_mount_point_table.is_empty() && !mount_point.is_root()) {
@@ -323,14 +315,16 @@ namespace Rune::VFS {
             }
         }
 
-        for (auto& dp : _driver_table) {
-            MountStatus ms = (*dp.value)->mount(storage_device);
+        for (const auto& dp : _driver_table) {
+            MountStatus ms = (*dp.value)->mount(storage_device); // NOLINT only end() is null
             // It is fine that the driver complains about this
             // as long as it serves the device
             if (ms == MountStatus::ALREADY_MOUNTED) ms = MountStatus::MOUNTED;
             if (ms == MountStatus::MOUNTED) {
                 _mount_point_table.put(mount_point,
-                                       {mount_point, (*dp.value)->get_name(), storage_device});
+                                       {.mount_point    = mount_point,
+                                        .driver_name    = (*dp.value)->get_name(),
+                                        .storage_device = storage_device});
                 LOGGER->info(R"(The {} formatted storage device {} is now mounted at "{}")",
                              (*dp.value)->get_name(),
                              storage_device,
@@ -340,14 +334,13 @@ namespace Rune::VFS {
             // Mount error or fs not supported -> Check next driver
         }
         LOGGER->warn(
-
-            R"(Failed to mount "{}". The FILEsystem of storage device {} is not supported.)",
+            R"(Failed to mount "{}". The Filesystem of storage device {} is not supported.)",
             mount_point.to_string(),
             storage_device);
         return MountStatus::NOT_SUPPORTED;
     }
 
-    MountStatus VFSModule::unmount(const Path& mount_point) {
+    auto VFSModule::unmount(const Path& mount_point) -> MountStatus {
         if (!mount_point.is_absolute()) return MountStatus::BAD_PATH;
 
         if (mount_point.is_root()) {
@@ -390,7 +383,7 @@ namespace Rune::VFS {
     //                                          Filesystem Access
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool VFSModule::is_valid_file_path(const Path& path) const {
+    auto VFSModule::is_valid_file_path(const Path& path) const -> bool {
         if (!path.is_absolute()) // Cannot resolve relative paths
             return false;
 
@@ -398,7 +391,7 @@ namespace Rune::VFS {
         while (!remaining.is_root()) {
             MountPointInfo         mpi    = resolve(path);
             UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
-            if (!driver) return false;
+            if (driver == nullptr) return false;
 
             auto relative = remaining.relative_to(mpi.mount_point);
             if (!(*driver)->is_valid_file_path(relative)) return false;
@@ -407,7 +400,7 @@ namespace Rune::VFS {
         return true;
     }
 
-    IOStatus VFSModule::create(const Path& path, U8 attributes) {
+    auto VFSModule::create(const Path& path, U8 attributes) -> IOStatus {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         if (_mount_point_table.find(path) != _mount_point_table.end()) return IOStatus::FOUND;
@@ -427,8 +420,8 @@ namespace Rune::VFS {
         return st;
     }
 
-    IOStatus
-    VFSModule::open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out) {
+    auto VFSModule::open(const Path& path, Ember::IOMode node_io_mode, SharedPointer<Node>& out)
+        -> IOStatus {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         if (!_node_handle_counter.has_more()) {
@@ -493,7 +486,9 @@ namespace Rune::VFS {
             // Increment FILE ref count
             auto it = _node_ref_table.find(path);
             if (it == _node_ref_table.end())
-                _node_ref_table.put(path, {path, (U16) 1, false});
+                _node_ref_table.put(
+                    path,
+                    {.node_path = path, .ref_count = (U16) 1, .delete_this = false});
             else
                 it->value->ref_count++;
 
@@ -510,7 +505,7 @@ namespace Rune::VFS {
         return open_status;
     }
 
-    IOStatus VFSModule::get_node_info(const Path& path, VFS::NodeInfo& out) {
+    auto VFSModule::get_node_info(const Path& path, VFS::NodeInfo& out) -> IOStatus {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         MountPointInfo         mpi    = resolve(path);
@@ -542,7 +537,7 @@ namespace Rune::VFS {
         return IOStatus::FOUND;
     }
 
-    IOStatus VFSModule::delete_node(const Path& path) {
+    auto VFSModule::delete_node(const Path& path) -> IOStatus {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         if (_mount_point_table.find(path) != _mount_point_table.end())
@@ -555,8 +550,8 @@ namespace Rune::VFS {
         if (delete_now) {
             // path could be a directory -> Check if any FILE in it or one of its subdirectories is
             // open
-            for (auto& frte : _node_ref_table) {
-                if (frte.key->relative_to(path).to_string().size() > 0) {
+            for (const auto& frte : _node_ref_table) {
+                if (frte.key->relative_to(path).to_string().size() > 0) { // NOLINT is not end()
                     LOGGER->warn("Cannot delete '{}' because '{}' is open.",
                                  path.to_string(),
                                  frte.key->to_string());
@@ -574,15 +569,14 @@ namespace Rune::VFS {
                               path.to_string(),
                               st.to_string());
             return st;
-        } else {
-            LOGGER->trace("Marked '{}' for deletion...", path.to_string());
-            it->value->delete_this = true;
-            return IOStatus::DELETED;
         }
+        LOGGER->trace("Marked '{}' for deletion...", path.to_string());
+        it->value->delete_this = true;
+        return IOStatus::DELETED;
     }
 
-    IOStatus VFSModule::open_directory_stream(const Path&                     path,
-                                              SharedPointer<DirectoryStream>& out) {
+    auto VFSModule::open_directory_stream(const Path& path, SharedPointer<DirectoryStream>& out)
+        -> IOStatus {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         if (!_dir_stream_handle_counter.has_more()) return IOStatus::OUT_OF_HANDLES;

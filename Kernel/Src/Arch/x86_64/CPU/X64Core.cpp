@@ -43,7 +43,7 @@ namespace Rune::CPU {
     TaskStateSegment64          TSS;
     // NOLINTEND
 
-    X64Core::X64Core(U8 core_id) : _core_id(core_id), _kgs_base(0), _gs_base(0) {}
+    X64Core::X64Core(U8 core_id) : _core_id(core_id) {}
 
     auto X64Core::init() -> bool {
         if (!cpuid_is_supported()) return false;
@@ -231,10 +231,10 @@ namespace Rune::CPU {
         InterruptDescriptorTable* idt = idt_get();
         stream->write_formatted("");
         stream->write_formatted("GDT={:0=#16x}, Limit={:0=#4x}\n",
-                                memory_pointer_to_addr(&GDT.entry),
+                                reinterpret_cast<uintptr_t>(&GDT.entry),
                                 GDT.limit);
         stream->write_formatted("IDT={:0=#16x}, Limit={:0=#4x}\n",
-                                memory_pointer_to_addr(&idt->entry),
+                                reinterpret_cast<uintptr_t>(&idt->entry),
                                 idt->limit);
         stream->write_formatted(
 
@@ -259,9 +259,9 @@ namespace Rune::CPU {
 
         stream->write_formatted("------------------ Global Descriptor Table -----------------\n");
         stream->write_formatted("  Sel           Base         Limit  A RW DC E S DPL P L DB G\n");
-        for (int i = 0; i < 5; i++) { //NOLINT Number of GDT entries defined in GDT.cpp
-            SegmentDescriptor sd    = GDT.entry[i];
-            U32               limit = (U32) sd.limit_flags.limit_high << SHIFT_16 | (U32) sd.limit_low;
+        for (int i = 0; i < 5; i++) { // NOLINT Number of GDT entries defined in GDT.cpp
+            SegmentDescriptor sd = GDT.entry[i];
+            U32 limit            = (U32) sd.limit_flags.limit_high << SHIFT_16 | (U32) sd.limit_low;
             stream->write_formatted(
                 " {:0=#2x}    {:0=#16x} {:0=#5x} {} {}  {}  {} {}  {}  {} {} {}  {}\n",
                 i * sizeof(SegmentDescriptor),

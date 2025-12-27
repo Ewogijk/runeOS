@@ -74,24 +74,22 @@ namespace Rune::SystemCall {
         void*             context          = nullptr;
     };
 
-    /**
-     * @brief Define a system call that takes all six user application arguments.
-     * @param sys_call_ctx
-     * @param name
-     * @param handler
-     * @param context
-     * @return
-     */
-    Definition define6(Ember::ResourceID                               sys_call_ctx,
-                       const String&                                   name,
-                       const Function<S64(void*,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument)>& handler,
-                       void*                                           context);
+    /// @brief Define a system call that takes all six user application arguments.
+    /// @param ID
+    /// @param name
+    /// @param handler
+    /// @param context
+    /// @return
+    auto define6(Ember::ResourceID                               ID,
+                 const String&                                   name,
+                 const Function<S64(void*,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument)>& handler,
+                 void*                                           context) -> Definition;
 
     /**
      * @brief Define a system call that takes only five user application arguments.
@@ -101,15 +99,15 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition define5(Ember::ResourceID                               ID,
-                       const String&                                   name,
-                       const Function<S64(void*,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument)>& handler,
-                       void*                                           context);
+    auto define5(Ember::ResourceID                               ID,
+                 const String&                                   name,
+                 const Function<S64(void*,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument)>& handler,
+                 void*                                           context) -> Definition;
 
     /**
      * @brief Define a system call that takes only four user application arguments.
@@ -119,14 +117,14 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition define4(Ember::ResourceID                               ID,
-                       const String&                                   name,
-                       const Function<S64(void*,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument)>& handler,
-                       void*                                           context);
+    auto define4(Ember::ResourceID                               ID,
+                 const String&                                   name,
+                 const Function<S64(void*,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument)>& handler,
+                 void*                                           context) -> Definition;
 
     /**
      * @brief Define a system call that takes only three user application arguments.
@@ -136,13 +134,13 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition define3(Ember::ResourceID                               ID,
-                       const String&                                   name,
-                       const Function<S64(void*,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument,
-                                          Ember::SystemCallArgument)>& handler,
-                       void*                                           context);
+    auto define3(Ember::ResourceID                               ID,
+                 const String&                                   name,
+                 const Function<S64(void*,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument,
+                                    Ember::SystemCallArgument)>& handler,
+                 void*                                           context) -> Definition;
 
     /**
      * @brief Define a system call that takes only two user application arguments.
@@ -152,11 +150,11 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition define2(
+    auto define2(
         Ember::ResourceID                                                                 ID,
         const String&                                                                     name,
         const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
-        void*                                                                             context);
+        void* context) -> Definition;
 
     /**
      * @brief Define a system call that takes only one user application argument.
@@ -166,10 +164,10 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition define1(Ember::ResourceID                                      ID,
-                       const String&                                          name,
-                       const Function<S64(void*, Ember::SystemCallArgument)>& handler,
-                       void*                                                  context);
+    auto define1(Ember::ResourceID                                      ID,
+                 const String&                                          name,
+                 const Function<S64(void*, Ember::SystemCallArgument)>& handler,
+                 void*                                                  context) -> Definition;
 
     /**
      * @brief Define a system call that takes only one user application argument.
@@ -179,8 +177,10 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    Definition
-    define0(Ember::ResourceID ID, const String& name, Function<S64(void*)> handler, void* context);
+    auto define0(Ember::ResourceID           ID,
+                 const String&               name,
+                 const Function<S64(void*)>& handler,
+                 void*                       context) -> Definition;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_DEFINITION_H

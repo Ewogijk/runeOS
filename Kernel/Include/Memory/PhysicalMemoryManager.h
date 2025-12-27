@@ -44,6 +44,7 @@ namespace Rune::Memory {
         auto detect_memory_range() -> bool;
 
       protected:
+        // NOLINTBEGIN
         U64          _page_size; // MemSize of a page frame
         PhysicalAddr _mem_base;  // Address of the memory start
         U32          _mem_size;  // Memory size in page frames
@@ -51,7 +52,8 @@ namespace Rune::Memory {
         bool         _init;
 
         PMMStartFailure _start_fail;
-        U32             _largest_free_block;
+        MemorySize      _largest_free_block;
+        // NOLINTEND
 
         [[nodiscard]] auto to_page_frame(PhysicalAddr addr) const -> PageFrameIndex;
 
@@ -65,6 +67,7 @@ namespace Rune::Memory {
 
       public:
         PhysicalMemoryManager();
+        virtual ~PhysicalMemoryManager() = default;
 
         /**
          * The physical memory manager (pmm) initialization will include the following steps:

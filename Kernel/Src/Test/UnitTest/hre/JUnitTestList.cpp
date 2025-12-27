@@ -31,7 +31,7 @@ namespace Heimdall {
         : _list_detail(new JUnitTestListDetail{other._list_detail->list}) {}
 
     JUnitTestList::JUnitTestList(JUnitTestList&& other) noexcept
-        : _list_detail(new JUnitTestListDetail{other._list_detail->list}) {
+        : _list_detail(new JUnitTestListDetail{other._list_detail->list}) { // NOLINT cannot throw
         delete other._list_detail;
         other._list_detail = nullptr;
     }
@@ -61,6 +61,6 @@ namespace Heimdall {
 
     auto JUnitTestList::operator[](size_t idx) -> JUnitTest {
         auto* test = _list_detail->list[idx];
-        return test ? *test : JUnitTest();
+        return (test != nullptr) ? *test : JUnitTest();
     }
 } // namespace Heimdall

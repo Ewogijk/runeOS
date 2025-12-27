@@ -60,7 +60,7 @@ namespace Rune {
      */
     class Module {
       protected:
-        HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;          // NOLINT
+        HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;            // NOLINT
         IDCounter<U16>                                      _event_hook_handle_counter{}; // NOLINT
 
         /**

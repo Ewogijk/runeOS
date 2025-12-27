@@ -1,27 +1,29 @@
----
 Checks: 'clang-diagnostic-*,
                   clang-analyzer-*,
                   bugprone-*,
                   -bugprone-easily-swappable-parameters,
+                  -bugprone-dynamic-static-initializers,
                   cppcoreguidelines-*,
                   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
                   -cppcoreguidelines-pro-type-union-access,
-                  -cppcoreguidelines-avoid-c-arrays,
                   -cppcoreguidelines-owning-memory,
                   -cppcoreguidelines-rvalue-reference-param-not-moved,
-                  -cppcoreguidelines-init-variables,
                   -cppcoreguidelines-missing-std-forward,
                   -cppcoreguidelines-macro-usage,
                   -cppcoreguidelines-pro-type-reinterpret-cast,
                   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
                   -cppcoreguidelines-special-member-functions,
+                  -cppcoreguidelines-macro-to-enum,
+                  -cppcoreguidelines-pro-bounds-constant-array-index,
                   modernize-*,
                   -modernize-use-ranges,
+                  -modernize-macro-to-enum,
                   readability-*,
                   -readability-braces-around-statements,
                   -readability-use-anyofallof,
                   -readability-identifier-length'
-WarningsAsErrors: true
+WarningsAsErrors: 'WARNINGS_AS_ERRORS'
+UseColor: true
 CheckOptions:
   - key: cert-dcl16-c.NewSuffixes
     value: 'L;LL;LU;LLU'

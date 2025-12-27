@@ -18,7 +18,7 @@
 #ifndef HEIMDALL_HSTRING_H
 #define HEIMDALL_HSTRING_H
 
-#include <stddef.h>
+#include <stddef.h> // NOLINT cstddef is missing
 
 namespace Heimdall {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -33,7 +33,7 @@ namespace Heimdall {
 
       public:
         HString();
-        HString(const char* c_str);
+        HString(const char* c_str); // NOLINT want implicit conversion from const char*
         ~HString();
 
         HString(const HString& other);

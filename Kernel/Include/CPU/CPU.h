@@ -187,16 +187,10 @@ namespace Rune::CPU {
          */
         int join_app_id = -1;
 
-        // // Number of arguments in argv
-        // int argc = 0;
-        // // Null terminated array pointers to the thread arguments
-        // char** argv = nullptr;
-        // // Main function of the thread
-        // ThreadMain main = nullptr;
         /**
          * @brief Thread arguments and more.
          */
-        StartInfo* start_info;
+        StartInfo* start_info{nullptr};
 
         /**
          * The thread control block contains the thread local storage (TLS) and other data, it is

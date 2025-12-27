@@ -186,7 +186,7 @@ namespace Rune {
         /// @param args Formatting arguments.
         template <typename... Args>
         void panic(const String& panic_msg_fmt, Args... args) const {
-            const Argument arg_array[] = {args...};
+            const Argument arg_array[] = {args...}; // NOLINT is dynamic size
             const size_t   arg_size    = sizeof...(Args);
 
             _panic_stream->set_background_color(Pixie::VSCODE_RED);

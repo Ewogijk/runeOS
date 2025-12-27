@@ -30,58 +30,52 @@ namespace Rune::VFS {
         Path                         _path;
         Ember::IOMode                _node_io_mode;
         LocationAwareFileEntry       _file_entry;
-        VolumeManager&               _volume_manager;
-        FileEntryManager&            _file_entry_manager;
+        VolumeManager*               _volume_manager;
+        FileEntryManager*            _file_entry_manager;
         SharedPointer<StorageDevRef> _mounted_storage;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          File Cursor
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         // Number of clusters the cursor has already pointed at
-        U32 _processed_clusters;
+        U32 _processed_clusters{0};
         // Cluster the cursor is pointing at
-        U32 _current_cluster;
+        U32 _current_cluster{0};
         // Byte inside the current cluster the cursor is pointing at
-        U32 _cluster_offset;
+        U32 _cluster_offset{0};
 
         void init_file_cursor();
 
-        [[nodiscard]]
-        U32 processed_bytes() const;
+        [[nodiscard]] auto processed_bytes() const -> U32;
 
       public:
         FATNode(Function<void()>             on_close,
                 Path                         path,
                 Ember::IOMode                node_io_mode,
                 LocationAwareFileEntry       file_entry,
-                VolumeManager&               volume_manager,
-                FileEntryManager&            file_entry_manager,
+                VolumeManager*               volume_manager,
+                FileEntryManager*            file_entry_manager,
                 SharedPointer<StorageDevRef> mounted_storage);
 
         ~FATNode() override = default;
 
-        [[nodiscard]]
-        Path get_node_path() const override;
+        [[nodiscard]] auto get_node_path() const -> Path override;
 
-        [[nodiscard]]
-        Ember::IOMode get_io_mode() const override;
+        [[nodiscard]] auto get_io_mode() const -> Ember::IOMode override;
 
-        [[nodiscard]]
-        size_t get_size() const override;
+        [[nodiscard]] auto get_size() const -> size_t override;
 
-        [[nodiscard]]
-        bool has_more() const override;
+        [[nodiscard]] auto has_more() const -> bool override;
 
-        NodeIOResult read(void* buf, size_t buf_size) override;
+        auto read(void* buf, size_t buf_size) -> NodeIOResult override;
 
-        NodeIOResult write(void* buf, size_t buf_size) override;
+        auto write(void* buf, size_t buf_size) -> NodeIOResult override;
 
-        NodeIOResult seek(Ember::SeekMode seek_mode, int offset) override;
+        auto seek(Ember::SeekMode seek_mode, int offset) -> NodeIOResult override;
 
-        [[nodiscard]]
-        bool has_attribute(Ember::NodeAttribute f_attr) const override;
+        [[nodiscard]] auto has_attribute(Ember::NodeAttribute f_attr) const -> bool override;
 
-        bool set_attribute(Ember::NodeAttribute n_attr, bool val) override;
+        auto set_attribute(Ember::NodeAttribute n_attr, bool val) -> bool override;
     };
 } // namespace Rune::VFS
 

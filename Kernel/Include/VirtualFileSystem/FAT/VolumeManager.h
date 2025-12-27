@@ -29,7 +29,7 @@ namespace Rune::VFS {
      */
     class VolumeManager {
         SharedPointer<FATEngine> _fat_engine;
-        Device::AHCIDriver&      _ahci_driver;
+        Device::AHCIDriver*      _ahci_driver;
 
         /**
          *
@@ -38,11 +38,11 @@ namespace Rune::VFS {
          *
          * @return Convert a cluster to LBA.
          */
-        size_t data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const;
+        auto data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const -> size_t;
 
       public:
         explicit VolumeManager(SharedPointer<FATEngine> fat_engine,
-                               Device::AHCIDriver&      ahci_driver);
+                               Device::AHCIDriver*      ahci_driver);
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          FAT Region Manipulation
@@ -52,8 +52,7 @@ namespace Rune::VFS {
          *
          * @return The FAT EOF marker.
          */
-        [[nodiscard]]
-        U32 fat_get_eof_marker() const;
+        [[nodiscard]] auto fat_get_eof_marker() const -> U32;
 
         /**
          * Read the FAT entry of a cluster.
@@ -64,8 +63,8 @@ namespace Rune::VFS {
          *
          * @return FAT entry for the given cluster.
          */
-        [[nodiscard]]
-        U32 fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const;
+        [[nodiscard]] auto fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const
+            -> U32;
 
         /**
          * Update the FAT entry of a cluster.
@@ -77,7 +76,8 @@ namespace Rune::VFS {
          *
          * @return True: The FAT entry is updated, False: It is not.
          */
-        bool fat_write(U16 storage_dev, BIOSParameterBlock* bpb, size_t cluster, U32 fat_value);
+        auto fat_write(U16 storage_dev, BIOSParameterBlock* bpb, size_t cluster, U32 fat_value)
+            -> bool;
 
         /**
          * Search the FAT for a free cluster. The first free encountered cluster will be returned.
@@ -88,7 +88,7 @@ namespace Rune::VFS {
          * @return The next free cluster in the FAT. 0 if no cluster is free or a storage error
          * happened.
          */
-        U32 fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb);
+        auto fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb) -> U32;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Data Region Manipulation
@@ -98,8 +98,7 @@ namespace Rune::VFS {
          *
          * @return Maximum number of cluster a storage can have.
          */
-        [[nodiscard]]
-        U32 get_max_cluster_count() const;
+        [[nodiscard]] auto get_max_cluster_count() const -> U32;
 
         /**
          * Read a single data cluster, that is a cluster after the reserved and FAT parts of the
@@ -112,10 +111,9 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was read. False: It was not.
          */
-        bool data_cluster_read(U16                 storage_dev,
-                               BIOSParameterBlock* bpb,
-                               void*               buf,
-                               size_t              cluster) const;
+        auto
+        data_cluster_read(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster) const
+            -> bool;
 
         /**
          * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of
@@ -128,8 +126,8 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was written. False: It was not.
          */
-        bool
-        data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster);
+        auto data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster)
+            -> bool;
     };
 } // namespace Rune::VFS
 

@@ -61,7 +61,7 @@ namespace Rune {
             return *this;
         }
 
-        auto get() const -> T* { return _ptr; }
+        [[nodiscard]] auto get() const -> T* { return _ptr; }
 
         explicit operator bool() const { return _ptr; }
 

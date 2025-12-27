@@ -28,8 +28,8 @@ namespace Rune::SystemCall {
      *
      */
     struct Bundle {
-        String                 name                    = "";
-        LinkedList<Definition> system_call_definitions = LinkedList<Definition>();
+        String                 name = "";
+        LinkedList<Definition> system_call_definitions;
     };
 
     /**
@@ -38,7 +38,7 @@ namespace Rune::SystemCall {
      * @param k_subsys_reg Kernel subsystem registry.
      * @return System call bundles.
      */
-    LinkedList<Bundle> system_call_get_native_bundles(KernelGuardian* k_guard);
+    auto system_call_get_native_bundles(KernelGuardian* k_guard) -> LinkedList<Bundle>;
 } // namespace Rune::SystemCall
 
 #endif // RUNEOS_BUNDLE_H
