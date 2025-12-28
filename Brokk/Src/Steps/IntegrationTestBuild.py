@@ -12,11 +12,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from typing import Dict, Any
+from typing import Any
 from pathlib import Path
 from Config import BuildConfig
 
@@ -31,7 +32,7 @@ class IntegrationTestBuildStep(Build.BuildStep):
 
         return "Integration Test Build"
 
-    def execute(self, build_conf: Dict[str, Any]) -> bool:
+    def execute(self, build_conf: dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """

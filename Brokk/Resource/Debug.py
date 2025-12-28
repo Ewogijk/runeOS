@@ -45,7 +45,8 @@ def create_gdb_conf(break_instruction: str):
         # Add libc sources
         f.write("directory /home/ewogijk/CLionProjects/runeToolchain/LibC/options/posix/generic\n")
         f.write(
-            "directory /home/ewogijk/CLionProjects/runeToolchain/LibC/sysdeps/rune/mlibc-integration\n"
+            "directory /home/ewogijk/CLionProjects/runeToolchain/LibC/sysdeps/rune/"
+            "mlibc-integration\n"
         )
 
         # Add libstdc++-v3 sources

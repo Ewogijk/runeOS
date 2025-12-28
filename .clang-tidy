@@ -22,7 +22,7 @@ Checks: 'clang-diagnostic-*,
                   -readability-braces-around-statements,
                   -readability-use-anyofallof,
                   -readability-identifier-length'
-WarningsAsErrors: 'WARNINGS_AS_ERRORS'
+WarningsAsErrors: '*'
 UseColor: true
 CheckOptions:
   - key: cert-dcl16-c.NewSuffixes

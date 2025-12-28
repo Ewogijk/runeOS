@@ -61,8 +61,8 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
         file.write("        //NOLINTBEGIN\n")
         for i in range(0, 256):
             file.write(
-                f"        idt_set({i}, reinterpret_cast<void*>(ISR{i}), GDT_OFFSET, 0, GateType::INTERRUPT_GATE, 0,"
-                " false);\n"
+                f"        idt_set({i}, reinterpret_cast<void*>(ISR{i}), GDT_OFFSET, 0, "
+                f"GateType::INTERRUPT_GATE, 0, false);\n"
             )
         file.write("        //NOLINTEND\n")
         file.write("    }\n")

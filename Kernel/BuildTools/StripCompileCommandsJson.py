@@ -26,13 +26,20 @@ def strip_compile_commands_json(compile_commands_json: str) -> None:
     :return: -
     """
     compile_flags = ["-mincoming-stack-boundary=3 "]
+    print(f"Compilation Database:  {compile_commands_json}")
+    print(f"Will remove GCC flags: {', '.join(compile_flags)}")
     new_compile_commands_lines = []
-    with open(compile_commands_json, "r") as file:
+    modified_lines = 0
+    with open(compile_commands_json) as file:
         for line in file:
             modified_line = line
             for cf in compile_flags:
                 modified_line = modified_line.replace(cf, "")
+            if modified_line != line:
+                modified_lines += 1
             new_compile_commands_lines.append(modified_line)
+
+    print(f"{modified_lines} lines have changed.")
 
     with open(compile_commands_json, "w") as file:
         file.writelines(new_compile_commands_lines)
