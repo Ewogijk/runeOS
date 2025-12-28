@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from typing import Dict, Any
+from typing import Any
 from enum import Enum, auto
 from types import NoneType
 
@@ -95,14 +95,14 @@ def verify_config(config: str, value: Any) -> bool:
     return True
 
 
-def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
+def load_brokk_config(brokk_config_yaml: str) -> dict[str, Any]:
     """Load and check that the brokk config contains a configuration keys and values of the expected
     types.
     :param brokk_config_yaml: Path to a Brokk config yaml file.
     :return: A dict with the Brokk config if it is valid otherwise an empty dict.
     """
     cfg = {}
-    with open(brokk_config_yaml, "r") as f:
+    with open(brokk_config_yaml) as f:
         cfg = yaml.safe_load(f)
 
     config_keys = {
@@ -140,14 +140,14 @@ def load_brokk_config(brokk_config_yaml: str) -> Dict[str, Any]:
     return cfg
 
 
-def load_build_config(build_config_yaml: str) -> Dict[str, Any]:
+def load_build_config(build_config_yaml: str) -> dict[str, Any]:
     """Load and check that the build config contains a configuration keys and values of the expected
     types.
     :param build_config_yaml: Path to a build config yaml file.
     :return: A dict with the build config if it is valid otherwise an empty dict.
     """
     cfg = {}
-    with open(build_config_yaml, "r") as f:
+    with open(build_config_yaml) as f:
         cfg = yaml.safe_load(f)
 
     config_keys = {

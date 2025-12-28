@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-from typing import Dict, Any
+from typing import Any
 from pathlib import Path
 
 import subprocess
@@ -47,7 +47,7 @@ class BuildStep:
         """
         return ""
 
-    def execute(self, build_conf: Dict[str, Any]) -> bool:
+    def execute(self, build_conf: dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """

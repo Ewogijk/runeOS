@@ -12,7 +12,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -27,7 +28,7 @@ from Steps.KernelBuild import KernelBuildStep
 from Steps.CrucibleBuild import CrucibleBuildStep
 from Steps.SystemLoaderBuild import SystemLoaderBuildStep
 
-from typing import List, Dict, Any
+from typing import Any
 from pathlib import Path
 from Build import BuildStep
 from Config import BrokkConfig, BuildConfig
@@ -55,7 +56,7 @@ def print_err(msg: str) -> None:
     print(msg, file=sys.stderr)
 
 
-def get_build_steps(build_conf: Dict[str, Any]) -> List[BuildStep]:
+def get_build_steps(build_conf: dict[str, Any]) -> list[BuildStep]:
     build = build_conf[BuildConfig.BUILD.to_yaml_key()]
     if build == "test" or build == "ci":
         return [
@@ -179,7 +180,7 @@ def build_all(arch: str, build: str) -> bool:
         print_err(f"'{build_config_yaml}': Build configuration not found.")
         return False
 
-    print_msg(f"Build with configuration:")
+    print_msg("Build with configuration:")
     for config, value in build_config.items():
         print(f"    {config}: {value}")
 
