@@ -17,8 +17,6 @@
 import click
 import subprocess
 
-from typing import List
-
 OVMF_CODE = "bin/OVMF_CODE.fd"
 OVMF_VARS = "bin/OVMF_VARS.fd"
 RUNE_OS_IMAGE = "bin/runeOS.image"
@@ -27,10 +25,10 @@ RUNE_OS_IMAGE = "bin/runeOS.image"
 class QemuOption:
     """List of space separated qemu options that belong together, e.g. -m 128M"""
 
-    def __init__(self, options: List[str]):
+    def __init__(self, options: list[str]):
         self.options = options
 
-    def as_list(self) -> List[str]:
+    def as_list(self) -> list[str]:
         """
 
         :return: Options as a list.
@@ -69,7 +67,7 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
         QemuOption(["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"])
     )
     qemu_options.append(QemuOption(["-drive", f"if=pflash,format=raw,unit=1,file={OVMF_VARS}"]))
-    qemu_options.append(QemuOption(["-net", f"none"]))
+    qemu_options.append(QemuOption(["-net", "none"]))
 
     # AHCI Device
     qemu_options.append(QemuOption(["-device", "ich9-ahci,id=ahci"]))

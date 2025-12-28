@@ -109,3 +109,37 @@ jobs:
         with:
           name: integration-test-report
           path: ${{ github.workspace }}/TestResults/IntegrationTest/JUnitReport.xml
+      - name: Upload Compile Commands Json
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-commands-json
+          path: ${{ github.workspace }}/Kernel/Build/x86_64-ci/compile_commands.json
+  lint:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v5
+        with:
+          name: compile-commands-json
+          path: ${{ github.workspace }}/Kernel
+      - name: Install ruff and clang-format-19
+        run: |
+          echo \> Installing clang-tidy
+          sudo apt install clang-tidy
+          echo \> Installing ruff
+          pip install ruff
+      - name: Lint C/C++ Code
+        run: |
+          echo \> Check Kernel code
+          Kernel/BuildTools/StripCompileCommandsJson.py Kernel/compile_commands.json
+          run-clang-tidy '.*\.cpp$' -p Kernel/ -j 8 -header-filter='^(?!.*limine\.h).*' -quiet
+          echo \> Check App code
+          find App/ -name compile_commands.json -exec Kernel/BuildTools/StripCompileCommandsJson.py {} \;
+          find App/ -type d -name "Build" -exec run-clang-tidy '.*\.cpp$' -p {} -j 8 -header-filter='.*' -quiet \;
+      - name: Lint Python Code
+        run: |
+          echo \> Check Kernel code
+          ruff check Kernel/
+          echo \> Check Brokk code
+          ruff check Brokk/

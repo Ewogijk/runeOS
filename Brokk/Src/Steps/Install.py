@@ -13,11 +13,12 @@
 #   limitations under the License.
 
 
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from typing import Dict, Any
+from typing import Any
 from pathlib import Path
 from Config import BuildConfig
 
@@ -32,7 +33,7 @@ class InstallStep(Build.BuildStep):
 
         return "Install"
 
-    def execute(self, build_conf: Dict[str, Any]) -> bool:
+    def execute(self, build_conf: dict[str, Any]) -> bool:
         """Execute this build step.
         :return: True: The build step was successful, False: Otherwise.
         """
