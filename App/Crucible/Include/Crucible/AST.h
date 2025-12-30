@@ -38,7 +38,7 @@ namespace Crucible {
          * @return The text content without any reserved character e.g. $stuff -> stuff, 'hi 123' ->
          * hi 123
          */
-        virtual std::string get_text() = 0;
+        virtual auto get_text() -> std::string = 0;
 
         /**
          * @brief Evaluate the node which could mean resolving an environment variable or executing
@@ -46,7 +46,7 @@ namespace Crucible {
          * @param shell_env Environment of the running shell.
          * @return A string representation of the evaluated node.
          */
-        virtual std::string evaluate(Environment& shell_env) = 0;
+        virtual auto evaluate(Environment& shell_env) -> std::string = 0;
     };
 
     /**
@@ -58,9 +58,9 @@ namespace Crucible {
       public:
         explicit Input(std::unique_ptr<ASTNode> cs_evd_or_ev);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 
     /**
@@ -82,9 +82,9 @@ namespace Crucible {
                                  std::vector<std::unique_ptr<ASTNode>> arguments_or_flags,
                                  Path                                  redirect_file);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 
     /**
@@ -98,9 +98,9 @@ namespace Crucible {
         explicit EnvVarDecl(std::unique_ptr<ASTNode>              env_var,
                             std::vector<std::unique_ptr<ASTNode>> value);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 
     /**
@@ -112,9 +112,9 @@ namespace Crucible {
       public:
         explicit EnvVar(std::unique_ptr<ASTNode> env_var);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 
     /**
@@ -126,9 +126,9 @@ namespace Crucible {
       public:
         explicit ShellString(std::vector<std::unique_ptr<ASTNode>> content);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 
     /**
@@ -138,11 +138,11 @@ namespace Crucible {
         std::string _value;
 
       public:
-        explicit IdentifierOrPath(const std::string& value);
+        explicit IdentifierOrPath(std::string  value);
 
-        std::string get_text() override;
+        auto get_text() -> std::string override;
 
-        std::string evaluate(Environment& shell_env) override;
+        auto evaluate(Environment& shell_env) -> std::string override;
     };
 } // namespace Crucible
 

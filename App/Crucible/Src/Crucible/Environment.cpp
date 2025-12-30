@@ -105,7 +105,7 @@ namespace Crucible {
     void Environment::input_delete_all(const bool erase_on_display) {
         if (input_buffer_size == 0) return; // Nothing to delete
 
-        memset(input_buffer, '\0', input_buffer_size);
+        memset(input_buffer.data(), '\0', input_buffer_size);
         if (erase_on_display) {
             if (input_buffer_cursor > 0)
                 std::cout << "\033[" << input_buffer_cursor << "D\033[0K";

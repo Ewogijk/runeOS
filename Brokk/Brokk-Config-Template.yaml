@@ -11,17 +11,15 @@ build: debug
 # If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
 # related debugging features.
 qemu-host: yes
-# The path to the installation directory of the freestanding compiler from the runeToolchain. It
-# will be used to compile the kernel.
-freestanding-compiler: /path/to/freestanding/compiler
-# The path to the installation directory of the hosted compiler from the runeToolchain. It will be
-# used to compile apps.
-hosted-compiler: /path/to/hosted/compiler
+# The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
+sysroot-x64-elf: /path/to/sysroot
+# The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
+sysroot-x64-rune: /path/to/sysroot
 # The runeOS image size in MiB
 image-size: 256
 # The absolute path to the system loader on the runeOS image
 # During boot the kernel will look for the system loader and panic if it cannot find it
-system_loader: /path/to/systemloader/on/the/image
+system-loader: /path/to/systemloader/on/the/image
 # A list of local files that should be copied to the runeOS image
 # Src is the local file that will be copied to Dest/Src on the runeOS image
 # e.g. given /my/local/file: /on/the/image would be copied to the /on/the/image/file path on the

@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace Freya {
-    std::vector<std::string> ServiceStarter::split(const std::string& s, char delim) {
+    auto ServiceStarter::split(const std::string& s, char delim) -> std::vector<std::string> {
         std::stringstream        ss(s);
         std::string              item;
         std::vector<std::string> elems;
@@ -32,7 +32,7 @@ namespace Freya {
         return elems;
     }
 
-    auto ServiceStarter::start_services(ServiceRegistry&                registry,
+    auto ServiceStarter::start_services(ServiceRegistry&                registry, // NOLINT
                                         const std::vector<std::string>& sorted_services) -> int {
         bool mandatory_service_crashed = false;
         std::cout << "Start services" << std::endl;
@@ -40,10 +40,10 @@ namespace Freya {
             auto service = registry[service_name];
             auto args    = split(service.exec_start, ' ');
 
-            const char* argv[args.size()];
+            const char* argv[args.size()]; // NOLINT
             for (size_t i = 1; i < args.size(); ++i) argv[i - 1] = args[i].c_str();
             argv[args.size() - 1]      = nullptr;
-            Ember::StdIOConfig inherit = {Ember::StdIOTarget::INHERIT};
+            Ember::StdIOConfig inherit = {.target = Ember::StdIOTarget::INHERIT};
             Ember::StatusCode  st =
                 Forge::app_start(args[0].c_str(), argv, "/", inherit, inherit, inherit);
             if (st < Ember::Status::OKAY) {

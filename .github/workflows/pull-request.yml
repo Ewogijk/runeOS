@@ -99,6 +99,15 @@ jobs:
           sudo umount tmp
           sudo losetup -d /dev/loop0
           cd ${{ github.workspace }}
+      - name: Archive Compilation Databases
+        run: |
+          mkdir CompilationDatabases
+          cd App/
+          find . -type d -name "Build" -exec cp --parents -r {}/compile_commands.json ../CompilationDatabases/ \;
+          cd ${{ github.workspace }}
+          mkdir -p CompilationDatabases/Kernel/
+          cp Kernel/Build/x86_64-ci/compile_commands.json CompilationDatabases/Kernel/
+          tar -czf CompilationDatabases.tar.gz CompilationDatabases/
       - name: Upload Unit Test Report
         uses: actions/upload-artifact@v4
         with:
@@ -109,11 +118,11 @@ jobs:
         with:
           name: integration-test-report
           path: ${{ github.workspace }}/TestResults/IntegrationTest/JUnitReport.xml
-      - name: Upload Compile Commands Json
+      - name: Upload Compilation Databases
         uses: actions/upload-artifact@v4
         with:
-          name: compile-commands-json
-          path: ${{ github.workspace }}/Kernel/Build/x86_64-ci/compile_commands.json
+          name: compilation-databases
+          path: ${{ github.workspace }}/CompilationDatabases.tar.gz
   lint:
     runs-on: ubuntu-latest
     needs: build
@@ -121,22 +130,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v5
         with:
-          name: compile-commands-json
-          path: ${{ github.workspace }}/Kernel
+          name: compilation-databases
+          path: ${{ github.workspace }}
       - name: Install ruff and clang-format-19
         run: |
           echo \> Installing clang-tidy
           sudo apt install clang-tidy
           echo \> Installing ruff
           pip install ruff
+      - name: Extract Compilation Databases
+        run: tar -xzf CompilationDatabases.tar.gz
       - name: Lint C/C++ Code
         run: |
           echo \> Check Kernel code
-          Kernel/BuildTools/StripCompileCommandsJson.py Kernel/compile_commands.json
-          run-clang-tidy '.*\.cpp$' -p Kernel/ -j 8 -header-filter='^(?!.*limine\.h).*' -quiet
+          run-clang-tidy '.*\.cpp$' -p CompilationDatabases/Kernel/ -j 8 -header-filter='^(?!.*limine\.h).*\.h' -quiet
           echo \> Check App code
-          find App/ -name compile_commands.json -exec Kernel/BuildTools/StripCompileCommandsJson.py {} \;
-          find App/ -type d -name "Build" -exec run-clang-tidy '.*\.cpp$' -p {} -j 8 -header-filter='.*' -quiet \;
+          find CompilationDatabases/ -type d -name "Build" -exec run-clang-tidy '^(?!.*\/subprojects\/).*\.cpp$' -p {} -j 8 -header-filter='^(?!.*\/subprojects\/).*\.h$' -quiet \;
       - name: Lint Python Code
         run: |
           echo \> Check Kernel code

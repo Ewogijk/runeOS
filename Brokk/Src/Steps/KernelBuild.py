@@ -57,4 +57,14 @@ class KernelBuildStep(Build.BuildStep):
                     f"{build_var.to_scons_key()} = '{build_conf[build_var.to_yaml_key()]}'\n"
                 )
         build_kernel_cmd = ["scons"]
-        return Build.exec_shell_cmd(build_kernel_cmd, str(kernel_directory))
+        if not Build.exec_shell_cmd(build_kernel_cmd, str(kernel_directory)):
+            return False
+
+        arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
+        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
+        compilation_database = (project_root
+                                / "Kernel"
+                                / "Build"
+                                / f"{arch}-{build}"
+                                / "compile_commands.json")
+        return Build.post_process_compilation_database(str(compilation_database), Path(""), False)

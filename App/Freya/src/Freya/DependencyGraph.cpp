@@ -23,7 +23,7 @@ namespace Freya {
 
     auto DependencyGraph::create(const ServiceRegistry& service_registry) -> DependencyGraph {
         std::unordered_map<std::string, std::vector<std::string>> graph;
-        for (auto& entry : service_registry) {
+        for (const auto& entry : service_registry) {
             const Service& service = entry;
 
             graph[service.name];

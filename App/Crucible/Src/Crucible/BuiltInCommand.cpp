@@ -25,9 +25,9 @@
 #include <Build.h>
 
 namespace Crucible {
-    std::unordered_map<std::string, std::string> HELP_TEXT_TABLE;
+    std::unordered_map<std::string, std::string> HELP_TEXT_TABLE; // NOLINT needs to be mutable
 
-    int cd(const int argc, char* argv[], Environment& shell_env) {
+    auto cd(const int argc, char* argv[], Environment& shell_env) -> int { // NOLINT
         if (argc == 0)
             // Stay in the current directory
             return 0;
@@ -54,25 +54,25 @@ namespace Crucible {
             return -1;
         }
 
-        char new_wd_resolved[128];
-        ret = Forge::app_current_directory(new_wd_resolved, 128);
+        std::array<char, Ember::STRING_SIZE_LIMIT> new_wd_resolved{};
+        ret = Forge::app_current_directory(new_wd_resolved.data(), Ember::STRING_SIZE_LIMIT);
         if (ret < Ember::Status::OKAY) {
             std::cerr << "'" << new_wd << "': Bad path." << std::endl;
             return -1;
         }
 
-        shell_env.working_directory = Path(new_wd_resolved);
+        shell_env.working_directory = Path(new_wd_resolved.data());
         return 0;
     }
 
-    int pwd(const int argc, char* argv[], const Environment& shell_env) {
+    auto pwd(const int argc, char* argv[], const Environment& shell_env) -> int { // NOLINT
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
         std::cout << shell_env.working_directory.to_string().c_str() << std::endl;
         return 0;
     }
 
-    int clear(const int argc, char* argv[], const Environment& shell_env) {
+    auto clear(const int argc, char* argv[], const Environment& shell_env) -> int { // NOLINT
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
         SILENCE_UNUSED(shell_env)
@@ -85,7 +85,7 @@ namespace Crucible {
         return 0;
     }
 
-    int help(const int argc, char* argv[], const Environment& shell_env) {
+    auto help(const int argc, char* argv[], const Environment& shell_env) -> int { // NOLINT
         SILENCE_UNUSED(shell_env)
         if (argc == 1) {
             const std::string cmd = argv[0];
@@ -122,7 +122,6 @@ namespace Crucible {
     }
 
     void register_builtin_commands(Environment& shell_env) {
-
         shell_env.command_table["cd"]    = &cd;
         shell_env.command_table["pwd"]   = &pwd;
         shell_env.command_table["clear"] = &clear;

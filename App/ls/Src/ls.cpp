@@ -17,6 +17,7 @@
 #include <Forge/App.h>
 #include <Forge/VFS.h>
 
+#include <array>
 #include <format>
 #include <iostream>
 #include <string>
@@ -29,11 +30,11 @@ struct CLIArgs {
     bool list = false;
 };
 
-bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
+auto parse_cli_args(int argc, char* argv[], CLIArgs& args_out) -> bool { // NOLINT
     bool dir_seen = false;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0) continue;
+        if (arg.empty()) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
@@ -58,14 +59,14 @@ bool parse_cli_args(int argc, char* argv[], CLIArgs& args_out) {
     }
 
     if (!dir_seen) {
-        char c_path[Ember::STRING_SIZE_LIMIT];
+        std::array<char, Ember::STRING_SIZE_LIMIT> c_path{};
         if (const Ember::StatusCode ret =
-                Forge::app_current_directory(c_path, Ember::STRING_SIZE_LIMIT);
+                Forge::app_current_directory(c_path.data(), Ember::STRING_SIZE_LIMIT);
             ret < 0) {
             std::cerr << "IO error: Cannot get current directory." << std::endl;
             return false;
         }
-        args_out.dir = c_path;
+        args_out.dir = c_path.data();
     }
     return true;
 }
@@ -74,7 +75,7 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
     if (const std::string node_path = node_info.node_path;
         args.all || (!node_info.is_hidden() && node_path != "." && node_path != "..")) {
         if (args.list) {
-            char attr[4] = {'-', '-', '-', '-'};
+            std::array<char, 4> attr = {'-', '-', '-', '-'};
             if (node_info.is_file())
                 attr[0] = 'F';
             else
@@ -86,7 +87,7 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
             if (node_info.is_readonly()) {
                 attr[3] = 'R';
             }
-            std::cout << std::format("{:<10} {:<15} {}", attr, node_info.size, node_info.node_path)
+            std::cout << std::format("{:<10} {:<15} {}", attr.data(), node_info.size, node_info.node_path)
                       << std::endl;
         } else {
             std::cout << node_info.node_path << std::endl;
@@ -94,7 +95,7 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
     }
 }
 
-CLINK int main(const int argc, char* argv[]) {
+CLINK auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

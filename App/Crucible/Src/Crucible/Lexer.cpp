@@ -16,6 +16,9 @@
 
 #include <Crucible/Lexer.h>
 
+#include <array>
+#include <functional>
+
 namespace Crucible {
 
     DEFINE_ENUM(TokenType, TOKEN_TYPES, 0x0) // NOLINT
@@ -24,48 +27,48 @@ namespace Crucible {
     //                                          Tokenizer
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool Lexer::is_digit(char c) { return '0' <= c && c <= '9'; }
+    auto Lexer::is_digit(char c) -> bool { return '0' <= c && c <= '9'; }
 
-    bool Lexer::is_lower_case(char c) { return 'a' <= c && c <= 'z'; }
+    auto Lexer::is_lower_case(char c) -> bool { return 'a' <= c && c <= 'z'; }
 
-    bool Lexer::is_upper_case(char c) { return 'A' <= c && c <= 'Z'; }
+    auto Lexer::is_upper_case(char c) -> bool { return 'A' <= c && c <= 'Z'; }
 
-    bool Lexer::is_esc_ch(char c) {
+    auto Lexer::is_esc_ch(char c) -> bool {
         return c == '\\' || c == '\'' || c == '$' || c == '=' || c == '>';
     }
 
-    bool Lexer::is_reserved(char c) {
+    auto Lexer::is_reserved(char c) -> bool {
         return c == '$' || c == '=' || c == '\'' || c == '>' || c == '\\';
     }
 
-    bool Lexer::is_path_element(char c) {
+    auto Lexer::is_path_element(char c) -> bool {
         // Allow every char except not printable chars and reserved chars
-        return c > 32 && !is_reserved(c);
+        return c > NON_PRINTABLE_ASCII_LIMIT && !is_reserved(c);
     }
 
-    bool Lexer::is_identifier(char c) {
+    auto Lexer::is_identifier(char c) -> bool {
         return c == '_' || c == '-' || is_lower_case(c) || is_upper_case(c) || is_digit(c);
     }
 
-    bool Lexer::has_more() { return _cursor < (int) _input.size(); }
+    auto Lexer::has_more() -> bool { return _cursor < _input.size(); }
 
-    char Lexer::advance() { return has_more() ? _input[_cursor++] : '\0'; }
+    auto Lexer::advance() -> char { return has_more() ? _input[_cursor++] : '\0'; }
 
-    char Lexer::peek() { return has_more() ? _input[_cursor] : '\0'; }
+    auto Lexer::peek() -> char { return has_more() ? _input[_cursor] : '\0'; }
 
     void Lexer::parse_escape_code() {
-        const char escaped = advance();
-        char       b[2]    = {'\\', escaped};
-        const bool is_good = is_esc_ch(escaped);
+        const char          escaped = advance();
+        std::array<char, 2> b       = {'\\', escaped};
+        const bool          is_good = is_esc_ch(escaped);
         _token_buffer.push_back({is_good ? TokenType::ESCAPE_CODE : TokenType::UNEXPECTED_TOKEN,
-                                 std::string(b, 2),
+                                 std::string(b.data(), 2),
                                  is_good ? _cursor - 2 : _cursor - 1});
     }
 
     void Lexer::parse_identifier_or_path_element(bool include_ws) {
-        char      b[BUF_SIZE];
-        int       b_pos = 0;
-        const int start = _cursor - 1;
+        std::array<char, BUF_SIZE> b{};
+        size_t                     b_pos = 0;
+        const size_t               start = _cursor - 1;
         b[b_pos++] = _input[start]; // scan_token has consumed the first identifier character -> add
                                     // it manually
 
@@ -76,20 +79,21 @@ namespace Crucible {
         //      we parse as long as we don't see any whitespace
         // If skip_ws == false -> !skip_ws is always true therefore we will also parse any
         // whitespace
-        while (has_more() && peek() != ' ' && b_pos < static_cast<int>(BUF_SIZE)) {
+        while (has_more() && peek() != ' ' && b_pos < BUF_SIZE) {
             // Add all identifier characters to the buffer
             if (is_path)
                 while (is_path_element(peek())) b[b_pos++] = advance();
             else
                 while (is_identifier(peek())) b[b_pos++] = advance();
 
-            if (char peek_a_boo = peek(); peek_a_boo == '\0' || peek_a_boo == '\''
-                                          || peek_a_boo == '\\' || peek_a_boo == '='
-                                          || peek_a_boo == '$' || peek_a_boo == '>') {
+            char peek_a_boo = peek();
+            if (peek_a_boo == '\0' || peek_a_boo == '\'' || peek_a_boo == '\\' || peek_a_boo == '='
+                || peek_a_boo == '$' || peek_a_boo == '>') {
                 // '\0' -> End of input reached
                 // Else -> End of IDENTIFIER/PATH_ELEMENT reached
                 break;
-            } else if (peek_a_boo == ' ') {
+            }
+            if (peek_a_boo == ' ') {
                 if (include_ws)
                     while (peek() == ' ') b[b_pos++] = advance();
                 // else break the outer loop
@@ -102,8 +106,9 @@ namespace Crucible {
                 return;
             }
         }
-        _token_buffer.push_back(
-            {is_path ? TokenType::PATH : TokenType::IDENTIFIER, std::string(b, b_pos), start});
+        _token_buffer.push_back({is_path ? TokenType::PATH : TokenType::IDENTIFIER,
+                                 std::string(b.data(), b_pos),
+                                 start});
     }
 
     void Lexer::parse_string() {
@@ -150,17 +155,14 @@ namespace Crucible {
         }
     }
 
-    Lexer::Lexer(const std::string& input)
-        : _input(input),
-          _cursor(0),
-          _token_buffer(),
-          _skip_ws(true),
-          _current_token({TokenType::END, "", 0}),
-          _next_token({TokenType::END, "", 0}) {}
+    Lexer::Lexer(std::string input)
+        : _input(std::move(input)),
+          _current_token({.type = TokenType::END, .text = "", .position = 0}),
+          _next_token({.type = TokenType::END, .text = "", .position = 0}) {}
 
-    Token Lexer::next_token() {
+    auto Lexer::next_token() -> Token {
         if (!has_more() && _token_buffer.empty())
-            return {TokenType::END, "", static_cast<int>(_input.size())};
+            return {.type = TokenType::END, .text = "", .position = _input.size()};
 
         if (_token_buffer.empty()) scan_token();
 
@@ -169,8 +171,9 @@ namespace Crucible {
         return t;
     }
 
-    Token Lexer::peek_token() {
-        if (!has_more() && _token_buffer.empty()) return {TokenType::END, "", (int) _input.size()};
+    auto Lexer::peek_token() -> Token {
+        if (!has_more() && _token_buffer.empty())
+            return {.type = TokenType::END, .text = "", .position = _input.size()};
 
         if (_token_buffer.empty()) scan_token();
         return _token_buffer.front();

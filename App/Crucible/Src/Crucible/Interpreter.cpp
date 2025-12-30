@@ -38,7 +38,7 @@ namespace Crucible {
         if (has_error) {
             // Print some error information that hopefully helps to resolve the issue
             const std::string error_prefix = "Error parsing: ";
-            std::string       highlight("");
+            std::string       highlight;
             for (size_t i = 0; i < actual.position + error_prefix.size(); i++) highlight += ' ';
             for (size_t i = 0; i < actual.text.size(); i++) highlight += '^';
 
@@ -53,9 +53,9 @@ namespace Crucible {
         }
     }
 
-    Interpreter::Interpreter() : _keyboard_modifier(), _env(), _parser() {}
+    Interpreter::Interpreter() : _keyboard_modifier(), _env() {}
 
-    bool Interpreter::setup_environment(const char* wd) {
+    auto Interpreter::setup_environment(const char* wd) -> bool {
         _env.working_directory     = Path(wd);
         _env.env_var_table["PATH"] = "/Apps";
         register_builtin_commands(_env);
@@ -68,35 +68,40 @@ namespace Crucible {
             str_split(_env.env_var_table.find("PATH")->second, ':'));
     }
 
-    void Interpreter::run() {
+    auto Interpreter::run() -> void { // NOLINT
         print_pretty_line_start();
         while (true) {
             if (Ember::VirtualKey key = Forge::app_read_stdin(); !key.is_none()) {
-                // Update modifiers
+                // NOLINTBEGIN Update modifiers
                 if ((key.get_row() == 4 && key.get_col() == 0)
                     || (key.get_row() == 4 && key.get_col() == 12)) {
                     _keyboard_modifier.shift_pressed = key.is_pressed();
                     continue;
-                } else if (key.get_row() == 5 && key.get_col() == 0) {
+                }
+                if (key.get_row() == 5 && key.get_col() == 0) {
                     _keyboard_modifier.ctrl_pressed = key.is_pressed();
                     continue;
-                } else if (key.get_row() == 5 && key.get_col() == 2) {
+                }
+                if (key.get_row() == 5 && key.get_col() == 2) {
                     _keyboard_modifier.alt_pressed = key.is_pressed();
                     continue;
-                } else if (key.get_row() == 5 && key.get_col() == 10) {
+                }
+                if (key.get_row() == 5 && key.get_col() == 10) {
                     _keyboard_modifier.alt_gr_pressed = key.is_pressed();
                     continue;
-                } else if (key.get_row() == 3 && key.get_col() == 0) {
+                }
+                if (key.get_row() == 3 && key.get_col() == 0) {
                     if (key.is_pressed())
                         _keyboard_modifier.angry_mode_on = !_keyboard_modifier.angry_mode_on;
                     continue;
                 }
+                // NOLINTEND
 
                 if (key.is_pressed()) {
                     // Convert keycode to ascii
                     char         ch = '\0';
                     const size_t kd_off =
-                        key.get_row() * Ember::VirtualKey::MAX_COLS + key.get_col();
+                        (key.get_row() * Ember::VirtualKey::MAX_COLS) + key.get_col();
                     if (_keyboard_modifier.shift_pressed || _keyboard_modifier.angry_mode_on) {
                         ch = _key_code_decoder_upper[kd_off];
                     } else if (_keyboard_modifier.alt_gr_pressed) {
@@ -114,7 +119,7 @@ namespace Crucible {
                                 std::cout.flush();
                                 if (_env.input_buffer_size > 0) {
                                     auto cmd =
-                                        std::string(_env.input_buffer, _env.input_buffer_size);
+                                        std::string(_env.input_buffer.data(), _env.input_buffer_size);
                                     _env.command_history.push_back(cmd);
                                     _env.command_history_cursor = _env.command_history.size();
                                     exec(cmd);

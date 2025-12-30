@@ -19,36 +19,37 @@
 #include <Crucible/Utility.h>
 
 #include <sstream>
+#include <utility>
 
 namespace Crucible {
     Path Path::ROOT   = Path(UNIX_PATH_SEPARATOR);
     Path Path::DOT    = Path('.');
     Path Path::DOTDOT = Path("..");
 
-    Path::Path() : _path("") {}
+    Path::Path() = default;
 
     Path::Path(const char c) : _path(1, c) {}
 
-    Path::Path(const std::string& path) : _path(path) {}
+    Path::Path(std::string path) : _path(std::move(path)) {}
 
-    char Path::get_path_separator() { return UNIX_PATH_SEPARATOR; }
+    auto Path::get_path_separator() -> char { return UNIX_PATH_SEPARATOR; }
 
-    std::string Path::get_file_name() const {
+    auto Path::get_file_name() const -> std::string {
         const size_t pos = _path.find_last_of(UNIX_PATH_SEPARATOR);
         return pos == std::string::npos ? _path : _path.substr(pos + 1);
     }
 
-    std::string Path::get_file_name_without_extension() const {
+    auto Path::get_file_name_without_extension() const -> std::string {
         std::vector<std::string> name_and_ext = str_split(get_file_name(), '.');
-        return name_and_ext.size() > 0 ? name_and_ext.front() : "";
+        return !name_and_ext.empty() ? name_and_ext.front() : "";
     }
 
-    std::string Path::get_file_extension() const {
+    auto Path::get_file_extension() const -> std::string {
         std::vector<std::string> name_and_ext = str_split(get_file_name(), '.');
         return name_and_ext.size() > 1 ? name_and_ext.back() : "";
     }
 
-    Path Path::get_parent() const {
+    auto Path::get_parent() const -> Path {
         if (_path.empty())
             // Parent of "" is ".".
             return Path(".");
@@ -67,11 +68,13 @@ namespace Crucible {
         return Path(_path.substr(0, idx));
     }
 
-    bool Path::is_root() const { return _path == "/"; }
+    auto Path::is_root() const -> bool { return _path == "/"; }
 
-    bool Path::is_absolute() const { return !_path.empty() && _path[0] == UNIX_PATH_SEPARATOR; }
+    auto Path::is_absolute() const -> bool {
+        return !_path.empty() && _path[0] == UNIX_PATH_SEPARATOR;
+    }
 
-    Path Path::common_path(const Path& path) const {
+    auto Path::common_path(const Path& path) const -> Path {
         if (path.to_string().empty()) return {};
         if (is_absolute() != path.is_absolute()) return {};
         if (*this == path) return *this;
@@ -89,7 +92,7 @@ namespace Crucible {
         return common;
     }
 
-    Path Path::relative_to(const Path& path) const {
+    auto Path::relative_to(const Path& path) const -> Path {
         if (path.to_string().empty()) return {};
         if (is_absolute() != path.is_absolute()) return {};
         if (*this == path) return {};
@@ -116,12 +119,14 @@ namespace Crucible {
         return relative;
     }
 
-    std::vector<std::string> Path::split() const { return str_split(_path, UNIX_PATH_SEPARATOR); }
+    auto Path::split() const -> std::vector<std::string> {
+        return str_split(_path, UNIX_PATH_SEPARATOR);
+    }
 
-    Path Path::append(const std::string& part) const {
-        if (_path.size() == 0 && part.size() == 0) return {};
-        if (_path.size() == 0) return Path(part);
-        if (part.size() == 0) return Path(_path);
+    auto Path::append(const std::string& part) const -> Path {
+        if (_path.empty() && part.empty()) return {};
+        if (_path.empty()) return Path(part);
+        if (part.empty()) return Path(_path);
 
         std::string p = _path;
         if (p[p.size() - 1] != UNIX_PATH_SEPARATOR && part[0] != UNIX_PATH_SEPARATOR)
@@ -132,7 +137,7 @@ namespace Crucible {
         return Path(r);
     }
 
-    Path Path::resolve(const Path& working_dir) const {
+    auto Path::resolve(const Path& working_dir) const -> Path {
         Path out(working_dir);
         for (auto& part : str_split(_path, UNIX_PATH_SEPARATOR)) {
             if (part == ".")
@@ -151,34 +156,38 @@ namespace Crucible {
         return out;
     }
 
-    std::string Path::to_string() const { return _path; }
+    auto Path::to_string() const -> std::string { return _path; }
 
-    Path Path::operator/(const std::string& part) const { return append(part); }
+    auto Path::operator/(const std::string& part) const -> Path { return append(part); }
 
-    Path Path::operator/(std::string&& part) const { return append(part); }
+    auto Path::operator/(std::string&& part) const -> Path { return append(part); }
 
-    Path Path::operator/(const Path& part) const { return append(part.to_string()); }
+    auto Path::operator/(const Path& part) const -> Path { return append(part.to_string()); }
 
-    Path& Path::operator/=(const std::string& part) {
+    auto Path::operator/=(const std::string& part) -> Path& {
         _path = append(part).to_string();
         return *this;
     }
 
-    Path& Path::operator/=(std::string&& part) {
+    auto Path::operator/=(std::string&& part) -> Path& {
         _path = append(part).to_string();
         return *this;
     }
 
-    Path& Path::operator/=(const Path& part) {
+    auto Path::operator/=(const Path& part) -> Path& {
         _path = append(part.to_string()).to_string();
         return *this;
     }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Operator Overloads
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    bool operator==(const Path& a, const Path& b) { return a._path == b._path; }
+    auto operator==(const Path& first, const Path& second) -> bool {
+        return first._path == second._path;
+    }
 
-    bool operator!=(const Path& first, const Path& b) { return first._path != b._path; }
+    auto operator!=(const Path& first, const Path& second) -> bool {
+        return first._path != second._path;
+    }
 } // namespace Crucible

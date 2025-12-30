@@ -29,9 +29,9 @@ namespace Crucible {
      */
     struct ParsedInput {
         std::unique_ptr<ASTNode> ast_node;
-        bool                     has_error;
-        Token                    actual;
-        TokenType                expected;
+        bool                     has_error{false};
+        Token                    actual{};
+        TokenType                expected{TokenType::NONE};
 
         /**
          * @brief Create a parsed input object with has_error=false, expected=TokenType::NONE,
@@ -39,7 +39,7 @@ namespace Crucible {
          * @param ast_node
          * @return
          */
-        static ParsedInput make_good(std::unique_ptr<ASTNode> ast_node);
+        static auto make_good(std::unique_ptr<ASTNode> ast_node) -> ParsedInput;
 
         /**
          * @brief Create a parsed input object with ast_node=null, has_error=true and the given
@@ -48,7 +48,7 @@ namespace Crucible {
          * @param expected
          * @return
          */
-        static ParsedInput make_error(const Token& actual, TokenType expected);
+        static auto make_error(const Token& actual, TokenType expected) -> ParsedInput;
     };
 
     /**
@@ -74,30 +74,30 @@ namespace Crucible {
     class Parser {
         Lexer _lexer;
 
-        ParsedInput parse_input();
+        auto parse_input() -> ParsedInput;
 
-        ParsedInput parse_command_sequence();
+        auto parse_command_sequence() -> ParsedInput;
 
-        ParsedInput parse_argument();
+        auto parse_argument() -> ParsedInput;
 
-        ParsedInput parse_flag();
+        auto parse_flag() -> ParsedInput;
 
-        ParsedInput parse_env_var_declaration();
+        auto parse_env_var_declaration() -> ParsedInput;
 
-        ParsedInput parse_string();
+        auto parse_string() -> ParsedInput;
 
-        ParsedInput parse_env_var();
+        auto parse_env_var() -> ParsedInput;
 
-        ParsedInput parse_path();
+        auto parse_path() -> ParsedInput;
 
-        ParsedInput parse_identifier();
+        auto parse_identifier() -> ParsedInput;
 
-        ParsedInput parse_escape_code();
+        auto parse_escape_code() -> ParsedInput;
 
       public:
         Parser();
 
-        ParsedInput parse_shell_input(const std::string& input);
+        auto parse_shell_input(const std::string& input) -> ParsedInput;
     };
 } // namespace Crucible
 
