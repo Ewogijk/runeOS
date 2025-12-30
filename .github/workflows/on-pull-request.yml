@@ -1,10 +1,6 @@
-name: pull-request.yml
+name: on-pull-request
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:
 
 jobs:
   format:
@@ -29,7 +25,7 @@ jobs:
           ruff format --check Kernel/
           echo \> Check Brokk code
           ruff format --check Brokk/
-  build:
+  build-test:
     runs-on: ubuntu-latest
     needs: format
     steps:
@@ -125,7 +121,7 @@ jobs:
           path: ${{ github.workspace }}/CompilationDatabases.tar.gz
   lint:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v5

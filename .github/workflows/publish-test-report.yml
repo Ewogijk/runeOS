@@ -1,0 +1,34 @@
+name: publish-test-report
+on:
+  workflow_run:
+    workflows: ['on-pull-request']
+    types:
+      - completed
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Unit Test Report
+        uses: actions/download-artifact@v5
+        with:
+          name: unit-test-report
+          path: ${{ github.workspace }}/UnitTestReport
+      - name: Download Integration Test Report
+        uses: actions/download-artifact@v5
+        with:
+          name: integration-test-report
+          path: ${{ github.workspace }}/IntegrationTestReport
+      - name: Make Unit Test Report
+        uses: dorny/test-reporter@v2
+        with:
+          name: Unit Test Report
+          path: '${{ github.workspace }}/UnitTestReport/JUnitReport.xml'
+          reporter: java-junit
+          report-title: 'Unit Test Report'
+      - name: Make Integration Test Report
+        uses: dorny/test-reporter@v2
+        with:
+          name: Integration Test Report
+          path: '${{ github.workspace }}/IntegrationTestReport/JUnitReport.xml'
+          reporter: java-junit
+          report-title: 'Integration Test Report'
