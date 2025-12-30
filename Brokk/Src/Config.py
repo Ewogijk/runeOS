@@ -18,6 +18,7 @@ from types import NoneType
 
 import yaml
 
+
 class BrokkConfig(Enum):
     """Keys of the settings in the Brokk config file."""
 
@@ -179,8 +180,7 @@ def load_build_config(build_config_yaml: str) -> dict[str, Any]:
                 break
         if not has_expected_type:
             print(
-                f"Key '{key}' has wrong type: expected {expected_types}, "
-                f"got {type(value).__name__}"
+                f"Key '{key}' has wrong type: expected {expected_types}, got {type(value).__name__}"
             )
             return {}
 
