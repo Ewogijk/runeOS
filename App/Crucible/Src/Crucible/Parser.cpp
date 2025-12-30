@@ -23,16 +23,16 @@ namespace Crucible {
     //                                          ParsedInput
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    ParsedInput ParsedInput::make_good(std::unique_ptr<ASTNode> ast_node) {
+    auto ParsedInput::make_good(std::unique_ptr<ASTNode> ast_node) -> ParsedInput {
         ParsedInput good;
-        good.ast_node  = move(ast_node);
+        good.ast_node  = std::move(ast_node);
         good.has_error = false;
         good.actual    = {};
         good.expected  = TokenType::NONE;
         return good;
     }
 
-    ParsedInput ParsedInput::make_error(const Token& actual, const TokenType expected) {
+    auto ParsedInput::make_error(const Token& actual, const TokenType expected) -> ParsedInput {
         ParsedInput err;
         err.ast_node  = std::unique_ptr<ASTNode>();
         err.has_error = true;
@@ -45,7 +45,7 @@ namespace Crucible {
     //                                          Parser
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    ParsedInput Parser::parse_input() {
+    auto Parser::parse_input() -> ParsedInput {
         switch (_lexer.peek_token().type) {
             case TokenType::PATH:
             case TokenType::IDENTIFIER: return parse_command_sequence();
@@ -54,7 +54,7 @@ namespace Crucible {
         }
     }
 
-    ParsedInput Parser::parse_command_sequence() {
+    auto Parser::parse_command_sequence() -> ParsedInput {
         ParsedInput path_or_identifier;
         if (_lexer.peek_token().type == TokenType::PATH)
             path_or_identifier = parse_path();
@@ -68,7 +68,7 @@ namespace Crucible {
         while (peek_a_boo.type != TokenType::REDIRECT && peek_a_boo.type != TokenType::END) {
             ParsedInput arg = parse_argument();
             if (arg.has_error) return arg;
-            args.push_back(move(arg.ast_node));
+            args.push_back(std::move(arg.ast_node));
             peek_a_boo = _lexer.peek_token();
         }
         std::string redirect_str;
@@ -81,12 +81,12 @@ namespace Crucible {
             redirect_str = redirect_token.text;
         }
         return ParsedInput::make_good(
-            std::make_unique<CommandSequence>(move(path_or_identifier.ast_node),
-                                              move(args),
+            std::make_unique<CommandSequence>(std::move(path_or_identifier.ast_node),
+                                              std::move(args),
                                               Path(redirect_str)));
     }
 
-    ParsedInput Parser::parse_argument() {
+    auto Parser::parse_argument() -> ParsedInput {
         switch (const Token identifier_path_or_string = _lexer.peek_token();
                 identifier_path_or_string.type) {
             case TokenType::IDENTIFIER: return parse_identifier();
@@ -100,7 +100,7 @@ namespace Crucible {
         }
     }
 
-    ParsedInput Parser::parse_flag() {
+    auto Parser::parse_flag() -> ParsedInput {
         const Token dash               = _lexer.next_token();
         Token       dash_or_identifier = _lexer.next_token();
         bool        double_dash        = false;
@@ -124,7 +124,7 @@ namespace Crucible {
             std::make_unique<IdentifierOrPath>(dashes + dash_or_identifier.text));
     }
 
-    ParsedInput Parser::parse_env_var_declaration() {
+    auto Parser::parse_env_var_declaration() -> ParsedInput {
         ParsedInput env_var = parse_env_var();
         if (env_var.has_error) return env_var;
         if (Token token = _lexer.next_token(); token.type != TokenType::ASSIGNMENT)
@@ -137,31 +137,31 @@ namespace Crucible {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
                     if (identifier.has_error) return identifier;
-                    value.push_back(move(identifier.ast_node));
+                    value.push_back(std::move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
                     if (escape_code.has_error) return escape_code;
-                    value.push_back(move(escape_code.ast_node));
+                    value.push_back(std::move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput more_env_var = parse_env_var();
                     if (more_env_var.has_error) return more_env_var;
-                    value.push_back(move(more_env_var.ast_node));
+                    value.push_back(std::move(more_env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
                     if (path.has_error) return path;
-                    value.push_back(move(path.ast_node));
+                    value.push_back(std::move(path.ast_node));
                     break;
                 }
                 case TokenType::QUOTE: {
                     ParsedInput sh_string = parse_string();
                     if (sh_string.has_error) return sh_string;
-                    value.push_back(move(sh_string.ast_node));
+                    value.push_back(std::move(sh_string.ast_node));
                     break;
                 }
                 default: return ParsedInput::make_error(t, TokenType::IDENTIFIER);
@@ -173,10 +173,10 @@ namespace Crucible {
             return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
 
         return ParsedInput::make_good(
-            std::make_unique<EnvVarDecl>(move(env_var.ast_node), move(value)));
+            std::make_unique<EnvVarDecl>(std::move(env_var.ast_node), std::move(value)));
     }
 
-    ParsedInput Parser::parse_string() {
+    auto Parser::parse_string() -> ParsedInput {
         Token opening_quote = _lexer.next_token();
         if (opening_quote.type != TokenType::QUOTE)
             return ParsedInput::make_error(opening_quote, TokenType::QUOTE);
@@ -188,25 +188,25 @@ namespace Crucible {
                 case TokenType::IDENTIFIER: {
                     ParsedInput identifier = parse_identifier();
                     if (identifier.has_error) return identifier;
-                    content.push_back(move(identifier.ast_node));
+                    content.push_back(std::move(identifier.ast_node));
                     break;
                 }
                 case TokenType::ESCAPE_CODE: {
                     ParsedInput escape_code = parse_escape_code();
                     if (escape_code.has_error) return escape_code;
-                    content.push_back(move(escape_code.ast_node));
+                    content.push_back(std::move(escape_code.ast_node));
                     break;
                 }
                 case TokenType::DOLLAR: {
                     ParsedInput env_var = parse_env_var();
                     if (env_var.has_error) return env_var;
-                    content.push_back(move(env_var.ast_node));
+                    content.push_back(std::move(env_var.ast_node));
                     break;
                 }
                 case TokenType::PATH: {
                     ParsedInput path = parse_path();
                     if (path.has_error) return path;
-                    content.push_back(move(path.ast_node));
+                    content.push_back(std::move(path.ast_node));
                     break;
                 }
                 default: return ParsedInput::make_error(t, TokenType::IDENTIFIER);
@@ -218,31 +218,31 @@ namespace Crucible {
         if (opening_quote.type != TokenType::QUOTE)
             return ParsedInput::make_error(closing_quote, TokenType::QUOTE);
 
-        return ParsedInput::make_good(std::make_unique<ShellString>(move(content)));
+        return ParsedInput::make_good(std::make_unique<ShellString>(std::move(content)));
     }
 
-    ParsedInput Parser::parse_env_var() {
+    auto Parser::parse_env_var() -> ParsedInput {
         if (const Token token = _lexer.next_token(); token.type != TokenType::DOLLAR)
             return ParsedInput::make_error(token, TokenType::DOLLAR);
         ParsedInput env_var = parse_identifier();
         if (env_var.has_error) return env_var;
-        return ParsedInput::make_good(std::make_unique<EnvVar>(move(env_var.ast_node)));
+        return ParsedInput::make_good(std::make_unique<EnvVar>(std::move(env_var.ast_node)));
     }
 
-    ParsedInput Parser::parse_path() {
+    auto Parser::parse_path() -> ParsedInput {
         Token token = _lexer.next_token();
         if (token.type != TokenType::PATH) return ParsedInput::make_error(token, TokenType::PATH);
         return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
 
-    ParsedInput Parser::parse_identifier() {
+    auto Parser::parse_identifier() -> ParsedInput {
         Token token = _lexer.next_token();
         if (token.type != TokenType::IDENTIFIER)
             return ParsedInput::make_error(token, TokenType::IDENTIFIER);
         return ParsedInput::make_good(std::make_unique<IdentifierOrPath>(token.text));
     }
 
-    ParsedInput Parser::parse_escape_code() {
+    auto Parser::parse_escape_code() -> ParsedInput {
         const Token token = _lexer.next_token();
         if (token.type != TokenType::ESCAPE_CODE)
             return ParsedInput::make_error(token, TokenType::ESCAPE_CODE);
@@ -252,7 +252,7 @@ namespace Crucible {
 
     Parser::Parser() : _lexer("") {}
 
-    ParsedInput Parser::parse_shell_input(const std::string& input) {
+    auto Parser::parse_shell_input(const std::string& input) -> ParsedInput {
         _lexer = Lexer(input);
         return parse_input();
     }

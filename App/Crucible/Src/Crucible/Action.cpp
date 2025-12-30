@@ -29,21 +29,19 @@ namespace Crucible {
             // The user was entering some command and then started scrolling through older commands
             // -> Save the current input, so it can be restored
             shell_env.input_buffer_backup =
-                std::string(shell_env.input_buffer, shell_env.input_buffer_size);
+                std::string(shell_env.input_buffer.data(), shell_env.input_buffer_size);
         }
 
         if (shell_env.command_history_cursor > 0) shell_env.command_history_cursor--;
         if (shell_env.command_history_cursor < shell_env.command_history.size())
-            shell_env.input_set(
-                shell_env.command_history[shell_env.command_history_cursor].c_str());
+            shell_env.input_set(shell_env.command_history[shell_env.command_history_cursor]);
     }
 
     void command_history_scroll_down(Environment& shell_env) {
         if (shell_env.command_history_cursor < shell_env.command_history.size()) {
             shell_env.command_history_cursor++;
             if (shell_env.command_history_cursor < shell_env.command_history.size()) {
-                shell_env.input_set(
-                    shell_env.command_history[shell_env.command_history_cursor].c_str());
+                shell_env.input_set(shell_env.command_history[shell_env.command_history_cursor]);
             } else {
                 shell_env.input_set(shell_env.input_buffer_backup);
             }
@@ -70,11 +68,11 @@ namespace Crucible {
 
     void delete_forward(Environment& shell_env) { shell_env.input_delete(true); }
 
-    void perform_auto_completion(Environment& shell_env) {
-        if (shell_env.input_buffer_size == 0) return; // No input -> Do not auto complete
+    void perform_auto_completion(Environment& shell_env) { // NOLINT
+        if (shell_env.input_buffer_size == 0) return;      // No input -> Do not auto complete
 
         if (!shell_env.ac_used || shell_env.ac_word_suggestions.size() == 1) {
-            const std::string input(shell_env.input_buffer, shell_env.input_buffer_cursor);
+            const std::string input(shell_env.input_buffer.data(), shell_env.input_buffer_cursor);
             const std::vector<std::string> parts = str_split(input, ' ');
             if (const bool has_ws_suffix = input[input.size() - 1] == ' ';
                 parts.size() == 1 && !has_ws_suffix) {
@@ -117,7 +115,7 @@ namespace Crucible {
     }
 
     void register_hotkey_actions(Environment& shell_env) {
-        // Arrow up
+        // NOLINTBEGIN Arrow up
         shell_env.action_table[Ember::VirtualKey::build(4, 15, false)] = &command_history_scroll_up;
         // Arrow down
         shell_env.action_table[Ember::VirtualKey::build(5, 15, false)] =
@@ -130,5 +128,6 @@ namespace Crucible {
         shell_env.action_table[Ember::VirtualKey::build(3, 14, false)] = &delete_forward;
         // Tab
         shell_env.action_table[Ember::VirtualKey::build(2, 0, false)] = &perform_auto_completion;
+        // NOLINTEND
     }
 } // namespace Crucible

@@ -18,7 +18,7 @@
 #define CRUCIBLE_OS_H
 
 namespace Crucible {
-    extern "C" int main(int argc, char* argv[]);
+    extern "C" auto main(int argc, char* argv[]) -> int;
 }
 
 #endif // CRUCIBLE_OS_H

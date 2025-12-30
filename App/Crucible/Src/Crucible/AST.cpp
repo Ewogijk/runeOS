@@ -33,9 +33,9 @@ namespace Crucible {
 
     Input::Input(std::unique_ptr<ASTNode> cs_evd_or_ev) : _cs_evd_or_ev(std::move(cs_evd_or_ev)) {}
 
-    std::string Input::get_text() { return _cs_evd_or_ev->get_text(); }
+    auto Input::get_text() -> std::string { return _cs_evd_or_ev->get_text(); }
 
-    std::string Input::evaluate(Environment& shell_env) {
+    auto Input::evaluate(Environment& shell_env) -> std::string {
         return _cs_evd_or_ev->evaluate(shell_env);
     }
 
@@ -50,7 +50,7 @@ namespace Crucible {
      * @param target_file Name of a file requested
      * @return
      */
-    bool is_target_application(const Path& file_name, const Path& target_file) {
+    auto is_target_application(const Path& file_name, const Path& target_file) -> bool {
         // As long as the app executable on the filesystem has the ".app" extension we know it is
         // executable, therefore it is okay if the ".app" extension is omitted in the shell input
         // E.g. "MyApp.app" on the filesystem will match with "MyApp.app" or "MyApp"
@@ -65,7 +65,7 @@ namespace Crucible {
      * @param target_file File that is searched for.
      * @return
      */
-    Path find_target_app(const Path& dir, const Path& target_file) {
+    auto find_target_app(const Path& dir, const Path& target_file) -> Path {
         if (const Ember::ResourceID dir_stream_ID =
                 Forge::vfs_directory_stream_open(dir.to_string().c_str());
             dir_stream_ID > Ember::Status::OKAY) {
@@ -103,18 +103,19 @@ namespace Crucible {
           _arguments_or_flags(std::move(arguments_or_flags)),
           _redirect_file(std::move(redirect_file)) {}
 
-    std::string CommandSequence::get_text() {
+    auto CommandSequence::get_text() -> std::string {
         std::string cs = _command->get_text();
         for (const auto& arg : _arguments_or_flags) cs += " " + arg->get_text();
         return cs;
     }
 
-    std::string CommandSequence::evaluate(Environment& shell_env) {
+    auto CommandSequence::evaluate(Environment& shell_env) -> std::string { // NOLINT
         const std::string cmd  = _command->evaluate(shell_env);
-        const auto        args = std::unique_ptr<char>(new char[ARGV_LIMIT]);
-        char*             argv[_arguments_or_flags.size() + 1] = {};
-        int               argv_idx                             = 0;
-        int               pos                                  = 0;
+        const auto        args = std::unique_ptr<char>(new char[ARGV_LIMIT]); // NOLINT
+        char*             argv[_arguments_or_flags.size() + 1];               // NOLINT
+        memset(reinterpret_cast<void*>(argv), 0, _arguments_or_flags.size() + 1);
+        int argv_idx = 0;
+        int pos      = 0;
         for (const auto& aof : _arguments_or_flags) {
             std::string aof_str = aof->evaluate(shell_env);
             memcpy(&args.get()[pos], (void*) aof_str.c_str(), aof_str.size() + 1);
@@ -156,7 +157,7 @@ namespace Crucible {
                     }
 
                     const std::vector<std::string> path_vars = str_split(path->second, ':');
-                    for (auto& dir : path_vars) {
+                    for (const auto& dir : path_vars) {
                         target_app = find_target_app(Path(dir) / cmd_file_dir, cmd_file_name);
                         if (target_app != Path("")) break;
                     }
@@ -168,19 +169,21 @@ namespace Crucible {
                 return "";
             }
             std::string        redirect_file_str = _redirect_file.to_string();
-            Ember::StdIOConfig stdout_err_config{
-                redirect_file_str.empty() ? Ember::StdIOTarget::INHERIT : Ember::StdIOTarget::FILE};
+            Ember::StdIOConfig stdout_err_config{.target = redirect_file_str.empty()
+                                                               ? Ember::StdIOTarget::INHERIT
+                                                               : Ember::StdIOTarget::FILE};
             if (stdout_err_config.target == Ember::StdIOTarget::FILE) {
                 memcpy(stdout_err_config.argument,
                        redirect_file_str.c_str(),
                        redirect_file_str.size());
             }
-            const Ember::ResourceID app_ID = Forge::app_start(target_app.to_string().c_str(),
-                                                              const_cast<const char**>(argv),
-                                                              wd.to_string().c_str(),
-                                                              {Ember::StdIOTarget::INHERIT},
-                                                              stdout_err_config,
-                                                              stdout_err_config);
+            const Ember::ResourceID app_ID =
+                Forge::app_start(target_app.to_string().c_str(),
+                                 const_cast<const char**>(argv),
+                                 wd.to_string().c_str(),
+                                 {.target = Ember::StdIOTarget::INHERIT},
+                                 stdout_err_config,
+                                 stdout_err_config);
             if (app_ID < Ember::Status::OKAY) {
                 std::cerr << "Failed to start app \"" << target_app.to_string()
                           << "\". Reason: " << app_ID << std::endl;
@@ -203,13 +206,13 @@ namespace Crucible {
         : _env_var(std::move(env_var)),
           _value(std::move(value)) {}
 
-    std::string EnvVarDecl::get_text() {
+    auto EnvVarDecl::get_text() -> std::string {
         std::string v;
         for (auto& vv : _value) v += vv->get_text();
         return _env_var->get_text() + "=" + v;
     }
 
-    std::string EnvVarDecl::evaluate(Environment& shell_env) {
+    auto EnvVarDecl::evaluate(Environment& shell_env) -> std::string {
         const std::string new_env_var = _env_var->get_text();
         std::string       val;
         for (const auto& v : _value) val += " " + v->evaluate(shell_env);
@@ -223,9 +226,9 @@ namespace Crucible {
 
     EnvVar::EnvVar(std::unique_ptr<ASTNode> env_var) : _env_var(std::move(env_var)) {}
 
-    std::string EnvVar::get_text() { return _env_var->get_text(); }
+    auto EnvVar::get_text() -> std::string { return _env_var->get_text(); }
 
-    std::string EnvVar::evaluate(Environment& shell_env) {
+    auto EnvVar::evaluate(Environment& shell_env) -> std::string {
         const std::string env_var = _env_var->get_text();
         const auto        var     = shell_env.env_var_table.find(env_var);
         if (var == shell_env.env_var_table.end()) {
@@ -242,14 +245,14 @@ namespace Crucible {
     ShellString::ShellString(std::vector<std::unique_ptr<ASTNode>> content)
         : _content(std::move(content)) {}
 
-    std::string ShellString::get_text() {
+    auto ShellString::get_text() -> std::string {
         std::string text;
         for (const auto& ele : _content) text += ele->get_text();
         return text;
     }
 
-    std::string ShellString::evaluate(Environment& shell_env) {
-        std::string value("");
+    auto ShellString::evaluate(Environment& shell_env) -> std::string {
+        std::string value;
         for (const auto& ele : _content) value += ele->evaluate(shell_env);
         return value;
     }
@@ -258,11 +261,11 @@ namespace Crucible {
     //                                          IdentifierOrPath
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    IdentifierOrPath::IdentifierOrPath(const std::string& value) : _value(value) {}
+    IdentifierOrPath::IdentifierOrPath(std::string value) : _value(std::move(value)) {}
 
-    std::string IdentifierOrPath::get_text() { return _value; }
+    auto IdentifierOrPath::get_text() -> std::string { return _value; }
 
-    std::string IdentifierOrPath::evaluate(Environment& shell_env) {
+    auto IdentifierOrPath::evaluate(Environment& shell_env) -> std::string {
         SILENCE_UNUSED(shell_env)
         return _value;
     }

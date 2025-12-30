@@ -15,7 +15,4 @@ sources = files(
     'Src/Crucible.cpp',
 )
 
-add_project_arguments('-mincoming-stack-boundary=3', language : 'c')
-add_project_arguments('-mincoming-stack-boundary=3', language : 'cpp')
-
 executable('Crucible.app', sources, include_directories : includes)

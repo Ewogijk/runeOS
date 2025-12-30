@@ -50,8 +50,14 @@ class InstallAppsStep(Build.BuildStep):
         app_dir = project_root / "App"
         for app in app_list:
             app_proj = app_dir / app
-            if not Build.meson_build(app_proj, cross_file, app_proj / "Build"):
+            if not Build.with_meson(app_proj, cross_file, app_proj / "Build"):
                 return False
+
+            sys_root = Path(build_conf[BuildConfig.SYSROOT_X64_RUNE.to_yaml_key()])
+            compilation_database = app_proj / "Build" / "compile_commands.json"
+            if not Build.post_process_compilation_database(compilation_database, sys_root, True):
+                return False
+
             install_app_cmd = [
                 "Src/Copy-File-To-Image.sh",
                 str(rune_os_image),

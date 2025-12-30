@@ -20,17 +20,17 @@
 #include <string>
 
 struct CLIArgs {
-    std::string node_path = "";
+    std::string node_path;
 
     bool help      = false;
     bool recursive = false;
 };
 
-bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+auto parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) -> bool { // NOLINT
     bool node_path_seen = false;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0) continue;
+        if (arg.empty()) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
@@ -56,7 +56,7 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
     return node_path_seen || args_out.help;
 }
 
-bool delete_node(const std::string& node_path) {
+auto delete_node(const std::string& node_path) -> bool {
     if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str());
         ret < Ember::Status::OKAY) {
         if (ret == Ember::Status::NODE_IN_USE)
@@ -77,7 +77,7 @@ void close_dir_stream(const S64 dir_stream_ID) {
     //   Ember::Status::UNKNOWN_ID -> No stream with the ID was found
 }
 
-bool delete_dir(const std::string& directory_path) {
+auto delete_dir(const std::string& directory_path) -> bool {
     const S64 dir_stream_ID = Forge::vfs_directory_stream_open(directory_path.c_str());
     if (dir_stream_ID < Ember::Status::OKAY) {
         std::cerr << "'" << directory_path << "': IO error." << std::endl;
@@ -115,7 +115,7 @@ bool delete_dir(const std::string& directory_path) {
     return true;
 }
 
-CLINK int main(const int argc, char* argv[]) {
+CLINK auto main(const int argc, char* argv[]) -> int { // NOLINT
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

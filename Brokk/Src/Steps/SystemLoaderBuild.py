@@ -42,4 +42,9 @@ class SystemLoaderBuildStep(Build.BuildStep):
         build = build_conf[BuildConfig.BUILD.to_yaml_key()]
         cross_file = project_root / "Brokk" / "Build" / f"{arch}-{build}" / "x86_64-rune.txt"
         system_loader_proj = project_root / "App" / "Freya"
-        return Build.meson_build(system_loader_proj, cross_file, system_loader_proj / "Build")
+        if not Build.with_meson(system_loader_proj, cross_file, system_loader_proj / "Build"):
+            return False
+
+        sys_root = Path(build_conf[BuildConfig.SYSROOT_X64_RUNE.to_yaml_key()])
+        compilation_database = system_loader_proj / "Build" / "compile_commands.json"
+        return Build.post_process_compilation_database(compilation_database, sys_root, True)

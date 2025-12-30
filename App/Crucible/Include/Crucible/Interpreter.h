@@ -44,13 +44,13 @@ namespace Crucible {
     };
 
     class Interpreter {
-        static constexpr Pixel GRAPE             = {0x6E, 0x17, 0xB5};
-        static constexpr U8    MAX_ROWS          = 8;
-        static constexpr U8    MAX_COLS          = 32;
-        static constexpr U8    INPUT_BUFFER_SIZE = 128;
+        static constexpr Pixel  GRAPE             = {.red = 0x6E, .green = 0x17, .blue = 0xB5};
+        static constexpr size_t MAX_ROWS          = 8;
+        static constexpr size_t MAX_COLS          = 32;
+        static constexpr size_t INPUT_BUFFER_SIZE = 128;
 
         // Maps a virtual keycode to an ascii char
-        char _key_code_decoder[MAX_ROWS * MAX_COLS] = {
+        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder = {
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '^',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
@@ -67,7 +67,7 @@ namespace Crucible {
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
         // Maps a virtual keycode to an ascii char
-        char _key_code_decoder_upper[MAX_ROWS * MAX_COLS] = {
+        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder_upper = {
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '\0', '!',  '"',  '\0', '$',  '%',  '&',  '/',  '(',  ')',
@@ -84,7 +84,7 @@ namespace Crucible {
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
         // Maps a virtual keycode to an ascii char
-        char _key_code_decoder_alt_gr[MAX_ROWS * MAX_COLS] = {
+        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder_alt_gr = {
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
             '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '{',  '[',  ']',
@@ -119,7 +119,7 @@ namespace Crucible {
          * @param wd Shell working directory.
          * @return True: The shell is setup, False: Configuration error.
          */
-        bool setup_environment(const char* wd);
+        auto setup_environment(const char* wd) -> bool;
 
         /**
          * @brief Run the command line interpreter.

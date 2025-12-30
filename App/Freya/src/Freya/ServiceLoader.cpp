@@ -24,7 +24,7 @@
 #include "yaml-cpp/yaml.h"
 
 namespace Freya {
-    bool ServiceLoader::verify_service_config() {
+    auto ServiceLoader::verify_service_config() -> bool {
         if (!_c_doc[NAME]) {
             std::cerr << "Missing property \"" << NAME << "\"." << std::endl;
             return false;
@@ -57,15 +57,21 @@ namespace Freya {
     }
 
     auto ServiceLoader::create_service() -> Service {
-        std::string              name               = _c_doc[NAME].as<std::string>();
-        std::string              description        = _c_doc[DESCRIPTION].as<std::string>();
-        std::string              exec_start         = _c_doc[EXEC_START].as<std::string>();
+        auto                     name               = _c_doc[NAME].as<std::string>();
+        auto                     description        = _c_doc[DESCRIPTION].as<std::string>();
+        auto                     exec_start         = _c_doc[EXEC_START].as<std::string>();
         bool                     wait_for_exit      = _c_doc[WAIT_FOR_EXIT].as<bool>();
         int                      expected_exit_code = _c_doc[EXPECTED_EXIT_CODE].as<int>();
         bool                     mandatory          = _c_doc[MANDATORY].as<bool>();
         std::vector<std::string> deps;
         for (auto req : _c_doc[REQUIRES]) deps.push_back(req.as<std::string>());
-        return {name, description, exec_start, wait_for_exit, expected_exit_code, mandatory, deps};
+        return {.name               = name,
+                .description        = description,
+                .exec_start         = exec_start,
+                .wait_for_exit      = wait_for_exit,
+                .expected_exit_code = expected_exit_code,
+                .mandatory          = mandatory,
+                .dependencies       = deps};
     }
 
     auto ServiceLoader::load_services(const std::string& directory) -> std::vector<Service> {

@@ -16,7 +16,7 @@
 
 #include <iostream>
 
-int main(const int argc, char* argv[]) {
+auto main(const int argc, char* argv[]) -> int {
     for (int i = 1; i < argc; i++) // Skip the application path
         std::cout << argv[i] << (i < argc - 1 ? " " : "");
     std::cout << std::endl;

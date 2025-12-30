@@ -58,47 +58,46 @@ namespace Crucible {
     struct Token {
         TokenType   type;
         std::string text; // Value of the token e.g. "hi"
-        int position; // Start index of this token relative to the input e.g "123 hi" -> Token "hi",
-                      // character=4
+        size_t position;  // Start index of this token relative to the input e.g "123 hi" -> Token
+                         // "hi", character=4
     };
 
     class Lexer {
-        static constexpr size_t BUF_SIZE = 64;
+        static constexpr size_t BUF_SIZE                  = 64;
+        static constexpr size_t NON_PRINTABLE_ASCII_LIMIT = 32;
 
         std::string _input;
-        int         _cursor;
+        size_t      _cursor{0};
 
         std::vector<Token> _token_buffer;
 
-        // OLD STUFF
-        bool  _skip_ws;
         Token _current_token;
         Token _next_token;
 
-        static bool is_digit(char c);
+        static auto is_digit(char c) -> bool;
 
-        static bool is_lower_case(char c);
+        static auto is_lower_case(char c) -> bool;
 
-        static bool is_upper_case(char c);
+        static auto is_upper_case(char c) -> bool;
 
-        static bool is_reserved(char c);
+        static auto is_reserved(char c) -> bool;
 
         // Check if c is in [a-zA-Z0-9_-]
-        static bool is_path_element(char c);
+        static auto is_path_element(char c) -> bool;
 
         // Check if c is in [a-zA-Z0-9_]
-        static bool is_identifier(char c);
+        static auto is_identifier(char c) -> bool;
 
         // Check if c is in [\'$=]
-        static bool is_esc_ch(char c);
+        static auto is_esc_ch(char c) -> bool;
 
-        bool has_more();
+        auto has_more() -> bool;
 
         // Get char at cursor then increment the cursor by one
-        char advance();
+        auto advance() -> char;
 
         // Get chat at cursor without incrementing the cursor
-        char peek();
+        auto peek() -> char;
 
         void parse_escape_code();
 
@@ -109,11 +108,11 @@ namespace Crucible {
         void scan_token();
 
       public:
-        explicit Lexer(const std::string& input);
+        explicit Lexer(std::string input);
 
-        Token next_token();
+        auto next_token() -> Token;
 
-        Token peek_token();
+        auto peek_token() -> Token;
     };
 } // namespace Crucible
 

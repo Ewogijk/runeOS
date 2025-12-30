@@ -49,34 +49,31 @@ namespace Crucible {
 
         explicit Path(char c);
 
-        explicit Path(const std::string& path);
+        explicit Path(std::string  path);
 
         /**
          * @brief Get the path separator.
          * @return
          */
-        static char get_path_separator();
+        static auto get_path_separator() -> char;
 
         /**
          *
          * @return The name of the file with file extension.
          */
-        [[nodiscard]]
-        std::string get_file_name() const;
+        [[nodiscard]] auto get_file_name() const -> std::string;
 
         /**
          *
          * @return The name of the file without the file extension.
          */
-        [[nodiscard]]
-        std::string get_file_name_without_extension() const;
+        [[nodiscard]] auto get_file_name_without_extension() const -> std::string;
 
         /**
          *
          * @return The file extension without the dot.
          */
-        [[nodiscard]]
-        std::string get_file_extension() const;
+        [[nodiscard]] auto get_file_extension() const -> std::string;
 
         /**
          * The most top level parent of each absolute path is "/" and of an relative path is "."
@@ -90,26 +87,23 @@ namespace Crucible {
          * @brief Get the parent of the path.
          * @return The parent of the path e.g. for /a/b the parent is /a.
          */
-        [[nodiscard]]
-        Path get_parent() const;
+        [[nodiscard]] auto get_parent() const -> Path;
 
         /**
          *
          * @return True if this path is the root directory, meaning "/".
          */
-        [[nodiscard]]
-        bool is_root() const;
+        [[nodiscard]] auto is_root() const -> bool;
 
         /**
          *
          * @return True if the path is absolute, e.g. /a/b.
          */
-        [[nodiscard]]
-        bool is_absolute() const;
+        [[nodiscard]] auto is_absolute() const -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         // Functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * Try to get the common parts of this path and the given path. E.g. for /a/b/c and /a/b/d
@@ -119,8 +113,7 @@ namespace Crucible {
          *
          * @return Common path of this and the other path.
          */
-        [[nodiscard]]
-        Path common_path(const Path& path) const;
+        [[nodiscard]] auto common_path(const Path& path) const -> Path;
 
         /**
          * A new path describing this path relative to the given path. The new path is still an
@@ -131,16 +124,14 @@ namespace Crucible {
          *
          * @return This path relative to the given path.
          */
-        [[nodiscard]]
-        Path relative_to(const Path& path) const;
+        [[nodiscard]] auto relative_to(const Path& path) const -> Path;
 
         /**
          * split this path along the unix path seperator.
          *
          * @return List of path components.
          */
-        [[nodiscard]]
-        std::vector<std::string> split() const;
+        [[nodiscard]] auto split() const -> std::vector<std::string>;
 
         /**
          * append the given part to this path. E.g. /a append with b will give the path /a/b.
@@ -155,8 +146,7 @@ namespace Crucible {
          *
          * @return A new path with the part appended.
          */
-        [[nodiscard]]
-        Path append(const std::string& part) const;
+        [[nodiscard]] auto append(const std::string& part) const -> Path;
 
         /**
          * Dot and dotdot entries are also expanded.
@@ -165,14 +155,12 @@ namespace Crucible {
          * @param working_dir Current working directory.
          * @return An absolute path.
          */
-        [[nodiscard]]
-        Path resolve(const Path& working_dir) const;
+        [[nodiscard]] auto resolve(const Path& working_dir) const -> Path;
 
         /**
          * @return This path as a string.
          */
-        [[nodiscard]]
-        std::string to_string() const;
+        [[nodiscard]] auto to_string() const -> std::string;
 
         /**
          * @see append(constString&) const
@@ -181,7 +169,7 @@ namespace Crucible {
          *
          * @return
          */
-        Path operator/(const std::string& part) const;
+        auto operator/(const std::string& part) const -> Path;
 
         /**
          * @see append(constString&) const
@@ -190,7 +178,7 @@ namespace Crucible {
          *
          * @return
          */
-        Path operator/(std::string&& part) const;
+        auto operator/(std::string&& part) const -> Path;
 
         /**
          * @see append(constString&) const
@@ -199,7 +187,7 @@ namespace Crucible {
          *
          * @return
          */
-        Path operator/(const Path& part) const;
+        auto operator/(const Path& part) const -> Path;
 
         /**
          * @see append(constString&) const
@@ -208,7 +196,7 @@ namespace Crucible {
          *
          * @return
          */
-        Path& operator/=(const std::string& part);
+        auto operator/=(const std::string& part) -> Path&;
 
         /**
          * @see append(constString&) const
@@ -217,7 +205,7 @@ namespace Crucible {
          *
          * @return
          */
-        Path& operator/=(std::string&& part);
+        auto operator/=(std::string&& part) -> Path&;
 
         /**
          * @see append(constString&) const
@@ -226,25 +214,25 @@ namespace Crucible {
          *
          * @return
          */
-        Path& operator/=(const Path& part);
-
-        /**
-         *
-         * @param a
-         * @param b
-         *
-         * @return True: The path string of the two paths is equal. False: Not.
-         */
-        friend bool operator==(const Path& a, const Path& b);
+        auto operator/=(const Path& part) -> Path&;
 
         /**
          *
          * @param first
-         * @param b
+         * @param second
          *
          * @return True: The path string of the two paths is equal. False: Not.
          */
-        friend bool operator!=(const Path& first, const Path& b);
+        friend auto operator==(const Path& first, const Path& second) -> bool;
+
+        /**
+         *
+         * @param first
+         * @param second
+         *
+         * @return True: The path string of the two paths is equal. False: Not.
+         */
+        friend auto operator!=(const Path& first, const Path& second) -> bool;
     };
 } // namespace Crucible
 

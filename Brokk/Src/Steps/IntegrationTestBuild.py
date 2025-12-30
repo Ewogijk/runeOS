@@ -42,4 +42,4 @@ class IntegrationTestBuildStep(Build.BuildStep):
         cross_file = project_root / "Brokk" / "Build" / f"{arch}-{build}" / "x86_64-rune.txt"
         src_dir = project_root / "Kernel" / "Src" / "Test"
         build_dir = project_root / "Kernel" / "Build" / f"{arch}-{build}" / "IntegrationTest"
-        return Build.meson_build(src_dir, cross_file, build_dir)
+        return Build.with_meson(src_dir, cross_file, build_dir)

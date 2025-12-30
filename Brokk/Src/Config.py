@@ -18,15 +18,14 @@ from types import NoneType
 
 import yaml
 
-
 class BrokkConfig(Enum):
     """Keys of the settings in the Brokk config file."""
 
     ARCH = (auto(),)
     BUILD = (auto(),)
     QEMU_HOST = (auto(),)
-    FREESTANDING_COMPILER = (auto(),)
-    HOSTED_COMPILER = (auto(),)
+    SYSROOT_X64_ELF = (auto(),)
+    SYSROOT_X64_RUNE = (auto(),)
     IMAGE_SIZE = (auto(),)
     SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)
@@ -60,6 +59,7 @@ class BuildConfig(Enum):
     SYSTEM_LOADER = (auto(),)
     FILES = (auto(),)
     APPS = (auto(),)
+    SYSROOT_X64_RUNE = (auto(),)
 
     def to_yaml_key(self) -> str:
         """
@@ -109,10 +109,11 @@ def load_brokk_config(brokk_config_yaml: str) -> dict[str, Any]:
         "arch": [str],
         "build": [str],
         "qemu-host": [bool],
-        "freestanding-compiler": [str],
+        "sysroot-x64-elf": [str],
+        "sysroot-x64-rune": [str],
         "image-size": [int],
         "system-loader": [str],
-        "files": [dict],
+        "files": [dict, NoneType],
         "apps": [list, NoneType],
     }
     for key, expected_types in config_keys.items():
@@ -151,26 +152,36 @@ def load_build_config(build_config_yaml: str) -> dict[str, Any]:
         cfg = yaml.safe_load(f)
 
     config_keys = {
-        "project-root": str,
-        "arch": str,
-        "build": str,
-        "qemu-host": bool,
-        "c": str,
-        "cpp": str,
-        "crt-begin": str,
-        "crt-end": str,
-        "image-size": int,
+        "apps": [list, NoneType],
+        "arch": [str],
+        "build": [str],
+        "c": [str],
+        "cpp": [str],
+        "crt-begin": [str],
+        "crt-end": [str],
+        "files": [dict, NoneType],
+        "image-size": [int],
+        "project-root": [str],
+        "qemu-host": [bool],
+        "sysroot-x64-rune": [str],
+        "system-loader": [str],
     }
-    for key, expected_type in config_keys.items():
+    for key, expected_types in config_keys.items():
         if key not in cfg:
             print(f"Missing required key: {key}")
             return {}
 
         value = cfg[key]
-        if not isinstance(value, expected_type):
+        has_expected_type = False
+        for et in expected_types:
+            if isinstance(value, et):
+                has_expected_type = True
+                break
+        if not has_expected_type:
             print(
-                f"Key '{key}' has wrong type: expected {expected_type.__name__}, "
+                f"Key '{key}' has wrong type: expected {expected_types}, "
                 f"got {type(value).__name__}"
             )
             return {}
+
     return cfg

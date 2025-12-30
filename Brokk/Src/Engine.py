@@ -100,14 +100,14 @@ def configure(brokk_config_yaml: str) -> bool:
         print_err(f"'{build_dir}': Cannot create build directory.")
         return False
 
-    freestanding_compiler = Path(brokk_config[BrokkConfig.FREESTANDING_COMPILER.to_yaml_key()])
-    if not freestanding_compiler.exists():
-        print_err(f"'{freestanding_compiler}': Freestanding compiler not found.")
+    sysroot_x64_elf = Path(brokk_config[BrokkConfig.SYSROOT_X64_ELF.to_yaml_key()])
+    if not sysroot_x64_elf.exists():
+        print_err(f"'{sysroot_x64_elf}': System root of x86_64-elf compiler not found.")
         return False
 
-    hosted_compiler = Path(brokk_config[BrokkConfig.HOSTED_COMPILER.to_yaml_key()])
-    if not hosted_compiler.exists():
-        print_err(f"'{hosted_compiler}': Hosted compiler not found.")
+    sysroot_x64_rune = Path(brokk_config[BrokkConfig.SYSROOT_X64_RUNE.to_yaml_key()])
+    if not sysroot_x64_rune.exists():
+        print_err(f"'{sysroot_x64_rune}': System root of x86_64-rune compiler not found.")
         return False
 
     image_size = brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()]
@@ -118,9 +118,16 @@ def configure(brokk_config_yaml: str) -> bool:
     cross_file = build_dir / "x86_64-rune.txt"
     cross_file_content = [
         "[binaries]\n",
-        f"c = '{hosted_compiler}/bin/x86_64-rune-gcc'\n",
-        f"cpp = '{hosted_compiler}/bin/x86_64-rune-g++'\n",
-        f"strip = '{hosted_compiler}/bin/x86_64-rune-strip'\n",
+        f"c = '{sysroot_x64_rune}/bin/x86_64-rune-gcc'\n",
+        f"cpp = '{sysroot_x64_rune}/bin/x86_64-rune-g++'\n",
+        f"strip = '{sysroot_x64_rune}/bin/x86_64-rune-strip'\n",
+        "\n",
+        "[built-in options]\n",
+        "# --sysroot -> Is required by clang-tidy to find libc system headers\n",
+        "# -mincoming-stack-boundary=3 -> Needed for 16byte stack alignment required by some "
+        "assembly instructions\n",
+        f"c_args = ['--sysroot={sysroot_x64_rune}', '-mincoming-stack-boundary=3']\n",
+        f"cpp_args = ['--sysroot={sysroot_x64_rune}', '-mincoming-stack-boundary=3']\n",
         "\n",
         "[host_machine]\n",
         "system = 'rune'\n",
@@ -142,13 +149,13 @@ def configure(brokk_config_yaml: str) -> bool:
         BuildConfig.QEMU_HOST.to_yaml_key(): True
         if brokk_config[BrokkConfig.QEMU_HOST.to_yaml_key()]
         else False,
-        BuildConfig.C.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-gcc"),
-        BuildConfig.CPP.to_yaml_key(): str(freestanding_compiler / "bin" / "x86_64-elf-g++"),
+        BuildConfig.C.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-gcc"),
+        BuildConfig.CPP.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-g++"),
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(
-            freestanding_compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtbegin.o"
+            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtbegin.o"
         ),
         BuildConfig.CRT_END.to_yaml_key(): str(
-            freestanding_compiler / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
+            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
         ),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
         BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[
@@ -156,6 +163,7 @@ def configure(brokk_config_yaml: str) -> bool:
         ],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
         BuildConfig.APPS.to_yaml_key(): apps if apps else [],
+        BuildConfig.SYSROOT_X64_RUNE.to_yaml_key(): str(sysroot_x64_rune),
     }
 
     build_settings_file = build_dir / Config.BUILD_CONFIG_YAML

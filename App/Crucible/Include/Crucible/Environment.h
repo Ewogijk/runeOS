@@ -29,7 +29,7 @@
 
 template <>
 struct std::hash<Ember::VirtualKey> {
-    std::size_t operator()(const Ember::VirtualKey& s) const noexcept {
+    auto operator()(const Ember::VirtualKey& s) const noexcept -> std::size_t {
         return std::hash<U16>{}(s.get_key_code());
     }
 };
@@ -54,14 +54,12 @@ namespace Crucible {
         /**
          * @brief All currently defined environment variables in the shell.
          */
-        std::unordered_map<std::string, std::string> env_var_table =
-            std::unordered_map<std::string, std::string>();
+        std::unordered_map<std::string, std::string> env_var_table;
 
         /**
          * @brief Contains all built-in commands of the shell.
          */
-        std::unordered_map<std::string, BuiltInCommand> command_table =
-            std::unordered_map<std::string, BuiltInCommand>();
+        std::unordered_map<std::string, BuiltInCommand> command_table;
 
         /**
          * @brief Contains all actions bound to non-ascii key presses e.g arrow up.
@@ -74,7 +72,7 @@ namespace Crucible {
          *
          * @brief The command history contains all user input that has been executed (or tried to).
          */
-        std::vector<std::string> command_history = std::vector<std::string>();
+        std::vector<std::string> command_history;
 
         /**
          * If command_history_cursor >= command_history.size() -> The input buffer shall be
@@ -93,7 +91,7 @@ namespace Crucible {
          * @brief A buffer for the input the user is writing currently aka the last line in the
          * terminal.
          */
-        char   input_buffer[INPUT_BUFFER_LIMIT];
+        std::array<char, INPUT_BUFFER_LIMIT> input_buffer{};
         U8     input_buffer_size   = 0; // Number of characters in the buffer
         size_t input_buffer_cursor = 0; // Cursor position in the buffer
 

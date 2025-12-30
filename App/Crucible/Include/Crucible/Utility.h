@@ -20,9 +20,9 @@
 #include <vector>
 
 namespace Crucible {
-    std::vector<std::string> str_split(const std::string& s, char delimiter);
+    auto str_split(const std::string& s, char delimiter) -> std::vector<std::string>;
 
-    bool str_is_prefix(const std::string& prefix, const std::string& word);
+    auto str_is_prefix(const std::string& prefix, const std::string& word) -> bool;
 } // namespace Crucible
 
 #endif // CRUCIBLE_UTILITY_H

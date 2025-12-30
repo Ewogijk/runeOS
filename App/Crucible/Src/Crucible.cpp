@@ -26,7 +26,7 @@
 #include <iostream>
 
 namespace Crucible {
-    int main(const int argc, char* argv[]) {
+    auto main(const int argc, char* argv[]) -> int {
         SILENCE_UNUSED(argc)
         SILENCE_UNUSED(argv)
 
