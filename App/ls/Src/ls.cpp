@@ -87,7 +87,10 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
             if (node_info.is_readonly()) {
                 attr[3] = 'R';
             }
-            std::cout << std::format("{:<10} {:<15} {}", attr.data(), node_info.size, node_info.node_path)
+            std::cout << std::format("{:<10} {:<15} {}",
+                                     attr.data(),
+                                     node_info.size,
+                                     node_info.node_path)
                       << std::endl;
         } else {
             std::cout << node_info.node_path << std::endl;

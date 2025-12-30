@@ -118,8 +118,8 @@ namespace Crucible {
                                 std::cout << ch;
                                 std::cout.flush();
                                 if (_env.input_buffer_size > 0) {
-                                    auto cmd =
-                                        std::string(_env.input_buffer.data(), _env.input_buffer_size);
+                                    auto cmd = std::string(_env.input_buffer.data(),
+                                                           _env.input_buffer_size);
                                     _env.command_history.push_back(cmd);
                                     _env.command_history_cursor = _env.command_history.size();
                                     exec(cmd);
