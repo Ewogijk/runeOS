@@ -61,15 +61,17 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
         file.write("        constexpr U8 GDT_OFFSET = 0x08;\n")
         file.write("        // NOLINTBEGIN\n")
         for i in range(0, 256):
-            file.writelines([
-                f"        idt_set({i},\n"
-                f"                reinterpret_cast<void*>(ISR{i}),\n"
-                f"                GDT_OFFSET,\n"
-                f"                0,\n"
-                f"                GateType::INTERRUPT_GATE,\n"
-                f"                0,\n"
-                f"                false);\n"
-            ])
+            file.writelines(
+                [
+                    f"        idt_set({i},\n"
+                    f"                reinterpret_cast<void*>(ISR{i}),\n"
+                    f"                GDT_OFFSET,\n"
+                    f"                0,\n"
+                    f"                GateType::INTERRUPT_GATE,\n"
+                    f"                0,\n"
+                    f"                false);\n"
+                ]
+            )
 
         file.write("        // NOLINTEND\n")
         file.write("    }\n")
