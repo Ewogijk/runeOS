@@ -29,7 +29,8 @@ namespace Crucible {
         std::vector<std::string> _builtin_command_vocabulary;
         std::vector<std::string> _path_vocabulary;
 
-        static bool list_directory(const std::string& directory, std::vector<Ember::NodeInfo>& out);
+        static auto list_directory(const std::string& directory, std::vector<Ember::NodeInfo>& out)
+            -> bool;
 
       public:
         /**
@@ -37,18 +38,19 @@ namespace Crucible {
          * @param builtin_commands
          * @param path_variables
          */
-        bool init_vocabulary(const std::vector<std::string>& builtin_commands,
-                             const std::vector<std::string>& path_variables);
+        auto init_vocabulary(const std::vector<std::string>& builtin_commands,
+                             const std::vector<std::string>& path_variables) -> bool;
 
         /**
          * @brief
          * @param command_prefix
          * @return
          */
-        std::vector<std::string> auto_complete_command(const std::string& command_prefix) const;
+        [[nodiscard]] auto auto_complete_command(const std::string& command_prefix) const
+            -> std::vector<std::string>;
 
-        std::vector<std::string> auto_complete_node(const Path& working_dir,
-                                                    const Path& node_prefix);
+        auto auto_complete_node(const Path& working_dir, const Path& node_prefix)
+            -> std::vector<std::string>;
     };
 } // namespace Crucible
 

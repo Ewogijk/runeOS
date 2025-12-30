@@ -17,7 +17,7 @@
 #include <sstream>
 
 namespace Crucible {
-    std::vector<std::string> str_split(const std::string& s, char delimiter) {
+    auto str_split(const std::string& s, char delimiter) -> std::vector<std::string> {
         std::vector<std::string> tokens;
         std::istringstream       tokenStream(s);
         std::string              token;
@@ -25,7 +25,7 @@ namespace Crucible {
         return tokens;
     }
 
-    bool str_is_prefix(const std::string& prefix, const std::string& word) {
+    auto str_is_prefix(const std::string& prefix, const std::string& word) -> bool {
         auto [fst, snd] = std::mismatch(prefix.begin(), prefix.end(), word.begin());
         return fst == prefix.end();
     }

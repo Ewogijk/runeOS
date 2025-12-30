@@ -27,7 +27,7 @@ namespace Crucible {
      * @param shell_env
      * @return
      */
-    int cd(int argc, char* argv[], Environment& shell_env);
+    auto cd(int argc, char* argv[], Environment& shell_env) -> int; // NOLINT
 
     /**
      * @brief Print the working directory of the shell interpreter.
@@ -36,7 +36,7 @@ namespace Crucible {
      * @param shell_env
      * @return
      */
-    int pwd(int argc, char* argv[], const Environment& shell_env);
+    auto pwd(int argc, char* argv[], const Environment& shell_env) -> int; // NOLINT
 
     /**
      * @brief Clear the terminal screen.
@@ -45,7 +45,7 @@ namespace Crucible {
      * @param shell_env
      * @return
      */
-    int clear(int argc, char* argv[], const Environment& shell_env);
+    auto clear(int argc, char* argv[], const Environment& shell_env) -> int; // NOLINT
 
     /**
      * @brief Print the shell help menu.
@@ -54,7 +54,7 @@ namespace Crucible {
      * @param shell_env
      * @return
      */
-    int help(int argc, char* argv[], const Environment& shell_env);
+    auto help(int argc, char* argv[], const Environment& shell_env) -> int; // NOLINT
 
     /**
      * @brief Add all built-in shell commands to the command table of the shell env.

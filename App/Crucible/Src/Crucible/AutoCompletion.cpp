@@ -24,8 +24,9 @@
 #include <Crucible/Utility.h>
 
 namespace Crucible {
-    bool AutoCompletion::list_directory(const std::string&            directory,
-                                        std::vector<Ember::NodeInfo>& out) {
+
+    auto AutoCompletion::list_directory(const std::string&            directory,
+                                        std::vector<Ember::NodeInfo>& out) -> bool {
         const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(directory.c_str());
         if (dir_stream_ID < Ember::Status::OKAY) return false;
 
@@ -41,11 +42,11 @@ namespace Crucible {
         return true;
     }
 
-    bool AutoCompletion::init_vocabulary(const std::vector<std::string>& builtin_commands,
-                                         const std::vector<std::string>& path_variables) {
+    auto AutoCompletion::init_vocabulary(const std::vector<std::string>& builtin_commands,
+                                         const std::vector<std::string>& path_variables) -> bool {
         _builtin_command_vocabulary = builtin_commands;
 
-        for (auto& path : path_variables) {
+        for (const auto& path : path_variables) {
             std::vector<Ember::NodeInfo> dir_content;
             if (!list_directory(path, dir_content)) return false;
 
@@ -61,10 +62,10 @@ namespace Crucible {
         return true;
     }
 
-    std::vector<std::string>
-    AutoCompletion::auto_complete_command(const std::string& command_prefix) const {
+    auto AutoCompletion::auto_complete_command(const std::string& command_prefix) const
+        -> std::vector<std::string> {
         std::vector<std::string> word_list;
-        for (auto& b_cmd : _builtin_command_vocabulary)
+        for (const auto& b_cmd : _builtin_command_vocabulary)
             if (str_is_prefix(command_prefix, b_cmd)) word_list.push_back(b_cmd);
 
         for (auto cmd : _path_vocabulary)
@@ -73,8 +74,8 @@ namespace Crucible {
         return word_list;
     }
 
-    std::vector<std::string> AutoCompletion::auto_complete_node(const Path& working_dir,
-                                                                const Path& node_prefix) {
+    auto AutoCompletion::auto_complete_node(const Path& working_dir, // NOLINT
+                                            const Path& node_prefix) -> std::vector<std::string> {
         Ember::NodeInfo node_info;
         std::string     node_prefix_str      = node_prefix.to_string();
         const bool      is_node_prefix_empty = node_prefix_str.empty();
@@ -83,8 +84,7 @@ namespace Crucible {
             const Ember::StatusCode ret =
                 Forge::vfs_get_node_info(node_prefix_str.c_str(), &node_info);
             const bool node_exists = ret >= 0;
-            if (!node_exists && ret != Ember::Status::NODE_NOT_FOUND)
-                return std::vector<std::string>();
+            if (!node_exists && ret != Ember::Status::NODE_NOT_FOUND) return {};
 
             if (node_exists) {
                 if (const size_t node_prefix_size = node_prefix_str.size();
@@ -127,7 +127,7 @@ namespace Crucible {
 
         // List the search directory content
         std::vector<Ember::NodeInfo> dir_content;
-        if (!list_directory(search_dir.to_string(), dir_content)) return std::vector<std::string>();
+        if (!list_directory(search_dir.to_string(), dir_content)) return {};
 
         // Perform the prefix search on directory listing
         const std::string node_prefix_file_name     = node_prefix.get_file_name();

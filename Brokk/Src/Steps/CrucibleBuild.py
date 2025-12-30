@@ -41,4 +41,9 @@ class CrucibleBuildStep(Build.BuildStep):
         build = build_conf[BuildConfig.BUILD.to_yaml_key()]
         cross_file = project_root / "Brokk" / "Build" / f"{arch}-{build}" / "x86_64-rune.txt"
         src_dir = project_root / "App" / "Crucible"
-        return Build.meson_build(src_dir, cross_file, src_dir / "Build")
+        if not Build.with_meson(src_dir, cross_file, src_dir / "Build"):
+            return False
+
+        sys_root = Path(build_conf[BuildConfig.SYSROOT_X64_RUNE.to_yaml_key()])
+        compilation_database = src_dir / "Build" / "compile_commands.json"
+        return Build.post_process_compilation_database(compilation_database, sys_root, True)

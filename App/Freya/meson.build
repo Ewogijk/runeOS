@@ -1,6 +1,4 @@
 project('Freya', 'cpp', default_options : ['cpp_std=c++20'])
-add_project_arguments('-mincoming-stack-boundary=3', language : 'c')
-add_project_arguments('-mincoming-stack-boundary=3', language : 'cpp')
 
 inc = [
     'include'

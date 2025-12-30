@@ -20,10 +20,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <array>
 
 constexpr U16 BUF_SIZE = 4096;
 
-std::vector<std::string> str_split(const std::string& s, const char delimiter) {
+auto str_split(const std::string& s, const char delimiter) -> std::vector<std::string> {
     std::vector<std::string> tokens;
     std::istringstream       tokenStream(s);
     std::string              token;
@@ -32,19 +33,19 @@ std::vector<std::string> str_split(const std::string& s, const char delimiter) {
 }
 
 struct CLIArgs {
-    std::string src_path  = "";
-    std::string dest_path = "";
+    std::string src_path;
+    std::string dest_path;
 
     bool help      = false;
     bool recursive = false;
 };
 
-bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
+auto parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) -> bool { // NOLINT
     bool src_found  = false;
     bool dest_found = false;
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.size() == 0) continue;
+        if (arg.empty()) continue;
 
         if (arg[0] == '-') {
             for (size_t j = 1; j < arg.size(); j++) {
@@ -87,7 +88,7 @@ bool parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) {
  *           0: The node does not exist.
  *          -1: An error happened.
  */
-int get_node_info(const std::string& node, Ember::NodeInfo& out) {
+auto get_node_info(const std::string& node, Ember::NodeInfo& out) -> int {
     Ember::NodeInfo         node_info;
     const Ember::StatusCode ret          = Forge::vfs_get_node_info(node.c_str(), &node_info);
     int                     function_ret = -1;
@@ -101,7 +102,7 @@ int get_node_info(const std::string& node, Ember::NodeInfo& out) {
     return function_ret;
 }
 
-Ember::StatusCode open_node(const std::string& node_path, const Ember::IOMode io_mode) {
+auto open_node(const std::string& node_path, const Ember::IOMode io_mode) -> Ember::StatusCode {
     const Ember::StatusCode file_ID = Forge::vfs_open(node_path.c_str(), io_mode);
     if (file_ID < Ember::Status::OKAY) {
         switch (file_ID) {
@@ -117,7 +118,7 @@ Ember::StatusCode open_node(const std::string& node_path, const Ember::IOMode io
     return file_ID;
 }
 
-bool create_node(const std::string& node_path, const U8 attr) {
+auto create_node(const std::string& node_path, const U8 attr) -> bool {
     const Ember::StatusCode ret = Forge::vfs_create(node_path.c_str(), attr);
     switch (ret) {
         case Ember::Status::BAD_ARG:
@@ -134,7 +135,7 @@ bool create_node(const std::string& node_path, const U8 attr) {
     return ret >= 0;
 }
 
-bool delete_node(const std::string& node_path) {
+auto delete_node(const std::string& node_path) -> bool {
     if (const Ember::StatusCode ret = Forge::vfs_delete(node_path.c_str());
         ret < Ember::Status::OKAY) {
         if (ret == Ember::Status::NODE_IN_USE)
@@ -155,7 +156,7 @@ void close_node(const Ember::StatusCode node_ID) {
     //   Ember::Status::UNKNOWN_ID -> No node with the ID was found
 }
 
-bool copy_file_content(const std::string& src, const std::string& dest) {
+auto copy_file_content(const std::string& src, const std::string& dest) -> bool {
     std::string     dest_node = dest;
     Ember::NodeInfo dest_node_info;
     if (get_node_info(dest, dest_node_info) < 0) return false;
@@ -174,10 +175,10 @@ bool copy_file_content(const std::string& src, const std::string& dest) {
     const Ember::StatusCode dest_file_ID = open_node(dest_node, Ember::IOMode::WRITE);
     if (dest_file_ID < Ember::Status::OKAY) return false;
 
-    U8                buf[BUF_SIZE];
-    Ember::StatusCode bytes_read = Forge::vfs_read(src_file_ID, buf, BUF_SIZE);
+    std::array<U8, BUF_SIZE> buf{};
+    Ember::StatusCode bytes_read = Forge::vfs_read(src_file_ID, buf.data(), BUF_SIZE);
     while (bytes_read > 0) {
-        if (const Ember::StatusCode bytes_written = Forge::vfs_write(dest_file_ID, buf, BUF_SIZE);
+        if (const Ember::StatusCode bytes_written = Forge::vfs_write(dest_file_ID, buf.data(), BUF_SIZE);
             bytes_written < 0) {
             if (bytes_written == Ember::Status::NODE_IS_DIRECTORY) {
                 std::cerr << "'" << dest_node << "': Not a file." << std::endl;
@@ -188,7 +189,7 @@ bool copy_file_content(const std::string& src, const std::string& dest) {
             close_node(dest_file_ID);
             return false;
         }
-        bytes_read = Forge::vfs_read(src_file_ID, buf, BUF_SIZE);
+        bytes_read = Forge::vfs_read(src_file_ID, buf.data(), BUF_SIZE);
     }
     if (bytes_read < 0) {
         if (bytes_read == Ember::Status::NODE_IS_DIRECTORY) {
@@ -213,7 +214,7 @@ void close_dir_stream(const S64 dir_stream_ID) {
     //   Ember::Status::UNKNOWN_ID -> No stream with the ID was found
 }
 
-bool delete_dir(const std::string& directory_path) {
+auto delete_dir(const std::string& directory_path) -> bool {
     const S64 dir_stream_ID = Forge::vfs_directory_stream_open(directory_path.c_str());
     if (dir_stream_ID < Ember::Status::OKAY) {
         std::cerr << "'" << directory_path << "': IO error." << std::endl;
@@ -251,7 +252,7 @@ bool delete_dir(const std::string& directory_path) {
     return true;
 }
 
-bool copy_dir_content(const std::string& src, const std::string& dest) {
+auto copy_dir_content(const std::string& src, const std::string& dest) -> bool {
     std::string     dest_node = dest;
     Ember::NodeInfo dest_node_info;
     if (get_node_info(dest, dest_node_info) < 0) return false;
@@ -298,7 +299,7 @@ bool copy_dir_content(const std::string& src, const std::string& dest) {
     return delete_dir(src);
 }
 
-CLINK int main(const int argc, char* argv[]) {
+CLINK auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

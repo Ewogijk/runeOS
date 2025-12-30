@@ -30,7 +30,7 @@
 #include <iostream>
 #include <string>
 
-int main(const int argc, char* argv[]) {
+auto main(const int argc, char* argv[]) -> int {
     std::cout << std::format("Freya v{}.{}.{}", MINOR, MAJOR, PATCH);
     if (!std::string(RELEASE).empty()) std::cout << std::format("-{}", RELEASE);
     std::cout << std::endl;
@@ -59,8 +59,7 @@ int main(const int argc, char* argv[]) {
     if (order) {
         Freya::ServiceStarter service_starter;
         return service_starter.start_services(registry, order.value());
-    } else {
-        std::cerr << "Cycle detected in the dependency graph" << std::endl;
-        return Freya::ExitCode::DEPENDENCY_CYCLE_DETECTED;
     }
+    std::cerr << "Cycle detected in the dependency graph" << std::endl;
+    return Freya::ExitCode::DEPENDENCY_CYCLE_DETECTED;
 }
