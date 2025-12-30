@@ -46,30 +46,37 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
         file.write(" * This file is auto generated.\n")
         file.write(" */\n\n")
 
-        file.write("#ifndef RUNEOS_ISR_STUBS_H \n")
+        file.write("#ifndef RUNEOS_ISR_STUBS_H\n")
         file.write("#define RUNEOS_ISR_STUBS_H\n\n")
 
         file.write('#include "IDT.h"\n\n')
 
         for i in range(0, 256):
             file.write(f"CLINK void ISR{i}();\n")
+        file.write("\n")
 
         file.write("namespace Rune::CPU {\n")
 
         file.write("    void init_interrupt_service_routines() {\n")
         file.write("        constexpr U8 GDT_OFFSET = 0x08;\n")
-        file.write("        //NOLINTBEGIN\n")
+        file.write("        // NOLINTBEGIN\n")
         for i in range(0, 256):
-            file.write(
-                f"        idt_set({i}, reinterpret_cast<void*>(ISR{i}), GDT_OFFSET, 0, "
-                f"GateType::INTERRUPT_GATE, 0, false);\n"
-            )
-        file.write("        //NOLINTEND\n")
+            file.writelines([
+                f"        idt_set({i},\n"
+                f"                reinterpret_cast<void*>(ISR{i}),\n"
+                f"                GDT_OFFSET,\n"
+                f"                0,\n"
+                f"                GateType::INTERRUPT_GATE,\n"
+                f"                0,\n"
+                f"                false);\n"
+            ])
+
+        file.write("        // NOLINTEND\n")
         file.write("    }\n")
 
-        file.write("}\n\n")
+        file.write("} // namespace Rune::CPU\n\n")
 
-        file.write("#endif //RUNEOS_ISR_STUBS_H")
+        file.write("#endif // RUNEOS_ISR_STUBS_H")
 
 
 if __name__ == "__main__":
