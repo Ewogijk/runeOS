@@ -33,16 +33,16 @@ def exec_shell_cmd(cmd: list[str], wd: str) -> bool:
 
 def with_meson(source_dir: Path, cross_file: Path, build_dir: Path):
     if not build_dir.exists() and not exec_shell_cmd(
-            ["meson", "setup", "--cross-file", str(cross_file), str(build_dir)],
-            str(source_dir),
+        ["meson", "setup", "--cross-file", str(cross_file), str(build_dir)],
+        str(source_dir),
     ):
         return False
     return exec_shell_cmd(["meson", "compile"], str(build_dir))
 
 
-def post_process_compilation_database(compilation_database: Path,
-                                      sys_root: Path,
-                                      need_system_headers: bool) -> bool:
+def post_process_compilation_database(
+    compilation_database: Path, sys_root: Path, need_system_headers: bool
+) -> bool:
     """
     Remove GCC only compilation flags from given compile_commands.json, so that clang-tidy does not
     report errors.
@@ -76,22 +76,19 @@ def post_process_compilation_database(compilation_database: Path,
     system_header_includes = []
     if need_system_headers:
         print("> Looking for GCC system header include directories...")
-        cmd = f"{gpp} -E -xc++ -v /dev/null".split(' ')
+        cmd = f"{gpp} -E -xc++ -v /dev/null".split(" ")
         print(f">>> {' '.join(cmd)}")
-        result = subprocess.run(cmd,
-                                input="",
-                                text=True,
-                                capture_output=True)
+        result = subprocess.run(cmd, input="", text=True, capture_output=True)
         if result.returncode != 0:
             print(result.stderr, file=sys.stderr)
             return False
 
         add_system_header = False
-        for line in result.stderr.split('\n'):
-            if 'End of search list.' in line:
+        for line in result.stderr.split("\n"):
+            if "End of search list." in line:
                 add_system_header = False
                 continue
-            if '#include <...> search starts here:' in line:
+            if "#include <...> search starts here:" in line:
                 add_system_header = True
                 continue
 
@@ -111,7 +108,7 @@ def post_process_compilation_database(compilation_database: Path,
     with open(compilation_database) as f:
         compile_database = json.load(f)
         for cmd_obj in compile_database:
-            command_list = cmd_obj['command'].split(' ')
+            command_list = cmd_obj["command"].split(" ")
 
             # Remove GCC only options
             command_list = [option for option in command_list if option not in gcc_only_options]
@@ -132,13 +129,15 @@ def post_process_compilation_database(compilation_database: Path,
                     continue
                 command_list.insert(1, f"-isystem{inc}")
 
-            cmd_obj['command'] = ' '.join(command_list)
+            cmd_obj["command"] = " ".join(command_list)
 
     with open(compilation_database, "w") as f:
         json.dump(compile_database, f, indent=2)
 
-    print(f"> {len(compile_database)} command{'s have' if len(compile_database) > 1 else ' has'}"
-          f" been modified.")
+    print(
+        f"> {len(compile_database)} command{'s have' if len(compile_database) > 1 else ' has'}"
+        f" been modified."
+    )
     return True
 
 

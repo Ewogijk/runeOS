@@ -62,9 +62,7 @@ class KernelBuildStep(Build.BuildStep):
 
         arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
         build = build_conf[BuildConfig.BUILD.to_yaml_key()]
-        compilation_database = (project_root
-                                / "Kernel"
-                                / "Build"
-                                / f"{arch}-{build}"
-                                / "compile_commands.json")
+        compilation_database = (
+            project_root / "Kernel" / "Build" / f"{arch}-{build}" / "compile_commands.json"
+        )
         return Build.post_process_compilation_database(str(compilation_database), Path(""), False)
