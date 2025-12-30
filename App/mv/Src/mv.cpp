@@ -16,11 +16,11 @@
 
 #include <Forge/VFS.h>
 
+#include <array>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <array>
 
 constexpr U16 BUF_SIZE = 4096;
 
@@ -176,9 +176,10 @@ auto copy_file_content(const std::string& src, const std::string& dest) -> bool 
     if (dest_file_ID < Ember::Status::OKAY) return false;
 
     std::array<U8, BUF_SIZE> buf{};
-    Ember::StatusCode bytes_read = Forge::vfs_read(src_file_ID, buf.data(), BUF_SIZE);
+    Ember::StatusCode        bytes_read = Forge::vfs_read(src_file_ID, buf.data(), BUF_SIZE);
     while (bytes_read > 0) {
-        if (const Ember::StatusCode bytes_written = Forge::vfs_write(dest_file_ID, buf.data(), BUF_SIZE);
+        if (const Ember::StatusCode bytes_written =
+                Forge::vfs_write(dest_file_ID, buf.data(), BUF_SIZE);
             bytes_written < 0) {
             if (bytes_written == Ember::Status::NODE_IS_DIRECTORY) {
                 std::cerr << "'" << dest_node << "': Not a file." << std::endl;
