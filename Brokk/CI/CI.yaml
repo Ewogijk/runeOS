@@ -11,12 +11,10 @@ build: ci
 # If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
 # related debugging features.
 qemu-host: yes
-# The path to the installation directory of the freestanding compiler from the runeToolchain. It
-# will be used to compile the kernel.
-freestanding-compiler: /opt/runeToolchain/x86_64-elf
-# The path to the installation directory of the hosted compiler from the runeToolchain. It will be
-# used to compile apps.
-hosted-compiler: /opt/runeToolchain/x86_64-rune
+# The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
+sysroot-x64-elf: /opt/runeToolchain/x86_64-elf
+# The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
+sysroot-x64-rune: /opt/runeToolchain/x86_64-rune
 # The runeOS image size in MiB
 image-size: 256
 # The absolute path to the system loader on the runeOS image
