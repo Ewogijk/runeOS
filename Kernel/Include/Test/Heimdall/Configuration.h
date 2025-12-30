@@ -46,7 +46,7 @@ namespace Heimdall {
         friend void swap(OptionList& fst, OptionList& sec) noexcept;
 
         [[nodiscard]] auto size() const -> size_t;
-        void               insert(const Option& test);
+        void               insert(const Option& option);
         auto               operator[](size_t index) const -> Option;
     };
 
