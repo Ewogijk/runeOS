@@ -25,7 +25,7 @@ namespace Heimdall {
 
     /// @brief The ConsoleReporter prints a test report in a human-readable format to the console
     class ConsoleReporter : public Reporter {
-        static constexpr size_t TAG_WIDTH = 10;
+        static constexpr int TAG_WIDTH = 10;
 
         static auto pad(const HString& text, unsigned char fill, bool left) -> HString;
         static void write_tag(const HString& tag, const HString& text, Color color, bool pad_pos);
