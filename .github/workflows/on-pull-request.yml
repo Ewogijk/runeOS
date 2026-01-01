@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install System & Python Dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb
+          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb clang-format-19
           pip install scons click meson pyyaml
       - name: Download runeToolchain
         id: rune_toolchain_download

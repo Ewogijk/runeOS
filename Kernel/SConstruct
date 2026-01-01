@@ -217,7 +217,7 @@ if not GetOption("clean"):
     target_env.Command(
         "Include/KRE/Build.h",
         ["BuildTools/GenerateBuildHeader.py", "BuildTools/BuildHReplacements.json"],
-        "python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json",
+        "python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json && clang-format-19 $TARGET -i",
     )
 
 ######################################################################################################
