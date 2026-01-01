@@ -18,14 +18,14 @@
 
 namespace Heimdall {
     auto ConsoleReporter::pad(const HString& text, unsigned char fill, bool left) -> HString {
-        size_t size_diff = TAG_WIDTH - text.size();
+        int size_diff = TAG_WIDTH - static_cast<int>(text.size());
         if (size_diff < 0) return text;
         HString out;
         if (left) {
             out = text;
-            for (size_t i = 0; i < size_diff; i++) out = out + fill; // NOLINT
+            for (int i = 0; i < size_diff; i++) out = out + fill; // NOLINT
         } else {
-            for (size_t i = 0; i < size_diff; i++) out = out + fill; // NOLINT
+            for (int i = 0; i < size_diff; i++) out = out + fill; // NOLINT
             out = out + text;
         }
         return out;

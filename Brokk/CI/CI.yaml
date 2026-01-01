@@ -32,3 +32,11 @@ files:
 # A list of apps that will be preinstalled in the /Apps directory on the runeOS image
 # The apps will be build if necessary and then copied to /Apps on the image
 apps:
+  - cat
+  - cp
+  - echo
+  - ls
+  - mkdir
+  - mv
+  - rm
+  - touch

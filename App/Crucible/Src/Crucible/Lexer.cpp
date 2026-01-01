@@ -43,7 +43,7 @@ namespace Crucible {
 
     auto Lexer::is_path_element(char c) -> bool {
         // Allow every char except not printable chars and reserved chars
-        return c > NON_PRINTABLE_ASCII_LIMIT && !is_reserved(c);
+        return static_cast<size_t>(c) > NON_PRINTABLE_ASCII_LIMIT && !is_reserved(c);
     }
 
     auto Lexer::is_identifier(char c) -> bool {

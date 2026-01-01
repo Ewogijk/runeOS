@@ -22,13 +22,16 @@
 #ifndef RUNEOS_BUILD_INFO_H
 #define RUNEOS_BUILD_INFO_H
 
-#define MAJOR         0                         // The kernel major version
-#define MINOR         2                         // The kernel minor version
-#define PATCH         0                         // The kernel patch version
-#define PRERELEASE    ""                        // The kernel prerelease version
-#define SYSTEM_LOADER "/System/Freya/Freya.app" // The absolute path to the OS executable
-#define ARCH          x86_64                    // Target architecture of the kernel.
-#define BIT64                                   // Activate 64-bit related features
-#define QEMU_HOST                               // Enable Qemu related debugging features.
 
-#endif // RUNEOS_BUILD_INFO_H
+#define MAJOR 0                     // The kernel major version
+#define MINOR 2                     // The kernel minor version
+#define PATCH 0                     // The kernel patch version
+#define PRERELEASE ""               // The kernel prerelease version
+#define SYSTEM_LOADER "/System/Freya/Freya.app"  // The absolute path to the OS executable
+#define ARCH x86_64 // Target architecture of the kernel.
+#define BIT64 //Activate 64-bit related features
+#define QEMU_HOST // Enable Qemu related debugging features.
+#define RUN_UNIT_TESTS // Execute the kernel unit tests.
+#define SHUTDOWN_ON_SYSTEM_LOADER_EXIT // Shutdown the system when the system loader exits unexpectedly.
+
+#endif //RUNEOS_BUILD_INFO_H
