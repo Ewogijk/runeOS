@@ -1,34 +1,42 @@
 # Target architecture of the kernel. One of: [x86_64]
 arch: x86_64
 # The build type. One of: [release, debug, test, ci]
-# Type      Packaging                               Testing
+# Type      Deployment                              Testing
 # ===============================================================================
 # release   No scripts and binaries for debugging   No unit and integration tests are run
 # debug     With scripts and binaries for debugging No unit and integration tests are run
-# test      No scripts and binaries for debugging   Run unit and integration testing then halt
-# ci        No scripts and binaries for debugging   Run unit and integration testing then shutdown
+# test      No scripts and binaries for debugging   Run unit and integration testing then halt OS
+# ci        No scripts and binaries for debugging   Run unit and integration testing then shutdown OS
 build: debug
 # If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
 # related debugging features.
 qemu-host: yes
 # The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
-sysroot-x64-elf: /path/to/sysroot
-# The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
-sysroot-x64-rune: /path/to/sysroot
+sysroot-x64-elf: <absolute-path-to-sysroot>
+# The path to the system root of the x86_64-rune GCC compiler from the runeToolchain.
+sysroot-x64-rune: <absolute-path-to-sysroot>
 # The runeOS image size in MiB
 image-size: 256
 # The absolute path to the system loader on the runeOS image
 # During boot the kernel will look for the system loader and panic if it cannot find it
-system-loader: /path/to/systemloader/on/the/image
+system-loader: /System/Freya/Freya.app
 # A list of local files that should be copied to the runeOS image
 # Src is the local file that will be copied to Dest/Src on the runeOS image
 # e.g. given /my/local/file: /on/the/image would be copied to the /on/the/image/file path on the
 # image
 # Note: Make sure to copy at least the system loader to the image!
 files:
-  systemloader/executable: systemloader/directory
+  <project-root>/App/Freya/Build/Freya.app: /System/Freya
+  <project-root>/App/Crucible/Build/Crucible.app: /System/Crucible
+  <project-root>/App/Crucible/Crucible.service: /System/Freya/Services
 # A list of apps that will be preinstalled in the /Apps directory on the runeOS image
 # The apps will be build if necessary and then copied to /Apps on the image
 apps:
   - cat
   - cp
+  - echo
+  - ls
+  - mkdir
+  - mv
+  - rm
+  - touch
