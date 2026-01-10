@@ -122,7 +122,7 @@ def configure(brokk_config_yaml: str) -> bool:
     with open(cross_file_template.resolve()) as f:
         cross_file_template_content = "".join(f.readlines())
     cross_file_content = cross_file_template_content.replace("SYSROOT", str(sysroot_x64_rune))
-    for line in cross_file_content.split('\n'):
+    for line in cross_file_content.split("\n"):
         print(f"    {line}")
     with open(cross_file, "w") as f:
         f.write(cross_file_content)
