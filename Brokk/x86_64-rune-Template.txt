@@ -1,0 +1,16 @@
+[binaries]
+c = 'SYSROOT/bin/x86_64-rune-gcc'
+cpp = 'SYSROOT/bin/x86_64-rune-g++'
+strip = 'SYSROOT/bin/x86_64-rune-strip'
+
+[built-in options]
+# --sysroot -> Is required by clang-tidy to find libc system headers
+# -mincoming-stack-boundary=3 -> Needed for 16byte stack alignment required by some assembly instructions
+c_args = ['--sysroot=SYSROOT', '-mincoming-stack-boundary=3']
+cpp_args = ['--sysroot=SYSROOT', '-mincoming-stack-boundary=3']
+
+[host_machine]
+system = 'rune'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'

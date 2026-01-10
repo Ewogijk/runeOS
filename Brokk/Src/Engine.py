@@ -116,30 +116,16 @@ def configure(brokk_config_yaml: str) -> bool:
         return False
 
     cross_file = build_dir / "x86_64-rune.txt"
-    cross_file_content = [
-        "[binaries]\n",
-        f"c = '{sysroot_x64_rune}/bin/x86_64-rune-gcc'\n",
-        f"cpp = '{sysroot_x64_rune}/bin/x86_64-rune-g++'\n",
-        f"strip = '{sysroot_x64_rune}/bin/x86_64-rune-strip'\n",
-        "\n",
-        "[built-in options]\n",
-        "# --sysroot -> Is required by clang-tidy to find libc system headers\n",
-        "# -mincoming-stack-boundary=3 -> Needed for 16byte stack alignment required by some "
-        "assembly instructions\n",
-        f"c_args = ['--sysroot={sysroot_x64_rune}', '-mincoming-stack-boundary=3']\n",
-        f"cpp_args = ['--sysroot={sysroot_x64_rune}', '-mincoming-stack-boundary=3']\n",
-        "\n",
-        "[host_machine]\n",
-        "system = 'rune'\n",
-        "cpu_family = 'x86_64'\n",
-        "cpu = 'x86_64'\n",
-        "endian = 'little'\n",
-    ]
+    cross_file_template = Path("x86_64-rune-Template.txt")
     print_msg(f"Create meson cross file: {cross_file}")
-    for line in cross_file_content:
-        print(f"    {line}", end="")
+    cross_file_template_content = ""
+    with open(cross_file_template.resolve()) as f:
+        cross_file_template_content = "".join(f.readlines())
+    cross_file_content = cross_file_template_content.replace("SYSROOT", str(sysroot_x64_rune))
+    for line in cross_file_content.split('\n'):
+        print(f"    {line}")
     with open(cross_file, "w") as f:
-        f.writelines(cross_file_content)
+        f.write(cross_file_content)
 
     apps = brokk_config[BrokkConfig.APPS.to_yaml_key()]
     build_config = {
