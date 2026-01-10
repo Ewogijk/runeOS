@@ -19,10 +19,10 @@
 set -euo pipefail
 
 help() {
-  echo Usage "./Install.sh [-h] BUILD INSTALL_DIRECTORY RUNE_OS_IMAGE KERNEL_ELF OS_ELF"
+  echo Usage "./Install.sh [-h] BUILD INSTALL_DIRECTORY RUNE_OS_IMAGE KERNEL_ELF SHELL_APP"
   echo
   echo Install the RUNE_OS_IMAGE alongside a start script in the INSTALL_DIRECTORY. If BUILD==debug, also install
-  echo a debug script for command line debugging of the Kernel/OS with GDB and the kernel and OS executables.
+  echo a debug script for command line debugging of the Kernel/OS with GDB and the kernel and shell executables.
   echo
   echo Directory layout:
   echo "    INSTALL_DIRECTORY/Start.py         : OS start script for Qemu configuration (from 'Brokkr/Resource')"
@@ -33,7 +33,7 @@ help() {
   echo If BUILD==debug:
   echo "    INSTALL_DIRECTORY/Debug.py      : Helper script to configure and run GDB (from 'Brokkr/Resource')"
   echo "    INSTALL_DIRECTORY/bin/KERNEL_ELF: Kernel ELF executable."
-  echo "    INSTALL_DIRECTORY/bin/OS_ELF    : OS ELF executable"
+  echo "    INSTALL_DIRECTORY/bin/SHELL_APP : Shell executable."
   echo
   echo
   echo
@@ -42,7 +42,7 @@ help() {
   echo "    INSTALL_DIRECTORY - Installation directory of the build files."
   echo "    RUNE_OS_IMAGE     - runeOS image."
   echo "    KERNEL_ELF        - The kernel executable."
-  echo "    OS_ELF            - The OS executable."
+  echo "    SHELL_APP         - The shell executable."
   echo Options:
   echo "    -h - Print this help text"
 }
@@ -64,7 +64,7 @@ build=$1
 install_directory=$2
 rune_os_image=$3
 kernel_elf=$4
-os_elf=$5
+shell_elf=$5
 
 echo
 echo Install Configuration:
@@ -74,7 +74,7 @@ echo "Build: $build"
 echo "Installation Directory: $install_directory"
 echo "runeOS Image: $rune_os_image"
 echo "Kernel ELF: $kernel_elf"
-echo "OS ELF: $os_elf"
+echo "Shell ELF: $shell_elf"
 echo
 
 set -x  # Print all shell commands
@@ -89,5 +89,5 @@ cp Resource/Start.py "$install_directory"
 if [ "$build" = "debug" ]; then
     cp Resource/Debug.py "$install_directory"
     cp "$kernel_elf" "${install_directory}"/bin
-    cp "$os_elf" "${install_directory}"/bin
+    cp "$shell_elf" "${install_directory}"/bin
 fi

@@ -34,6 +34,9 @@ def print_banner() -> None:
     
     Building works similar to meson, first a build directory must be configured by running 
     './Brokk configure ...' and then the sources can be build using './Brokk build ...'.
+    
+    A build is divided into a series of build steps, where each step must be successful for the
+    overall build to succeed.
     """
 )
 @click.help_option("-h", "--help")
@@ -45,55 +48,31 @@ def cli() -> None:
 @click.help_option("-h", "--help")
 @click.argument("brokk_config", type=str)
 def configure(brokk_config: str) -> None:
-    """Create a build directory for the 'BUILD' builds for the kernel target architecture 'ARCH'.
+    """
+    Create the Build/ARCH-BUILD directory, then the build-config.yaml and x86_64-rune.txt
+    cross-file.
 
-    FREESTANDING_COMPILER is a path to the installation directory of the freestanding compiler from
-    the runeToolchain. It will be used to compile the kernel.
+    The build-config.yaml contains build and command line parameters for each build step.
 
-    If QEMU is true, the kernel will be informed that it runs inside the Qemu VM, and it should
-    enable Qemu related debugging features.
-
-    IMAGE_SIZE defines the size of the runeOS.image in MB.
-
-    Build configuration involves two steps: First the 'Build/ARCH-DEBUG' directory inside the
-    current directory is created, then the 'build.settings' file is created. It is a Json file that
-    contains build parameters for build scripts.
+     x86_64-rune.txt is the meson cross-file that will be used to compile user space applications.
     """
     if not BrokkEngine.configure(brokk_config):
         sys.exit(-1)
 
 
 @cli.command("build")
+@click.help_option("-h", "--help")
 @click.argument("arch", type=str)
 @click.argument("build", type=str)
 def build_target(arch: str, build: str) -> None:
-    """Run the 'Scripts/Build-All.py Build/ARCH-BUILD/build.settings' command to build the kernel,
-    OS, all applications in 'Apps/' and create a bootable image.
+    """
+    First check that the build for specified architecture was configured. Then runs each build step
+    for the requested build type.
 
-    Before running the build it is verified that 'Build/ARCH-BUILD/build.settings' exists, if not
-    'configure' must be run first.
+    Build steps may vary depending on the build type.
     """
     if not BrokkEngine.build_all(arch, build):
         sys.exit(-1)
-
-    # print_banner()
-    #
-    # print("Creating build with:")
-    # print(f"    Arch: {arch}")
-    # print(f"    Build: {build}")
-    #
-    # build_settings = Path("Build") / f"{arch}-{build}" / "build.settings"
-    # if not build_settings.exists():
-    #     sys.exit(
-    #         f"'{build_settings}': Build settings not found. Run './Brokk.py configure ...' first "
-    #         f"to create a build directory."
-    #     )
-    # ret = subprocess.run(["Scripts/Build-All.py", str(build_settings)]).returncode
-    #
-    # if ret == 0:
-    #     print(f"'{build}' build for target architecture '{arch}' was successful.")
-    # else:
-    #     print(f"'{build}' build for target architecture '{arch}' failed.")
 
 
 if __name__ == "__main__":
