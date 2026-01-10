@@ -44,7 +44,7 @@ build_h_template = """
 
 
 #define MAJOR 0                     // The kernel major version
-#define MINOR 2                     // The kernel minor version
+#define MINOR 3                     // The kernel minor version
 #define PATCH 0                     // The kernel patch version
 #define PRERELEASE ""               // The kernel prerelease version
 #define SYSTEM_LOADER "$SYSTEM_LOADER"  // The absolute path to the OS executable
