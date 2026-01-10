@@ -1,0 +1,16 @@
+# Unique name of the service
+Name: Crucible
+# Short description of the service
+Description: Crucible is the OS shell.
+# The command line input to start the app. Note that the input is simply split by ' '
+ExecStart: /System/Crucible/Crucible.app
+# Boolean value that indicates if Freya should wait for the service to finish
+WaitForExit: yes
+# The expected exit code when the service finished. The value is only used when 'WaitForExit==true'
+ExpectedExitCode: 0
+# A mandatory service must finish with the expected service code for the system to be considered
+# started successful. The value is only used when 'WaitForExit==true'
+Mandatory: yes
+# A list of services that this service depends on. These services will be started before this
+# service
+Requires:
