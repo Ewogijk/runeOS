@@ -2,7 +2,8 @@
 Name: A Service
 # Short description of the service
 Description: A description
-# The command line input to start the app. Note that the input is simply split by ' '
+# The command line input to start the app. Note that quoted strings are not supported, the input is
+# simply split by ' '
 ExecStart: /path/to/the/app arg1 arg2
 # Boolean value that indicates if Freya should wait for the service to finish
 WaitForExit: yes|no
