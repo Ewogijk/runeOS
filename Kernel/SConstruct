@@ -52,7 +52,7 @@ vars.Add(
 vars.Add(
     (
         "system_loader",
-        "Absolute path to the system loader executable.",
+        "Absolute path to the system loader executable on the bootable image.",
         "",
     )
 )
@@ -85,12 +85,27 @@ vars.Add(
     )
 )
 
+# Disable build variable validation when the help text was requested, so simply writing "scons -h"
+# is possible without providing valid build vars
+# If enabled: During instantiation of target_env the values of build vars are checked and scons will
+#               report an error instead of printing the help text
+if GetOption("help"):
+    vars.options[0].validator=None
+    vars.options[1].validator=None
 
 target_env = Environment(
     tools=['default', 'compilation_db'],
     variables=vars,
     AS="nasm",
 )
+
+# Manually print the help text and exit. Do not parse SConscript files!
+# This will lead to errors when build vars are not provided
+
+if GetOption("help"):
+    print(vars.GenerateHelpText(target_env))
+    Exit(0)
+
 Help(vars.GenerateHelpText(target_env))
 arch = target_env["arch"]
 build = target_env["build"]
