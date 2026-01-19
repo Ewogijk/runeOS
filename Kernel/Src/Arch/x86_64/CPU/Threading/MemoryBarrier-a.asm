@@ -14,46 +14,32 @@
 ; limitations under the License.
 ;
 
-; CLINK Register get_stack_pointer();
+; CLINK void memory_barrier_read();
 ; Args:
 ;   -
 ; Returns:
-;   Current value of the stack pointer.
-global get_stack_pointer
-get_stack_pointer:
-    mov rax, rsp
-    add rax, 8      ; Account for the return address being popped on ret
+;   -
+global memory_barrier_read
+memory_barrier_read:
+    lfence
     ret
 
-
-; CLINK void halt();
+; CLINK void memory_barrier_write();
 ; Args:
 ;   -
 ; Returns:
 ;   -
-global halt:
-halt:
-    hlt
+global memory_barrier_write
+memory_barrier_write:
+    sfence
+    ret
 
-; CLINK void pause();
+; CLINK void memory_barrier_full();
 ; Args:
 ;   -
 ; Returns:
 ;   -
-global pause
-pause:
-    pause
-
-
-; CLINK Register get_page_fault_address();
-; Args:
-;   rdi -> -
-;   rsi -> -
-;   rdx -> -
-;   rcx -> -
-; Returns:
-;   The content of the cr2 register.
-global get_page_fault_address
-get_page_fault_address:
-    mov rax, cr2
+global memory_barrier_full
+memory_barrier_full:
+    mfence
     ret

@@ -14,46 +14,39 @@
 ; limitations under the License.
 ;
 
-; CLINK Register get_stack_pointer();
+
+; CLINK auto atomic_flag_test_and_set(bool* flag) -> bool;
 ; Args:
-;   -
+;   rdi -> flag
 ; Returns:
-;   Current value of the stack pointer.
-global get_stack_pointer
-get_stack_pointer:
-    mov rax, rsp
-    add rax, 8      ; Account for the return address being popped on ret
+;   Value of flag before it was set to true.
+global atomic_flag_test_and_set
+atomic_flag_test_and_set:
+    mov rax, 1
+    lock xchg [rdi], rax
     ret
 
-
-; CLINK void halt();
+; CLINK void atomic_flag_clear(bool* flag);
 ; Args:
-;   -
+;   rdi -> flag
 ; Returns:
 ;   -
-global halt:
-halt:
-    hlt
+global atomic_flag_clear
+atomic_flag_clear:
+    lock and byte [rdi], 0
+    ret
 
-; CLINK void pause();
+; CLINK auto atomic_flag_test(bool* flag) -> bool;
 ; Args:
-;   -
+;   rdi -> flag
 ; Returns:
-;   -
-global pause
-pause:
-    pause
-
-
-; CLINK Register get_page_fault_address();
-; Args:
-;   rdi -> -
-;   rsi -> -
-;   rdx -> -
-;   rcx -> -
-; Returns:
-;   The content of the cr2 register.
-global get_page_fault_address
-get_page_fault_address:
-    mov rax, cr2
+;   The value of the flag
+global atomic_flag_test
+atomic_flag_test:
+    lock and byte [rdi], 1
+    jz .flag_not_set
+    mov rax, 1
+    ret
+.flag_not_set:
+    mov rax, 0
     ret
