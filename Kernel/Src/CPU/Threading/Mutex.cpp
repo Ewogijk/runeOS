@@ -81,7 +81,7 @@ namespace Rune::CPU {
                           t->handle,
                           t->name);
             _wait_queue.add_back(t);
-            t->state = ThreadState::WAITING;
+            t->state = ThreadState::WAIT_MUTEX;
             _scheduler->execute_next_thread();
         } // else Allow the owner to lock the mutex recursively
         _scheduler->unlock();

@@ -130,7 +130,7 @@ namespace Rune::CPU {
                       r_t->name,
                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
-        r_t->state = ThreadState::SLEEPING;
+        r_t->state = ThreadState::WAIT_TIMER;
         _scheduler->execute_next_thread();
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->unlock();

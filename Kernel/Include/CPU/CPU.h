@@ -52,20 +52,31 @@ namespace Rune::CPU {
     /**
      * @brief Describes what a thread is currently doing.
      * <ul>
-     *  <li>Ready: The thread is in the ready queue and waiting to be scheduled.</li>
-     *  <li>Running: The thread is in the ready queue and waiting to be scheduled.</li>
-     *  <li>Sleeping: The thread is in the sleep queue of a timer.</li>
-     *  <li>Waiting: The thread is in the wait queue of a mutex.</li>
-     *  <li>Terminated: The thread has finished execution and but it's resources are not freed
-     * yet.</li>
+     *  <li>READY: The thread is in the ready queue and waiting to be scheduled.</li>
+     *  <li>RUNNING: The thread is being executed.</li>
+     *  <li>WAIT_TIMER: The thread is in the wait queue of the system timer.</li>
+     *  <li>WAIT_MUTEX: The thread is in the wait queue of a mutex.</li>
+     *  <li>WAIT_SPINLOCK: The thread is waiting for a spinlock to be unlocked.</li>
+     *  <li>WAIT_SPINLOCK: The thread is waiting for another thread to finish.</li>
+     *  <li>WAIT_SPINLOCK: The thread is waiting for an app to finish.</li>
+     *  <li>ON_THE_HUNT: The thread terminator is on the hunt for a clueless terminated thread
+     *                      (The thread is sleeping).</li>
+     *  <li>CHILLING: The idle thread is just enjoying life (The thread is sleeping).</li>
+     *  <li>TERMINATED: The thread has finished execution and its resources are not freed
+     *       yet.</li>
      * </ul>
      */
 #define THREAD_STATES(X)                                                                           \
     X(ThreadState, READY, 0x1)                                                                     \
     X(ThreadState, RUNNING, 0x2)                                                                   \
-    X(ThreadState, SLEEPING, 0x3)                                                                  \
-    X(ThreadState, WAITING, 0x4)                                                                   \
-    X(ThreadState, TERMINATED, 0x5)
+    X(ThreadState, WAIT_TIMER, 0x3)                                                                \
+    X(ThreadState, WAIT_MUTEX, 0x4)                                                                \
+    X(ThreadState, WAIT_SPINLOCK, 0x5)                                                             \
+    X(ThreadState, WAIT_THREAD, 0x6)                                                               \
+    X(ThreadState, WAIT_APP, 0x7)                                                                  \
+    X(ThreadState, ON_THE_HUNT, 0x8)                                                               \
+    X(ThreadState, CHILLING, 0x9)                                                                  \
+    X(ThreadState, TERMINATED, 0xA)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
@@ -371,26 +382,26 @@ namespace Rune::CPU {
      */
     auto get_physical_address_width() -> U8;
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Assembly Stuff
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Assembly Stuff
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * @return The current value of the stack pointer.
-     */
+    /// @brief
+    /// @return The current value of the stack pointer.
     CLINK auto get_stack_pointer() -> Register;
 
-    /**
-     * halt the CPU until an interrupt occurs.
-     */
+    /// @brief halt the CPU until an interrupt occurs.
     CLINK void halt();
 
-    /**
-     * @brief Get the virtual address that was responsible for a page fault.
-     *
-     * Important: The returned virtual address is only valid during handling of a page fault
-     * otherwise the virtual address is undefined.
-     */
+    /// @brief Pause the CPU in an optimized way in terms of performance/power usage. This function
+    ///         is intended to be used when waiting in a loop, e.g. in a spinlock.
+    CLINK void pause();
+
+    /// @brief Get the virtual address that was responsible for a page fault.
+    ///
+    /// Important: The returned virtual address is only valid during handling of a page fault
+    /// otherwise the virtual address is undefined.
+    /// @return
     CLINK auto get_page_fault_address() -> Register;
 
 } // namespace Rune::CPU

@@ -110,11 +110,11 @@ namespace Rune::CPU {
 
         setup_kernel_stack(thread_terminator);
         _thread_terminator        = thread_terminator;
-        _thread_terminator->state = ThreadState::WAITING;
+        _thread_terminator->state = ThreadState::ON_THE_HUNT;
 
         setup_kernel_stack(idle_thread);
         _idle_thread        = idle_thread;
-        _idle_thread->state = ThreadState::WAITING;
+        _idle_thread->state = ThreadState::CHILLING;
 
         _allow_preemption = true;
         return true;
@@ -190,7 +190,7 @@ namespace Rune::CPU {
 
         if (_running_thread == _idle_thread) {
             // Do not reschedule the idle thread -> We do not want it to be regularly scheduled
-            _idle_thread->state = ThreadState::WAITING;
+            _idle_thread->state = ThreadState::CHILLING;
         } else if (_running_thread->state == ThreadState::RUNNING) {
             // Reschedule thread
             if (!_ready_threads->enqueue(_running_thread))

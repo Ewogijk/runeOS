@@ -529,7 +529,7 @@ namespace Rune::App {
                       app->handle,
                       app->name);
         r_t->join_app_id = app->handle;
-        r_t->state       = CPU::ThreadState::WAITING;
+        r_t->state       = CPU::ThreadState::WAIT_APP;
         app->joining_thread_table.add_back(r_t);
         scheduler->execute_next_thread();
         // The "unlock" call will trigger a context switch to whatever next thread will be run and

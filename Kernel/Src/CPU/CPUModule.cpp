@@ -96,7 +96,7 @@ namespace Rune::CPU {
                 }
                 // dT gets deleted here after it goes out of scope
             }
-            SCHEDULER->get_running_thread()->state = ThreadState::WAITING;
+            SCHEDULER->get_running_thread()->state = ThreadState::ON_THE_HUNT;
             SCHEDULER->execute_next_thread();
             SCHEDULER->unlock();
         }
@@ -373,7 +373,7 @@ namespace Rune::CPU {
                               da_thread->handle,
                               da_thread->name);
                 return true; // Early return, so we can just terminate the thread after the switch
-            case ThreadState::SLEEPING:
+            case ThreadState::WAIT_TIMER:
                 if (!_timer->remove_sleeping_thread(handle)) {
                     LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
                                   da_thread->handle,
@@ -381,7 +381,7 @@ namespace Rune::CPU {
                     return false;
                 }
                 break;
-            case ThreadState::WAITING: {
+            case ThreadState::WAIT_MUTEX: {
                 if (da_thread->mutex_id < 0) {
                     LOGGER->error(R"("{}-{}" has not mutex ID assigned.)",
                                   da_thread->handle,
