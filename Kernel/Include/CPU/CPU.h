@@ -22,6 +22,7 @@
 
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/System/Resource.h>
 
 #include <KRE/Memory.h>
 
@@ -48,6 +49,13 @@ namespace Rune::CPU {
      * error.
      */
     using ThreadMain = int (*)(StartInfo*);
+
+    /// @brief Handle type of thread.
+    using ThreadHandle = U16;
+    /// @brief Handle type of spinlock.
+    using SpinlockHandle = U16;
+    /// @brief Handle type of mutex.
+    using MutexHandle = U16;
 
     /**
      * @brief Describes what a thread is currently doing.
@@ -169,7 +177,7 @@ namespace Rune::CPU {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
         // Unique ID of the thread
-        U16 handle = 0;
+        ThreadHandle handle = 0;
 
         // Handle of the app the thread belongs to
         U16              app_handle = 0;
@@ -189,9 +197,14 @@ namespace Rune::CPU {
         PhysicalAddr base_page_table_address = 0x0;
 
         /**
-         * @brief ID of the mutex this thread is owning at the moment.
+         * @brief Handle of the mutex this thread is owning at the moment.
          */
-        int mutex_id = -1;
+        MutexHandle mutex_handle = Resource<U16>::HANDLE_NONE;
+
+        /**
+         * @brief Handle of the spinlock this thread is owning at the moment.
+         */
+        SpinlockHandle spinlock_handle = Resource<U16>::HANDLE_NONE;
 
         /**
          * @brief ID of the application this thread is waiting for to exit.
