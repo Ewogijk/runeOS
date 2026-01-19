@@ -61,7 +61,7 @@ namespace Rune {
     class Module {
       protected:
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;            // NOLINT
-        IDCounter<U16>                                      _event_hook_handle_counter{}; // NOLINT
+        HandleCounter<U16>                                      _event_hook_handle_counter{}; // NOLINT
 
         /**
          * @brief Fire an event for the given evtHook with the evtContext.
