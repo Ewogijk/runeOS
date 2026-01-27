@@ -78,10 +78,10 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
-        HandleCounter<U16>                      _thread_handle_counter;
+        HandleCounter<U16>                  _thread_handle_counter;
 
         HashMap<U16, SharedPointer<Mutex>> _mutex_table;
-        HandleCounter<U16>                     _mutex_handle_counter;
+        HandleCounter<U16>                 _mutex_handle_counter;
         Scheduler                          _scheduler;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

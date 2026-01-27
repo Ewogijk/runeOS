@@ -33,7 +33,7 @@ namespace Rune::SystemCall {
             m_name = String::format("Mutex-App{}", t_ctx->app_module->get_active_app()->handle);
 
         const auto m = t_ctx->cpu_module->create_mutex(m_name);
-        return m ? m->handle : Ember::Status(Ember::Status::FAULT).to_value();
+        return m ? m->get_handle() : Ember::Status(Ember::Status::FAULT).to_value();
     }
 
     auto mutex_lock(void* sys_call_ctx, const U64 ID) -> Ember::StatusCode {

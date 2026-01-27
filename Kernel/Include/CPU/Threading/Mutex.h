@@ -17,30 +17,28 @@
 #ifndef RUNEOS_MUTEX_H
 #define RUNEOS_MUTEX_H
 
+#include <KRE/System/Resource.h>
+
 #include <CPU/Threading/Scheduler.h>
+#include <CPU/Threading/Spinlock.h>
 
 namespace Rune::CPU {
     /**
      * A recursive mutex implementation.
      */
-    class Mutex {
-        Scheduler* _scheduler;
+    class Mutex : public Resource<MutexHandle> {
+        int _lock = 0;
+        int _wake_in_progress = 0;
 
+        Scheduler* _scheduler;
         SharedPointer<Thread>             _owner;
+        Spinlock _wait_queue_lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
         void transfer_ownership();
 
       public:
-        // Per requirement of the "Column::make_handle_column_table" these properties must be
-        // publicly accessible
-        U16    handle; // NOLINT
-        String name;   // NOLINT
-
-        // Per definition of the "ResourceTable" a default constructor must be provided
-        Mutex();
-
-        Mutex(Scheduler* scheduler, String name);
+        Mutex(MutexHandle handle, String name, Scheduler* scheduler);
 
         /**
          * @brief The thread that is currently locking the mutex.

@@ -56,6 +56,8 @@ namespace Rune::CPU {
     using SpinlockHandle = U16;
     /// @brief Handle type of mutex.
     using MutexHandle = U16;
+    /// @brief Handle type of semaphore.
+    using SemaphoreHandle = U16;
 
     /**
      * @brief Describes what a thread is currently doing.
@@ -65,8 +67,9 @@ namespace Rune::CPU {
      *  <li>WAIT_TIMER: The thread is in the wait queue of the system timer.</li>
      *  <li>WAIT_MUTEX: The thread is in the wait queue of a mutex.</li>
      *  <li>WAIT_SPINLOCK: The thread is waiting for a spinlock to be unlocked.</li>
-     *  <li>WAIT_SPINLOCK: The thread is waiting for another thread to finish.</li>
-     *  <li>WAIT_SPINLOCK: The thread is waiting for an app to finish.</li>
+     *  <li>WAIT_SEMAPHORE: The thread is waiting for a semaphore to be unlocked.</li>
+     *  <li>WAIT_THREAD: The thread is waiting for another thread to finish.</li>
+     *  <li>WAIT_APP: The thread is waiting for an app to finish.</li>
      *  <li>ON_THE_HUNT: The thread terminator is on the hunt for a clueless terminated thread
      *                      (The thread is sleeping).</li>
      *  <li>CHILLING: The idle thread is just enjoying life (The thread is sleeping).</li>
@@ -77,14 +80,16 @@ namespace Rune::CPU {
 #define THREAD_STATES(X)                                                                           \
     X(ThreadState, READY, 0x1)                                                                     \
     X(ThreadState, RUNNING, 0x2)                                                                   \
-    X(ThreadState, WAIT_TIMER, 0x3)                                                                \
-    X(ThreadState, WAIT_MUTEX, 0x4)                                                                \
-    X(ThreadState, WAIT_SPINLOCK, 0x5)                                                             \
-    X(ThreadState, WAIT_THREAD, 0x6)                                                               \
-    X(ThreadState, WAIT_APP, 0x7)                                                                  \
-    X(ThreadState, ON_THE_HUNT, 0x8)                                                               \
-    X(ThreadState, CHILLING, 0x9)                                                                  \
-    X(ThreadState, TERMINATED, 0xA)
+    X(ThreadState, PLANNED_WAIT, 0x3)                                                              \
+    X(ThreadState, WAIT_TIMER, 0x4)                                                                \
+    X(ThreadState, WAIT_MUTEX, 0x5)                                                                \
+    X(ThreadState, WAIT_SPINLOCK, 0x6)                                                             \
+    X(ThreadState, WAIT_SEMAPHORE, 0x7)                                                            \
+    X(ThreadState, WAIT_THREAD, 0x8)                                                               \
+    X(ThreadState, WAIT_APP, 0x9)                                                                  \
+    X(ThreadState, ON_THE_HUNT, 0xA)                                                               \
+    X(ThreadState, CHILLING, 0xB)                                                                  \
+    X(ThreadState, TERMINATED, 0xC)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
@@ -196,15 +201,14 @@ namespace Rune::CPU {
         // Address of the base page table defining the threads virtual address space.
         PhysicalAddr base_page_table_address = 0x0;
 
-        /**
-         * @brief Handle of the mutex this thread is owning at the moment.
-         */
-        MutexHandle mutex_handle = Resource<U16>::HANDLE_NONE;
+        /// @brief Handle of the mutex this thread is owning at the moment.
+        MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
 
-        /**
-         * @brief Handle of the spinlock this thread is owning at the moment.
-         */
-        SpinlockHandle spinlock_handle = Resource<U16>::HANDLE_NONE;
+        /// @brief Handle of the spinlock this thread spinning with.
+        SpinlockHandle spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
+
+        /// @brief Handle of the semaphore the thread is waiting for to be signaled.
+        SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
 
         /**
          * @brief ID of the application this thread is waiting for to exit.

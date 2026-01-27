@@ -337,7 +337,7 @@ namespace Rune::CPU {
     }
 
     auto CPUModule::terminate_thread(int handle) -> bool {
-        // Check if a thread with the ID exists
+        // Check if a thread with the handle exists
         SharedPointer<Thread> da_thread(nullptr);
         for (const auto& t : _thread_table) {
             if (t.value->get()->handle == handle) { // NOLINT Only end() is null
@@ -382,8 +382,8 @@ namespace Rune::CPU {
                 }
                 break;
             case ThreadState::WAIT_MUTEX: {
-                if (da_thread->mutex_id < 0) {
-                    LOGGER->error(R"("{}-{}" has not mutex ID assigned.)",
+                if (da_thread->mutex_handle == Resource<U16>::HANDLE_NONE) {
+                    LOGGER->error(R"("{}-{}": No mutex found.)",
                                   da_thread->handle,
                                   da_thread->name);
                     return false;
@@ -391,8 +391,8 @@ namespace Rune::CPU {
 
                 SharedPointer<Mutex> m(nullptr);
                 for (const auto& mm : _mutex_table) {
-                    if (mm.value->get()->handle // NOLINT Only end() is null
-                        == da_thread->mutex_id) {
+                    if (mm.value->get()->get_handle() // NOLINT Only end() is null
+                        == da_thread->mutex_handle) {
                         m = *mm.value;
                         break;
                     }
@@ -401,7 +401,7 @@ namespace Rune::CPU {
                     LOGGER->error("No mutex with ID {} was found.",
                                   da_thread->handle,
                                   da_thread->name,
-                                  da_thread->mutex_id);
+                                  da_thread->mutex_handle);
                     return false;
                 }
 
@@ -409,14 +409,16 @@ namespace Rune::CPU {
                     LOGGER->error(R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
                                   da_thread->handle,
                                   da_thread->name,
-                                  m->handle,
-                                  m->name);
+                                  m->get_handle(),
+                                  m->get_handle());
                     return false;
                 }
                 break;
             }
+            case ThreadState::WAIT_SPINLOCK:
+                break;
             case ThreadState::TERMINATED:
-                LOGGER->trace(R"("{}-{}" is already terminated.)",
+                LOGGER->trace(R"("{}-{}": Already terminated.)",
                               da_thread->handle,
                               da_thread->name);
                 break;
@@ -451,7 +453,7 @@ namespace Rune::CPU {
                 for (auto& t : mutex->get_waiting_threads())
                     waiting_threads += String::format("{}-{}, ", t->handle, t->name);
                 if (waiting_threads.is_empty()) waiting_threads = "-";
-                return {String::format("{}-{}", mutex->handle, mutex->name),
+                return {String::format("{}-{}", mutex->get_handle(), mutex->get_name()),
                         owner != nullptr ? String::format("{}-{}", owner->handle, owner->name)
                                          : "-",
                         waiting_threads};
@@ -463,23 +465,22 @@ namespace Rune::CPU {
 
     auto CPUModule::create_mutex(String name) -> SharedPointer<Mutex> {
         if (!_mutex_handle_counter.has_more()) return SharedPointer<Mutex>(nullptr);
-        auto m    = SharedPointer<Mutex>(new Mutex(&_scheduler, move(name)));
-        m->handle = _mutex_handle_counter.acquire();
-        _mutex_table.put(m->handle, m);
+        auto m    = SharedPointer<Mutex>(new Mutex(_mutex_handle_counter.acquire(), move(name), &_scheduler));
+        _mutex_table.put(m->get_handle(), m);
         return m;
     }
 
     auto CPUModule::release_mutex(U16 mutex_handle) -> bool {
         SharedPointer<Mutex> to_remove;
         for (const auto& m : _mutex_table) {
-            if (m.value->get()->handle == mutex_handle) { // NOLINT Only end() is null
+            if (m.value->get()->get_handle() == mutex_handle) { // NOLINT Only end() is null
                 to_remove = *m.value;
                 break;
             }
         }
         if (!to_remove) return false;
 
-        _mutex_table.remove(to_remove->handle);
+        _mutex_table.remove(to_remove->get_handle());
         return true;
     }
 
