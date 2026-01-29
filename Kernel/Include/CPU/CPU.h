@@ -20,10 +20,9 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
-
-#include <KRE/Memory.h>
 
 namespace Rune::CPU {
     // Size of a register
@@ -33,50 +32,46 @@ namespace Rune::CPU {
     using Register = U32;
 #endif
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Threading structures
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  Threading structures
     //
     // Defined here because they are needed by the "Core" class
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     struct StartInfo;
 
-    /**
-     * @brief Main function of a thread. It has the signature int(int, char*[]). Parameters are the
-     * number of arguments and a pointer to the array with the string arguments. The return value is
-     * the thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
-     * error.
-     */
+    /// @brief Main function of a thread. It has the signature int(StartInfo*). The start
+    /// info contains argc/argv parameters as well as other information. The return value is the
+    /// thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
+    /// error.
     using ThreadMain = int (*)(StartInfo*);
 
-    /**
-     * @brief Describes what a thread is currently doing.
-     * <ul>
-     *  <li>Ready: The thread is in the ready queue and waiting to be scheduled.</li>
-     *  <li>Running: The thread is in the ready queue and waiting to be scheduled.</li>
-     *  <li>Sleeping: The thread is in the sleep queue of a timer.</li>
-     *  <li>Waiting: The thread is in the wait queue of a mutex.</li>
-     *  <li>Terminated: The thread has finished execution and but it's resources are not freed
-     * yet.</li>
-     * </ul>
-     */
+    /// @brief Describes what a thread is currently doing.
+    /// @param X
+    ///
+    /// - CREATED: The thread has been created but has not started execution yet.
+    /// - READY: The thread is in the ready queue of the scheduler and waiting to be scheduled.
+    /// - RUNNING: The thread code is currently being executed.
+    /// - AWAIT_BLOCK: The thread is running but planned to be blocked in the future.
+    /// - BLOCKED: The thread is not in the ready queue of the scheduler and waiting for a condition
+    ///             to fulfill before it will be scheduled again.
+    /// - STOPPED: The thread has finished execution, but its heap memory has yet to be freed.
 #define THREAD_STATES(X)                                                                           \
-    X(ThreadState, READY, 0x1)                                                                     \
-    X(ThreadState, RUNNING, 0x2)                                                                   \
-    X(ThreadState, SLEEPING, 0x3)                                                                  \
-    X(ThreadState, WAITING, 0x4)                                                                   \
-    X(ThreadState, TERMINATED, 0x5)
+    X(ThreadState, CREATED, 0x1)                                                                   \
+    X(ThreadState, READY, 0x2)                                                                     \
+    X(ThreadState, RUNNING, 0x3)                                                                   \
+    X(ThreadState, AWAIT_BLOCK, 0x4)                                                               \
+    X(ThreadState, BLOCKED, 0x5)                                                                   \
+    X(ThreadState, STOPPED, 0x6)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
-    /**
-     * @brief The scheduling policy describes the priority of a group of threads.
-     * <ul>
-     *  <li>LowLatency: Highest priority.</li>
-     *  <li>Normal: </li>
-     *  <li>Background: Lowest priority.</li>
-     * </ul>
-     */
+    /// @brief The scheduling policy describes the priority of a group of threads.
+    /// @param X
+    ///
+    /// - LowLatency: Highest priority.
+    /// - Normal:
+    /// - Background: Lowest priority.
 #define SCHEDULING_POLICIES(X)                                                                     \
     X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                          \
     X(SchedulingPolicy, NORMAL, 0x2)                                                               \
@@ -151,9 +146,19 @@ namespace Rune::CPU {
         void* random;
     };
 
-    /**
-     * The thread struct contains general information about a running thread.
-     */
+    /// @brief The thread struct contains technical and informational data about a thread object.
+    ///
+    /// Threads are a resource and therefore associated with a unique handle and a name for
+    /// debugging purposes.
+    ///
+    /// A thread has a state which must only be modified by the scheduler or undefined behavior will
+    /// occur. Only upon instantiation, where it must be assigned the ThreadState::CREATED.
+    ///
+    /// Each thread will be maintained by either the scheduler, some synchronization primitive or
+    /// a timer. To be able to track where the thread is currently being maintained a reference to
+    /// the maintaining resource is kept in the thread struct and only one reference must be set at
+    /// once at all times. If the thread is maintained by the scheduler, no resource references must
+    /// be set.
     struct Thread {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
@@ -163,41 +168,41 @@ namespace Rune::CPU {
         // Handle of the app the thread belongs to
         U16              app_handle = 0;
         String           name       = "";
-        ThreadState      state      = ThreadState::NONE;
+        ThreadState      state      = ThreadState::CREATED;
         SchedulingPolicy policy     = SchedulingPolicy::NONE;
 
-        // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or
-        // syscall It is dynamically allocated on the kernel heap and has a preconfigured fixed size
+        /// @brief The kernel stack is used whenever kernel code is run e.g. because of an interrupt
+        ///         or syscall It is dynamically allocated on the kernel heap and has a
+        ///         preconfigured fixed size
         U8*         kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
         VirtualAddr kernel_stack_top    = 0x0;
 
-        // The user mode stack contains application data, is managed by an application.
+        /// @brief The user mode stack contains application data, it is managed by an application.
         Stack user_stack;
 
-        // Address of the base page table defining the threads virtual address space.
+        /// @brief Address of the base page table defining the threads virtual address space.
         PhysicalAddr base_page_table_address = 0x0;
 
-        /**
-         * @brief ID of the mutex this thread is owning at the moment.
-         */
-        int mutex_id = -1;
-
-        /**
-         * @brief ID of the application this thread is waiting for to exit.
-         */
-        int join_app_id = -1;
-
-        /**
-         * @brief Thread arguments and more.
-         */
+        /// @brief Thread arguments and more.
         StartInfo* start_info{nullptr};
 
-        /**
-         * The thread control block contains the thread local storage (TLS) and other data, it is
-         * maintained by libc. We simply provide easy access to it through an arch specific TLS
-         * register.
-         */
+        /// @brief The thread control block contains the thread local storage (TLS) and other data,
+        ///         it is maintained by libc. We simply provide easy access to it through an arch
+        ///         specific TLS register.
         void* thread_control_block = nullptr;
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  Resource Refs
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+        /// @brief ID of the mutex this thread is owning at the moment.
+        int mutex_id = -1;
+
+        /// @brief ID of the timer owning the thread.
+        int timer_id = -1;
+
+        /// @brief ID of the application this thread is waiting for to exit.
+        int join_app_id = -1;
 
         friend auto operator==(const Thread& one, const Thread& two) -> bool;
 

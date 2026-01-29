@@ -96,7 +96,7 @@ namespace Rune::CPU {
                 }
                 // dT gets deleted here after it goes out of scope
             }
-            SCHEDULER->get_running_thread()->state = ThreadState::WAITING;
+            SCHEDULER->get_running_thread()->state = ThreadState::BLOCKED;
             SCHEDULER->execute_next_thread();
             SCHEDULER->unlock();
         }
@@ -373,49 +373,42 @@ namespace Rune::CPU {
                               da_thread->handle,
                               da_thread->name);
                 return true; // Early return, so we can just terminate the thread after the switch
-            case ThreadState::SLEEPING:
-                if (!_timer->remove_sleeping_thread(handle)) {
-                    LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
-                                  da_thread->handle,
-                                  da_thread->name);
-                    return false;
-                }
-                break;
-            case ThreadState::WAITING: {
-                if (da_thread->mutex_id < 0) {
-                    LOGGER->error(R"("{}-{}" has not mutex ID assigned.)",
-                                  da_thread->handle,
-                                  da_thread->name);
-                    return false;
-                }
+            case ThreadState::BLOCKED:
+                if (da_thread->timer_id > 0) {
+                    if (!_timer->remove_sleeping_thread(handle)) {
+                        LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
+                                      da_thread->handle,
+                                      da_thread->name);
+                        return false;
+                    }
+                } else if (da_thread->mutex_id > 0) {
+                    SharedPointer<Mutex> m(nullptr);
+                    for (const auto& mm : _mutex_table) {
+                        if (mm.value->get()->handle // NOLINT Only end() is null
+                            == da_thread->mutex_id) {
+                            m = *mm.value;
+                            break;
+                            }
+                    }
+                    if (!m) {
+                        LOGGER->error("No mutex with ID {} was found.",
+                                      da_thread->handle,
+                                      da_thread->name,
+                                      da_thread->mutex_id);
+                        return false;
+                    }
 
-                SharedPointer<Mutex> m(nullptr);
-                for (const auto& mm : _mutex_table) {
-                    if (mm.value->get()->handle // NOLINT Only end() is null
-                        == da_thread->mutex_id) {
-                        m = *mm.value;
-                        break;
+                    if (!m->remove_waiting_thread(da_thread->handle)) {
+                        LOGGER->error(R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
+                                      da_thread->handle,
+                                      da_thread->name,
+                                      m->handle,
+                                      m->name);
+                        return false;
                     }
                 }
-                if (!m) {
-                    LOGGER->error("No mutex with ID {} was found.",
-                                  da_thread->handle,
-                                  da_thread->name,
-                                  da_thread->mutex_id);
-                    return false;
-                }
-
-                if (!m->remove_waiting_thread(da_thread->handle)) {
-                    LOGGER->error(R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
-                                  da_thread->handle,
-                                  da_thread->name,
-                                  m->handle,
-                                  m->name);
-                    return false;
-                }
                 break;
-            }
-            case ThreadState::TERMINATED:
+            case ThreadState::STOPPED:
                 LOGGER->trace(R"("{}-{}" is already terminated.)",
                               da_thread->handle,
                               da_thread->name);
