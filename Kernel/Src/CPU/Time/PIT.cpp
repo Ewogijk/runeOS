@@ -83,6 +83,7 @@ namespace Rune::CPU {
             auto c_t = _sleeping_threads.dequeue();
             while (c_t) {
                 LOGGER->trace(R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
+                c_t->timer_id = -1;
                 _scheduler->schedule(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
                     _scheduler->execute_next_thread(); // Execute the thread immediately if it is
@@ -130,7 +131,8 @@ namespace Rune::CPU {
                       r_t->name,
                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
-        r_t->state = ThreadState::SLEEPING;
+        r_t->state = ThreadState::BLOCKED;
+        r_t->timer_id = 1;
         _scheduler->execute_next_thread();
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->unlock();
