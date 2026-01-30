@@ -40,7 +40,7 @@ namespace Rune::CPU {
                           waiting->name);
             _owner            = waiting;
             waiting->mutex_id = handle;
-            _scheduler->schedule(waiting);
+            _scheduler->unblock(waiting);
         }
     }
 
@@ -60,7 +60,6 @@ namespace Rune::CPU {
     }
 
     void Mutex::lock() {
-        _scheduler->lock();
         auto t      = _scheduler->get_running_thread();
         t->mutex_id = handle;
         if (!_owner) {
@@ -70,7 +69,6 @@ namespace Rune::CPU {
                           t->handle,
                           t->name);
             _owner = t;
-            _scheduler->unlock();
             return;
         }
 
@@ -81,31 +79,24 @@ namespace Rune::CPU {
                           t->handle,
                           t->name);
             _wait_queue.add_back(t);
-            t->state = ThreadState::BLOCKED;
-            _scheduler->execute_next_thread();
+            _scheduler->await_block();
+            _scheduler->block();
         } // else Allow the owner to lock the mutex recursively
-        _scheduler->unlock();
     }
 
     void Mutex::unlock() {
-        _scheduler->lock();
-        if (!_owner) {
-            _scheduler->unlock();
-            return;
-        }
+        if (!_owner) return;
 
         // Only the owner is allowed to unlock the mutex
         if (_scheduler->get_running_thread()->handle == _owner->handle) {
             transfer_ownership();
             if (_scheduler->get_ready_queue()->peek() == _owner.get())
-                _scheduler->execute_next_thread(); // Execute the thread immediately if it is first
-                                                   // in the ready queue
+                _scheduler->preempt_running_thread(); // Execute the thread immediately if it is
+                                                      // first in the ready queue
         }
-        _scheduler->unlock();
     }
 
     auto Mutex::remove_waiting_thread(U16 t_id) -> bool {
-        _scheduler->lock();
         if (!_owner) return false;
 
         if (_owner->handle == t_id) {
@@ -121,7 +112,6 @@ namespace Rune::CPU {
             if (!to_remove) return false;
             _wait_queue.remove(to_remove);
         }
-        _scheduler->unlock();
         return true;
     }
 } // namespace Rune::CPU

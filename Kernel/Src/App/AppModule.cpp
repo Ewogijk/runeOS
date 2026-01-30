@@ -42,7 +42,6 @@ namespace Rune::App {
                      app->vendor,
                      app->working_directory.to_string());
 
-        _cpu_module->get_scheduler()->lock();
         int t_id    = _cpu_module->schedule_new_thread("main",
                                                     start_info,
                                                     app->base_page_table_address,
@@ -52,7 +51,6 @@ namespace Rune::App {
         _app_table.put(app->handle, app);
         _cpu_module->find_thread(t_id)->app_handle = app->handle;
         app->thread_table.add_back(t_id);
-        _cpu_module->get_scheduler()->unlock();
         return app->handle;
     }
 
@@ -146,16 +144,16 @@ namespace Rune::App {
                 t->app_handle = _active_app->handle;
             });
         _cpu_module->install_event_handler(
-            CPU::EventHook(CPU::EventHook::THREAD_TERMINATED).to_string(),
+            CPU::EventHook(CPU::EventHook::THREAD_STOPPED).to_string(),
             "App Thread Table Manager - ThreadTerminated",
             [this](void* evt_ctx) {
                 // Find the app this thread belongs to
-                auto* tt_ctx = reinterpret_cast<CPU::ThreadTerminatedContext*>(evt_ctx);
+                auto* tt_ctx = reinterpret_cast<CPU::ThreadPreemptionContext*>(evt_ctx);
                 SharedPointer<Info> finished_app(nullptr);
                 for (const auto& app_entry : _app_table) {
                     auto& app = *app_entry.value;
-                    if (app->handle == tt_ctx->terminated->app_handle) {
-                        app->thread_table.remove(tt_ctx->terminated->handle);
+                    if (app->handle == tt_ctx->stopped->app_handle) {
+                        app->thread_table.remove(tt_ctx->stopped->handle);
                         if (app->thread_table.is_empty()) finished_app = app;
                         break;
                     }
@@ -204,7 +202,7 @@ namespace Rune::App {
                 }
             });
         _cpu_module->install_event_handler(
-            CPU::EventHook(CPU::EventHook::CONTEXT_SWITCH).to_string(),
+            CPU::EventHook(CPU::EventHook::THREAD_PREEMPTED).to_string(),
             "App Thread Table Manager - ContextSwitch",
             [this](void* evt_ctx) {
                 auto* next = reinterpret_cast<CPU::Thread*>(evt_ctx);
@@ -473,7 +471,7 @@ namespace Rune::App {
 
         LOGGER->debug("Terminating all app threads...");
         for (auto r_t : _active_app->thread_table) {
-            if (!_cpu_module->terminate_thread(r_t)
+            if (!_cpu_module->stop_thread(r_t)
                 && r_t != _cpu_module->get_scheduler()->get_running_thread()->handle) {
                 LOGGER->warn(R"(Failed to terminate thread with ID {}.)", r_t);
             }
@@ -492,24 +490,21 @@ namespace Rune::App {
 
         // Schedule all threads joining with this app
         auto* scheduler = _cpu_module->get_scheduler();
-        scheduler->lock();
         LOGGER->debug("Scheduling all joining threads...");
         for (auto& j_t : _active_app->joining_thread_table) {
             j_t->join_app_id = 0;
-            scheduler->schedule(j_t);
+            scheduler->unblock(j_t);
         }
         _active_app->joining_thread_table.clear();
-        scheduler->unlock();
 
         CPU::thread_exit(exit_code);
     }
 
     auto AppModule::join(U16 handle) -> int {
         // Important: We need to keep a copy of the shared pointer here, so that the app info does
-        // not get freed
-        //              when the final context switch from its main thread to the next thread
-        //              happens after it has exited, otherwise the info gets freed, and it is no
-        //              longer possible to access its exit code.
+        // not get freed when the final context switch from its main thread to the next thread
+        // happens after it has exited, otherwise the info gets freed, and it is no longer possible
+        // to access its exit code.
         SharedPointer<Info> app;
         for (const auto& app_entry : _app_table) {
             auto& a = *app_entry.value; // NOLINT app_table cannot contain null entries
@@ -521,8 +516,7 @@ namespace Rune::App {
         }
 
         auto* scheduler = _cpu_module->get_scheduler();
-        scheduler->lock();
-        auto r_t = scheduler->get_running_thread();
+        auto  r_t       = scheduler->get_running_thread();
         LOGGER->debug(R"(Thread "{}-{}" is joining with app "{}-{}")",
                       r_t->handle,
                       r_t->name,
@@ -531,10 +525,10 @@ namespace Rune::App {
         r_t->join_app_id = app->handle;
         r_t->state       = CPU::ThreadState::BLOCKED;
         app->joining_thread_table.add_back(r_t);
-        scheduler->execute_next_thread();
-        // The "unlock" call will trigger a context switch to whatever next thread will be run and
+        // The "block" call will trigger a context switch to whatever next thread will be run and
         // this thread will wait until it is scheduled again in the "exit_running_app" function.
-        scheduler->unlock();
+        scheduler->await_block();
+        scheduler->block();
         // The application has exited here, meaning this thread was rescheduled in
         // "exit_running_app" at some point thus the exit_code of the app is now set
         return app->exit_code;
