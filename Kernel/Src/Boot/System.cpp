@@ -203,9 +203,7 @@ namespace Rune {
         CPU::exception_install_panic_stream(_panic_stream);
         init_cpp_runtime_support(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
 
-        auto* cpu_subsys = get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        cpu_subsys->get_scheduler()->lock();
-        cpu_subsys->get_scheduler()->terminate(); // Schedule bootstrap termination after unlock
+        auto*          cpu_subsys    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
         char*          dummy_args[1] = {nullptr}; // NOLINT
         CPU::StartInfo start_info{};
         start_info.argc = 0;
@@ -217,7 +215,8 @@ namespace Rune {
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        cpu_subsys->get_scheduler()->unlock(); // Boot thread is scheduled after unlock
+        cpu_subsys->get_scheduler()->await_block();
+        cpu_subsys->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
 
     void System::shutdown() { // NOLINT
