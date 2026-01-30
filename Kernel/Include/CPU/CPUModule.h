@@ -50,16 +50,16 @@ namespace Rune::CPU {
 
     /// @brief Event context of the "THREAD_STOPPED" event hook.
     struct ThreadPreemptionContext {
-        Thread* stopped     = nullptr;
+        Thread* stopped        = nullptr;
         Thread* next_scheduled = nullptr;
     };
 
     /// @brief The CPU module acts as an entry point for interrupt, threading and timing based
     ///         functionality.
     class CPUModule : public Module {
-        static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
+        static constexpr char const* BOOTSTRAP_THREAD_NAME         = "Bootstrap";
         static constexpr char const* GARBAGE_COLLECTOR_THREAD_NAME = "Garbage Collector Thread";
-        static constexpr char const* IDLE_THREAD_NAME       = "Idle Thread";
+        static constexpr char const* IDLE_THREAD_NAME              = "Idle Thread";
         static char*     DUMMY_ARGS[1]; // NOLINT Array disallowed! Is part of Kernel ABI
         static StartInfo GCT_START_INFO;
         static StartInfo IDLE_THREAD_START_INFO;
@@ -95,7 +95,6 @@ namespace Rune::CPU {
                            Stack            user_stack) -> SharedPointer<Thread>;
 
       public:
-
         CPUModule();
 
         ~CPUModule() override = default;
