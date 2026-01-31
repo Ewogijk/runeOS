@@ -11,8 +11,12 @@ jobs:
         run: |
           echo \> Installing clang-format-19
           sudo apt install clang-format-19
+          echo >\ Clang-format Version:
+          echo clang-format-19 --version
           echo \> Installing ruff
           pip install ruff
+          echo \> Ruff version:
+          echo ruff --version
       - name: Check C/C++ Code Formatting
         run: |
           echo \> Check Kernel code
@@ -132,8 +136,12 @@ jobs:
         run: |
           echo \> Installing clang-tidy
           sudo apt install clang-tidy
+          echo >\ Clang-tidy Version:
+          echo clang-tidy --version
           echo \> Installing ruff
           pip install ruff
+          echo \> Ruff version:
+          echo ruff --version
       - name: Extract Compilation Databases
         run: tar -xzf CompilationDatabases.tar.gz
       - name: Lint C/C++ Code
