@@ -15,14 +15,15 @@
 #   limitations under the License.
 
 import json
+import subprocess
 from pathlib import Path
 
 from SCons.Environment import *
 from SCons.Variables import *
 
-######################################################################################################
-#                                   Target Compiler Config                                           #
-######################################################################################################
+####################################################################################################
+#                                   Target Compiler Config                                         #
+####################################################################################################
 
 # Define command line arguments
 vars = Variables("BuildVariables.py")
@@ -90,8 +91,8 @@ vars.Add(
 # If enabled: During instantiation of target_env the values of build vars are checked and scons will
 #               report an error instead of printing the help text
 if GetOption("help"):
-    vars.options[0].validator=None
-    vars.options[1].validator=None
+    vars.options[0].validator = None
+    vars.options[1].validator = None
 
 target_env = Environment(
     tools=['default', 'compilation_db'],
@@ -176,6 +177,7 @@ target_env.Replace(
 )
 Export("target_env")
 
+
 ######################################################################################################
 #                                           Code Generation                                          #
 ######################################################################################################
@@ -212,11 +214,10 @@ if not GetOption("clean"):
     # Provide the python scripts as source so the code gen is always triggered when the scripts are updated
     #                           OR
     # Obviously the generated source file is missing
-    target_env.Command(
-        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc",
-        "BuildTools/GenerateISRStubsAssembly.py",
-        "python3 $SOURCE $TARGET",
-    )
+    # SCons does not pick up tha ISR-a.asm depends on ISR_Stubs.inc correctly, therefore this will
+    # be created always
+    subprocess.run(["python3", "BuildTools/GenerateISRStubsAssembly.py",
+                    f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc"])
     target_env.Command(
         f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
         "BuildTools/GenerateISRStubsCPP.py",
