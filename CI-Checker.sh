@@ -60,7 +60,7 @@ echo
 echo \> Lint C/C++ Code
 echo \> ===========================================
 echo \> Check Kernel code...
-find Kernel/Build/ -type d -name "*-*" -exec run-clang-tidy '.*\.cpp$' -p Kernel/Build/x86_64-debug -j 8 -header-filter='^(?!.*limine\.h).*\.h' -quiet \;
+find Kernel/Build/ -maxdepth 1 -type d -name "*-*" -exec run-clang-tidy '.*\.cpp$' -p {} -j 8 -header-filter='^(?!.*limine\.h).*\.h' -quiet \;
 echo \> '                         ' OKAY
 
 echo \> Check App code...
