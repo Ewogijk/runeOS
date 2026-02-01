@@ -132,7 +132,7 @@ jobs:
         with:
           name: compilation-databases
           path: ${{ github.workspace }}
-      - name: Install ruff and clang-format-19
+      - name: Install ruff and clang-tidy
         run: |
           echo \> Installing clang-tidy
           sudo apt install clang-tidy
