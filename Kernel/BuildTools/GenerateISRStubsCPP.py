@@ -25,7 +25,7 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
     :param out_file: Path to the ISR_Stubs.cpp file.
     :return: -
     """
-    print(f"> +++++ ISR C++ Stub Generator +++++")
+    print("> +++++ ISR C++ Stub Generator +++++")
     print(f"> ISR stubs file: {out_file}")
     with open(out_file, "w") as file:
         file.write("/*\n")

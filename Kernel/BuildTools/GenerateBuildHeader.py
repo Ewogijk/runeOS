@@ -81,9 +81,9 @@ def generate_build_info_h(out_file: str, macro_defs_json: str) -> None:
     for placeholder, replacement in macro_defs.items():
         build_h_out = build_h_out.replace(placeholder, replacement)
 
-    print(f"> +++++ Build Info Header Generator +++++")
+    print("> +++++ Build Info Header Generator +++++")
     print(f"> Build info header file: {out_file}")
-    print(f"> Build info header content:")
+    print("> Build info header content:")
     print(build_h_out)
 
     with open(out_file, "w") as file:
