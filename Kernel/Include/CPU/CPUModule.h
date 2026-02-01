@@ -32,50 +32,48 @@
 
 namespace Rune::CPU {
 
-    /**
-     * @brief All CPU subsystem event hooks.
-     * <ul>
-     *  <li>THREAD_CREATED: A new thread object was created and is about to be scheduled
-     *                          Event Context - Thread*: The created thread.</li>
-     *  <li>THREAD_TERMINATED: A thread has returned from main or requested termination.
-     *                          Event Context - ThreadTerminatedContext*: Contains pointers to the
-     * terminated and next to be scheduled thread.</li> <li>CONTEXT_SWITCH: A context switch is
-     * about to happen. Event Context - Thread*: The next thread that will be scheduled.</li>
-     * </ul>
-     */
 #define CPU_EVENT_HOOKS(X)                                                                         \
     X(EventHook, THREAD_CREATED, 0x1)                                                              \
-    X(EventHook, THREAD_TERMINATED, 0x2)                                                           \
-    X(EventHook, CONTEXT_SWITCH, 0x3)
+    X(EventHook, THREAD_STOPPED, 0x2)                                                              \
+    X(EventHook, THREAD_PREEMPTED, 0x3)
 
+    /// @brief CPU module event hooks
+    ///
+    /// - THREAD_CREATED: A new thread object was created and is about to be scheduled
+    ///                     Event Context - Thread*: The created thread.
+    /// - THREAD_STOPPED: A thread has returned from main or requested to be stopped.
+    ///                     Event Context - ThreadTerminatedContext*: Contains pointers to the
+    ///                         terminated and next to be scheduled thread.
+    /// - THREAD_PREEMPTED: A context switch is about to happen.
+    ///                     Event Context - Thread*: The next thread that will be scheduled.
     DECLARE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0) // NOLINT
 
-    /**
-     * @brief Event context of the "ThreadTerminated" event hook.
-     */
-    struct ThreadTerminatedContext {
-        Thread* terminated     = nullptr;
+    /// @brief Event context of the "THREAD_STOPPED" event hook.
+    struct ThreadPreemptionContext {
+        Thread* stopped        = nullptr;
         Thread* next_scheduled = nullptr;
     };
 
+    /// @brief The CPU module acts as an entry point for interrupt, threading and timing based
+    ///         functionality.
     class CPUModule : public Module {
-        static constexpr char const* BOOTSTRAP_THREAD_NAME  = "Bootstrap";
-        static constexpr char const* TERMINATOR_THREAD_NAME = "The Terminator";
-        static constexpr char const* IDLE_THREAD_NAME       = "Idle";
+        static constexpr char const* BOOTSTRAP_THREAD_NAME         = "Bootstrap";
+        static constexpr char const* GARBAGE_COLLECTOR_THREAD_NAME = "Garbage Collector Thread";
+        static constexpr char const* IDLE_THREAD_NAME              = "Idle Thread";
         static char*     DUMMY_ARGS[1]; // NOLINT Array disallowed! Is part of Kernel ABI
-        static StartInfo TERMINATOR_THREAD_START_INFO;
+        static StartInfo GCT_START_INFO;
         static StartInfo IDLE_THREAD_START_INFO;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Interrupt Properties
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         LinkedList<UniquePointer<PICDriver>> _pic_driver_table;
         PICDriver*                           _active_pic{nullptr};
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Threading Properties
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
         HandleCounter<U16>                  _thread_handle_counter;
@@ -84,9 +82,9 @@ namespace Rune::CPU {
         HandleCounter<U16>                 _mutex_handle_counter;
         Scheduler                          _scheduler;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Time Properties
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         UniquePointer<Timer> _timer;
 
@@ -97,25 +95,21 @@ namespace Rune::CPU {
                            Stack            user_stack) -> SharedPointer<Thread>;
 
       public:
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Constructors&Destructors
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
         CPUModule();
 
         ~CPUModule() override = default;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Kernel Subsystem Functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                              Kernel Subsystem Functions
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         [[nodiscard]] auto get_name() const -> String override;
 
         auto load(const BootInfo& boot_info) -> bool override;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Interrupt API
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                              Interrupt API
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * @brief
@@ -163,9 +157,9 @@ namespace Rune::CPU {
          */
         auto uninstall_irq_handler(U8 irq_line, U16 dev_handle) -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                      High Level Threading API
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                          High Level Threading API
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * @brief Get the scheduler itself, which gives access to the Low Level Threading API.
@@ -244,11 +238,11 @@ namespace Rune::CPU {
          * @return True: The thread is marked as terminated, False: No thread with the ID was found
          * or it is currently running.
          */
-        auto terminate_thread(int handle) -> bool;
+        auto stop_thread(int handle) -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Mutex API
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                      Mutex API
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * @brief A list of all currently acquired mutexes.
@@ -292,9 +286,9 @@ namespace Rune::CPU {
          */
         auto release_mutex(U16 mutex_handle) -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Time Functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  Time Functions
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * A driver for a timer.
@@ -311,7 +305,7 @@ namespace Rune::CPU {
     };
 
     /**
-     * @brief Mark the currently running thread as terminated which will immediately trigger a
+     * @brief Mark the currently running thread as stopped which will immediately trigger a
      * context switch to the next thread.
      *
      * This is the clean and advised way of terminating a thread whose main function has returned.

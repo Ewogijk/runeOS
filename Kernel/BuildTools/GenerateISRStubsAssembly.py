@@ -25,6 +25,8 @@ def generate_isr_assembly_stubs(out_file: str) -> None:
     :param out_file: Path to the ISR_Stubs.inc file.
     :return: -
     """
+    print("> +++++ ISR Assembly Stub Generator +++++")
+    print(f"> ISR stubs file: {out_file}")
     stubs_with_error_code = [8, 10, 11, 12, 13, 14, 17, 21]
     with open(out_file, "w") as file:
         file.write(";\n")

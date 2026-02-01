@@ -18,7 +18,6 @@ import click
 
 from pathlib import Path
 
-
 PSF1_MAGIC = int.from_bytes(b"\x36\x04", "little")
 PSF2_MAGIC = int.from_bytes(b"\x72\xb5\x4a\x86", "little")
 
@@ -116,12 +115,13 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
         file.write(" * This file is auto generated.\n")
         file.write(" */\n\n")
 
-        file.write(f"#ifndef RUNEOS_{font_name_cppified.upper()}_H \n")
+        file.write(f"#ifndef RUNEOS_{font_name_cppified.upper()}_H\n")
         file.write(f"#define RUNEOS_{font_name_cppified.upper()}_H\n\n")
 
         file.write("#include <KRE/System/FrameBuffer.h>\n\n")
 
         file.write("namespace Rune {\n")
+        file.write("    // NOLINTBEGIN\n")
 
         # Glyphs to byte array
         glyph_idx = font.number_of_glyphs * font.glyph_size
@@ -133,13 +133,13 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
 
         glyph_id = 0
         for g in font.glyphs:
-            file.write(f"            // Glyph {glyph_id}\n")
+            file.write(f"        // Glyph {glyph_id}\n")
             for i in range(0, font.glyph_size, byte_width):
                 vi = 0
                 # write byte values
                 while vi < byte_width:
                     if vi == 0:
-                        file.write("            ")
+                        file.write("        ")
                     file.write(f"{format(g[i + vi], '#04x')}, ")
                     vi += 1
 
@@ -147,7 +147,7 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
                 # write comment
                 while ci < byte_width:
                     if ci == 0:
-                        file.write("        // ")
+                        file.write("// ")
                     file.write(f"{format(g[i + ci], '08b')}")
                     ci += 1
                 file.write("\n")
@@ -156,17 +156,19 @@ def generate_cpp_font_file(cpp_file: Path, font: BitMapFont) -> None:
         file.write("    };\n\n")
 
         # Font object definition
-        file.write(f"    static BitMapFont {font_name_cppified} = {'{'}\n")
-        file.write(f'            "{font.name}",\n')
-        file.write(f"            {font.number_of_glyphs},\n")
-        file.write(f"            {font.glyph_size},\n")
-        file.write(f"            {font.pixel_height},\n")
-        file.write(f"            {font.pixel_width},\n")
-        file.write(f"            {font_name_cppified}_glyphs\n")
-        file.write("    };\n")
+        file.write(f"    static BitMapFont {font_name_cppified} =\n")
+        file.write(
+            f'        {"{"}"{font.name}", '
+            f"{font.number_of_glyphs}, "
+            f"{font.glyph_size}, "
+            f"{font.pixel_height}, "
+            f"{font.pixel_width}, "
+            f"{font_name_cppified}_glyphs{'}'};\n"
+        )
 
-        file.write("}\n\n")
-        file.write(f"#endif //RUNEOS_{font_name_cppified.upper()}_H")
+        file.write("    // NOLINTEND\n")
+        file.write("} // namespace Rune\n\n")
+        file.write(f"#endif // RUNEOS_{font_name_cppified.upper()}_H")
 
 
 @click.command()
@@ -179,6 +181,9 @@ def convert_psf2_to_cpp(font_file: Path, out_file: Path) -> None:
     :param out_file:  Output file for the header file
     :return: True if the header file has been generated else false.
     """
+    print("> +++++ PSF2 to CPP Generator +++++")
+    print(f"> PSF2 font file:       {font_file}")
+    print(f"> C++ font header file: {out_file}")
     psf_font = read_psf2_file(font_file)
     if not psf_font:
         return

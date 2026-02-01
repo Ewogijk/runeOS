@@ -25,9 +25,9 @@
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Scheduler");
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      Scheduler Implementation
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  Private Functions
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void Scheduler::setup_kernel_stack(const SharedPointer<CPU::Thread>& thread) {
         // Create kernel stack - only used for system calls and interrupts
@@ -43,49 +43,125 @@ namespace Rune::CPU {
     }
 
     auto Scheduler::next_scheduled_thread() -> SharedPointer<Thread> {
-        if (!_terminated_threads.is_empty()) // Clean up terminated threads whenever possible
-            return _thread_terminator;
+        if (!_thread_garbage_bin.is_empty()) // Clean up terminated threads whenever possible
+            return _garbage_collector_thread;
 
         auto t = _ready_threads->dequeue();
         if (!t) t = _idle_thread; // Switch to the idle thread if no other thread is ready
         return t;
     }
 
+    void Scheduler::lock() {
+        if (_irq_disable_counter == 0) interrupt_disable();
+        _irq_disable_counter++;
+    }
+
+    void Scheduler::unlock() {
+        if (_irq_disable_counter > 0) _irq_disable_counter--;
+        if (_irq_disable_counter == 0) interrupt_enable();
+    }
+
+    void Scheduler::perform_context_switch() {
+        auto next_thread = next_scheduled_thread();
+        if (next_thread == _idle_thread) {
+            if (_running_thread == _idle_thread) return; // Just keep the idle thread running
+
+            if (_running_thread->state == ThreadState::RUNNING)
+                return; // Let the last non-idle thread keep running
+        }
+
+        if (_running_thread == _idle_thread) {
+            // Do not reschedule the Idle Thread
+            _idle_thread->state = ThreadState::BLOCKED;
+        } else {
+            switch (_running_thread->state) {
+                case ThreadState::NONE:
+                case ThreadState::CREATED:
+                case ThreadState::READY:
+                    LOGGER->warn(R"({}-{}: Invalid thread state "{}" (perform_context_switch))",
+                                 _running_thread->handle,
+                                 _running_thread->name,
+                                 _running_thread->state.to_string());
+                    break;
+                case ThreadState::RUNNING:
+                case ThreadState::AWAIT_BLOCK:
+                    if (!_ready_threads->enqueue(_running_thread)) {
+                        LOGGER->warn(R"({}-{}: Reschedule failed)",
+                                     _running_thread->handle,
+                                     _running_thread->name);
+                    } else {
+                        // Only change from RUNNING -> READY state not AWAIT_BLOCK -> READY
+                        // Why? Use case of await_block functions is following:
+                        //
+                        // scheduler->await_block();
+                        // ... more code <-- Timer interrupt and preemption could happen
+                        // scheduler->block();
+                        //
+                        // A thread that is in the AWAIT_BLOCK state could be preempted anytime
+                        // before it is blocked, therefore the state must be preserved across
+                        // context switches, otherwise the block() call will fail
+                        if (_running_thread->state == ThreadState::RUNNING)
+                            _running_thread->state = ThreadState::READY;
+                    }
+                    break;
+                default: // ThreadState::BLOCKED or ThreadState::STOPPED
+                    // Do not reschedule blocked and stopped threads
+                    break;
+            }
+        }
+
+        // Switch to next thread
+        LOGGER->trace(R"(Context switch: "{}-{}" -> "{}-{}")",
+                      _running_thread->handle,
+                      _running_thread->name,
+                      next_thread->handle,
+                      next_thread->name);
+
+        auto* old_thread       = _running_thread.get();
+        _running_thread        = move(next_thread);
+        _running_thread->state = ThreadState::RUNNING;
+        _allow_preemption      = _running_thread != _idle_thread;
+        _on_context_switch(forward<Thread*>(_running_thread.get()));
+        current_core()->switch_to_thread(old_thread, _running_thread.get());
+    }
+
     Scheduler::Scheduler()
         : _running_thread(nullptr),
           _idle_thread(nullptr),
-          _thread_terminator(nullptr),
+          _garbage_collector_thread(nullptr),
           _on_context_switch([](Thread* next) { SILENCE_UNUSED(next) }) {}
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Properties
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     auto Scheduler::get_ready_queue() -> MultiLevelQueue* { return _ready_threads; }
 
-    auto Scheduler::get_terminated_threads() -> LinkedList<SharedPointer<Thread>>* {
-        return &_terminated_threads;
+    auto Scheduler::get_thread_garbage_bin() -> LinkedList<SharedPointer<Thread>>* {
+        return &_thread_garbage_bin;
     }
 
     auto Scheduler::get_running_thread() -> SharedPointer<Thread> { return _running_thread; }
 
     auto Scheduler::get_idle_thread() -> SharedPointer<Thread> { return _idle_thread; }
 
-    auto Scheduler::get_thread_terminator() -> SharedPointer<Thread> { return _thread_terminator; }
+    auto Scheduler::get_garbage_collector_thread() -> SharedPointer<Thread> {
+        return _garbage_collector_thread;
+    }
 
     auto Scheduler::is_preemption_allowed() const -> bool { return _allow_preemption; }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Event Hooks
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Event Hooks
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void Scheduler::set_on_context_switch(Function<void(CPU::Thread*)> on_context_switch) {
         _on_context_switch = move(on_context_switch);
     }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          General Stuff
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  Scheduling API
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     auto Scheduler::init(PhysicalAddr                 base_pt_addr,
                          Register                     stack_top,
@@ -109,126 +185,131 @@ namespace Rune::CPU {
         _running_thread->policy                  = SchedulingPolicy::LOW_LATENCY;
 
         setup_kernel_stack(thread_terminator);
-        _thread_terminator        = thread_terminator;
-        _thread_terminator->state = ThreadState::ON_THE_HUNT;
+        _garbage_collector_thread        = thread_terminator;
+        _garbage_collector_thread->state = ThreadState::BLOCKED;
 
         setup_kernel_stack(idle_thread);
         _idle_thread        = idle_thread;
-        _idle_thread->state = ThreadState::CHILLING;
+        _idle_thread->state = ThreadState::BLOCKED;
 
         _allow_preemption = true;
         return true;
     }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Actual Scheduling
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    void Scheduler::lock() {
-        if (_irq_disable_counter == 0) interrupt_disable();
-        _irq_disable_counter++;
-        _postpone_ctx_switches++;
-    }
-
-    void Scheduler::unlock() {
-        if (_postpone_ctx_switches > 0) _postpone_ctx_switches--;
-        if (_postpone_ctx_switches == 0) {
-            if (_ctx_switches_postponed) {
-                _ctx_switches_postponed = false;
-                execute_next_thread();
-            }
+    auto Scheduler::schedule(const SharedPointer<Thread>& thread) -> bool {
+        lock();
+        if (!thread) {
+            unlock();
+            return false;
         }
-
-        if (_irq_disable_counter > 0) _irq_disable_counter--;
-        if (_irq_disable_counter == 0) interrupt_enable();
-    }
-
-    auto Scheduler::schedule_new_thread(const SharedPointer<CPU::Thread>& thread) -> bool {
+        if (thread->state != ThreadState::CREATED) {
+            LOGGER->error(R"({}-{}: Invalid thread state "{}" (schedule))",
+                          thread->handle,
+                          thread->name,
+                          thread->state.to_string());
+            unlock();
+            return false;
+        }
         if (thread->policy == SchedulingPolicy::NONE) {
-            LOGGER->error(R"(Attempt to schedule a thread with policy "None")");
+            LOGGER->error(R"({}-{}: Invalid thread policy "NONE")", thread->handle, thread->name);
+            unlock();
             return false;
         }
 
         setup_kernel_stack(thread);
         if (!_ready_threads->enqueue(thread)) {
-            LOGGER->error(
-
-                R"(Failed to put initialized thread "{}" in the ready queue... Freeing allocated stack memory.)",
-                thread->name);
+            LOGGER->error(R"({}-{}: Schedule failed... Freeing kernel stack)",
+                          thread->handle,
+                          thread->name);
             delete[] thread->kernel_stack_bottom;
+            unlock();
             return false;
         }
         thread->state = ThreadState::READY;
+        unlock();
         return true;
     }
 
-    auto Scheduler::schedule(const SharedPointer<CPU::Thread>& thread) -> bool {
-        if (!thread || thread == _running_thread) return false;
+    void Scheduler::on_thread_enter() { unlock(); }
 
-        if (!_ready_threads->enqueue(thread)) {
-            LOGGER->error(R"(Failed to put thread "{}" in the ready queue.)", thread->name);
-            return false;
+    void Scheduler::preempt_running_thread() {
+        lock();
+        if (!_allow_preemption) return;
+        perform_context_switch();
+        unlock();
+    }
+
+    void Scheduler::await_block() {
+        lock();
+        _running_thread->state = ThreadState::AWAIT_BLOCK;
+        unlock();
+    }
+
+    void Scheduler::block(const SharedPointer<Thread>& thread) {
+        lock();
+        if (!thread) {
+            unlock();
+            return;
         }
-        thread->state = ThreadState::READY;
-        LOGGER->trace(R"(Thread "{}-{}" has been scheduled.)", thread->handle, thread->name);
-        return true;
+        if (thread->state != ThreadState::AWAIT_BLOCK) {
+            LOGGER->error(R"({}-{}: Invalid thread state "{}" (block))",
+                          _running_thread->handle,
+                          _running_thread->name,
+                          _running_thread->state.to_string());
+            unlock();
+            return;
+        }
+        thread->state = ThreadState::BLOCKED;
+        if (thread != _running_thread)
+            _ready_threads->remove(thread->handle); // Remove the thread from the schedule
+        else
+            perform_context_switch(); // Preempt the running thread
+
+        unlock();
     }
 
-    void Scheduler::execute_next_thread() {
-        if (_postpone_ctx_switches != 0) {
-            _ctx_switches_postponed = true;
+    void Scheduler::block() { block(_running_thread); }
+
+    void Scheduler::unblock(const SharedPointer<Thread>& thread) {
+        lock();
+        if (!thread) {
+            unlock();
+            return;
+        }
+        if (thread->state != ThreadState::BLOCKED) {
+            LOGGER->error(R"({}-{}: Invalid thread state "{}" (unblock))",
+                          _running_thread->handle,
+                          _running_thread->name,
+                          _running_thread->state.to_string());
+            unlock();
             return;
         }
 
-        auto next_thread = next_scheduled_thread();
-        if (next_thread == _idle_thread) {
-            if (_running_thread == _idle_thread) return; // Just keep the idle thread running
-
-            if (_running_thread->state == ThreadState::RUNNING)
-                return; // Let the last non-idle thread keep running
+        if (!_ready_threads->enqueue(thread)) {
+            LOGGER->error(R"({}-{}: Scheduling failed)", thread->handle, thread->name);
+            unlock();
+            return;
         }
-
-        if (_running_thread == _idle_thread) {
-            // Do not reschedule the idle thread -> We do not want it to be regularly scheduled
-            _idle_thread->state = ThreadState::CHILLING;
-        } else if (_running_thread->state == ThreadState::RUNNING) {
-            // Reschedule thread
-            if (!_ready_threads->enqueue(_running_thread))
-                LOGGER->warn(R"(Failed to reschedule "{}-{}")",
-                             _running_thread->handle,
-                             _running_thread->name);
-            else {
-                if (_running_thread->state == ThreadState::RUNNING)
-                    _running_thread->state = ThreadState::READY;
-            }
-        }
-
-        // Switch to next thread
-        LOGGER->trace(R"(Context switch: "{}-{}" -> "{}-{}")",
-                      _running_thread->handle,
-                      _running_thread->name,
-                      next_thread->handle,
-                      next_thread->name);
-
-        auto* old_thread       = _running_thread.get();
-        _running_thread        = move(next_thread);
-        _running_thread->state = ThreadState::RUNNING;
-        _allow_preemption      = _running_thread != _idle_thread;
-        _on_context_switch(forward<Thread*>(_running_thread.get()));
-        current_core()->switch_to_thread(old_thread, _running_thread.get());
+        thread->state = ThreadState::READY;
+        // Context switch immediately if thread was scheduled as next thread
+        if (thread->handle == _ready_threads->peek()->handle) perform_context_switch();
+        unlock();
     }
 
-    void Scheduler::terminate(const SharedPointer<CPU::Thread>& thread) {
-        if (!thread) return;
-
-        thread->state  = ThreadState::TERMINATED;
-        thread->policy = SchedulingPolicy::NONE;
-        _terminated_threads.add_back(thread);
-
-        // Schedule another thread if the currently running thread is terminated
-        if (thread == _running_thread) execute_next_thread();
+    void Scheduler::stop(const SharedPointer<Thread>& thread) {
+        lock();
+        if (!thread) {
+            unlock();
+            return;
+        }
+        thread->state = ThreadState::STOPPED;
+        _thread_garbage_bin.add_back(thread);
+        if (thread != _running_thread)
+            _ready_threads->remove(thread->handle); // Remove the thread from the schedule
+        else
+            perform_context_switch(); // Preempt the running thread
+        unlock();
     }
 
-    void Scheduler::terminate() { terminate(_running_thread); }
-
+    void Scheduler::stop() { stop(_running_thread); }
 } // namespace Rune::CPU

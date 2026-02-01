@@ -756,7 +756,6 @@ namespace Rune::App {
         if (!_initialized) return false;
 
         if (_render_thread_ID == 0) {
-            _cpu_module->get_scheduler()->lock();
             _render_thread_ID = _cpu_module->schedule_new_thread(
                 "Terminal-Cursor Render Thread",
                 &_render_thread_start_info,
@@ -764,7 +763,6 @@ namespace Rune::App {
                 CPU::SchedulingPolicy::LOW_LATENCY,
                 {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
             if (_render_thread_ID == 0) _initialized = false;
-            _cpu_module->get_scheduler()->unlock();
         }
 
         char ch = (char) value;

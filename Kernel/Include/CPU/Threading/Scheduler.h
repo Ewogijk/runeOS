@@ -26,57 +26,39 @@
 #include <CPU/Threading/MultiLevelQueue.h>
 
 namespace Rune::CPU {
-    /**
-     * A round robin scheduler that utilizes a multilevel queue with each queue having a scheduling
-     * policy that determines the priority of threads in that queue.
-     *
-     * <p>
-     *  A thread terminator is used to free memory of terminated threads as well as a idle thread
-     * that halts the CPU until another thread is ready to run. The thread terminator has implicitly
-     * the highest priority while the idle thread the lowest, both are not scheduled in the
-     * multilevel queue.
-     * </p>
-     */
+    /// @brief A scheduler using a multilevel queue with policies grouping threads of the same
+    ///         priority together.
+    ///
+    /// The scheduler manages two special threads, the Garbage Collector Thread (GCT) and the Idle
+    /// Thread (IT). Former is used to run a cleanup task on stopped threads while the later will be
+    /// run whenever the ready queue is empty. The GCT is implicitly the highest priority thread and
+    /// the IT is the lowest priority thread.
     class Scheduler {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
         SharedPointer<Thread> _running_thread;
         MultiLevelQueue*      _ready_threads{nullptr};
 
-        /**
-         * @brief Whenever this thread contains at least one thread, the thread terminator will be
-         * scheduled.
-         */
-        LinkedList<SharedPointer<Thread>> _terminated_threads;
+        /// @brief Contains references of threads that have been stopped but their allocated memory
+        ///         has yet to be freed by the Garbage Collector Thread.
+        LinkedList<SharedPointer<Thread>> _thread_garbage_bin;
 
-        /**
-         * @brief If (_irqDisableCounter != 0), IRQs are disabled.
-         */
+        /// @brief If (_irqDisableCounter != 0), IRQs are disabled.
         int _irq_disable_counter{0};
 
-        /**
-         * @brief If (_postPoneCtxSwitches != 0), then no context switch will be done.
-         */
-        int  _postpone_ctx_switches{0};
-        bool _ctx_switches_postponed{false};
-
-        /**
-         * @brief If (_allowPreemption == true) threads can be preempted. Note: We cannot know if a
-         * schedule() call happens as part preemption, thus we cannot enforce this rule and must
-         * hope preemption is implemented properly.
-         */
+        /// @brief If (_allowPreemption == true) threads can be preempted. Note: We cannot know if a
+        ///          schedule() call happens as part preemption, thus we cannot enforce this rule
+        ///          and must hope preemption is implemented properly.
         bool _allow_preemption{false};
 
         SharedPointer<Thread>   _idle_thread;
-        SharedPointer<Thread>   _thread_terminator;
+        SharedPointer<Thread>   _garbage_collector_thread;
         Function<void(Thread*)> _on_context_switch;
 
         void (*_thread_enter)(){nullptr};
 
-        /**
-         * @brief allocate the kernel stacks for the given stack.
-         * @param thread
-         */
+        /// @brief Allocate the kernel stacks for the given stack.
+        /// @param thread
         void setup_kernel_stack(const SharedPointer<Thread>& thread);
 
         /**
@@ -90,70 +72,69 @@ namespace Rune::CPU {
          */
         auto next_scheduled_thread() -> SharedPointer<Thread>;
 
+        /**
+         * Disable interrupts and postpone context switches until the scheduler is unlocked. Two
+         * separate locks are used for disabling interrupts and postponing context switches. Both
+         * locks can be acquired multiple times.
+         */
+        void lock();
+
+        /**
+         * Release both locks once. If the last interrupt disable lock is released, interrupts are
+         * enabled. If the last postpone context switches lock is released, a context switch is
+         * triggered.
+         */
+        void unlock();
+
+        /// @brief Perform the context switch from the running thread to the next thread in the
+        /// ready
+        ///         queue.
+        ///
+        /// Note: This function is NOT thread safe!
+        void perform_context_switch();
+
       public:
         Scheduler();
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Properties
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                      Properties
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        /**
-         * @brief The ready queue contains all threads that are waiting to be scheduled.
-         * @return The ready queue.
-         */
+        /// @brief
+        /// @return The ready queue containing all threads waiting to be scheduled.
         auto get_ready_queue() -> MultiLevelQueue*;
 
-        /**
-         * @brief Get all threads that have been marked as terminated that still need to have their
-         * memory freed.
-         *
-         * On the next cycle of the tread terminator their memory will be freed.
-         *
-         * @return A list of terminated threads.
-         */
-        auto get_terminated_threads() -> LinkedList<SharedPointer<Thread>>*;
+        /// @brief Get a reference to the Thread Garbage Bin (TGB).
+        ///
+        /// The TGB contains all threads that have been stopped by a call to stop(), but yet need
+        /// their kernel stack memory to be freed.
+        ///
+        /// @return A reference to the TGB.
+        auto get_thread_garbage_bin() -> LinkedList<SharedPointer<Thread>>*;
 
-        /**
-         * @brief Get the thread that currently has CPU time, meaning the thread that can execute
-         * code.
-         * @return The running thread.
-         */
+        /// @brief
+        /// @return Get a reference to the thread is currently running.
         auto get_running_thread() -> SharedPointer<Thread>;
 
-        /**
-         * @brief The idle thread will always be scheduled when there is no other ready thread
-         * available.
-         *
-         * The thread terminator is the second thread to be created during kernel boot thus it will
-         * always have ID 1 and furthermore it never terminates.
-         *
-         * @return The idle thread.
-         */
+        /// @brief Return the Idle Thread that will be run when the ready queue is empty.
+        /// @return A reference to the Idle Thread.
         auto get_idle_thread() -> SharedPointer<Thread>;
 
-        /**
-         * @brief The thread terminator is responsible for freeing the memory allocated for another
-         * thread that has finished execution.
-         *
-         * The thread terminator is the third thread to be created during kernel boot thus it will
-         * always have ID 2 and furthermore it never terminates.
-         *
-         * @return The thread terminator.
-         */
-        auto get_thread_terminator() -> SharedPointer<Thread>;
+        /// @brief Return the Garbage Collector Thread  (GCT) that frees the memory allocated for
+        ///         stopped threads.
+        /// @return A reference to the Garbage Collector Thread .
+        auto get_garbage_collector_thread() -> SharedPointer<Thread>;
 
-        /**
-         * @brief Whenever this function returns true the scheduler can be preempted by e.g. a
-         * timer, otherwise a timer must not attempt to call the schedule() function.
-         * @return True: Calling schedule() as part of preemption is allowed, False: It is not
-         * allowed to call schedule() as part of preemption.
-         */
-        [[nodiscard]]
-        auto is_preemption_allowed() const -> bool;
+        /// @brief Check if thread preemption is currently allowed.
+        /// @return True: Preempting threads is allowed, False: Otherwise.
+        ///
+        /// Thread preemption will be disabled by the scheduler if the Idle or Garbage Collector
+        /// Thread are running.
+        [[nodiscard]] auto is_preemption_allowed() const -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          *
@@ -163,9 +144,9 @@ namespace Rune::CPU {
          */
         void set_on_context_switch(Function<void(Thread*)> on_context_switch);
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          General Stuff
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  Scheduling API
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /**
          * @brief Initialize the scheduler by creating the system threads, after initialization
@@ -189,102 +170,130 @@ namespace Rune::CPU {
                   const SharedPointer<Thread>& thread_terminator,
                   void                         (*thread_enter)()) -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Actual Scheduling
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-        /**
-         * Disable interrupts and postpone context switches until the scheduler is unlocked. Two
-         * separate locks are used for disabling interrupts and postponing context switches. Both
-         * locks can be acquired multiple times.
-         */
-        void lock();
-
-        /**
-         * Release both locks once. If the last interrupt disable lock is released, interrupts are
-         * enabled. If the last postpone context switches lock is released, a context switch is
-         * triggered.
-         */
-        void unlock();
-
-        /**
-         * @brief Setup the kernel stack of the newly created thread and put it into the ready
-         * queue.
-         *
-         * This function only sets the KernelStackBottom, KernelStackTop and State field of the
-         * thread, the other fields must be set before passing the thread to this function.
-         *
-         * @param thread New thread to be scheduled.
-         * @return True: The thread is in the ready queue waiting to be scheduled, False: The thread
-         * has policy "None" or could not be put into the ready queue.
-         */
-        auto schedule_new_thread(const SharedPointer<Thread>& thread) -> bool;
-
-        /**
-         * @brief Put the thread in the "Ready" state and place it in the ready queue. The thread
-         * will be executed
-         *
-         * <p>
-         *  This function is intended to schedule an already initialized thread that was blocked /
-         * waiting in another wait queue and should now be scheduled for execution.
-         * </p>
-         * <p>
-         *  It is the callers responsibility to remove the thread from it's wait queue before
-         * calling this function.
-         * </p>
-         *
-         * @param thread
-         * @param preemptRunningThread
-         * @return True: The thread is in the ready queue, False: The could not be enqueued in the
-         * ready queue, it was null or it is the currently running thread.
-         */
+        /// @brief Allocate the kernel stack of the thread and put it in the ready queue.
+        /// @param thread A thread object that has not been executed yet.
+        /// @return True: The thread has been put in the ready queue, False: The thread was not in
+        ///             the CREATED state or the kernel stack could not be allocated.
+        ///
+        /// The thread needs to be in the ThreadState::CREATED state, otherwise scheduling of the
+        /// thread is rejected. In other words, it must be a newly created thread that has never
+        /// been run yet.
+        ///
+        /// Only the kernel stack will be allocated and set by this function. Initializing the other
+        /// members of the thread struct is the responsibility of the caller.
+        ///
+        /// Thread state transition: ThreadState::CREATED -> ThreadState::READY
+        ///
+        /// Note: This function is thread safe.
         auto schedule(const SharedPointer<Thread>& thread) -> bool;
 
-        /**
-         * @brief Trigger a context switch to continue execution of the next ready thread if context
-         * switches are allowed meaning not postponed.
-         *
-         * <p>
-         *  Important note: It is the callers responsibility to lock/unlock the scheduler
-         * before/after calling this function.
-         * </p>
-         * <p>
-         *  If there are any terminated threads, then the thread terminator is scheduled. Otherwise
-         * the next thread in the highest available scheduling policy of the ready queue is
-         * scheduled. Should no thread be ready for scheduling the idle thread will be scheduled.
-         * </p>
-         * <p>
-         *  When the currently running thread is still in the "Running" state and no other thread is
-         * ready then it will be rescheduled otherwise not.
-         * </p>
-         * <p>
-         *  Preemption is disabled while the idle task is running.
-         * </p>
-         */
-        void execute_next_thread();
+        /// @brief Activate thread preemption in the thread_enter function.
+        ///
+        /// During thread preemption the internal lock will be set before the context switch from
+        /// thread A and will be unlocked by thread B after the context switch.
+        /// First-time execution of a thread is different since the context switch will jump to the
+        /// thread_enter function which is not in control of the scheduler, thus this function must
+        /// be called manually.
+        ///
+        /// Note: Calling this function is mandatory, otherwise preemptive multithreading is not
+        ///         possible.
+        ///
+        /// Note2: This function is thread safe.
+        void on_thread_enter();
 
-        /**
-         * @brief Mark the given thread as terminated and put it into the terminated threads queue.
-         * If the thread is the currently running thread a context switch will be initiated.
-         *
-         * <p>
-         *   It is the callers responsibility to make sure that the thread gets removed from it's
-         * current wait queue, before it is put in the terminated thread queue.
-         * </p>
-         * <p>
-         *  Important note: It is the callers responsibility to lock/unlock the scheduler
-         * before/after calling this function.
-         * </p>
-         * @param thread
-         */
-        void terminate(const SharedPointer<Thread>& thread);
+        /// @brief Immediately trigger a context switch from the running thread to the next highest
+        ///         priority thread if preemption is allowed.
+        ///
+        /// If any threads are in the Thread Garbage Bin then the Garbage Collector Thread  will be
+        /// run next, otherwise the highest priority thread in the ready queue will be chosen.
+        /// Should the ready queue be empty then the Idle Thread is run next.
+        ///
+        /// Thread state transition:
+        /// - Running thread
+        ///     - ThreadState::RUNNING -> ThreadState::READY
+        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
+        /// - Next thread: ThreadState::READY -> ThreadState::RUNNING
+        ///
+        /// Note: This function is thread safe.
+        void preempt_running_thread();
 
-        /**
-         * @brief terminate the currently running thread, this is basically a call to
-         * terminate(get_running_thread()). See terminate(SharedPointer<Thread> thread) for the
-         * details.
-         */
-        void terminate();
+        /// @brief Mark the running thread to be blocked at some point in the future.
+        ///
+        /// This function is implemented as a means to solve the lost-wake-up problem at scheduler
+        /// level and there kernel-wide. The lost-wake-up problem occurs when thread A is put in a
+        /// synchronized wait queue, but the actual blocking happens at a later point. Another
+        /// thread B could decide to unblock thread A (because it sees it in the wait queue), that
+        /// has not been blocked yet. Now, when thread A is actually blocked it will never be
+        /// unblocked, because it was already and thus removed from the wait queue.
+        ///
+        /// The intention of this function is to plan to block a thread by making a state transition
+        /// to ThreadState::AWAIT_BLOCK state and later call block() which atomically triggers a
+        /// context switch if and only if the thread is still in said state.
+        ///
+        /// Thread state transition: ThreadState::RUNNING -> ThreadState::AWAIT_BLOCK
+        ///
+        /// Note: This function is thread safe.
+        void await_block();
+
+        /// @brief Preempt the given thread if and only if it is in the ThreadState::AWAIT_BLOCK
+        ///         state.
+        /// @param thread The thread to be blocked.
+        ///
+        /// If thread is currently running it will be preempted immediately without rescheduling it,
+        /// otherwise the thread will be removed from the ready queue. After blocking the reference
+        /// to the thread will no longer be maintained by the scheduler, it is the callers
+        /// responsibility to do so.
+        ///
+        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        ///
+        /// Note: This function is thread safe.
+        void block(const SharedPointer<Thread>& thread);
+
+        /// @brief Preempt the running thread if it is in the ThreadState::AWAIT_BLOCK state.
+        ///
+        /// This function is a shortcut for: block(get_running_thread()).
+        ///
+        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        ///
+        /// Note: This function is thread safe.
+        void block();
+
+        /// @brief Put the given thread in the ready queue if it is in the ThreadState::BLOCKED
+        ///         state.
+        /// @param thread Thread to be unblocked.
+        ///
+        /// The blocked thread will be marked with ThreadState::READY and put into the ready queue.
+        /// If the thread is scheduled to be run after the currently running thread, the running
+        /// thread will be preempted immediately. Which means the caller gives responsibility of
+        /// maintaining the reference to the thread object back to the scheduler.
+        ///
+        /// Thread state transition: ThreadState::BLOCKED -> ThreadState::READY
+        ///
+        /// Note: This function is thread safe.
+        void unblock(const SharedPointer<Thread>& thread);
+
+        /// @brief Stop the given thread from being executed in the future and move it to the Thread
+        ///         Garbage Bin (TGB).
+        /// @param thread Thread to be stopped.
+        ///
+        /// The given thread will be removed from the ready queue and placed in the TGB. Should the
+        /// given thread be the running thread then it will be preempted immediately, otherwise the
+        /// thread will simply not be scheduled anymore and cleaned up by the Thread Garbage
+        /// Collector after the next thread preemption.
+        ///
+        /// Thread state transition: Any state -> ThreadState::STOPPED
+        ///
+        /// Note: This function is thread safe.
+        void stop(const SharedPointer<Thread>& thread);
+
+        /// @brief Move the running thread to the Thread Garbage Bin and preempt it.
+        ///
+        /// This function is a shortcut for: stop(get_running_thread()).
+        ///
+        /// Thread state transition: Any state -> ThreadState::STOPPED
+        ///
+        /// Note: This function is thread safe.
+        void stop();
     };
 } // namespace Rune::CPU
 

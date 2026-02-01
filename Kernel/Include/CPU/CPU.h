@@ -20,11 +20,10 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
 #include <KRE/System/Resource.h>
-
-#include <KRE/Memory.h>
 
 namespace Rune::CPU {
     // Size of a register
@@ -34,20 +33,18 @@ namespace Rune::CPU {
     using Register = U32;
 #endif
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Threading structures
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                  Threading structures
     //
     // Defined here because they are needed by the "Core" class
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     struct StartInfo;
 
-    /**
-     * @brief Main function of a thread. It has the signature int(int, char*[]). Parameters are the
-     * number of arguments and a pointer to the array with the string arguments. The return value is
-     * the thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
-     * error.
-     */
+    /// @brief Main function of a thread. It has the signature int(StartInfo*). The start
+    /// info contains argc/argv parameters as well as other information. The return value is the
+    /// thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
+    /// error.
     using ThreadMain = int (*)(StartInfo*);
 
     /// @brief Handle type of thread.
@@ -59,48 +56,32 @@ namespace Rune::CPU {
     /// @brief Handle type of semaphore.
     using SemaphoreHandle = U16;
 
-    /**
-     * @brief Describes what a thread is currently doing.
-     * <ul>
-     *  <li>READY: The thread is in the ready queue and waiting to be scheduled.</li>
-     *  <li>RUNNING: The thread is being executed.</li>
-     *  <li>WAIT_TIMER: The thread is in the wait queue of the system timer.</li>
-     *  <li>WAIT_MUTEX: The thread is in the wait queue of a mutex.</li>
-     *  <li>WAIT_SPINLOCK: The thread is waiting for a spinlock to be unlocked.</li>
-     *  <li>WAIT_SEMAPHORE: The thread is waiting for a semaphore to be unlocked.</li>
-     *  <li>WAIT_THREAD: The thread is waiting for another thread to finish.</li>
-     *  <li>WAIT_APP: The thread is waiting for an app to finish.</li>
-     *  <li>ON_THE_HUNT: The thread terminator is on the hunt for a clueless terminated thread
-     *                      (The thread is sleeping).</li>
-     *  <li>CHILLING: The idle thread is just enjoying life (The thread is sleeping).</li>
-     *  <li>TERMINATED: The thread has finished execution and its resources are not freed
-     *       yet.</li>
-     * </ul>
-     */
+    /// @brief Describes what a thread is currently doing.
+    /// @param X
+    ///
+    /// - CREATED: The thread has been created but has not started execution yet.
+    /// - READY: The thread is in the ready queue of the scheduler and waiting to be scheduled.
+    /// - RUNNING: The thread code is currently being executed.
+    /// - AWAIT_BLOCK: The thread is running but planned to be blocked in the future.
+    /// - BLOCKED: The thread is not in the ready queue of the scheduler and waiting for a condition
+    ///             to fulfill before it will be scheduled again.
+    /// - STOPPED: The thread has finished execution, but its heap memory has yet to be freed.
 #define THREAD_STATES(X)                                                                           \
-    X(ThreadState, READY, 0x1)                                                                     \
-    X(ThreadState, RUNNING, 0x2)                                                                   \
-    X(ThreadState, PLANNED_WAIT, 0x3)                                                              \
-    X(ThreadState, WAIT_TIMER, 0x4)                                                                \
-    X(ThreadState, WAIT_MUTEX, 0x5)                                                                \
-    X(ThreadState, WAIT_SPINLOCK, 0x6)                                                             \
-    X(ThreadState, WAIT_SEMAPHORE, 0x7)                                                            \
-    X(ThreadState, WAIT_THREAD, 0x8)                                                               \
-    X(ThreadState, WAIT_APP, 0x9)                                                                  \
-    X(ThreadState, ON_THE_HUNT, 0xA)                                                               \
-    X(ThreadState, CHILLING, 0xB)                                                                  \
-    X(ThreadState, TERMINATED, 0xC)
+    X(ThreadState, CREATED, 0x1)                                                                   \
+    X(ThreadState, READY, 0x2)                                                                     \
+    X(ThreadState, RUNNING, 0x3)                                                                   \
+    X(ThreadState, AWAIT_BLOCK, 0x4)                                                               \
+    X(ThreadState, BLOCKED, 0x5)                                                                   \
+    X(ThreadState, STOPPED, 0x6)
 
     DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
-    /**
-     * @brief The scheduling policy describes the priority of a group of threads.
-     * <ul>
-     *  <li>LowLatency: Highest priority.</li>
-     *  <li>Normal: </li>
-     *  <li>Background: Lowest priority.</li>
-     * </ul>
-     */
+    /// @brief The scheduling policy describes the priority of a group of threads.
+    /// @param X
+    ///
+    /// - LowLatency: Highest priority.
+    /// - Normal:
+    /// - Background: Lowest priority.
 #define SCHEDULING_POLICIES(X)                                                                     \
     X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                          \
     X(SchedulingPolicy, NORMAL, 0x2)                                                               \
@@ -175,9 +156,19 @@ namespace Rune::CPU {
         void* random;
     };
 
-    /**
-     * The thread struct contains general information about a running thread.
-     */
+    /// @brief The thread struct contains technical and informational data about a thread object.
+    ///
+    /// Threads are a resource and therefore associated with a unique handle and a name for
+    /// debugging purposes.
+    ///
+    /// A thread has a state which must only be modified by the scheduler or undefined behavior will
+    /// occur. Only upon instantiation, where it must be assigned the ThreadState::CREATED.
+    ///
+    /// Each thread will be maintained by either the scheduler, some synchronization primitive or
+    /// a timer. To be able to track where the thread is currently being maintained a reference to
+    /// the maintaining resource is kept in the thread struct and only one reference must be set at
+    /// once at all times. If the thread is maintained by the scheduler, no resource references must
+    /// be set.
     struct Thread {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
@@ -187,19 +178,32 @@ namespace Rune::CPU {
         // Handle of the app the thread belongs to
         U16              app_handle = 0;
         String           name       = "";
-        ThreadState      state      = ThreadState::NONE;
+        ThreadState      state      = ThreadState::CREATED;
         SchedulingPolicy policy     = SchedulingPolicy::NONE;
 
-        // The kernel stack is used whenever kernel code is run e.g. because of an interrupt or
-        // syscall It is dynamically allocated on the kernel heap and has a preconfigured fixed size
+        /// @brief The kernel stack is used whenever kernel code is run e.g. because of an interrupt
+        ///         or syscall It is dynamically allocated on the kernel heap and has a
+        ///         preconfigured fixed size
         U8*         kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
         VirtualAddr kernel_stack_top    = 0x0;
 
-        // The user mode stack contains application data, is managed by an application.
+        /// @brief The user mode stack contains application data, it is managed by an application.
         Stack user_stack;
 
-        // Address of the base page table defining the threads virtual address space.
+        /// @brief Address of the base page table defining the threads virtual address space.
         PhysicalAddr base_page_table_address = 0x0;
+
+        /// @brief Thread arguments and more.
+        StartInfo* start_info{nullptr};
+
+        /// @brief The thread control block contains the thread local storage (TLS) and other data,
+        ///         it is maintained by libc. We simply provide easy access to it through an arch
+        ///         specific TLS register.
+        void* thread_control_block = nullptr;
+
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        //                                  Resource Refs
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /// @brief Handle of the mutex this thread is owning at the moment.
         MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
@@ -210,22 +214,8 @@ namespace Rune::CPU {
         /// @brief Handle of the semaphore the thread is waiting for to be signaled.
         SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
 
-        /**
-         * @brief ID of the application this thread is waiting for to exit.
-         */
+        /// @brief ID of the application this thread is waiting for to exit.
         int join_app_id = -1;
-
-        /**
-         * @brief Thread arguments and more.
-         */
-        StartInfo* start_info{nullptr};
-
-        /**
-         * The thread control block contains the thread local storage (TLS) and other data, it is
-         * maintained by libc. We simply provide easy access to it through an arch specific TLS
-         * register.
-         */
-        void* thread_control_block = nullptr;
 
         friend auto operator==(const Thread& one, const Thread& two) -> bool;
 
@@ -399,26 +389,26 @@ namespace Rune::CPU {
      */
     auto get_physical_address_width() -> U8;
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      Assembly Stuff
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          Assembly Stuff
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /// @brief
-    /// @return The current value of the stack pointer.
+    /**
+     * @return The current value of the stack pointer.
+     */
     CLINK auto get_stack_pointer() -> Register;
 
-    /// @brief halt the CPU until an interrupt occurs.
+    /**
+     * halt the CPU until an interrupt occurs.
+     */
     CLINK void halt();
 
-    /// @brief Pause the CPU in an optimized way in terms of performance/power usage. This function
-    ///         is intended to be used when waiting in a loop, e.g. in a spinlock.
-    CLINK void pause();
-
-    /// @brief Get the virtual address that was responsible for a page fault.
-    ///
-    /// Important: The returned virtual address is only valid during handling of a page fault
-    /// otherwise the virtual address is undefined.
-    /// @return
+    /**
+     * @brief Get the virtual address that was responsible for a page fault.
+     *
+     * Important: The returned virtual address is only valid during handling of a page fault
+     * otherwise the virtual address is undefined.
+     */
     CLINK auto get_page_fault_address() -> Register;
 
 } // namespace Rune::CPU

@@ -109,7 +109,6 @@ namespace Rune::CPU {
     }
 
     auto Mutex::remove_waiting_thread(U16 t_id) -> bool {
-        _scheduler->lock();
         if (!_owner) return false;
 
         if (_owner->handle == t_id) {
@@ -125,7 +124,6 @@ namespace Rune::CPU {
             if (!to_remove) return false;
             _wait_queue.remove(to_remove);
         }
-        _scheduler->unlock();
         return true;
     }
 } // namespace Rune::CPU

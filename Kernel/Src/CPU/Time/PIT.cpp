@@ -79,14 +79,15 @@ namespace Rune::CPU {
         _irq_handler = [this] {
             _count++;
             _sleeping_threads.update_wake_time(_time_between_irq);
-            _scheduler->lock();
-            auto c_t = _sleeping_threads.dequeue();
+            bool do_preempt = false;
+            auto c_t        = _sleeping_threads.dequeue();
             while (c_t) {
                 LOGGER->trace(R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
-                _scheduler->schedule(c_t);
+                c_t->timer_id = -1;
+                _scheduler->unblock(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
-                    _scheduler->execute_next_thread(); // Execute the thread immediately if it is
-                                                       // first in the ready queue
+                    do_preempt = true; // Execute the thread immediately if it is first in the
+                                       // ready queue
                 c_t = _sleeping_threads.dequeue();
             }
 
@@ -96,14 +97,15 @@ namespace Rune::CPU {
                     irq_send_eoi();
                     eoi_triggered      = true;
                     _quantum_remaining = _quantum;
-                    _scheduler->execute_next_thread();
+                    ;
+                    do_preempt = true;
                 } else {
                     _quantum_remaining -= _time_between_irq;
                 }
             }
 
             if (!eoi_triggered) irq_send_eoi();
-            _scheduler->unlock();
+            if (do_preempt) _scheduler->preempt_running_thread();
             return IRQState::HANDLED;
         };
 
@@ -115,11 +117,9 @@ namespace Rune::CPU {
     }
 
     void PIT::sleep_until(U64 wake_time_nanos) {
-        _scheduler->lock();
         U64 tsb = get_time_since_start();
         if (wake_time_nanos <= tsb) {
             // Wake time is now or in the past -> Don't bother putting the thread to sleep
-            _scheduler->unlock();
             return;
         }
         U64 sleep_time_nanos = wake_time_nanos - tsb;
@@ -130,9 +130,9 @@ namespace Rune::CPU {
                       r_t->name,
                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
-        r_t->state = ThreadState::WAIT_TIMER;
-        _scheduler->execute_next_thread();
+        r_t->timer_id      = 1;
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
-        _scheduler->unlock();
+        _scheduler->await_block();
+        _scheduler->block();
     }
 } // namespace Rune::CPU

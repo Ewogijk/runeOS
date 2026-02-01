@@ -38,13 +38,11 @@ namespace Rune::CPU {
                       t->name,
                       exit_code);
 
-        SCHEDULER->lock();
-        SCHEDULER->terminate();
-        SCHEDULER->unlock();
+        SCHEDULER->stop();
     }
 
     void thread_enter() {
-        SCHEDULER->unlock();
+        SCHEDULER->on_thread_enter();
         // Use raw pointer -> See "ThreadExit" for explanation
         auto* t = SCHEDULER->get_running_thread().get();
         if (t->user_stack.stack_top == 0) {
@@ -66,20 +64,17 @@ namespace Rune::CPU {
         return 0;
     }
 
-    auto terminator_thread(StartInfo* start_info) -> int {
+    auto thread_garbage_collector(StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
-            SCHEDULER->lock();
-            auto*                 terminated_threads = SCHEDULER->get_terminated_threads();
-            SharedPointer<Thread> cT                 = !terminated_threads->is_empty()
-                                                           ? *terminated_threads->head()
-                                                           : SharedPointer<Thread>(nullptr);
-            terminated_threads->remove_front();
+            auto*                 tgb = SCHEDULER->get_thread_garbage_bin();
+            SharedPointer<Thread> cT =
+                !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
+            tgb->remove_front();
             while (cT) {
                 auto dT = cT;
-                cT      = !terminated_threads->is_empty() ? *terminated_threads->head()
-                                                          : SharedPointer<Thread>(nullptr);
-                terminated_threads->remove_front();
+                cT      = !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
+                tgb->remove_front();
                 LOGGER->trace(R"(Terminating thread: "{}-{}")", dT->handle, dT->name);
 
                 auto* next = SCHEDULER->get_ready_queue()->peek();
@@ -96,9 +91,8 @@ namespace Rune::CPU {
                 }
                 // dT gets deleted here after it goes out of scope
             }
-            SCHEDULER->get_running_thread()->state = ThreadState::ON_THE_HUNT;
-            SCHEDULER->execute_next_thread();
-            SCHEDULER->unlock();
+            SCHEDULER->await_block();
+            SCHEDULER->block();
         }
         return 0;
     }
@@ -110,7 +104,7 @@ namespace Rune::CPU {
     DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
     char*     CPUModule::DUMMY_ARGS[]; // NOLINT Array disallowed! Is part of Kernel ABI
-    StartInfo CPUModule::TERMINATOR_THREAD_START_INFO;
+    StartInfo CPUModule::GCT_START_INFO;
     StartInfo CPUModule::IDLE_THREAD_START_INFO;
 
     auto CPUModule::create_thread(const String&    thread_name,
@@ -137,19 +131,19 @@ namespace Rune::CPU {
         // Init Event Hook table
         _event_hook_table.put(EventHook(EventHook::THREAD_CREATED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
-        _event_hook_table.put(EventHook(EventHook::THREAD_TERMINATED).to_string(),
+        _event_hook_table.put(EventHook(EventHook::THREAD_STOPPED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
-        _event_hook_table.put(EventHook(EventHook::CONTEXT_SWITCH).to_string(),
+        _event_hook_table.put(EventHook(EventHook::THREAD_PREEMPTED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
 
         install_event_handler(
-            EventHook(EventHook::THREAD_TERMINATED).to_string(),
+            EventHook(EventHook::THREAD_STOPPED).to_string(),
             "Thread Table Cleaner",
             [this](void* evt_ctx) {
-                auto*                 ctx = reinterpret_cast<ThreadTerminatedContext*>(evt_ctx);
+                auto*                 ctx = reinterpret_cast<ThreadPreemptionContext*>(evt_ctx);
                 SharedPointer<Thread> to_remove(nullptr);
                 for (const auto& t : _thread_table) {
-                    if (ctx->terminated->handle == (*t.value)->handle) {
+                    if (ctx->stopped->handle == (*t.value)->handle) {
                         to_remove = *t.value;
                         break;
                     }
@@ -161,9 +155,9 @@ namespace Rune::CPU {
                                   to_remove->name);
                     _thread_table.remove(to_remove->handle);
                 } else {
-                    LOGGER->warn(R"(Terminated thread "{}-{}" was not found in the thread table.)",
-                                 ctx->terminated->handle,
-                                 ctx->terminated->name);
+                    LOGGER->warn(R"(Stopped thread "{}-{}" was not found in the thread table.)",
+                                 ctx->stopped->handle,
+                                 ctx->stopped->name);
                 }
             });
 
@@ -185,14 +179,14 @@ namespace Rune::CPU {
 
         // Init Scheduling
         LOGGER->debug("Starting the Scheduler...");
-        PhysicalAddr base_pt_addr         = Memory::get_base_page_table_address();
-        DUMMY_ARGS[0]                     = nullptr;
-        TERMINATOR_THREAD_START_INFO.argc = 0;
-        TERMINATOR_THREAD_START_INFO.argv = DUMMY_ARGS;
-        TERMINATOR_THREAD_START_INFO.main = &terminator_thread;
-        auto thread_terminator =
-            create_thread(TERMINATOR_THREAD_NAME,
-                          &TERMINATOR_THREAD_START_INFO,
+        PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
+        DUMMY_ARGS[0]             = nullptr;
+        GCT_START_INFO.argc       = 0;
+        GCT_START_INFO.argv       = DUMMY_ARGS;
+        GCT_START_INFO.main       = &thread_garbage_collector;
+        auto garbage_collector_thread =
+            create_thread(GARBAGE_COLLECTOR_THREAD_NAME,
+                          &GCT_START_INFO,
                           base_pt_addr,
                           SchedulingPolicy::NONE,
                           {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
@@ -208,25 +202,24 @@ namespace Rune::CPU {
         if (!_scheduler.init(Memory::get_base_page_table_address(),
                              boot_info.stack,
                              le_idle_thread,
-                             thread_terminator,
+                             garbage_collector_thread,
                              &thread_enter)) {
-            LOGGER->critical("Failed to start the SCHEDULER!");
+            LOGGER->critical("Failed to start the scheduler!");
             return false;
         }
         SCHEDULER          = &_scheduler;
         NOTIFY_THREAD_BOOM = [this](Thread* term, Thread* next) {
-            ThreadTerminatedContext tt_ctx = {.terminated     = move(term),
-                                              .next_scheduled = move(next)};
-            fire(EventHook(EventHook::THREAD_TERMINATED).to_string(), (void*) &tt_ctx);
+            ThreadPreemptionContext tt_ctx = {.stopped = move(term), .next_scheduled = move(next)};
+            fire(EventHook(EventHook::THREAD_STOPPED).to_string(), (void*) &tt_ctx);
         };
         _scheduler.set_on_context_switch([this](Thread* next) {
-            fire(EventHook(EventHook::CONTEXT_SWITCH).to_string(), (void*) next);
+            fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), (void*) next);
         });
         _scheduler.get_running_thread()->handle = _thread_handle_counter.acquire();
-        thread_terminator->handle               = _thread_handle_counter.acquire();
+        garbage_collector_thread->handle        = _thread_handle_counter.acquire();
         le_idle_thread->handle                  = _thread_handle_counter.acquire();
         _thread_table.put(_scheduler.get_running_thread()->handle, _scheduler.get_running_thread());
-        _thread_table.put(thread_terminator->handle, thread_terminator);
+        _thread_table.put(garbage_collector_thread->handle, garbage_collector_thread);
         _thread_table.put(le_idle_thread->handle, le_idle_thread);
 
         // Init Timer
@@ -325,19 +318,17 @@ namespace Rune::CPU {
 
         SharedPointer<Thread> new_thread =
             create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
-        _scheduler.lock();
-        if (!_scheduler.schedule_new_thread(new_thread)) {
+        if (!_scheduler.schedule(new_thread)) {
             return 0;
         }
 
         new_thread->handle = _thread_handle_counter.acquire();
         _thread_table.put(new_thread->handle, new_thread);
-        _scheduler.unlock();
         return new_thread->handle;
     }
 
-    auto CPUModule::terminate_thread(int handle) -> bool {
-        // Check if a thread with the handle exists
+    auto CPUModule::stop_thread(int handle) -> bool { // NOLINT
+        // Check if a thread with the ID exists
         SharedPointer<Thread> da_thread(nullptr);
         for (const auto& t : _thread_table) {
             if (t.value->get()->handle == handle) { // NOLINT Only end() is null
@@ -367,66 +358,54 @@ namespace Rune::CPU {
                 }
                 break;
             case ThreadState::RUNNING:
-                // Do not terminate the running thread because we do not want a context switch to
+                // Do not stop the running thread because we do not want a context switch to
                 // happen
-                LOGGER->trace(R"("{}-{}" is running, will not terminate.)",
+                LOGGER->trace(R"("{}-{}" is running, will not stop.)",
                               da_thread->handle,
                               da_thread->name);
-                return true; // Early return, so we can just terminate the thread after the switch
-            case ThreadState::WAIT_TIMER:
-                if (!_timer->remove_sleeping_thread(handle)) {
-                    LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
-                                  da_thread->handle,
-                                  da_thread->name);
-                    return false;
-                }
-                break;
-            case ThreadState::WAIT_MUTEX: {
-                if (da_thread->mutex_handle == Resource<U16>::HANDLE_NONE) {
-                    LOGGER->error(R"("{}-{}": No mutex found.)",
-                                  da_thread->handle,
-                                  da_thread->name);
-                    return false;
-                }
+                return true; // Early return, so we can just stop the thread after the switch
+            case ThreadState::BLOCKED:
+                if (da_thread->timer_id > 0) {
+                    if (!_timer->remove_sleeping_thread(handle)) {
+                        LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
+                                      da_thread->handle,
+                                      da_thread->name);
+                        return false;
+                    }
+                } else if (da_thread->mutex_id > 0) {
+                    SharedPointer<Mutex> m(nullptr);
+                    for (const auto& mm : _mutex_table) {
+                        if (mm.value->get()->handle // NOLINT Only end() is null
+                            == da_thread->mutex_id) {
+                            m = *mm.value;
+                            break;
+                        }
+                    }
+                    if (!m) {
+                        LOGGER->error("No mutex with ID {} was found.",
+                                      da_thread->handle,
+                                      da_thread->name,
+                                      da_thread->mutex_id);
+                        return false;
+                    }
 
-                SharedPointer<Mutex> m(nullptr);
-                for (const auto& mm : _mutex_table) {
-                    if (mm.value->get()->get_handle() // NOLINT Only end() is null
-                        == da_thread->mutex_handle) {
-                        m = *mm.value;
-                        break;
+                    if (!m->remove_waiting_thread(da_thread->handle)) {
+                        LOGGER->error(
+                            R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
+                            da_thread->handle,
+                            da_thread->name,
+                            m->handle,
+                            m->name);
+                        return false;
                     }
                 }
-                if (!m) {
-                    LOGGER->error("No mutex with ID {} was found.",
-                                  da_thread->handle,
-                                  da_thread->name,
-                                  da_thread->mutex_handle);
-                    return false;
-                }
-
-                if (!m->remove_waiting_thread(da_thread->handle)) {
-                    LOGGER->error(R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
-                                  da_thread->handle,
-                                  da_thread->name,
-                                  m->get_handle(),
-                                  m->get_handle());
-                    return false;
-                }
                 break;
-            }
-            case ThreadState::WAIT_SPINLOCK:
-                break;
-            case ThreadState::TERMINATED:
-                LOGGER->trace(R"("{}-{}": Already terminated.)",
-                              da_thread->handle,
-                              da_thread->name);
+            case ThreadState::STOPPED:
+                LOGGER->trace(R"("{}-{}" is already stopped.)", da_thread->handle, da_thread->name);
                 break;
         }
 
-        _scheduler.lock();
-        _scheduler.terminate(da_thread);
-        _scheduler.unlock();
+        _scheduler.stop(da_thread);
         return true;
     }
 
