@@ -181,7 +181,7 @@ def convert_psf2_to_cpp(font_file: Path, out_file: Path) -> None:
     :param out_file:  Output file for the header file
     :return: True if the header file has been generated else false.
     """
-    print(f"> +++++ PSF2 to CPP Generator +++++")
+    print("> +++++ PSF2 to CPP Generator +++++")
     print(f"> PSF2 font file:       {font_file}")
     print(f"> C++ font header file: {out_file}")
     psf_font = read_psf2_file(font_file)
