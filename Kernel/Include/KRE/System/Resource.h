@@ -62,6 +62,10 @@ namespace Rune {
         /// @brief
         /// @return The name of this resource.
         auto get_name() -> String { return _name; }
+
+        /// @brief
+        /// @return The unique name contains handle and name.
+        auto get_unique_name() -> String { return String::format("{}-{}", _handle, _name); }
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

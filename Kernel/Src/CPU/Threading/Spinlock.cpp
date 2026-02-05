@@ -38,23 +38,20 @@ namespace Rune::CPU {
                 // Spinlock is claimed
                 // For debugging: Track ownership
                 auto calling_thread = _scheduler->get_running_thread();
-                LOGGER->trace(R"("{}-{}": Lock spinlock by "{}-{}".)",
-                              get_handle(),
-                              get_name(),
+                LOGGER->trace(R"({}: {}-{} lock)",
+                              get_unique_name(),
                               calling_thread->handle,
                               calling_thread->name);
-                _owner = calling_thread->handle;
+                _owner                          = calling_thread->handle;
                 calling_thread->spinlock_handle = get_handle();
                 return;
             }
 
             auto calling_thread = _scheduler->get_running_thread();
-            LOGGER->trace(R"("{}-{}": "{}-{}" goes spinning.)",
-                          get_handle(),
-                          get_name(),
+            LOGGER->trace(R"({}: {}-{} busy wait)",
+                          get_unique_name(),
                           calling_thread->handle,
                           calling_thread->name);
-            calling_thread->state = ThreadState::WAIT_SPINLOCK;
             calling_thread->spinlock_handle = get_handle();
 
             // The spinlock is already claimed -> Wait until it is free
@@ -73,12 +70,8 @@ namespace Rune::CPU {
 
         // For debugging: Track ownership
         auto t = _scheduler->get_running_thread();
-        LOGGER->trace(R"("{}-{}": Unlock spinlock by "{}-{}".)",
-                      get_handle(),
-                      get_name(),
-                      t->handle,
-                      t->name);
-        _owner = Resource<ThreadHandle>::HANDLE_NONE;
+        LOGGER->trace(R"({}: {}-{} unlock)", get_unique_name(), t->handle, t->name);
+        _owner             = Resource<ThreadHandle>::HANDLE_NONE;
         t->spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
     }
 

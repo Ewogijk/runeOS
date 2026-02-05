@@ -67,6 +67,7 @@ namespace Rune::CPU {
     auto thread_garbage_collector(StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
+            interrupt_disable();
             auto*                 tgb = SCHEDULER->get_thread_garbage_bin();
             SharedPointer<Thread> cT =
                 !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
@@ -92,6 +93,7 @@ namespace Rune::CPU {
                 // dT gets deleted here after it goes out of scope
             }
             SCHEDULER->await_block();
+            interrupt_enable();
             SCHEDULER->block();
         }
         return 0;
@@ -365,18 +367,18 @@ namespace Rune::CPU {
                               da_thread->name);
                 return true; // Early return, so we can just stop the thread after the switch
             case ThreadState::BLOCKED:
-                if (da_thread->timer_id > 0) {
+                if (da_thread->timer_handle > 0) {
                     if (!_timer->remove_sleeping_thread(handle)) {
                         LOGGER->error(R"("{}-{}" is missing from the wait queue of the timer.)",
                                       da_thread->handle,
                                       da_thread->name);
                         return false;
                     }
-                } else if (da_thread->mutex_id > 0) {
+                } else if (da_thread->mutex_handle > 0) {
                     SharedPointer<Mutex> m(nullptr);
                     for (const auto& mm : _mutex_table) {
-                        if (mm.value->get()->handle // NOLINT Only end() is null
-                            == da_thread->mutex_id) {
+                        if (mm.value->get()->get_handle() // NOLINT Only end() is null
+                            == da_thread->mutex_handle) {
                             m = *mm.value;
                             break;
                         }
@@ -385,17 +387,17 @@ namespace Rune::CPU {
                         LOGGER->error("No mutex with ID {} was found.",
                                       da_thread->handle,
                                       da_thread->name,
-                                      da_thread->mutex_id);
+                                      da_thread->mutex_handle);
                         return false;
                     }
 
-                    if (!m->remove_waiting_thread(da_thread->handle)) {
+                    if (!m->remove_thread(da_thread->handle)) {
                         LOGGER->error(
                             R"("{}-{}" was not the owner or in the waiting queue of "{}-{}")",
                             da_thread->handle,
                             da_thread->name,
-                            m->handle,
-                            m->name);
+                            m->get_handle(),
+                            m->get_name());
                         return false;
                     }
                 }

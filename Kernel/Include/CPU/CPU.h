@@ -47,6 +47,9 @@ namespace Rune::CPU {
     /// error.
     using ThreadMain = int (*)(StartInfo*);
 
+    /// @brief Handle type of timer.
+    using TimerHandle = U16;
+
     /// @brief Handle type of thread.
     using ThreadHandle = U16;
     /// @brief Handle type of spinlock.
@@ -205,13 +208,16 @@ namespace Rune::CPU {
         //                                  Resource Refs
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        /// @brief Handle of the mutex this thread is owning at the moment.
+        /// @brief Handle of the timer that maintains the thread.
+        TimerHandle timer_handle = Resource<TimerHandle>::HANDLE_NONE;
+
+        /// @brief Handle of the mutex that maintains the thread.
         MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
 
-        /// @brief Handle of the spinlock this thread spinning with.
+        /// @brief Handle of the spinlock that maintains the thread.
         SpinlockHandle spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
 
-        /// @brief Handle of the semaphore the thread is waiting for to be signaled.
+        /// @brief Handle of the semaphore that maintains the thread.
         SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
 
         /// @brief ID of the application this thread is waiting for to exit.
@@ -397,6 +403,10 @@ namespace Rune::CPU {
      * @return The current value of the stack pointer.
      */
     CLINK auto get_stack_pointer() -> Register;
+
+    /// @brief Pause the CPU in an optimized way in terms of performance/power usage. This function
+    ///         is intended to be used when waiting in a loop, e.g. in a spinlock.
+    CLINK void pause();
 
     /**
      * halt the CPU until an interrupt occurs.
