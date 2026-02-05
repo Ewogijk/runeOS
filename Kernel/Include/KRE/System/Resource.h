@@ -57,15 +57,17 @@ namespace Rune {
 
         /// @brief
         /// @return The handle of this resource.
-        auto get_handle() -> Handle { return _handle; }
+        [[nodiscard]] auto get_handle() const -> Handle { return _handle; }
 
         /// @brief
         /// @return The name of this resource.
-        auto get_name() -> String { return _name; }
+        [[nodiscard]] auto get_name() const -> String { return _name; }
 
         /// @brief
         /// @return The unique name contains handle and name.
-        auto get_unique_name() -> String { return String::format("{}-{}", _handle, _name); }
+        [[nodiscard]] auto get_unique_name() const -> String {
+            return String::format("{}-{}", _handle, _name);
+        }
     };
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

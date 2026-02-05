@@ -78,17 +78,15 @@ namespace Rune::CPU {
                 case ThreadState::NONE:
                 case ThreadState::CREATED:
                 case ThreadState::READY:
-                    LOGGER->warn(R"({}-{}: Invalid thread state "{}" (perform_context_switch))",
-                                 _running_thread->handle,
-                                 _running_thread->name,
+                    LOGGER->warn(R"({}: Invalid thread state "{}" (perform_context_switch))",
+                                 _running_thread->get_unique_name(),
                                  _running_thread->state.to_string());
                     break;
                 case ThreadState::RUNNING:
                 case ThreadState::AWAIT_BLOCK:
                     if (!_ready_queue->enqueue(_running_thread)) {
-                        LOGGER->warn(R"({}-{}: Reschedule failed)",
-                                     _running_thread->handle,
-                                     _running_thread->name);
+                        LOGGER->warn(R"({}: Reschedule failed)",
+                                     _running_thread->get_unique_name());
                     } else {
                         // Only change from RUNNING -> READY state not AWAIT_BLOCK -> READY
                         // Why? Use case of await_block function is following:
@@ -111,11 +109,9 @@ namespace Rune::CPU {
         }
 
         // Switch to next thread
-        LOGGER->trace(R"(Context switch: "{}-{}" -> "{}-{}")",
-                      _running_thread->handle,
-                      _running_thread->name,
-                      next_thread->handle,
-                      next_thread->name);
+        LOGGER->trace(R"(Context switch: {} -> {})",
+                      _running_thread->get_unique_name(),
+                      next_thread->get_unique_name());
 
         auto* old_thread       = _running_thread.get();
         _running_thread        = move(next_thread);
@@ -162,8 +158,7 @@ namespace Rune::CPU {
     //                                  Scheduling API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto Scheduler::init(PhysicalAddr                 base_pt_addr,
-                         Register                     stack_top,
+    auto Scheduler::init(const SharedPointer<Thread>& bootstrap_thread,
                          const SharedPointer<Thread>& idle_thread,
                          const SharedPointer<Thread>& thread_terminator,
                          void                         (*thread_enter)()) -> bool {
@@ -171,17 +166,7 @@ namespace Rune::CPU {
         auto* normal_threads = new MultiLevelQueue(SchedulingPolicy::NORMAL, back_ground_threads);
         _ready_queue         = new MultiLevelQueue(SchedulingPolicy::LOW_LATENCY, normal_threads);
         _thread_enter        = thread_enter;
-
-        // Set the code running since the start of the machine as the initial thread
-        // No "main" is needed as the code is already running
-        // The idea is to make further initializations and then ditch the bootstrap thread as soon
-        // as possible because the stack provided by limine lies in a reclaimed memory region
-        // thus it will be reused sooner than later and the initial thread will crash at this point
-        _running_thread                          = SharedPointer<Thread>(new Thread);
-        _running_thread->name                    = BOOTSTRAP_THREAD_NAME;
-        _running_thread->base_page_table_address = base_pt_addr;
-        _running_thread->kernel_stack_top        = stack_top;
-        _running_thread->policy                  = SchedulingPolicy::LOW_LATENCY;
+        _running_thread      = bootstrap_thread;
 
         setup_kernel_stack(thread_terminator);
         _garbage_collector_thread        = thread_terminator;
@@ -201,14 +186,13 @@ namespace Rune::CPU {
         }
         if (thread->state != ThreadState::CREATED) {
             LOGGER->error(R"({}-{}: Invalid thread state "{}" (schedule))",
-                          thread->handle,
-                          thread->name,
+                          thread->get_unique_name(),
                           thread->state.to_string());
             unlock();
             return false;
         }
         if (thread->policy == SchedulingPolicy::NONE) {
-            LOGGER->error(R"({}-{}: Invalid thread policy "NONE")", thread->handle, thread->name);
+            LOGGER->error(R"({}-{}: Invalid thread policy "NONE")", thread->get_unique_name());
             unlock();
             return false;
         }
@@ -216,8 +200,7 @@ namespace Rune::CPU {
         setup_kernel_stack(thread);
         if (!_ready_queue->enqueue(thread)) {
             LOGGER->error(R"({}-{}: Schedule failed... Freeing kernel stack)",
-                          thread->handle,
-                          thread->name);
+                          thread->get_unique_name());
             delete[] thread->kernel_stack_bottom;
             unlock();
             return false;
@@ -249,15 +232,14 @@ namespace Rune::CPU {
         }
         if (thread->state != ThreadState::AWAIT_BLOCK) {
             LOGGER->error(R"({}-{}: Invalid thread state "{}" (block))",
-                          _running_thread->handle,
-                          _running_thread->name,
+                          _running_thread->get_unique_name(),
                           _running_thread->state.to_string());
             unlock();
             return;
         }
         thread->state = ThreadState::BLOCKED;
         if (thread != _running_thread)
-            _ready_queue->remove(thread->handle); // Remove the thread from the schedule
+            _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule
         else
             perform_context_switch(); // Preempt the running thread
 
@@ -274,21 +256,20 @@ namespace Rune::CPU {
         }
         if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::AWAIT_BLOCK) {
             LOGGER->error(R"({}-{}: Invalid thread state "{}" (unblock))",
-                          thread->handle,
-                          thread->name,
+                          thread->get_unique_name(),
                           thread->state.to_string());
             unlock();
             return;
         }
 
         if (!_ready_queue->enqueue(thread)) {
-            LOGGER->error(R"({}-{}: Scheduling failed)", thread->handle, thread->name);
+            LOGGER->error(R"({}-{}: Scheduling failed)", thread->get_unique_name());
             unlock();
             return;
         }
         thread->state = ThreadState::READY;
         // Context switch immediately if thread was scheduled as next thread
-        if (thread->handle == _ready_queue->peek()->handle) perform_context_switch();
+        if (thread->get_handle() == _ready_queue->peek()->get_handle()) perform_context_switch();
         unlock();
     }
 
@@ -301,7 +282,7 @@ namespace Rune::CPU {
         thread->state = ThreadState::STOPPED;
         _thread_garbage_bin.add_back(thread);
         if (thread != _running_thread)
-            _ready_queue->remove(thread->handle); // Remove the thread from the schedule
+            _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule
         else
             perform_context_switch(); // Preempt the running thread
         unlock();

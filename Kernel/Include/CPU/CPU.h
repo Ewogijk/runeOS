@@ -172,15 +172,13 @@ namespace Rune::CPU {
     /// the maintaining resource is kept in the thread struct and only one reference must be set at
     /// once at all times. If the thread is maintained by the scheduler, no resource references must
     /// be set.
-    struct Thread {
+    struct Thread : public Resource<MutexHandle> {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
-        // Unique ID of the thread
-        ThreadHandle handle = 0;
+        Thread(MutexHandle handle, const String& name);
 
         // Handle of the app the thread belongs to
         U16              app_handle = 0;
-        String           name       = "";
         ThreadState      state      = ThreadState::CREATED;
         SchedulingPolicy policy     = SchedulingPolicy::NONE;
 

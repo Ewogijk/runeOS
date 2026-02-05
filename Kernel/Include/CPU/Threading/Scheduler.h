@@ -153,8 +153,7 @@ namespace Rune::CPU {
          * @param stack_top   Top of the bootstrap stack.
          * @return
          */
-        auto init(PhysicalAddr                 base_pt_addr,
-                  CPU::Register                stack_top,
+        auto init(const SharedPointer<Thread>& bootstrap_thread,
                   const SharedPointer<Thread>& idle_thread,
                   const SharedPointer<Thread>& thread_terminator,
                   void                         (*thread_enter)()) -> bool;

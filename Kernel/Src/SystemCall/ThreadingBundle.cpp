@@ -68,7 +68,7 @@ namespace Rune::SystemCall {
 
     auto get_thread_ID(void* sys_call_ctx) -> Ember::StatusCode {
         const auto* t_ctx = static_cast<ThreadingSystemCallContext*>(sys_call_ctx);
-        return t_ctx->cpu_module->get_scheduler()->get_running_thread()->handle;
+        return t_ctx->cpu_module->get_scheduler()->get_running_thread()->get_handle();
     }
 
     auto set_thread_control_block(void* sys_call_ctx, const U64 tcb) -> Ember::StatusCode {

@@ -91,7 +91,7 @@ namespace Rune::CPU {
         DQNode* c_node  = _first;
         bool    removed = false;
         while (c_node != nullptr) {
-            if (c_node->sleeping_thread->handle == t_id) {
+            if (c_node->sleeping_thread->get_handle() == t_id) {
                 DQNode* next = c_node->next;
                 if (next != nullptr) {
                     next->wake_time += c_node->wake_time;

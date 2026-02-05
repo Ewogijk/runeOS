@@ -32,7 +32,7 @@ namespace Rune {
                               log_level.to_string(),
                               logger_name,
                               r_app->name,
-                              r_thread->name)
+                              r_thread->get_name())
                + String::format(log_msg_template, static_cast<const Argument*>(arg_list), arg_size);
     }
 

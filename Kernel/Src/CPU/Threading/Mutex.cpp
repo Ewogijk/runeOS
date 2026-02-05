@@ -23,13 +23,11 @@ namespace Rune::CPU {
 
     void Mutex::trace_state(const String& action) {
         String wq;
-        for (auto& thread : _wait_queue)
-            wq += String::format("{}-{}, ", thread->handle, thread->name);
-        LOGGER->trace(R"(": {}, O={}-{}, WQ={})",
+        for (auto& thread : _wait_queue) wq += String::format("{}-{}, ", thread->get_unique_name());
+        LOGGER->trace(R"(": {}, O={}, WQ={})",
                       get_unique_name(),
                       action,
-                      _owner ? _owner->handle : Resource<MutexHandle>::HANDLE_NONE,
-                      _owner ? _owner->name : "",
+                      _owner ? _owner->get_unique_name() : "",
                       wq);
     }
 
@@ -67,7 +65,7 @@ namespace Rune::CPU {
 
             // Check if fast handoff to calling thread was done in unlock()
             // If yes, just return because _lock == 1 and _owner == calling_thread
-            if (_owner->handle == calling_thread->handle) return;
+            if (_owner->get_handle() == calling_thread->get_handle()) return;
         }
         _owner = _scheduler->get_running_thread();
         trace_state("lock");
@@ -76,7 +74,7 @@ namespace Rune::CPU {
     void Mutex::unlock() {
         auto calling_thread = _scheduler->get_running_thread();
         // Only the owning thread is allowed to unlock the mutex
-        if (calling_thread->handle != _owner->handle) return;
+        if (calling_thread->get_handle() != _owner->get_handle()) return;
 
         SharedPointer<Thread> thread_to_wake;
         _wait_queue_lock.lock();
@@ -96,14 +94,14 @@ namespace Rune::CPU {
     auto Mutex::remove_thread(MutexHandle handle) -> bool {
         if (atomic_load_acquire(&_lock) == 0) return false;
 
-        if (_owner->handle == handle) {
+        if (_owner->get_handle() == handle) {
             _scheduler->block(_owner);
             unlock();
         } else {
             SharedPointer<Thread> to_remove;
             _wait_queue_lock.lock();
             for (auto& waiting : _wait_queue) {
-                if (waiting->handle == handle) {
+                if (waiting->get_handle() == handle) {
                     to_remove = waiting;
                     break;
                 }

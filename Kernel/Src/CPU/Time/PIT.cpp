@@ -81,7 +81,7 @@ namespace Rune::CPU {
             bool do_preempt = false;
             auto c_t        = _sleeping_threads.dequeue();
             while (c_t) {
-                LOGGER->trace(R"(1-{}: {}-{} wake up)", get_name(), c_t->handle, c_t->name);
+                LOGGER->trace(R"(1-{}: {} wake up)", get_name(), c_t->get_unique_name());
                 c_t->timer_handle = Resource<TimerHandle>::HANDLE_NONE;
                 _scheduler->unblock(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
@@ -121,10 +121,9 @@ namespace Rune::CPU {
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
         SharedPointer<Thread> r_t = _scheduler->get_running_thread();
-        LOGGER->trace(R"(1-{}: {}-{} sleep until {}ns)",
+        LOGGER->trace(R"(1-{}: {} sleep until {}ns)",
                       get_name(),
-                      r_t->handle,
-                      r_t->name,
+                      r_t->get_unique_name(),
                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
         r_t->timer_handle  = 1;

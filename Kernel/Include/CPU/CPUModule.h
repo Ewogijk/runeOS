@@ -88,7 +88,8 @@ namespace Rune::CPU {
 
         UniquePointer<Timer> _timer;
 
-        auto create_thread(const String&    thread_name,
+        auto create_thread(MutexHandle      handle,
+                           const String&    thread_name,
                            StartInfo*       start_info,
                            PhysicalAddr     base_pt_addr,
                            SchedulingPolicy policy,
