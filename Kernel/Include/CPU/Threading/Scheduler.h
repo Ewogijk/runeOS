@@ -253,9 +253,8 @@ namespace Rune::CPU {
         /// @param thread Thread to be unblocked.
         ///
         /// The blocked thread will be marked with ThreadState::READY and put into the ready queue.
-        /// If the thread is scheduled to be run after the currently running thread, the running
-        /// thread will be preempted immediately. Which means the caller gives responsibility of
-        /// maintaining the reference to the thread object back to the scheduler.
+        /// The caller gives responsibility of maintaining the reference to the thread object back
+        /// to the scheduler.
         ///
         /// Thread state transition:
         ///     - ThreadState::BLOCKED -> ThreadState::READY

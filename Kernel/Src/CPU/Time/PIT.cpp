@@ -120,7 +120,7 @@ namespace Rune::CPU {
         }
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
-        SharedPointer<Thread> r_t = _scheduler->get_running_thread();
+        auto r_t = _scheduler->get_running_thread();
         LOGGER->trace(R"(1-{}: {} sleep until {}ns)",
                       get_name(),
                       r_t->get_unique_name(),
@@ -130,5 +130,7 @@ namespace Rune::CPU {
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->await_block();
         _scheduler->block();
+        int a = 0;
+        LOGGER->trace(R"({})", a);
     }
 } // namespace Rune::CPU

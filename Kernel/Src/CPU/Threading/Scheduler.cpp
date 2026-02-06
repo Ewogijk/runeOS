@@ -70,6 +70,12 @@ namespace Rune::CPU {
                 return; // Let the last non-idle thread keep running
         }
 
+        // Rarely an illegal context switch from GCT to GCT which leads to a kernel panic.
+        // Root cause is not clear but this fix disallows such context switches.
+        if (_running_thread == _garbage_collector_thread
+            && next_thread == _garbage_collector_thread)
+            return;
+
         if (_running_thread == _idle_thread) {
             // Do not reschedule the Idle Thread
             _idle_thread->state = ThreadState::BLOCKED;
@@ -85,8 +91,9 @@ namespace Rune::CPU {
                 case ThreadState::RUNNING:
                 case ThreadState::AWAIT_BLOCK:
                     if (!_ready_queue->enqueue(_running_thread)) {
-                        LOGGER->warn(R"({}: Reschedule failed)",
-                                     _running_thread->get_unique_name());
+                        LOGGER->warn(R"({}: Reschedule failed (perform_context_switch) (going to {}))",
+                                     _running_thread->get_unique_name(),
+                                     next_thread->get_unique_name());
                     } else {
                         // Only change from RUNNING -> READY state not AWAIT_BLOCK -> READY
                         // Why? Use case of await_block function is following:
@@ -237,6 +244,7 @@ namespace Rune::CPU {
             unlock();
             return;
         }
+        LOGGER->trace("{}: block thread", thread->get_unique_name());
         thread->state = ThreadState::BLOCKED;
         if (thread != _running_thread)
             _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule
@@ -269,7 +277,7 @@ namespace Rune::CPU {
         }
         thread->state = ThreadState::READY;
         // Context switch immediately if thread was scheduled as next thread
-        if (thread->get_handle() == _ready_queue->peek()->get_handle()) perform_context_switch();
+        // if (thread->get_handle() == _ready_queue->peek()->get_handle()) perform_context_switch();
         unlock();
     }
 
