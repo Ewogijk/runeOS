@@ -14,24 +14,25 @@
  *  limitations under the License.
  */
 
-#include "CPU/Threading/Atomic.h"
-
 #include <CPU/Threading/Mutex.h>
+
+#include <CPU/Threading/Atomic.h>
+#include <CPU/Threading/LockGuard.h>
 
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Mutex");
 
     void Mutex::trace_state(const String& action) {
         String wq;
-        for (auto& thread : _wait_queue) wq += String::format("{}-{}, ", thread->get_unique_name());
-        LOGGER->trace(R"(": {}, O={}, WQ={})",
+        for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
+        LOGGER->trace(R"("{}: {}, O={}, WQ={})",
                       get_unique_name(),
                       action,
                       _owner ? _owner->get_unique_name() : "",
                       wq);
     }
 
-    Mutex::Mutex(MutexHandle handle, String name, Scheduler* scheduler)
+    Mutex::Mutex(MutexHandle handle, const String& name, Scheduler* scheduler)
         : Resource(handle, name),
           _scheduler(scheduler),
           _wait_queue_lock(Resource<SpinlockHandle>::HANDLE_NONE,
@@ -55,11 +56,12 @@ namespace Rune::CPU {
             auto calling_thread = _scheduler->get_running_thread();
             // _wait_queue is a non synchronized linkedlist -> need spinlock protection here
             // Could also use lock-free queue implementation. Is maybe better?
-            _wait_queue_lock.lock();
-            _wait_queue.add_back(calling_thread);
-            _scheduler->await_block();
-            trace_state("try lock");
-            _wait_queue_lock.unlock();
+            {
+                LockGuard<Spinlock> lock(_wait_queue_lock);
+                _wait_queue.add_back(calling_thread);
+                _scheduler->await_block();
+                trace_state("try lock");
+            }
             // await_block()/block() mechanic solves the lost wakeup problem
             _scheduler->block();
 
@@ -77,14 +79,15 @@ namespace Rune::CPU {
         if (calling_thread->get_handle() != _owner->get_handle()) return;
 
         SharedPointer<Thread> thread_to_wake;
-        _wait_queue_lock.lock();
-        if (!_wait_queue.is_empty()) {
-            thread_to_wake = *_wait_queue.head();
-            _wait_queue.remove_front();
+        {
+            LockGuard<Spinlock> lock(_wait_queue_lock);
+            if (!_wait_queue.is_empty()) {
+                thread_to_wake = *_wait_queue.head();
+                _wait_queue.remove_front();
+            }
+            _owner = thread_to_wake;
+            trace_state("unlock");
         }
-        _owner = thread_to_wake;
-        trace_state("unlock");
-        _wait_queue_lock.unlock();
 
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);

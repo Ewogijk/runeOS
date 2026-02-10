@@ -28,13 +28,18 @@ namespace Rune::CPU {
     /// @brief A spinlock is synchronization primitive that keeps a thread busy waiting when the
     ///         lock is not available.
     class Spinlock : public Resource<SpinlockHandle> {
-        bool _lock  = false;
-        ThreadHandle  _owner = Resource<ThreadHandle>::HANDLE_NONE;
+        bool         _lock  = false;
+        ThreadHandle _owner = Resource<ThreadHandle>::HANDLE_NONE;
 
         Scheduler* _scheduler;
 
       public:
         Spinlock(SpinlockHandle handle, String name, Scheduler* scheduler);
+
+        Spinlock(const Spinlock& other)                    = delete;
+        Spinlock(Spinlock&& other)                         = delete;
+        auto operator=(const Spinlock& other) -> Spinlock& = delete;
+        auto operator=(Spinlock&& other) -> Spinlock&      = delete;
 
         /// @brief
         /// @return The handle of the thread that locked this spinlock, if no thread owns the

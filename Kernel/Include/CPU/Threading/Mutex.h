@@ -28,7 +28,7 @@ namespace Rune::CPU {
     /// Fairness is guaranteed when the mutex is unlocked, this means the next thread in the wait
     /// queue of the mutex will always acquire the mutex when it is unlocked.
     class Mutex : public Resource<MutexHandle> {
-        int _lock             = 0;
+        int _lock = 0;
 
         Scheduler*                        _scheduler;
         SharedPointer<Thread>             _owner;
@@ -38,7 +38,12 @@ namespace Rune::CPU {
         void trace_state(const String& action);
 
       public:
-        Mutex(MutexHandle handle, String name, Scheduler* scheduler);
+        Mutex(MutexHandle handle, const String& name, Scheduler* scheduler);
+
+        Mutex(const Mutex&)                    = delete;
+        Mutex(Mutex&&)                         = delete;
+        auto operator=(const Mutex&) -> Mutex& = delete;
+        auto operator=(Mutex&&) -> Mutex&      = delete;
 
         /// @brief
         /// @return A reference to the thread owning the mutex.
