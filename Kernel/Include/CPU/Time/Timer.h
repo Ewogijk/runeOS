@@ -188,6 +188,10 @@ namespace Rune::CPU {
          * @param time_seconds
          */
         void sleep_second(U64 time_seconds);
+
+        /// @brief Make the calling thread busy-wait for the specified amount of milli seconds.
+        /// @param time_millis
+        void stall_millis(U64 time_millis);
     };
 } // namespace Rune::CPU
 
