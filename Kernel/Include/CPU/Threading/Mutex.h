@@ -35,6 +35,8 @@ namespace Rune::CPU {
         Spinlock                          _wait_queue_lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
+        /// @brief Trace the owner and wait queue upon an action e.g. lock.
+        /// @param action
         void trace_state(const String& action);
 
       public:
@@ -59,6 +61,10 @@ namespace Rune::CPU {
         /// It is the callers responsibility to not lock the mutex twice by the same thread, if done
         /// the thread will be deadlocked.
         void lock();
+
+        /// @brief Try to lock the mutex and return immediately.
+        /// @return True: The mutex has been locked, False: Otherwise.
+        auto try_lock() -> bool;
 
         /// @brief Try to unlock the mutex.
         ///

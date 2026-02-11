@@ -52,7 +52,7 @@ namespace Rune::CPU {
             auto calling_thread = _scheduler->get_running_thread();
             _wait_queue.add_back(calling_thread);
             _scheduler->await_block();
-            trace_state("wait");
+            trace_state("lock-fail");
             // Release the spinlock for the block duration to allow threads holding the semaphore
             // to unlock it or other threads to try to lock it
             _lock.unlock();
@@ -61,14 +61,25 @@ namespace Rune::CPU {
         }
         --_counter;
         _scheduler->get_running_thread()->semaphore_handle = get_handle();
-        trace_state("acquire");
+        trace_state("lock-good");
         _lock.unlock();
     }
 
+    auto Semaphore::try_lock() -> bool {
+        LockGuard<Spinlock> lg(_lock);
+        if (_counter <= 0) {
+            trace_state("try_lock-fail");
+            return false;
+        }
+        --_counter;
+        trace_state("try_lock-good");
+        return true;
+    }
+
     void Semaphore::unlock() {
-        LockGuard<Spinlock> lock(_lock);
-        // _lock.lock();
-        _counter = min(_counter + 1, _counter_max);
+        LockGuard<Spinlock> lg(_lock);
+        if (_counter >= _counter_max) return;
+        _counter++;
         SharedPointer<Thread> thread_to_wake;
         if (!_wait_queue.is_empty()) {
             thread_to_wake = *_wait_queue.head();
@@ -79,7 +90,6 @@ namespace Rune::CPU {
         _counter = _counter;
         memory_barrier_write();
         trace_state("unlock");
-        // _lock.unlock();
     }
 
 } // namespace Rune::CPU

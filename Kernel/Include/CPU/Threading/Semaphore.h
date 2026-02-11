@@ -24,6 +24,11 @@
 #include <CPU/Threading/Spinlock.h>
 
 namespace Rune::CPU {
+
+    /// @brief A counting semaphore using a spinlock for synchronization.
+    ///
+    /// The semaphore keeps track of a maximum value for the counter, it cannot be incremented
+    /// beyond this value.
     class Semaphore : public Resource<SemaphoreHandle> {
         int _counter     = 0;
         int _counter_max = 0;
@@ -32,6 +37,8 @@ namespace Rune::CPU {
         Spinlock                          _lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
+        /// @brief Trace the count and wait queue upon an action e.g. lock.
+        /// @param action
         void trace_state(const String& action);
 
       public:
@@ -46,8 +53,20 @@ namespace Rune::CPU {
         auto operator=(const Semaphore&) -> Semaphore& = delete;
         auto operator=(Semaphore&&) -> Semaphore&      = delete;
 
+        /// @brief Try to decrease the counter of the semaphore.
+        ///
+        /// When the counter has reached zero the calling thread will be blocked until the counter
+        /// has been increased by a call to `unlock()`.
         void lock();
 
+        /// @brief Try to lock the semaphore and return immediately.
+        /// @return True: The mutex has been locked, False: Otherwise.
+        auto try_lock() -> bool;
+
+        /// @brief Try to increment the counter and unblock a waiting thread.
+        ///
+        /// If the counter has reached the maximum value this function will return immediately
+        /// without unblocking any waiting threads.
         void unlock();
     };
 } // namespace Rune::CPU

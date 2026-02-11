@@ -60,7 +60,7 @@ namespace Rune::CPU {
                 LockGuard<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
                 _scheduler->await_block();
-                trace_state("try lock");
+                trace_state("lock-fail");
             }
             // await_block()/block() mechanic solves the lost wakeup problem
             _scheduler->block();
@@ -70,7 +70,17 @@ namespace Rune::CPU {
             if (_owner->get_handle() == calling_thread->get_handle()) return;
         }
         _owner = _scheduler->get_running_thread();
-        trace_state("lock");
+        trace_state("lock-good");
+    }
+
+    auto Mutex::try_lock() -> bool {
+        if (!atomic_compare_exchange_acquire(&_lock, 0 , 1)) {
+            trace_state("try_lock-fail");
+            return false;
+        }
+        _owner = _scheduler->get_running_thread();
+        trace_state("try_lock-good");
+        return true;
     }
 
     void Mutex::unlock() {
