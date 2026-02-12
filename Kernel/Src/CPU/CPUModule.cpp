@@ -218,6 +218,18 @@ namespace Rune::CPU {
         SCHEDULER          = &_scheduler;
         NOTIFY_THREAD_BOOM = [this](Thread* term, Thread* next) {
             ThreadPreemptionContext tt_ctx = {.stopped = move(term), .next_scheduled = move(next)};
+
+            // Wake up joining threads
+            auto maybe_wait_list = _joining_threads.find(term->get_handle());
+            if (maybe_wait_list != _joining_threads.end()) {
+                for (SharedPointer<Thread>& t : *maybe_wait_list->value) {
+                    t->join_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
+                    _scheduler.unblock(t);
+                }
+                maybe_wait_list->value->clear();
+                _joining_threads.remove(term->get_handle());
+            }
+
             fire(EventHook(EventHook::THREAD_STOPPED).to_string(), (void*) &tt_ctx);
         };
         _scheduler.set_on_context_switch([this](Thread* next) {
@@ -319,8 +331,8 @@ namespace Rune::CPU {
                                         StartInfo*       start_info,
                                         PhysicalAddr     base_pt_addr,
                                         SchedulingPolicy policy,
-                                        Stack            user_stack) -> U16 {
-        if (!_thread_handle_counter.has_more()) return 0;
+                                        Stack            user_stack) -> ThreadHandle {
+        if (!_thread_handle_counter.has_more()) return Resource<ThreadHandle>::HANDLE_NONE;
 
         SharedPointer<Thread> new_thread = create_thread(_thread_handle_counter.acquire(),
                                                          thread_name,
@@ -328,7 +340,7 @@ namespace Rune::CPU {
                                                          base_pt_addr,
                                                          policy,
                                                          move(user_stack));
-        if (!_scheduler.schedule(new_thread)) return 0;
+        if (!_scheduler.schedule(new_thread)) return Resource<ThreadHandle>::HANDLE_NONE;
 
         _thread_table.put(new_thread->get_handle(), new_thread);
         return new_thread->get_handle();
@@ -404,6 +416,21 @@ namespace Rune::CPU {
         }
 
         _scheduler.stop(da_thread);
+        return true;
+    }
+
+    auto CPUModule::join_thread(int handle) -> bool {
+        if (_thread_table.find(handle) == _thread_table.end()) return false;
+
+        auto calling_thread  = _scheduler.get_running_thread();
+        auto maybe_wait_list = _joining_threads.find(handle);
+        if (maybe_wait_list == _joining_threads.end()) {
+            _joining_threads[handle] = LinkedList<SharedPointer<Thread>>();
+            maybe_wait_list          = _joining_threads.find(handle);
+        }
+        maybe_wait_list->value->add_back(calling_thread);
+        _scheduler.await_block();
+        _scheduler.block(calling_thread);
         return true;
     }
 

@@ -65,14 +65,14 @@ namespace Rune::CPU {
         static StartInfo IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Interrupt Properties
+        //                                      Interrupt Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         LinkedList<UniquePointer<PICDriver>> _pic_driver_table;
         PICDriver*                           _active_pic{nullptr};
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Threading Properties
+        //                                      Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         HashMap<U16, SharedPointer<Thread>> _thread_table;
@@ -82,8 +82,11 @@ namespace Rune::CPU {
         HandleCounter<U16>                 _mutex_handle_counter;
         Scheduler                          _scheduler;
 
+        /// @brief
+        HashMap<U16, LinkedList<SharedPointer<Thread>>> _joining_threads;
+
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Time Properties
+        //                                      Time Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         UniquePointer<Timer> _timer;
@@ -240,6 +243,18 @@ namespace Rune::CPU {
          * or it is currently running.
          */
         auto stop_thread(int handle) -> bool;
+
+        /// @brief Block the calling thread until the joined thread with the requested handle has
+        ///         finished execution.
+        /// @param handle Handle of the joined thread.
+        /// @return True: The calling thread has joined with the requested thread,
+        ///         False: No thread with the requested handle was found.
+        ///
+        /// When no thread with the requested handle was found the function will do nothing.
+        ///
+        /// After the calling thread is unblocked it is not guaranteed that the thread object of the
+        /// joined thread is still available in the thread table.
+        auto join_thread(int handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Mutex API

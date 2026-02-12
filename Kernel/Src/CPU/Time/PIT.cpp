@@ -130,7 +130,5 @@ namespace Rune::CPU {
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->await_block();
         _scheduler->block();
-        int a = 0;
-        LOGGER->trace(R"({})", a);
     }
 } // namespace Rune::CPU
