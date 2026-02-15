@@ -49,7 +49,6 @@ namespace Rune::CPU {
 
     /// @brief Handle type of timer.
     using TimerHandle = U16;
-
     /// @brief Handle type of thread.
     using ThreadHandle = U16;
     /// @brief Handle type of spinlock.

@@ -111,15 +111,32 @@ Help(vars.GenerateHelpText(target_env))
 arch = target_env["arch"]
 build = target_env["build"]
 
+target_env["CC"] = target_env["c"]
 target_env["CXX"] = target_env["cpp"]
-target_env["CPPPATH"] = target_env["cpp"]
 
 # Include directoriesx
 target_env["CPPPATH"] = [
     str(Path.cwd() / "Include"),
+    # ACPICA sources expect the ACPICA include directories on CPPPATH, which points into the Device
+    # module
+    str(Path.cwd() / "Include" / "Device" / "ACPICA" ),
 ]
 
 # Compiler flags
+target_env["CCFLAGS"] = [
+    "-std=c11",
+    "-Wall",
+    "-Wextra",
+    "-ffreestanding",
+    "-fno-exceptions",
+    "-fstack-protector-all",
+    "-m64",
+    "-mcmodel=kernel",
+    "-mno-mmx",
+    "-mno-red-zone",
+    "-g",
+    "-mincoming-stack-boundary=3",
+]
 target_env["CXXFLAGS"] = [
     "-std=c++23",
     "-Wall",
@@ -169,7 +186,7 @@ if build == "release":
 # Change scons messages for better readability
 target_env.Replace(
     ASCOMSTR="Assembling [$SOURCE]",
-    CXXCOMSTR="Compiling [$SOURCE]",
+    # CXXCOMSTR="Compiling [$SOURCE]",
     ARCOMSTR="Creating static library [$TARGET]",
     RANLIBCOMSTR="Updating static library [$TARGET]",
     LINKCOMSTR="Linking [$TARGET]",
