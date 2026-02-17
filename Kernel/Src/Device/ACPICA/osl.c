@@ -16,21 +16,99 @@
 
 #include <Device/ACPICA/acpi.h>
 
+// ============================================================================================== //
+// OSL-to-rune Bridge
+// The abstraction layer between ACPICA and runeOS, it is needed because ACPICA is a C library
+// while runeOS is implemented in C++. This means ACPICA is not allowed to reference runeOS,
+// because gcc is not able to compile C++ code.
+// ============================================================================================== //
+
+/* Initialization */
+extern unsigned int       acpi_to_rune_initialize(void);
+extern unsigned int       acpi_to_rune_terminate(void);
+extern unsigned long long acpi_to_rune_get_root_pointer(void);
+
+/* Memory */
+extern void* acpi_to_rune_map_memory(unsigned long long phys, unsigned long long length);
+extern void  acpi_to_rune_unmap_memory(void* virt, unsigned long long length);
+extern int   acpi_to_rune_get_physical_address(void* virt, unsigned long long* phys_out);
+extern void* acpi_to_rune_allocate(unsigned long long size);
+extern void  acpi_to_rune_free(void* ptr);
+
+/* Threading */
+extern unsigned long long acpi_to_rune_get_thread_id(void);
+extern int                acpi_to_rune_execute(int type, void (*func)(void*), void* ctx);
+extern void               acpi_to_rune_wait_events_complete(void);
+extern void               acpi_to_rune_sleep(unsigned long long ms);
+extern void               acpi_to_rune_stall(unsigned int us);
+
+/* Mutexes */
+extern void* acpi_to_rune_mutex_create(void);
+extern void  acpi_to_rune_mutex_delete(void* mutex);
+extern int   acpi_to_rune_mutex_acquire(void* mutex, unsigned short timeout_ms);
+extern void  acpi_to_rune_mutex_release(void* mutex);
+
+/* Semaphores */
+extern void* acpi_to_rune_semaphore_create(unsigned int max_units, unsigned int initial_units);
+extern int   acpi_to_rune_semaphore_delete(void* sem);
+extern int   acpi_to_rune_semaphore_wait(void* sem, unsigned int units, unsigned short timeout_ms);
+extern int   acpi_to_rune_semaphore_signal(void* sem, unsigned int units);
+
+/* Spinlocks */
+extern void*         acpi_to_rune_spinlock_create(void);
+extern void          acpi_to_rune_spinlock_delete(void* lock);
+extern unsigned long acpi_to_rune_spinlock_acquire(void* lock);
+extern void          acpi_to_rune_spinlock_release(void* lock, unsigned long flags);
+
+/* Interrupts */
+extern int
+acpi_to_rune_install_interrupt(unsigned int irq, unsigned int (*handler)(void*), void* ctx);
+extern int acpi_to_rune_remove_interrupt(unsigned int irq, unsigned int (*handler)(void*));
+
+/* I/O */
+extern int
+acpi_to_rune_read_memory(unsigned long long addr, unsigned long long* val, unsigned int width);
+extern int
+acpi_to_rune_write_memory(unsigned long long addr, unsigned long long val, unsigned int width);
+extern int acpi_to_rune_read_port(unsigned short port, unsigned int* val, unsigned int width);
+extern int acpi_to_rune_write_port(unsigned short port, unsigned int val, unsigned int width);
+
+/* PCI */
+extern int acpi_to_rune_read_pci_config(unsigned short      seg,
+                                        unsigned short      bus,
+                                        unsigned short      dev,
+                                        unsigned short      func,
+                                        unsigned int        reg,
+                                        unsigned long long* val,
+                                        unsigned int        width);
+extern int acpi_to_rune_write_pci_config(unsigned short     seg,
+                                         unsigned short     bus,
+                                         unsigned short     dev,
+                                         unsigned short     func,
+                                         unsigned int       reg,
+                                         unsigned long long val,
+                                         unsigned int       width);
+
+/* Platform */
+extern unsigned long long acpi_to_rune_get_timer(void);
+extern int                acpi_to_rune_signal(unsigned int func, void* info);
+extern int acpi_to_rune_enter_sleep(unsigned char state, unsigned int rega, unsigned int regb);
+
+/* Print */
+extern void acpi_to_rune_vprintf(const char* fmt, va_list args);
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                              Environmental and ACPI Table Interfaces
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsInitialize() -> ACPI_STATUS {
-    /* Initialize the OSL - called during AcpiInitializeSubsystem() */
-    return AE_OK;
-}
+ACPI_STATUS
+AcpiOsInitialize(void) { return acpi_to_rune_initialize(); }
 
-auto AcpiOsTerminate() -> ACPI_STATUS {
-    /* Terminate the OSL - called during AcpiTerminate() */
-    return AE_OK;
-}
+ACPI_STATUS
+AcpiOsTerminate(void) { return acpi_to_rune_terminate(); }
 
-auto AcpiOsGetRootPointer() -> ACPI_PHYSICAL_ADDRESS {
+ACPI_PHYSICAL_ADDRESS
+AcpiOsGetRootPointer(void) {
     /*
      * Return the physical address of the RSDP (Root System Description Pointer)
      * Typically found via:
@@ -38,32 +116,33 @@ auto AcpiOsGetRootPointer() -> ACPI_PHYSICAL_ADDRESS {
      * - Searching EBDA (Extended BIOS Data Area) on legacy BIOS
      * - Searching 0xE0000-0xFFFFF on legacy BIOS
      */
-    return 0;
+    return acpi_to_rune_get_root_pointer();
 }
 
-auto AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES* PredefinedObject, ACPI_STRING* NewVal)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsPredefinedOverride(const ACPI_PREDEFINED_NAMES* InitVal, ACPI_STRING* NewVal) {
     /*
      * Override predefined ACPI objects (_OS, _REV, etc.)
      * Return AE_OK with *NewVal = NULL to use default values
      */
-    *NewVal = nullptr;
+    *NewVal = NULL;
     return AE_OK;
 }
 
-auto AcpiOsTableOverride(ACPI_TABLE_HEADER* ExistingTable, ACPI_TABLE_HEADER** NewTable)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsTableOverride(ACPI_TABLE_HEADER* ExistingTable, ACPI_TABLE_HEADER** NewTable) {
     /*
      * Override ACPI tables (e.g., DSDT, SSDT)
      * Return AE_OK with *NewTable = NULL to use firmware tables
      */
-    *NewTable = nullptr;
+    *NewTable = NULL;
     return AE_OK;
 }
 
-auto AcpiOsPhysicalTableOverride(ACPI_TABLE_HEADER*     ExistingTable,
-                                 ACPI_PHYSICAL_ADDRESS* NewAddress,
-                                 UINT32*                NewTableLength) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsPhysicalTableOverride(ACPI_TABLE_HEADER*     ExistingTable,
+                            ACPI_PHYSICAL_ADDRESS* NewAddress,
+                            UINT32*                NewTableLength) {
     /*
      * Physical override variant - return physical address of replacement table
      * Return AE_OK with *NewAddress = 0 to use firmware tables
@@ -76,55 +155,59 @@ auto AcpiOsPhysicalTableOverride(ACPI_TABLE_HEADER*     ExistingTable,
 //                                  Memory Management
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsCreateCache(char*          CacheName,
-                       UINT16         ObjectSize,
-                       UINT16         MaxDepth,
-                       ACPI_CACHE_T** ReturnCache) -> ACPI_STATUS {}
+ACPI_STATUS
+AcpiOsCreateCache(char* CacheName, UINT16 ObjectSize, UINT16 MaxDepth, ACPI_CACHE_T** ReturnCache) {
+    return AE_NOT_IMPLEMENTED;
+}
 
-auto AcpiOsDeleteCache(ACPI_CACHE_T* Cache) -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsDeleteCache(ACPI_CACHE_T* Cache) { return AE_NOT_IMPLEMENTED; }
 
-auto AcpiOsPurgeCache(ACPI_CACHE_T* Cache) -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsPurgeCache(ACPI_CACHE_T* Cache) { return AE_NOT_IMPLEMENTED; }
 
-auto AcpiOsAcquireObject(ACPI_CACHE_T* Cache) -> void* {}
+void* AcpiOsAcquireObject(ACPI_CACHE_T* Cache) { return NULL; }
 
-auto AcpiOsReleaseObject(ACPI_CACHE_T* Cache, void* Object) -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsReleaseObject(ACPI_CACHE_T* Cache, void* Object) {
+    { return AE_NOT_IMPLEMENTED; }
+}
 
-auto AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length) -> void* {
+void* AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS Where, ACPI_SIZE Length) {
     /*
      * Map physical memory into virtual address space
      * Must handle both RAM and MMIO regions
      * Should use uncached mapping for MMIO
      */
-    return nullptr;
+    return NULL;
 }
 
-void AcpiOsUnmapMemory(void* LogicalAddress, ACPI_SIZE Length) {
+void AcpiOsUnmapMemory(void* LogicalAddress, ACPI_SIZE Size) {
     /* Unmap previously mapped memory */
 }
 
-auto AcpiOsGetPhysicalAddress(void* LogicalAddress, ACPI_PHYSICAL_ADDRESS* PhysicalAddress)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsGetPhysicalAddress(void* LogicalAddress, ACPI_PHYSICAL_ADDRESS* PhysicalAddress) {
     /* Convert virtual address to physical address */
     *PhysicalAddress = 0;
     return AE_OK;
 }
 
-auto AcpiOsAllocate(ACPI_SIZE Size) -> void* {
+void* AcpiOsAllocate(ACPI_SIZE Size) {
     /*
      * Allocate memory (kernel heap)
      * Must be usable in interrupt context
      */
-    return nullptr;
+    return NULL;
 }
 
 void AcpiOsFree(void* Memory) { /* Free memory allocated by AcpiOsAllocate */ }
 
-auto AcpiOsReadable(void* Memory, ACPI_SIZE Length) -> BOOLEAN {
+BOOLEAN
+AcpiOsReadable(void* Memory, ACPI_SIZE Length) {
     /* Check if memory range is readable (for debugging) */
     return TRUE;
 }
 
-auto AcpiOsWritable(void* Memory, ACPI_SIZE Length) -> BOOLEAN {
+BOOLEAN
+AcpiOsWritable(void* Memory, ACPI_SIZE Length) {
     /* Check if memory range is writable (for debugging) */
     return TRUE;
 }
@@ -133,7 +216,8 @@ auto AcpiOsWritable(void* Memory, ACPI_SIZE Length) -> BOOLEAN {
 //                                  Multithreading and Scheduling
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsGetThreadId() -> ACPI_THREAD_ID {
+ACPI_THREAD_ID
+AcpiOsGetThreadId(void) {
     /*
      * Return unique thread/task identifier
      * Can be process ID, thread ID, or CPU ID if no threading
@@ -141,8 +225,8 @@ auto AcpiOsGetThreadId() -> ACPI_THREAD_ID {
     return 1;
 }
 
-auto AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function, void* Context)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function, void* Context) {
     /*
      * Queue deferred work for execution
      * Type can be: OSL_GLOBAL_LOCK_HANDLER, OSL_NOTIFY_HANDLER,
@@ -176,15 +260,17 @@ void AcpiOsWaitEventsComplete() {
 //                                  Mutual Exclusion and Synchronization
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsCreateMutex(ACPI_MUTEX* OutHandle) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsCreateMutex(ACPI_MUTEX* OutHandle) {
     /* Create a mutex */
-    *OutHandle = ACPI_MUTEX();
+    *OutHandle = NULL;
     return AE_OK;
 }
 
 void AcpiOsDeleteMutex(ACPI_MUTEX Handle) { /* Delete a mutex */ }
 
-auto AcpiOsAcquireMutex(ACPI_MUTEX Handle, UINT16 Timeout) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsAcquireMutex(ACPI_MUTEX Handle, UINT16 Timeout) {
     /*
      * Acquire mutex with timeout in milliseconds
      * ACPI_WAIT_FOREVER means wait indefinitely
@@ -194,19 +280,21 @@ auto AcpiOsAcquireMutex(ACPI_MUTEX Handle, UINT16 Timeout) -> ACPI_STATUS {
 
 void AcpiOsReleaseMutex(ACPI_MUTEX Handle) { /* Release mutex */ }
 
-auto AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits, ACPI_SEMAPHORE* OutHandle)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits, ACPI_SEMAPHORE* OutHandle) {
     /* Create a counting semaphore */
-    *OutHandle = ACPI_SEMAPHORE();
+    *OutHandle = NULL;
     return AE_OK;
 }
 
-auto AcpiOsDeleteSemaphore(ACPI_SEMAPHORE Handle) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsDeleteSemaphore(ACPI_SEMAPHORE Handle) {
     /* Delete semaphore */
     return AE_OK;
 }
 
-auto AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout) {
     /*
      * Wait for semaphore units with timeout in milliseconds
      * ACPI_WAIT_FOREVER means wait indefinitely
@@ -214,23 +302,26 @@ auto AcpiOsWaitSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units, UINT16 Timeout) ->
     return AE_OK;
 }
 
-auto AcpiOsSignalSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsSignalSemaphore(ACPI_SEMAPHORE Handle, UINT32 Units) {
     /* Signal semaphore (increment by Units) */
     return AE_OK;
 }
 
-auto AcpiOsCreateLock(ACPI_SPINLOCK* OutHandle) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsCreateLock(ACPI_SPINLOCK* OutHandle) {
     /*
      * Create a spinlock
      * Must be usable in interrupt context
      */
-    *OutHandle = ACPI_SPINLOCK();
+    *OutHandle = NULL;
     return AE_OK;
 }
 
 void AcpiOsDeleteLock(ACPI_SPINLOCK Handle) { /* Delete spinlock */ }
 
-auto AcpiOsAcquireLock(ACPI_SPINLOCK Handle) -> ACPI_CPU_FLAGS {
+ACPI_CPU_FLAGS
+AcpiOsAcquireLock(ACPI_SPINLOCK Handle) {
     /*
      * Acquire spinlock, disable interrupts
      * Return interrupt state flags
@@ -246,8 +337,10 @@ void AcpiOsReleaseLock(ACPI_SPINLOCK Handle, ACPI_CPU_FLAGS Flags) {
 //                                  Interrupt Handling
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsInstallInterruptHandler(UINT32 InterruptNumber, ACPI_OSD_HANDLER Handler, void* Context)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsInstallInterruptHandler(UINT32           InterruptNumber,
+                              ACPI_OSD_HANDLER ServiceRoutine,
+                              void*            Context) {
     /*
      * Install interrupt handler
      * ServiceRoutine will be called as: ServiceRoutine(Context)
@@ -256,7 +349,8 @@ auto AcpiOsInstallInterruptHandler(UINT32 InterruptNumber, ACPI_OSD_HANDLER Hand
     return AE_NOT_IMPLEMENTED;
 }
 
-auto AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber, ACPI_OSD_HANDLER Handler) -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber, ACPI_OSD_HANDLER ServiceRoutine) {
     /* Remove previously installed interrupt handler */
     return AE_OK;
 }
@@ -265,7 +359,7 @@ auto AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber, ACPI_OSD_HANDLER Handl
 //                              Memory Access and Memory Mapped I/O
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64* Value, UINT32 Width) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64* Value, UINT32 Width) {
     /*
      * Read from physical memory address
      * Width is 8, 16, 32, or 64 bits
@@ -274,7 +368,7 @@ auto AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64* Value, UINT32 Width
     return AE_OK;
 }
 
-auto AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64 Value, UINT32 Width) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64 Value, UINT32 Width) {
     /*
      * Write to physical memory address
      * Width is 8, 16, 32, or 64 bits
@@ -286,7 +380,7 @@ auto AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT64 Value, UINT32 Width
 //                                  Port Input/Output
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32* Value, UINT32 Width) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32* Value, UINT32 Width) {
     /*
      * Read from I/O port (x86 IN instruction)
      * Width is 8, 16, or 32 bits
@@ -295,7 +389,7 @@ auto AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32* Value, UINT32 Width) -> ACP
     return AE_OK;
 }
 
-auto AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width) {
     /*
      * Write to I/O port (x86 OUT instruction)
      * Width is 8, 16, or 32 bits
@@ -307,8 +401,8 @@ auto AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width) -> ACP
 //                              PCI Configuration Space Access
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsReadPciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64* Value, UINT32 Width)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsReadPciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64* Value, UINT32 Width) {
     /*
      * Read PCI configuration space
      * PciId contains: Segment, Bus, Device, Function
@@ -319,8 +413,8 @@ auto AcpiOsReadPciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64* Valu
     return AE_OK;
 }
 
-auto AcpiOsWritePciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64 Value, UINT32 Width)
-    -> ACPI_STATUS {
+ACPI_STATUS
+AcpiOsWritePciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64 Value, UINT32 Width) {
     /*
      * Write PCI configuration space
      * PciId contains: Segment, Bus, Device, Function
@@ -351,23 +445,28 @@ void AcpiOsRedirectOutput(void* Destination) {
 //                                  System ACPI Table Access
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsGetTableByAddress(ACPI_PHYSICAL_ADDRESS Address, ACPI_TABLE_HEADER** OutTable)
-    -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsGetTableByAddress(ACPI_PHYSICAL_ADDRESS Address, ACPI_TABLE_HEADER** OutTable) {
+    return AE_NOT_IMPLEMENTED;
+}
 
-auto AcpiOsGetTableByIndex(UINT32                  TableIndex,
-                           ACPI_TABLE_HEADER**     OutTable,
-                           ACPI_PHYSICAL_ADDRESS** OutAddress) -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsGetTableByIndex(UINT32                  Index,
+                                  ACPI_TABLE_HEADER**     OutTable,
+                                  ACPI_PHYSICAL_ADDRESS** OutAddress) {
+    return AE_NOT_IMPLEMENTED;
+}
 
-auto AcpiOsGetTableByName(char*                   Signature,
-                          UINT32                  Instance,
-                          ACPI_TABLE_HEADER**     OutTable,
-                          ACPI_PHYSICAL_ADDRESS** OutAddress) -> ACPI_STATUS {}
+ACPI_STATUS AcpiOsGetTableByName(char*                   Signature,
+                                 UINT32                  Instance,
+                                 ACPI_TABLE_HEADER**     OutTable,
+                                 ACPI_PHYSICAL_ADDRESS** OutAddress) {
+    return AE_NOT_IMPLEMENTED;
+}
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Miscellaneous
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-auto AcpiOsGetTimer() -> UINT64 {
+UINT64 AcpiOsGetTimer() {
     /*
      * Return current time in 100-nanosecond units
      * Used for performance timing, doesn't need to be precise
@@ -375,7 +474,7 @@ auto AcpiOsGetTimer() -> UINT64 {
     return 0;
 }
 
-auto AcpiOsSignal(UINT32 Function, void* Info) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsSignal(UINT32 Function, void* Info) {
     /*
      * Handle platform-specific signals
      * Function can be: ACPI_SIGNAL_FATAL, ACPI_SIGNAL_BREAKPOINT
@@ -383,7 +482,7 @@ auto AcpiOsSignal(UINT32 Function, void* Info) -> ACPI_STATUS {
     return AE_OK;
 }
 
-auto AcpiOsGetLine(char* Buffer, UINT32 BufferLength, UINT32* BytesRead) -> ACPI_STATUS {
+ACPI_STATUS AcpiOsGetLine(char* Buffer, UINT32 BufferLength, UINT32* BytesRead) {
     /*
      * Read line from debug console (for interactive debugger)
      * Usually not implemented in production kernels

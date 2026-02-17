@@ -157,6 +157,7 @@
 
 #include "amlresrc.h"
 
+
 /*
  * If possible, pack the following structures to byte alignment, since we
  * don't care about performance for debug output. Two cases where we cannot

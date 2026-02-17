@@ -123,8 +123,9 @@ target_env["CPPPATH"] = [
 ]
 
 # Compiler flags
+# CCFLAGS are also appended in CXXFLAGS, therefore common gcc/g++ compiler flags are only defined
+# fo CCFLAGS
 target_env["CCFLAGS"] = [
-    "-std=c11",
     "-Wall",
     "-Wextra",
     "-ffreestanding",
@@ -139,20 +140,10 @@ target_env["CCFLAGS"] = [
 ]
 target_env["CXXFLAGS"] = [
     "-std=c++23",
-    "-Wall",
-    "-Wextra",
-    "-ffreestanding",
     "-fno-exceptions",
     "-fno-rtti",
-    "-fstack-protector-all",
     "-fno-threadsafe-statics",
-    "-m64",
-    "-mcmodel=kernel",
-    "-mno-mmx",
-    "-mno-red-zone",
     "-fno-use-cxa-atexit",  # Do not call destructors for global objects
-    "-g",
-    "-mincoming-stack-boundary=3",
 ]
 
 # Linker flags

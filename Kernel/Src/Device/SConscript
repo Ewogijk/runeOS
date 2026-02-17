@@ -18,7 +18,8 @@ Import("target_env")
 target_env: Environment
 sources = [
     target_env.File("DeviceModule.cpp"),
-    target_env.File("ACPICA/osrune.cpp"),
+    target_env.File("ACPICA/osl.c"),
+    target_env.File("ACPICA/osl-to-rune-bridge.cpp"),
     target_env.File("AHCI/AHCI.cpp"),
     target_env.File("AHCI/FIS.cpp"),
     target_env.File("AHCI/GPT.cpp"),
@@ -26,19 +27,18 @@ sources = [
     target_env.File("AHCI/PortEngine.cpp"),
     target_env.File("Keyboard/Keyboard.cpp"),
     target_env.File("Keyboard/PS2Keyboard.cpp"),
-    target_env.File("ACPICA/dispatcher/dsargs.c"),
 
 ]
-# acpi_sources = (Glob("ACPICA/dispatcher/*.c")
-                # + Glob("ACPICA/events/*.c")
-                # + Glob("ACPICA/executer/*.c")
-                # + Glob("ACPICA/hardware/*.c")
-                # + Glob("ACPICA/namespace/*.c")
-                # + Glob("ACPICA/parser/*.c")
-                # + Glob("ACPICA/resources/*.c")
-                # + Glob("ACPICA/tables/*.c")
-                # + Glob("ACPICA/utilities/*.c"))
-# sources += acpi_sources
+acpi_sources = (Glob("ACPICA/dispatcher/*.c")
+                + Glob("ACPICA/events/*.c")
+                + Glob("ACPICA/executer/*.c")
+                + Glob("ACPICA/hardware/*.c")
+                + Glob("ACPICA/namespace/*.c")
+                + Glob("ACPICA/parser/*.c")
+                + Glob("ACPICA/resources/*.c")
+                + Glob("ACPICA/tables/*.c")
+                + Glob("ACPICA/utilities/*.c"))
+sources += acpi_sources
 
 Device = target_env.StaticLibrary("Device.o", target_env.Object(sources))
 Export("Device")

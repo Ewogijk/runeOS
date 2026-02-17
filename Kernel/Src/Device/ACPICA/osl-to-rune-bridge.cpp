@@ -1,5 +1,5 @@
 /*
-*  Copyright 2025 Ewogijk
+ *  Copyright 2025 Ewogijk
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,3 +13,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+#include <Ember/Ember.h>
+
+CLINK {
+    unsigned int acpi_to_rune_initialize(void) {}
+
+    unsigned int acpi_to_rune_terminate(void) {}
+
+    unsigned long long acpi_to_rune_get_root_pointer(void) {
+
+    }
+}

@@ -17,27 +17,27 @@
 #ifndef RUNEOS_ACRUNE_H
 #define RUNEOS_ACRUNE_H
 
-#include <KRE/Memory.h>
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+//                                  Component Selection
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-#include <Memory/SlabAllocator.h>
-
-#include <CPU/CPU.h>
-#include <CPU/Threading/Mutex.h>
-#include <CPU/Threading/Semaphore.h>
-#include <CPU/Threading/Spinlock.h>
+// Src files in "resources" requires this flag
+#define ACPI_DEBUGGER
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Configurable Data Types
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-#define ACPI_SPINLOCK  Rune::SharedPointer<Rune::CPU::Spinlock>
-#define ACPI_SEMAPHORE Rune::SharedPointer<Rune::CPU::Semaphore>
-#define ACPI_MUTEX     Rune::SharedPointer<Rune::CPU::Mutex>
-#define ACPI_CPU_FLAGS U32
+// Cannot reference kernel code here, because it is C++, so the exact types must be unknown to
+// ACPICA
+#define ACPI_SPINLOCK  void*
+#define ACPI_SEMAPHORE void*
+#define ACPI_MUTEX     void*
+#define ACPI_CPU_FLAGS unsigned long
 
-#define ACPI_THREAD_ID Rune::CPU::ThreadHandle
+#define ACPI_THREAD_ID unsigned int
 
-#define ACPI_CACHE_T Rune::Memory::ObjectCache*
+#define ACPI_CACHE_T void*
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Subsystem Compile-Time Options
@@ -47,6 +47,13 @@
 #define ACPI_MUTEX_TYPE 1 // ACPI_OSL_MUTEX
 #define ACPI_USE_DO_WHILE_0
 
+// The definitions in acpiosxf.h for these OSL do not match with the reference definitions, so we
+// deactivate them. But others do, why is that?
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsReadPciConfiguration
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsWritePciConfiguration
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsGetTableByName
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsGetTableByIndex
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Per-Compiler Configuration
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -54,7 +61,7 @@
 #define COMPILER_DEPENDENT_INT64  long long
 #define COMPILER_DEPENDENT_UINT64 unsigned long long
 #define ACPI_USE_NATIVE_DIVIDE
-//NOLINTBEGIN
+// NOLINTBEGIN
 #define ACPI_DIV_64_BY_32(n, n_hi, n_lo, d32, q32, r32)                                            \
     {                                                                                              \
         q32 = n / d32;                                                                             \
@@ -63,7 +70,7 @@
 
 #define ACPI_SHIFT_RIGHT_64(n, n_hi, n_lo)                                                         \
     { n <<= 1; }
-//NOLINTEND
+// NOLINTEND
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Per-Machine Configuration
@@ -74,8 +81,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Subsystem Runtime Configuration
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Subsystem Configuration Constants

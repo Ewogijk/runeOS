@@ -159,16 +159,16 @@
  *
  * Note: The order of these include files is important.
  */
-#include "acconfig.h"
-#include "acglobal.h"
-#include "achware.h"
-#include "aclocal.h"
-#include "acmacros.h"
-#include "acobject.h"
-#include "acstruct.h"
-#include "acutils.h"
+#include "acconfig.h"           /* Global configuration constants */
+#include "acmacros.h"           /* C macros */
+#include "aclocal.h"            /* Internal data types */
+#include "acobject.h"           /* ACPI internal object */
+#include "acstruct.h"           /* Common structures */
+#include "acglobal.h"           /* All global variables */
+#include "achware.h"            /* Hardware defines and interfaces */
+#include "acutils.h"            /* Utility interfaces */
 #ifndef ACPI_USE_SYSTEM_CLIBRARY
-#include "acclib.h"
+#include "acclib.h"             /* C library interfaces */
 #endif /* !ACPI_USE_SYSTEM_CLIBRARY */
 
 

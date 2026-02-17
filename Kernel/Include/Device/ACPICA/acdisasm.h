@@ -154,6 +154,7 @@
 
 #include "amlresrc.h"
 
+
 #define BLOCK_NONE              0
 #define BLOCK_PAREN             1
 #define BLOCK_BRACE             2
