@@ -216,6 +216,8 @@ namespace Rune {
         cpu_subsys->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
 
+    auto System::get_boot_info() -> BootInfo& { return _boot_info; }
+
     void System::shutdown() { // NOLINT
         // Workaround solution to shut down the system
         //  -> Disable DIVISION_BY_ZERO and DOUBLE_FAULT interrupt vectors to force a triple fault

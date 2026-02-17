@@ -158,6 +158,10 @@ namespace Rune {
         //                                  General Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+        /// @brief
+        /// @return The boot info provided by phase 1.
+        auto get_boot_info() -> BootInfo&;
+
         /**
          * Get a pointer to the requested kernel module.
          *

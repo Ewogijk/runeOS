@@ -41,6 +41,10 @@ limine_memmap_request LIMINE_MEM_MAP = {.id       = LIMINE_MEMMAP_REQUEST,
 limine_framebuffer_request LIMINE_FRAME_BUFFERS = {.id       = LIMINE_FRAMEBUFFER_REQUEST,
                                                    .revision = 0,
                                                    .response = nullptr};
+
+limine_rsdp_request LIMINE_RSDP{.id = LIMINE_RSDP_REQUEST, .revision = 0, .response = nullptr};
+
+limine_hhdm_request LIMINE_HHDM{.id = LIMINE_HHDM_REQUEST, .revision = 0, .response = nullptr};
 // NOLINTEND
 namespace Rune {
     /**
@@ -200,13 +204,29 @@ namespace Rune {
             break;
         }
 
-        System::instance().boot_phase2(
-            {.boot_loader_name       = LIMINE_BOOTLOADER_INFO.response->name,
-             .boot_loader_version    = LIMINE_BOOTLOADER_INFO.response->version,
-             .physical_memory_map    = p_map,
-             .framebuffer            = frame_buffer,
-             .base_page_table_addr   = Memory::get_base_page_table_address(),
-             .stack                  = CPU::get_stack_pointer(),
-             .physical_address_width = CPU::get_physical_address_width()});
+        // Get RSDP address
+        PhysicalAddr rsdp_addr = 0x0;
+        if (LIMINE_RSDP.response == nullptr)
+            while (true) CPU::halt();
+        rsdp_addr = memory_pointer_to_addr(LIMINE_RSDP.response->address);
+
+        if (LIMINE_RSDP.revision < 3) {
+            // Need to convert virtual addr -> physical addr
+
+            if (LIMINE_HHDM.response == nullptr)
+                while (true) CPU::halt();
+            rsdp_addr -= LIMINE_HHDM.response->offset;
+        }
+
+        System::instance().boot_phase2({
+            .boot_loader_name       = LIMINE_BOOTLOADER_INFO.response->name,
+            .boot_loader_version    = LIMINE_BOOTLOADER_INFO.response->version,
+            .physical_memory_map    = p_map,
+            .framebuffer            = frame_buffer,
+            .base_page_table_addr   = Memory::get_base_page_table_address(),
+            .stack                  = CPU::get_stack_pointer(),
+            .physical_address_width = CPU::get_physical_address_width(),
+            .rsdp_addr              = rsdp_addr,
+        });
     }
 } // namespace Rune
