@@ -48,12 +48,10 @@ namespace Rune::CPU {
         sleep_until(get_time_since_start() + time_nanos);
     }
 
-    void Timer::stall_millis(U64 time_millis) {
-        constexpr U32 MILLI_TO_NANO = 1000000;
-        U64 end = get_time_since_start() + (time_millis * MILLI_TO_NANO);
-        while (get_time_since_start() < end) {
-            CPU::pause();
-        }
+    void Timer::stall_micro(U64 time_micros) const {
+        constexpr U32 MICRO_TO_NANO = 1000;
+        U64 end = get_time_since_start() + (time_micros * MICRO_TO_NANO);
+        while (get_time_since_start() < end) CPU::pause();
     }
 
 } // namespace Rune::CPU
