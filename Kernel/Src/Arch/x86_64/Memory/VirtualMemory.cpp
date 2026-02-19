@@ -1,4 +1,4 @@
-/*#include <Memory/VirtualMemory.h>
+/*
  *  Copyright 2025 Ewogijk
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,19 @@
 #include <Memory/VirtualMemory.h>
 
 namespace Rune::Memory {
-    constexpr VirtualAddr USER_SPACE_END    = 0x0000800000000000;
-    constexpr VirtualAddr HHDM_BEGIN        = 0xFFFF800000000000;
-    constexpr VirtualAddr PMM_MEM_BEGIN     = 0xFFFF900000000000;
-    constexpr VirtualAddr HEAP_BEGIN        = 0xFFFFA00000000000;
-    constexpr VirtualAddr KERNEL_CODE_BEGIN = 0xFFFFFFFF80000000;
+    constexpr VirtualAddr USER_SPACE_END    = 0x0000800000000000; // Upto 128 TiB
+    constexpr VirtualAddr HHDM_BEGIN        = 0xFFFF800000000000; // Upto 16 GiB
+    constexpr VirtualAddr PMM_MEM_BEGIN     = 0xFFFF900000000000; // Upto 16 GiB
+    constexpr VirtualAddr HEAP_BEGIN        = 0xFFFFA00000000000; // Upto 16 GiB
+    constexpr VirtualAddr ACPI_BEGIN        = 0xFFFFB00000000000; // Upto 16 GiB
+    constexpr VirtualAddr KERNEL_CODE_BEGIN = 0xFFFFFFFF80000000; // Upto 2 GiB
     constexpr VirtualAddr VIRTUAL_ADDR_MAX  = 0xFFFFFFFFFFFFFFFF;
 
     auto get_virtual_kernel_space_layout() -> KernelSpaceLayout {
         return {.higher_half_direct_map = HHDM_BEGIN,
                 .pmm_reserved           = PMM_MEM_BEGIN,
                 .kernel_heap            = HEAP_BEGIN,
+                .acpi                   = ACPI_BEGIN,
                 .kernel_code            = KERNEL_CODE_BEGIN};
     }
 

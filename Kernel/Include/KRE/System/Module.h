@@ -40,6 +40,7 @@ namespace Rune {
         PhysicalAddr base_page_table_addr   = 0;
         U64          stack                  = 0;
         U8           physical_address_width = 0;
+        PhysicalAddr rsdp_addr              = 0;
     };
 
     /**
@@ -61,7 +62,7 @@ namespace Rune {
     class Module {
       protected:
         HashMap<String, LinkedList<EventHandlerTableEntry>> _event_hook_table;            // NOLINT
-        HandleCounter<U16>                                      _event_hook_handle_counter{}; // NOLINT
+        HandleCounter<U16>                                  _event_hook_handle_counter{}; // NOLINT
 
         /**
          * @brief Fire an event for the given evtHook with the evtContext.

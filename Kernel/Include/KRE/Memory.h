@@ -302,9 +302,9 @@ namespace Rune {
     X(MemoryRegionType, USERSPACE, 0x4)                                                            \
     X(MemoryRegionType, HHDM, 0x5)                                                                 \
     X(MemoryRegionType, PMM_RESERVED, 0x6)                                                         \
-    X(MemoryRegionType, VMM_RESERVED, 0x7)                                                         \
-    X(MemoryRegionType, KERNEL_HEAP, 0x8)                                                          \
-    X(MemoryRegionType, KERNEL_CODE, 0x9)                                                          \
+    X(MemoryRegionType, KERNEL_HEAP, 0x7)                                                          \
+    X(MemoryRegionType, KERNEL_CODE, 0x8)                                                          \
+    X(MemoryRegionType, ACPI, 0x9)                                                                 \
     X(MemoryRegionType, BOOTLOADER_RECLAIMABLE, 0xA)
 
     DECLARE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0) // NOLINT
