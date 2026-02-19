@@ -569,6 +569,11 @@ namespace Rune {
             return *maybe_value->value;
         }
 
+        /// @brief Remove all key-value pairs in the hashmap.
+        void clear() {
+            free_nodes();
+        }
+
         [[nodiscard]] auto begin() const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {
                 return end();

@@ -30,7 +30,7 @@ namespace Rune::Memory {
      * physical and virtual memory maps.
      */
     class MemoryModule : public Module {
-        static constexpr size_t HEAP_SIZE = 128; // MiB
+        static constexpr size_t HEAP_SIZE = 128 * MemoryUnit::MiB;
 
         MemoryMap _p_map;
         MemoryMap _v_map;
