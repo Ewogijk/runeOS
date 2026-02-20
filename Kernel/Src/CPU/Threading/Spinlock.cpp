@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+#include "CPU/Interrupt/Interrupt.h"
+
 #include <CPU/Threading/Spinlock.h>
 
 #include <KRE/Logging.h>
@@ -25,7 +27,7 @@ namespace Rune::CPU {
 
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Spinlock");
 
-    Spinlock::Spinlock(ThreadHandle handle, String name, Scheduler* scheduler)
+    Spinlock::Spinlock(SpinlockHandle handle, String name, Scheduler* scheduler)
         : Resource(handle, name),
           _scheduler(scheduler) {}
 
@@ -62,6 +64,12 @@ namespace Rune::CPU {
         }
     }
 
+    auto Spinlock::lock_safe() -> Register {
+        Register flags = interrupt_irq_save();
+        lock();
+        return flags;
+    }
+
     void Spinlock::unlock() {
         // Should unlocking by not owner threads be disallowed?
         atomic_flag_clear(&_lock);
@@ -72,5 +80,11 @@ namespace Rune::CPU {
         _owner             = Resource<ThreadHandle>::HANDLE_NONE;
         t->spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
     }
+
+    void Spinlock::unlock_safe(Register restore_flags) {
+        unlock();
+        interrupt_irq_restore(restore_flags);
+    }
+
 
 } // namespace Rune::CPU

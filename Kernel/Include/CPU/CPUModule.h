@@ -27,6 +27,8 @@
 
 #include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
+#include <CPU/Threading/Semaphore.h>
+#include <CPU/Threading/Spinlock.h>
 
 #include <CPU/Time/PIT.h>
 
@@ -75,15 +77,21 @@ namespace Rune::CPU {
         //                                      Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        HashMap<U16, SharedPointer<Thread>> _thread_table;
-        HandleCounter<U16>                  _thread_handle_counter;
+        HashMap<ThreadHandle, SharedPointer<Thread>> _thread_table;
+        HandleCounter<ThreadHandle>                  _thread_handle_counter;
 
-        HashMap<U16, SharedPointer<Mutex>> _mutex_table;
-        HandleCounter<U16>                 _mutex_handle_counter;
-        Scheduler                          _scheduler;
+        HashMap<MutexHandle, SharedPointer<Mutex>> _mutex_table;
+        HandleCounter<MutexHandle>                 _mutex_handle_counter;
 
-        /// @brief
-        HashMap<U16, LinkedList<SharedPointer<Thread>>> _joining_threads;
+        HashMap<SemaphoreHandle, SharedPointer<Semaphore>> _semaphore_table;
+        HandleCounter<SemaphoreHandle>                     _semaphore_handle_counter;
+
+        HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
+        HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
+
+        Scheduler _scheduler;
+
+        HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _joining_threads;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Time Properties
@@ -302,9 +310,66 @@ namespace Rune::CPU {
          */
         auto release_mutex(U16 mutex_handle) -> bool;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                  Time Functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        // ====================================================================================== //
+        // Semaphore API
+        // ====================================================================================== //
+
+        /// @brief A list of all currently created semaphores.
+        /// @return The semaphore table.
+        auto get_semaphore_table() -> LinkedList<Semaphore*>;
+
+        /// @brief Try to find the semaphore with the given handle.
+        /// @param handle Handle of a semaphore.
+        /// @return A pointer to a semaphore, null if not found.
+        auto find_semaphore(SemaphoreHandle handle) -> SharedPointer<Semaphore>;
+
+        /// @brief Dump the semaphore table to the stream.
+        /// @param stream
+        void dump_semaphore_table(const SharedPointer<TextStream>& stream) const;
+
+        /// @brief Create a new semaphore instance and add it to the semaphore table.
+        /// @param name          Name of the semaphore.
+        /// @param counter_start Start value of the semaphore counter.
+        /// @param counter_max   Maximum value the semaphore counter can have.
+        /// @return A new semaphore instance.
+        auto create_semaphore(String name, int counter_start, int counter_max)
+            -> SharedPointer<Semaphore>;
+
+        /// @brief Free the memory of the semaphore with the given handle.
+        /// @param handle Handle of a semaphore
+        /// @return True: The semaphore was freed, False: No semaphore with the handle was found.
+        auto free_semaphore(SemaphoreHandle handle) -> bool;
+
+        // ====================================================================================== //
+        // Spinlock API
+        // ====================================================================================== //
+
+        /// @brief A list of all currently created spinlocks.
+        /// @return The spinlock table.
+        auto get_spinlock_table() -> LinkedList<Spinlock*>;
+
+        /// @brief Try to find the spinlock with the given handle.
+        /// @param handle Handle of a spinlock.
+        /// @return A pointer to a spinlock, null if not found.
+        auto find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock>;
+
+        /// @brief Dump the spinlock table to the stream.
+        /// @param stream
+        void dump_spinlock_table(const SharedPointer<TextStream>& stream) const;
+
+        /// @brief Create a new spinlock instance and add it to the spinlock table.
+        /// @param name          Name of the spinlock.
+        /// @return A new spinlock instance.
+        auto create_spinlock(String name) -> SharedPointer<Spinlock>;
+
+        /// @brief Free the memory of the spinlock with the given handle.
+        /// @param handle Handle of a spinlock
+        /// @return True: The spinlock was freed, False: No spinlock with the handle was found.
+        auto free_spinlock(SpinlockHandle handle) -> bool;
+
+        // ====================================================================================== //
+        // Time API
+        // ====================================================================================== //
 
         /**
          * A driver for a timer.

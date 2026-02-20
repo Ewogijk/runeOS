@@ -28,9 +28,9 @@ namespace Rune::CPU {
     void Semaphore::trace_state(const String& action) {
         String wq;
         for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
-        int c = _counter;
+        int c = _units;
         memory_barrier_read();
-        LOGGER->trace(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, _counter, wq);
+        LOGGER->trace(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, _units, wq);
     }
 
     Semaphore::Semaphore(SemaphoreHandle handle,
@@ -39,16 +39,27 @@ namespace Rune::CPU {
                          int             counter_start,
                          int             counter_max)
         : Resource(handle, name),
-          _counter(counter_start),
-          _counter_max(counter_max),
+          _units(counter_start),
+          _unit_max(counter_max),
           _scheduler(scheduler),
           _lock(Resource<SpinlockHandle>::HANDLE_NONE,
                 String::format("{}Lock", get_unique_name()),
                 scheduler) {}
 
+    auto Semaphore::get_available_units() const -> int { return _units; }
+
+    auto Semaphore::get_unit_max() const -> int { return _unit_max; }
+
+    auto Semaphore::get_waiting_threads() const -> LinkedList<Thread*> {
+        LinkedList<Thread*> copy;
+        for (auto& t : _wait_queue) copy.add_back(t.get());
+        return copy;
+    }
+
+
     void Semaphore::lock() {
         _lock.lock();
-        while (_counter <= 0) {
+        while (_units <= 0) {
             auto calling_thread = _scheduler->get_running_thread();
             _wait_queue.add_back(calling_thread);
             _scheduler->await_block();
@@ -59,7 +70,7 @@ namespace Rune::CPU {
             _scheduler->block();
             _lock.lock();
         }
-        --_counter;
+        --_units;
         _scheduler->get_running_thread()->semaphore_handle = get_handle();
         trace_state("lock-good");
         _lock.unlock();
@@ -67,19 +78,19 @@ namespace Rune::CPU {
 
     auto Semaphore::try_lock() -> bool {
         LockGuard<Spinlock> lg(_lock);
-        if (_counter <= 0) {
+        if (_units <= 0) {
             trace_state("try_lock-fail");
             return false;
         }
-        --_counter;
+        --_units;
         trace_state("try_lock-good");
         return true;
     }
 
     void Semaphore::unlock() {
         LockGuard<Spinlock> lg(_lock);
-        if (_counter >= _counter_max) return;
-        _counter++;
+        if (_units >= _unit_max) return;
+        _units++;
         SharedPointer<Thread> thread_to_wake;
         if (!_wait_queue.is_empty()) {
             thread_to_wake = *_wait_queue.head();
@@ -87,7 +98,7 @@ namespace Rune::CPU {
         }
         _scheduler->get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
         _scheduler->unblock(thread_to_wake);
-        _counter = _counter;
+        _units = _units;
         memory_barrier_write();
         trace_state("unlock");
     }

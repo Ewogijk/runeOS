@@ -54,9 +54,9 @@ namespace Rune::CPU {
     auto idle_thread(StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
-            interrupt_enable();
+            interrupt_irq_enable();
             halt();
-            interrupt_disable();
+            interrupt_irq_disable();
         }
         return 0;
     }
@@ -64,7 +64,7 @@ namespace Rune::CPU {
     auto thread_garbage_collector(StartInfo* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
-            interrupt_disable();
+            interrupt_irq_disable();
             auto*                 tgb = SCHEDULER->get_thread_garbage_bin();
             SharedPointer<Thread> cT =
                 !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
@@ -89,7 +89,7 @@ namespace Rune::CPU {
                 // dT gets deleted here after it goes out of scope
             }
             SCHEDULER->await_block();
-            interrupt_enable();
+            interrupt_irq_enable();
             SCHEDULER->block();
         }
         return 0;
@@ -488,9 +488,94 @@ namespace Rune::CPU {
         return true;
     }
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Time API
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ========================================================================================== //
+    // Semaphore API
+    // ========================================================================================== //
+
+    auto CPUModule::get_semaphore_table() -> LinkedList<Semaphore*> {
+        LinkedList<Semaphore*> copy;
+        for (const auto& sem : _semaphore_table) copy.add_back(sem.value->get());
+        return copy;
+    }
+
+    auto CPUModule::find_semaphore(SemaphoreHandle handle) -> SharedPointer<Semaphore> {
+        auto it = _semaphore_table.find(handle);
+        return it == _semaphore_table.end() ? SharedPointer<Semaphore>() : *it->value;
+    }
+
+    void CPUModule::dump_semaphore_table(const SharedPointer<TextStream>& stream) const {
+        Table<SharedPointer<Semaphore>, 4>::make_table(
+            [](const SharedPointer<Semaphore>& sem) -> Array<String, 4> {
+                String waiting_threads = "";
+                for (auto& t : sem->get_waiting_threads()) waiting_threads += t->get_unique_name();
+                if (waiting_threads.is_empty()) waiting_threads = "-";
+                return {sem->get_unique_name(),
+                        String::format("", sem->get_available_units()),
+                        String::format("", sem->get_unit_max()),
+                        waiting_threads};
+            })
+            .with_headers({"ID-Name", "Units", "Unit Max", "Wait Queue"})
+            .with_data(_semaphore_table.values())
+            .print(stream);
+    }
+
+    auto CPUModule::create_semaphore(String name, int counter_start, int counter_max)
+        -> SharedPointer<Semaphore> {
+        if (!_semaphore_handle_counter.has_more()) return SharedPointer<Semaphore>(nullptr);
+        auto sem = make_shared<Semaphore>(_semaphore_handle_counter.acquire(),
+                                          name,
+                                          &_scheduler,
+                                          counter_start,
+                                          counter_max);
+        _semaphore_table.put(sem->get_handle(), sem);
+        return sem;
+    }
+
+    auto CPUModule::free_semaphore(SemaphoreHandle handle) -> bool {
+        return _semaphore_table.remove(handle);
+    }
+
+    // ========================================================================================== //
+    // Spinlock API
+    // ========================================================================================== //
+
+    auto CPUModule::get_spinlock_table() -> LinkedList<Spinlock*> {
+        LinkedList<Spinlock*> copy;
+        for (const auto& sp : _spinlock_table) copy.add_back(sp.value->get());
+        return copy;
+    }
+
+    auto CPUModule::find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock> {
+        auto it = _spinlock_table.find(handle);
+        return it == _spinlock_table.end() ? SharedPointer<Spinlock>() : *it->value;
+    }
+
+    void CPUModule::dump_spinlock_table(const SharedPointer<TextStream>& stream) const {
+        Table<SharedPointer<Spinlock>, 2>::make_table(
+            [](const SharedPointer<Spinlock>& sp) -> Array<String, 2> {
+                return {sp->get_unique_name(), String::format("", sp->get_owner())};
+            })
+            .with_headers({"ID-Name", "Owner Handle"})
+            .with_data(_spinlock_table.values())
+            .print(stream);
+    }
+
+    auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
+        if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
+        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(),
+                                          name,
+                                          &_scheduler);
+        _spinlock_table.put(sp->get_handle(), sp);
+        return sp;
+    }
+
+    auto CPUModule::free_spinlock(SpinlockHandle handle) -> bool {
+        return _spinlock_table.remove(handle);
+    }
+
+    // ========================================================================================== //
+    // Time API
+    // ========================================================================================== //
 
     void CPUModule::install_timer_driver(UniquePointer<Timer> driver) {
         if (driver) _timer = move(driver);

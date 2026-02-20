@@ -30,8 +30,8 @@ namespace Rune::CPU {
     /// The semaphore keeps track of a maximum value for the counter, it cannot be incremented
     /// beyond this value.
     class Semaphore : public Resource<SemaphoreHandle> {
-        int _counter     = 0;
-        int _counter_max = 0;
+        int _units    = 0;
+        int _unit_max = 0;
 
         Scheduler*                        _scheduler;
         Spinlock                          _lock;
@@ -53,20 +53,32 @@ namespace Rune::CPU {
         auto operator=(const Semaphore&) -> Semaphore& = delete;
         auto operator=(Semaphore&&) -> Semaphore&      = delete;
 
-        /// @brief Try to decrease the counter of the semaphore.
+        /// @brief
+        /// @return The number of currently available units.
+        [[nodiscard]] auto get_available_units() const -> int;
+
+        /// @brief
+        /// @return The maximum available units.
+        [[nodiscard]] auto get_unit_max() const -> int;
+
+        /// @brief
+        /// @return A list of all currently waiting threads.
+        [[nodiscard]] auto get_waiting_threads() const -> LinkedList<Thread*>;
+
+        /// @brief Try to request a unit from the semaphore.
         ///
-        /// When the counter has reached zero the calling thread will be blocked until the counter
-        /// has been increased by a call to `unlock()`.
+        /// When all units are used the calling thread will be blocked until a unit has been
+        /// returned by a call to `unlock()`.
         void lock();
 
         /// @brief Try to lock the semaphore and return immediately.
-        /// @return True: The mutex has been locked, False: Otherwise.
+        /// @return True: The semaphore has been locked, False: Otherwise.
         auto try_lock() -> bool;
 
-        /// @brief Try to increment the counter and unblock a waiting thread.
+        /// @brief Try to return a unit to the semaphore.
         ///
-        /// If the counter has reached the maximum value this function will return immediately
-        /// without unblocking any waiting threads.
+        /// If all units have been returned this function will return immediately without unblocking
+        /// any waiting threads.
         void unlock();
     };
 } // namespace Rune::CPU

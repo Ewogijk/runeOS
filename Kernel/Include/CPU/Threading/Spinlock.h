@@ -49,14 +49,22 @@ namespace Rune::CPU {
         /// @brief Try to lock this spinlock.
         ///
         /// If the spinlock is unlocked: Lock the spinlock, set the owner handle to the handle
-        /// of the calling thread and set the handle of the spinlock in the thread. Then return
+        /// of the calling thread and set the handle of the spinlock in the thread. Then return from
         /// this function.
         ///
-        /// If the spinlock is locked: Set the calling threads state to ThreadState::WAIT_SPINLOCK
-        /// and set the handle of the spinlock in the thread. The keep the thread in a loop
-        /// repeatedly checking if the spinlock is unlocked, once it is the thread will try to lock
-        /// it.
+        /// If the spinlock is locked: The calling thread will busy wait until the spinlock is
+        /// unlocked, then it tries to lock the spinlock again. This pattern repeats until the
+        /// calling thread is able to lock the spinlock.
         void lock();
+
+        /// @brief Disable IRQs and then lock the spinlock.
+        /// @return The value of the CPUs Flags register before disabling IRQs.
+        ///
+        /// Check the lock() function for info about the locking mechanism.
+        ///
+        /// The returned flags register content is intended to be used with unlock_safe() to
+        /// restore the flags register.
+        auto lock_safe() -> Register;
 
         /// @brief Unlock this spinlock, set the owning thread handle to
         ///         Resource<ThreadHandle>::HANDLE_NONE and the spinlock handle in the thread to
@@ -65,6 +73,13 @@ namespace Rune::CPU {
         /// Note that this function should only ever be called from the owning thread, calling it
         /// from another thread will result in undefined behavior.
         void unlock();
+
+        /// @brief Unlock the spinlock and restore the CPU Flags register to restore_flags.
+        /// @param restore_flags Flags register content saved previously.
+        ///
+        /// This function is intended to be used with lock_safe() to restore Flags register content
+        /// saved at that time.
+        void unlock_safe(Register restore_flags);
     };
 
 } // namespace Rune::CPU
