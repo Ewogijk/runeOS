@@ -19,6 +19,8 @@
 
 #include <Ember/Ember.h>
 
+#include <CPU/CPU.h>
+
 namespace Rune::CPU {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -39,15 +41,20 @@ namespace Rune::CPU {
      */
     void interrupt_load_vector_table();
 
-    /**
-     * @brief Enable all interrupts in the system.
-     */
-    CLINK void interrupt_enable();
+    /// @brief Enable all external interrupts.
+    CLINK void interrupt_irq_enable();
 
-    /**
-     * @brief Disable all interrupts in the system.
-     */
-    CLINK void interrupt_disable();
+    /// @brief Disable all external interrupts.
+    CLINK void interrupt_irq_disable();
+
+    /// @brief Save the content of the Flags register and then disable external interrupts.
+    /// @return Flags register content before disabling interrupts.
+    CLINK auto interrupt_irq_save() -> Register;
+
+    /// @brief Restore the given flags value to the Flags register.
+    /// @param flags Flags register content saved previously.
+    CLINK void interrupt_irq_restore(Register flags);
+
 } // namespace Rune::CPU
 
 #endif // RUNEOS_INTERRUPT_H

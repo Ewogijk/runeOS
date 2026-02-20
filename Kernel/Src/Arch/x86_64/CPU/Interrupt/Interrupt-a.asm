@@ -15,25 +15,53 @@
 ;
 
 ; CLINK void interrupt_enable();
-global interrupt_enable
-interrupt_enable:
-    push rbp
-    mov rbp, rsp
-
+global interrupt_irq_enable
+interrupt_irq_enable:
     sti
-
-    mov rsp, rbp
-    pop rbp
     ret
 
 ; CLINK void interrupt_disable();
-global interrupt_disable
-interrupt_disable:
-    push rbp
-    mov rbp, rsp
+global interrupt_irq_disable
+interrupt_irq_disable:
+    cli
+    ret
 
+; CLINK auto interrupt_irq_save() -> Register;
+; Args:
+;   rdi -> -
+;   rsi -> -
+;   rdx -> -
+;   rcx -> -
+; Returns:
+;   Flags register content before disabling interrupts.
+global interrupt_irq_save
+interrupt_irq_save:
+    enter 0, 0
+
+    pushfq
+    pop rax
     cli
 
-    mov rsp, rbp
-    pop rbp
+    leave
     ret
+
+; CLINK void interrupt_irq_restore(Register flags);
+; Args:
+;   rdi -> Flags register content saved previously.
+;   rsi -> -
+;   rdx -> -
+;   rcx -> -
+; Returns:
+;   -
+global interrupt_irq_restore
+interrupt_irq_restore:
+    enter 0, 0
+
+    push rdi
+    popfq
+    sti
+
+    leave
+    ret
+
+
