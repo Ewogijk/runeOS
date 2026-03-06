@@ -14,15 +14,15 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("App.cpp"),
-    target_env.File("AppModule.cpp"),
-    target_env.File("ELF.cpp"),
-    target_env.File("ELFLoader.cpp"),
-    target_env.File("TerminalStream.cpp"),
-    target_env.File("VoidStream.cpp"),
+    build_env.File("App.cpp"),
+    build_env.File("AppModule.cpp"),
+    build_env.File("ELF.cpp"),
+    build_env.File("ELFLoader.cpp"),
+    build_env.File("TerminalStream.cpp"),
+    build_env.File("VoidStream.cpp"),
 ]
-App = target_env.StaticLibrary("App.o", target_env.Object(sources))
+App = build_env.StaticLibrary("App.o", build_env.Object(sources))
 Export("App")

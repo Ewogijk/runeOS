@@ -14,19 +14,19 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("CPU.cpp"),
-    target_env.File("CPUModule.cpp"),
-    target_env.File("E9Stream.cpp"),
-    target_env.File("Interrupt/8259PIC.cpp"),
-    target_env.File("Threading/MultiLevelQueue.cpp"),
-    target_env.File("Threading/Mutex.cpp"),
-    target_env.File("Threading/Scheduler.cpp"),
-    target_env.File("Time/DeltaQueue.cpp"),
-    target_env.File("Time/PIT.cpp"),
-    target_env.File("Time/Timer.cpp"),
+    build_env.File("CPU.cpp"),
+    build_env.File("CPUModule.cpp"),
+    build_env.File("E9Stream.cpp"),
+    build_env.File("Interrupt/8259PIC.cpp"),
+    build_env.File("Threading/MultiLevelQueue.cpp"),
+    build_env.File("Threading/Mutex.cpp"),
+    build_env.File("Threading/Scheduler.cpp"),
+    build_env.File("Time/DeltaQueue.cpp"),
+    build_env.File("Time/PIT.cpp"),
+    build_env.File("Time/Timer.cpp"),
 ]
-CPU = target_env.StaticLibrary("CPU.o", target_env.Object(sources))
+CPU = build_env.StaticLibrary("CPU.o", build_env.Object(sources))
 Export("CPU")

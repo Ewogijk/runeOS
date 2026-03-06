@@ -14,184 +14,288 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-import json
-import subprocess
-from pathlib import Path
+"""
+SConstruct — runeOS Kernel build script.
 
+This file is the top-level SCons build script for the runeOS kernel. It:
+  - Loads user-configurable build variables from a build config file.
+  - Constructs and configures the SCons build environment (compiler, linker,
+    assembler flags, include paths, sysroot, etc.).
+  - Configures the cross-compiler toolchain for freestanding kernel builds.
+  - Generates a build.h header from template substitutions based on the active
+    build configuration.
+  - Defines code-generation targets (e.g. NASM-generated ISR stubs).
+  - Defines all kernel object compilation targets.
+  - Defines the final kernel image link order and link target.
+
+Usage:
+    scons           -> Build kernel
+    scons codegen   -> Build code-generation targets
+    scons -c        -> Clean build directory
+"""
+
+import json
+
+from pathlib import Path
 from SCons.Environment import *
 from SCons.Variables import *
+from SCons.Tool import SourceFileScanner
 
-####################################################################################################
-#                                   Target Compiler Config                                         #
-####################################################################################################
 
-# Define command line arguments
-vars = Variables("BuildVariables.py")
-vars.Add(
-    EnumVariable(
-        "build",
-        "The build type determines if compiler optimizations are used, release builds have compiler optimizations.",
-        "debug",
-        allowed_values=["release", "debug", "test", "ci"],
+# =================================================================================================
+# Build Variables
+# =================================================================================================
+
+def load_build_variables(file: str) -> Variables:
+    """Load SCons build variables from a build configuration file.
+
+    :param file: Path to the build configuration file.
+    :return: A :class:`Variables` object populated with all keys from the build
+             config.  An empty :class:`Variables` object is returned when the
+             config file is absent or contains invalid entries.
+    """
+    variables = Variables(file)
+    variables.Add(
+        EnumVariable(
+            "build",
+            "The build type determines if compiler optimizations are used, release builds have compiler optimizations.",
+            "debug",
+            allowed_values=["release", "debug", "test", "ci"],
+        )
     )
-)
-vars.Add(
-    EnumVariable(
-        "arch",
-        "The CPU architecture the kernel will be build for.",
-        "x86_64",
-        allowed_values=["x86_64"],
+    variables.Add(
+        EnumVariable(
+            "arch",
+            "The CPU architecture the kernel will be build for.",
+            "x86_64",
+            allowed_values=["x86_64"],
+        )
     )
-)
-vars.Add(
-    BoolVariable(
-        "qemu_build",
-        "Enables additional qemu specific debugging features in the kernel.",
-        True,
+    variables.Add(
+        BoolVariable(
+            "qemu_build",
+            "Enables additional qemu specific debugging features in the kernel.",
+            True,
+        )
     )
-)
-vars.Add(
-    (
-        "system_loader",
-        "Absolute path to the system loader executable on the bootable image.",
-        "",
+    variables.Add(
+        (
+            "system_loader",
+            "Absolute path to the system loader executable on the bootable image.",
+            "",
+        )
     )
-)
-vars.Add(
-    (
-        "c",
-        "The absolute path to the c cross compiler e.g. x86_64-elf-gcc.",
-        "/path/to/your/cross-compiler/bin/x86_64-elf-gcc",
+    variables.Add(
+        (
+            "c",
+            "The absolute path to the c cross compiler e.g. x86_64-elf-gcc.",
+            "/path/to/your/cross-compiler/bin/x86_64-elf-gcc",
+        )
     )
-)
-vars.Add(
-    (
-        "cpp",
-        "The absolute path to the cpp cross compiler e.g. x86_64-elf-g++.",
-        "/path/to/your/cross-compiler/bin/x86_64-elf-g++",
+    variables.Add(
+        (
+            "cpp",
+            "The absolute path to the cpp cross compiler e.g. x86_64-elf-g++.",
+            "/path/to/your/cross-compiler/bin/x86_64-elf-g++",
+        )
     )
-)
-vars.Add(
-    (
-        "crt_begin",
-        "The absolute path to the crtbegin.o file of the cross compiler.",
-        "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtbegin.o",
+    variables.Add(
+        (
+            "crt_begin",
+            "The absolute path to the crtbegin.o file of the cross compiler.",
+            "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtbegin.o",
+        )
     )
-)
-vars.Add(
-    (
-        "crt_end",
-        "The absolute path to the crtend.o file of the cross compiler.",
-        "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtend.o",
+    variables.Add(
+        (
+            "crt_end",
+            "The absolute path to the crtend.o file of the cross compiler.",
+            "/path/to/your/cross-compiler/lib/gcc/x86_64-elf/<version>/crtend.o",
+        )
     )
-)
 
-# Disable build variable validation when the help text was requested, so simply writing "scons -h"
-# is possible without providing valid build vars
-# If enabled: During instantiation of target_env the values of build vars are checked and scons will
-#               report an error instead of printing the help text
-if GetOption("help"):
-    vars.options[0].validator = None
-    vars.options[1].validator = None
-
-target_env = Environment(
-    tools=['default', 'compilation_db'],
-    variables=vars,
-    AS="nasm",
-)
-
-# Manually print the help text and exit. Do not parse SConscript files!
-# This will lead to errors when build vars are not provided
-
-if GetOption("help"):
-    print(vars.GenerateHelpText(target_env))
-    Exit(0)
-
-Help(vars.GenerateHelpText(target_env))
-arch = target_env["arch"]
-build = target_env["build"]
-
-target_env["CXX"] = target_env["cpp"]
-target_env["CPPPATH"] = target_env["cpp"]
-
-# Include directoriesx
-target_env["CPPPATH"] = [
-    str(Path.cwd() / "Include"),
-]
-
-# Compiler flags
-target_env["CXXFLAGS"] = [
-    "-std=c++23",
-    "-Wall",
-    "-Wextra",
-    "-ffreestanding",
-    "-fno-exceptions",
-    "-fno-rtti",
-    "-fstack-protector-all",
-    "-fno-threadsafe-statics",
-    "-m64",
-    "-mcmodel=kernel",
-    "-mno-mmx",
-    "-mno-red-zone",
-    "-fno-use-cxa-atexit",  # Do not call destructors for global objects
-    "-g",
-    "-mincoming-stack-boundary=3",
-]
-
-# Linker flags
-target_env["LINKFLAGS"] = [
-    "-ffreestanding",
-    "-lgcc",
-    "-nostdlib",
-    "-static",
-    "-pie",
-    "-z",
-    "text",
-    "-z",
-    "max-page-size=0x1000",
-    "-g",
-]
-
-# Nasm flags
-target_env["ASFLAGS"] = [
-    "-Wall",
-    "-f",
-    "elf64",
-    "-I",
-    str(Path.cwd() / "Src" / "Arch" / arch),
-]
-
-if build == "release":
-    # enable optimizations
-    target_env["CXXFLAGS"].append("-O2")
-    target_env["LINKFLAGS"].append("-O2")
-
-# Change scons messages for better readability
-target_env.Replace(
-    ASCOMSTR="Assembling [$SOURCE]",
-    CXXCOMSTR="Compiling [$SOURCE]",
-    ARCOMSTR="Creating static library [$TARGET]",
-    RANLIBCOMSTR="Updating static library [$TARGET]",
-    LINKCOMSTR="Linking [$TARGET]",
-    INSTALLSTR="Installing [$TARGET]",
-)
-Export("target_env")
+    # Disable build variable validation when the help text was requested, so simply writing "scons -h"
+    # is possible without providing valid build vars
+    # If enabled: During instantiation of target_env the values of build vars are checked and scons will
+    #               report an error instead of printing the help text
+    if GetOption("help"):
+        variables.options[0].validator = None
+        variables.options[1].validator = None
+    return variables
 
 
-######################################################################################################
-#                                           Code Generation                                          #
-######################################################################################################
+# =================================================================================================
+# Target Environment Setup
+# =================================================================================================
+
+# Compiled regular expression used to detect NASM %include directives inside
+# .asm/.inc source files.  The single capture group yields the quoted path
+# that follows the directive, e.g. ``%include "CPU/Interrupt/ISR_Stubs.inc"``
+# would yield ``CPU/Interrupt/ISR_Stubs.inc``.
+NASM_INCLUDE_PATTERN = re.compile(r'%include\s+"([^"]+)"')
 
 
-def create_build_h_replacements(out_file: str):
+def scan_nasm_includes(node, env, path, arg=None):
+    """SCons dependency scanner for NASM source files.
+
+    SCons cannot natively follow NASM ``%include`` directives the way it
+    follows C/C++ ``#include`` directives.  This function is registered as a
+    custom :class:`Scanner` so that SCons rebuilds ``.asm`` and ``.inc`` files
+    whenever one of their transitive ``%include`` dependencies changes.
+
+    The function reads *node*'s contents, applies :data:`NASM_INCLUDE_PATTERN`
+    to discover every ``%include "…"`` path, resolves each path relative to the
+    directories listed in *path*, and returns the matching SCons file nodes.
+
+    :param node: The SCons source node (`.asm` / `.inc` file) being scanned.
+    :param env:  The active SCons :class:`Environment`.
+    :param path: Sequence of directory nodes forming the NASM include search
+                 path (populated from the ``ASPPPATH`` / ``CPPPATH`` environment
+                 variables).
+    :param arg:  Optional scanner argument (unused).
+    :return: List of SCons file nodes that *node* directly or indirectly
+             includes via ``%include``.
+    """
+
+    # The nasm include path contains only one path: Src/Arch/ARCH/ e.g., Src/Arch/x86_64/
+    # and each nasm include must be relative to that path, so we will just make every include
+    # relative to that path.
+    # We ignore the fact that some files may not exist. This is fine since they will be dynamically
+    # generated
+    include_dir = path[0]
+    includes = NASM_INCLUDE_PATTERN.findall(node.get_text_contents())
+    return [include_dir.File(include) for include in includes]
+
+
+def create_build_env(variables: Variables) -> Environment:
+    """Create the base SCons build environment for the kernel.
+
+    Constructs a new SCons :class:`Environment`, injects the build variables.
+
+    :param variables: Populated :class:`Variables` object as returned by
+                      :func:`load_build_variables`.
+    :return: A configured SCons :class:`Environment` ready for further
+             compiler and target configuration.
+    """
+
+    target_env = Environment(
+        tools=['default', 'compilation_db'],
+        variables=variables,
+        AS="nasm",
+    )
+    # Manually print the help text and exit. Do not parse SConscript files!
+    # This will lead to errors when build vars are not provided
+    if GetOption("help"):
+        print(vars.GenerateHelpText(target_env))
+        Exit(0)
+    return target_env
+
+
+def configure_compiler(env: Environment) -> None:
+    """Apply kernel-specific compiler and linker flags to *env*.
+
+    Mutates the supplied :class:`Environment` in-place, adding all flags
+    required for a freestanding, position-independent kernel build.
+
+    :param env: The SCons :class:`Environment` to configure (modified
+                in-place).
+    """
+    env["CXX"] = env["cpp"]
+    env["CPPPATH"] = env["cpp"]
+
+    # C++ Compiler Configuration
+    # Include directories
+    env["CPPPATH"] = [
+        str(Path.cwd() / "Include"),
+    ]
+    # Compiler Flags
+    env["CXXFLAGS"] = [
+        "-std=c++23",
+        "-Wall",
+        "-Wextra",
+        "-ffreestanding",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fstack-protector-all",
+        "-fno-threadsafe-statics",
+        "-m64",
+        "-mcmodel=kernel",
+        "-mno-mmx",
+        "-mno-red-zone",
+        "-fno-use-cxa-atexit",  # Do not call destructors for global objects
+        "-g",
+        "-mincoming-stack-boundary=3",
+    ]
+    # Linker flags
+    env["LINKFLAGS"] = [
+        "-ffreestanding",
+        "-lgcc",
+        "-nostdlib",
+        "-static",
+        "-pie",
+        "-z",
+        "text",
+        "-z",
+        "max-page-size=0x1000",
+        "-g",
+    ]
+
+    if env["build"] == "release":
+        # enable optimizations
+        env["CXXFLAGS"].append("-O2")
+        env["LINKFLAGS"].append("-O2")
+
+    # NASM
+    # Scons does not support nasm files by default, so we add a custom scanner that finds all
+    # includes in nasm files
+    nasm_scanner = Scanner(function=scan_nasm_includes, skeys=['.asm'],
+                           path_function=FindPathDirs('NASMPATH'))
+    # Add directly to the source file scanner, otherwise the scanner is not picked up
+    SourceFileScanner.add_scanner('.asm', nasm_scanner)
+
+    # Include directories
+    nasm_include_dir = str(Path.cwd() / "Src" / "Arch" / build_env["arch"])
+    build_env.Append(NASMPATH=[nasm_include_dir])
+    # Flags
+    env["ASFLAGS"] = [
+        "-Wall",
+        "-f",
+        "elf64",
+        "-I",
+        nasm_include_dir,
+    ]
+
+    # Change scons messages for better readability
+    env.Replace(
+        ASCOMSTR="Assembling [$SOURCE]",
+        CXXCOMSTR="Compiling [$SOURCE]",
+        ARCOMSTR="Creating static library [$TARGET]",
+        RANLIBCOMSTR="Updating static library [$TARGET]",
+        LINKCOMSTR="Linking [$TARGET]",
+        INSTALLSTR="Installing [$TARGET]",
+    )
+
+
+# =================================================================================================
+# Code Generation
+# =================================================================================================
+
+def create_build_h_substitution_dict(target, source, env):
+    """Build the substitution dictionary used to generate ``build.h``.
+
+    :return: -
+    """
+
+    arch = env["arch"]
+    build = env["build"]
     macro_defs = {
         "$ARCH": f"#define ARCH {arch} // Target architecture of the kernel.",
-        "$SYSTEM_LOADER": target_env["system_loader"]
+        "$SYSTEM_LOADER": build_env["system_loader"]
     }
     if "64" in arch:
         macro_defs["$BIT"] = "#define BIT64 //Activate 64-bit related features"
 
-    if target_env["qemu_build"]:
+    if build_env["qemu_build"]:
         macro_defs["$QEMU"] = "#define QEMU_HOST // Enable Qemu related debugging features."
 
     if build == "test" or build == "ci":
@@ -205,160 +309,215 @@ def create_build_h_replacements(out_file: str):
     else:
         macro_defs["$SHUTDOWN_ON_SYSTEM_LOADER_EXIT"] = ""
 
-    with open(out_file, "w") as f:
+    with open(str(target[0]), "w") as f:
         json.dump(macro_defs, f, indent=4)
 
 
-# Only run code generation if the kernel should be build
-if not GetOption("clean"):
-    # Provide the python scripts as source so the code gen is always triggered when the scripts are updated
-    #                           OR
-    # Obviously the generated source file is missing
-    # SCons does not pick up tha ISR-a.asm depends on ISR_Stubs.inc correctly, therefore this will
-    # be created always
-    subprocess.run(["python3", "BuildTools/GenerateISRStubsAssembly.py",
-                    f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc"])
-    target_env.Command(
-        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
-        "BuildTools/GenerateISRStubsCPP.py",
+def define_codegen_targets(env: Environment):
+    """Declare SCons targets for files that must be generated before compilation.
+
+    :param env: The configured SCons :class:`Environment`.
+    :return: A list of SCons target nodes representing the generated files.
+    """
+
+    arch = env["arch"]
+    isr_stubs_inc = env.Command(
+        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc",
+        "Tools/GenerateISRStubsAssembly.py",
         "python3 $SOURCE $TARGET",
     )
-    target_env.Command(
+    isr_stubs_h = env.Command(
+        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
+        "Tools/GenerateISRStubsCPP.py",
+        "python3 $SOURCE $TARGET",
+    )
+    lat_terminus = env.Command(
         "Include/KRE/System/Lat15-Terminus16.h",
-        "BuildTools/PSF2ToCPP.py",
-        "python3 $SOURCE $TARGET BuildTools/Lat15-Terminus16.psf",
+        "Tools/PSF2ToCPP.py",
+        "python3 $SOURCE $TARGET Tools/Lat15-Terminus16.psf",
     )
-    # Dunno how to make this only run when cli args change -> just run it everytime
-    create_build_h_replacements("BuildTools/BuildHReplacements.json")
-    target_env.Command(
+    # Update BuildHReplacements.json when BuildVariables.py changes
+    build_h_replacements = env.Command(
+        "Tools/BuildHReplacements.json",
+        "Tools/BuildVariables.py",
+        create_build_h_substitution_dict,
+    )
+    build_h = env.Command(
         "Include/KRE/Build.h",
-        ["BuildTools/GenerateBuildHeader.py", "BuildTools/BuildHReplacements.json"],
-        "python3 $SOURCE $TARGET BuildTools/BuildHReplacements.json && clang-format-19 $TARGET -i",
+        "Tools/GenerateBuildHeader.py",
+        "python3 $SOURCE $TARGET Tools/BuildHReplacements.json && clang-format-19 $TARGET -i",
     )
+    # Need to explicitly declare a dependency between Build.h and BuildHReplacements.json
+    build_h_dep = env.Depends("Include/KRE/Build.h", "Tools/BuildHReplacements.json")
+    return [isr_stubs_inc, isr_stubs_h, lat_terminus, build_h_replacements, build_h, build_h_dep]
 
-######################################################################################################
-#                                           Kernel build                                             #
-######################################################################################################
 
+# =================================================================================================
+# Kernel Build
+# =================================================================================================
 
-build_dir = Path("Build") / f"{arch}-{build}"
-target_env.SConscript(
-    str(Path("Src") / "Ember" / "SConscript"),
-    variant_dir=str(build_dir / "Ember"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "KRE" / "SConscript"),
-    variant_dir=str(build_dir / "KRE"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "Arch" / arch / "SConscript"),
-    variant_dir=str(build_dir / "Arch"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "Memory" / "SConscript"),
-    variant_dir=str(build_dir / "Memory"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "CPU" / "SConscript"),
-    variant_dir=str(build_dir / "CPU"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "Device" / "SConscript"),
-    variant_dir=str(build_dir / "Device"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "VirtualFileSystem" / "SConscript"),
-    variant_dir=str(build_dir / "VirtualFileSystem"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "App" / "SConscript"),
-    variant_dir=str(build_dir / "App"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "SystemCall" / "SConscript"),
-    variant_dir=str(build_dir / "SystemCall"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "BuiltInPlugin" / "SConscript"),
-    variant_dir=str(build_dir / "BuiltInPlugin"),
-    duplicate=0,
-)
-target_env.SConscript(
-    str(Path("Src") / "Boot" / "SConscript"),
-    variant_dir=str(build_dir / "Boot"),
-    duplicate=0,
-)
+def define_kernel_build_targets(env: Environment) -> None:
+    """Declare SCons compilation targets for all kernel source files.
 
-if build == "test" or build == "ci":
-    target_env.SConscript(
-        str(Path("Src") / "Test" / "SConscript"),
-        variant_dir=str(build_dir / "Test" / "Heimdall"),
+    Walks the kernel source tree (``Src/``), identifies every ``.cpp`` and
+    ``.asm`` file, and registers a corresponding SCons object-file target in
+    the build variant directory.
+
+    :param env:             The configured SCons :class:`Environment`.
+    """
+
+    arch = env["arch"]
+    build = env["build"]
+    build_location = Path("Build") / f"{arch}-{build}"
+    env.SConscript(
+        str(Path("Src") / "Ember" / "SConscript"),
+        variant_dir=str(build_location / "Ember"),
         duplicate=0,
     )
-    Import("Heimdall")
+    env.SConscript(
+        str(Path("Src") / "KRE" / "SConscript"),
+        variant_dir=str(build_location / "KRE"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "Arch" / arch / "SConscript"),
+        variant_dir=str(build_location / "Arch"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "Memory" / "SConscript"),
+        variant_dir=str(build_location / "Memory"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "CPU" / "SConscript"),
+        variant_dir=str(build_location / "CPU"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "Device" / "SConscript"),
+        variant_dir=str(build_location / "Device"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "VirtualFileSystem" / "SConscript"),
+        variant_dir=str(build_location / "VirtualFileSystem"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "App" / "SConscript"),
+        variant_dir=str(build_location / "App"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "SystemCall" / "SConscript"),
+        variant_dir=str(build_location / "SystemCall"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "BuiltInPlugin" / "SConscript"),
+        variant_dir=str(build_location / "BuiltInPlugin"),
+        duplicate=0,
+    )
+    env.SConscript(
+        str(Path("Src") / "Boot" / "SConscript"),
+        variant_dir=str(build_location / "Boot"),
+        duplicate=0,
+    )
+    if build == "test" or build == "ci":
+        env.SConscript(
+            str(Path("Src") / "Test" / "SConscript"),
+            variant_dir=str(build_location / "Test" / "Heimdall"),
+            duplicate=0,
+        )
 
-Import("Ember")
-Import("KRE")
-Import("Arch")
-Import("Memory")
-Import("CPU")
-Import("Device")
-Import("VirtualFileSystem")
-Import("App")
-Import("SystemCall")
-Import("BuiltInPlugin")
-Import("Boot")
-Import("crti")
-Import("crtn")
 
-if build == "test" or build == "ci":
-    objects = [
-        crti,
-        target_env["crt_begin"],
-        Boot,
-        BuiltInPlugin,
-        Heimdall,
-        SystemCall,
-        App,
-        VirtualFileSystem,
-        Device,
-        CPU,
-        Memory,
-        Arch,
-        KRE,
-        Ember,
-        target_env["crt_end"],
-        crtn,
-    ]
-else:
-    objects = [
-        crti,
-        target_env["crt_begin"],
-        Boot,
-        BuiltInPlugin,
-        SystemCall,
-        App,
-        VirtualFileSystem,
-        Device,
-        CPU,
-        Memory,
-        Arch,
-        KRE,
-        Ember,
-        target_env["crt_end"],
-        crtn,
-    ]
+def define_link_order(env: Environment):
+    """Declare the final kernel image link target.
 
-target_env.Append(LINKFLAGS=["-T", target_env.File("Kernel.ld").srcnode().path])
+    :param env:     The configured SCons :class:`Environment` (must already
+                    have linker flags set by :func:`configure_compiler`).
+    :returns: Ordered list of object-file nodes.
+    """
 
-target_env.CompilationDatabase(build_dir / "compile_commands")
-target_env.Program(build_dir / "runeKernel.elf", objects)
+    build = env["build"]
+    if build == "test" or build == "ci":
+        Import("Heimdall")
+
+    Import("Ember")
+    Import("KRE")
+    Import("Arch")
+    Import("Memory")
+    Import("CPU")
+    Import("Device")
+    Import("VirtualFileSystem")
+    Import("App")
+    Import("SystemCall")
+    Import("BuiltInPlugin")
+    Import("Boot")
+    Import("crti")
+    Import("crtn")
+
+    if build == "test" or build == "ci":
+        objects = [
+            crti,
+            env["crt_begin"],
+            Boot,
+            BuiltInPlugin,
+            Heimdall,
+            SystemCall,
+            App,
+            VirtualFileSystem,
+            Device,
+            CPU,
+            Memory,
+            Arch,
+            KRE,
+            Ember,
+            env["crt_end"],
+            crtn,
+        ]
+    else:
+        objects = [
+            crti,
+            env["crt_begin"],
+            Boot,
+            BuiltInPlugin,
+            SystemCall,
+            App,
+            VirtualFileSystem,
+            Device,
+            CPU,
+            Memory,
+            Arch,
+            KRE,
+            Ember,
+            env["crt_end"],
+            crtn,
+        ]
+    env.Append(LINKFLAGS=["-T", env.File("Kernel.ld").srcnode().path])
+    return objects
+
+
+# =================================================================================================
+# Top-level build orchestration
+# =================================================================================================
+
+build_vars = load_build_variables("Tools/BuildVariables.py")
+build_env = create_build_env(build_vars)
+Help(build_vars.GenerateHelpText(build_env))
+configure_compiler(build_env)
+Export("build_env")
+
+# Define a "codegen" target that will run only code generation targets without building the kernel
+# Used for CI to only generate missing generated source files for the linter because they are not
+# checked in to the repository
+codegen_targets = define_codegen_targets(build_env)
+build_env.Alias("codegen", codegen_targets)
+
+define_kernel_build_targets(build_env)
+objects = define_link_order(build_env)
+
+build_dir = Path("Build") / f"{build_env['arch']}-{build_env['build']}"
+build_env.CompilationDatabase(build_dir / "compile_commands")
+build_env.Program(build_dir / "runeKernel.elf", objects)

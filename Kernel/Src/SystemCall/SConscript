@@ -14,17 +14,17 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("AppBundle.cpp"),
-    target_env.File("Bundle.cpp"),
-    target_env.File("Definition.cpp"),
-    target_env.File("KernelGuardian.cpp"),
-    target_env.File("MemoryBundle.cpp"),
-    target_env.File("SystemCallModule.cpp"),
-    target_env.File("ThreadingBundle.cpp"),
-    target_env.File("VFSBundle.cpp"),
+    build_env.File("AppBundle.cpp"),
+    build_env.File("Bundle.cpp"),
+    build_env.File("Definition.cpp"),
+    build_env.File("KernelGuardian.cpp"),
+    build_env.File("MemoryBundle.cpp"),
+    build_env.File("SystemCallModule.cpp"),
+    build_env.File("ThreadingBundle.cpp"),
+    build_env.File("VFSBundle.cpp"),
 ]
-SystemCall = target_env.StaticLibrary("SystemCall.o", target_env.Object(sources))
+SystemCall = build_env.StaticLibrary("SystemCall.o", build_env.Object(sources))
 Export("SystemCall")

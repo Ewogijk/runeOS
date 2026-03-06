@@ -142,6 +142,8 @@ jobs:
           pip install ruff
           echo \> Ruff version:
           echo ruff --version
+      - name: Generate Source files
+        run: echo \> TODO IMPLEMENT ME
       - name: Extract Compilation Databases
         run: tar -xzf CompilationDatabases.tar.gz
       - name: Lint C/C++ Code
