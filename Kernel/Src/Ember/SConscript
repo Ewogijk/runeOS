@@ -14,15 +14,15 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("AppBits.cpp"),
-    target_env.File("Ember.cpp"),
-    target_env.File("Enum.cpp"),
-    target_env.File("MemoryBits.cpp"),
-    target_env.File("SystemCallID.cpp"),
-    target_env.File("VFSBits.cpp"),
+    build_env.File("AppBits.cpp"),
+    build_env.File("Ember.cpp"),
+    build_env.File("Enum.cpp"),
+    build_env.File("MemoryBits.cpp"),
+    build_env.File("SystemCallID.cpp"),
+    build_env.File("VFSBits.cpp"),
 ]
-Ember = target_env.StaticLibrary("Ember.o", target_env.Object(sources))
+Ember = build_env.StaticLibrary("Ember.o", build_env.Object(sources))
 Export("Ember")

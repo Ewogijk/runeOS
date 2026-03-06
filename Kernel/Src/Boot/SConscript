@@ -15,12 +15,12 @@
 from SCons.Environment import *
 from pathlib import Path
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("DetailedLogLayout.cpp"),
-    target_env.File(Path(target_env['arch']) / "Phase1.cpp"),
-    target_env.File("System.cpp"),
+    build_env.File("DetailedLogLayout.cpp"),
+    build_env.File(Path(build_env['arch']) / "Phase1.cpp"),
+    build_env.File("System.cpp"),
 ]
-Boot = target_env.StaticLibrary("Boot.o", target_env.Object(sources))
+Boot = build_env.StaticLibrary("Boot.o", build_env.Object(sources))
 Export("Boot")

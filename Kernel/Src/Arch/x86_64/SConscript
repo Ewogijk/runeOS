@@ -14,35 +14,35 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("CPU/Interrupt/IDT.cpp"),
-    target_env.File("CPU/Interrupt/IDT-a.asm"),
-    target_env.File("CPU/Interrupt/Interrupt.cpp"),
-    target_env.File("CPU/Interrupt/Interrupt-a.asm"),
-    target_env.File("CPU/Interrupt/ISR-a.asm"),
-    target_env.File("CPU/Threading/Stack.cpp"),
-    target_env.File("CPU/CPU.cpp"),
-    target_env.File("CPU/CPU-a.asm"),
-    target_env.File("CPU/CPUID.cpp"),
-    target_env.File("CPU/CPUID-a.asm"),
-    target_env.File("CPU/GDT.cpp"),
-    target_env.File("CPU/GDT-a.asm"),
-    target_env.File("CPU/IO-a.asm"),
-    target_env.File("CPU/X64Core.cpp"),
-    target_env.File("CPU/X64Core-a.asm"),
-    target_env.File("KRE/CppRuntimeSupport-a.asm"),
-    target_env.File("Memory/Paging.cpp"),
-    target_env.File("Memory/Paging-a.asm"),
-    target_env.File("Memory/VirtualMemory.cpp"),
-    target_env.File("SystemCall/SystemCall.cpp"),
-    target_env.File("SystemCall/SystemCall-a.asm"),
+    build_env.File("CPU/Interrupt/IDT.cpp"),
+    build_env.File("CPU/Interrupt/IDT-a.asm"),
+    build_env.File("CPU/Interrupt/Interrupt.cpp"),
+    build_env.File("CPU/Interrupt/Interrupt-a.asm"),
+    build_env.File("CPU/Interrupt/ISR-a.asm"),
+    build_env.File("CPU/Threading/Stack.cpp"),
+    build_env.File("CPU/CPU.cpp"),
+    build_env.File("CPU/CPU-a.asm"),
+    build_env.File("CPU/CPUID.cpp"),
+    build_env.File("CPU/CPUID-a.asm"),
+    build_env.File("CPU/GDT.cpp"),
+    build_env.File("CPU/GDT-a.asm"),
+    build_env.File("CPU/IO-a.asm"),
+    build_env.File("CPU/X64Core.cpp"),
+    build_env.File("CPU/X64Core-a.asm"),
+    build_env.File("KRE/CppRuntimeSupport-a.asm"),
+    build_env.File("Memory/Paging.cpp"),
+    build_env.File("Memory/Paging-a.asm"),
+    build_env.File("Memory/VirtualMemory.cpp"),
+    build_env.File("SystemCall/SystemCall.cpp"),
+    build_env.File("SystemCall/SystemCall-a.asm"),
 ]
-Arch = target_env.StaticLibrary("Arch.o", target_env.Object(sources))
+Arch = build_env.StaticLibrary("Arch.o", build_env.Object(sources))
 Export("Arch")
 
-crti = target_env.Object(target_env.File("crti.asm"))
-crtn = target_env.Object(target_env.File("crtn.asm"))
+crti = build_env.Object(build_env.File("crti.asm"))
+crtn = build_env.Object(build_env.File("crtn.asm"))
 Export("crti")
 Export("crtn")
