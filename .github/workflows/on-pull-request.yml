@@ -142,8 +142,15 @@ jobs:
           pip install ruff
           echo \> Ruff version:
           echo ruff --version
-      - name: Generate Source files
-        run: echo \> TODO IMPLEMENT ME
+      - name: Run Kernel Codegen
+        run: |
+          cd Brokk
+          sed -i 's+PROJECT_ROOT+${{ github.workspace }}+g' CI/CI.yaml
+          ./Brokk.py configure CI/CI.yaml
+          ./Brokk.py build x86_64 ci --step kernel-pre-build
+          cd ../Kernel
+          scons codegen
+          cd ${{ github.workspace }}
       - name: Extract Compilation Databases
         run: tar -xzf CompilationDatabases.tar.gz
       - name: Lint C/C++ Code
