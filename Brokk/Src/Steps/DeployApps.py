@@ -1,0 +1,69 @@
+#   Copyright 2025 Ewogijk
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+from typing import Any
+from pathlib import Path
+from Config import BuildConfig
+
+import Build
+
+
+class DeployAppsStep(Build.BuildStep):
+    def name(self) -> str:
+        """
+        :return: Name of the build step.
+        """
+
+        return "Deploy Apps"
+
+    def execute(self, build_conf: dict[str, Any]) -> bool:
+        """Execute this build step.
+        :return: True: The build step was successful, False: Otherwise.
+        """
+        app_list = build_conf[BuildConfig.APPS.to_yaml_key()]
+        if len(app_list) == 0:
+            print("No apps to install")
+            return True
+
+        project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
+        arch = build_conf[BuildConfig.ARCH.to_yaml_key()]
+        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
+        cross_file = project_root / "Brokk" / "Build" / f"{arch}-{build}" / "x86_64-rune.txt"
+        rune_os_image = project_root / "Brokk" / "runeOS.image"
+        app_dir = project_root / "App"
+        for app in app_list:
+            app_proj = app_dir / app
+            if not Build.with_meson(app_proj, cross_file, app_proj / "Build"):
+                return False
+
+            sys_root = Path(build_conf[BuildConfig.SYSROOT_X64_RUNE.to_yaml_key()])
+            compilation_database = app_proj / "Build" / "compile_commands.json"
+            if not Build.post_process_compilation_database(compilation_database, sys_root, True):
+                return False
+
+            install_app_cmd = [
+                "Src/Copy-File-To-Image.sh",
+                str(rune_os_image),
+                "/Apps",
+                str(app_proj / "Build" / f"{app}.app"),
+            ]
+            if not Build.exec_shell_cmd(install_app_cmd, "."):
+                return False
+        return True
