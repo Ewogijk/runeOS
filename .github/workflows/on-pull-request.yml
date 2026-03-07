@@ -142,6 +142,16 @@ jobs:
           pip install ruff
           echo \> Ruff version:
           echo ruff --version
+      - name: Install runeToolchain
+        run: |
+          echo \> Compiler Toolchain: runeToolchain ${{steps.rune_toolchain_download.outputs.tag_name}}
+          cd /opt
+          sudo tar -xzf runeToolchain.tar.gz
+          echo \> GCC x86_64-elf is
+          /opt/runeToolchain/x86_64-elf/bin/x86_64-elf-g++ --version
+          echo \> GCC x86_64-rune is
+          /opt/runeToolchain/x86_64-rune/bin/x86_64-rune-g++ --version
+          cd ${{ github.workspace }}
       - name: Run Kernel Codegen
         run: |
           cd Brokk
