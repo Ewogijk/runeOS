@@ -74,6 +74,17 @@ def build_target(arch: str, build: str, step: str) -> None:
     step to execute. If no step is provided, all steps for the target build will
     be executed. Failure in execution will terminate the process.
 
+    The following build steps can be selected with the --step option:
+    - kernel-pre-build
+    - kernel-build
+    - system-loader-build
+    - integration-test-build
+    - crucible-build
+    - image-build
+    - install-apps
+    - file-copy
+    - deploy
+
     :param arch: Build architecture, represented as a string.
     :param build: Target build identifier, represented as a string.
     :param step: Optional; defines a specific build step to execute. Defaults to
