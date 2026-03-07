@@ -519,5 +519,5 @@ define_kernel_build_targets(build_env)
 objects = define_link_order(build_env)
 
 build_dir = Path("Build") / f"{build_env['arch']}-{build_env['build']}"
-build_env.CompilationDatabase(build_dir / "compile_commands")
+build_env.CompilationDatabase(build_dir / "compile_commands.json")
 build_env.Program(build_dir / "runeKernel.elf", objects)
