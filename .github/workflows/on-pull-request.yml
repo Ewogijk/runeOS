@@ -134,10 +134,14 @@ jobs:
           path: ${{ github.workspace }}
       - name: Install Dependencies
         run: |
-          echo \> Installing clang-tidy and scons
-          sudo apt install clang-tidy scons
+          echo \> Installing clang-tidy, scons and clang-format-19
+          sudo apt install clang-tidy scons clang-format-19
           echo >\ Clang-tidy Version:
           echo clang-tidy --version
+          echo >\ Clang-format Version:
+          echo clang-format-19 --version
+          echo >\ scons Version:
+          echo scons --version
           echo \> Installing ruff
           pip install ruff
           echo \> Ruff version:
