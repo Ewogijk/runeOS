@@ -515,9 +515,14 @@ Export("build_env")
 codegen_targets = define_codegen_targets(build_env)
 build_env.Alias("codegen", codegen_targets)
 
-define_kernel_build_targets(build_env)
-objects = define_link_order(build_env)
-
-build_dir = Path("Build") / f"{build_env['arch']}-{build_env['build']}"
-build_env.CompilationDatabase(build_dir / "compile_commands.json")
-build_env.Program(build_dir / "runeKernel.elf", objects)
+# Skip kernel build targets when only codegen is requested (e.g. in the lint CI job).
+# CompilationDatabase depends on object files; without a prior full build those
+# don't exist and SCons would error with "Do not know how to create a target
+# from source `…/compile_commands.json'".
+codegen_only = "codegen" in BUILD_TARGETS and len(BUILD_TARGETS) == 1
+if not codegen_only:
+    build_dir = Path("Build") / f"{build_env['arch']}-{build_env['build']}"
+    define_kernel_build_targets(build_env)
+    objects = define_link_order(build_env)
+    build_env.CompilationDatabase(build_dir / "compile_commands.json")
+    build_env.Program(build_dir / "runeKernel.elf", objects)
