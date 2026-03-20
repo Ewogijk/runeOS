@@ -21,8 +21,7 @@
 //                                  Component Selection
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-// Src files in "resources" requires this flag
-#define ACPI_DEBUGGER
+
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Configurable Data Types
@@ -33,11 +32,9 @@
 #define ACPI_SPINLOCK  void*
 #define ACPI_SEMAPHORE void*
 #define ACPI_MUTEX     void*
-#define ACPI_CPU_FLAGS unsigned long
+#define ACPI_CPU_FLAGS unsigned long long
 
-#define ACPI_THREAD_ID unsigned int
-
-#define ACPI_CACHE_T void*
+#define ACPI_CACHE_T void
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Subsystem Compile-Time Options
@@ -46,6 +43,7 @@
 #define ACPI_USE_SYSTEM_CLIBRARY
 #define ACPI_MUTEX_TYPE 1 // ACPI_OSL_MUTEX
 #define ACPI_USE_DO_WHILE_0
+#define ACPI_DEBUG_OUTPUT
 
 // The definitions in acpiosxf.h for these OSL do not match with the reference definitions, so we
 // deactivate them. But others do, why is that?
