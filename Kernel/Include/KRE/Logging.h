@@ -170,17 +170,6 @@ namespace Rune {
         String               _name;
         LoggerConfig         _config;
 
-        void log(LogLevel log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
-            if ((int) log_level < (int) _config.log_level) return;
-            _distributor->log(log_level,
-                              _name,
-                              fmt,
-                              arg_list,
-                              arg_size,
-                              _config.layout_ref,
-                              _config.target_refs);
-        }
-
       public:
         Logger(LogEventDistributor* distributor, const String& name, const LoggerConfig& config)
             : _distributor(distributor),
@@ -210,6 +199,22 @@ namespace Rune {
          * @param layout_ref New layout ref.
          */
         void set_layout_ref(const String& layout_ref);
+
+        /// @brief Log a message of the given log level.
+        /// @param log_level Log level of the message.
+        /// @param fmt       The message as a format string.
+        /// @param arg_list  Format string arguments.
+        /// @param arg_size  Number of arguments.
+        void log(LogLevel log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
+            if ((int) log_level < (int) _config.log_level) return;
+            _distributor->log(log_level,
+                              _name,
+                              fmt,
+                              arg_list,
+                              arg_size,
+                              _config.layout_ref,
+                              _config.target_refs);
+        }
 
         /**
          * Log a trace message.
