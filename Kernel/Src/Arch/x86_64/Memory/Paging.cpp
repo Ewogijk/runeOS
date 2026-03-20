@@ -331,8 +331,8 @@ namespace Rune::Memory {
         if (pta.status != PageTableAccessStatus::OKAY) return pta;
 
         U8 shift = PHYSICAL_PAGE_OFFSET;
-        // We only the page tables until the L3 page table since the L4 page table is the base page
-        // table and freeing it would delete the whole virtual address space
+        // We only free the page tables until the L3 page table since the L4 page table is the base
+        // page table and freeing it would delete the whole virtual address space
         for (int i = 0; i < 4; i++) {
             PageTable      parent_pt(pta.path[i + 1].get_address(),
                                 reinterpret_cast<NativePageTableEntry*>(
@@ -340,9 +340,12 @@ namespace Rune::Memory {
                                 i + 1);
             PageTableEntry pte = pta.path[i];
 
-            bool do_free{false};
             if (i == 0) {
-                do_free = pte.is_present();
+                // Do not free page frames as they are caller maintained. Reasoning is the memory
+                // could be reserved and must not be freed
+                // -> Just clear ref of parent PT
+                parent_pt.update((v_addr >> shift) & PT_IDX_MASK, 0x0);
+                if (i == 0) pta.pte_after = parent_pt[(v_addr >> shift) & PT_IDX_MASK];
             } else {
                 PageTable pt(pte.get_address(),
                              reinterpret_cast<NativePageTableEntry*>(
@@ -352,17 +355,16 @@ namespace Rune::Memory {
                 for (size_t j = 0; j < PT_MAX_SIZE; j++) {
                     if (pt[j].is_present()) pte_count++;
                 }
-                do_free = pte_count == 0;
-            }
-
-            if (do_free) {
-                if (!pmm->free(pte.get_address())) {
-                    pta.status = PageTableAccessStatus::FREE_ERROR;
-                    pta.level  = i;
-                    break;
+                if (pte_count == 0) {
+                    // PT has no PTE refs -> Free the PT memory
+                    if (!pmm->free(pte.get_address())) {
+                        pta.status = PageTableAccessStatus::FREE_ERROR;
+                        pta.level  = i;
+                        break;
+                    }
+                    parent_pt.update((v_addr >> shift) & PT_IDX_MASK, 0x0);
+                    if (i == 0) pta.pte_after = parent_pt[(v_addr >> shift) & PT_IDX_MASK];
                 }
-                parent_pt.update((v_addr >> shift) & PT_IDX_MASK, 0x0);
-                if (i == 0) pta.pte_after = parent_pt[(v_addr >> shift) & PT_IDX_MASK];
             }
             shift += PAGE_TRANSLATION_OFFSET_DIFF;
         }

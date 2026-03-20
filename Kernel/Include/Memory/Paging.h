@@ -25,7 +25,6 @@
 #include <KRE/Memory.h>
 
 #include <Memory/PhysicalMemoryManager.h>
-
 namespace Rune::Memory {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -362,21 +361,19 @@ namespace Rune::Memory {
                        U16                    flags,
                        PhysicalMemoryManager* pmm) -> PageTableAccess;
 
-    /**
-     * free the page of the given vAddr and free the associated page frame using the physical memory
-     * manager.
-     *
-     * <p>
-     *  If any intermediate page table has no other entries except the page table entry for vAddr or
-     * another page table that has no entries then it will be freed.
-     * </p>
-     *
-     * @param base_pt Base page table.
-     * @param v_addr  Virtual address.
-     * @param pmm    Physical memory manager.
-     *
-     * @return Result of the page table access.
-     */
+    /// @brief Free the page of the given vAddr and free the memory of intermediate page table
+    ///         entries (PTE) as needed.
+    /// @param base_pt Base page table.
+    /// @param v_addr Virtual address.
+    /// @param pmm Physical memory manager.
+    /// @return Result of the page table access.
+    ///
+    /// The caller maintains the page frame. Hence, it is his responsibility to free the physical
+    /// memory if it is not necessary anymore.
+    ///
+    /// The paging API maintains physical memory of intermediate PTE's. Therefore, if any
+    /// intermediate PTE is going to be empty after v_addr was freed, the physical memory will be
+    /// freed.
     auto free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm)
         -> PageTableAccess;
 
