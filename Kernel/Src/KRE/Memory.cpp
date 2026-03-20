@@ -211,6 +211,14 @@ namespace Rune {
         }
     }
 
+    auto MemoryMap::find_type_of(const MemoryRegion& region) -> MemoryRegionType {
+        for (auto& reg : _map) {
+            if (reg.contains(reg)) return reg.memory_type;
+        }
+        return MemoryRegionType::NONE;
+    }
+
+
     auto MemoryMap::operator[](const size_t index) const -> const MemoryRegion& {
         return _map[index];
     }

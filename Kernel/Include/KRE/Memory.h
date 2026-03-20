@@ -293,7 +293,7 @@ namespace Rune {
     }
 
     /// Describes if a memory region is free to use or reserved for something else. If further
-    /// information is available the type may also describe which type of data is stored in the
+    /// information is available, the type may also describe which type of data is stored in the
     /// region (e.g. kernel code).
 #define MEMORY_REGION_TYPES(X)                                                                     \
     X(MemoryRegionType, USABLE, 0x1)                                                               \
@@ -427,6 +427,16 @@ namespace Rune {
          * Merge adjacent regions of the same type into bigger regions.
          */
         void merge();
+
+        /// @brief Get the type of the given memory region.
+        /// @param region A memory region.
+        /// @return The type of the memory region, MemoryRegionType::NONE if it is not part of the
+        ///         memory map or intersects multiple memory regions.
+        ///
+        /// The memory type of the memory region in the memory map that contains the given memory
+        /// region will be returned. Therefore, 'region' is not allowed to intersect multiple memory
+        /// regions.
+        [[nodiscard]] auto find_type_of(const MemoryRegion& region) -> MemoryRegionType;
 
         auto operator[](size_t index) const -> const MemoryRegion&;
 
