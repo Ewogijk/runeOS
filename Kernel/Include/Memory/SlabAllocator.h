@@ -230,6 +230,8 @@ namespace Rune::Memory {
 
         [[nodiscard]] auto get_type() const -> CacheType;
 
+        [[nodiscard]] auto get_object_size() const -> size_t;
+
         auto init(VirtualMemoryManager* vmm,
                   ObjectCache*          memory_node_cache,
                   MemoryRegion          managed,

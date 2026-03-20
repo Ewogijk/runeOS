@@ -232,8 +232,10 @@ namespace Rune::Memory {
             }
         }
         if (!all_fine) {
-            for (VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size())
+            for (VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size()) {
                 if (!_vmm->free(i)) break;
+                invalidate_page(i);
+            }
             return false;
         }
 
@@ -268,6 +270,9 @@ namespace Rune::Memory {
     auto ObjectCache::get_managed() const -> MemoryRegion { return _managed; }
 
     auto ObjectCache::get_type() const -> CacheType { return _type; }
+
+    auto ObjectCache::get_object_size() const -> size_t { return _object_size; }
+
 
     auto ObjectCache::init(VirtualMemoryManager* vmm,
                            ObjectCache*          memory_node_cache,
@@ -390,19 +395,12 @@ namespace Rune::Memory {
             _object_buf_node_hash_map->purge(_object_buf_node_cache);
         }
 
-        // Free virtual memory
-        for (VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size())
-            _vmm->free(addr);
         // Free memory nodes
         MemoryNode* c_mem_node = _free_page_list;
         while (c_mem_node != nullptr) {
             _memory_node_cache->free(c_mem_node);
             c_mem_node = _free_page_list->next;
         }
-
-        // Reset used memory monitoring
-        _limit             = _managed.start;
-        _free_page_list    = nullptr;
 
         // Delete all slab list references
         _full_list    = nullptr;
@@ -413,7 +411,15 @@ namespace Rune::Memory {
 
     void ObjectCache::destroy() {
         purge();
-        _object_buf_node_hash_map->destroy(_object_buf_node_cache);
+        if (_type == CacheType::OFF_SLAB) {
+            _object_buf_node_hash_map->destroy(_object_buf_node_cache);
+        }
+
+        // Free virtual memory
+        for (VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size()) {
+            _vmm->free(addr);
+            invalidate_page(addr);
+        }
 
         _vmm               = nullptr;
         _memory_node_cache = nullptr;
