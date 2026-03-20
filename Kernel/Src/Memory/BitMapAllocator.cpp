@@ -117,9 +117,11 @@ namespace Rune::Memory {
             }
         }
 
-        bool bkr_marked = mark_memory_region(p_memory_index, _bitmap_size, true);
-        if (bkr_marked) _init = true;
-        return bkr_marked;
+        MemoryRegion mi_reg    = {p_memory_index, _bitmap_size, MemoryRegionType::RESERVED};
+        bool         init_good = mark_memory_region(p_memory_index, _bitmap_size, true);
+        init_good              = init_good && _mem_map->claim(mi_reg, _page_size);
+        if (init_good) _init = true;
+        return init_good;
     }
 
     BitMapAllocator::BitMapAllocator() = default;
