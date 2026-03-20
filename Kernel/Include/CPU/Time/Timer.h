@@ -22,7 +22,6 @@
 #include <CPU/Threading/Scheduler.h>
 
 namespace Rune::CPU {
-
     /**
      * @brief All kernel supported timer modes of operation.
      * <ul>
