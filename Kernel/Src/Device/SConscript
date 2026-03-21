@@ -17,9 +17,9 @@ from SCons.Environment import *
 Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File("ACPICA/CLibFunctions.cpp"),
-    target_env.File("ACPICA/osl.c"),
-    target_env.File("ACPICA/osl-to-rune-bridge.cpp"),
+    target_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
+    target_env.File("ACPI/ACPICA/osl.c"),
+    target_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
     target_env.File("AHCI/AHCI.cpp"),
     target_env.File("AHCI/FIS.cpp"),
     target_env.File("AHCI/GPT.cpp"),

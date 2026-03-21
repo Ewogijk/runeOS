@@ -31,7 +31,7 @@
 #include <Device/PCI.h>
 
 CLINK {
-#include <Device/ACPICA/acpi.h>
+#include <Device/ACPI/ACPICA/acpi.h>
 
     using namespace Rune;
 

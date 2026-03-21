@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Device/ACPICA/acpi.h>
+#include <Device/ACPI/ACPICA/acpi.h>
 
 // ============================================================================================== //
 // OSL-to-rune Bridge

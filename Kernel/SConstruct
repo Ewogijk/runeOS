@@ -119,7 +119,7 @@ target_env["CPPPATH"] = [
     str(Path.cwd() / "Include"),
     # ACPICA sources expect the ACPICA include directories on CPPPATH, which points into the Device
     # module
-    str(Path.cwd() / "Include" / "Device" / "ACPICA" ),
+    str(Path.cwd() / "Include" / "Device" / "ACPI" / "ACPICA" ),
 ]
 
 # Compiler flags
