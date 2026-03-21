@@ -19,11 +19,13 @@ sys.path.append(os.path.dirname(__file__))
 
 import yaml
 import Config as Config
+
 from Steps.FileCopy import FileCopyStep
 from Steps.ImageBuild import ImageBuildStep
-from Steps.Install import InstallStep
-from Steps.InstallApps import InstallAppsStep
+from Steps.Deploy import DeployStep
+from Steps.DeployApps import DeployAppsStep
 from Steps.IntegrationTestBuild import IntegrationTestBuildStep
+from Steps.KernelPreBuild import KernelPreBuildStep
 from Steps.KernelBuild import KernelBuildStep
 from Steps.CrucibleBuild import CrucibleBuildStep
 from Steps.SystemLoaderBuild import SystemLoaderBuildStep
@@ -35,6 +37,17 @@ from Config import BrokkConfig, BuildConfig
 
 VERSION = "0.2.0"
 MIN_IMAGE_SIZE = 256
+BUILD_STEP_LOOKUP_TABLE = {
+    "kernel-pre-build": KernelPreBuildStep(),
+    "kernel-build": KernelBuildStep(),
+    "system-loader-build": SystemLoaderBuildStep(),
+    "integration-test-build": IntegrationTestBuildStep(),
+    "crucible-build": CrucibleBuildStep(),
+    "image-build": ImageBuildStep(),
+    "install-apps": DeployAppsStep(),
+    "file-copy": FileCopyStep(),
+    "deploy": DeployStep(),
+}
 
 
 def print_banner() -> None:
@@ -60,27 +73,36 @@ def get_build_steps(build_conf: dict[str, Any]) -> list[BuildStep]:
     build = build_conf[BuildConfig.BUILD.to_yaml_key()]
     if build == "test" or build == "ci":
         return [
+            KernelPreBuildStep(),
             KernelBuildStep(),
             SystemLoaderBuildStep(),
             IntegrationTestBuildStep(),
             ImageBuildStep(),
-            InstallAppsStep(),
+            DeployAppsStep(),
             FileCopyStep(),
-            InstallStep(),
+            DeployStep(),
         ]
     else:
         return [
+            KernelPreBuildStep(),
             KernelBuildStep(),
             SystemLoaderBuildStep(),
             CrucibleBuildStep(),
             ImageBuildStep(),
-            InstallAppsStep(),
+            DeployAppsStep(),
             FileCopyStep(),
-            InstallStep(),
+            DeployStep(),
         ]
 
 
 def configure(brokk_config_yaml: str) -> bool:
+    """
+    Configures the build environment and prepares the necessary directories and files based on the
+    provided configuration.
+
+    :param brokk_config_yaml: Path to the YAML configuration file for Brokk.
+    :return: A boolean indicating whether the configuration was successful.
+    """
     print_banner()
     brokk_config = Config.load_brokk_config(brokk_config_yaml)
     if len(brokk_config) == 0:
@@ -164,7 +186,19 @@ def configure(brokk_config_yaml: str) -> bool:
     return True
 
 
-def build_all(arch: str, build: str) -> bool:
+def run_all_build_steps(arch: str, build: str) -> bool:
+    """
+    Builds the full project by processing a given architecture and build type.
+
+    This function orchestrates the build process by parsing a build configuration
+    file, displaying the configuration, and executing each step in the build
+    sequence. If any step fails or the configuration is not found, the process
+    stops and returns a failure status. Outputs logs at various stages of the build.
+
+    :param arch: The target architecture for the build.
+    :param build: The build type or configuration (e.g., Debug, Release).
+    :return: True if the build process completes successfully, False otherwise.
+    """
     print_banner()
 
     build_config_yaml = Path("Build") / f"{arch}-{build}" / Config.BUILD_CONFIG_YAML
@@ -184,4 +218,45 @@ def build_all(arch: str, build: str) -> bool:
             print_err(f"'{build_step.name()}': Build step failed.")
             return False
         print()
+    return True
+
+
+def run_single_build_step(arch: str, build: str, step: str) -> bool:
+    """
+    Executes a build step for a specified architecture and build configuration.
+
+    This function retrieves a specific build configuration based on the provided
+    architecture (`arch`) and build name (`build`) and executes the defined build
+    step (`step`). It ensures that the necessary configuration is loaded and validates
+    the step requested before execution. If the build step fails or the configuration
+    is invalid, it returns False.
+
+    :param arch: The architecture type (e.g., x86, arm) as a string.
+    :param build: The name of the build configuration as a string.
+    :param step: The name of the build step to execute as a string.
+    :return: A boolean indicating whether the build step executed successfully
+        (True) or not (False).
+    """
+    print_banner()
+
+    build_config_yaml = Path("Build") / f"{arch}-{build}" / Config.BUILD_CONFIG_YAML
+    print_msg(f"Parse: {build_config_yaml}")
+    build_config = Config.load_build_config(str(build_config_yaml))
+    if len(build_config) == 0:
+        print_err(f"'{build_config_yaml}': Build configuration not found.")
+        return False
+
+    print_msg("Build with configuration:")
+    for config, value in build_config.items():
+        print(f"    {config}: {value}")
+
+    if step not in BUILD_STEP_LOOKUP_TABLE:
+        print_err(f"Unknown build step: {step}")
+        return False
+
+    build_step = BUILD_STEP_LOOKUP_TABLE[step]
+    print_step(build_step.name())
+    if not build_step.execute(build_config):
+        print_err(f"'{build_step.name()}': Build step failed.")
+        return False
     return True

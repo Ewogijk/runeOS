@@ -18,7 +18,6 @@ import click
 import sys
 import Src.Engine as BrokkEngine
 
-
 VERSION = "0.1.0"
 MIN_IMAGE_SIZE = 256
 
@@ -64,15 +63,40 @@ def configure(brokk_config: str) -> None:
 @click.help_option("-h", "--help")
 @click.argument("arch", type=str)
 @click.argument("build", type=str)
-def build_target(arch: str, build: str) -> None:
+@click.option("--step", default="")
+def build_target(arch: str, build: str, step: str) -> None:
     """
-    First check that the build for specified architecture was configured. Then runs each build step
-    for the requested build type.
+    Builds a specified target using the given architecture, build, and optionally a
+    specific step.
 
-    Build steps may vary depending on the build type.
+    This function is invoked when the "build" command is issued via the CLI. It
+    supports specifying an architecture, a build target, and optionally a single
+    step to execute. If no step is provided, all steps for the target build will
+    be executed. Failure in execution will terminate the process.
+
+    The following build steps can be selected with the --step option:
+    - kernel-pre-build
+    - kernel-build
+    - system-loader-build
+    - integration-test-build
+    - crucible-build
+    - image-build
+    - install-apps
+    - file-copy
+    - deploy
+
+    :param arch: Build architecture, represented as a string.
+    :param build: Target build identifier, represented as a string.
+    :param step: Optional; defines a specific build step to execute. Defaults to
+        an empty string.
+    :return: None
     """
-    if not BrokkEngine.build_all(arch, build):
-        sys.exit(-1)
+    if len(step) > 0:
+        if not BrokkEngine.run_single_build_step(arch, build, step):
+            sys.exit(-1)
+    else:
+        if not BrokkEngine.run_all_build_steps(arch, build):
+            sys.exit(-1)
 
 
 if __name__ == "__main__":
