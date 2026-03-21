@@ -14,19 +14,19 @@
 
 from SCons.Environment import *
 
-Import("target_env")
-target_env: Environment
+Import("build_env")
+build_env: Environment
 sources = [
-    target_env.File("CppRTS.cpp"),
-    target_env.File("Logging.cpp"),
-    target_env.File("Memory.cpp"),
-    target_env.File("Stream.cpp"),
-    target_env.File("String.cpp"),
-    target_env.File("Utility.cpp"),
-    target_env.File("Module/EventHook.cpp"),
-    target_env.File("Module/FrameBuffer.cpp"),
-    target_env.File("Module/Module.cpp"),
-    target_env.File("Module/Plugin.cpp"),
+    build_env.File("CppRTS.cpp"),
+    build_env.File("Logging.cpp"),
+    build_env.File("Memory.cpp"),
+    build_env.File("Stream.cpp"),
+    build_env.File("String.cpp"),
+    build_env.File("Utility.cpp"),
+    build_env.File("Module/EventHook.cpp"),
+    build_env.File("Module/FrameBuffer.cpp"),
+    build_env.File("Module/Module.cpp"),
+    build_env.File("Module/Plugin.cpp"),
 ]
-KRE = target_env.StaticLibrary("KRE.o", target_env.Object(sources))
+KRE = build_env.StaticLibrary("KRE.o", build_env.Object(sources))
 Export("KRE")

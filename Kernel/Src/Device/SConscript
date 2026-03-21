@@ -17,19 +17,19 @@ from SCons.Environment import *
 Import("build_env")
 build_env: Environment
 sources = [
-    target_env.File("ACPI/ACPI.cpp"),
-    target_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
-    target_env.File("ACPI/ACPICA/osl.c"),
-    target_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
-    target_env.File("AHCI/AHCI.cpp"),
-    target_env.File("AHCI/FIS.cpp"),
-    target_env.File("AHCI/GPT.cpp"),
-    target_env.File("AHCI/Port.cpp"),
-    target_env.File("AHCI/PortEngine.cpp"),
-    target_env.File("Keyboard/Keyboard.cpp"),
-    target_env.File("Keyboard/PS2Keyboard.cpp"),
-    target_env.File("DeviceModule.cpp"),
-    target_env.File("PCI.cpp"),
+    build_env.File("ACPI/ACPI.cpp"),
+    build_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
+    build_env.File("ACPI/ACPICA/osl.c"),
+    build_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
+    build_env.File("AHCI/AHCI.cpp"),
+    build_env.File("AHCI/FIS.cpp"),
+    build_env.File("AHCI/GPT.cpp"),
+    build_env.File("AHCI/Port.cpp"),
+    build_env.File("AHCI/PortEngine.cpp"),
+    build_env.File("Keyboard/Keyboard.cpp"),
+    build_env.File("Keyboard/PS2Keyboard.cpp"),
+    build_env.File("DeviceModule.cpp"),
+    build_env.File("PCI.cpp"),
 ]
 acpi_sources = (Glob("ACPI/ACPICA/dispatcher/*.c")
                 + Glob("ACPI/ACPICA/events/*.c")
