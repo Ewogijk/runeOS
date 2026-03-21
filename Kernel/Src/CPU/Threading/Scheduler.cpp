@@ -52,13 +52,13 @@ namespace Rune::CPU {
     }
 
     void Scheduler::lock() {
-        if (_irq_disable_counter == 0) interrupt_disable();
+        if (_irq_disable_counter == 0) interrupt_irq_disable();
         _irq_disable_counter++;
     }
 
     void Scheduler::unlock() {
         if (_irq_disable_counter > 0) _irq_disable_counter--;
-        if (_irq_disable_counter == 0) interrupt_enable();
+        if (_irq_disable_counter == 0) interrupt_irq_enable();
     }
 
     void Scheduler::perform_context_switch() {

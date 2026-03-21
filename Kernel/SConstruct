@@ -128,6 +128,7 @@ target_env["CPPPATH"] = [
 target_env["CCFLAGS"] = [
     "-Wall",
     "-Wextra",
+    "-Wno-unused-parameter",
     "-ffreestanding",
     "-fno-exceptions",
     "-fstack-protector-all",
@@ -177,7 +178,7 @@ if build == "release":
 # Change scons messages for better readability
 target_env.Replace(
     ASCOMSTR="Assembling [$SOURCE]",
-    # CXXCOMSTR="Compiling [$SOURCE]",
+    CXXCOMSTR="Compiling [$SOURCE]",
     ARCOMSTR="Creating static library [$TARGET]",
     RANLIBCOMSTR="Updating static library [$TARGET]",
     LINKCOMSTR="Linking [$TARGET]",

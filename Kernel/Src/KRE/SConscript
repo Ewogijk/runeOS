@@ -17,7 +17,7 @@ from SCons.Environment import *
 Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File("CppRuntimeSupport.cpp"),
+    target_env.File("CppRTS.cpp"),
     target_env.File("Logging.cpp"),
     target_env.File("Memory.cpp"),
     target_env.File("Stream.cpp"),

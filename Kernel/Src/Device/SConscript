@@ -17,7 +17,7 @@ from SCons.Environment import *
 Import("target_env")
 target_env: Environment
 sources = [
-    target_env.File("DeviceModule.cpp"),
+    target_env.File("ACPICA/CLibFunctions.cpp"),
     target_env.File("ACPICA/osl.c"),
     target_env.File("ACPICA/osl-to-rune-bridge.cpp"),
     target_env.File("AHCI/AHCI.cpp"),
@@ -27,7 +27,8 @@ sources = [
     target_env.File("AHCI/PortEngine.cpp"),
     target_env.File("Keyboard/Keyboard.cpp"),
     target_env.File("Keyboard/PS2Keyboard.cpp"),
-
+    target_env.File("DeviceModule.cpp"),
+    target_env.File("PCI.cpp"),
 ]
 acpi_sources = (Glob("ACPICA/dispatcher/*.c")
                 + Glob("ACPICA/events/*.c")
