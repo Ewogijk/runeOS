@@ -17,6 +17,7 @@ from SCons.Environment import *
 Import("target_env")
 target_env: Environment
 sources = [
+    target_env.File("ACPI/ACPI.cpp"),
     target_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
     target_env.File("ACPI/ACPICA/osl.c"),
     target_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
@@ -30,15 +31,15 @@ sources = [
     target_env.File("DeviceModule.cpp"),
     target_env.File("PCI.cpp"),
 ]
-acpi_sources = (Glob("ACPICA/dispatcher/*.c")
-                + Glob("ACPICA/events/*.c")
-                + Glob("ACPICA/executer/*.c")
-                + Glob("ACPICA/hardware/*.c")
-                + Glob("ACPICA/namespace/*.c")
-                + Glob("ACPICA/parser/*.c")
-                + Glob("ACPICA/resources/*.c")
-                + Glob("ACPICA/tables/*.c")
-                + Glob("ACPICA/utilities/*.c"))
+acpi_sources = (Glob("ACPI/ACPICA/dispatcher/*.c")
+                + Glob("ACPI/ACPICA/events/*.c")
+                + Glob("ACPI/ACPICA/executer/*.c")
+                + Glob("ACPI/ACPICA/hardware/*.c")
+                + Glob("ACPI/ACPICA/namespace/*.c")
+                + Glob("ACPI/ACPICA/parser/*.c")
+                + Glob("ACPI/ACPICA/resources/*.c")
+                + Glob("ACPI/ACPICA/tables/*.c")
+                + Glob("ACPI/ACPICA/utilities/*.c"))
 sources += acpi_sources
 
 Device = target_env.StaticLibrary("Device.o", target_env.Object(sources))
