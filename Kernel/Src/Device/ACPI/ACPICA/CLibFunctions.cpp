@@ -17,7 +17,7 @@
 #include <Ember/Ember.h>
 
 #include <KRE/String.h>
-
+// NOLINTBEGIN Is C code -> do not lint
 CLINK {
     // ========================================================================================== //
     // C Library functions required by ACPICA
@@ -48,9 +48,9 @@ CLINK {
     }
 
     int strncmp(const char* str1, const char* str2, size_t num) {
-        char* c1 = const_cast<char*>(str1);
-        char* c2 = const_cast<char*>(str2);
-        int   i  = 0;
+        char*  c1 = const_cast<char*>(str1);
+        char*  c2 = const_cast<char*>(str2);
+        size_t i  = 0;
         while (c1 && c2 && i < num) {
             if (*c1 != *c2) return c1 < c2 ? -1 : 1;
             c1++;
@@ -76,11 +76,11 @@ CLINK {
     int isdigit(int c) { return '0' <= c && c <= '9'; }
 
     int isspace(int c) {
-        return c == ' ' || c == '\t' || c == '\r' || c == '\n' | c == '\v' | c == '\f';
+        return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\v' || c == '\f';
     }
 
     int isxdigit(int c) {
-        return 0x30 <= c && c <= 0x39 || 0x41 <= c && c <= 0x46 || 0x61 <= c && c <= 0x66;
+        return (0x30 <= c && c <= 0x39) || 0x41 <= c && c <= 0x46 || (0x61 <= c && c <= 0x66);
     }
 
     int isprint(int c) { return 0x20 <= c && c <= 0x7F; }
@@ -89,3 +89,4 @@ CLINK {
 
     int toupper(int c) { return String(static_cast<char>(c)).upper()[0]; }
 }
+// NOLINTEND

@@ -212,7 +212,7 @@ namespace Rune::Memory {
     auto ObjectCache::grow() -> bool {
         VirtualAddr page = (_free_page_list != nullptr) ? _free_page_list->mem_addr : _limit;
         // Align size to requested alignment
-        size_t      aligned_size =
+        size_t aligned_size =
             _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
         // Align size to page size
         size_t slab_size = aligned_size;
@@ -272,7 +272,6 @@ namespace Rune::Memory {
     auto ObjectCache::get_type() const -> CacheType { return _type; }
 
     auto ObjectCache::get_object_size() const -> size_t { return _object_size; }
-
 
     auto ObjectCache::init(VirtualMemoryManager* vmm,
                            ObjectCache*          memory_node_cache,
@@ -398,8 +397,9 @@ namespace Rune::Memory {
         // Free memory nodes
         MemoryNode* c_mem_node = _free_page_list;
         while (c_mem_node != nullptr) {
-            _memory_node_cache->free(c_mem_node);
-            c_mem_node = _free_page_list->next;
+            MemoryNode* d_mem_node = c_mem_node;
+            c_mem_node             = c_mem_node->next;
+            _memory_node_cache->free(d_mem_node);
         }
 
         // Delete all slab list references
@@ -516,7 +516,6 @@ namespace Rune::Memory {
             node = nullptr;
         }
     }
-
 
     void ObjectBufNodeHashMap::destroy(ObjectCache* object_buf_cache) {
         purge(object_buf_cache);
@@ -783,7 +782,7 @@ namespace Rune::Memory {
 
         cache->destroy();
         _object_cache_cache.free(cache);
-        //TODO Memory leak here: free object buf node hashmap
+        // TODO Memory leak here: free object buf node hashmap
 
         if (m_start == _limit) {
             _limit -= CACHE_SIZE;

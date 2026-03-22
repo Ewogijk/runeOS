@@ -129,23 +129,6 @@ namespace Rune {
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
 
-
-        // ACPI_TABLE_DESC TableArray[16];
-        // ACPI_STATUS status = AcpiInitializeSubsystem();
-        // LOGGER->warn("AcpiInitializeSubsystem DONE");
-        // status             = AcpiInitializeTables(TableArray, 16, TRUE);
-        // LOGGER->warn("AcpiInitializeTables DONE");
-        // status             = AcpiLoadTables();
-        // LOGGER->warn("AcpiLoadTables DONE");
-        // status             = AcpiEnableSubsystem(ACPI_FULL_INITIALIZATION);
-        // LOGGER->warn("AcpiEnableSubsystem DONE");
-        // status             = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
-        // LOGGER->warn("AcpiInitializeObjects DONE");
-        //
-        // status = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
-        // status = AcpiEnterSleepState(ACPI_STATE_S5);
-        // system.panic("OY POWER OFF FAILED!");
-
 #ifdef RUN_UNIT_TESTS
         LOGGER->info("Run kernel unit tests");
         Test::run_kernel_tests();

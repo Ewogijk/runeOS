@@ -41,6 +41,6 @@ namespace Rune::CPU {
     ///         operations, that is any load/store operation coming before the barrier will be
     ///         executed before any load/store operation coming after the barrier are executed.
     void memory_barrier_compiler();
-} // namespace Rune::Memory
+} // namespace Rune::CPU
 
 #endif // RUNEOS_MEMORYBARRIER_H

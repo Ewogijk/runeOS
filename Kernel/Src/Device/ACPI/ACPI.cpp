@@ -31,7 +31,7 @@ namespace Rune::Device {
             return false;
         }
 
-        status = AcpiInitializeTables(NULL, 16, TRUE);
+        status = AcpiInitializeTables(nullptr, 0, TRUE);
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiInitializeTables failed. Status={}", status);
             return false;

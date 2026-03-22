@@ -570,9 +570,7 @@ namespace Rune {
         }
 
         /// @brief Remove all key-value pairs in the hashmap.
-        void clear() {
-            free_nodes();
-        }
+        void clear() { free_nodes(); }
 
         [[nodiscard]] auto begin() const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {

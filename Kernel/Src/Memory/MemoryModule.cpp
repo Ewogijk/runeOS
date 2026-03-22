@@ -74,8 +74,7 @@ namespace Rune::Memory {
 
         // Init vmm
         init_paging(boot_info.physical_address_width);
-        if (_vmm.start(&_p_map, &_v_map, k_space_layout, HEAP_SIZE)
-            != VMMStartFailure::NONE)
+        if (_vmm.start(&_p_map, &_v_map, k_space_layout, HEAP_SIZE) != VMMStartFailure::NONE)
             return false;
 
         // Adjust pmm to new virtual memory space

@@ -106,7 +106,7 @@ namespace Rune::Memory {
         size_t allocated_count;
 
         /// @brief Virtual address of the page containing the slab.
-        void*  page;
+        void* page;
         /// @brief Size of the slab in bytes.
         size_t slab_size;
 

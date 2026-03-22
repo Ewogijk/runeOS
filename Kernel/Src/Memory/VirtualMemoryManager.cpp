@@ -49,7 +49,7 @@ namespace Rune::Memory {
         free_pta.status = PageTableAccessStatus::OKAY;
         if (alloc_limit > 0) {
             for (MemorySize i = 0; i < alloc_limit; i += page_size) {
-                PhysicalAddr p_addr;
+                PhysicalAddr p_addr = 0;
                 if (!virtual_to_physical_address(v_start + i, p_addr)) continue;
                 free_pta = free_page(base_pt, v_start + i, _pmm);
                 if (free_pta.status != PageTableAccessStatus::OKAY) continue;
@@ -293,7 +293,7 @@ namespace Rune::Memory {
     }
 
     auto VirtualMemoryManager::free(VirtualAddr v_addr) -> bool {
-        PhysicalAddr p_addr;
+        PhysicalAddr p_addr = 0;
         if (!virtual_to_physical_address(v_addr, p_addr))
             // Virtual address is unmapped
             return false;

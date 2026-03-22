@@ -125,7 +125,7 @@ namespace Rune::Memory {
     auto PageTableEntry::get_address() const -> PhysicalAddr {
         //   63        M M-1    12 11         0
         //  | ShiftLeft | Address | ShiftRight |
-        // -> Shift by (ShiftLeft + ShiftRight) amount of bits to get address mask
+        // -> Shift by (ShiftLeft + ShiftRight) number of bits to get address mask
         U8                   p_addr_width = PHYSICAL_ADDRESS_WIDTH;
         NativePageTableEntry mask =
             ((NativePageTableEntry) -1) >> (BIT_COUNT_QWORD - p_addr_width + PTTE_BIT_SIZE);
@@ -229,6 +229,8 @@ namespace Rune::Memory {
         return true;
     }
 
+    auto get_page_offset(VirtualAddr v_addr) -> U16 { return v_addr & PAGE_FRAME_OFFSET_MASK; }
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Page Table Hierarchy Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -325,6 +327,7 @@ namespace Rune::Memory {
         return pta;
     }
 
+    // NOLINTBEGIN cognitive complexity check -> dont care
     auto free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm)
         -> PageTableAccess {
         PageTableAccess pta = access_page_hierarchy(base_pt, v_addr);
@@ -370,6 +373,7 @@ namespace Rune::Memory {
         }
         return pta;
     }
+    // NOLINTEND
 
     auto modify_page_flags(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, bool set)
         -> PageTableAccess {

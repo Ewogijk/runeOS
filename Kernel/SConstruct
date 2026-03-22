@@ -272,6 +272,7 @@ def configure_compiler(env: Environment) -> None:
     # Change scons messages for better readability
     env.Replace(
         ASCOMSTR="Assembling [$SOURCE]",
+        CCCOMSTR="Compiling [$SOURCE]",
         CXXCOMSTR="Compiling [$SOURCE]",
         ARCOMSTR="Creating static library [$TARGET]",
         RANLIBCOMSTR="Updating static library [$TARGET]",

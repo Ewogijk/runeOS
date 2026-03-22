@@ -267,6 +267,11 @@ namespace Rune::Memory {
      */
     auto virtual_to_physical_address(VirtualAddr v_addr, PhysicalAddr& p_addr_out) -> bool;
 
+    /// @brief Get the byte offset into the virtual address.
+    /// @param v_addr Virtual address.
+    /// @return Byte offset into the page.
+    auto get_page_offset(VirtualAddr v_addr) -> U16;
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Page Table Hierarchy Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

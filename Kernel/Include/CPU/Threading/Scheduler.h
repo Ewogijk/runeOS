@@ -120,7 +120,6 @@ namespace Rune::CPU {
         /// @return A reference to the Garbage Collector Thread .
         auto get_garbage_collector_thread() -> SharedPointer<Thread>;
 
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

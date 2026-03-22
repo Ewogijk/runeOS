@@ -67,7 +67,7 @@ namespace Rune::App {
         FrameBuffer           _frame_buffer;
 
         HashMap<U16, SharedPointer<Info>> _app_table;
-        HandleCounter<U16>                    _app_handle_counter;
+        HandleCounter<U16>                _app_handle_counter;
 
         SharedPointer<Info> _active_app;
 

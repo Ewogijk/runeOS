@@ -74,7 +74,7 @@ namespace Rune::CPU {
     }
 
     auto Mutex::try_lock() -> bool {
-        if (!atomic_compare_exchange_acquire(&_lock, 0 , 1)) {
+        if (!atomic_compare_exchange_acquire(&_lock, 0, 1)) {
             trace_state("try_lock-fail");
             return false;
         }

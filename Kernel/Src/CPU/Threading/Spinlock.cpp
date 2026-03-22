@@ -86,5 +86,4 @@ namespace Rune::CPU {
         interrupt_irq_restore(restore_flags);
     }
 
-
 } // namespace Rune::CPU

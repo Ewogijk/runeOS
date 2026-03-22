@@ -17,7 +17,5 @@
 #include <CPU/Threading/MemoryBarrier.h>
 
 namespace Rune::CPU {
-    void memory_barrier_compiler() {
-        asm volatile("" ::: "memory");
-    }
-}
+    void memory_barrier_compiler() { asm volatile("" ::: "memory"); }
+} // namespace Rune::CPU

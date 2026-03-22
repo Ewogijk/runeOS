@@ -18,8 +18,8 @@
 #ifndef RUNEOS_LOCKGUARD_H
 #define RUNEOS_LOCKGUARD_H
 
-#include <KRE/Utility.h>
 #include <KRE/Memory.h>
+#include <KRE/Utility.h>
 
 namespace Rune::CPU {
 

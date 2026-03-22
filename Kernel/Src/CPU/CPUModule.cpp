@@ -347,7 +347,7 @@ namespace Rune::CPU {
     }
 
     auto CPUModule::stop_thread(int handle) -> bool { // NOLINT
-        // Check if a thread with the ID exists
+        // Check if a thread with the handle exists
         SharedPointer<Thread> da_thread(nullptr);
         for (const auto& t : _thread_table) {
             if (t.value->get()->get_handle() == handle) { // NOLINT Only end() is null
@@ -366,6 +366,10 @@ namespace Rune::CPU {
             case ThreadState::NONE:
                 LOGGER->error(R"({} has invalid state "None".)", da_thread->get_unique_name());
                 return false;
+            case ThreadState::CREATED:
+                // NOOP -> Thread has been created and is not yet scheduled, thus there is no need
+                // to stop it
+                return true;
             case ThreadState::READY:
                 if (!_scheduler.get_ready_queue()->remove(handle)) {
                     LOGGER->error(R"({} is missing from the ready queue.)",
@@ -377,7 +381,20 @@ namespace Rune::CPU {
                 // Do not stop the running thread because we do not want a context switch to
                 // happen
                 LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
-                return true; // Early return, so we can just stop the thread after the switch
+                return true;
+            case ThreadState::AWAIT_BLOCK:
+                if (_scheduler.get_running_thread()->get_handle()
+                    == static_cast<ThreadHandle>(handle)) {
+                    LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
+                    return true;
+                } else {
+                    if (!_scheduler.get_ready_queue()->remove(handle)) {
+                        LOGGER->error(R"({} is missing from the ready queue.)",
+                                      da_thread->get_unique_name());
+                        return false;
+                    }
+                }
+                break;
             case ThreadState::BLOCKED:
                 if (da_thread->timer_handle > 0) {
                     if (!_timer->remove_sleeping_thread(handle)) {
@@ -562,9 +579,7 @@ namespace Rune::CPU {
 
     auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
         if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
-        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(),
-                                          name,
-                                          &_scheduler);
+        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name, &_scheduler);
         _spinlock_table.put(sp->get_handle(), sp);
         return sp;
     }

@@ -91,9 +91,10 @@ namespace Rune::CPU {
                 case ThreadState::RUNNING:
                 case ThreadState::AWAIT_BLOCK:
                     if (!_ready_queue->enqueue(_running_thread)) {
-                        LOGGER->warn(R"({}: Reschedule failed (perform_context_switch) (going to {}))",
-                                     _running_thread->get_unique_name(),
-                                     next_thread->get_unique_name());
+                        LOGGER->warn(
+                            R"({}: Reschedule failed (perform_context_switch) (going to {}))",
+                            _running_thread->get_unique_name(),
+                            next_thread->get_unique_name());
                     } else {
                         // Only change from RUNNING -> READY state not AWAIT_BLOCK -> READY
                         // Why? Use case of await_block function is following:
@@ -103,7 +104,7 @@ namespace Rune::CPU {
                         // scheduler->block();
                         //
                         // A thread that is in the AWAIT_BLOCK state could be preempted anytime
-                        // before it is blocked, therefore the state must be preserved across
+                        // before it is blocked, therefore, the state must be preserved across
                         // context switches, otherwise the block() call will fail
                         if (_running_thread->state == ThreadState::RUNNING)
                             _running_thread->state = ThreadState::READY;

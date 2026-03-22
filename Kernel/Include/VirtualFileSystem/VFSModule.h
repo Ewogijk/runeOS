@@ -147,11 +147,11 @@ namespace Rune::VFS {
 
         // All currently opened nodes
         HashMap<U16, SharedPointer<Node>> _node_table;
-        HandleCounter<U16>                    _node_handle_counter;
+        HandleCounter<U16>                _node_handle_counter;
 
         // All currently opened directory streams
         HashMap<U16, SharedPointer<DirectoryStream>> _dir_stream_table;
-        HandleCounter<U16>                               _dir_stream_handle_counter;
+        HandleCounter<U16>                           _dir_stream_handle_counter;
 
         [[nodiscard]] auto resolve(const Path& path) const -> MountPointInfo;
 

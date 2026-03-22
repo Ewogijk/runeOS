@@ -218,7 +218,6 @@ namespace Rune {
         return MemoryRegionType::NONE;
     }
 
-
     auto MemoryMap::operator[](const size_t index) const -> const MemoryRegion& {
         return _map[index];
     }

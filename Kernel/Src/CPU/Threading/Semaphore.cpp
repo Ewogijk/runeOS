@@ -30,7 +30,7 @@ namespace Rune::CPU {
         for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
         int c = _units;
         memory_barrier_read();
-        LOGGER->trace(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, _units, wq);
+        LOGGER->trace(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, c, wq);
     }
 
     Semaphore::Semaphore(SemaphoreHandle handle,
@@ -55,7 +55,6 @@ namespace Rune::CPU {
         for (auto& t : _wait_queue) copy.add_back(t.get());
         return copy;
     }
-
 
     void Semaphore::lock() {
         _lock.lock();
@@ -98,7 +97,6 @@ namespace Rune::CPU {
         }
         _scheduler->get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
         _scheduler->unblock(thread_to_wake);
-        _units = _units;
         memory_barrier_write();
         trace_state("unlock");
     }

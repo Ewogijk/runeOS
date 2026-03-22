@@ -16,6 +16,7 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Collections/LinkedList.h>
 #include <KRE/Logging.h>
 #include <KRE/Math.h>
@@ -56,7 +57,7 @@ CLINK {
         String         m_func_addr;
         String         m_ctx_addr;
         char*          m_argv[3]{};
-        CPU::StartInfo m_start_info;
+        CPU::StartInfo m_start_info{};
     };
 
     /// @brief Stores ACPICA and runeOS interrupt handler information.
@@ -66,12 +67,12 @@ CLINK {
         ACPI_OSD_HANDLER handler;
         void*            context;
 
-        friend bool operator==(const ACPIInterruptHandlerContext& lhs,
-                               const ACPIInterruptHandlerContext& rhs) {
+        friend auto operator==(const ACPIInterruptHandlerContext& lhs,
+                               const ACPIInterruptHandlerContext& rhs) -> bool {
             return lhs.handler == rhs.handler;
         }
-        friend bool operator!=(const ACPIInterruptHandlerContext& lhs,
-                               const ACPIInterruptHandlerContext& rhs) {
+        friend auto operator!=(const ACPIInterruptHandlerContext& lhs,
+                               const ACPIInterruptHandlerContext& rhs) -> bool {
             return lhs.handler != rhs.handler;
         }
     };
@@ -122,7 +123,7 @@ CLINK {
     // Environmental and ACPI Table Interfaces
     // ========================================================================================== //
 
-    ACPI_STATUS acpi_to_rune_initialize() {
+    auto acpi_to_rune_initialize() -> ACPI_STATUS {
         auto* mem_module =
             System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         g_osl_config.m_acpi_memory       = {.start       = Memory::get_virtual_kernel_space_layout().acpi,
@@ -139,30 +140,29 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_terminate() { return AE_OK; }
+    auto acpi_to_rune_terminate() -> ACPI_STATUS { return AE_OK; }
 
-    ACPI_STATUS AcpiOsEnterSleep(UINT8 SleepState, UINT32 RegaValue, UINT32 RegbValue)
-    {
+    auto AcpiOsEnterSleep(UINT8 SleepState, UINT32 RegaValue, UINT32 RegbValue) -> ACPI_STATUS {
         return AE_OK;
     }
 
-    ACPI_PHYSICAL_ADDRESS acpi_to_rune_get_root_pointer() {
+    auto acpi_to_rune_get_root_pointer() -> ACPI_PHYSICAL_ADDRESS {
         return System::instance().get_boot_info().rsdp_addr;
     }
 
-    ACPI_STATUS acpi_to_rune_predefined_override(const ACPI_PREDEFINED_NAMES* predefined_object,
-                                                 ACPI_STRING*                 new_value) {
+    auto acpi_to_rune_predefined_override(const ACPI_PREDEFINED_NAMES* predefined_object,
+                                          ACPI_STRING*                 new_value) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
-    ACPI_STATUS acpi_to_rune_table_override(ACPI_TABLE_HEADER * existing_table,
-                                            ACPI_TABLE_HEADER * *new_table) {
+    auto acpi_to_rune_table_override(ACPI_TABLE_HEADER * existing_table,
+                                     ACPI_TABLE_HEADER * *new_table) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
-    ACPI_STATUS acpi_to_rune_physical_table_override(ACPI_TABLE_HEADER * existing_table,
-                                                     ACPI_PHYSICAL_ADDRESS * new_address,
-                                                     UINT32 * new_table_length) {
+    auto acpi_to_rune_physical_table_override(ACPI_TABLE_HEADER * existing_table,
+                                              ACPI_PHYSICAL_ADDRESS * new_address,
+                                              UINT32 * new_table_length) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
@@ -170,16 +170,18 @@ CLINK {
     // Memory Management
     // ========================================================================================== //
 
+    constexpr U8 OBJ_MIN_SIZE = 16;
+
     auto check_acpi_memory_available(ACPI_SIZE req_memory) -> bool {
         return req_memory
                < abs(g_osl_config.m_acpi_memory.end() - g_osl_config.m_acpi_memory_limit);
     }
 
-    ACPI_STATUS acpi_to_rune_create_cache(char*          cache_name,
-                                          UINT16         object_size,
-                                          UINT16         cache_depth,
-                                          ACPI_CACHE_T** return_cache) {
-        if (object_size < 16) return AE_BAD_PARAMETER;
+    auto acpi_to_rune_create_cache(char*          cache_name,
+                                   UINT16         object_size,
+                                   UINT16         cache_depth,
+                                   ACPI_CACHE_T** return_cache) -> ACPI_STATUS {
+        if (object_size < OBJ_MIN_SIZE) return AE_BAD_PARAMETER;
         auto* mem_module =
             System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto* cache = mem_module->get_heap()->create_new_cache(object_size, 0, false);
@@ -188,7 +190,7 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_delete_cache(ACPI_CACHE_T * cache) {
+    auto acpi_to_rune_delete_cache(ACPI_CACHE_T * cache) -> ACPI_STATUS {
         if (cache == nullptr) return AE_BAD_PARAMETER;
         auto* mem_module =
             System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
@@ -198,13 +200,13 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_purge_cache(ACPI_CACHE_T * cache) {
+    auto acpi_to_rune_purge_cache(ACPI_CACHE_T * cache) -> ACPI_STATUS {
         if (cache == nullptr) return AE_BAD_PARAMETER;
         reinterpret_cast<Memory::ObjectCache*>(cache)->purge();
         return AE_OK;
     }
 
-    void* acpi_to_rune_acquire_object(ACPI_CACHE_T * cache) {
+    auto acpi_to_rune_acquire_object(ACPI_CACHE_T * cache) -> void* {
         if (cache == nullptr) return nullptr;
         auto* obj = reinterpret_cast<Memory::ObjectCache*>(cache)->allocate();
         if (obj != nullptr) {
@@ -213,13 +215,14 @@ CLINK {
         return obj;
     }
 
-    ACPI_STATUS acpi_to_rune_release_object(ACPI_CACHE_T * cache, void* object) {
+    auto acpi_to_rune_release_object(ACPI_CACHE_T * cache, void* object) -> ACPI_STATUS {
         if (cache == nullptr || object == nullptr) return AE_BAD_PARAMETER;
         reinterpret_cast<Memory::ObjectCache*>(cache)->free(object);
         return AE_OK;
     }
 
-    void* acpi_to_rune_map_memory(ACPI_PHYSICAL_ADDRESS phys, ACPI_SIZE length) {
+    // NOLINTBEGIN readability-function-cognitive-complexity -> Fix later
+    auto acpi_to_rune_map_memory(ACPI_PHYSICAL_ADDRESS phys, ACPI_SIZE length) -> void* {
         auto* mem_module =
             System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto page_size    = Memory::get_page_size();
@@ -263,11 +266,10 @@ CLINK {
         }
 
         // Request physical memory
-        bool         allocate_page_frame = true;
-        auto*        pmm                 = mem_module->get_physical_memory_manager();
-        MemoryRegion req_region          = {
-                     .start = phys,
-                     .size  = aligned_size,
+        auto*        pmm        = mem_module->get_physical_memory_manager();
+        MemoryRegion req_region = {
+            .start = phys,
+            .size  = aligned_size,
         };
         // ACPI will request reserved physical memory regions which the PMM does not allow to be
         // allocated and would be bad if done since it is firmware-initialized memory pointing to
@@ -290,8 +292,8 @@ CLINK {
 
         // Try to map the physical memory
         auto base_pt    = Memory::get_base_page_table();
-        int  alloc_fail = 0;
-        for (int i = 0; i < page_count; i++) {
+        U64  alloc_fail = 0;
+        for (U64 i = 0; i < page_count; i++) {
             auto pta = Memory::allocate_page(base_pt,
                                              v_addr + (i * page_size),
                                              phys + (i * page_size),
@@ -303,7 +305,7 @@ CLINK {
             }
         }
         if (alloc_fail > 0) {
-            for (int i = 0; i < alloc_fail; i++) {
+            for (U64 i = 0; i < alloc_fail; i++) {
                 if (Memory::free_page(base_pt, v_addr + (i * page_size), pmm).status
                     != Memory::PageTableAccessStatus::OKAY) {
                     LOGGER->warn("Page free failed: {:#16x}", v_addr + (i * page_size));
@@ -316,7 +318,7 @@ CLINK {
         }
         // The physical memory address is not guaranteed to be page frame aligned
         // -> Add page frame offset to the virtual address
-        U16 page_frame_offset             = phys & 0xFFF;
+        U16 page_frame_offset             = Memory::get_page_offset(phys);
         g_osl_config.m_acpi_memory_limit += aligned_size;
         return reinterpret_cast<void*>(v_addr + page_frame_offset);
     }
@@ -326,7 +328,7 @@ CLINK {
         // -> Align it first
         VirtualAddr v_addr =
             memory_align(memory_pointer_to_addr<void>(virt), Memory::get_page_size(), false);
-        PhysicalAddr p_addr;
+        PhysicalAddr p_addr = 0;
         if (!Memory::virtual_to_physical_address(v_addr, p_addr)) return;
 
         auto* mem_module =
@@ -338,7 +340,7 @@ CLINK {
         auto  base_pt      = Memory::get_base_page_table();
 
         // Free virtual memory
-        for (int i = 0; i < page_count; i++) {
+        for (U64 i = 0; i < page_count; i++) {
             if (Memory::free_page(base_pt, v_addr + (i * page_size), pmm).status
                 != Memory::PageTableAccessStatus::OKAY) {
                 LOGGER->warn("Page free failed: {:0=#16x}", v_addr + (i * page_size));
@@ -377,11 +379,13 @@ CLINK {
             // free_reg is the region right before the memory limit -> decrease memory limit
             g_osl_config.m_acpi_memory_limit = free_reg.start;
     }
+    // NOLINTEND
 
-    ACPI_STATUS acpi_to_rune_get_physical_address(void* virt, ACPI_PHYSICAL_ADDRESS* phys_out) {
+    auto acpi_to_rune_get_physical_address(void* virt, ACPI_PHYSICAL_ADDRESS* phys_out)
+        -> ACPI_STATUS {
         if (virt == nullptr || phys_out == nullptr) return AE_BAD_PARAMETER;
 
-        PhysicalAddr phys;
+        PhysicalAddr phys = 0;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr<void>(virt), phys))
             return AE_ERROR;
 
@@ -389,11 +393,11 @@ CLINK {
         return AE_OK;
     }
 
-    void* acpi_to_rune_allocate(ACPI_SIZE size) {
-        auto a = System::instance()
-                     .get_module<Memory::MemoryModule>(ModuleSelector::MEMORY)
-                     ->get_heap()
-                     ->allocate(size);
+    auto acpi_to_rune_allocate(ACPI_SIZE size) -> void* {
+        auto* a = System::instance()
+                      .get_module<Memory::MemoryModule>(ModuleSelector::MEMORY)
+                      ->get_heap()
+                      ->allocate(size);
         return a;
     }
 
@@ -404,44 +408,44 @@ CLINK {
             ->free(ptr);
     }
 
-    BOOLEAN acpi_to_rune_readable(void* memory, ACPI_SIZE length) {
+    auto acpi_to_rune_readable(void* memory, ACPI_SIZE length) -> BOOLEAN {
         auto page_size    = Memory::get_page_size();
         auto aligned_size = memory_align(length, page_size, true);
         auto page_count   = aligned_size / page_size;
         auto base_pt      = Memory::get_base_page_table();
 
         VirtualAddr v_addr = memory_pointer_to_addr<void>(memory);
-        for (int i = 0; i < page_count; i++) {
+        for (U64 i = 0; i < page_count; i++) {
             auto pta = Memory::find_page(base_pt, v_addr + (i * page_size));
             if (pta.status != Memory::PageTableAccessStatus::OKAY)
                 // Virtual addr is not mapped aka not readable
-                return false;
+                return FALSE;
         }
-        return true;
+        return TRUE;
     }
 
-    BOOLEAN acpi_to_rune_writable(void* memory, ACPI_SIZE length) {
+    auto acpi_to_rune_writable(void* memory, ACPI_SIZE length) -> BOOLEAN {
         auto page_size    = Memory::get_page_size();
         auto aligned_size = memory_align(length, page_size, true);
         auto page_count   = aligned_size / page_size;
         auto base_pt      = Memory::get_base_page_table();
 
         VirtualAddr v_addr = memory_pointer_to_addr<void>(memory);
-        for (int i = 0; i < page_count; i++) {
+        for (U64 i = 0; i < page_count; i++) {
             auto pta = Memory::find_page(base_pt, v_addr + (i * page_size));
             if (pta.status != Memory::PageTableAccessStatus::OKAY)
                 // Virtual addr is not mapped aka not readable
-                return false;
-            if (!pta.path[0].is_write_allowed()) return false;
+                return FALSE;
+            if (!pta.path[0].is_write_allowed()) return FALSE;
         }
-        return true;
+        return TRUE;
     }
 
     // ========================================================================================== //
     // Multithreading and Scheduling Services
     // ========================================================================================== //
 
-    ACPI_THREAD_ID acpi_to_rune_get_thread_id() {
+    auto acpi_to_rune_get_thread_id() -> ACPI_THREAD_ID {
         CPU::ThreadHandle h = System::instance()
                                   .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                                   ->get_scheduler()
@@ -450,9 +454,8 @@ CLINK {
         return static_cast<ACPI_THREAD_ID>(h);
     }
 
-    ACPI_STATUS acpi_to_rune_execute(ACPI_EXECUTE_TYPE      type,
-                                     ACPI_OSD_EXEC_CALLBACK func,
-                                     void*                  ctx) {
+    auto acpi_to_rune_execute(ACPI_EXECUTE_TYPE type, ACPI_OSD_EXEC_CALLBACK func, void* ctx)
+        -> ACPI_STATUS {
         if (func == nullptr) return AE_BAD_PARAMETER;
 
         static constexpr uintptr_t RADIX_HEX = 16;
@@ -461,8 +464,11 @@ CLINK {
         t_ctx.m_func_addr = int_to_string(memory_pointer_to_addr(func), RADIX_HEX);
         t_ctx.m_ctx_addr  = int_to_string(memory_pointer_to_addr(ctx), RADIX_HEX);
 
-        t_ctx.m_argv[0]         = const_cast<char*>(t_ctx.m_func_addr.to_cstr());
-        t_ctx.m_argv[1]         = const_cast<char*>(t_ctx.m_ctx_addr.to_cstr());
+        // NOLINTBEGIN cppcoreguidelines-pro-type-const-cast -> Required, to_cstr() is const char*
+        //              but m_argv must be char*
+        t_ctx.m_argv[0] = const_cast<char*>(t_ctx.m_func_addr.to_cstr());
+        t_ctx.m_argv[1] = const_cast<char*>(t_ctx.m_ctx_addr.to_cstr());
+        // NOLINTEND
         t_ctx.m_argv[2]         = nullptr;
         t_ctx.m_start_info.argc = 2;
         t_ctx.m_start_info.argv = t_ctx.m_argv;
@@ -475,6 +481,7 @@ CLINK {
             if (!parse_int<uintptr_t>(start_info->argv[1], RADIX_HEX, ptr)) return -1;
             auto* ctx = reinterpret_cast<void*>(ptr);
 
+            if (func == nullptr) return -1;
             func(ctx);
             return 0;
         };
@@ -510,8 +517,10 @@ CLINK {
 
     void acpi_to_rune_wait_events_complete() {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        for (auto& started_threads : g_osl_config.m_acpi_threads)
+        for (const auto& started_threads : g_osl_config.m_acpi_threads)
+            // NOLINTBEGIN clang-analyzer-core.NullDereference -> iterator is null checked
             cpu_module->join_thread(*started_threads.key);
+        // NOLINTEND
 
         // At this point all threads have finished execution or had already finished
         g_osl_config.m_acpi_threads.clear();
@@ -521,7 +530,9 @@ CLINK {
     // Mutual Exclusion and Synchronization
     // ========================================================================================== //
 
-    ACPI_STATUS acpi_to_rune_mutex_create(ACPI_MUTEX * out_handle) {
+    constexpr U32 ACPI_NO_TIMEOUT = 0xFFFF;
+
+    auto acpi_to_rune_mutex_create(ACPI_MUTEX * out_handle) -> ACPI_STATUS {
         if (out_handle == nullptr) return AE_BAD_PARAMETER;
 
         auto m = System::instance()
@@ -541,7 +552,7 @@ CLINK {
         g_osl_config.m_mutex_recursion_depth.remove(memory_pointer_to_addr(mutex));
     }
 
-    ACPI_STATUS acpi_to_rune_mutex_acquire(ACPI_MUTEX mutex, UINT16 timeout_ms) {
+    auto acpi_to_rune_mutex_acquire(ACPI_MUTEX mutex, UINT16 timeout_ms) -> ACPI_STATUS {
         if (mutex == nullptr) return AE_BAD_PARAMETER;
         auto* m = reinterpret_cast<CPU::Mutex*>(mutex);
 
@@ -551,7 +562,7 @@ CLINK {
             g_osl_config.m_mutex_recursion_depth[memory_pointer_to_addr(mutex)]++;
             return AE_OK;
         }
-        if (timeout_ms == 0xFFFF) {
+        if (timeout_ms == ACPI_NO_TIMEOUT) {
             // Lock without timeout
             m->lock();
             g_osl_config.m_mutex_recursion_depth[memory_pointer_to_addr(mutex)] = 1;
@@ -560,8 +571,8 @@ CLINK {
         auto* timer =
             System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();
         constexpr U32 MILLI_TO_NANO = 1000000;
-        U64           end           = timer->get_time_since_start() + (MILLI_TO_NANO * timeout_ms);
-        bool          locked        = false;
+        U64  end    = timer->get_time_since_start() + static_cast<U64>(MILLI_TO_NANO * timeout_ms);
+        bool locked = false;
         while (timer->get_time_since_start() < end) {
             locked = m->try_lock();
             if (locked) break;
@@ -571,7 +582,7 @@ CLINK {
     }
 
     void acpi_to_rune_mutex_release(ACPI_MUTEX mutex) {
-        if (mutex) {
+        if (mutex != nullptr) {
             if (g_osl_config.m_mutex_recursion_depth[memory_pointer_to_addr(mutex)] == 0) return;
 
             g_osl_config.m_mutex_recursion_depth[memory_pointer_to_addr(mutex)]--;
@@ -581,23 +592,23 @@ CLINK {
         }
     }
 
-    ACPI_STATUS acpi_to_rune_semaphore_create(UINT32 max_units,
-                                              UINT32 initial_units,
-                                              ACPI_SEMAPHORE * out_handle) {
+    auto acpi_to_rune_semaphore_create(UINT32 max_units,
+                                       UINT32 initial_units,
+                                       ACPI_SEMAPHORE * out_handle) -> ACPI_STATUS {
         if (out_handle == nullptr || initial_units > max_units) return AE_BAD_PARAMETER;
 
         auto sem = System::instance()
                        .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                        ->create_semaphore(String::format("ACPI-Semaphore-{}",
                                                          g_osl_config.m_semaphore_name_counter++),
-                                          initial_units,
-                                          max_units);
+                                          static_cast<int>(initial_units),
+                                          static_cast<int>(max_units));
         if (!sem) return AE_NO_MEMORY;
         *out_handle = sem.get();
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_semaphore_delete(ACPI_SEMAPHORE sem) {
+    auto acpi_to_rune_semaphore_delete(ACPI_SEMAPHORE sem) -> ACPI_STATUS {
         return System::instance()
                        .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                        ->free_semaphore(reinterpret_cast<CPU::Semaphore*>(sem)->get_handle())
@@ -605,11 +616,12 @@ CLINK {
                    : AE_BAD_PARAMETER;
     }
 
-    ACPI_STATUS acpi_to_rune_semaphore_wait(ACPI_SEMAPHORE sem, UINT32 units, UINT16 timeout_ms) {
+    auto acpi_to_rune_semaphore_wait(ACPI_SEMAPHORE sem, UINT32 units, UINT16 timeout_ms)
+        -> ACPI_STATUS {
         if (sem == nullptr) return AE_BAD_PARAMETER;
         auto*  s       = reinterpret_cast<CPU::Semaphore*>(sem);
         UINT32 c_units = 0; // Currently acquired units
-        if (timeout_ms == 0xFFFF) {
+        if (timeout_ms == ACPI_NO_TIMEOUT) {
             // Lock without timeout
             while (c_units < units) {
                 s->lock();
@@ -630,7 +642,7 @@ CLINK {
         auto* timer =
             System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();
         constexpr U32 MILLI_TO_NANO = 1000000;
-        U64           end           = timer->get_time_since_start() + (MILLI_TO_NANO * timeout_ms);
+        U64 end = timer->get_time_since_start() + static_cast<U64>(MILLI_TO_NANO * timeout_ms);
         while (timer->get_time_since_start() < end) {
             if (s->try_lock()) {
                 c_units++;
@@ -640,7 +652,7 @@ CLINK {
         return c_units < units ? AE_TIME : AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_semaphore_signal(ACPI_SEMAPHORE sem, UINT32 units) {
+    auto acpi_to_rune_semaphore_signal(ACPI_SEMAPHORE sem, UINT32 units) -> ACPI_STATUS {
         if (sem == nullptr) return AE_BAD_PARAMETER;
         auto*  s       = reinterpret_cast<CPU::Semaphore*>(sem);
         UINT32 c_units = 0;
@@ -652,7 +664,7 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_spinlock_create(ACPI_SPINLOCK * out_handle) {
+    auto acpi_to_rune_spinlock_create(ACPI_SPINLOCK * out_handle) -> ACPI_STATUS {
         if (out_handle == nullptr) return AE_BAD_PARAMETER;
 
         auto sp = System::instance()
@@ -670,7 +682,7 @@ CLINK {
             ->free_spinlock(reinterpret_cast<CPU::Spinlock*>(lock)->get_handle());
     }
 
-    ACPI_CPU_FLAGS acpi_to_rune_spinlock_acquire(ACPI_SPINLOCK lock) {
+    auto acpi_to_rune_spinlock_acquire(ACPI_SPINLOCK lock) -> ACPI_CPU_FLAGS {
         return reinterpret_cast<CPU::Spinlock*>(lock)->lock_safe();
     }
 
@@ -682,9 +694,8 @@ CLINK {
     // Interrupt Handling
     // ========================================================================================== //
 
-    ACPI_STATUS acpi_to_rune_install_interrupt_handler(UINT32           irq,
-                                                       ACPI_OSD_HANDLER handler,
-                                                       void*            ctx) {
+    auto acpi_to_rune_install_interrupt_handler(UINT32 irq, ACPI_OSD_HANDLER handler, void* ctx)
+        -> ACPI_STATUS {
         if (handler == nullptr || irq >= CPU::irq_get_line_limit()) return AE_BAD_PARAMETER;
         U16                         dev_handle = g_osl_config.m_interrupt_handler_counter++;
         ACPIInterruptHandlerContext int_ctx{.dev_handle = dev_handle,
@@ -696,7 +707,7 @@ CLINK {
             System::instance()
                 .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                 ->install_irq_handler(irq, int_ctx.dev_handle, int_ctx.dev_name, [&handler, &ctx] {
-                    int ret = handler(ctx);
+                    UINT32 ret = handler(ctx);
                     return ret == ACPI_INTERRUPT_HANDLED ? CPU::IRQState::HANDLED
                                                          : CPU::IRQState::PENDING;
                 });
@@ -706,7 +717,8 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_remove_interrupt_handler(UINT32 irq, ACPI_OSD_HANDLER handler) {
+    auto acpi_to_rune_remove_interrupt_handler(UINT32 irq, ACPI_OSD_HANDLER handler)
+        -> ACPI_STATUS {
         if (handler == nullptr || irq >= CPU::irq_get_line_limit()) return AE_BAD_PARAMETER;
 
         ACPIInterruptHandlerContext* int_ctx = nullptr;
@@ -729,39 +741,40 @@ CLINK {
     // Memory Access and Memory Mapped I/O
     // ========================================================================================== //
 
-    extern ACPI_STATUS acpi_to_rune_read_memory(ACPI_PHYSICAL_ADDRESS addr,
-                                                UINT64 * val,
-                                                UINT32 width) {
+    auto acpi_to_rune_read_memory(ACPI_PHYSICAL_ADDRESS addr, UINT64 * val, UINT32 width)
+        -> ACPI_STATUS {
         if (addr == 0x0 || val == nullptr
-            || (width != 8 && width != 16 && width != 32 && width != 64))
+            || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
+                && width != BIT_COUNT_QWORD))
             return AE_BAD_PARAMETER;
 
         VirtualAddr v_addr = Memory::physical_to_virtual_address(addr);
-        if (width == 8)
+        if (width == BIT_COUNT_BYTE)
             *val = *memory_addr_to_pointer<U8>(v_addr);
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             *val = *memory_addr_to_pointer<U16>(v_addr);
-        else if (width == 32)
+        else if (width == BIT_COUNT_DWORD)
             *val = *memory_addr_to_pointer<U32>(v_addr);
-        else if (width == 64)
+        else if (width == BIT_COUNT_QWORD)
             *val = *memory_addr_to_pointer<U64>(v_addr);
         return AE_OK;
     }
 
-    extern ACPI_STATUS acpi_to_rune_write_memory(ACPI_PHYSICAL_ADDRESS addr,
-                                                 UINT64                val,
-                                                 UINT32                width) {
-        if (addr == 0x0 || (width != 8 && width != 16 && width != 32 && width != 64))
+    auto acpi_to_rune_write_memory(ACPI_PHYSICAL_ADDRESS addr, UINT64 val, UINT32 width)
+        -> ACPI_STATUS {
+        if (addr == 0x0
+            || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
+                && width != BIT_COUNT_QWORD))
             return AE_BAD_PARAMETER;
 
         VirtualAddr v_addr = Memory::physical_to_virtual_address(addr);
-        if (width == 8)
+        if (width == BIT_COUNT_BYTE)
             *memory_addr_to_pointer<U8>(v_addr) = val;
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             *memory_addr_to_pointer<U16>(v_addr) = val;
-        else if (width == 32)
+        else if (width == BIT_COUNT_DWORD)
             *memory_addr_to_pointer<U32>(v_addr) = val;
-        else if (width == 64)
+        else if (width == BIT_COUNT_QWORD)
             *memory_addr_to_pointer<U64>(v_addr) = val;
         return AE_OK;
     }
@@ -770,22 +783,25 @@ CLINK {
     // Port Input/Output
     // ========================================================================================== //
 
-    extern ACPI_STATUS acpi_to_rune_read_port(ACPI_IO_ADDRESS port, UINT32 * val, UINT32 width) {
-        if (val == nullptr || (width != 8 && width != 16 && width != 32)) return AE_BAD_PARAMETER;
-        if (width == 8)
+    auto acpi_to_rune_read_port(ACPI_IO_ADDRESS port, UINT32 * val, UINT32 width) -> ACPI_STATUS {
+        if (val == nullptr
+            || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD))
+            return AE_BAD_PARAMETER;
+        if (width == BIT_COUNT_BYTE)
             *val = CPU::in_b(port);
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             *val = CPU::in_w(port);
         else
             *val = CPU::in_dw(port);
         return AE_OK;
     }
 
-    extern ACPI_STATUS acpi_to_rune_write_port(ACPI_IO_ADDRESS port, UINT32 val, UINT32 width) {
-        if (width != 8 && width != 16 && width != 32) return AE_BAD_PARAMETER;
-        if (width == 8)
+    auto acpi_to_rune_write_port(ACPI_IO_ADDRESS port, UINT32 val, UINT32 width) -> ACPI_STATUS {
+        if (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD)
+            return AE_BAD_PARAMETER;
+        if (width == BIT_COUNT_BYTE)
             CPU::out_b(port, static_cast<U8>(val));
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             CPU::out_w(port, static_cast<U16>(val));
         else
             CPU::out_dw(port, static_cast<U32>(val));
@@ -796,20 +812,24 @@ CLINK {
     // PCI Configuration Space Access
     // ========================================================================================== //
 
-    ACPI_STATUS
-    acpi_to_rune_read_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 * val, UINT32 width) {
-        if (val == nullptr || (width != 8 && width != 16 && width != 32 && width != 64))
+    constexpr U16 PCI_IO_PORT_MAX_BYTES = 0x100;
+
+    auto acpi_to_rune_read_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 * val, UINT32 width)
+        -> ACPI_STATUS {
+        if (val == nullptr
+            || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
+                && width != BIT_COUNT_QWORD))
             return AE_BAD_PARAMETER;
-        if (reg > (0x100 - (width / 8)))
+        if (reg > (PCI_IO_PORT_MAX_BYTES - (width / BIT_COUNT_BYTE)))
             // Reading the PCI configuration space with the I/O port method only supports 256 bytes
             // -> Report error because we cannot serve this request
             return AE_ERROR;
 
-        if (width == 8)
+        if (width == BIT_COUNT_BYTE)
             *val = Device::PCI::read_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             *val = Device::PCI::read_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
-        else if (width == 32)
+        else if (width == BIT_COUNT_DWORD)
             *val = Device::PCI::read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
         else {
             *val = static_cast<U64>(
@@ -820,21 +840,21 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_write_pci_config(ACPI_PCI_ID pci_id,
-                                              UINT32      reg,
-                                              UINT64      val,
-                                              UINT32      width) {
-        if (width != 8 && width != 16 && width != 32 && width != 64) return AE_BAD_PARAMETER;
-        if (reg > (0x100 - (width / 8)))
+    auto acpi_to_rune_write_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 val, UINT32 width)
+        -> ACPI_STATUS {
+        if (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
+            && width != BIT_COUNT_QWORD)
+            return AE_BAD_PARAMETER;
+        if (reg > (PCI_IO_PORT_MAX_BYTES - (width / BIT_COUNT_BYTE)))
             // Writing the PCI configuration space with the I/O port method only supports 256 bytes
             // -> Report error because we cannot serve this request
             return AE_ERROR;
 
-        if (width == 8)
+        if (width == BIT_COUNT_BYTE)
             Device::PCI::write_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
-        else if (width == 16)
+        else if (width == BIT_COUNT_WORD)
             Device::PCI::write_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
-        else if (width == 32)
+        else if (width == BIT_COUNT_DWORD)
             Device::PCI::write_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
         else {
             Device::PCI::write_dword(pci_id.Bus,
@@ -854,7 +874,7 @@ CLINK {
     // ========================================================================================== //
     // Formatted Output
     // ========================================================================================== //
-
+    // NOLINTBEGIN
     void acpi_to_rune_vprintf(const char* format, va_list args) {
         constexpr size_t MAX_ARGS = 16;
         Argument         f_args[MAX_ARGS];
@@ -987,8 +1007,8 @@ CLINK {
                     case Length::LL: f_args[arg_count++] = va_arg(args, long long); break;
                     default:         f_args[arg_count++] = va_arg(args, int); break;
                 }
-                precision_str = ""; // Precision isn't allowed for integers
-                r_fstr += build_placeholder("");
+                precision_str  = ""; // Precision isn't allowed for integers
+                r_fstr        += build_placeholder("");
             } else if (c == 'u') {
                 // Unsigned decimal
                 switch (length) {
@@ -1002,8 +1022,8 @@ CLINK {
                     case Length::LL: f_args[arg_count++] = va_arg(args, unsigned long long); break;
                     default:         f_args[arg_count++] = va_arg(args, unsigned int); break;
                 }
-                precision_str = ""; // Precision isn't allowed for integers
-                r_fstr += build_placeholder("");
+                precision_str  = ""; // Precision isn't allowed for integers
+                r_fstr        += build_placeholder("");
             } else if (c == 'o') {
                 // Octal
                 switch (length) {
@@ -1017,8 +1037,8 @@ CLINK {
                     case Length::LL: f_args[arg_count++] = va_arg(args, unsigned long long); break;
                     default:         f_args[arg_count++] = va_arg(args, unsigned int); break;
                 }
-                precision_str = ""; // Precision isn't allowed for integers
-                r_fstr += build_placeholder("o");
+                precision_str  = ""; // Precision isn't allowed for integers
+                r_fstr        += build_placeholder("o");
             } else if (c == 'x' || c == 'X') {
                 // Hex (kernel only has lowercase 'x'; uppercase is not supported, skip distinction)
                 switch (length) {
@@ -1033,8 +1053,8 @@ CLINK {
                     default:         f_args[arg_count++] = va_arg(args, unsigned int); break;
                 }
                 if (!width_str.is_empty()) zero_pad = true;
-                precision_str = ""; // Precision isn't allowed for integers
-                r_fstr += build_placeholder("x");
+                precision_str  = ""; // Precision isn't allowed for integers
+                r_fstr        += build_placeholder("x");
             } else if (c == 'f' || c == 'F' || c == 'e' || c == 'E' || c == 'g' || c == 'G'
                        || c == 'a' || c == 'A') {
                 // Floating point — scientific/hex/shortest not supported by kernel, use default
@@ -1053,7 +1073,7 @@ CLINK {
                 // Pointer — print as hex with prefix
                 alt_form             = true;
                 f_args[arg_count++]  = (unsigned long) va_arg(args, void*);
-                precision_str = ""; // Precision isn't allowed for integers
+                precision_str        = ""; // Precision isn't allowed for integers
                 r_fstr              += build_placeholder("x");
             } else {
                 // '%n' and anything unknown — not supported, consume the argument if needed
@@ -1062,6 +1082,7 @@ CLINK {
         }
         LOGGER->log(LogLevel::INFO, r_fstr, f_args, arg_count);
     }
+    // NOLINTEND
 
     void acpi_to_rune_redirect_output(void* destination) {
         // Not supported
@@ -1071,21 +1092,21 @@ CLINK {
     // System ACPI Table Access
     // ========================================================================================== //
 
-    ACPI_STATUS acpi_to_rune_get_table_by_address(ACPI_PHYSICAL_ADDRESS address,
-                                                  ACPI_TABLE_HEADER * *out_table) {
+    auto acpi_to_rune_get_table_by_address(ACPI_PHYSICAL_ADDRESS address,
+                                           ACPI_TABLE_HEADER * *out_table) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
-    ACPI_STATUS acpi_to_rune_get_table_by_index(UINT32 table_index,
-                                                ACPI_TABLE_HEADER * *out_table,
-                                                ACPI_PHYSICAL_ADDRESS * *out_address) {
+    auto acpi_to_rune_get_table_by_index(UINT32 table_index,
+                                         ACPI_TABLE_HEADER * *out_table,
+                                         ACPI_PHYSICAL_ADDRESS * *out_address) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
-    ACPI_STATUS acpi_to_rune_get_table_by_name(char*                  signature,
-                                               UINT32                 instance,
-                                               ACPI_TABLE_HEADER**    out_table,
-                                               ACPI_PHYSICAL_ADDRESS* out_address) {
+    auto acpi_to_rune_get_table_by_name(char*                  signature,
+                                        UINT32                 instance,
+                                        ACPI_TABLE_HEADER**    out_table,
+                                        ACPI_PHYSICAL_ADDRESS* out_address) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
@@ -1093,17 +1114,18 @@ CLINK {
     // Miscellaneous
     // ========================================================================================== //
 
-    UINT64 acpi_to_rune_get_timer() {
+    auto acpi_to_rune_get_timer() -> UINT64 {
+        constexpr U8 TENS_OF_NS_DIVIDER = 100;
         return System::instance()
                    .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                    ->get_system_timer()
                    ->get_time_since_start()
-               / 100;
+               / TENS_OF_NS_DIVIDER;
     }
 
-    ACPI_STATUS acpi_to_rune_signal(UINT32 func, void* info) {
+    auto acpi_to_rune_signal(UINT32 func, void* info) -> ACPI_STATUS {
         if (func == ACPI_SIGNAL_FATAL) {
-            ACPI_SIGNAL_FATAL_INFO* fatal_info = reinterpret_cast<ACPI_SIGNAL_FATAL_INFO*>(info);
+            auto* fatal_info = reinterpret_cast<ACPI_SIGNAL_FATAL_INFO*>(info);
             System::instance().panic("ACPI FATAL: Type={}, Code={}, Argument={}",
                                      fatal_info->Type,
                                      fatal_info->Code,
@@ -1113,7 +1135,8 @@ CLINK {
         return AE_OK;
     }
 
-    ACPI_STATUS acpi_to_rune_get_line(char* buffer, UINT32 buffer_length, UINT32* bytes_read) {
+    auto acpi_to_rune_get_line(char* buffer, UINT32 buffer_length, UINT32* bytes_read)
+        -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED; // Dont care about the ACPI debugger atm
     }
 }
