@@ -38,7 +38,7 @@ done
 echo \> Check C/C++ Code formatting
 echo \> ===========================================
 echo \> Check Kernel code...
-find Kernel/ -name '*.h' -o -name '*.cpp' | xargs clang-format-19 --dry-run -Werror
+find Kernel/ -path Kernel/Include/Device/ACPI/ACPICA -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
 echo \> '                         ' OKAY
 
 echo \> Check App code...
