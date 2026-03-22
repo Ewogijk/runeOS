@@ -18,36 +18,70 @@
 #ifndef RUNEOS_RESOURCE_H
 #define RUNEOS_RESOURCE_H
 
-#include "KRE/Collections/Array.h"
+#include <KRE/Collections/Array.h>
 
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/TypeTraits.h>
 
 namespace Rune {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      ID Counter
+    //                                      Resource
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * @brief The handle counter provides a subsystem with unique handles for it's resources.
-     *
-     * <p>
-     *  A handle must be a unsigned numeric type, so it can be incremented.
-     * </p>
-     * <p>
-     *  The handle 0 is reserved and means the resource is invalid or in case of referencing means
-     * that no resource is referenced. 0 is basically a null pointer in a sense.
-     * </p>
-     * @tparam Counter
-     */
-    template <typename Handle>
-    class IDCounter {
+    /// @brief A resource is a uniquely identifiable object with a human-readable name, e.g. a file.
+    ///
+    /// A handle is an unsigned integer that is unique for its specific type, more concrete no two
+    /// files are allowed to have the same handle, but a file and say thread are allowed to have the
+    /// same handle, because they are different types of resources.
+    ///
+    /// The handle 0 is the NONE handle and indicates a non-existent resource, this handle must not
+    /// be assigned to any valid resource.
+    ///
+    /// For debugging purpose each handle has name, names are not required to be unique.
+    ///
+    /// @tparam ResourceType
+    /// @tparam Handle
+    template <Integer Handle>
+    class Resource {
+        Handle _handle;
+        String _name;
+
+      public:
+        /// @brief The handle 0 indicates non-existent resources.
+        static constexpr U8 HANDLE_NONE = 0;
+
+        Resource(Handle handle, String name) : _handle(handle), _name(name) {}
+
+        /// @brief
+        /// @return The handle of this resource.
+        [[nodiscard]] auto get_handle() const -> Handle { return _handle; }
+
+        /// @brief
+        /// @return The name of this resource.
+        [[nodiscard]] auto get_name() const -> String { return _name; }
+
+        /// @brief
+        /// @return The unique name contains handle and name.
+        [[nodiscard]] auto get_unique_name() const -> String {
+            return String::format("{}-{}", _handle, _name);
+        }
+    };
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                      Handle Counter
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+
+    /// @brief The handle counter provides unique handles for newly created resources.
+    /// @tparam Handle
+    template <Integer Handle>
+    class HandleCounter {
         Handle _counter;
 
       public:
-        explicit IDCounter() : _counter(0) {}
+        explicit HandleCounter() : _counter(Resource<Handle>::HANDLE_NONE) {}
 
         /**
          * @brief Check if the handle counter has free resource handles.

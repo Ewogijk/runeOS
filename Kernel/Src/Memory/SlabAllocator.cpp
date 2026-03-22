@@ -211,14 +211,17 @@ namespace Rune::Memory {
 
     auto ObjectCache::grow() -> bool {
         VirtualAddr page = (_free_page_list != nullptr) ? _free_page_list->mem_addr : _limit;
-        size_t      aligned_size =
+        // Align size to requested alignment
+        size_t aligned_size =
             _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
+        // Align size to page size
         size_t slab_size = aligned_size;
         if (!memory_is_aligned(slab_size, Memory::get_page_size()))
             slab_size = memory_align(aligned_size, Memory::get_page_size(), true);
-
+        // Check if enough memory is available
         if ((page + slab_size) >= _managed.end()) return false;
 
+        // Request virtual memory
         bool        all_fine   = true;
         VirtualAddr last_alloc = 0x0;
         for (VirtualAddr i = page; i < page + slab_size; i += Memory::get_page_size()) {
@@ -229,21 +232,26 @@ namespace Rune::Memory {
             }
         }
         if (!all_fine) {
-            for (VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size())
+            for (VirtualAddr i = page; i < last_alloc; i += Memory::get_page_size()) {
                 if (!_vmm->free(i)) break;
+                invalidate_page(i);
+            }
             return false;
         }
 
         if (page < _limit) {
+            // Remove the free memory gap in the managed memory region
             MemoryNode* f   = _free_page_list;
             _free_page_list = _free_page_list->next;
             f->next         = nullptr;
             f->mem_addr     = 0;
             _memory_node_cache->free(f);
         } else {
+            // Allocation at the end of the used memory -> increment the limit
             _limit += slab_size;
         }
 
+        // Init the s
         Slab* slab = _type == CacheType::ON_SLAB ? Slab::create_on_slab(aligned_size, page)
                                                  : Slab::create_off_slab(_slab_cache,
                                                                          _object_buf_node_cache,
@@ -262,6 +270,8 @@ namespace Rune::Memory {
     auto ObjectCache::get_managed() const -> MemoryRegion { return _managed; }
 
     auto ObjectCache::get_type() const -> CacheType { return _type; }
+
+    auto ObjectCache::get_object_size() const -> size_t { return _object_size; }
 
     auto ObjectCache::init(VirtualMemoryManager* vmm,
                            ObjectCache*          memory_node_cache,
@@ -376,16 +386,40 @@ namespace Rune::Memory {
         return memory_addr_to_pointer<void>(page + ((idx % obj_count) * _object_size));
     }
 
-    void ObjectCache::destroy() {
+    void ObjectCache::purge() {
         if (_type == CacheType::OFF_SLAB) {
             destroy_slab_list(_full_list, _slab_cache);
             destroy_slab_list(_partial_list, _slab_cache);
             destroy_slab_list(_empty_list, _slab_cache);
+            _object_buf_node_hash_map->purge(_object_buf_node_cache);
+        }
+
+        // Free memory nodes
+        MemoryNode* c_mem_node = _free_page_list;
+        while (c_mem_node != nullptr) {
+            MemoryNode* d_mem_node = c_mem_node;
+            c_mem_node             = c_mem_node->next;
+            _memory_node_cache->free(d_mem_node);
+        }
+
+        // Delete all slab list references
+        _full_list    = nullptr;
+        _partial_list = nullptr;
+        _empty_list   = nullptr;
+        _slab_count   = 0;
+    }
+
+    void ObjectCache::destroy() {
+        purge();
+        if (_type == CacheType::OFF_SLAB) {
             _object_buf_node_hash_map->destroy(_object_buf_node_cache);
         }
 
-        for (VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size())
+        // Free virtual memory
+        for (VirtualAddr addr = _managed.start; addr < _limit; addr += Memory::get_page_size()) {
             _vmm->free(addr);
+            invalidate_page(addr);
+        }
 
         _vmm               = nullptr;
         _memory_node_cache = nullptr;
@@ -464,7 +498,7 @@ namespace Rune::Memory {
         return nullptr;
     }
 
-    void ObjectBufNodeHashMap::destroy(ObjectCache* object_buf_cache) {
+    void ObjectBufNodeHashMap::purge(ObjectCache* object_buf_cache) {
         for (auto& node : _nodes) {
             while (node != nullptr) {
                 HashNode* next      = node->next;
@@ -481,7 +515,10 @@ namespace Rune::Memory {
             }
             node = nullptr;
         }
+    }
 
+    void ObjectBufNodeHashMap::destroy(ObjectCache* object_buf_cache) {
+        purge(object_buf_cache);
         _hash_node_cache = nullptr;
     }
 
@@ -745,6 +782,7 @@ namespace Rune::Memory {
 
         cache->destroy();
         _object_cache_cache.free(cache);
+        // TODO Memory leak here: free object buf node hashmap
 
         if (m_start == _limit) {
             _limit -= CACHE_SIZE;

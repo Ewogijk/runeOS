@@ -16,7 +16,7 @@
 
 #include <KRE/System/System.h>
 
-#include <KRE/CppRuntimeSupport.h>
+#include <KRE/CppRTS.h>
 
 #include <BuiltInPlugin/8259PICDriverPlugin.h>
 #include <BuiltInPlugin/AHCIDriverPlugin.h>
@@ -110,8 +110,7 @@ namespace Rune {
 
         auto& system = System::instance();
         if (system._is_booted) {
-            LOGGER->warn(
-                "Kernel boot phase 3 was requested. Aborting the kernel has already booted!");
+            LOGGER->warn("Kernel boot phase 3 has already run! Aborting...");
             return 0;
         }
 
@@ -124,7 +123,6 @@ namespace Rune {
         for (auto& module_loader : module_loaders) module_loader->load();
 
         auto* cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
-
         auto* app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         LogContext::instance().register_layout(
             "detailed-layout",
@@ -157,8 +155,7 @@ namespace Rune {
 
     void System::boot_phase2(BootInfo boot_info) {
         if (_is_booted) {
-            LOGGER->warn(
-                "Kernel boot phase 2 was requested. Aborting the kernel has already booted!");
+            LOGGER->warn("Kernel boot phase 2 has already run! Aborting...");
             return;
         }
 
@@ -218,6 +215,8 @@ namespace Rune {
         cpu_subsys->get_scheduler()->await_block();
         cpu_subsys->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
+
+    auto System::get_boot_info() -> BootInfo& { return _boot_info; }
 
     void System::shutdown() { // NOLINT
         // Workaround solution to shut down the system

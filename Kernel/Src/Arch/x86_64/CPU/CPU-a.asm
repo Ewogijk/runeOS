@@ -33,13 +33,16 @@ get_stack_pointer:
 ;   -
 global halt:
 halt:
-    push rbp
-    mov rbp, rsp
-
     hlt
 
-    leave
-    ret
+; CLINK void pause();
+; Args:
+;   -
+; Returns:
+;   -
+global pause
+pause:
+    pause
 
 
 ; CLINK Register get_page_fault_address();

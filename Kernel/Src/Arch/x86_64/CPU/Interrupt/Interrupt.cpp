@@ -246,7 +246,7 @@ namespace Rune::CPU {
         }
         if (pic_idx < 0) return -1;
 
-        interrupt_enable();
+        interrupt_irq_enable();
         return pic_idx;
     }
 
@@ -272,10 +272,10 @@ namespace Rune::CPU {
         -> bool {
         if (irq_line >= IRQ_COUNT || (PIC == nullptr)) return false;
 
-        interrupt_disable();
+        interrupt_irq_disable();
         for (auto& c : IRQ_HANDLER_TABLE[irq_line]) {
             if (c.entry.device_handle == dev_handle) {
-                interrupt_enable();
+                interrupt_irq_enable();
                 return false; // An IRQ handler for the device is already installed
             }
         }
@@ -291,14 +291,14 @@ namespace Rune::CPU {
             PIC->clear_mask(irq_line); // Enable IRQ on PIC
         }
         // NOLINTEND
-        interrupt_enable();
+        interrupt_irq_enable();
         return true;
     }
 
     auto irq_uninstall_handler(U8 irq_line, U16 dev_handle) -> bool {
         if (irq_line >= IRQ_COUNT || (PIC == nullptr)) return false;
 
-        interrupt_disable();
+        interrupt_irq_disable();
         IRQContainer to_remove;
         for (auto& c : IRQ_HANDLER_TABLE[irq_line]) {
             if (c.entry.device_handle == dev_handle) {
@@ -306,7 +306,7 @@ namespace Rune::CPU {
             }
         }
         if (to_remove.entry.device_handle != dev_handle) {
-            interrupt_disable();
+            interrupt_irq_disable();
             return false; // No IRQ handler installed for device
         }
         // NOLINTBEGIN done bounds check on irq_line
@@ -318,7 +318,7 @@ namespace Rune::CPU {
                 false; // Disable interrupt when last handler is uninstalled
         }
         // NOLINTEND
-        interrupt_enable();
+        interrupt_irq_enable();
         return true;
     }
 

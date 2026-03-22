@@ -5,7 +5,7 @@
 #ifndef RUNEOS_DICTIONARY_H
 #define RUNEOS_DICTIONARY_H
 
-#include <KRE/CppRuntimeSupport.h>
+#include <KRE/CppRTS.h>
 #include <KRE/Utility.h>
 
 namespace Rune {
@@ -568,6 +568,9 @@ namespace Rune {
             maybe_value = put0(new HashNode<K, V>(move(key), V()));
             return *maybe_value->value;
         }
+
+        /// @brief Remove all key-value pairs in the hashmap.
+        void clear() { free_nodes(); }
 
         [[nodiscard]] auto begin() const -> HashMapIterator<K, V> {
             if (_bucket == nullptr) {

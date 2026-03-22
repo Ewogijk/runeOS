@@ -18,6 +18,8 @@
 
 #include <Device/PCI.h>
 
+#include <Device/ACPI/ACPI.h>
+
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER =
         LogContext::instance().get_logger("Device.DeviceSubsystem");
@@ -28,6 +30,9 @@ namespace Rune::Device {
 
     auto DeviceModule::load(const BootInfo& boot_info) -> bool {
         SILENCE_UNUSED(boot_info)
+
+        if (!acpi_start()) return false;
+
         PCI::discover_devices(*_ahci_driver);
 
         _keyboard->start();

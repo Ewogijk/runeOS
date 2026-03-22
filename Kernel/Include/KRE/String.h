@@ -21,7 +21,7 @@
 #include <Ember/Ember.h>
 
 #include <KRE/Collections/LinkedList.h>
-#include <KRE/CppRuntimeSupport.h>
+#include <KRE/CppRTS.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -73,6 +73,8 @@ namespace Rune {
             const char* CString;
         } values;
         AType type;
+
+        Argument() : type(CHAR) { values.Char = '\0'; }
 
         Argument(signed char v) : type(SIGNED_CHAR) { values.SChar = v; }
 

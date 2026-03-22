@@ -25,7 +25,6 @@
 #include <KRE/Memory.h>
 
 #include <Memory/PhysicalMemoryManager.h>
-
 namespace Rune::Memory {
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -37,27 +36,23 @@ namespace Rune::Memory {
      */
     using NativePageTableEntry = VirtualAddr;
 
-    /**
-     * @brief A page table entry (PTE) acts as an architecture independent interface to the
-     * architecture dependant paging implementation, a native page table entry (NPTE).
-     *
-     * <p>
-     *  A PTE exposes all paging properties supported by the kernel in an architecture independent
-     * way, that is the NPTE could have more properties that are not explicitly supported by the
-     * kernel.
-     * </p>
-     * <p>
-     *  The Level describes the position of this PTE in the page table hierarchy starting from the
-     * base page table (BPT). The BTP is the entry point to the page table hierarchy, e.g. in x86_64
-     * 4-level paging the BTP would be the Page-Map Level-4 Table.<br> Counting starts from the
-     * highest level down to zero, where zero is effectively the physical page offset. This means
-     * that practically the page table hierarchy ends at level 1 (L1), since L0 is is not a PTE. If
-     * level=0xFF it indicates that is PTE is invalid and should not be used.
-     * </p>
-     * <p>
-     *  Lastly the PTE exposes the NPTE which can be used to create page table objects.
-     * </p>
-     */
+    /// @brief A page table entry (PTE) acts as an architecture independent interface to the
+    /// architecture dependant paging implementation, a native page table entry (NPTE).
+    ///
+    /// A PTE exposes all paging properties supported by the kernel in an architecture independent
+    /// way, that is the NPTE could have more properties that are not explicitly supported by the
+    /// kernel.
+    ///
+    /// The Level describes the position of this PTE in the page table hierarchy starting from the
+    /// base page table (BPT). The BTP is the entry point to the page table hierarchy, e.g. in
+    /// x86_64 4-level paging the BTP would be the Page-Map Level-4 Table.
+    ///
+    /// Counting starts from the highest level down to zero, where zero is effectively the physical
+    /// page offset. This means that practically the page table hierarchy ends at level 1 (L1),
+    /// since L0 is not a PTE. If level=0xFF it indicates that is PTE is invalid and should not be
+    /// used.
+    ///
+    /// Lastly the PTE exposes the NPTE which can be used to create page table objects.
     struct PageTableEntry {
         static constexpr U8  BAD_LEVEL    = 0xFF;
         NativePageTableEntry native_entry = 0x0;
@@ -272,6 +267,11 @@ namespace Rune::Memory {
      */
     auto virtual_to_physical_address(VirtualAddr v_addr, PhysicalAddr& p_addr_out) -> bool;
 
+    /// @brief Get the byte offset into the virtual address.
+    /// @param v_addr Virtual address.
+    /// @return Byte offset into the page.
+    auto get_page_offset(VirtualAddr v_addr) -> U16;
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Page Table Hierarchy Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -307,33 +307,26 @@ namespace Rune::Memory {
 
     DECLARE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) // NOLINT
 
-    /**
-     * @brief Describes the outcome of accessing the page table hierarchy and performing an
-     * operation (e.g allocation).
-     *
-     * <p>
-     * Field descriptions:
-     * <ol>
-     *  <li>Status:        Outcome of the access.</li>
-     *  <li>Path:          All PTEs that have been accessed before any modification until the access
-     * ended.</li> <li>Level:         Page table level where the access ended.</li>
-     *  <li>PageTableLeak: True if the physical memory on an intermediate page table could not be
-     * freed.</li> <li>PTEAfter:      Copy of the accessed page table entry after modification
-     * (currently in use).</li>
-     * </ol>
-     * </p>
-     *
-     * <p>
-     *  The path array is filled in reverse, that is the first accessed PTE will not be at index 0
-     * but at index 3. In general a Level n PTE will be found at index (n - 1), e.g. the L4 PTE can
-     * be accessed at path[3].
-     * </p>
-     * <p>
-     *  The path array may not contain valid PTEs at all indices, this is the case if the access
-     * ended early due to an error. The number of valid PTEs in the path is always equal to the
-     * (MaxPathLength - Level).
-     * </p>
-     */
+    /// @brief Describes the outcome of accessing the page table hierarchy and performing an
+    ///         operation (e.g allocation).
+    ///
+    /// Field descriptions:
+    /// - Status:        Outcome of the access.
+    /// - Path:          All PTEs that have been accessed before any modification until the access
+    ///                     ended.
+    /// - Level:         Page table level where the access ended.
+    /// - PageTableLeak: True if the physical memory on an intermediate page table could not be
+    ///                     freed.
+    /// - PTEAfter:      Copy of the accessed page table entry after modification
+    ///                     (currently in use).
+    ///
+    /// The path array is filled in reverse, that is the first accessed PTE will not be at index 0
+    /// but at index 3. In general a Level n PTE will be found at index (n - 1), e.g. the L4 PTE can
+    /// be accessed at path[3].
+    ///
+    /// The path array may not contain valid PTEs at all indices, this is the case if the access
+    /// ended early due to an error. The number of valid PTEs in the path is always equal to the
+    /// (MaxPathLength - Level).
     struct PageTableAccess {
         static constexpr U8 MAX_PATH_LENGTH = 5;
 
@@ -373,21 +366,19 @@ namespace Rune::Memory {
                        U16                    flags,
                        PhysicalMemoryManager* pmm) -> PageTableAccess;
 
-    /**
-     * free the page of the given vAddr and free the associated page frame using the physical memory
-     * manager.
-     *
-     * <p>
-     *  If any intermediate page table has no other entries except the page table entry for vAddr or
-     * another page table that has no entries then it will be freed.
-     * </p>
-     *
-     * @param base_pt Base page table.
-     * @param v_addr  Virtual address.
-     * @param pmm    Physical memory manager.
-     *
-     * @return Result of the page table access.
-     */
+    /// @brief Free the page of the given vAddr and free the memory of intermediate page table
+    ///         entries (PTE) as needed.
+    /// @param base_pt Base page table.
+    /// @param v_addr Virtual address.
+    /// @param pmm Physical memory manager.
+    /// @return Result of the page table access.
+    ///
+    /// The caller maintains the page frame. Hence, it is his responsibility to free the physical
+    /// memory if it is not necessary anymore.
+    ///
+    /// The paging API maintains physical memory of intermediate PTE's. Therefore, if any
+    /// intermediate PTE is going to be empty after v_addr was freed, the physical memory will be
+    /// freed.
     auto free_page(const PageTable& base_pt, VirtualAddr v_addr, PhysicalMemoryManager* pmm)
         -> PageTableAccess;
 

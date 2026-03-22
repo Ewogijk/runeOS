@@ -5,7 +5,7 @@
 #ifndef RUNEOS_LINKEDLIST_H
 #define RUNEOS_LINKEDLIST_H
 
-#include <KRE/CppRuntimeSupport.h>
+#include <KRE/CppRTS.h>
 #include <KRE/Utility.h>
 
 namespace Rune {

@@ -170,7 +170,6 @@ namespace Rune::App {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void TerminalStream::scroll_back(int lines) {
-        _state.mutex->lock();
         if (lines == 0) return;
 
         U64 terminal_line_pixels = _state.frame_buffer->get_pitch() * _state.font->pixel_height;
@@ -281,11 +280,9 @@ namespace Rune::App {
                 x += st.text.size();
             }
         }
-        _state.mutex->unlock();
     }
 
     void TerminalStream::draw_char(char ch) {
-        _state.mutex->lock();
         start_cursor_movement();
         _state.frame_buffer->draw_glyph(_state.font,
                                         _state.cursor_sbb.column * _state.font->pixel_width,
@@ -300,18 +297,15 @@ namespace Rune::App {
             _state.cursor_sbb.line++;
         }
         end_cursor_movement();
-        _state.mutex->unlock();
     }
 
     void TerminalStream::draw_char(char ch, U16 x, U16 y, Pixel bg_color, Pixel fg_color) const {
-        _state.mutex->lock();
         _state.frame_buffer->draw_glyph(_state.font,
                                         x * _state.font->pixel_width,
                                         y * _state.font->pixel_height,
                                         bg_color,
                                         fg_color,
                                         ch);
-        _state.mutex->unlock();
     }
 
     void TerminalStream::draw_cursor(const Pixel& color) const {
@@ -767,8 +761,10 @@ namespace Rune::App {
 
         char ch = (char) value;
         if (!interpret_char(ch) && ch != '\0') {
+            _state.mutex->lock();
             draw_char(ch);
             scroll_back_buffer_get_last_line()->append_char(ch);
+            _state.mutex->unlock();
         }
         return true;
     }

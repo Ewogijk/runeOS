@@ -23,6 +23,7 @@
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/System/Resource.h>
 
 namespace Rune::CPU {
     // Size of a register
@@ -45,6 +46,17 @@ namespace Rune::CPU {
     /// thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
     /// error.
     using ThreadMain = int (*)(StartInfo*);
+
+    /// @brief Handle type of timer.
+    using TimerHandle = U16;
+    /// @brief Handle type of thread.
+    using ThreadHandle = U16;
+    /// @brief Handle type of spinlock.
+    using SpinlockHandle = U16;
+    /// @brief Handle type of mutex.
+    using MutexHandle = U16;
+    /// @brief Handle type of semaphore.
+    using SemaphoreHandle = U16;
 
     /// @brief Describes what a thread is currently doing.
     /// @param X
@@ -159,15 +171,13 @@ namespace Rune::CPU {
     /// the maintaining resource is kept in the thread struct and only one reference must be set at
     /// once at all times. If the thread is maintained by the scheduler, no resource references must
     /// be set.
-    struct Thread {
+    struct Thread : public Resource<MutexHandle> {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
-        // Unique ID of the thread
-        U16 handle = 0;
+        Thread(MutexHandle handle, const String& name);
 
         // Handle of the app the thread belongs to
         U16              app_handle = 0;
-        String           name       = "";
         ThreadState      state      = ThreadState::CREATED;
         SchedulingPolicy policy     = SchedulingPolicy::NONE;
 
@@ -195,11 +205,20 @@ namespace Rune::CPU {
         //                                  Resource Refs
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        /// @brief ID of the mutex this thread is owning at the moment.
-        int mutex_id = -1;
+        /// @brief Handle of the timer that maintains the thread.
+        TimerHandle timer_handle = Resource<TimerHandle>::HANDLE_NONE;
 
-        /// @brief ID of the timer owning the thread.
-        int timer_id = -1;
+        /// @brief Handle of the mutex that maintains the thread.
+        MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
+
+        /// @brief Handle of the spinlock that maintains the thread.
+        SpinlockHandle spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
+
+        /// @brief Handle of the semaphore that maintains the thread.
+        SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
+
+        /// @brief Handle of the thread that this thread is waiting for to exit.
+        ThreadHandle join_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
 
         /// @brief ID of the application this thread is waiting for to exit.
         int join_app_id = -1;
@@ -384,6 +403,10 @@ namespace Rune::CPU {
      * @return The current value of the stack pointer.
      */
     CLINK auto get_stack_pointer() -> Register;
+
+    /// @brief Pause the CPU in an optimized way in terms of performance/power usage. This function
+    ///         is intended to be used when waiting in a loop, e.g. in a spinlock.
+    CLINK void pause();
 
     /**
      * halt the CPU until an interrupt occurs.

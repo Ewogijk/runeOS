@@ -17,76 +17,74 @@
 #ifndef RUNEOS_MUTEX_H
 #define RUNEOS_MUTEX_H
 
+#include <KRE/System/Resource.h>
+
 #include <CPU/Threading/Scheduler.h>
+#include <CPU/Threading/Spinlock.h>
 
 namespace Rune::CPU {
-    /**
-     * A recursive mutex implementation.
-     */
-    class Mutex {
-        Scheduler* _scheduler;
+    /// @brief A fair lock-free non-recursive mutex.
+    ///
+    /// Fairness is guaranteed when the mutex is unlocked, this means the next thread in the wait
+    /// queue of the mutex will always acquire the mutex when it is unlocked.
+    class Mutex : public Resource<MutexHandle> {
+        int _lock = 0;
 
+        Scheduler*                        _scheduler;
         SharedPointer<Thread>             _owner;
+        Spinlock                          _wait_queue_lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
-        void transfer_ownership();
+        /// @brief Trace the owner and wait queue upon an action e.g. lock.
+        /// @param action
+        void trace_state(const String& action);
 
       public:
-        // Per requirement of the "Column::make_handle_column_table" these properties must be
-        // publicly accessible
-        U16    handle; // NOLINT
-        String name;   // NOLINT
+        Mutex(MutexHandle handle, const String& name, Scheduler* scheduler);
 
-        // Per definition of the "ResourceTable" a default constructor must be provided
-        Mutex();
+        Mutex(const Mutex&)                    = delete;
+        Mutex(Mutex&&)                         = delete;
+        auto operator=(const Mutex&) -> Mutex& = delete;
+        auto operator=(Mutex&&) -> Mutex&      = delete;
 
-        Mutex(Scheduler* scheduler, String name);
-
-        /**
-         * @brief The thread that is currently locking the mutex.
-         * @return Owner thread of the mutex or nullptr if the mutex is not locked.
-         */
+        /// @brief
+        /// @return A reference to the thread owning the mutex.
         [[nodiscard]] auto get_owner() const -> Thread*;
 
-        /**
-         * @brief All threads that are waiting for the mutex to be unlocked.
-         * @return A copy of the mutexes wait queue.
-         */
+        /// @brief
+        /// @return A list of threads waiting for the mutex to be unlocked.
         [[nodiscard]] auto get_waiting_threads() const -> LinkedList<Thread*>;
 
-        /**
-         * @brief Try to lock the mutex.
-         *
-         * If it is not locked yet then the running thread will acquire the mutex. If the mutex is
-         * already locked then all threads other then the owner of the lock will put into a wait
-         * queue, while the owner of the thread  is allowed to lock the mutex multiple times.
-         */
+        /// @brief Try to lock the mutex, if it is already locked the calling thread will be
+        ///         blocked.
+        ///
+        /// It is the callers responsibility to not lock the mutex twice by the same thread, if done
+        /// the thread will be deadlocked.
         void lock();
 
-        /**
-         * Unlock the mutex if the calling thread is the owner of the mutex then ownership will be
-         * transferred to the next thread in the waiting queue and the thread is woken up. Otherwise
-         * nothing will happen.
-         */
+        /// @brief Try to lock the mutex and return immediately.
+        /// @return True: The mutex has been locked, False: Otherwise.
+        auto try_lock() -> bool;
+
+        /// @brief Try to unlock the mutex.
+        ///
+        /// Only the owner thread can unlock the mutex.
         void unlock();
 
-        /**
-         * @brief Search for a thread with the given ID in the waiting queue and remove it if found.
-         *
-         * <p>
-         *  If the thread was the owner of the mutex, then ownership will be transferred to the next
-         * thread in the queue and the thread will be scheduled. If the thread was the only owner of
-         * the mutex then it will simply be unlocked.
-         * </p>
-         * <p>
-         *  If the thread was not the owner of the mutex but simply waiting in the queue, then it
-         * will just be removed from the queue without any ownership transfer.
-         * </p>
-         * @param t_id
-         * @return True: The thread got removed from the wait queue., False: No thread with the
-         * requested ID was found.
-         */
-        auto remove_waiting_thread(U16 t_id) -> bool;
+        /// @brief Remove the owner thread or a waiting thread from the mutex.
+        /// @param handle Handle of the thread to be removed.
+        /// @return True: The thread is no longer maintained by the mutex, False: Otherwise.
+        ///
+        /// If the mutex has no owner, this function will return false without doing anything.
+        /// When the owning thread should be removed, the owning thread is blocked and the mutex
+        /// will be given to the next waiting thread. In case of a waiting thread, it will be simply
+        /// removed from the wait queue.
+        ///
+        /// It is the callers responsibility to maintain the removed thread.
+        ///
+        /// Note: Use this function with care, because undefined behavior could occur as a result,
+        ///         especially when removing the owner thread.
+        auto remove_thread(MutexHandle handle) -> bool;
     };
 } // namespace Rune::CPU
 

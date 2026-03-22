@@ -25,12 +25,14 @@ namespace Rune::CPU {
 
     DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
 
+    Thread::Thread(MutexHandle handle, const String& name) : Resource(handle, name) {}
+
     auto operator==(const Thread& one, const Thread& two) -> bool {
-        return one.handle == two.handle;
+        return one.get_handle() == two.get_handle();
     }
 
     auto operator!=(const Thread& one, const Thread& two) -> bool {
-        return one.handle != two.handle;
+        return one.get_handle() != two.get_handle();
     }
 
     DEFINE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)

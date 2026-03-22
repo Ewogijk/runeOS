@@ -24,6 +24,8 @@ sources = [
     build_env.File("Threading/MultiLevelQueue.cpp"),
     build_env.File("Threading/Mutex.cpp"),
     build_env.File("Threading/Scheduler.cpp"),
+    build_env.File("Threading/Semaphore.cpp"),
+    build_env.File("Threading/Spinlock.cpp"),
     build_env.File("Time/DeltaQueue.cpp"),
     build_env.File("Time/PIT.cpp"),
     build_env.File("Time/Timer.cpp"),

@@ -55,7 +55,8 @@ namespace Rune::Memory {
     class ObjectBufNodeHashMap;
 
     /**
-     * A slab stores allocated objects.
+     * A slab stores allocated objects with integrated circular doubly linked list pointing to
+     * other slabs.
      */
     struct Slab;
 
@@ -69,7 +70,8 @@ namespace Rune::Memory {
     };
 
     /**
-     * I forgot what this is!
+     * A reference to the next free object, either a pointer to an ObjectBufNode
+     * (OFF_SLAB allocation) or an index into the freelist (ON_SLAB allocation).
      */
     union ObjectBuf {
         ObjectBufNode* regular_object;
@@ -88,16 +90,24 @@ namespace Rune::Memory {
         static constexpr size_t MAX_OBJECT_COUNT =
             255; // And marker of the end of the free list (Object at index 255)
 
+        /// @brief Next slab in the slab list.
         Slab* next;
+        /// @brief Previous slab in the slab list.
         Slab* prev;
 
+        /// @brief Reference to the next free object.
         ObjectBuf free_buf;
 
+        /// @brief Size in bytes of an object.
         size_t object_size;
+        /// @brief Maximum number of objects that can be allocated.
         size_t object_count;
+        /// @brief Current number of objects that are allocated.
         size_t allocated_count;
 
-        void*  page;
+        /// @brief Virtual address of the page containing the slab.
+        void* page;
+        /// @brief Size of the slab in bytes.
         size_t slab_size;
 
         /**
@@ -171,28 +181,44 @@ namespace Rune::Memory {
     class ObjectCache {
         // Memory management
         VirtualMemoryManager* _vmm{nullptr};
-        ObjectCache*          _memory_node_cache{nullptr};
-        MemoryRegion          _managed;
-        VirtualAddr           _limit{0};
-        U16                   _page_flags{0};
-        MemoryNode*           _free_page_list{nullptr};
+        /// @brief Cache providing MemoryNode objects
+        ObjectCache* _memory_node_cache{nullptr};
+        /// @brief The memory area managed by the cache
+        MemoryRegion _managed;
+        /// @brief The address dividing the managed memory region into the used and free memory
+        ///         parts.
+        VirtualAddr _limit{0};
+        /// @brief Page flags that will be used to request virtual memory.
+        U16 _page_flags{0};
+        /// @brief A list of free memory gaps in the managed memory area
+        MemoryNode* _free_page_list{nullptr};
 
         // Object management
-        ObjectCache*          _object_buf_node_cache{nullptr};
+        /// @brief Cache providing ObjectBufNode objects
+        ObjectCache* _object_buf_node_cache{nullptr};
+        /// @brief Hashmap for VirtualAddr->ObjectBufNode mappings.
         ObjectBufNodeHashMap* _object_buf_node_hash_map{nullptr};
-        size_t                _object_size{0};
-        size_t                _align{0};
+        /// @brief Size of a single object in the cache.
+        size_t _object_size{0};
+        /// @brief Memory alignment of objects.
+        size_t _align{0};
 
         // Slab management
+        /// @brief Cache providing Slab objects.
         ObjectCache* _slab_cache{nullptr};
-        Slab*        _full_list{nullptr};
-        Slab*        _partial_list{nullptr};
-        Slab*        _empty_list{nullptr};
-        size_t       _slab_count{0};
+        /// @brief List of full slabs.
+        Slab* _full_list{nullptr};
+        /// @brief List of partially full slabs.
+        Slab* _partial_list{nullptr};
+        /// @brief List of empty slabs.
+        Slab* _empty_list{nullptr};
+        /// @brief Number of slabs in the cache.
+        size_t _slab_count{0};
 
         // Debug information
         CacheType _type;
 
+        // Allocate and init a new slab
         auto grow() -> bool;
 
       public:
@@ -203,6 +229,8 @@ namespace Rune::Memory {
         [[nodiscard]] auto get_managed() const -> MemoryRegion;
 
         [[nodiscard]] auto get_type() const -> CacheType;
+
+        [[nodiscard]] auto get_object_size() const -> size_t;
 
         auto init(VirtualMemoryManager* vmm,
                   ObjectCache*          memory_node_cache,
@@ -237,6 +265,8 @@ namespace Rune::Memory {
          * @return A pointer to the object.
          */
         auto object_at(U8 idx) -> void*;
+
+        void purge();
 
         /**
          * free all claimed memory of the object cache.
@@ -274,6 +304,8 @@ namespace Rune::Memory {
 
         auto get(void* key) -> ObjectBufNode*;
 
+        void purge(ObjectCache* object_buf_cache);
+
         void destroy(ObjectCache* object_buf_cache);
     };
 
@@ -283,10 +315,10 @@ namespace Rune::Memory {
      * caches of custom size and specific alignment can be requested.
      */
     class SlabAllocator {
-        static constexpr U8         MIN_SIZE_POWER     = 4;
-        static constexpr U8         STATIC_CACHE_COUNT = 13;
-        static constexpr size_t     MIN_OBJ_SIZE       = 16;
-        static constexpr MemorySize CACHE_SIZE = static_cast<MemorySize>(2) * 1048576; // 2 MiB
+        static constexpr U8         MIN_SIZE_POWER        = 4;
+        static constexpr U8         STATIC_CACHE_COUNT    = 13;
+        static constexpr size_t     MIN_OBJ_SIZE          = 16;
+        static constexpr MemorySize CACHE_SIZE            = 2 * MemoryUnit::MiB;
         static constexpr U8         BOOTSTRAP_CACHE_COUNT = 6;
 
         ObjectCache _object_cache_cache;

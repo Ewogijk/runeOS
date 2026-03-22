@@ -17,7 +17,10 @@ from SCons.Environment import *
 Import("build_env")
 build_env: Environment
 sources = [
-    build_env.File("DeviceModule.cpp"),
+    build_env.File("ACPI/ACPI.cpp"),
+    build_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
+    build_env.File("ACPI/ACPICA/osl.c"),
+    build_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
     build_env.File("AHCI/AHCI.cpp"),
     build_env.File("AHCI/FIS.cpp"),
     build_env.File("AHCI/GPT.cpp"),
@@ -25,6 +28,19 @@ sources = [
     build_env.File("AHCI/PortEngine.cpp"),
     build_env.File("Keyboard/Keyboard.cpp"),
     build_env.File("Keyboard/PS2Keyboard.cpp"),
+    build_env.File("DeviceModule.cpp"),
+    build_env.File("PCI.cpp"),
 ]
+acpi_sources = (Glob("ACPI/ACPICA/dispatcher/*.c")
+                + Glob("ACPI/ACPICA/events/*.c")
+                + Glob("ACPI/ACPICA/executer/*.c")
+                + Glob("ACPI/ACPICA/hardware/*.c")
+                + Glob("ACPI/ACPICA/namespace/*.c")
+                + Glob("ACPI/ACPICA/parser/*.c")
+                + Glob("ACPI/ACPICA/resources/*.c")
+                + Glob("ACPI/ACPICA/tables/*.c")
+                + Glob("ACPI/ACPICA/utilities/*.c"))
+sources += acpi_sources
+
 Device = build_env.StaticLibrary("Device.o", build_env.Object(sources))
 Export("Device")

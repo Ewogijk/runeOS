@@ -37,7 +37,7 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME = "Bootstrap";
 
         SharedPointer<Thread> _running_thread;
-        MultiLevelQueue*      _ready_threads{nullptr};
+        MultiLevelQueue*      _ready_queue{nullptr};
 
         /// @brief Contains references of threads that have been stopped but their allocated memory
         ///         has yet to be freed by the Garbage Collector Thread.
@@ -45,11 +45,6 @@ namespace Rune::CPU {
 
         /// @brief If (_irqDisableCounter != 0), IRQs are disabled.
         int _irq_disable_counter{0};
-
-        /// @brief If (_allowPreemption == true) threads can be preempted. Note: We cannot know if a
-        ///          schedule() call happens as part preemption, thus we cannot enforce this rule
-        ///          and must hope preemption is implemented properly.
-        bool _allow_preemption{false};
 
         SharedPointer<Thread>   _idle_thread;
         SharedPointer<Thread>   _garbage_collector_thread;
@@ -125,13 +120,6 @@ namespace Rune::CPU {
         /// @return A reference to the Garbage Collector Thread .
         auto get_garbage_collector_thread() -> SharedPointer<Thread>;
 
-        /// @brief Check if thread preemption is currently allowed.
-        /// @return True: Preempting threads is allowed, False: Otherwise.
-        ///
-        /// Thread preemption will be disabled by the scheduler if the Idle or Garbage Collector
-        /// Thread are running.
-        [[nodiscard]] auto is_preemption_allowed() const -> bool;
-
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -164,8 +152,7 @@ namespace Rune::CPU {
          * @param stack_top   Top of the bootstrap stack.
          * @return
          */
-        auto init(PhysicalAddr                 base_pt_addr,
-                  CPU::Register                stack_top,
+        auto init(const SharedPointer<Thread>& bootstrap_thread,
                   const SharedPointer<Thread>& idle_thread,
                   const SharedPointer<Thread>& thread_terminator,
                   void                         (*thread_enter)()) -> bool;
@@ -212,7 +199,9 @@ namespace Rune::CPU {
         /// - Running thread
         ///     - ThreadState::RUNNING -> ThreadState::READY
         ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
-        /// - Next thread: ThreadState::READY -> ThreadState::RUNNING
+        /// - Next thread:
+        ///     - ThreadState::READY -> ThreadState::RUNNING
+        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
         ///
         /// Note: This function is thread safe.
         void preempt_running_thread();
@@ -263,11 +252,12 @@ namespace Rune::CPU {
         /// @param thread Thread to be unblocked.
         ///
         /// The blocked thread will be marked with ThreadState::READY and put into the ready queue.
-        /// If the thread is scheduled to be run after the currently running thread, the running
-        /// thread will be preempted immediately. Which means the caller gives responsibility of
-        /// maintaining the reference to the thread object back to the scheduler.
+        /// The caller gives responsibility of maintaining the reference to the thread object back
+        /// to the scheduler.
         ///
-        /// Thread state transition: ThreadState::BLOCKED -> ThreadState::READY
+        /// Thread state transition:
+        ///     - ThreadState::BLOCKED -> ThreadState::READY
+        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::READY
         ///
         /// Note: This function is thread safe.
         void unblock(const SharedPointer<Thread>& thread);

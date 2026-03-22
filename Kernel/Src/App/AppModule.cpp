@@ -153,7 +153,7 @@ namespace Rune::App {
                 for (const auto& app_entry : _app_table) {
                     auto& app = *app_entry.value;
                     if (app->handle == tt_ctx->stopped->app_handle) {
-                        app->thread_table.remove(tt_ctx->stopped->handle);
+                        app->thread_table.remove(tt_ctx->stopped->get_handle());
                         if (app->thread_table.is_empty()) finished_app = app;
                         break;
                     }
@@ -294,7 +294,7 @@ namespace Rune::App {
         _app_table.put(kernel_app->handle, kernel_app);
 
         for (auto& t : _cpu_module->get_thread_table()) {
-            kernel_app->thread_table.add_back(t->handle);
+            kernel_app->thread_table.add_back(t->get_handle());
             t->app_handle = kernel_app->handle;
         }
 
@@ -472,7 +472,7 @@ namespace Rune::App {
         LOGGER->debug("Terminating all app threads...");
         for (auto r_t : _active_app->thread_table) {
             if (!_cpu_module->stop_thread(r_t)
-                && r_t != _cpu_module->get_scheduler()->get_running_thread()->handle) {
+                && r_t != _cpu_module->get_scheduler()->get_running_thread()->get_handle()) {
                 LOGGER->warn(R"(Failed to terminate thread with ID {}.)", r_t);
             }
         }
@@ -517,9 +517,8 @@ namespace Rune::App {
 
         auto* scheduler = _cpu_module->get_scheduler();
         auto  r_t       = scheduler->get_running_thread();
-        LOGGER->debug(R"(Thread "{}-{}" is joining with app "{}-{}")",
-                      r_t->handle,
-                      r_t->name,
+        LOGGER->debug(R"(Thread {} is joining with app "{}-{}")",
+                      r_t->get_unique_name(),
                       app->handle,
                       app->name);
         r_t->join_app_id = app->handle;

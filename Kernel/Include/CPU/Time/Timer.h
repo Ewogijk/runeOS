@@ -22,7 +22,6 @@
 #include <CPU/Threading/Scheduler.h>
 
 namespace Rune::CPU {
-
     /**
      * @brief All kernel supported timer modes of operation.
      * <ul>
@@ -188,6 +187,10 @@ namespace Rune::CPU {
          * @param time_seconds
          */
         void sleep_second(U64 time_seconds);
+
+        /// @brief Make the calling thread busy-wait for the specified amount of micro seconds.
+        /// @param time_micros
+        void stall_micro(U64 time_micros) const;
     };
 } // namespace Rune::CPU
 

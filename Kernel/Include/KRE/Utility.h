@@ -20,7 +20,7 @@
 
 #include <stddef.h> // NOLINT cstddef does not exist
 
-#include <KRE/CppRuntimeSupport.h>
+#include <KRE/CppRTS.h>
 #include <KRE/TypeTraits.h>
 
 namespace Rune {

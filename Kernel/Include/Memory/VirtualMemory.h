@@ -24,6 +24,7 @@ namespace Rune::Memory {
         VirtualAddr higher_half_direct_map = 0x0;
         VirtualAddr pmm_reserved           = 0x0;
         VirtualAddr kernel_heap            = 0x0;
+        VirtualAddr acpi                   = 0x0;
         VirtualAddr kernel_code            = 0x0;
     };
 

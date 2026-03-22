@@ -76,7 +76,7 @@ namespace Rune::CPU {
         while (c_thread_q != nullptr) {
             SharedPointer<Thread> to_delete(nullptr);
             for (auto& t : c_thread_q->_threads) {
-                if (t->handle == thread_id) {
+                if (t->get_handle() == thread_id) {
                     to_delete = t;
                     break;
                 }

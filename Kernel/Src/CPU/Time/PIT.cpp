@@ -47,17 +47,16 @@ namespace Rune::CPU {
         _freq_hz           = frequency;
         _quantum           = quantum;
         _quantum_remaining = _quantum;
-        LOGGER->debug("Requested PIT configuration: Mode={}, TargetFrequency={}Hz, Quantum={}",
+        LOGGER->debug("Config: Mode={}, TargetFrequency={}Hz, Quantum={}",
                       mode.to_string(),
                       frequency,
                       quantum);
 
         // The PIT is limited by the QuartzFrequency
         if (_freq_hz > QUARTZ_FREQUENCY_HZ) {
-            LOGGER->debug("Requested frequency of {}Hz exceeds quartz frequency {}Hz. Will "
-                          "operate on quartz frequency.",
-                          _freq_hz,
-                          QUARTZ_FREQUENCY_HZ);
+            LOGGER->debug(
+                "Target frequency > Max quartz frequency. Using max quartz frequency ({}Hz)",
+                QUARTZ_FREQUENCY_HZ);
             _freq_hz = QUARTZ_FREQUENCY_HZ;
         }
 
@@ -69,7 +68,7 @@ namespace Rune::CPU {
         // We want nanoseconds therefore we use 1000000000 instead of 1
         constexpr U32 NANO_SECOND = 1000000000;
         _time_between_irq         = NANO_SECOND / _freq_hz;
-        LOGGER->debug("Time between IRQs will be ~{}ns", _time_between_irq);
+        LOGGER->debug("Time between IRQs: ~{}ns", _time_between_irq);
 
         // Configure the frequency divider
         out_b(Channel::COMMAND, Mode::SQUARE_WAVE_GENERATOR);
@@ -82,8 +81,8 @@ namespace Rune::CPU {
             bool do_preempt = false;
             auto c_t        = _sleeping_threads.dequeue();
             while (c_t) {
-                LOGGER->trace(R"(Waking thread "{}-{}" up.)", c_t->handle, c_t->name);
-                c_t->timer_id = -1;
+                LOGGER->trace(R"(1-{}: {} wake up)", get_name(), c_t->get_unique_name());
+                c_t->timer_handle = Resource<TimerHandle>::HANDLE_NONE;
                 _scheduler->unblock(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
                     do_preempt = true; // Execute the thread immediately if it is first in the
@@ -92,16 +91,13 @@ namespace Rune::CPU {
             }
 
             bool eoi_triggered = false;
-            if (_scheduler->is_preemption_allowed()) {
-                if (_quantum_remaining <= 0) {
-                    irq_send_eoi();
-                    eoi_triggered      = true;
-                    _quantum_remaining = _quantum;
-                    ;
-                    do_preempt = true;
-                } else {
-                    _quantum_remaining -= _time_between_irq;
-                }
+            if (_quantum_remaining <= 0) {
+                irq_send_eoi();
+                eoi_triggered      = true;
+                _quantum_remaining = _quantum;
+                do_preempt         = true;
+            } else {
+                _quantum_remaining -= _time_between_irq;
             }
 
             if (!eoi_triggered) irq_send_eoi();
@@ -124,13 +120,13 @@ namespace Rune::CPU {
         }
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
-        SharedPointer<Thread> r_t = _scheduler->get_running_thread();
-        LOGGER->trace(R"(Putting thread "{}-{}" to sleep for {}ns)",
-                      r_t->handle,
-                      r_t->name,
+        auto r_t = _scheduler->get_running_thread();
+        LOGGER->trace(R"(1-{}: {} sleep until {}ns)",
+                      get_name(),
+                      r_t->get_unique_name(),
                       sleep_time_nanos);
         _sleeping_threads.enqueue(r_t, sleep_time_nanos);
-        r_t->timer_id      = 1;
+        r_t->timer_handle  = 1;
         _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->await_block();
         _scheduler->block();
