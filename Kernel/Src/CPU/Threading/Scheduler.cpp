@@ -70,7 +70,7 @@ namespace Rune::CPU {
                 return; // Let the last non-idle thread keep running
         }
 
-        // Rarely an illegal context switch from GCT to GCT which leads to a kernel panic.
+        // Rarely an illegal context switch from GCT to GCT happens which leads to a kernel panic.
         // Root cause is not clear but this fix disallows such context switches.
         if (_running_thread == _garbage_collector_thread
             && next_thread == _garbage_collector_thread)
@@ -239,7 +239,7 @@ namespace Rune::CPU {
             return;
         }
         if (thread->state != ThreadState::AWAIT_BLOCK) {
-            LOGGER->error(R"({}-{}: Invalid thread state "{}" (block))",
+            LOGGER->error(R"({}: Invalid thread state "{}" (block))",
                           _running_thread->get_unique_name(),
                           _running_thread->state.to_string());
             unlock();
@@ -264,7 +264,7 @@ namespace Rune::CPU {
             return;
         }
         if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::AWAIT_BLOCK) {
-            LOGGER->error(R"({}-{}: Invalid thread state "{}" (unblock))",
+            LOGGER->error(R"({}: Invalid thread state "{}" (unblock))",
                           thread->get_unique_name(),
                           thread->state.to_string());
             unlock();
@@ -272,13 +272,11 @@ namespace Rune::CPU {
         }
 
         if (!_ready_queue->enqueue(thread)) {
-            LOGGER->error(R"({}-{}: Scheduling failed)", thread->get_unique_name());
+            LOGGER->error(R"({}: Scheduling failed)", thread->get_unique_name());
             unlock();
             return;
         }
         thread->state = ThreadState::READY;
-        // Context switch immediately if thread was scheduled as next thread
-        // if (thread->get_handle() == _ready_queue->peek()->get_handle()) perform_context_switch();
         unlock();
     }
 

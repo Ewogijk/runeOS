@@ -50,7 +50,7 @@ namespace Rune::CPU {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
             if (c_thread_q->get_policy() == t->policy) {
-                c_thread_q->_threads.add_back(t);
+                if (!c_thread_q->_threads.contains(t)) c_thread_q->_threads.add_back(t);
                 return true;
             }
             c_thread_q = c_thread_q->_lower_policy_queue;
