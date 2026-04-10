@@ -60,14 +60,17 @@ namespace Rune::CPU {
                 LockGuard<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
                 _scheduler->await_block();
-                trace_state("lock-fail");
             }
+            trace_state("lock-fail");
             // await_block()/block() mechanic solves the lost wakeup problem
             _scheduler->block();
 
             // Check if fast handoff to calling thread was done in unlock()
             // If yes, just return because _lock == 1 and _owner == calling_thread
-            if (_owner->get_handle() == calling_thread->get_handle()) return;
+            if (_owner->get_handle() == calling_thread->get_handle()) {
+                trace_state("lock-fast-handoff");
+                return;
+            }
         }
         _owner = _scheduler->get_running_thread();
         trace_state("lock-good");
@@ -96,9 +99,8 @@ namespace Rune::CPU {
                 _wait_queue.remove_front();
             }
             _owner = thread_to_wake;
-            trace_state("unlock");
         }
-
+        trace_state("unlock");
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);
         _scheduler->unblock(thread_to_wake);
