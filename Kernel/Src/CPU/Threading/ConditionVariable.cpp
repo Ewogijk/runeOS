@@ -35,7 +35,6 @@ namespace Rune::CPU {
         return copy;
     }
 
-
     void ConditionVariable::wait() {
         {
             LockGuard<Spinlock> _(m_spinlock);

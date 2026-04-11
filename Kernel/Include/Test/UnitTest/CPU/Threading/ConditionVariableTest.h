@@ -22,7 +22,7 @@ struct TestThread {
     SharedPointer<CPU::StartInfo> m_start_info;
 };
 
-constexpr U8                          SLEEP_TIME_MS = 2000;
+constexpr U8                          SLEEP_TIME_MS = 50;
 TestThread                            test_thread_a;
 TestThread                            test_thread_b;
 SharedPointer<CPU::ConditionVariable> condition_variable;
@@ -73,7 +73,7 @@ TEST("wait - One Thread", "ConditionVariable") {
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
     auto* thread_a = find_waiting_thread(test_thread_a.m_thread_handle);
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != 0);
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0));
     REQUIRE(thread_a->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
@@ -101,9 +101,9 @@ TEST("wait - Multiple Threads", "ConditionVariable") {
 
     auto* thread_a = find_waiting_thread(test_thread_a.m_thread_handle);
     auto* thread_b = find_waiting_thread(test_thread_b.m_thread_handle);
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state == CPU::ThreadState::BLOCKED)
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
@@ -130,15 +130,16 @@ TEST("notify_one", "ConditionVariable") {
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
 
-
     auto* thread_a = cpu_module->find_thread(test_thread_a.m_thread_handle);
     auto* thread_b = cpu_module->find_thread(test_thread_b.m_thread_handle);
     condition_variable->notify_one();
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != 0)
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle)) == 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle))
+            == static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state != CPU::ThreadState::BLOCKED)
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != 0)
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle)) != 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle))
+            != static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
@@ -165,15 +166,16 @@ TEST("notify_all", "ConditionVariable") {
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
 
-
     auto* thread_a = cpu_module->find_thread(test_thread_a.m_thread_handle);
     auto* thread_b = cpu_module->find_thread(test_thread_b.m_thread_handle);
     condition_variable->notify_all();
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != 0)
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle)) == 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle))
+            == static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state != CPU::ThreadState::BLOCKED)
-    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != 0)
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle)) == 0)
+    REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle))
+            == static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state != CPU::ThreadState::BLOCKED)
 
     // Cleanup
