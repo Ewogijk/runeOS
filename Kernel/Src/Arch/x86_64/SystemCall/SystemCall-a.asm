@@ -25,7 +25,7 @@ system_call_accept:
     swapgs
     mov rsp, [gs:0] ; Load kernel stack
 
-    ; Enabled interrupts only after the kernel stack was loaded, it is intentionally disabled during
+    ; Enable interrupts only after the kernel stack was loaded, it is intentionally disabled during
     ; syscall because otherwise the interrupt frame could be pushed onto the user stack if an
     ; interrupt happens during syscall
     sti
