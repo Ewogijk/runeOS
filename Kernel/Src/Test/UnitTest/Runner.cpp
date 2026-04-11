@@ -17,8 +17,7 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
-#include <Test/UnitTest/tests/Dummy.h>
-#include <Test/UnitTest/tests/Dummy2.h>
+#include <Test/UnitTest/CPU/Threading/ConditionVariableTest.h>
 
 #include <KRE/Build.h>
 
