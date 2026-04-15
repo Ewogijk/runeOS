@@ -19,12 +19,14 @@
 #include <CPU/Interrupt/Interrupt.h>
 
 namespace Rune::CPU {
+    // NOLINTBEGIN readability-convert-member-functions-to-static is intended
     void InterruptLock::lock() { interrupt_irq_disable(); }
 
     void InterruptLock::unlock() { interrupt_irq_enable(); }
+    // NOLINTEND
 
     void InterruptSaveLock::lock() { _flags = interrupt_irq_save(); }
 
-    void InterruptSaveLock::unlock() { interrupt_irq_restore(_flags); }
+    void InterruptSaveLock::unlock() const { interrupt_irq_restore(_flags); }
 
 } // namespace Rune::CPU

@@ -42,7 +42,7 @@ namespace Rune::CPU {
         void lock();
 
         /// @brief Restore the previously saved Flags register content and enable interrupts.
-        void unlock();
+        void unlock() const;
     };
 }
 
