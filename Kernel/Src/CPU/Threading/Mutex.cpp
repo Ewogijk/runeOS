@@ -17,7 +17,7 @@
 #include <CPU/Threading/Mutex.h>
 
 #include <CPU/Threading/Atomic.h>
-#include <CPU/Threading/LockGuard.h>
+#include <CPU/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Mutex");
@@ -57,7 +57,7 @@ namespace Rune::CPU {
             // _wait_queue is a non synchronized linkedlist -> need spinlock protection here
             // Could also use lock-free queue implementation. Is maybe better?
             {
-                LockGuard<Spinlock> lock(_wait_queue_lock);
+                CriticalSection<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
                 _scheduler->await_block();
             }
@@ -93,7 +93,7 @@ namespace Rune::CPU {
 
         SharedPointer<Thread> thread_to_wake;
         {
-            LockGuard<Spinlock> lock(_wait_queue_lock);
+            CriticalSection<Spinlock> lock(_wait_queue_lock);
             if (!_wait_queue.is_empty()) {
                 thread_to_wake = *_wait_queue.head();
                 _wait_queue.remove_front();

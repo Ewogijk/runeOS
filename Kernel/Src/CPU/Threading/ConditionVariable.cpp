@@ -37,7 +37,7 @@ namespace Rune::CPU {
 
     void ConditionVariable::wait() {
         {
-            LockGuard<Spinlock> _(m_spinlock);
+            CriticalSection<Spinlock> _(m_spinlock);
             m_waiters.add_back(m_scheduler->get_running_thread());
         }
         m_scheduler->await_block();
@@ -45,13 +45,13 @@ namespace Rune::CPU {
     }
 
     void ConditionVariable::notify_one() {
-        LockGuard<Spinlock> _(m_spinlock);
+        CriticalSection<Spinlock> _(m_spinlock);
         if (m_waiters.is_empty()) return;
         wake_one();
     }
 
     void ConditionVariable::notify_all() {
-        LockGuard<Spinlock> _(m_spinlock);
+        CriticalSection<Spinlock> _(m_spinlock);
         while (!m_waiters.is_empty()) wake_one();
     }
 } // namespace Rune::CPU

@@ -23,8 +23,7 @@
 
 namespace Rune::CPU {
 
-    /// @brief A lock wrapper that provides RAII-style locking mechanism for the duration of a
-    ///         scope.
+    /// @brief A critical section provides an RAII-style locking mechanism for a section of code.
     /// @tparam LockType Type of the lock.
     ///
     /// A lock guard holds a raw pointer to the lock internally, and it is the users responsibility
@@ -37,24 +36,24 @@ namespace Rune::CPU {
     /// Usage is the same as <a
     /// href="https://en.cppreference.com/w/cpp/thread/lock_guard.html">std::lock_guard</a>.
     template <class LockType>
-    class LockGuard {
+    class CriticalSection {
         LockType* _lock_ptr;
 
       public:
-        explicit LockGuard(SharedPointer<LockType> lock) : _lock_ptr(lock.get()) {
+        explicit CriticalSection(SharedPointer<LockType> lock) : _lock_ptr(lock.get()) {
             if (_lock_ptr) _lock_ptr->lock();
         }
-        explicit LockGuard(LockType& lock) : _lock_ptr(&lock) {
+        explicit CriticalSection(LockType& lock) : _lock_ptr(&lock) {
             if (_lock_ptr) _lock_ptr->lock();
         }
-        ~LockGuard() {
+        ~CriticalSection() {
             if (_lock_ptr) _lock_ptr->unlock();
         }
 
-        LockGuard(const LockGuard<LockType>& other)   = delete;
-        LockGuard(LockGuard<LockType>&& other)        = delete;
-        auto operator=(LockType& other) -> LockType&  = delete;
-        auto operator=(LockType&& other) -> LockType& = delete;
+        CriticalSection(const CriticalSection<LockType>& other) = delete;
+        CriticalSection(CriticalSection<LockType>&& other)      = delete;
+        auto operator=(LockType& other) -> LockType&            = delete;
+        auto operator=(LockType&& other) -> LockType&           = delete;
     };
 } // namespace Rune::CPU
 

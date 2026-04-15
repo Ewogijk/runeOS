@@ -19,7 +19,7 @@
 
 #include <KRE/Collections/LinkedList.h>
 
-#include <CPU/Threading/LockGuard.h>
+#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/Scheduler.h>
 #include <CPU/Threading/Spinlock.h>
 
