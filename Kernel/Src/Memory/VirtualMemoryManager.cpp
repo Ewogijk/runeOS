@@ -249,13 +249,13 @@ namespace Rune::Memory {
         }
     }
 
-    auto VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags) -> bool {
+    auto VirtualMemoryManager::allocate(const PageTable& base_pt, VirtualAddr v_addr, U16 flags)
+        -> bool {
         PhysicalAddr pAddr{0};
         if (!_pmm->allocate(pAddr)) {
             LOGGER->warn("Page allocation fail: Out of physical memory for page.");
             return false;
         }
-        PageTable base_pt = get_base_page_table();
         if (allocate_page(base_pt, v_addr, pAddr, flags, _pmm).status
             != PageTableAccessStatus::OKAY) {
             LOGGER->warn("Page allocation fail: {:0=#16x}", v_addr);
@@ -267,23 +267,27 @@ namespace Rune::Memory {
         return true;
     }
 
-    auto VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags, size_t pages) -> bool {
-        MemorySize page_size  = get_page_size();
-        size_t     alloc_fail = 0;
+    auto VirtualMemoryManager::allocate(const PageTable& base_pt,
+                                        VirtualAddr      v_addr,
+                                        U16              flags,
+                                        size_t           pages) -> bool {
+        MemorySize page_size           = get_page_size();
+        bool       alloc_failed        = false;
+        size_t     alloc_fail_page_idx = 0;
         for (size_t i = 0; i < pages; i++) {
-            if (!allocate(v_addr + (i * page_size), flags)) {
+            if (!allocate(base_pt, v_addr + (i * page_size), flags)) {
                 LOGGER->warn("Page allocation fail: Failed to allocate page {:0=#16x} ({}/{})",
-
                              v_addr + (i * page_size),
                              i + 1,
                              pages + 1);
-                alloc_fail = i;
+                alloc_fail_page_idx = i;
+                alloc_failed        = true;
                 break;
             }
         }
-        if (alloc_fail > 0) {
-            for (size_t i = 0; i < alloc_fail; i++) {
-                if (!free(v_addr + (i * page_size))) {
+        if (alloc_failed) {
+            for (size_t i = 0; i <= alloc_fail_page_idx; i++) {
+                if (!free(base_pt, v_addr + (i * page_size))) {
                     LOGGER->warn("Failed to free {:0=#16x}", v_addr + (i * page_size));
                 }
             }
@@ -292,15 +296,22 @@ namespace Rune::Memory {
         return true;
     }
 
-    auto VirtualMemoryManager::free(VirtualAddr v_addr) -> bool {
+    auto VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags) -> bool {
+        return allocate(get_base_page_table(), v_addr, flags);
+    }
+
+    auto VirtualMemoryManager::allocate(VirtualAddr v_addr, U16 flags, size_t pages) -> bool {
+        return allocate(get_base_page_table(), v_addr, flags, pages);
+    }
+
+    auto VirtualMemoryManager::free(const PageTable& base_pt, VirtualAddr v_addr) -> bool {
         PhysicalAddr p_addr = 0;
         if (!virtual_to_physical_address(v_addr, p_addr))
             // Virtual address is unmapped
             return false;
 
         // Unmap virtual address
-        PageTable       base_pt = get_base_page_table();
-        PageTableAccess pta     = free_page(base_pt, v_addr, _pmm);
+        PageTableAccess pta = free_page(base_pt, v_addr, _pmm);
         if (pta.status == PageTableAccessStatus::FREE_ERROR) {
             LOGGER->warn("Page free fail: Failed to free {:0=#16x}", v_addr);
             return false;
@@ -308,11 +319,12 @@ namespace Rune::Memory {
         return _pmm->free(p_addr); // Free page frame
     }
 
-    auto VirtualMemoryManager::free(VirtualAddr v_addr, size_t pages) -> bool {
+    auto VirtualMemoryManager::free(const PageTable& base_pt, VirtualAddr v_addr, size_t pages)
+        -> bool {
         MemorySize page_size = get_page_size();
         bool       all_free  = true;
         for (size_t i = 0; i < pages; i++) {
-            if (!free(v_addr + (i * page_size))) {
+            if (!free(base_pt, v_addr + (i * page_size))) {
                 LOGGER->warn("Page free fail: Failed to allocate page {:0=#16x} ({}/{})",
                              v_addr + (i * page_size),
                              i + 1,
@@ -321,5 +333,13 @@ namespace Rune::Memory {
             }
         }
         return all_free;
+    }
+
+    auto VirtualMemoryManager::free(VirtualAddr v_addr) -> bool {
+        return free(get_base_page_table(), v_addr);
+    }
+
+    auto VirtualMemoryManager::free(VirtualAddr v_addr, size_t pages) -> bool {
+        return free(get_base_page_table(), v_addr, pages);
     }
 } // namespace Rune::Memory
