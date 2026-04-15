@@ -40,7 +40,7 @@ namespace Rune::CPU {
         LockType* _lock_ptr;
 
       public:
-        explicit CriticalSection(SharedPointer<LockType> lock) : _lock_ptr(lock.get()) {
+        explicit CriticalSection(const SharedPointer<LockType>& lock) : _lock_ptr(lock.get()) {
             if (_lock_ptr) _lock_ptr->lock();
         }
         explicit CriticalSection(LockType& lock) : _lock_ptr(&lock) {

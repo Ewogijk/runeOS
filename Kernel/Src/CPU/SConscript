@@ -21,6 +21,7 @@ sources = [
     build_env.File("CPUModule.cpp"),
     build_env.File("E9Stream.cpp"),
     build_env.File("Interrupt/8259PIC.cpp"),
+    build_env.File("Interrupt/InterruptLock.cpp"),
     build_env.File("Threading/ConditionVariable.cpp"),
     build_env.File("Threading/MultiLevelQueue.cpp"),
     build_env.File("Threading/Mutex.cpp"),
