@@ -51,7 +51,7 @@ namespace Rune::CPU {
     /// @return Flags register content before disabling interrupts.
     CLINK auto interrupt_irq_save() -> Register;
 
-    /// @brief Restore the given flags value to the Flags register.
+    /// @brief Restore the given flags value to the Flags register and enable external interrupts.
     /// @param flags Flags register content saved previously.
     CLINK void interrupt_irq_restore(Register flags);
 
