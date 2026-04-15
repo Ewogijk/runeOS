@@ -19,6 +19,7 @@
 #include <KRE/Math.h>
 #include <KRE/Utility.h>
 
+#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::App {
@@ -381,7 +382,8 @@ namespace Rune::App {
     ELFLoader::ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys)
         : _file_buf(),
           _memory_subsys(memory_module),
-          _vfs_subsys(vfs_subsys) {}
+          _vfs_subsys(vfs_subsys),
+          _load_lock() {}
 
     auto ELFLoader::load(const Path&                executable,
                          char*                      args[], // NOLINT syscall arg, must use raw ptr
@@ -389,6 +391,10 @@ namespace Rune::App {
                          CPU::Stack&                user_stack_out,
                          VirtualAddr&               start_info_addr_out,
                          bool                       keep_vas) -> LoadStatus {
+        // Interrupts must be disabled during ELF loading because the VAS of the new app is
+        // temporarily loaded, thus any allocations/frees during interrupt handling will be made in
+        // the wrong VAS which leads to undefined behavior
+        CPU::CriticalSection<CPU::InterruptLock> _(_load_lock);
         if (const VFS::IOStatus io_status =
                 _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {

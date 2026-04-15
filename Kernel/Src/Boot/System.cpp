@@ -81,12 +81,11 @@ namespace Rune {
     }
 
     void on_pure_virtual_function_callback() {
-        LOGGER->critical("Pure virtual function without implementation called!");
+        System::instance().panic("Pure virtual function not implemented!");
     }
 
     void on_stack_guard_fail_callback() {
-        LOGGER->critical("Yoho, the stack got smashed real hard!");
-        while (true) CPU::halt();
+        System::instance().panic("Stack guard failure detected!");
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

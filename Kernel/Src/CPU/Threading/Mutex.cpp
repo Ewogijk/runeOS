@@ -17,7 +17,7 @@
 #include <CPU/Threading/Mutex.h>
 
 #include <CPU/Threading/Atomic.h>
-#include <CPU/Threading/LockGuard.h>
+#include <CPU/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Mutex");
@@ -57,17 +57,20 @@ namespace Rune::CPU {
             // _wait_queue is a non synchronized linkedlist -> need spinlock protection here
             // Could also use lock-free queue implementation. Is maybe better?
             {
-                LockGuard<Spinlock> lock(_wait_queue_lock);
+                CriticalSection<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
                 _scheduler->await_block();
-                trace_state("lock-fail");
             }
+            trace_state("lock-fail");
             // await_block()/block() mechanic solves the lost wakeup problem
             _scheduler->block();
 
             // Check if fast handoff to calling thread was done in unlock()
             // If yes, just return because _lock == 1 and _owner == calling_thread
-            if (_owner->get_handle() == calling_thread->get_handle()) return;
+            if (_owner->get_handle() == calling_thread->get_handle()) {
+                trace_state("lock-fast-handoff");
+                return;
+            }
         }
         _owner = _scheduler->get_running_thread();
         trace_state("lock-good");
@@ -90,15 +93,14 @@ namespace Rune::CPU {
 
         SharedPointer<Thread> thread_to_wake;
         {
-            LockGuard<Spinlock> lock(_wait_queue_lock);
+            CriticalSection<Spinlock> lock(_wait_queue_lock);
             if (!_wait_queue.is_empty()) {
                 thread_to_wake = *_wait_queue.head();
                 _wait_queue.remove_front();
             }
             _owner = thread_to_wake;
-            trace_state("unlock");
         }
-
+        trace_state("unlock");
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);
         _scheduler->unblock(thread_to_wake);

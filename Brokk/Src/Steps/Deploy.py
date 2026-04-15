@@ -45,7 +45,7 @@ class DeployStep(Build.BuildStep):
         os_elf = project_root / "App" / "Crucible" / "Build" / "Crucible.app"
         rune_os_image = project_root / "Brokk" / "runeOS.image"
         install_cmd = [
-            "Src/Install.sh",
+            "Src/Deploy.sh",
             build,
             str(project_root / "Brokk" / "Build" / f"{arch}-{build}"),
             str(rune_os_image),

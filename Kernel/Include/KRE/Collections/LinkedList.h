@@ -125,10 +125,10 @@ namespace Rune {
         auto contains0(const T& element) -> bool {
             Node<T>* current = _head;
             while (current != nullptr) {
-                if (current->Element == element) {
+                if (current->element == element) {
                     return true;
                 }
-                current = current->Next;
+                current = current->next;
             }
             return false;
         }

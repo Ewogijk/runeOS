@@ -79,8 +79,8 @@ namespace Rune::Memory {
 
         /**
          * Load the initial virtual address space (VAS) using the given physical memory map, virtual
-         * memory map and virtual kernel space layout. The VAS will contain mappings for the higher
-         * half direct map (HHDM) of the physical memory, kernel code, physical memory manager and
+         * memory map, and virtual kernel space layout. The VAS will contain mappings for the higher
+         * half direct map (HHDM) of the physical memory, kernel code, physical memory manager, and
          * kernel heap.
          *
          * <p>
@@ -143,54 +143,103 @@ namespace Rune::Memory {
          */
         void load_virtual_address_space(PhysicalAddr base_pt_addr);
 
-        /**
-         * Try to allocate a page in the base page table loaded by the CPU for the page aligned
-         * `vAddr` using the `pFlags` to a page frame which will be requested from the physical
-         * memory manager.
-         *
-         * @param vAddr    Virtual address of a page to map to a page frame.
-         * @param flags    Page flags.
-         *
-         * @return True if the allocation succeeded, false if the page is already allocated or out
-         * of physical memory.
-         */
+        /// @brief Allocate the v_addr with given flags to the base_pt.
+        ///
+        /// The virtual memory manager will request a page frame from the physical memory manager.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr Virtual address to be mapped to a page frame.
+        /// @param flags Page flags.
+        /// @return True: The allocation succeeded, Otherwise: The v_addr is already mapped or out
+        ///         of physical memory.
+        auto allocate(const PageTable& base_pt, VirtualAddr v_addr, U16 flags) -> bool;
+
+        /// @brief Allocate the requested number of pages starting at v_addr with given flags to the
+        ///         base_pt.
+        ///
+        /// The virtual memory manager will request page frames from the physical memory manager.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr Virtual address to be mapped to a page frame.
+        /// @param flags Page flags.
+        /// @return True: The allocation succeeded, Otherwise: The v_addr is already mapped or out
+        ///         of physical memory.
+        auto allocate(const PageTable& base_pt, VirtualAddr v_addr, U16 flags, size_t pages)
+            -> bool;
+
+        /// @brief Allocate the v_addr with given flags to the loaded base page table.
+        ///
+        /// The virtual memory manager will request a page frame from the physical memory manager.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr Virtual address to be mapped to a page frame.
+        /// @param flags Page flags.
+        /// @return True: The allocation succeeded, Otherwise: The v_addr is already mapped or out
+        ///         of physical memory.
         auto allocate(VirtualAddr v_addr, U16 flags) -> bool;
 
-        /**
-         * Try to allocate `pages` pages in the base page table loaded by the CPU for the page
-         * aligned `vAddr` using the `pFlags` to a page frame which will be requested from the
-         * physical memory manager.
-         *
-         * @param vAddr Virtual address of a page to map to a page frame.
-         * @param flags Page flags.
-         * @param pages Number of pages to allocate.
-         *
-         * @return True if the allocation succeeded, false if the page is already allocated or out
-         * of physical memory.
-         */
+        /// @brief Allocate the requested number of pages starting at v_addr with given flags to the
+        ///         loaded base page table.
+        ///
+        /// The virtual memory manager will request page frames from the physical memory manager.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr Virtual address to be mapped to a page frame.
+        /// @param flags Page flags.
+        /// @return True: The allocation succeeded, Otherwise: The v_addr is already mapped or out
+        ///         of physical memory.
         auto allocate(VirtualAddr v_addr, U16 flags, size_t pages) -> bool;
 
-        /**
-         * Try to free the page aligned `vAddr` in the base page table loaded by the CPU by removing
-         * the mappings in the page tables.
-         *
-         * @param vAddr Virtual address of a page to free.
-         *
-         * @return True if the free succeeded, false if the virtual address is not mapped or the
-         * physical memory manager fails to free the associated page frame.
-         */
+        /// @brief Remove the mapping for the given v_addr from the page table hierarchy defined by
+        ///         base_pt.
+        ///
+        /// Empty page tables will be removed, and their physical memory is freed, including the
+        /// page frame mapped to v_addr.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr  Virtual address to be unmapped.
+        /// @return True: The page mapping was removed, and the associated page frame was freed.
+        ///         Otherwise: No mapping for v_addr was found, unmapping v_addr failed, or freeing
+        ///                     the page frame mapped to v_addr failed.
+        auto free(const PageTable& base_pt, VirtualAddr v_addr) -> bool;
+
+        /// @brief Remove the requested number of mappings starting at v_addr from the page table
+        ///         hierarchy defined by base_pt.
+        ///
+        /// Empty page tables will be removed, and their physical memory is freed, including the
+        /// page frames mapped to the pages starting at v_addr.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr  Virtual address to be unmapped.
+        /// @return True: The page mapping was removed, and the associated page frame was freed.
+        ///         Otherwise: No mapping for v_addr was found, unmapping v_addr failed, or freeing
+        ///                     the page frame mapped to v_addr failed.
+        auto free(const PageTable& base_pt, VirtualAddr v_addr, size_t pages) -> bool;
+
+        /// @brief Remove the mapping for the given v_addr from the page table hierarchy defined by
+        ///         the loaded base page table.
+        ///
+        /// Empty page tables will be removed, and their physical memory is freed, including the
+        /// page frame mapped to v_addr.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr  Virtual address to be unmapped.
+        /// @return True: The page mapping was removed, and the associated page frame was freed.
+        ///         Otherwise: No mapping for v_addr was found, unmapping v_addr failed, or freeing
+        ///                     the page frame mapped to v_addr failed.
         auto free(VirtualAddr v_addr) -> bool;
 
-        /**
-         * Try to free `pages` pages aligned `vAddr` in the base page table loaded by the CPU by
-         * removing the mappings in the page tables.
-         *
-         * @param vAddr Virtual address of a page to free.
-         * @param pages Number of pages to free.
-         *
-         * @return True if the free succeeded, false if the virtual address is not mapped or the
-         * physical memory manager fails to free the associated page frame.
-         */
+        /// @brief Remove the requested number of mappings starting at v_addr from the page table
+        ///         hierarchy defined by the loaded base page table.
+        ///
+        /// Empty page tables will be removed, and their physical memory is freed, including the
+        /// page frames mapped to the pages starting at v_addr.
+        ///
+        /// @param base_pt A base page table.
+        /// @param v_addr  Virtual address to be unmapped.
+        /// @return True: The page mapping was removed, and the associated page frame was freed.
+        ///         Otherwise: No mapping for v_addr was found, unmapping v_addr failed, or freeing
+        ///                     the page frame mapped to v_addr failed.
         auto free(VirtualAddr v_addr, size_t pages) -> bool;
     };
 } // namespace Rune::Memory

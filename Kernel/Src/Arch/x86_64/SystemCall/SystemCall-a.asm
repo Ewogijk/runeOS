@@ -25,6 +25,11 @@ system_call_accept:
     swapgs
     mov rsp, [gs:0] ; Load kernel stack
 
+    ; Enable interrupts only after the kernel stack was loaded, it is intentionally disabled during
+    ; syscall because otherwise the interrupt frame could be pushed onto the user stack if an
+    ; interrupt happens during syscall
+    sti
+
     push rcx    ; Save return user mode rip
     push r11    ; Save user mode rflags
 

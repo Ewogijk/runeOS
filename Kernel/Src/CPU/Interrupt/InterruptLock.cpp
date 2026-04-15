@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2025 Ewogijk
  *
@@ -15,15 +14,19 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_DUMMY2_H
-#define RUNEOS_DUMMY2_H
+#include <CPU/Interrupt/InterruptLock.h>
 
-#include <Test/Heimdall/Heimdall.h>
+#include <CPU/Interrupt/Interrupt.h>
 
-TEST("Kernel Test 1", "B Suite") { REQUIRE(1 + 2 == 3) }
+namespace Rune::CPU {
+    // NOLINTBEGIN readability-convert-member-functions-to-static is intended
+    void InterruptLock::lock() { interrupt_irq_disable(); }
 
-// TEST("Kernel Test 2", "B Suite") {
-//     REQUIRE(1 + 2 == 4)
-// }
+    void InterruptLock::unlock() { interrupt_irq_enable(); }
+    // NOLINTEND
 
-#endif // RUNEOS_DUMMY2_H
+    void InterruptSaveLock::lock() { _flags = interrupt_irq_save(); }
+
+    void InterruptSaveLock::unlock() const { interrupt_irq_restore(_flags); }
+
+} // namespace Rune::CPU

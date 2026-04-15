@@ -27,7 +27,7 @@
 #include <VirtualFileSystem/FileStream.h>
 
 namespace Rune::App {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("App.AppSubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("App.AppModule");
 
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 
@@ -349,7 +349,7 @@ namespace Rune::App {
         auto        app = SharedPointer<Info>(new Info());
         CPU::Stack  user_stack;
         VirtualAddr start_info_addr = 0;
-        LOGGER->info("Loading OS: {}", system_loader_executable.to_string());
+        LOGGER->info("Loading System Loader: {}", system_loader_executable.to_string());
         char*      dummy_args[1] = {nullptr}; // NOLINT syscall arg, must use ptr
         LoadStatus load_status   = loader.load(system_loader_executable,
                                              dummy_args,
@@ -358,7 +358,7 @@ namespace Rune::App {
                                              start_info_addr,
                                              true);
         if (load_status != LoadStatus::LOADED) {
-            LOGGER->warn("Failed to load OS. Status: {}", load_status.to_string());
+            LOGGER->warn("Failed to load System Loader. Status: {}", load_status.to_string());
             return load_status;
         }
 

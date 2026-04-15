@@ -80,7 +80,7 @@ CLINK {
     }
 
     int isxdigit(int c) {
-        return (0x30 <= c && c <= 0x39) || 0x41 <= c && c <= 0x46 || (0x61 <= c && c <= 0x66);
+        return (0x30 <= c && c <= 0x39) || (0x41 <= c && c <= 0x46) || (0x61 <= c && c <= 0x66);
     }
 
     int isprint(int c) { return 0x20 <= c && c <= 0x7F; }

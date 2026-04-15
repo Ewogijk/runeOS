@@ -92,8 +92,8 @@ atomic_test_and_set:
 ;   True if atomic_value, false otherwise.
 global atomic_compare_exchange_relaxed
 atomic_compare_exchange_relaxed:
-    mov rax, rsi
-    lock cmpxchg [rdi], rdx
+    mov eax, esi
+    lock cmpxchg [rdi], edx
     setz al
     ret
 
@@ -108,13 +108,10 @@ atomic_compare_exchange_relaxed:
 global atomic_compare_exchange_acquire
 atomic_compare_exchange_acquire:
     ; x86 has acquire memory order by default -> see atomic_store_acquire comment for explanation
-    mov rax, rsi
-    lock cmpxchg [rdi], rdx
+    mov eax, esi
+    lock cmpxchg [rdi], edx
     setz al
     ret
-
-
-
 
 ; CLINK auto atomic_flag_test_and_set(bool* flag) -> bool;
 ; Args:

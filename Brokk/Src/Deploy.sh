@@ -86,7 +86,7 @@ mv "$rune_os_image" "${install_directory}"/bin        # Created by us -> does no
 cp Resource/requirements.txt "$install_directory"
 cp Resource/Start.py "$install_directory"
 
-if [ "$build" = "debug" ]; then
+if [ "$build" = "debug" ] || [ "$build" = "test" ]; then
     cp Resource/Debug.py "$install_directory"
     cp "$kernel_elf" "${install_directory}"/bin
     cp "$shell_elf" "${install_directory}"/bin

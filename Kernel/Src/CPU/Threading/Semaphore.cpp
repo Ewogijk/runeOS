@@ -19,7 +19,7 @@
 #include <KRE/Math.h>
 
 #include <CPU/Threading/Atomic.h>
-#include <CPU/Threading/LockGuard.h>
+#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/MemoryBarrier.h>
 
 namespace Rune::CPU {
@@ -76,7 +76,7 @@ namespace Rune::CPU {
     }
 
     auto Semaphore::try_lock() -> bool {
-        LockGuard<Spinlock> lg(_lock);
+        CriticalSection<Spinlock> lg(_lock);
         if (_units <= 0) {
             trace_state("try_lock-fail");
             return false;
@@ -87,7 +87,7 @@ namespace Rune::CPU {
     }
 
     void Semaphore::unlock() {
-        LockGuard<Spinlock> lg(_lock);
+        CriticalSection<Spinlock> lg(_lock);
         if (_units >= _unit_max) return;
         _units++;
         SharedPointer<Thread> thread_to_wake;
