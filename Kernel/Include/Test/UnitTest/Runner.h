@@ -20,6 +20,9 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
+#include <Test/UnitTest/CPU/Threading/ConditionVariableTest.h>
+#include <Test/UnitTest/CPU/Threading/FutureTest.h>
+
 namespace Rune::Test {
     void run_kernel_tests();
 }
