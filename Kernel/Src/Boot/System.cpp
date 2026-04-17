@@ -199,20 +199,20 @@ namespace Rune {
         CPU::exception_install_panic_stream(_panic_stream);
         init_cpp_runtime_support(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
 
-        auto*          cpu_subsys    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
+        auto*          cpu_module    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
         char*          dummy_args[1] = {nullptr}; // NOLINT
         CPU::StartInfo start_info{};
         start_info.argc = 0;
         start_info.argv = dummy_args;
         start_info.main = &boot_phase3;
-        cpu_subsys->schedule_new_thread(
+        cpu_module->schedule_new_thread(
             BOOT_THREAD_NAME,
             &start_info,
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        cpu_subsys->get_scheduler()->await_block();
-        cpu_subsys->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
+        cpu_module->get_scheduler()->await_block();
+        cpu_module->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
 
     auto System::get_boot_info() -> BootInfo& { return _boot_info; }

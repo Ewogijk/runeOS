@@ -76,8 +76,9 @@ TEST("wait - One Thread", "ConditionVariable") {
     REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0));
     REQUIRE(thread_a->state == CPU::ThreadState::BLOCKED)
 
-    // Cleanup
-    cpu_module->stop_thread(test_thread_a.m_thread_handle);
+    // Cleanupx
+    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_a.m_thread_handle);
     condition_variable = SharedPointer<CPU::ConditionVariable>();
 }
 
@@ -107,8 +108,10 @@ TEST("wait - Multiple Threads", "ConditionVariable") {
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    cpu_module->stop_thread(test_thread_b.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_a.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_b.m_thread_handle);
     condition_variable = SharedPointer<CPU::ConditionVariable>();
 }
 
@@ -143,8 +146,10 @@ TEST("notify_one", "ConditionVariable") {
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    cpu_module->stop_thread(test_thread_b.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_a.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_b.m_thread_handle);
     condition_variable = SharedPointer<CPU::ConditionVariable>();
 }
 
@@ -179,8 +184,10 @@ TEST("notify_all", "ConditionVariable") {
     REQUIRE(thread_b->state != CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    cpu_module->stop_thread(test_thread_b.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_a.m_thread_handle);
+    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(test_thread_b.m_thread_handle);
     condition_variable = SharedPointer<CPU::ConditionVariable>();
 }
 

@@ -356,7 +356,7 @@ namespace Rune::CPU {
             }
         }
         if (!da_thread) {
-            LOGGER->warn("No thread with handle {} exists", handle);
+            LOGGER->debug("No thread with handle {} exists", handle);
             return false;
         }
 
