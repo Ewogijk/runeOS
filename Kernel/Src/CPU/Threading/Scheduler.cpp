@@ -79,6 +79,9 @@ namespace Rune::CPU {
         if (_running_thread == _idle_thread) {
             // Do not reschedule the Idle Thread
             _idle_thread->state = ThreadState::BLOCKED;
+        } else if (_running_thread == _garbage_collector_thread) {
+            // And do not reschedule the Thread Garbage Collector
+            _garbage_collector_thread->state = ThreadState::BLOCKED;
         } else {
             switch (_running_thread->state) {
                 case ThreadState::NONE:
