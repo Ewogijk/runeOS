@@ -17,8 +17,6 @@
 
 #include <Test/Heimdall/Heimdall.h>
 
-#include <Test/UnitTest/CPU/Threading/ConditionVariableTest.h>
-
 #include <KRE/Build.h>
 
 namespace Rune::Test {
