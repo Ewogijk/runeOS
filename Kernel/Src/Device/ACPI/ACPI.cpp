@@ -14,8 +14,13 @@
  *  limitations under the License.
  */
 
-#include "KRE/Logging.h"
-#include "KRE/Memory.h"
+#include <Device/ACPI/ACPI.h>
+
+#include <KRE/Logging.h>
+#include <KRE/Memory.h>
+#include <KRE/System/System.h>
+
+#include <Memory/Paging.h>
 
 CLINK {
 #include <Device/ACPI/ACPICA/acpi.h>
@@ -24,7 +29,37 @@ CLINK {
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.ACPI");
 
-    auto acpi_start() -> bool {
+    void ACPIDriver::handle_get_acpi_info_request(IOResponse& response) {
+        ACPI_TABLE_RSDP* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
+            Memory::physical_to_virtual_address(System::instance().get_boot_info().rsdp_addr));
+        response.m_status = IORequestStatus::HANDLED;
+        response.m_data   = new ACPIInfo{.m_oem      = String(rsdp->OemId, ACPI_OEM_ID_SIZE),
+                                         .m_revision = rsdp->Revision};
+    }
+
+    void ACPIDriver::handle_shutdown_request(IOResponse& response) {
+        ACPI_STATUS status = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+        if (ACPI_FAILURE(status)) {
+            LOGGER->error("AcpiEnterSleepStatePrep(S5) failed. Status={}", status);
+            response.m_status = IORequestStatus::FAILED;
+            return;
+        }
+
+        status = AcpiEnterSleepState(ACPI_STATE_S5);
+        if (ACPI_FAILURE(status)) {
+            LOGGER->error("AcpiEnterSleepState(S5) failed. Status={}", status);
+            response.m_status = IORequestStatus::FAILED;
+            return;
+        }
+
+        response.m_status = IORequestStatus::HANDLED;
+        response.m_data   = nullptr;
+    }
+
+    ACPIDriver::ACPIDriver(DriverHandle handle, const String& name) : BusDriver(handle, name) {}
+
+    auto ACPIDriver::start(void* context) -> bool {
+        SILENCE_UNUSED(context)
         ACPI_STATUS status = AcpiInitializeSubsystem();
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiInitializeSubsystem failed. Status={}", status);
@@ -54,7 +89,27 @@ namespace Rune::Device {
             LOGGER->error("AcpiInitializeObjects failed. Status={}", status);
             return false;
         }
-
+        _acpi_initialized = true;
         return true;
     }
+
+    auto ACPIDriver::stop() -> bool { return true; }
+
+    auto ACPIDriver::handle_request(IORequest request) -> IOResponse {
+        if (!_acpi_initialized)
+            return IOResponse{.m_status = IORequestStatus::FAILED, .m_data = nullptr};
+        auto       req = reinterpret_cast<ACPIREQUEST*>(request);
+        IOResponse io_response;
+
+        switch (*req) {
+            case ACPIREQUEST::GET_ACPI_INFO: handle_get_acpi_info_request(io_response); break;
+            case ACPIREQUEST::SHUTDOWN:      handle_shutdown_request(io_response); break;
+            default:                         io_response.m_status = IORequestStatus::BAD_ARGUMENT;
+        }
+
+        return io_response;
+    }
+
+    auto ACPIDriver::discover_devices() -> LinkedList<Device> { return LinkedList<Device>(); }
+
 } // namespace Rune::Device
