@@ -28,6 +28,7 @@ sources = [
     build_env.File("AHCI/PortEngine.cpp"),
     build_env.File("Keyboard/Keyboard.cpp"),
     build_env.File("Keyboard/PS2Keyboard.cpp"),
+    build_env.File("Device.cpp"),
     build_env.File("DeviceModule.cpp"),
     build_env.File("PCI.cpp"),
 ]
