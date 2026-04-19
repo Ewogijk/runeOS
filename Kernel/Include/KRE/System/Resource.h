@@ -46,27 +46,27 @@ namespace Rune {
     /// @tparam Handle
     template <Integer Handle>
     class Resource {
-        Handle _handle;
-        String _name;
+        Handle m_handle;
+        String m_name;
 
       public:
         /// @brief The handle 0 indicates non-existent resources.
         static constexpr U8 HANDLE_NONE = 0;
 
-        Resource(Handle handle, String name) : _handle(handle), _name(name) {}
+        Resource(Handle handle, String name) : m_handle(handle), m_name(name) {}
 
         /// @brief
         /// @return The handle of this resource.
-        [[nodiscard]] auto get_handle() const -> Handle { return _handle; }
+        [[nodiscard]] auto get_handle() const -> Handle { return m_handle; }
 
         /// @brief
         /// @return The name of this resource.
-        [[nodiscard]] auto get_name() const -> String { return _name; }
+        [[nodiscard]] auto get_name() const -> String { return m_name; }
 
         /// @brief
         /// @return The unique name contains handle and name.
         [[nodiscard]] auto get_unique_name() const -> String {
-            return String::format("{}-{}", _handle, _name);
+            return String::format("{}-{}", m_handle, m_name);
         }
     };
 

@@ -24,12 +24,18 @@
 #include <CPU/CPUModule.h>
 
 #include <Device/AHCI/AHCI.h>
+#include <Device/Device.h>
 #include <Device/Keyboard/PS2Keyboard.h>
 
 namespace Rune::Device {
     class DeviceModule : public Module {
         UniquePointer<AHCIDriver>      _ahci_driver;
         SharedPointer<VirtualKeyboard> _keyboard;
+        SharedPointer<Driver>          _acpi_driver;
+
+        Device _root_device;
+
+        auto configure_root_device() -> bool;
 
       public:
         explicit DeviceModule();
@@ -40,8 +46,7 @@ namespace Rune::Device {
         //                                      KernelSubsystem Overrides
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        [[nodiscard]]
-        auto get_name() const -> String override;
+        [[nodiscard]] auto get_name() const -> String override;
 
         auto load(const BootInfo& boot_info) -> bool override;
 

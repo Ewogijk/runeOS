@@ -18,8 +18,39 @@
 #ifndef RUNEOS_ACPI_H
 #define RUNEOS_ACPI_H
 
+#include <Device/Device.h>
+
 namespace Rune::Device {
-    bool acpi_start();
-}
+
+#define ACPI_REQUESTS(X)                                                                           \
+    X(ACPIREQUEST, GET_ACPI_INFO, 0x1)                                                             \
+    X(ACPIREQUEST, SHUTDOWN, 0x2)
+
+    /// @brief TODO write doc
+    ///
+    /// - GET_ACPI_INFO: A_DESCRIPTION
+    /// - SHUTDOWN: A_DESCRIPTION
+    DECLARE_ENUM(ACPIREQUEST, ACPI_REQUESTS, 0x0) // NOLINT
+
+    struct ACPIInfo {
+        String m_oem;
+        U32    m_revision;
+    };
+
+    class ACPIDriver : public BusDriver {
+        bool _acpi_initialized = false;
+
+        void handle_get_acpi_info_request(IOResponse& response);
+        void handle_shutdown_request(IOResponse& response);
+
+      public:
+        ACPIDriver(DriverHandle handle, const String& name);
+
+        auto start(void* context) -> bool override;
+        auto stop() -> bool override;
+        auto handle_request(IORequest request) -> IOResponse override;
+        auto discover_devices() -> LinkedList<Device> override;
+    };
+} // namespace Rune::Device
 
 #endif // RUNEOS_ACPI_H
