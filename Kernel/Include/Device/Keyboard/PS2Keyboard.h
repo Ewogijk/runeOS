@@ -41,13 +41,25 @@ namespace Rune::Device {
         CPU::IRQHandler _irq_handler;
 
       public:
-        PS2Keyboard();
+        /// @brief Name of the PS2 Keyboard device.
+        static const String PS2_KEYBOARD;
 
-        auto start() -> bool override;
+        PS2Keyboard(DriverHandle handle);
 
         auto read() -> int override;
 
         void flush() override;
+
+        auto get_target_device() -> String override;
+
+        auto start(void* context) -> bool override;
+
+        auto stop() -> bool override;
+
+        auto handle_request(IORequest request) -> IOResponse override;
+
+        void discover_devices(const DeviceMapper&          device_mapper,
+                              HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device
 

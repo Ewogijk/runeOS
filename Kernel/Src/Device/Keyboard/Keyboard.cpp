@@ -21,6 +21,9 @@ namespace Rune::Device {
     //                                          KeyStream
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    VirtualKeyboard::VirtualKeyboard(DriverHandle handle, const String& name)
+        : Driver(handle, name) {}
+
     auto VirtualKeyboard::is_read_supported() -> bool { return true; }
 
     auto VirtualKeyboard::is_write_supported() -> bool { return false; }

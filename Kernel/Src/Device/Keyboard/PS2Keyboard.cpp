@@ -107,11 +107,29 @@ namespace Rune::Device {
         }
     }
 
-    PS2Keyboard::PS2Keyboard()
-        : _key_code_cache(),
+    const String PS2Keyboard::PS2_KEYBOARD = "PS2 Keyboard";
+
+    PS2Keyboard::PS2Keyboard(DriverHandle handle)
+        : VirtualKeyboard(handle, PS2_KEYBOARD),
+          _key_code_cache(),
           _irq_handler([] { return CPU::IRQState::PENDING; }) {}
 
-    auto PS2Keyboard::start() -> bool {
+    auto PS2Keyboard::read() -> int {
+        if (_start == _end) return Ember::VirtualKey::NONE_KEY_CODE;
+        int key_code = _key_code_cache[_start];
+        _start       = (_start + 1) % RING_BUFFER_SIZE;
+        return key_code;
+    }
+
+    void PS2Keyboard::flush() {
+        _start = 0;
+        _end   = 0;
+    }
+
+    auto PS2Keyboard::get_target_device() -> String { return PS2_KEYBOARD; }
+
+    auto PS2Keyboard::start(void* ctx) -> bool {
+        SILENCE_UNUSED(ctx)
         init_scan_set_one();
 
         _irq_handler = [this] {
@@ -131,19 +149,20 @@ namespace Rune::Device {
             }
             return CPU::IRQState::HANDLED;
         };
-        CPU::irq_install_handler(1, 0, "PS2 Keyboard", _irq_handler);
-        return true;
+
+        return CPU::irq_install_handler(1, get_handle(), PS2_KEYBOARD, _irq_handler);
     }
 
-    auto PS2Keyboard::read() -> int {
-        if (_start == _end) return Ember::VirtualKey::NONE_KEY_CODE;
-        int key_code = _key_code_cache[_start];
-        _start       = (_start + 1) % RING_BUFFER_SIZE;
-        return key_code;
+    auto PS2Keyboard::stop() -> bool { return CPU::irq_uninstall_handler(1, get_handle()); }
+
+    auto PS2Keyboard::handle_request(IORequest request) -> IOResponse {
+        SILENCE_UNUSED(request)
+        // Requests are not supported
+        return IOResponse{.m_status = IORequestStatus::FAILED, .m_data = nullptr};
     }
 
-    void PS2Keyboard::flush() {
-        _start = 0;
-        _end   = 0;
+    void PS2Keyboard::discover_devices(const DeviceMapper&          device_mapper,
+                                       HandleCounter<DeviceHandle>& dev_handle_counter) {
+        SILENCE_UNUSED(device_mapper)
     }
 } // namespace Rune::Device

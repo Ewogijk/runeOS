@@ -22,6 +22,8 @@
 
 #include <Memory/Paging.h>
 
+#include <Device/Keyboard/PS2Keyboard.h>
+
 CLINK {
 #include <Device/ACPI/ACPICA/acpi.h>
 }
@@ -56,7 +58,11 @@ namespace Rune::Device {
         response.m_data   = nullptr;
     }
 
-    ACPIDriver::ACPIDriver(DriverHandle handle, const String& name) : BusDriver(handle, name) {}
+    const String ACPIDriver::ACPI = "ACPI";
+
+    ACPIDriver::ACPIDriver(DriverHandle handle) : Driver(handle, ACPI) {}
+
+    auto ACPIDriver::get_target_device() -> String { return ACPI; }
 
     auto ACPIDriver::start(void* context) -> bool {
         SILENCE_UNUSED(context)
@@ -110,6 +116,10 @@ namespace Rune::Device {
         return io_response;
     }
 
-    auto ACPIDriver::discover_devices() -> LinkedList<Device> { return LinkedList<Device>(); }
+    void ACPIDriver::discover_devices(const DeviceMapper&          device_mapper,
+                                      HandleCounter<DeviceHandle>& dev_handle_counter) {
+        Device ps2_keyboard = Device(dev_handle_counter.acquire(), PS2Keyboard::PS2_KEYBOARD);
+        device_mapper(get_handle(), ps2_keyboard, nullptr);
+    }
 
 } // namespace Rune::Device
