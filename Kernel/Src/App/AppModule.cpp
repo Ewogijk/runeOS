@@ -371,7 +371,7 @@ namespace Rune::App {
         // Set the error stream also to the terminal stream, just print text in red
         app->std_err = app->std_out;
         // Hook up the stdin to the keyboard
-        app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard().get());
+        app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard());
 
         _system_loader_handle =
             schedule_for_start(app,

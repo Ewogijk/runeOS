@@ -17,6 +17,7 @@
 #include <Device/DeviceModule.h>
 
 #include <KRE/System/System.h>
+#include <KRE/Utility.h>
 
 #include <Device/PCI.h>
 
@@ -26,40 +27,92 @@ namespace Rune::Device {
     const SharedPointer<Logger> LOGGER =
         LogContext::instance().get_logger("Device.DeviceSubsystem");
 
+    const String DeviceModule::ROOT_DEVICE_NAME = "ACPI";
+
+    void DeviceModule::setup_device_driver_registry() {
+        auto acpi_driver = SharedPointer<Driver>(new ACPIDriver(_driver_handle_counter.acquire()));
+        _device_driver_registry[acpi_driver->get_target_device()] = acpi_driver;
+        auto ps2keyboard_driver =
+            SharedPointer<Driver>(new PS2Keyboard(_driver_handle_counter.acquire()));
+        _device_driver_registry[ps2keyboard_driver->get_target_device()] = ps2keyboard_driver;
+    }
+
     bool DeviceModule::configure_root_device() {
-        if (!_acpi_driver->start(nullptr)) {
-            LOGGER->error("Failed to start ACPI driver.");
+        auto maybe_root_device_driver = _device_driver_registry.find(ROOT_DEVICE_NAME);
+        if (maybe_root_device_driver == _device_driver_registry.end()) {
+            LOGGER->error("The root device driver is missing.");
             return false;
         }
+        auto root_device_driver = *maybe_root_device_driver->value;
+        if (!root_device_driver->start(nullptr)) {
+            LOGGER->error("Failed to start the root device driver.");
+            return false;
+        }
+
         auto       request  = ACPIREQUEST::GET_ACPI_INFO;
-        IOResponse response = _acpi_driver->handle_request(&request);
+        IOResponse response = root_device_driver->handle_request(&request);
         if (response.m_status != IORequestStatus::HANDLED) {
-            LOGGER->error("Failed to configure root device.");
+            LOGGER->error("Failed to configure the root device.");
             return false;
         }
         auto* acpi_info              = reinterpret_cast<ACPIInfo*>(response.m_data);
-        _root_device                 = Device(1, "ACPI");
+        _root_device                 = Device(_device_handle_counter.acquire(), ACPIDriver::ACPI);
         _root_device.m_oem           = acpi_info->m_oem;
         _root_device.m_revision      = acpi_info->m_revision;
-        _root_device.m_driver_handle = _acpi_driver->get_handle();
+        _root_device.m_driver_handle = root_device_driver->get_handle();
+        _root_device.m_is_bus_device = true;
+        root_device_driver->set_operated_device(_root_device.get_handle());
+        _device_registry.put(_root_device.get_handle(), _root_device);
         return true;
     }
 
     DeviceModule::DeviceModule()
         : _ahci_driver(nullptr),
-          _keyboard(new PS2Keyboard()),
-          _acpi_driver(new ACPIDriver(1, "ACPI")),
           _root_device(Resource<DeviceHandle>::HANDLE_NONE, "") {}
 
     auto DeviceModule::get_name() const -> String { return "Device"; }
 
     auto DeviceModule::load(const BootInfo& boot_info) -> bool {
         SILENCE_UNUSED(boot_info)
+
+        setup_device_driver_registry();
+
         if (!configure_root_device()) return false;
 
-        PCI::discover_devices(*_ahci_driver);
+        Function<void(DeviceHandle, Device&, void*)> device_mapper =
+            [this](DeviceHandle bus_device, Device& discovered_device, void* driver_ctx) {
+                auto maybe_driver = _device_driver_registry.find(discovered_device.get_name());
+                if (maybe_driver == _device_driver_registry.end()) {
+                    LOGGER->warn(R"(Missing device driver: {})",
+                                 discovered_device.get_unique_name());
+                    return;
+                }
 
-        _keyboard->start();
+                auto driver = *maybe_driver->value;
+                if (driver->is_operating_device()) {
+                    LOGGER->warn(R"(Device driver "{}" is already operating device {}.)",
+                                 driver->get_unique_name(),
+                                 driver->get_operated_device());
+                    return;
+                }
+
+                if (!driver->start(driver_ctx)) {
+                    LOGGER->warn(R"(Device driver start failure: {})", driver->get_unique_name());
+                    return;
+                }
+
+                driver->set_operated_device(discovered_device.get_handle());
+                discovered_device.m_driver_handle = driver->get_handle();
+
+                _device_registry.put(discovered_device.get_handle(), discovered_device);
+                _device_registry.find(bus_device)
+                    ->value->m_child_devices.add_back(discovered_device.get_handle());
+            };
+
+        _device_driver_registry[_root_device.get_name()]->discover_devices(device_mapper,
+                                                                           _device_handle_counter);
+
+        PCI::discover_devices(*_ahci_driver);
         return true;
     }
 
@@ -69,5 +122,8 @@ namespace Rune::Device {
 
     auto DeviceModule::get_ahci_driver() -> AHCIDriver* { return _ahci_driver.get(); }
 
-    auto DeviceModule::get_keyboard() -> SharedPointer<VirtualKeyboard> { return _keyboard; }
+    auto DeviceModule::get_keyboard() -> VirtualKeyboard* {
+        return static_cast<VirtualKeyboard*>(
+            _device_driver_registry.find(PS2Keyboard::PS2_KEYBOARD)->value->get());
+    }
 } // namespace Rune::Device
