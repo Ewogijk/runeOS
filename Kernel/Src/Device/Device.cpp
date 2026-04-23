@@ -23,6 +23,4 @@ namespace Rune::Device {
 
     Driver::Driver(DriverHandle handle, const String& name) : Resource(handle, name) {}
 
-    BusDriver::BusDriver(DriverHandle handle, const String& name) : Driver(handle, name) {}
-
 } // namespace Rune::Device

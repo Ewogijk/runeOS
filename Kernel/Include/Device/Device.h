@@ -37,9 +37,9 @@ namespace Rune::Device {
     /// device drivers. Since handles are dynamically assigned during runtime, they cannot be used
     /// to identify specific devices for a device driver; hence a static name is used.
     ///
-    /// Devices are organized in a tree like structure, the device tree. Generally speaking, devices
-    /// can be divided into two types of devices: Bus Devices and (Leaf) Devices. Bus devices like
-    /// PCIe can contain other devices, while (Leaf) devices do not, e.g., a keyboard.
+    /// Devices are organized in a tree structure. Generally speaking, devices can be divided into
+    /// two types of devices: Bus Devices and Leaf Devices. Bus devices like PCIe can contain
+    /// other devices, while Leaf Devices do not, e.g., a keyboard.
     struct Device : public Resource<DeviceHandle> {
         /// @brief Name of the original equipment manufacturer
         String m_oem;
@@ -51,7 +51,11 @@ namespace Rune::Device {
 
         /// @brief If this device is a bus device, this list contains all devices detected on the
         ///         bus.
-        LinkedList<Device> m_child_devices;
+        LinkedList<DeviceHandle> m_child_devices;
+
+        /// @brief Determines if this device will be treated as a bus device. True: Bus Device,
+        /// False: Leaf Device.
+        bool m_is_bus_device = false;
 
         Device(DeviceHandle handle, const String& name);
     };
@@ -85,6 +89,13 @@ namespace Rune::Device {
         void*           m_data   = nullptr;
     };
 
+    /// @brief A function that maps a device to a device driver.
+    ///
+    /// DeviceHandle: The handle of the bus device that has discovered the given device.
+    /// Device: A reference to a device discovered by a bus device.
+    /// void*: A pointer to data required for device driver initialization.
+    using DeviceMapper = Function<void(DeviceHandle, Device&, void*)>;
+
     /// @brief A device driver operates a device in the system.
     ///
     /// Device drivers are mapped to devices automatically. Device drivers provide the name of the
@@ -96,9 +107,27 @@ namespace Rune::Device {
         Driver(DriverHandle handle, const String& name);
         virtual ~Driver() = default;
 
+        /// @brief Check if the driver is operating a device.
+        /// @return True: A device handle was assigned to this driver, False: Otherwise.
+        [[nodiscard]] auto is_operating_device() const -> bool {
+            return m_device_handle != Resource<DeviceHandle>::HANDLE_NONE;
+        }
+
         /// @brief
-        /// @return The name of the device that is supported by this device driver.
-        virtual auto get_supported_device() -> String = 0;
+        /// @return The handle of the device that is operated by this driver.
+        [[nodiscard]] auto get_operated_device() const -> DeviceHandle { return m_device_handle; }
+
+        /// @brief
+        /// @param device_handle Handle of the device to operate.
+        void set_operated_device(DeviceHandle device_handle) {
+            if (!is_operating_device()) {
+                m_device_handle = device_handle;
+            }
+        }
+
+        /// @brief
+        /// @return Name of the device this driver intends to operate.
+        virtual auto get_target_device() -> String = 0;
 
         /// @brief Initialize the device to a working state so that it is able to handle IO
         ///         requests.
@@ -118,17 +147,13 @@ namespace Rune::Device {
         /// @param request An IO request.
         /// @return IO response containing the result of the action.
         virtual auto handle_request(IORequest request) -> IOResponse = 0;
-    };
-
-    /// @brief A bus driver operates a bus device, thus is able to discover additional devices
-    ///         connected to the system on top off (Leaf) device functions.
-    class BusDriver : public Driver {
-      public:
-        BusDriver(DriverHandle handle, const String& name);
 
         /// @brief Scan the bus for devices.
         /// @return A list of devices connected to the bus.
-        virtual auto discover_devices() -> LinkedList<Device> = 0;
+        ///
+        /// If the operated device is a leaf device, an empty list must be returned.
+        virtual void discover_devices(const DeviceMapper&          device_mapper,
+                                      HandleCounter<DeviceHandle>& dev_handle_counter) = 0;
     };
 } // namespace Rune::Device
 
