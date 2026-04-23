@@ -37,19 +37,24 @@ namespace Rune::Device {
         U32    m_revision;
     };
 
-    class ACPIDriver : public BusDriver {
+    class ACPIDriver : public Driver {
         bool _acpi_initialized = false;
 
         void handle_get_acpi_info_request(IOResponse& response);
         void handle_shutdown_request(IOResponse& response);
 
       public:
-        ACPIDriver(DriverHandle handle, const String& name);
+        /// @brief Name of the ACPI device.
+        const static String ACPI;
 
+        ACPIDriver(DriverHandle handle);
+
+        auto get_target_device() -> String override;
         auto start(void* context) -> bool override;
         auto stop() -> bool override;
         auto handle_request(IORequest request) -> IOResponse override;
-        auto discover_devices() -> LinkedList<Device> override;
+        void discover_devices(const DeviceMapper&                device_mapper,
+                              HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device
 

@@ -21,26 +21,20 @@
 
 #include <KRE/Stream.h>
 
+#include <Device/Device.h>
+
 namespace Rune::Device {
     /**
      * @brief The virtual keyboard maps physical keyboard scancodes to virtual keycodes and provides
      * them to the system as a stream.
      */
-    class VirtualKeyboard : public TextStream {
+    class VirtualKeyboard : public TextStream, public Driver {
       public:
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Virtual Keyboard API
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        VirtualKeyboard(DriverHandle handle, const String& name);
 
-        /**
-         * @brief
-         * @return
-         */
-        virtual auto start() -> bool = 0;
-
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                          Stream functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        // ====================================================================================== //
+        // TextStream API
+        // ====================================================================================== //
 
         auto is_read_supported() -> bool override;
 
@@ -63,6 +57,21 @@ namespace Rune::Device {
         void close() override;
 
         auto is_ansi_supported() -> bool override;
+
+        // ====================================================================================== //
+        // Driver API
+        // ====================================================================================== //
+
+        auto get_target_device() -> String override = 0;
+
+        auto start(void* context) -> bool override = 0;
+
+        auto stop() -> bool override = 0;
+
+        auto handle_request(IORequest request) -> IOResponse override = 0;
+
+        void discover_devices(const DeviceMapper&          device_mapper,
+                              HandleCounter<DeviceHandle>& dev_handle_counter) override = 0;
     };
 } // namespace Rune::Device
 
