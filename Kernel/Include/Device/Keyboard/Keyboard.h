@@ -62,7 +62,7 @@ namespace Rune::Device {
         // Driver API
         // ====================================================================================== //
 
-        auto get_target_device() -> String override = 0;
+        auto get_target_device_ID() -> SharedPointer<DeviceID> override = 0;
 
         auto start(void* context) -> bool override = 0;
 

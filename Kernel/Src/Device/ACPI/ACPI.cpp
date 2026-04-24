@@ -23,6 +23,7 @@
 #include <Memory/Paging.h>
 
 #include <Device/Keyboard/PS2Keyboard.h>
+#include <Device/PCI/PCI.h>
 
 CLINK {
 #include <Device/ACPI/ACPICA/acpi.h>
@@ -30,6 +31,10 @@ CLINK {
 
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.ACPI");
+
+    // ========================================================================================== //
+    // ACPIDriver
+    // ========================================================================================== //
 
     void ACPIDriver::handle_get_acpi_info_request(IOResponse& response) {
         ACPI_TABLE_RSDP* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
@@ -62,7 +67,9 @@ namespace Rune::Device {
 
     ACPIDriver::ACPIDriver(DriverHandle handle) : Driver(handle, ACPI) {}
 
-    auto ACPIDriver::get_target_device() -> String { return ACPI; }
+    auto ACPIDriver::get_target_device_ID() -> SharedPointer<DeviceID> {
+        return SharedPointer<DeviceID>(new StringDeviceID(ACPI));
+    }
 
     auto ACPIDriver::start(void* context) -> bool {
         SILENCE_UNUSED(context)
@@ -118,8 +125,20 @@ namespace Rune::Device {
 
     void ACPIDriver::discover_devices(const DeviceMapper&          device_mapper,
                                       HandleCounter<DeviceHandle>& dev_handle_counter) {
-        Device ps2_keyboard = Device(dev_handle_counter.acquire(), PS2Keyboard::PS2_KEYBOARD);
+        Device ps2_keyboard     = Device(dev_handle_counter.acquire(), PS2Keyboard::PS2_KEYBOARD);
+        ps2_keyboard.m_oem      = "";
+        ps2_keyboard.m_revision = 0;
+        ps2_keyboard.m_is_bus_device = false;
+        ps2_keyboard.m_device_ID =
+            SharedPointer<DeviceID>(new StringDeviceID(PS2Keyboard::PS2_KEYBOARD));
         device_mapper(get_handle(), ps2_keyboard, nullptr);
+
+        Device pci          = Device(dev_handle_counter.acquire(), PCIDriver::PCI);
+        pci.m_oem           = "";
+        pci.m_revision      = 0;
+        pci.m_is_bus_device = true;
+        pci.m_device_ID     = SharedPointer<DeviceID>(new StringDeviceID(PCIDriver::PCI));
+        device_mapper(get_handle(), pci, nullptr);
     }
 
 } // namespace Rune::Device

@@ -19,6 +19,18 @@
 namespace Rune::Device {
     DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
 
+    StringDeviceID::StringDeviceID(const String& device_id) : m_string_ID(device_id) {}
+
+    auto StringDeviceID::get_device_ID_type() -> DeviceIDType {
+        return DeviceIDType::STRING;
+    }
+
+    auto StringDeviceID::equals(const SharedPointer<DeviceID>& d_ID) -> bool {
+        if (d_ID->get_device_ID_type() != DeviceIDType::STRING) return false;
+        auto* str_d_ID = static_cast<StringDeviceID*>(d_ID.get());
+        return m_string_ID == str_d_ID->m_string_ID;
+    }
+
     Device::Device(DriverHandle handle, const String& name) : Resource(handle, name) {}
 
     Driver::Driver(DriverHandle handle, const String& name) : Resource(handle, name) {}

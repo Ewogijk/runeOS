@@ -23,6 +23,48 @@
 #include <KRE/System/Resource.h>
 
 namespace Rune::Device {
+    // ========================================================================================== //
+    // DeviceID
+    // ========================================================================================== //
+
+#define DEVICE_ID_TYPES(X)                                                                         \
+    X(DeviceIDType, STRING, 0x1)                                                                   \
+    X(DeviceIDType, PCI, 0x2)
+
+    /// @brief Helper type to differentiate between DeviceID subclasses.
+    ///
+    /// This is needed because dynamic_cast is unsupported.
+    ///
+    /// - STRING: StringDeviceID class
+    /// - PCI: PCIDeviceID class
+    DECLARE_ENUM(DeviceIDType, DEVICE_ID_TYPES, 0x0) // NOLINT
+
+    /// @brief Base type for a context-aware device ID (CAD ID) that is used to match devices and
+    /// device drivers.
+    ///
+    /// Example: A PCI Device ID could consist of the Device's base class, subclass and programming
+    ///             interface.
+    class DeviceID {
+      public:
+        virtual ~DeviceID()                                              = default;
+        virtual auto get_device_ID_type() -> DeviceIDType                = 0;
+        virtual auto equals(const SharedPointer<DeviceID>& d_ID) -> bool = 0;
+    };
+
+    class StringDeviceID : public DeviceID {
+        String m_string_ID;
+
+      public:
+        StringDeviceID(const String& device_id);
+
+        auto get_device_ID_type() -> DeviceIDType override;
+        auto equals(const SharedPointer<DeviceID>& d_ID) -> bool override;
+    };
+
+    // ========================================================================================== //
+    // Device
+    // ========================================================================================== //
+
     class Driver;
 
     /// @brief Handle type of device.
@@ -43,6 +85,7 @@ namespace Rune::Device {
     struct Device : public Resource<DeviceHandle> {
         /// @brief Name of the original equipment manufacturer
         String m_oem;
+
         /// @brief The revision of the device.
         U32 m_revision = 0;
 
@@ -57,8 +100,14 @@ namespace Rune::Device {
         /// False: Leaf Device.
         bool m_is_bus_device = false;
 
+        SharedPointer<DeviceID> m_device_ID;
+
         Device(DeviceHandle handle, const String& name);
     };
+
+    // ========================================================================================== //
+    // Driver
+    // ========================================================================================== //
 
     /// @brief An IO request is a driver-specific context that contains information about an action
     ///         a driver should perform.
@@ -126,13 +175,16 @@ namespace Rune::Device {
         }
 
         /// @brief
-        /// @return Name of the device this driver intends to operate.
-        virtual auto get_target_device() -> String = 0;
+        /// @return CAD ID of the device this driver intends to operate.
+        virtual auto get_target_device_ID() -> SharedPointer<DeviceID> = 0;
 
         /// @brief Initialize the device to a working state so that it is able to handle IO
         ///         requests.
         /// @param context A device driver specific context required to start it.
         /// @return True: Device initialization was successful, False: Otherwise.
+        ///
+        /// The calling function has to guarantue that lifetime of context outlives the call to
+        /// start, otherwise the behavior is not defined.
         virtual auto start(void* context) -> bool = 0;
 
         /// @brief Finish any ongoing IO requests, flush data to the device, if any, and shutdown
