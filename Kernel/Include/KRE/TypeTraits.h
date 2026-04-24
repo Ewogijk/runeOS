@@ -93,9 +93,9 @@ namespace Rune {
         static bool constexpr value = true;
     };
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                               Concepts
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ========================================================================================== //
+    // Concepts
+    // ========================================================================================== //
 
     template <typename T>
     concept Integer = is_integral<T>::value;
@@ -104,6 +104,14 @@ namespace Rune {
     template <typename T>
     concept Number = is_integral<T>::value || is_floating_point<T>::value;
 
+    template <typename T>
+    struct AddLValueRef {
+        using type = T&;
+    };
+    template <>
+    struct AddLValueRef<void> {
+        using type = void;
+    };
 } // namespace Rune
 
 #endif // RUNEOS_TYPETRAITS_H

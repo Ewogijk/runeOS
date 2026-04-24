@@ -35,46 +35,61 @@ namespace Rune {
      */
     template <typename T>
     class UniquePointer {
-        T* _ptr;
+        T*   m_ptr;
+        void (*m_deleter)(void*);
 
         void swap(UniquePointer<T>& other) noexcept {
-            T* temp    = _ptr;
-            _ptr       = other._ptr;
-            other._ptr = temp;
+            T* temp     = m_ptr;
+            m_ptr       = other.m_ptr;
+            other.m_ptr = temp;
+
+            void (*temp_deleter)(void*) = m_deleter;
+            m_deleter                   = other.m_deleter;
+            other.m_deleter             = temp_deleter;
         }
 
       public:
-        UniquePointer() : _ptr(nullptr) {}
+        UniquePointer() : m_ptr(nullptr), m_deleter(nullptr) {}
 
-        explicit UniquePointer(T* ptr) : _ptr(ptr) {}
+        explicit UniquePointer(T* ptr)
+            : m_ptr(ptr),
+              m_deleter([](void* p) { delete static_cast<T*>(p); }) {}
 
-        ~UniquePointer() { delete _ptr; }
+        ~UniquePointer() {
+            if (m_ptr) m_deleter(m_ptr);
+        }
 
         UniquePointer(const UniquePointer<T>& other) = delete;
 
         auto operator=(const UniquePointer<T>& other) -> UniquePointer& = delete;
 
-        UniquePointer(UniquePointer<T>&& other) noexcept : _ptr(nullptr) { swap(other); }
+        UniquePointer(UniquePointer<T>&& other) noexcept : m_ptr(nullptr), m_deleter(nullptr) {
+            swap(other);
+        }
 
         auto operator=(UniquePointer<T>&& other) noexcept -> UniquePointer& {
             swap(other);
             return *this;
         }
 
-        [[nodiscard]] auto get() const -> T* { return _ptr; }
+        [[nodiscard]] auto get() const -> T* { return m_ptr; }
 
-        explicit operator bool() const { return _ptr; }
+        explicit operator bool() const { return m_ptr; }
 
         [[nodiscard]]
-        auto operator*() const -> T& {
-            return *_ptr;
+        auto operator*() const -> AddLValueRef<T>::type {
+            return *m_ptr;
         }
 
-        auto operator->() const -> T* { return _ptr; }
+        auto operator->() const -> T* { return m_ptr; }
 
-        auto operator==(const UniquePointer<T>& other) const -> bool { return _ptr == other._ptr; }
+        auto operator==(const UniquePointer<T>& other) const -> bool {
+            return m_ptr == other.m_ptr;
+        }
 
-        auto operator!=(const UniquePointer<T>& other) const -> bool { return _ptr != other._ptr; }
+        auto operator!=(const UniquePointer<T>& other) const -> bool {
+            return m_ptr != other.m_ptr;
+        }
     };
 
     /**
@@ -91,8 +106,9 @@ namespace Rune {
 
     template <typename T>
     struct RefControlBlock {
-        T*     ptr              = nullptr;
-        size_t strong_ref_count = 0;
+        T*     m_ptr               = nullptr;
+        size_t m_strong_ref_count  = 0;
+        void   (*m_deleter)(void*) = nullptr;
     };
 
     /**
@@ -100,60 +116,61 @@ namespace Rune {
      */
     template <typename T>
     class SharedPointer {
-        RefControlBlock<T>* _refs;
+        RefControlBlock<T>* m_refs;
 
-        void init(T* ptr) {
-            if (ptr == nullptr) return;
-            _refs      = new RefControlBlock<T>;
-            _refs->ptr = ptr;
-            ++_refs->strong_ref_count;
+        void init(T* m_ptr) {
+            if (m_ptr == nullptr) return;
+            m_refs            = new RefControlBlock<T>;
+            m_refs->m_ptr     = m_ptr;
+            m_refs->m_deleter = [](void* p) { delete static_cast<T*>(p); };
+            ++m_refs->m_strong_ref_count;
         }
 
         void swap(SharedPointer<T>& other) noexcept {
-            RefControlBlock<T>* temp = _refs;
-            _refs                    = other._refs;
-            other._refs              = temp;
+            RefControlBlock<T>* temp = m_refs;
+            m_refs                   = other.m_refs;
+            other.m_refs             = temp;
         }
 
       public:
-        SharedPointer() : _refs(nullptr) { init(nullptr); }
+        SharedPointer() : m_refs(nullptr) { init(nullptr); }
 
-        explicit SharedPointer(T* ptr) : _refs(nullptr) { init(ptr); }
+        explicit SharedPointer(T* m_ptr) : m_refs(nullptr) { init(m_ptr); }
 
         ~SharedPointer() {
-            if (_refs == nullptr) return;
-            --_refs->strong_ref_count;
-            if (_refs->strong_ref_count == 0) {
-                delete _refs->ptr;
-                delete _refs;
+            if (m_refs == nullptr) return;
+            --m_refs->m_strong_ref_count;
+            if (m_refs->m_strong_ref_count == 0) {
+                m_refs->m_deleter(m_refs->m_ptr);
+                delete m_refs;
             }
         }
 
-        SharedPointer(const SharedPointer<T>& other) noexcept : _refs(other._refs) {
-            if (_refs) ++_refs->strong_ref_count;
+        SharedPointer(const SharedPointer<T>& other) noexcept : m_refs(other.m_refs) {
+            if (m_refs) ++m_refs->m_strong_ref_count;
         }
 
         auto operator=(const SharedPointer<T>& other) noexcept -> SharedPointer& {
             if (this == &other) return *this;
 
-            if (_refs == other._refs) // Same ref control block
+            if (m_refs == other.m_refs) // Same ref control block
                 return *this;
 
             // Different pointer -> Decrement current pointer ref count
-            if (_refs) {
-                --_refs->strong_ref_count;
-                if (_refs->strong_ref_count == 0) {
-                    delete _refs->ptr;
-                    delete _refs;
+            if (m_refs) {
+                --m_refs->m_strong_ref_count;
+                if (m_refs->m_strong_ref_count == 0) {
+                    delete m_refs->m_ptr;
+                    delete m_refs;
                 }
             }
-            _refs = other._refs;
-            if (_refs) ++_refs->strong_ref_count;
+            m_refs = other.m_refs;
+            if (m_refs) ++m_refs->m_strong_ref_count;
             return *this;
         }
 
-        SharedPointer(SharedPointer<T>&& other) noexcept : _refs(other._refs) {
-            other._refs = nullptr;
+        SharedPointer(SharedPointer<T>&& other) noexcept : m_refs(other.m_refs) {
+            other.m_refs = nullptr;
         }
 
         auto operator=(SharedPointer<T>&& other) noexcept -> SharedPointer& {
@@ -162,22 +179,22 @@ namespace Rune {
             return *this;
         }
 
-        [[nodiscard]] auto get() const -> T* { return _refs ? _refs->ptr : nullptr; }
+        [[nodiscard]] auto get() const -> T* { return m_refs ? m_refs->m_ptr : nullptr; }
 
-        auto get_ref_count() -> size_t { return _refs ? _refs->strong_ref_count : 0; }
+        auto get_ref_count() -> size_t { return m_refs ? m_refs->m_strong_ref_count : 0; }
 
-        explicit operator bool() const { return _refs; }
+        explicit operator bool() const { return m_refs; }
 
-        [[nodiscard]] auto operator*() const -> T& { return *_refs->ptr; }
+        [[nodiscard]] auto operator*() const -> AddLValueRef<T>::type { return *m_refs->m_ptr; }
 
-        auto operator->() const -> T* { return _refs ? _refs->ptr : nullptr; }
+        auto operator->() const -> T* { return m_refs ? m_refs->m_ptr : nullptr; }
 
         auto operator==(const SharedPointer<T>& other) const -> bool {
-            return _refs ? _refs->ptr == other._refs->ptr : _refs == other._refs;
+            return m_refs ? m_refs->m_ptr == other.m_refs->m_ptr : m_refs == other.m_refs;
         }
 
         auto operator!=(const SharedPointer<T>& other) const -> bool {
-            return _refs ? _refs->ptr != other._refs->ptr : _refs != other._refs;
+            return m_refs ? m_refs->m_ptr != other.m_refs->m_ptr : m_refs != other.m_refs;
         }
     };
 
