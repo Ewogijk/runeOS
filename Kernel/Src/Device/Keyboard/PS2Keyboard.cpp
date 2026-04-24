@@ -126,7 +126,9 @@ namespace Rune::Device {
         _end   = 0;
     }
 
-    auto PS2Keyboard::get_target_device() -> String { return PS2_KEYBOARD; }
+    auto PS2Keyboard::get_target_device_ID() -> SharedPointer<DeviceID> {
+        return SharedPointer<DeviceID>(new StringDeviceID(PS2_KEYBOARD));
+    }
 
     auto PS2Keyboard::start(void* ctx) -> bool {
         SILENCE_UNUSED(ctx)

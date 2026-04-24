@@ -50,7 +50,7 @@ namespace Rune::Device {
 
         void flush() override;
 
-        auto get_target_device() -> String override;
+        auto get_target_device_ID() -> SharedPointer<DeviceID> override;
 
         auto start(void* context) -> bool override;
 

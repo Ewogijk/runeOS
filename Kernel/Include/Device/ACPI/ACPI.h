@@ -49,11 +49,11 @@ namespace Rune::Device {
 
         ACPIDriver(DriverHandle handle);
 
-        auto get_target_device() -> String override;
+        auto get_target_device_ID() -> SharedPointer<DeviceID> override;
         auto start(void* context) -> bool override;
         auto stop() -> bool override;
         auto handle_request(IORequest request) -> IOResponse override;
-        void discover_devices(const DeviceMapper&                device_mapper,
+        void discover_devices(const DeviceMapper&          device_mapper,
                               HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device
