@@ -62,7 +62,7 @@ namespace Rune::Device {
 
         UniquePointer<AHCIDriver> _ahci_driver;
 
-        Device _root_device;
+        DeviceHandle _root_device_handle;
 
         HandleCounter<DeviceHandle> _device_handle_counter;
         HandleCounter<DriverHandle> _driver_handle_counter;
@@ -71,15 +71,24 @@ namespace Rune::Device {
         HashMap<DeviceHandle, Device> _device_registry;
 
         /// @brief Contains all device drivers.
-        HashMap<String, SharedPointer<Driver>> _device_driver_registry;
+        HashMap<DriverHandle, SharedPointer<Driver>> _device_driver_registry;
 
         /// @brief Register basic device drivers.
         void setup_device_driver_registry();
+
+        /// @brief
+        auto search_device_driver(const SharedPointer<DeviceID>& CAD_ID)
+            -> SharedPointer<Driver>;
 
         /// @brief Map the root device to the root device driver.
         /// @return True: The root device was mapped to the root device and initialized.
         ///         False: Otherwise.
         auto configure_root_device() -> bool;
+
+        /// @brief
+        /// @param device
+        /// @param device_mapper
+        void build_device_tree(const Device& device, const DeviceMapper& device_mapper);
 
       public:
         explicit DeviceModule();
