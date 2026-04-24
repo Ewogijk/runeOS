@@ -29,7 +29,7 @@
 #include <CPU/IO.h>
 #include <CPU/Interrupt/Exception.h>
 
-#include <Device/PCI.h>
+#include <Device/PCI/PCI.h>
 
 CLINK {
 #include <Device/ACPI/ACPICA/acpi.h>
@@ -826,16 +826,16 @@ CLINK {
             return AE_ERROR;
 
         if (width == BIT_COUNT_BYTE)
-            *val = Device::PCI::read_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
         else if (width == BIT_COUNT_WORD)
-            *val = Device::PCI::read_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
         else if (width == BIT_COUNT_DWORD)
-            *val = Device::PCI::read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
         else {
             *val = static_cast<U64>(
-                       Device::PCI::read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg + 4))
+                       Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg + 4))
                        << SHIFT_32
-                   | Device::PCI::read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+                   | Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
         }
         return AE_OK;
     }
@@ -851,22 +851,22 @@ CLINK {
             return AE_ERROR;
 
         if (width == BIT_COUNT_BYTE)
-            Device::PCI::write_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
         else if (width == BIT_COUNT_WORD)
-            Device::PCI::write_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
         else if (width == BIT_COUNT_DWORD)
-            Device::PCI::write_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
         else {
-            Device::PCI::write_dword(pci_id.Bus,
-                                     pci_id.Device,
-                                     pci_id.Function,
-                                     reg + 4,
-                                     dword_get(val, 1));
-            Device::PCI::write_dword(pci_id.Bus,
-                                     pci_id.Device,
-                                     pci_id.Function,
-                                     reg,
-                                     dword_get(val, 0));
+            Device::pci_write_dword(pci_id.Bus,
+                                    pci_id.Device,
+                                    pci_id.Function,
+                                    reg + 4,
+                                    dword_get(val, 1));
+            Device::pci_write_dword(pci_id.Bus,
+                                    pci_id.Device,
+                                    pci_id.Function,
+                                    reg,
+                                    dword_get(val, 0));
         }
         return AE_OK;
     }
