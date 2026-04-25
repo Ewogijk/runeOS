@@ -22,6 +22,8 @@
 
 #include <Device/AHCI/HBAMemory.h>
 #include <Device/AHCI/PortEngine.h>
+#include <Device/Device.h>
+#include <Device/PCI/Types.h>
 
 namespace Rune::Device {
     /**
@@ -34,7 +36,7 @@ namespace Rune::Device {
         U8 partition_table_index = 0;
     };
 
-    class AHCIDriver {
+    class AHCIDriver : public Driver {
         static constexpr U8 LOGICAL_DRIVE_LIMIT = 255;
         static constexpr U8 PORT_LIMIT          = 32;
 
@@ -52,7 +54,24 @@ namespace Rune::Device {
         auto resolve_logical_drive(U8 logicalDrive) -> LogicalDrive;
 
       public:
-        AHCIDriver(Memory::SlabAllocator* kHeap, CPU::Timer* timer);
+        static const PCIDeviceID ID_AHCI;
+
+        AHCIDriver(DriverHandle handle, Memory::SlabAllocator* kHeap, CPU::Timer* timer);
+
+        // ====================================================================================== //
+        // Driver API
+        // ====================================================================================== //
+
+        [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
+        auto               start(void* context) -> bool override;
+        auto               stop() -> bool override;
+        auto               handle_request(IORequest request) -> IOResponse override;
+        void               discover_devices(const DeviceMapper&          device_mapper,
+                                            HandleCounter<DeviceHandle>& dev_handle_counter) override;
+
+        // ====================================================================================== //
+        // AHCI API
+        // ====================================================================================== //
 
         auto get_discovered_hard_drives() -> LinkedList<HardDrive>;
 
@@ -61,8 +80,6 @@ namespace Rune::Device {
         auto get_hard_drive_info(U8 hard_drive) -> HardDrive;
 
         auto start(volatile HBAMemory* hba) -> bool;
-
-        auto stop() -> bool;
 
         auto
         send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2d_fis)

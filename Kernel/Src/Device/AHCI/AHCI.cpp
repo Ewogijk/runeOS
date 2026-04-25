@@ -93,9 +93,88 @@ namespace Rune::Device {
         return ld;
     }
 
-    AHCIDriver::AHCIDriver(Memory::SlabAllocator* heap, CPU::Timer* timer)
-        : _heap(heap),
+    const PCIDeviceID AHCIDriver::ID_AHCI(0x1, 0x6, 0x1);
+
+    AHCIDriver::AHCIDriver(DriverHandle handle, Memory::SlabAllocator* heap, CPU::Timer* timer)
+        : Driver(handle, "AHCI"),
+          _heap(heap),
           _timer(timer) {}
+
+    // ========================================================================================== //
+    // Driver API
+    // ========================================================================================== //
+
+    auto AHCIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_AHCI; }
+
+    auto AHCIDriver::start(void* context) -> bool {
+        auto* pci_type0_header = static_cast<PCIConfigurationSpaceHeaderType0*>(context);
+        _hba                   = reinterpret_cast<HBAMemory*>(
+            Memory::physical_to_virtual_address(pci_type0_header->bar_5));
+        _hba->GHC.AE = 1;
+        return true;
+    }
+
+    auto AHCIDriver::stop() -> bool { return _hba == nullptr; }
+
+    auto AHCIDriver::handle_request(IORequest request) -> IOResponse {
+        return {.m_status = IORequestStatus::FAILED, .m_data = nullptr};
+    }
+
+    void AHCIDriver::discover_devices(const DeviceMapper&          device_mapper,
+                                      HandleCounter<DeviceHandle>& dev_handle_counter) {
+        U32  pi                 = _hba->PI;
+        U32  command_slots      = _hba->CAP.NCS;
+        bool s64_a              = _hba->CAP.S64A;
+        U8   c_logical_drive_id = 0;
+        for (size_t i = 0; i < PORT_LIMIT; i++) {
+            if (c_logical_drive_id == LOGICAL_DRIVE_LIMIT) {
+                LOGGER->warn("Limit of 255 logical drives reached. Stopping port scan... ");
+                break;
+            }
+
+            if (!bit_check(pi, i)) continue;
+
+            LOGGER->debug("------------------------------------- Scanning Port {} "
+                          "-------------------------------------",
+                          i);
+            // NOLINTBEGIN iterating -> index is in bounds
+            if (!_port_engine[i].scan_device(&_hba->Port[i])) continue;
+            // NOLINTEND
+            if (!_port_engine[i].stop()) {
+                LOGGER->error("Stopping the port failed. Trying port reset...");
+                _port_engine[i].reset();
+            }
+
+            SystemMemory* system_memory = alloc_system_memory(command_slots);
+            if (!_port_engine[i].start(system_memory, s64_a, _heap, _timer)) {
+                LOGGER->error("Failed to start port {}. Freeing allocated system memory...", i);
+                _heap->free(system_memory->CL);
+                _heap->free(system_memory->CT);
+                _heap->free(system_memory->RFIS);
+            }
+
+            LOGGER->debug("Detected logical drives:");
+            auto pt = _port_engine[i].get_hard_drive_info().partition_table;
+            for (size_t j = 0; j < pt.size(); j++) {
+                auto* partition = pt[j];
+                LOGGER->debug("{} -> Drive{}, Partition{}: {} ({}): LBA {}-{}",
+                              c_logical_drive_id,
+                              i,
+                              j,
+                              partition->name,
+                              partition->type.to_string(),
+                              partition->start_lba,
+                              partition->end_lba);
+                _logical_drive_table[c_logical_drive_id++] = {.port_index            = (U8) i,
+                                                              .partition_table_index = (U8) j};
+            }
+        }
+        _logical_drive_count = c_logical_drive_id;
+    }
+
+    // ========================================================================================== //
+    // AHCI API
+    // ========================================================================================== //
 
     auto AHCIDriver::get_discovered_hard_drives() -> LinkedList<HardDrive> {
         LinkedList<HardDrive> hd;
@@ -183,8 +262,6 @@ namespace Rune::Device {
         _logical_drive_count = c_logical_drive_id;
         return true;
     }
-
-    auto AHCIDriver::stop() -> bool { return _hba == nullptr; }
 
     auto AHCIDriver::send_ata_command(U8                     hard_drive,
                                       void*                  buf,

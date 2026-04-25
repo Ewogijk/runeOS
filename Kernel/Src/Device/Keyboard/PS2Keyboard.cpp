@@ -107,10 +107,10 @@ namespace Rune::Device {
         }
     }
 
-    const String PS2Keyboard::PS2_KEYBOARD = "PS2 Keyboard";
+    const BasicDeviceID PS2Keyboard::ID_PS2_KEYBOARD("PS2 Keyboard");
 
     PS2Keyboard::PS2Keyboard(DriverHandle handle)
-        : VirtualKeyboard(handle, PS2_KEYBOARD),
+        : VirtualKeyboard(handle, ID_PS2_KEYBOARD.get_string_ID()),
           _key_code_cache(),
           _irq_handler([] { return CPU::IRQState::PENDING; }) {}
 
@@ -126,9 +126,7 @@ namespace Rune::Device {
         _end   = 0;
     }
 
-    auto PS2Keyboard::get_target_device_ID() -> SharedPointer<DeviceID> {
-        return SharedPointer<DeviceID>(new StringDeviceID(PS2_KEYBOARD));
-    }
+    auto PS2Keyboard::get_target_device_ID() const -> const DeviceID* { return &ID_PS2_KEYBOARD; }
 
     auto PS2Keyboard::start(void* ctx) -> bool {
         SILENCE_UNUSED(ctx)
@@ -152,7 +150,7 @@ namespace Rune::Device {
             return CPU::IRQState::HANDLED;
         };
 
-        return CPU::irq_install_handler(1, get_handle(), PS2_KEYBOARD, _irq_handler);
+        return CPU::irq_install_handler(1, get_handle(), get_name(), _irq_handler);
     }
 
     auto PS2Keyboard::stop() -> bool { return CPU::irq_uninstall_handler(1, get_handle()); }

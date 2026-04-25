@@ -46,19 +46,26 @@ namespace Rune::Device {
     ///             interface.
     class DeviceID {
       public:
-        virtual ~DeviceID()                                              = default;
-        virtual auto get_device_ID_type() -> DeviceIDType                = 0;
-        virtual auto equals(const SharedPointer<DeviceID>& d_ID) -> bool = 0;
+        virtual ~DeviceID()                                                   = default;
+        [[nodiscard]] virtual auto get_device_ID_type() const -> DeviceIDType = 0;
+        [[nodiscard]] virtual auto equals(const DeviceID* d_ID) const -> bool = 0;
     };
 
-    class StringDeviceID : public DeviceID {
+    // ========================================================================================== //
+    // BasicDeviceID
+    // ========================================================================================== //
+
+    /// @brief A DeviceID implementation for devices with a simple string ID.
+    class BasicDeviceID : public DeviceID {
         String m_string_ID;
 
       public:
-        StringDeviceID(const String& device_id);
+        BasicDeviceID(const String& device_id);
 
-        auto get_device_ID_type() -> DeviceIDType override;
-        auto equals(const SharedPointer<DeviceID>& d_ID) -> bool override;
+        [[nodiscard]] auto get_device_ID_type() const -> DeviceIDType override;
+        [[nodiscard]] auto equals(const DeviceID* d_ID) const -> bool override;
+
+        [[nodiscard]] auto get_string_ID() const -> String;
     };
 
     // ========================================================================================== //
@@ -82,7 +89,7 @@ namespace Rune::Device {
     /// Devices are organized in a tree structure. Generally speaking, devices can be divided into
     /// two types of devices: Bus Devices and Leaf Devices. Bus devices like PCIe can contain
     /// other devices, while Leaf Devices do not, e.g., a keyboard.
-    struct Device : public Resource<DeviceHandle> {
+    class Device : public Resource<DeviceHandle> {
         /// @brief Name of the original equipment manufacturer
         String m_oem;
 
@@ -96,13 +103,46 @@ namespace Rune::Device {
         ///         bus.
         LinkedList<DeviceHandle> m_child_devices;
 
-        /// @brief Determines if this device will be treated as a bus device. True: Bus Device,
-        /// False: Leaf Device.
-        bool m_is_bus_device = false;
+      public:
+        Device(DeviceHandle handle, const String& name, const String& oem, U32 revision);
+        virtual ~Device() = default;
 
-        SharedPointer<DeviceID> m_device_ID;
+        /// @brief
+        /// @return The handle to the driver that operates this device.
+        ///         Resource<DriverHandle>::HANDLE_NONE if no driver is mapped to the device.
+        [[nodiscard]] auto get_driver_handle() const -> DriverHandle;
 
-        Device(DeviceHandle handle, const String& name);
+        /// @brief Set the handle of the driver that is operating this device.
+        /// @param driver_handle
+        void set_driver_handle(DriverHandle driver_handle);
+
+        /// @brief
+        /// @return A reference to the list of child devices.
+        [[nodiscard]] auto get_child_devices() -> LinkedList<DeviceHandle>&;
+
+        /// @brief
+        /// @return A pointer to the Device ID.
+        ///
+        /// The device always owns the pointer and must guarantue a valid pointer is returned at all
+        /// times.
+        [[nodiscard]] virtual auto get_device_ID() const -> const DeviceID* = 0;
+    };
+
+    // ========================================================================================== //
+    // BasicDevice
+    // ========================================================================================== //
+
+    class BasicDevice : public Device {
+        BasicDeviceID m_device_ID;
+
+      public:
+        BasicDevice(DeviceHandle         handle,
+                    const String&        name,
+                    const String&        oem,
+                    U32                  revision,
+                    const BasicDeviceID& device_ID);
+
+        [[nodiscard]] auto get_device_ID() const -> const DeviceID* override;
     };
 
     // ========================================================================================== //
@@ -140,10 +180,10 @@ namespace Rune::Device {
 
     /// @brief A function that maps a device to a device driver.
     ///
-    /// DeviceHandle: The handle of the bus device that has discovered the given device.
-    /// Device: A reference to a device discovered by a bus device.
-    /// void*: A pointer to data required for device driver initialization.
-    using DeviceMapper = Function<void(DeviceHandle, Device&, void*)>;
+    /// - DeviceHandle: The handle of the bus device that has discovered the given device.
+    /// - Device: A pointer to a device discovered by a bus device.
+    /// - void*: A pointer to data required for device driver initialization.
+    using DeviceMapper = Function<void(DeviceHandle, SharedPointer<Device>, void*)>;
 
     /// @brief A device driver operates a device in the system.
     ///
@@ -175,8 +215,10 @@ namespace Rune::Device {
         }
 
         /// @brief
-        /// @return CAD ID of the device this driver intends to operate.
-        virtual auto get_target_device_ID() -> SharedPointer<DeviceID> = 0;
+        /// @return DeviceID of the device this driver intends to operate.
+        /// The device driver always owns the pointer and must guarantue a valid pointer is
+        /// returned at all times.
+        [[nodiscard]] virtual auto get_target_device_ID() const -> const DeviceID* = 0;
 
         /// @brief Initialize the device to a working state so that it is able to handle IO
         ///         requests.

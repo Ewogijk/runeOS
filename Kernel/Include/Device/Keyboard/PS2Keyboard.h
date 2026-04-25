@@ -41,8 +41,7 @@ namespace Rune::Device {
         CPU::IRQHandler _irq_handler;
 
       public:
-        /// @brief Name of the PS2 Keyboard device.
-        static const String PS2_KEYBOARD;
+        static const BasicDeviceID ID_PS2_KEYBOARD;
 
         PS2Keyboard(DriverHandle handle);
 
@@ -50,7 +49,7 @@ namespace Rune::Device {
 
         void flush() override;
 
-        auto get_target_device_ID() -> SharedPointer<DeviceID> override;
+        [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
 
         auto start(void* context) -> bool override;
 

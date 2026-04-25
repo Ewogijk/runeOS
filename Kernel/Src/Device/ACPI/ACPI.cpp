@@ -63,13 +63,11 @@ namespace Rune::Device {
         response.m_data   = nullptr;
     }
 
-    const String ACPIDriver::ACPI = "ACPI";
+    const BasicDeviceID ACPIDriver::ID_ACPI("ACPI");
 
-    ACPIDriver::ACPIDriver(DriverHandle handle) : Driver(handle, ACPI) {}
+    ACPIDriver::ACPIDriver(DriverHandle handle) : Driver(handle, ID_ACPI.get_string_ID()) {}
 
-    auto ACPIDriver::get_target_device_ID() -> SharedPointer<DeviceID> {
-        return SharedPointer<DeviceID>(new StringDeviceID(ACPI));
-    }
+    auto ACPIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
 
     auto ACPIDriver::start(void* context) -> bool {
         SILENCE_UNUSED(context)
@@ -125,20 +123,20 @@ namespace Rune::Device {
 
     void ACPIDriver::discover_devices(const DeviceMapper&          device_mapper,
                                       HandleCounter<DeviceHandle>& dev_handle_counter) {
-        Device ps2_keyboard     = Device(dev_handle_counter.acquire(), PS2Keyboard::PS2_KEYBOARD);
-        ps2_keyboard.m_oem      = "";
-        ps2_keyboard.m_revision = 0;
-        ps2_keyboard.m_is_bus_device = false;
-        ps2_keyboard.m_device_ID =
-            SharedPointer<DeviceID>(new StringDeviceID(PS2Keyboard::PS2_KEYBOARD));
-        device_mapper(get_handle(), ps2_keyboard, nullptr);
+        SharedPointer<Device> ps2_keyboard(
+            new BasicDevice(dev_handle_counter.acquire(),
+                            PS2Keyboard::ID_PS2_KEYBOARD.get_string_ID(),
+                            "",
+                            0,
+                            PS2Keyboard::ID_PS2_KEYBOARD));
+        device_mapper(get_operated_device(), ps2_keyboard, nullptr);
 
-        Device pci          = Device(dev_handle_counter.acquire(), PCIDriver::PCI);
-        pci.m_oem           = "";
-        pci.m_revision      = 0;
-        pci.m_is_bus_device = true;
-        pci.m_device_ID     = SharedPointer<DeviceID>(new StringDeviceID(PCIDriver::PCI));
-        device_mapper(get_handle(), pci, nullptr);
+        SharedPointer<Device> pci(new BasicDevice(dev_handle_counter.acquire(),
+                                                  PCIDriver::ID_PCI.get_string_ID(),
+                                                  "",
+                                                  0,
+                                                  PCIDriver::ID_PCI));
+        device_mapper(get_operated_device(), pci, nullptr);
     }
 
 } // namespace Rune::Device

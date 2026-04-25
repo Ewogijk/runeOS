@@ -53,22 +53,17 @@ namespace Rune::Device {
     /// Module is loaded.
     ///
     /// Once a device is discovered, the device module will try to find the matching device driver.
-    /// Devices must have unique names, while device drivers must request the name of the device
-    /// they are intended to operate, their target device. This way the device module knows which
-    /// device driver should be mapped to which device.
+    /// Devices provide a unique device ID, while a device driver will request the device ID of the
+    /// device that it wants to operate.<br>
+    /// Device IDs are context-aware, that means the structure of a Device ID depends on the bus.
     class DeviceModule : public Module {
-        /// @brief ACPI provides the root bus.
-        static const String ROOT_DEVICE_NAME;
-
-        UniquePointer<AHCIDriver> _ahci_driver;
-
         DeviceHandle _root_device_handle;
 
         HandleCounter<DeviceHandle> _device_handle_counter;
         HandleCounter<DriverHandle> _driver_handle_counter;
 
         /// @brief Contains all devices.
-        HashMap<DeviceHandle, Device> _device_registry;
+        HashMap<DeviceHandle, SharedPointer<Device>> _device_registry;
 
         /// @brief Contains all device drivers.
         HashMap<DriverHandle, SharedPointer<Driver>> _device_driver_registry;
@@ -76,38 +71,41 @@ namespace Rune::Device {
         /// @brief Register basic device drivers.
         void setup_device_driver_registry();
 
-        /// @brief
-        auto search_device_driver(const SharedPointer<DeviceID>& CAD_ID)
-            -> SharedPointer<Driver>;
+        /// @brief Find the driver with the matching device ID.
+        /// @param device_ID
+        /// @return A pointer to the device driver if found, otherwise null.
+        auto search_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver>;
 
         /// @brief Map the root device to the root device driver.
         /// @return True: The root device was mapped to the root device and initialized.
         ///         False: Otherwise.
         auto configure_root_device() -> bool;
 
-        /// @brief
+        /// @brief Discover and start devices on the bus of the given device, then recursively call
+        ///         this function on the discovered devices.
         /// @param device
         /// @param device_mapper
-        void build_device_tree(const Device& device, const DeviceMapper& device_mapper);
+        void build_device_tree(SharedPointer<Device> device, const DeviceMapper& device_mapper);
 
       public:
         explicit DeviceModule();
 
         ~DeviceModule() override = default;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                      KernelSubsystem Overrides
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+        // ====================================================================================== //
+        // Module API
+        // ====================================================================================== //
 
         [[nodiscard]] auto get_name() const -> String override;
 
+        /// @brief Configure the root device and then build the device tree.
+        /// @param boot_info
+        /// @return True: The device tree has been build, False: Otherwise.
         auto load(const BootInfo& boot_info) -> bool override;
 
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-        //                                  Device specific functions
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-        void set_ahci_driver(UniquePointer<AHCIDriver> ahci_driver);
+        // ====================================================================================== //
+        // Device Module API
+        // ====================================================================================== //
 
         auto get_ahci_driver() -> AHCIDriver*;
 

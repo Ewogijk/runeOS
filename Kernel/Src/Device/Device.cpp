@@ -17,21 +17,60 @@
 #include <Device/Device.h>
 
 namespace Rune::Device {
-    DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
+    // ========================================================================================== //
+    // BasicDeviceID
+    // ========================================================================================== //
 
-    StringDeviceID::StringDeviceID(const String& device_id) : m_string_ID(device_id) {}
+    BasicDeviceID::BasicDeviceID(const String& device_id) : m_string_ID(device_id) {}
 
-    auto StringDeviceID::get_device_ID_type() -> DeviceIDType {
-        return DeviceIDType::STRING;
-    }
+    auto BasicDeviceID::get_device_ID_type() const -> DeviceIDType { return DeviceIDType::STRING; }
 
-    auto StringDeviceID::equals(const SharedPointer<DeviceID>& d_ID) -> bool {
+    auto BasicDeviceID::equals(const DeviceID* d_ID) const -> bool {
         if (d_ID->get_device_ID_type() != DeviceIDType::STRING) return false;
-        auto* str_d_ID = static_cast<StringDeviceID*>(d_ID.get());
+        auto* str_d_ID = static_cast<const BasicDeviceID*>(d_ID);
         return m_string_ID == str_d_ID->m_string_ID;
     }
 
-    Device::Device(DriverHandle handle, const String& name) : Resource(handle, name) {}
+    auto BasicDeviceID::get_string_ID() const -> String { return m_string_ID; }
+
+    // ========================================================================================== //
+    // Device
+    // ========================================================================================== //
+
+    DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
+
+    Device::Device(DriverHandle handle, const String& name, const String& oem, U32 revision)
+        : Resource(handle, name),
+          m_oem(oem),
+          m_revision(revision),
+          m_driver_handle(Resource<DriverHandle>::HANDLE_NONE),
+          m_child_devices() {}
+
+    auto Device::get_driver_handle() const -> DriverHandle { return m_driver_handle; }
+
+    auto Device::set_driver_handle(DriverHandle driver_handle) -> void {
+        m_driver_handle = driver_handle;
+    }
+
+    auto Device::get_child_devices() -> LinkedList<DeviceHandle>& { return m_child_devices; }
+
+    // ========================================================================================== //
+    // BasicDevice
+    // ========================================================================================== //
+
+    BasicDevice::BasicDevice(DeviceHandle         handle,
+                             const String&        name,
+                             const String&        oem,
+                             U32                  revision,
+                             const BasicDeviceID& device_ID)
+        : Device(handle, name, oem, revision),
+          m_device_ID(device_ID) {}
+
+    auto BasicDevice::get_device_ID() const -> const DeviceID* { return &m_device_ID; }
+
+    // ========================================================================================== //
+    // Driver
+    // ========================================================================================== //
 
     Driver::Driver(DriverHandle handle, const String& name) : Resource(handle, name) {}
 

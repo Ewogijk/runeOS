@@ -28,9 +28,12 @@ sources = [
     build_env.File("AHCI/PortEngine.cpp"),
     build_env.File("Keyboard/Keyboard.cpp"),
     build_env.File("Keyboard/PS2Keyboard.cpp"),
+    build_env.File("PCI/ClassCode.cpp"),
+    build_env.File("PCI/PCI.cpp"),
+    build_env.File("PCI/Types.cpp"),
+    build_env.File("PCI/VendorDB.cpp"),
     build_env.File("Device.cpp"),
     build_env.File("DeviceModule.cpp"),
-    build_env.File("PCI.cpp"),
 ]
 acpi_sources = (Glob("ACPI/ACPICA/dispatcher/*.c")
                 + Glob("ACPI/ACPICA/events/*.c")
