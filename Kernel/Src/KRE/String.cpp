@@ -869,6 +869,21 @@ namespace Rune {
         return {get_buf(), start_idx, len};
     }
 
+    auto String::trim() -> String {
+        const char* buf   = get_buf();
+        size_t      start = 0;
+        while (start < _size
+               && (buf[start] == ' ' || buf[start] == '\t' || buf[start] == '\n'
+                   || buf[start] == '\r'))
+            start++;
+        size_t end = _size;
+        while (end > start
+               && (buf[end - 1] == ' ' || buf[end - 1] == '\t' || buf[end - 1] == '\n'
+                   || buf[end - 1] == '\r'))
+            end--;
+        return {buf, start, end - start};
+    }
+
     auto String::operator+(const String& o) const -> String {
         if (o.size() == 0)
             return {_size < BUF_SIZE ? _storage._stackBuf : _storage._heapBuf, 0, _size};

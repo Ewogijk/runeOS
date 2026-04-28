@@ -80,6 +80,22 @@ namespace Rune::Device {
     /// @brief Handle type of driver.
     using DriverHandle = U16;
 
+#define DEVICE_TYPES(X)                                                                            \
+    X(DeviceType, MASS_STORAGE_DEVICE, 0x1)                                                        \
+    X(DeviceType, KEYBOARD, 0x2)                                                                   \
+    X(DeviceType, GENERIC, 0x3)
+
+    /// @brief Describes general functionality of a device and to which interface type it can be
+    ///         safely cast.
+    ///
+    /// - MASS_STORAGE_DEVICE: A device that stores large amounts of data, e.g., HDD, SSD, USB, etc.
+    ///     - Interface: TBD
+    /// - KEYBOARD: A computer keyboard.
+    ///     - Interface: VirtualKeyboard - Device/Keyboard/Keyboard.h
+    /// - GENERIC: A generic device, the catch-all category of devices.
+    ///     - Interface: Device
+    DECLARE_ENUM(DeviceType, DEVICE_TYPES, 0x0) // NOLINT
+
     /// @brief A device connected to the system e.g., a keyboard.
     ///
     /// Each device has a unique handle and a unique name. The name will be used to map devices to
@@ -90,11 +106,13 @@ namespace Rune::Device {
     /// two types of devices: Bus Devices and Leaf Devices. Bus devices like PCIe can contain
     /// other devices, while Leaf Devices do not, e.g., a keyboard.
     class Device : public Resource<DeviceHandle> {
-        /// @brief Name of the original equipment manufacturer
         String m_oem;
 
-        /// @brief The revision of the device.
-        U32 m_revision = 0;
+        String m_revision;
+
+        String m_serial_number;
+
+        DeviceType m_device_type;
 
         /// @brief The handle of the driver operating this device.
         DriverHandle m_driver_handle = Resource<DriverHandle>::HANDLE_NONE;
@@ -104,8 +122,29 @@ namespace Rune::Device {
         LinkedList<DeviceHandle> m_child_devices;
 
       public:
-        Device(DeviceHandle handle, const String& name, const String& oem, U32 revision);
+        Device(DeviceHandle  handle,
+               const String& name,
+               const String& oem,
+               const String& revision,
+               const String& serial_number,
+               DeviceType    device_type);
         virtual ~Device() = default;
+
+        /// @brief
+        /// @return The OEM name of the device manufacturer.
+        [[nodiscard]] auto get_oem() const -> const String&;
+
+        /// @brief
+        /// @return The hardware revision identifier of the device.
+        [[nodiscard]] auto get_revision() const -> const String&;
+
+        /// @brief
+        /// @return The serial number uniquely identifying this device unit.
+        [[nodiscard]] auto get_serial_number() const -> const String&;
+
+        /// @brief
+        /// @return The general category of this device.
+        [[nodiscard]] auto get_device_type() const -> DeviceType;
 
         /// @brief
         /// @return The handle to the driver that operates this device.
@@ -139,7 +178,9 @@ namespace Rune::Device {
         BasicDevice(DeviceHandle         handle,
                     const String&        name,
                     const String&        oem,
-                    U32                  revision,
+                    const String&        revision,
+                    const String&        serial_number,
+                    DeviceType           device_type,
                     const BasicDeviceID& device_ID);
 
         [[nodiscard]] auto get_device_ID() const -> const DeviceID* override;
@@ -190,28 +231,22 @@ namespace Rune::Device {
     /// Device drivers are mapped to devices automatically. Device drivers provide the name of the
     /// supported, and the kernel will map it to the matching device once it is discovered.
     class Driver : public Resource<DriverHandle> {
-        DeviceHandle m_device_handle;
+        LinkedList<DeviceHandle> m_operated_devices;
 
       public:
         Driver(DriverHandle handle, const String& name);
         virtual ~Driver() = default;
 
-        /// @brief Check if the driver is operating a device.
-        /// @return True: A device handle was assigned to this driver, False: Otherwise.
-        [[nodiscard]] auto is_operating_device() const -> bool {
-            return m_device_handle != Resource<DeviceHandle>::HANDLE_NONE;
+        /// @brief
+        /// @return A list handles of all operated devices.
+        [[nodiscard]] auto get_operated_devices() const -> LinkedList<DeviceHandle> {
+            return m_operated_devices;
         }
 
         /// @brief
-        /// @return The handle of the device that is operated by this driver.
-        [[nodiscard]] auto get_operated_device() const -> DeviceHandle { return m_device_handle; }
-
-        /// @brief
         /// @param device_handle Handle of the device to operate.
-        void set_operated_device(DeviceHandle device_handle) {
-            if (!is_operating_device()) {
-                m_device_handle = device_handle;
-            }
+        void add_operated_device(DeviceHandle device_handle) {
+            m_operated_devices.add_back(device_handle);
         }
 
         /// @brief
@@ -246,9 +281,17 @@ namespace Rune::Device {
         /// @return A list of devices connected to the bus.
         ///
         /// If the operated device is a leaf device, an empty list must be returned.
-        virtual void discover_devices(const DeviceMapper&          device_mapper,
+        virtual void discover_devices(DeviceHandle                 bus_device,
+                                      const DeviceMapper&          device_mapper,
                                       HandleCounter<DeviceHandle>& dev_handle_counter) = 0;
     };
 } // namespace Rune::Device
+
+namespace Rune {
+    template <>
+    struct Hash<Device::DeviceType> {
+        auto operator()(const Device::DeviceType& key) const -> size_t { return FNV::do_hash(key.to_value()); }
+    };
+} // namespace Rune
 
 #endif // RUNEOS_DEVICE_H

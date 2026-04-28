@@ -121,22 +121,27 @@ namespace Rune::Device {
         return io_response;
     }
 
-    void ACPIDriver::discover_devices(const DeviceMapper&          device_mapper,
+    void ACPIDriver::discover_devices(DeviceHandle                 bus_device,
+                                      const DeviceMapper&          device_mapper,
                                       HandleCounter<DeviceHandle>& dev_handle_counter) {
         SharedPointer<Device> ps2_keyboard(
             new BasicDevice(dev_handle_counter.acquire(),
                             PS2Keyboard::ID_PS2_KEYBOARD.get_string_ID(),
                             "",
-                            0,
+                            "",
+                            "",
+                            DeviceType::KEYBOARD,
                             PS2Keyboard::ID_PS2_KEYBOARD));
-        device_mapper(get_operated_device(), ps2_keyboard, nullptr);
+        device_mapper(bus_device, ps2_keyboard, nullptr);
 
         SharedPointer<Device> pci(new BasicDevice(dev_handle_counter.acquire(),
                                                   PCIDriver::ID_PCI.get_string_ID(),
                                                   "",
-                                                  0,
+                                                  "",
+                                                  "",
+                                                  DeviceType::GENERIC,
                                                   PCIDriver::ID_PCI));
-        device_mapper(get_operated_device(), pci, nullptr);
+        device_mapper(bus_device, pci, nullptr);
     }
 
 } // namespace Rune::Device

@@ -57,7 +57,8 @@ namespace Rune::Device {
 
         auto handle_request(IORequest request) -> IOResponse override;
 
-        void discover_devices(const DeviceMapper&          device_mapper,
+        void discover_devices(DeviceHandle                 bus_device,
+                              const DeviceMapper&          device_mapper,
                               HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device
