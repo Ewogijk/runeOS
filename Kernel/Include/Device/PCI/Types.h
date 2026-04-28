@@ -48,7 +48,9 @@ namespace Rune::Device {
         PCIDevice(DeviceHandle       handle,
                   const String&      name,
                   const String&      oem,
-                  U32                revision,
+                  const String&      revision,
+                  const String&      serial_number,
+                  DeviceType         device_type,
                   const PCIDeviceID& device_ID);
 
         [[nodiscard]] auto get_device_ID() const -> const DeviceID* override;

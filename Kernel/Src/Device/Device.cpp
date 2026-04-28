@@ -37,14 +37,29 @@ namespace Rune::Device {
     // Device
     // ========================================================================================== //
 
-    DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
+    DEFINE_ENUM(DeviceType, DEVICE_TYPES, 0x0)
 
-    Device::Device(DriverHandle handle, const String& name, const String& oem, U32 revision)
+    Device::Device(DriverHandle  handle,
+                   const String& name,
+                   const String& oem,
+                   const String& revision,
+                   const String& serial_number,
+                   DeviceType    device_type)
         : Resource(handle, name),
           m_oem(oem),
           m_revision(revision),
+          m_serial_number(serial_number),
+          m_device_type(device_type),
           m_driver_handle(Resource<DriverHandle>::HANDLE_NONE),
           m_child_devices() {}
+
+    auto Device::get_oem() const -> const String& { return m_oem; }
+
+    auto Device::get_revision() const -> const String& { return m_revision; }
+
+    auto Device::get_serial_number() const -> const String& { return m_serial_number; }
+
+    auto Device::get_device_type() const -> DeviceType { return m_device_type; }
 
     auto Device::get_driver_handle() const -> DriverHandle { return m_driver_handle; }
 
@@ -61,9 +76,11 @@ namespace Rune::Device {
     BasicDevice::BasicDevice(DeviceHandle         handle,
                              const String&        name,
                              const String&        oem,
-                             U32                  revision,
+                             const String&        revision,
+                             const String&        serial_number,
+                             DeviceType           device_type,
                              const BasicDeviceID& device_ID)
-        : Device(handle, name, oem, revision),
+        : Device(handle, name, oem, revision, serial_number, device_type),
           m_device_ID(device_ID) {}
 
     auto BasicDevice::get_device_ID() const -> const DeviceID* { return &m_device_ID; }
@@ -71,6 +88,8 @@ namespace Rune::Device {
     // ========================================================================================== //
     // Driver
     // ========================================================================================== //
+
+    DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
 
     Driver::Driver(DriverHandle handle, const String& name) : Resource(handle, name) {}
 

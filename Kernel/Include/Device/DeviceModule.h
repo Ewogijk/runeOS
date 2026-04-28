@@ -57,16 +57,19 @@ namespace Rune::Device {
     /// device that it wants to operate.<br>
     /// Device IDs are context-aware, that means the structure of a Device ID depends on the bus.
     class DeviceModule : public Module {
-        DeviceHandle _root_device_handle;
+        DeviceHandle m_root_device_handle;
 
-        HandleCounter<DeviceHandle> _device_handle_counter;
-        HandleCounter<DriverHandle> _driver_handle_counter;
+        HandleCounter<DeviceHandle> m_device_handle_counter;
+        HandleCounter<DriverHandle> m_driver_handle_counter;
 
         /// @brief Contains all devices.
-        HashMap<DeviceHandle, SharedPointer<Device>> _device_registry;
+        HashMap<DeviceHandle, SharedPointer<Device>> m_device_registry;
 
         /// @brief Contains all device drivers.
-        HashMap<DriverHandle, SharedPointer<Driver>> _device_driver_registry;
+        HashMap<DriverHandle, SharedPointer<Driver>> m_device_driver_registry;
+
+        /// @brief Fast lookup for devices of a specific type.
+        HashMap<DeviceType, LinkedList<SharedPointer<Device>>> m_device_registry_by_type;
 
         /// @brief Register basic device drivers.
         void setup_device_driver_registry();
@@ -110,6 +113,17 @@ namespace Rune::Device {
         auto get_ahci_driver() -> AHCIDriver*;
 
         auto get_keyboard() -> VirtualKeyboard*;
+
+        // auto get_device_driver_handle_counter() -> HandleCounter<DriverHandle>&;
+        // auto register_device_driver(const SharedPointer<Driver>& driver) -> bool;
+
+        template <class DeviceInterface>
+        auto get_devices(DeviceType device_type) -> LinkedList<DeviceInterface*> {
+            LinkedList<Device*> devices;
+            for (auto& device : m_device_registry_by_type[device_type])
+                devices.add_back(static_cast<DeviceInterface*>(device.get()));
+            return devices;
+        }
     };
 } // namespace Rune::Device
 

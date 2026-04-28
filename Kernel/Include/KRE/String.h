@@ -328,6 +328,10 @@ namespace Rune {
          */
         [[nodiscard]] auto substring(size_t start_idx, size_t len) const -> String;
 
+        /// @brief
+        /// @return A new string without leading and trailing whitespaces.
+        auto trim() -> String;
+
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  String concatenation overloads
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

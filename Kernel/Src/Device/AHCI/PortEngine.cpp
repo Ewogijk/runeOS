@@ -18,6 +18,7 @@
 
 #include <Device/AHCI/GPT.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Math.h>
 
 namespace Rune::Device {
@@ -25,7 +26,17 @@ namespace Rune::Device {
 
     DEFINE_ENUM(PartitionType, PARTITION_TYPES, 0x0) // NOLINT
 
-    HardDrive::HardDrive() : serial_number(), model_number(), current_media_serial_number() {}
+    template <size_t N>
+    auto decode_ata_string(Array<U16, N> ata_string) -> String {
+        Array<U8, 2 * N> decoded{};
+        for (size_t i = 0; i < N; i++) {
+            decoded[2 * i]       = (U8) (ata_string[i] >> SHIFT_8);
+            decoded[(2 * i) + 1] = (U8) ata_string[i];
+        }
+        return String(reinterpret_cast<const char*>(decoded.data()), decoded.size()).trim();
+    }
+
+    HardDrive::HardDrive() = default;
 
     PortEngine::PortEngine() = default;
 
@@ -116,18 +127,29 @@ namespace Rune::Device {
             stop();
             return false;
         }
-        memcpy(_disk_info.serial_number.data(),
+        Array<U16, HardDrive::SERIAL_NUMBER_SIZE>     serial_number{};
+        Array<U16, HardDrive::FIRMWARE_REVISION_SIZE> firmware_revision{};
+        Array<U16, HardDrive::MODEL_NUMBER_SIZE>      model_number{};
+        memcpy(serial_number.data(),
                &buf[HardDrive::SERIAL_NUMBER_OFFSET],
                2 * HardDrive::SERIAL_NUMBER_SIZE);
-        _disk_info.firmware_revision = (U64) buf[HardDrive::FIRMWARE_REVISION_OFFSET];
-        memcpy(_disk_info.model_number.data(),
+        memcpy(firmware_revision.data(),
+               &buf[HardDrive::FIRMWARE_REVISION_OFFSET],
+               2 * HardDrive::FIRMWARE_REVISION_SIZE);
+        memcpy(model_number.data(),
                &buf[HardDrive::MODEL_NUMBER_OFFSET],
                2 * HardDrive::MODEL_NUMBER_SIZE);
-        _disk_info.additional_product_identifier =
-            (U64) buf[HardDrive::ADDITIONAL_PRODUCT_IDENTIFIER_OFFSET];
-        memcpy(_disk_info.current_media_serial_number.data(),
-               &buf[HardDrive::CURRENT_MEDIA_SERIAL_NUMBER_OFFSET],
-               2 * HardDrive::MEDIA_SERIAL_NUMBER_SIZE);
+
+        _disk_info.m_model_number = decode_ata_string<HardDrive::MODEL_NUMBER_SIZE>(model_number);
+        _disk_info.m_firmware_revision =
+            decode_ata_string<HardDrive::FIRMWARE_REVISION_SIZE>(firmware_revision);
+        _disk_info.m_serial_number =
+            decode_ata_string<HardDrive::SERIAL_NUMBER_SIZE>(serial_number);
+
+        LOGGER->info("Disk Info: Model: {}, Serial: {}, Firmware: {}",
+                     _disk_info.m_model_number,
+                     _disk_info.m_serial_number,
+                     _disk_info.m_firmware_revision);
 
         if (bit_check(buf[HardDrive::COMMAND_AND_FEATURE_SET_OFFSET],
                       HardDrive::CAF_48_BIT_ADDR_BIT)) {
@@ -162,7 +184,7 @@ namespace Rune::Device {
                      .type = is_kernel_partition ? PartitionType::KERNEL : PartitionType::DATA});
             }
         } else {
-            // Fixing the GPT is not supported for now, therefore we treat a corrupted GPT as if
+            // Fixing the GPT is not supported for now, therefore, we treat a corrupted GPT as if
             // there is no GPT at all
             // -> Create the implicit partition over the whole disk
             _disk_info.partition_table.add_back({.name      = "Disk",

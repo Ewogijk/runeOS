@@ -47,6 +47,7 @@ namespace Rune::Device {
         CPU::Timer*            _timer;
 
         Array<LogicalDrive, LOGICAL_DRIVE_LIMIT> _logical_drive_table;
+        HashMap<DeviceHandle, LogicalDrive> bla;
         size_t                                   _logical_drive_count{0};
 
         auto alloc_system_memory(U32 ct_count) -> SystemMemory*;
@@ -66,7 +67,8 @@ namespace Rune::Device {
         auto               start(void* context) -> bool override;
         auto               stop() -> bool override;
         auto               handle_request(IORequest request) -> IOResponse override;
-        void               discover_devices(const DeviceMapper&          device_mapper,
+        void               discover_devices(DeviceHandle                 bus_device,
+                                            const DeviceMapper&          device_mapper,
                                             HandleCounter<DeviceHandle>& dev_handle_counter) override;
 
         // ====================================================================================== //
@@ -78,8 +80,6 @@ namespace Rune::Device {
         auto get_logical_drives() -> LinkedList<Partition>;
 
         auto get_hard_drive_info(U8 hard_drive) -> HardDrive;
-
-        auto start(volatile HBAMemory* hba) -> bool;
 
         auto
         send_ata_command(U8 hard_drive, void* buf, size_t buf_size, RegisterHost2DeviceFIS h2d_fis)

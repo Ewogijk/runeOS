@@ -161,7 +161,8 @@ namespace Rune::Device {
         return IOResponse{.m_status = IORequestStatus::FAILED, .m_data = nullptr};
     }
 
-    void PS2Keyboard::discover_devices(const DeviceMapper&          device_mapper,
+    void PS2Keyboard::discover_devices(DeviceHandle                 bus_device,
+                                       const DeviceMapper&          device_mapper,
                                        HandleCounter<DeviceHandle>& dev_handle_counter) {
         SILENCE_UNUSED(device_mapper)
     }

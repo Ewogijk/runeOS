@@ -121,6 +121,7 @@ namespace Rune::Device {
         auto map_device(U16                          bus,
                         U8                           device,
                         U8                           func,
+                        DeviceHandle                 bus_device,
                         const DeviceMapper&          device_mapper,
                         HandleCounter<DeviceHandle>& dev_handle_counter) -> bool;
 
@@ -133,7 +134,8 @@ namespace Rune::Device {
         auto               start(void* context) -> bool override;
         auto               stop() -> bool override;
         auto               handle_request(IORequest request) -> IOResponse override;
-        void               discover_devices(const DeviceMapper&          device_mapper,
+        void               discover_devices(DeviceHandle                 bus_device,
+                                            const DeviceMapper&          device_mapper,
                                             HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device

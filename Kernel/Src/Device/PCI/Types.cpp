@@ -43,9 +43,11 @@ namespace Rune::Device {
     PCIDevice::PCIDevice(DeviceHandle       handle,
                          const String&      name,
                          const String&      oem,
-                         U32                revision,
+                         const String&      revision,
+                         const String&      serial_number,
+                         DeviceType         device_type,
                          const PCIDeviceID& device_ID)
-        : Device(handle, name, oem, revision),
+        : Device(handle, name, oem, revision, serial_number, device_type),
           m_device_ID(device_ID) {}
 
     auto PCIDevice::get_device_ID() const -> const DeviceID* { return &m_device_ID; }

@@ -17,14 +17,15 @@
 #ifndef RUNEOS_PORTENGINE_H
 #define RUNEOS_PORTENGINE_H
 
-#include <Device/AHCI/Port.h>
-
 #include <KRE/Collections/Array.h>
 #include <KRE/Memory.h>
 
 #include <Memory/SlabAllocator.h>
 
 #include <CPU/Time/Timer.h>
+
+#include <Device/AHCI/Port.h>
+#include <Device/Device.h>
 
 namespace Rune::Device {
     struct SystemMemory {
@@ -121,9 +122,9 @@ namespace Rune::Device {
     };
 
     struct HardDrive {
+        static constexpr size_t FIRMWARE_REVISION_SIZE      = 4;
         static constexpr size_t SERIAL_NUMBER_SIZE          = 10;
         static constexpr size_t MODEL_NUMBER_SIZE           = 20;
-        static constexpr size_t MEDIA_SERIAL_NUMBER_SIZE    = 30;
         static constexpr size_t IDENTIFY_DEVICE_BUFFER_SIZE = 256;
         static constexpr size_t DEFAULT_SECTOR_SIZE         = 512;
 
@@ -140,11 +141,9 @@ namespace Rune::Device {
         static constexpr U8 LOGICAL_SECTOR_SIZE_SUPPORTED_BIT    = 12;
         static constexpr U8 LOGICAL_SECTOR_SIZE_OFFSET           = 117;
 
-        Array<U16, SERIAL_NUMBER_SIZE>       serial_number;
-        U64                                  firmware_revision{0};
-        Array<U16, MODEL_NUMBER_SIZE>        model_number;
-        U64                                  additional_product_identifier{0};
-        Array<U16, MEDIA_SERIAL_NUMBER_SIZE> current_media_serial_number;
+        String m_model_number;
+        String m_firmware_revision;
+        String m_serial_number;
 
         U32 sector_size{0};
         U64 sector_count{0};

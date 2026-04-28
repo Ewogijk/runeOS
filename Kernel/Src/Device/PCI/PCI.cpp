@@ -312,6 +312,7 @@ namespace Rune::Device {
     auto PCIDriver::map_device(U16                          bus,
                                U8                           device,
                                U8                           func,
+                               DeviceHandle                 bus_device,
                                const DeviceMapper&          device_mapper,
                                HandleCounter<DeviceHandle>& dev_handle_counter) -> bool {
         PCIConfigurationSpaceHeaderCommon header =
@@ -344,14 +345,16 @@ namespace Rune::Device {
         SharedPointer<Device> dev(new PCIDevice(dev_handle_counter.acquire(),
                                                 resp.m_device_name,
                                                 resp.m_vendor_name,
-                                                header.revision_id,
+                                                int_to_string(header.revision_id, 10),
+                                                "",
+                                                DeviceType::GENERIC,
                                                 PCIDeviceID(header.base_class_code,
                                                             header.sub_class_code,
                                                             header.programming_interface)));
         if (header.get_header_layout() == 0x0) {
             PCIConfigurationSpaceHeaderType0 csh_type0 =
                 pci_read_configuration_space_header_type0(header, bus, device, 0);
-            device_mapper(get_operated_device(), dev, &csh_type0);
+            device_mapper(bus_device, dev, &csh_type0);
         } else {
             LOGGER->warn("PCI Header Type{} detected but it is not supported yet!",
                          header.get_header_layout());
@@ -375,13 +378,19 @@ namespace Rune::Device {
         return {IORequestStatus::FAILED, nullptr};
     }
 
-    void PCIDriver::discover_devices(const DeviceMapper&          device_mapper,
+    void PCIDriver::discover_devices(DeviceHandle                 bus_device,
+                                     const DeviceMapper&          device_mapper,
                                      HandleCounter<DeviceHandle>& dev_handle_counter) {
         for (U16 bus = 0; bus < BUS_LIMIT; bus++) {
             for (U8 device = 0; device < DEVICE_LIMIT; device++) {
-                if (map_device(bus, device, 0, device_mapper, dev_handle_counter)) {
+                if (map_device(bus, device, 0, bus_device, device_mapper, dev_handle_counter)) {
                     for (U8 func = 1; func < FUNCTION_LIMIT; func++) {
-                        map_device(bus, device, func, device_mapper, dev_handle_counter);
+                        map_device(bus,
+                                   device,
+                                   func,
+                                   bus_device,
+                                   device_mapper,
+                                   dev_handle_counter);
                     }
                 }
             }
