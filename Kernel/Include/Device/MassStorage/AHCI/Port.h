@@ -21,7 +21,7 @@
 
 #include <KRE/Collections/Array.h>
 
-#include <Device/AHCI/FIS.h>
+#include <Device/MassStorage/AHCI/FIS.h>
 
 namespace Rune::Device {
 #define SATA_DEVICE_TYPES(X)                                                                       \

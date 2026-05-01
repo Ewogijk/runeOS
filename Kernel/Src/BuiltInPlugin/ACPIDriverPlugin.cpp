@@ -14,27 +14,27 @@
  *  limitations under the License.
  */
 
-#include <BuiltInPlugin/PITDriverPlugin.h>
+
+#include <BuiltInPlugin/ACPIDriverPlugin.h>
 
 #include <KRE/System/System.h>
 
-#include <CPU/CPUModule.h>
-
-#include <CPU/Time/PIT.h>
+#include <Device/DeviceModule.h>
+#include <Device/ACPI/ACPI.h>
 
 namespace Rune::BuiltInPlugin {
-    const PluginInfo PS2KEYBOARD_INFO = {
-        .name    = "PIT",
+    const PluginInfo ACPI_INFO = {
+        .name    = "ACPI",
         .vendor  = "Ewogijk",
         .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
-    auto PITDriverPlugin::get_info() const -> PluginInfo { return PS2KEYBOARD_INFO; }
+    auto ACPIDriverPlugin::get_info() const -> PluginInfo { return ACPI_INFO; }
 
-    auto PITDriverPlugin::load() -> bool {
-        auto* cs = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        cs->install_timer_driver(UniquePointer<CPU::Timer>(new CPU::PIT()));
+    auto ACPIDriverPlugin::load() -> bool {
+        auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
 
-        return true;
+        return ds->register_device_driver(
+            SharedPointer<Device::Driver>(new Device::ACPIDriver(ds->get_device_driver_handle())));
     }
 } // namespace Rune::BuiltInPlugin

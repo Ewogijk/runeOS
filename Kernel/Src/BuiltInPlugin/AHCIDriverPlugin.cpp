@@ -18,12 +18,9 @@
 
 #include <BuiltInPlugin/AHCIDriverPlugin.h>
 
-#include <Memory/MemoryModule.h>
-
-#include <CPU/CPUModule.h>
-
-#include <Device/AHCI/AHCI.h>
 #include <Device/DeviceModule.h>
+#include <Device/MassStorage/AHCI/HostBusAdapterDriver.h>
+#include <Device/MassStorage/AHCI/PortDriver.h>
 
 namespace Rune::BuiltInPlugin {
     const PluginInfo AHCI_INFO = {
@@ -36,11 +33,12 @@ namespace Rune::BuiltInPlugin {
 
     auto AHCIDriverPlugin::load() -> bool {
         System& system = System::instance();
-        auto*   ms     = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto*   cs     = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
         auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        // ds->set_ahci_driver(
-        //     UniquePointer(new Device::AHCIDriver(ms->get_heap(), cs->get_system_timer())));
-        return true;
+        auto hba_driver = SharedPointer<Device::Driver>(
+            new Device::HostBusAdapterDriver(ds->get_device_driver_handle()));
+        auto ahci_port_driver =
+            SharedPointer<Device::Driver>(new Device::PortDriver(ds->get_device_driver_handle()));
+        return ds->register_device_driver(hba_driver)
+               && ds->register_device_driver(ahci_port_driver);
     }
 } // namespace Rune::BuiltInPlugin

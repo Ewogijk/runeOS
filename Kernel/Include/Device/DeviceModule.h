@@ -23,9 +23,9 @@
 
 #include <CPU/CPUModule.h>
 
-#include <Device/AHCI/AHCI.h>
 #include <Device/Device.h>
-#include <Device/Keyboard/PS2Keyboard.h>
+
+#include <Device/Keyboard/Keyboard.h>
 
 namespace Rune::Device {
 
@@ -71,8 +71,6 @@ namespace Rune::Device {
         /// @brief Fast lookup for devices of a specific type.
         HashMap<DeviceType, LinkedList<SharedPointer<Device>>> m_device_registry_by_type;
 
-        /// @brief Register basic device drivers.
-        void setup_device_driver_registry();
 
         /// @brief Find the driver with the matching device ID.
         /// @param device_ID
@@ -105,6 +103,35 @@ namespace Rune::Device {
         /// @param boot_info
         /// @return True: The device tree has been build, False: Otherwise.
         auto load(const BootInfo& boot_info) -> bool override;
+
+        // ====================================================================================== //
+        // Device Driver API
+        // ====================================================================================== //
+
+        /// @brief Get an unused device driver handle for a device driver.
+        /// @return A device driver handle.
+        ///
+        /// The device driver handle is intended to be assigned to a device driver that will be
+        /// instantiated.
+        auto get_device_driver_handle() -> DriverHandle;
+
+        /// @brief Register a device driver to the device module.
+        /// @param driver Pointer to a device driver.
+        /// @return True: The device driver was registered, False: Otherwise.
+        auto register_device_driver(SharedPointer<Driver> driver) -> bool;
+
+        /// @brief Search for a device driver with dev_handle and return it cast to
+        ///         DeviceDriverInterface.
+        /// @tparam DeviceDriverInterface Type of the device driver that will be returned.
+        /// @param driver_handle Handle of a device driver.
+        /// @return A pointer to the device driver or nullptr if no device driver with driver_handle
+        ///         exists.
+        template <class DeviceDriverInterface>
+        auto get_device_driver(DriverHandle driver_handle) -> DeviceDriverInterface* {
+            auto maybe_driver = m_device_driver_registry.find(driver_handle);
+            if (maybe_driver == m_device_driver_registry.end()) return nullptr;
+            return static_cast<DeviceDriverInterface*>((*maybe_driver->value).get());
+        }
 
         // ====================================================================================== //
         // Device API
