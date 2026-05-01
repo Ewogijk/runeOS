@@ -23,35 +23,10 @@
 
 #include <Device/ACPI/ACPI.h>
 
-#include <Device/MassStorage/AHCI/HostBusAdapterDriver.h>
-#include <Device/MassStorage/AHCI/PortDriver.h>
+#include <Device/Keyboard/PS2Keyboard.h>
 
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.DeviceModule");
-
-    void DeviceModule::setup_device_driver_registry() {
-        auto mem_module =
-            System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-
-        auto acpi_driver = SharedPointer<Driver>(new ACPIDriver(m_driver_handle_counter.acquire()));
-        m_device_driver_registry[acpi_driver->get_handle()] = acpi_driver;
-
-        auto ps2keyboard_driver =
-            SharedPointer<Driver>(new PS2Keyboard(m_driver_handle_counter.acquire()));
-        m_device_driver_registry[ps2keyboard_driver->get_handle()] = ps2keyboard_driver;
-
-        auto pci_driver = SharedPointer<Driver>(new PCIDriver(m_driver_handle_counter.acquire()));
-        m_device_driver_registry[pci_driver->get_handle()] = pci_driver;
-
-        auto hba_driver =
-            SharedPointer<Driver>(new HostBusAdapterDriver(m_driver_handle_counter.acquire()));
-        m_device_driver_registry[hba_driver->get_handle()] = hba_driver;
-
-        auto ahci_port_driver =
-            SharedPointer<Driver>(new PortDriver(m_driver_handle_counter.acquire()));
-        m_device_driver_registry[ahci_port_driver->get_handle()] = ahci_port_driver;
-    }
 
     auto DeviceModule::search_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver> {
         for (auto maybe_device_driver : m_device_driver_registry) {
@@ -165,6 +140,17 @@ namespace Rune::Device {
     // ========================================================================================== //
     // Device Driver API
     // ========================================================================================== //
+
+    auto DeviceModule::get_device_driver_handle() -> DriverHandle {
+        return m_driver_handle_counter.acquire();
+    }
+
+    auto DeviceModule::register_device_driver(SharedPointer<Driver> driver) -> bool {
+        auto maybe_device_driver = m_device_driver_registry.find(driver->get_handle());
+        if (maybe_device_driver != m_device_driver_registry.end()) return false;
+        m_device_driver_registry.put(driver->get_handle(), driver);
+        return true;
+    }
 
     // ========================================================================================== //
     // Device API

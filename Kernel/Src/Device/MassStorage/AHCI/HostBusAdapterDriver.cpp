@@ -121,10 +121,9 @@ namespace Rune::Device {
     void HostBusAdapterDriver::discover_devices(DeviceHandle                 bus_device,
                                                 const DeviceMapper&          device_mapper,
                                                 HandleCounter<DeviceHandle>& dev_handle_counter) {
-        U32  pi                 = _hba->PI;
-        U32  command_slots      = _hba->CAP.NCS;
-        bool s64_a              = _hba->CAP.S64A;
-        U8   c_logical_drive_id = 0;
+        U32  pi            = _hba->PI;
+        U32  command_slots = _hba->CAP.NCS;
+        bool s64_a         = _hba->CAP.S64A;
         for (size_t i = 0; i < HBAMemory::PORT_LIMIT; i++) {
             if (!bit_check(pi, i)) continue;
 

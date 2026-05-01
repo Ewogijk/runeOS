@@ -19,9 +19,12 @@
 #include <KRE/CppRTS.h>
 
 #include <BuiltInPlugin/8259PICDriverPlugin.h>
+#include <BuiltInPlugin/ACPIDriverPlugin.h>
 #include <BuiltInPlugin/AHCIDriverPlugin.h>
 #include <BuiltInPlugin/FATDriverPlugin.h>
+#include <BuiltInPlugin/PCIDriverPlugin.h>
 #include <BuiltInPlugin/PITDriverPlugin.h>
+#include <BuiltInPlugin/PS2KeyboardDriverPlugin.h>
 
 #include <CPU/CPU.h>
 #include <CPU/CPUModule.h>
@@ -287,6 +290,9 @@ namespace Rune {
 
     void DeviceModuleLoader::on_pre_load(Module* module) {
         SILENCE_UNUSED(module);
+        load_plugin(new BuiltInPlugin::ACPIDriverPlugin());
+        load_plugin(new BuiltInPlugin::PCIDriverPlugin());
+        load_plugin(new BuiltInPlugin::PS2KeyboardDriverPlugin());
         load_plugin(new BuiltInPlugin::AHCIDriverPlugin());
     }
 

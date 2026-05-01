@@ -18,9 +18,12 @@ Import("build_env")
 build_env: Environment
 sources = [
     build_env.File("8259PICDriverPlugin.cpp"),
+    build_env.File("ACPIDriverPlugin.cpp"),
     build_env.File("AHCIDriverPlugin.cpp"),
     build_env.File("FATDriverPlugin.cpp"),
+    build_env.File("PCIDriverPlugin.cpp"),
     build_env.File("PITDriverPlugin.cpp"),
+    build_env.File("PS2KeyboardDriverPlugin.cpp"),
 ]
 BuiltInPlugin = build_env.StaticLibrary("BuiltInPlugin.o", build_env.Object(sources))
 Export("BuiltInPlugin")
