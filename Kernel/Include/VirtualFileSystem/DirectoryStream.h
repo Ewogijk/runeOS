@@ -36,6 +36,9 @@ namespace Rune::VFS {
 
     DECLARE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0) // NOLINT
 
+    /// @brief Handle type of DirectoryStream.
+    using DirectoryStreamHandle = U16;
+
     /**
      * @brief The directory stream returns node infos until the end of directory is reached.
      */
@@ -47,8 +50,8 @@ namespace Rune::VFS {
         Function<void()> _on_close;
 
       public:
-        U16    handle;
-        String name;
+        DirectoryStreamHandle handle;
+        String                name;
         // NOLINTEND
 
         explicit DirectoryStream(const Function<void()>& on_close);

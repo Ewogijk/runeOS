@@ -61,6 +61,9 @@ namespace Rune::VFS {
         U8     attributes = 0;
     };
 
+    /// @brief Handle type of Node.
+    using NodeHandle = U16;
+
     /**
      * @brief A virtual representation of a file or directory. Files can be read from or written to
      * and directories provide an overview of their contents.

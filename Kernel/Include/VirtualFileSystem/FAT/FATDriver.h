@@ -17,9 +17,9 @@
 #ifndef RUNEOS_FATDRIVER_H
 #define RUNEOS_FATDRIVER_H
 
-#include <Device/AHCI/AHCI.h>
-
 #include <VirtualFileSystem/Driver.h>
+
+#include <Device/Device.h>
 
 #include <VirtualFileSystem/FAT/FAT.h>
 #include <VirtualFileSystem/FAT/FATEngine.h>
@@ -28,69 +28,82 @@
 namespace Rune::VFS {
 
     class FATDriver : public Driver {
-        LinkedList<SharedPointer<StorageDevRef>> _storage_dev_ref_table;
-        SharedPointer<FATEngine>                 _fat_engine;
+        LinkedList<SharedPointer<MassStorageDevRef>> _storage_dev_ref_table;
+        SharedPointer<FATEngine>                     _fat_engine;
 
         VolumeManager    _volume_manager;
         FileEntryManager _file_entry_manager;
 
-        Device::AHCIDriver* _ahci_driver;
-
-        [[nodiscard]] auto find_storage_dev_ref(U16 storage_dev) const
-            -> SharedPointer<StorageDevRef>;
+        [[nodiscard]] auto find_storage_dev_ref(Device::DeviceHandle mass_storage_dev_handle) const
+            -> SharedPointer<MassStorageDevRef>;
 
         static auto node_attributes_to_fat_file_attributes(U8 node_attr) -> U8;
 
-        [[nodiscard]] auto exists(const SharedPointer<StorageDevRef>& md, const Path& path) const
+        [[nodiscard]] auto exists(const SharedPointer<MassStorageDevRef>& md,
+                                  const Path&                             path) const -> IOStatus;
+
+        auto make_long_file_name_entries(const SharedPointer<MassStorageDevRef>& md,
+                                         const Path&                             path,
+                                         LinkedList<LocationAwareFileEntry>&     out) -> IOStatus;
+
+        auto create_file(const SharedPointer<MassStorageDevRef>& md,
+                         const Path&                             path,
+                         U8                                      attributes) -> IOStatus;
+
+        auto create_directory(const SharedPointer<MassStorageDevRef>& md,
+                              const Path&                             path,
+                              U8                                      attributes) -> IOStatus;
+
+        auto delete_file(const SharedPointer<MassStorageDevRef>& md, LocationAwareFileEntry& file)
             -> IOStatus;
 
-        auto make_long_file_name_entries(const SharedPointer<StorageDevRef>& md,
-                                         const Path&                         path,
-                                         LinkedList<LocationAwareFileEntry>& out) -> IOStatus;
+        auto delete_directory(const SharedPointer<MassStorageDevRef>& md,
+                              LocationAwareFileEntry&                 dir,
+                              const Path&                             path) -> IOStatus;
 
-        auto create_file(const SharedPointer<StorageDevRef>& md, const Path& path, U8 attributes)
-            -> IOStatus;
+        auto mass_storage_device_read(Device::DeviceHandle dev_handle,
+                                      void*                buf,
+                                      size_t               buf_size,
+                                      U32                  lba) -> size_t;
 
-        auto create_directory(const SharedPointer<StorageDevRef>& md,
-                              const Path&                         path,
-                              U8                                  attributes) -> IOStatus;
-
-        auto delete_file(const SharedPointer<StorageDevRef>& md, LocationAwareFileEntry& file)
-            -> IOStatus;
-
-        auto delete_directory(const SharedPointer<StorageDevRef>& md,
-                              LocationAwareFileEntry&             dir,
-                              const Path&                         path) -> IOStatus;
+        auto mass_storage_device_write(Device::DeviceHandle dev_handle,
+                                       void*                buf,
+                                       size_t               buf_size,
+                                       U32                  lba) -> size_t;
 
       public:
-        explicit FATDriver(SharedPointer<FATEngine> fat_engine, Device::AHCIDriver* ahci_driver);
+        explicit FATDriver(SharedPointer<FATEngine> fat_engine);
 
         ~FATDriver() override = default;
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto format(U16 storage_dev) -> FormatStatus override;
+        auto format(Device::DeviceHandle mass_storage_dev_handle) -> FormatStatus override;
 
-        auto mount(U16 storage_dev) -> MountStatus override;
+        auto mount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus override;
 
-        auto unmount(U16 storage_dev) -> MountStatus override;
+        auto unmount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus override;
 
         [[nodiscard]] auto is_valid_file_path(const Path& path) const -> bool override;
 
-        auto create(U16 storage_dev, const Path& path, U8 attributes) -> IOStatus override;
+        auto create(Device::DeviceHandle mass_storage_dev_handle, const Path& path, U8 attributes)
+            -> IOStatus override;
 
-        auto open(U16                  storage_dev,
+        auto open(Device::DeviceHandle mass_storage_dev_handle,
                   const Path&          mount_point,
                   const Path&          path,
                   Ember::IOMode        node_io_mode,
                   Function<void()>     on_close,
                   SharedPointer<Node>& out) -> IOStatus override;
 
-        auto find_node(U16 storage_dev, const Path& path, NodeInfo& out) -> IOStatus override;
+        auto find_node(Device::DeviceHandle mass_storage_dev_handle,
+                       const Path&          path,
+                       NodeInfo&            out) -> IOStatus override;
 
-        auto delete_node(U16 storage_dev, const Path& path) -> IOStatus override;
+        auto delete_node(Device::DeviceHandle mass_storage_dev_handle, const Path& path)
+            -> IOStatus override;
 
-        auto open_directory_stream(U16                             storage_dev,
+        auto open_directory_stream(Device::DeviceHandle            mass_storage_dev_handle,
                                    const Path&                     path,
                                    const Function<void()>&         on_close,
                                    SharedPointer<DirectoryStream>& out) -> IOStatus override;

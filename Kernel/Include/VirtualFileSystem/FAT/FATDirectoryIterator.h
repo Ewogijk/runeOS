@@ -87,7 +87,7 @@ namespace Rune::VFS {
     };
 
     class FATDirectoryIterator {
-        U16                  _storage_dev;
+        Device::DeviceHandle _mass_storage_dev_handle;
         BIOSParameterBlock*  _bpb;
         const VolumeManager* _volume_manager;
 
@@ -119,7 +119,7 @@ namespace Rune::VFS {
         void parse_used_file_entry();
 
       public:
-        FATDirectoryIterator(U16                    storage_dev,
+        FATDirectoryIterator(Device::DeviceHandle   mass_storage_dev_handle,
                              BIOSParameterBlock*    bpb,
                              const VolumeManager*   volume_manager,
                              U32                    start_cluster,
@@ -129,7 +129,7 @@ namespace Rune::VFS {
         //                                          Static Functions
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        static auto navigate_to(U16                         storage_dev,
+        static auto navigate_to(Device::DeviceHandle        mass_storage_dev_handle,
                                 BIOSParameterBlock*         bpb,
                                 const VolumeManager*        volume_manager,
                                 U32                         start_cluster,

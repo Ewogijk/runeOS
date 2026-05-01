@@ -17,8 +17,6 @@
 #ifndef RUNEOS_VOLUMEMANAGER_H
 #define RUNEOS_VOLUMEMANAGER_H
 
-#include <Device/AHCI/AHCI.h>
-
 #include <VirtualFileSystem/FAT/FAT.h>
 #include <VirtualFileSystem/FAT/FATEngine.h>
 
@@ -29,7 +27,6 @@ namespace Rune::VFS {
      */
     class VolumeManager {
         SharedPointer<FATEngine> _fat_engine;
-        Device::AHCIDriver*      _ahci_driver;
 
         /**
          *
@@ -40,9 +37,18 @@ namespace Rune::VFS {
          */
         auto data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const -> size_t;
 
+        auto mass_storage_device_read(Device::DeviceHandle dev_handle,
+                                      void*                buf,
+                                      size_t               buf_size,
+                                      U32                  lba) const -> size_t;
+
+        auto mass_storage_device_write(Device::DeviceHandle dev_handle,
+                                       void*                buf,
+                                       size_t               buf_size,
+                                       U32                  lba) const -> size_t;
+
       public:
-        explicit VolumeManager(SharedPointer<FATEngine> fat_engine,
-                               Device::AHCIDriver*      ahci_driver);
+        explicit VolumeManager(SharedPointer<FATEngine> fat_engine);
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          FAT Region Manipulation
@@ -63,8 +69,9 @@ namespace Rune::VFS {
          *
          * @return FAT entry for the given cluster.
          */
-        [[nodiscard]] auto fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const
-            -> U32;
+        [[nodiscard]] auto fat_read(Device::DeviceHandle mass_storage_dev_handle,
+                                    BIOSParameterBlock*  bpb,
+                                    size_t               cluster) const -> U32;
 
         /**
          * Update the FAT entry of a cluster.
@@ -76,8 +83,10 @@ namespace Rune::VFS {
          *
          * @return True: The FAT entry is updated, False: It is not.
          */
-        auto fat_write(U16 storage_dev, BIOSParameterBlock* bpb, size_t cluster, U32 fat_value)
-            -> bool;
+        auto fat_write(Device::DeviceHandle mass_storage_dev_handle,
+                       BIOSParameterBlock*  bpb,
+                       size_t               cluster,
+                       U32                  fat_value) -> bool;
 
         /**
          * Search the FAT for a free cluster. The first free encountered cluster will be returned.
@@ -88,7 +97,8 @@ namespace Rune::VFS {
          * @return The next free cluster in the FAT. 0 if no cluster is free or a storage error
          * happened.
          */
-        auto fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb) -> U32;
+        auto fat_find_next_free_cluster(Device::DeviceHandle mass_storage_dev_handle,
+                                        BIOSParameterBlock*  bpb) -> U32;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Data Region Manipulation
@@ -111,9 +121,10 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was read. False: It was not.
          */
-        auto
-        data_cluster_read(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster) const
-            -> bool;
+        auto data_cluster_read(Device::DeviceHandle mass_storage_dev_handle,
+                               BIOSParameterBlock*  bpb,
+                               void*                buf,
+                               size_t               cluster) const -> bool;
 
         /**
          * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of
@@ -126,8 +137,10 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was written. False: It was not.
          */
-        auto data_cluster_write(U16 storage_dev, BIOSParameterBlock* bpb, void* buf, size_t cluster)
-            -> bool;
+        auto data_cluster_write(Device::DeviceHandle mass_storage_dev_handle,
+                                BIOSParameterBlock*  bpb,
+                                void*                buf,
+                                size_t               cluster) -> bool;
     };
 } // namespace Rune::VFS
 

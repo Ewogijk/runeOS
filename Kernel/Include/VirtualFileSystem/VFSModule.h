@@ -17,12 +17,13 @@
 #ifndef RUNEOS_VFSMODULE_H
 #define RUNEOS_VFSMODULE_H
 
+#include <KRE/Collections/HashMap.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
 #include <KRE/System/Module.h>
 #include <KRE/System/Resource.h>
 
-#include <KRE/Collections/HashMap.h>
+#include <Device/Device.h>
 
 #include <VirtualFileSystem/DirectoryStream.h>
 #include <VirtualFileSystem/Driver.h>
@@ -32,32 +33,29 @@
 
 namespace Rune::VFS {
 
-    /**
-     * @brief All event hooks of the filesystem subsystem.
-     * <ul>
-     *  <li>NodeOpened: A node has been opened. Event Context: The handle of the opened node,
-     * U16*.</li> <li>NodeClosed: A node has been closed. Event Context: The handle of the closed
-     * node, U16*.</li> <li>DirectoryStreamOpened: A directory stream has been closed. Event
-     * Context: The handle of the opened directory stream, U16*.</li> <li>DirectoryStreamClosed: A
-     * directory stream has been opened. Event Context: The handle of the closed directory stream,
-     * U16*.</li>
-     * </ul>
-     */
 #define VFS_EVENT_HOOKS(X)                                                                         \
     X(EventHook, NODE_OPENED, 0x1)                                                                 \
     X(EventHook, NODE_CLOSED, 0x2)                                                                 \
     X(EventHook, DIRECTORY_STREAM_OPENED, 0x3)                                                     \
     X(EventHook, DIRECTORY_STREAM_CLOSED, 0x4)
 
+    /// @brief All event hooks of the filesystem subsystem.
+    ///
+    /// - NODE_OPENED: A node has been opened. Event Context: The handle of the opened node, U16*.
+    /// - NODE_CLOSED: A node has been closed. Event Context: The handle of the closed node, U16*.
+    /// - DIRECTORY_STREAM_OPENED: A directory stream has been closed. Event Context: The handle of
+    ///     the opened directory stream, U16*.
+    /// - DIRECTORY_STREAM_CLOSED: A directory stream has been opened. Event Context: The handle of
+    ///     the closed directory stream, U16*.
     DECLARE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
     /**
      * @brief Mapping of a mount point (path) to a driver name and storage device ID.
      */
     struct MountPointInfo {
-        Path   mount_point;
-        String driver_name;
-        U16    storage_device;
+        Path                 m_mount_point;
+        String               m_driver_name;
+        Device::DeviceHandle m_mass_storage_device_handle;
     };
 
     /**
@@ -65,9 +63,9 @@ namespace Rune::VFS {
      * deleted when the last file handles is closed.
      */
     struct NodeRefCount {
-        Path node_path   = Path("");
-        U16  ref_count   = 0;
-        bool delete_this = false;
+        Path m_node_path   = Path("");
+        U16  m_ref_count   = 0;
+        bool m_delete_this = false;
     };
 
     /**
@@ -225,7 +223,7 @@ namespace Rune::VFS {
          * @param handle Node handle.
          * @return The node if the node handle is present else a nullptr.
          */
-        [[nodiscard]] auto find_node(U16 handle) const -> SharedPointer<Node>;
+        [[nodiscard]] auto find_node(NodeHandle handle) const -> SharedPointer<Node>;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Directory Stream Table Access
@@ -248,7 +246,7 @@ namespace Rune::VFS {
          * @param handle Directory stream handle.
          * @return The directory stream if the directory stream handle is present else a nullptr.
          */
-        [[nodiscard]] auto find_directory_stream(U16 handle) const
+        [[nodiscard]] auto find_directory_stream(DirectoryStreamHandle handle) const
             -> SharedPointer<DirectoryStream>;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -277,14 +275,15 @@ namespace Rune::VFS {
          * </p>
          *
          * @param driver         Driver that will be used for formatting.
-         * @param storage_device ID of the storage device.
+         * @param mass_storage_device_handle ID of the storage device.
          *
          * @return FORMATTED:     The storage device is formatted.
          *          FORMAT_ERROR: An error happened while formatting the storage device. Failure
          * reason is specific to the file system implementation, check the logs. DEV_ERROR:    An IO
          * error happened.
          */
-        [[nodiscard]] auto format(const String& driver_name, uint16_t storage_device) const
+        [[nodiscard]] auto format(const String&        driver_name,
+                                  Device::DeviceHandle mass_storage_device_handle) const
             -> FormatStatus;
 
         /**
@@ -304,7 +303,7 @@ namespace Rune::VFS {
          * </p>
          *
          * @param mount_point    Absolute path to an existing directory.
-         * @param storage_device_id ID of the storage device.
+         * @param mass_storage_device_handle ID of the storage device.
          *
          * @return MOUNTED:          The storage device is mounted.
          *          ALREADY_MOUNTED: The storage device is already mounted.
@@ -312,7 +311,8 @@ namespace Rune::VFS {
          * directory or the directory does not exists. NOT_SUPPORTED:   No driver supports the
          * filesystem of the storage device. DEV_ERROR:       An IO error happened.
          */
-        auto mount(const Path& mount_point, U16 storage_device_id) -> MountStatus;
+        auto mount(const Path& mount_point, Device::DeviceHandle mass_storage_device_handle)
+            -> MountStatus;
 
         /**
          * Try to unmount the given mount point.
@@ -373,11 +373,11 @@ namespace Rune::VFS {
         auto get_node_info(const Path& path, NodeInfo& out) -> IOStatus;
 
         /// @brief Search for the node with the given ID and get the node info if found.
-        /// @param node_ID ID of a node.
+        /// @param node_handle ID of a node.
         /// @param out     If a node was found the info will be put in this object.
         /// @return FOUND:       The node was found.<br>
         ///          NOT_FOUND:   No node with the ID was found.<br>
-        auto get_node_info(U16 node_ID, NodeInfo& out) -> IOStatus;
+        auto get_node_info(NodeHandle node_handle, NodeInfo& out) -> IOStatus;
 
         /**
          * Try to create a file/directory at the path with the given attributes. Either the

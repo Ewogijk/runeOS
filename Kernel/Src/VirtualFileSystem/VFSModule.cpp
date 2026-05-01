@@ -19,6 +19,7 @@
 #include <KRE/System/System.h>
 
 #include <Device/DeviceModule.h>
+#include <Device/MassStorage/MassStorage.h>
 
 namespace Rune::VFS {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("VFS.VFSModule");
@@ -42,31 +43,34 @@ namespace Rune::VFS {
         _event_hook_table.put(EventHook(EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
 
-        System& system        = System::instance();
-        auto*   ds            = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        int     logical_drive = -1;
-        LinkedList<Device::Partition> p = ds->get_ahci_driver()->get_logical_drives();
-        for (size_t i = 0; i < p.size(); i++) {
-            if (p[i]->type == Device::PartitionType::DATA) {
-                logical_drive = static_cast<int>(i);
+        System&              system = System::instance();
+        auto*                ds = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::DeviceHandle msd_handle = Resource<Device::DeviceHandle>::HANDLE_NONE;
+        LinkedList<Device::MassStorageDevice*> msd_list =
+            ds->get_devices<Device::MassStorageDevice>(Device::DeviceType::MASS_STORAGE_DEVICE);
+        for (auto* msd : msd_list) {
+            if (msd->get_mass_storage_device_type() == Device::MassStorageDeviceType::GENERIC) {
+                msd_handle = msd->get_handle();
                 break;
             }
         }
-        if (logical_drive == -1) {
-            LOGGER->critical("Cannot mount root directory! No data partition found...");
+
+        if (msd_handle == Resource<Device::DeviceHandle>::HANDLE_NONE) {
+            LOGGER->critical(
+                "Cannot mount root directory! No generic mass storage device found...");
             return false;
         }
         // Mount root directory
         Path        root = Path::ROOT;
-        MountStatus ms   = mount(root, logical_drive);
+        MountStatus ms   = mount(root, msd_handle);
         if (ms != MountStatus::MOUNTED) {
             LOGGER->critical("Failed to mount logical drive {} at \"{}\". Mount Status: {}",
                              root.to_string(),
-                             logical_drive,
+                             msd_handle,
                              ms.to_string());
             return false;
         }
-        LOGGER->debug("Logical drive {} is mounted at \"{}\".", logical_drive, root.to_string());
+        LOGGER->debug("Logical drive {} is mounted at \"{}\".", msd_handle, root.to_string());
 
         // Create system directories
         Path sys_dir = root / "System";
@@ -104,9 +108,9 @@ namespace Rune::VFS {
         }
         LOGGER->trace(R"(Path "{}" has been resolved to "{}" (Storage Device: {}, Driver: {}))",
                       path.to_string(),
-                      best_fit.mount_point.to_string(),
-                      best_fit.storage_device,
-                      best_fit.driver_name);
+                      best_fit.m_mount_point.to_string(),
+                      best_fit.m_mass_storage_device_handle,
+                      best_fit.m_driver_name);
         return best_fit;
     }
 
@@ -133,7 +137,7 @@ namespace Rune::VFS {
 
     auto VFSModule::get_driver_table() const -> LinkedList<String> {
         auto dn = LinkedList<String>();
-        for (const auto& mpi_p : _mount_point_table) dn.add_back(mpi_p.value->driver_name);
+        for (const auto& mpi_p : _mount_point_table) dn.add_back(mpi_p.value->m_driver_name);
         return dn;
     }
 
@@ -204,7 +208,7 @@ namespace Rune::VFS {
 
     void VFSModule::dump_node_ref_table(const SharedPointer<TextStream>& stream) const {
         Table<NodeRefCount, 3>::make_table([](const NodeRefCount& nrc) -> Array<String, 3> {
-            return {nrc.node_path.to_string(), String::format("{}", nrc.ref_count)};
+            return {nrc.m_node_path.to_string(), String::format("{}", nrc.m_ref_count)};
         })
             .with_headers({"Path", "RefCount"})
             .with_data(_node_ref_table.values())
@@ -253,31 +257,33 @@ namespace Rune::VFS {
 
     void VFSModule::dump_mount_point_table(const SharedPointer<TextStream>& stream) const {
         Table<MountPointInfo, 3>::make_table([](const MountPointInfo& mpi) -> Array<String, 3> {
-            return {mpi.mount_point.to_string(),
-                    mpi.driver_name,
-                    String::format("{}", mpi.storage_device)};
+            return {mpi.m_mount_point.to_string(),
+                    mpi.m_driver_name,
+                    String::format("{}", mpi.m_mass_storage_device_handle)};
         })
             .with_headers({"Mount Point", "Driver", "Storage Device"})
             .with_data(_mount_point_table.values())
             .print(stream);
     }
 
-    auto VFSModule::format(const String& driver_name, uint16_t storage_device) const
+    auto VFSModule::format(const String& driver_name, uint16_t mass_storage_device_handle) const
         -> FormatStatus {
         UniquePointer<Driver>* maybe_driver = _driver_table.find(driver_name)->value;
         if (maybe_driver == nullptr) {
             LOGGER->warn("Unknown driver: {}. Cannot format storage device {}.",
                          driver_name,
-                         storage_device);
+                         mass_storage_device_handle);
             return FormatStatus::UNKNOWN_DRIVER;
         }
-        FormatStatus st = (*maybe_driver)->format(storage_device);
+        FormatStatus st = (*maybe_driver)->format(mass_storage_device_handle);
         if (st == FormatStatus::FORMATTED)
-            LOGGER->info(R"(Storage device {} is now {} formatted.)", storage_device, driver_name);
+            LOGGER->info(R"(Storage device {} is now {} formatted.)",
+                         mass_storage_device_handle,
+                         driver_name);
         else
             LOGGER->warn(R"(Failed to {} format storage device {}. Format Status: {})",
                          driver_name,
-                         storage_device,
+                         mass_storage_device_handle,
                          st.to_string());
         return st;
     }
@@ -300,10 +306,10 @@ namespace Rune::VFS {
             // Find the device where this mount point should be mounted and check if the directory
             // exists
             MountPointInfo         mpi    = resolve(mount_point);
-            UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
+            UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
             NodeInfo               dummy;
-            IOStatus               as = (*driver)->find_node(mpi.storage_device,
-                                               mount_point.relative_to(mpi.mount_point),
+            IOStatus               as = (*driver)->find_node(mpi.m_mass_storage_device_handle,
+                                               mount_point.relative_to(mpi.m_mount_point),
                                                dummy);
             if (as != IOStatus::FOUND) {
                 LOGGER->warn(
@@ -322,9 +328,9 @@ namespace Rune::VFS {
             if (ms == MountStatus::ALREADY_MOUNTED) ms = MountStatus::MOUNTED;
             if (ms == MountStatus::MOUNTED) {
                 _mount_point_table.put(mount_point,
-                                       {.mount_point    = mount_point,
-                                        .driver_name    = (*dp.value)->get_name(),
-                                        .storage_device = storage_device});
+                                       {.m_mount_point                = mount_point,
+                                        .m_driver_name                = (*dp.value)->get_name(),
+                                        .m_mass_storage_device_handle = storage_device});
                 LOGGER->info(R"(The {} formatted storage device {} is now mounted at "{}")",
                              (*dp.value)->get_name(),
                              storage_device,
@@ -355,23 +361,23 @@ namespace Rune::VFS {
         }
 
         MountPointInfo         mpi    = resolve(mount_point);
-        UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
-        MountStatus            mst    = (*driver)->unmount(mpi.storage_device);
+        UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
+        MountStatus            mst    = (*driver)->unmount(mpi.m_mass_storage_device_handle);
         if (mst != MountStatus::UNMOUNTED) {
             LOGGER->warn(
 
                 R"(Failed to unmount storage device {} from {}. Driver={}, Mount Status={})",
-                mpi.storage_device,
+                mpi.m_mass_storage_device_handle,
                 mount_point.to_string(),
-                mpi.driver_name,
+                mpi.m_driver_name,
                 mst.to_string());
             return mst;
         }
         bool success = _mount_point_table.remove(mount_point);
         if (success)
             LOGGER->info(R"(The {} formatted storage device {} is no longer mounted at "{}")",
-                         mpi.driver_name,
-                         mpi.storage_device,
+                         mpi.m_driver_name,
+                         mpi.m_mass_storage_device_handle,
                          mount_point.to_string());
         else
             LOGGER->warn(R"(Failed to remove "{}" from the mount point table.)",
@@ -390,12 +396,12 @@ namespace Rune::VFS {
         Path remaining = path;
         while (!remaining.is_root()) {
             MountPointInfo         mpi    = resolve(path);
-            UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
+            UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
             if (driver == nullptr) return false;
 
-            auto relative = remaining.relative_to(mpi.mount_point);
+            auto relative = remaining.relative_to(mpi.m_mount_point);
             if (!(*driver)->is_valid_file_path(relative)) return false;
-            remaining = remaining.common_path(mpi.mount_point);
+            remaining = remaining.common_path(mpi.m_mount_point);
         }
         return true;
     }
@@ -406,9 +412,10 @@ namespace Rune::VFS {
         if (_mount_point_table.find(path) != _mount_point_table.end()) return IOStatus::FOUND;
 
         MountPointInfo         mpi    = resolve(path);
-        UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
-        IOStatus               st =
-            (*driver)->create(mpi.storage_device, path.relative_to(mpi.mount_point), attributes);
+        UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
+        IOStatus               st     = (*driver)->create(mpi.m_mass_storage_device_handle,
+                                        path.relative_to(mpi.m_mount_point),
+                                        attributes);
         if (st == IOStatus::CREATED)
             LOGGER->debug(R"(Created FILE "{}" with attributes {:0=#8b})",
                           path.to_string(),
@@ -431,13 +438,13 @@ namespace Rune::VFS {
         }
 
         MountPointInfo         mpi    = resolve(path);
-        UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
+        UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
 
         U16      node_handle = _node_handle_counter.acquire();
-        Path     p           = path.relative_to(mpi.mount_point);
+        Path     p           = path.relative_to(mpi.m_mount_point);
         IOStatus open_status = (*driver)->open(
-            mpi.storage_device,
-            mpi.mount_point,
+            mpi.m_mass_storage_device_handle,
+            mpi.m_mount_point,
             p,
             node_io_mode,
             [this, path, node_handle] {
@@ -451,11 +458,11 @@ namespace Rune::VFS {
                     LOGGER->error("Missing node ref table entry for node handle: {}", node_handle);
                     return;
                 }
-                it->value->ref_count--;
+                it->value->m_ref_count--;
 
                 // Check if this is the last node handle pointing to the path
-                if (it->value->ref_count == 0) {
-                    bool delete_this = it->value->delete_this;
+                if (it->value->m_ref_count == 0) {
+                    bool delete_this = it->value->m_delete_this;
                     // Remove the Node Ref Table entry
                     if (!_node_ref_table.remove(path))
                         LOGGER->warn("Could not remove node ref table entry for node handle: {}",
@@ -488,14 +495,14 @@ namespace Rune::VFS {
             if (it == _node_ref_table.end())
                 _node_ref_table.put(
                     path,
-                    {.node_path = path, .ref_count = (U16) 1, .delete_this = false});
+                    {.m_node_path = path, .m_ref_count = (U16) 1, .m_delete_this = false});
             else
-                it->value->ref_count++;
+                it->value->m_ref_count++;
 
             LOGGER->debug(R"(Opened node "{}-{}", RefCount={})",
                           node_handle,
                           path.to_string(),
-                          _node_ref_table.find(path)->value->ref_count);
+                          _node_ref_table.find(path)->value->m_ref_count);
         } else {
             _node_handle_counter.release_last_acquired();
             LOGGER->debug(R"(Failed to open "{}". IOStatus={})",
@@ -509,12 +516,14 @@ namespace Rune::VFS {
         if (!path.is_absolute()) return IOStatus::BAD_PATH;
 
         MountPointInfo         mpi    = resolve(path);
-        UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
-        return (*driver)->find_node(mpi.storage_device, path.relative_to(mpi.mount_point), out);
+        UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
+        return (*driver)->find_node(mpi.m_mass_storage_device_handle,
+                                    path.relative_to(mpi.m_mount_point),
+                                    out);
     }
 
-    auto VFSModule::get_node_info(U16 node_ID, NodeInfo& out) -> IOStatus {
-        auto maybe_node = _node_table.find(node_ID);
+    auto VFSModule::get_node_info(U16 node_handle, NodeInfo& out) -> IOStatus {
+        auto maybe_node = _node_table.find(node_handle);
         if (maybe_node == _node_table.end()) return IOStatus::NOT_FOUND;
 
         SharedPointer<Node> node = *maybe_node->value;
@@ -544,9 +553,9 @@ namespace Rune::VFS {
             return IOStatus::ACCESS_DENIED; // Deleting a mount point is not allowed
 
         MountPointInfo         mpi    = resolve(path);
-        UniquePointer<Driver>* driver = _driver_table.find(mpi.driver_name)->value;
+        UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
         auto                   it     = _node_ref_table.find(path);
-        bool delete_now               = it == _node_ref_table.end() || it->value->ref_count == 0;
+        bool delete_now               = it == _node_ref_table.end() || it->value->m_ref_count == 0;
         if (delete_now) {
             // path could be a directory -> Check if any FILE in it or one of its subdirectories is
             // open
@@ -560,8 +569,8 @@ namespace Rune::VFS {
             }
         }
         if (delete_now) {
-            IOStatus st =
-                (*driver)->delete_node(mpi.storage_device, path.relative_to(mpi.mount_point));
+            IOStatus st = (*driver)->delete_node(mpi.m_mass_storage_device_handle,
+                                                 path.relative_to(mpi.m_mount_point));
             if (st == IOStatus::DELETED)
                 LOGGER->trace("Deleted '{}'", path.to_string());
             else
@@ -571,7 +580,7 @@ namespace Rune::VFS {
             return st;
         }
         LOGGER->trace("Marked '{}' for deletion...", path.to_string());
-        it->value->delete_this = true;
+        it->value->m_delete_this = true;
         return IOStatus::DELETED;
     }
 
@@ -583,10 +592,10 @@ namespace Rune::VFS {
 
         U16                    dir_stream_handle = _dir_stream_handle_counter.acquire();
         MountPointInfo         mpi               = resolve(path);
-        UniquePointer<Driver>* driver            = _driver_table.find(mpi.driver_name)->value;
+        UniquePointer<Driver>* driver            = _driver_table.find(mpi.m_driver_name)->value;
         IOStatus               io_st             = (*driver)->open_directory_stream(
-            mpi.storage_device,
-            path.relative_to(mpi.mount_point),
+            mpi.m_mass_storage_device_handle,
+            path.relative_to(mpi.m_mount_point),
             [this, dir_stream_handle, path] {
                 // Remove FILE handle from FILE table
                 _dir_stream_table.remove(dir_stream_handle);

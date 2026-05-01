@@ -27,12 +27,12 @@
 
 namespace Rune::VFS {
     class FATNode : public Node {
-        Path                         _path;
-        Ember::IOMode                _node_io_mode;
-        LocationAwareFileEntry       _file_entry;
-        VolumeManager*               _volume_manager;
-        FileEntryManager*            _file_entry_manager;
-        SharedPointer<StorageDevRef> _mounted_storage;
+        Path                             _path;
+        Ember::IOMode                    _node_io_mode;
+        LocationAwareFileEntry           _file_entry;
+        VolumeManager*                   _volume_manager;
+        FileEntryManager*                _file_entry_manager;
+        SharedPointer<MassStorageDevRef> _mounted_storage;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          File Cursor
@@ -49,13 +49,13 @@ namespace Rune::VFS {
         [[nodiscard]] auto processed_bytes() const -> U32;
 
       public:
-        FATNode(Function<void()>             on_close,
-                Path                         path,
-                Ember::IOMode                node_io_mode,
-                LocationAwareFileEntry       file_entry,
-                VolumeManager*               volume_manager,
-                FileEntryManager*            file_entry_manager,
-                SharedPointer<StorageDevRef> mounted_storage);
+        FATNode(Function<void()>                 on_close,
+                Path                             path,
+                Ember::IOMode                    node_io_mode,
+                LocationAwareFileEntry           file_entry,
+                VolumeManager*                   volume_manager,
+                FileEntryManager*                file_entry_manager,
+                SharedPointer<MassStorageDevRef> mounted_storage);
 
         ~FATNode() override = default;
 

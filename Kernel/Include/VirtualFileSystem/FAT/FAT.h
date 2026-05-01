@@ -22,6 +22,8 @@
 
 #include <KRE/String.h>
 
+#include <Device/Device.h>
+
 namespace Rune::VFS {
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -351,13 +353,13 @@ namespace Rune::VFS {
     /**
      * Mapping of a storage device ID to a BPB.
      */
-    struct StorageDevRef {
-        U16                 storage_dev = -1;
-        BIOSParameterBlock* BPB         = nullptr;
+    struct MassStorageDevRef {
+        Device::DeviceHandle m_mass_storage_dev_handle = -1;
+        BIOSParameterBlock*  m_BPB                     = nullptr;
 
-        StorageDevRef(U16 storage_dev, BIOSParameterBlock* bpb);
+        MassStorageDevRef(Device::DeviceHandle mass_storage_dev_handle, BIOSParameterBlock* bpb);
 
-        ~StorageDevRef();
+        ~MassStorageDevRef();
     };
 } // namespace Rune::VFS
 

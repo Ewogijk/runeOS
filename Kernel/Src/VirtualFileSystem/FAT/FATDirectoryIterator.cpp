@@ -16,20 +16,23 @@
 
 #include <VirtualFileSystem/FAT/FATDirectoryIterator.h>
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::VFS {
     DEFINE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0)
 
     void FATDirectoryIterator::get_next_cluster() {
         // If the iterator has not started yet read the cluster mentioned in the directory file
         // entry else get the next cluster from the FAT
-        U32 next_cluster = (_current_entry != nullptr)
-                               ? _volume_manager->fat_read(_storage_dev, _bpb, _current_cluster)
-                               : _current_cluster;
+        U32 next_cluster =
+            (_current_entry != nullptr)
+                ? _volume_manager->fat_read(_mass_storage_dev_handle, _bpb, _current_cluster)
+                : _current_cluster;
         if (next_cluster > _volume_manager->get_max_cluster_count()) {
             _state = DirectoryIteratorState::END_OF_DIRECTORY;
             return;
         }
-        if (!_volume_manager->data_cluster_read(_storage_dev,
+        if (!_volume_manager->data_cluster_read(_mass_storage_dev_handle,
                                                 _bpb,
                                                 _cluster_buf.get(),
                                                 next_cluster)) {
@@ -207,12 +210,12 @@ namespace Rune::VFS {
         _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
     }
 
-    FATDirectoryIterator::FATDirectoryIterator(U16                    storage_dev,
+    FATDirectoryIterator::FATDirectoryIterator(Device::DeviceHandle   mass_storage_dev_handle,
                                                BIOSParameterBlock*    bpb,
                                                const VolumeManager*   volume_manager,
                                                U32                    start_cluster,
                                                DirectoryIterationMode it_mode)
-        : _storage_dev(storage_dev),
+        : _mass_storage_dev_handle(mass_storage_dev_handle),
           _bpb(bpb),
           _volume_manager(volume_manager),
           _cluster_buf(nullptr),
@@ -239,14 +242,14 @@ namespace Rune::VFS {
         }
     }
 
-    auto FATDirectoryIterator::navigate_to(U16                         storage_dev,
+    auto FATDirectoryIterator::navigate_to(Device::DeviceHandle        mass_storage_dev_handle,
                                            BIOSParameterBlock*         bpb,
                                            const VolumeManager*        volume_manager,
                                            U32                         start_cluster,
                                            LinkedListIterator<String>& path) -> NavigationResult {
         String wanted_file_entry = *path;
         ++path;
-        FATDirectoryIterator d_it(storage_dev,
+        FATDirectoryIterator d_it(mass_storage_dev_handle,
                                   bpb,
                                   volume_manager,
                                   start_cluster,
@@ -262,7 +265,7 @@ namespace Rune::VFS {
                 // here
                 if (FATFileAttribute(c_entry.file.attributes & FATFileAttribute::DIRECTORY)
                     == FATFileAttribute::DIRECTORY) {
-                    return navigate_to(storage_dev,
+                    return navigate_to(mass_storage_dev_handle,
                                        bpb,
                                        volume_manager,
                                        c_entry.file.cluster(),
