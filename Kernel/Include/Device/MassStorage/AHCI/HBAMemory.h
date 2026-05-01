@@ -179,7 +179,7 @@ namespace Rune::Device {
     /// AHCI v1.3.1 spec (section 3.1). Must be accessed through a volatile pointer.
     struct HBAMemory {
         /// @brief Up to 32 ports are supported.
-        static constexpr U8 MAX_PORT_COUNT = 32;
+        static constexpr U8 PORT_LIMIT = 32;
 
         /// @brief HBA Capabilities (offset 0x00).
         HBACapabilities                    CAP{};
@@ -215,7 +215,7 @@ namespace Rune::Device {
         Array<U8, 96>  Vendor{};   // NOLINT Registers 0xA0-0xFF
 
         /// @brief Per-port register blocks (offset 0x100, each port occupies 0x80 bytes).
-        HBAPort Port[MAX_PORT_COUNT]; // NOLINT HBAMemory needs to be volatile -> Must be C-Array
+        HBAPort Port[PORT_LIMIT]; // NOLINT HBAMemory needs to be volatile -> Must be C-Array
     };
 } // namespace Rune::Device
 

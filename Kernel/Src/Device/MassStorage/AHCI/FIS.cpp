@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Device/AHCI/FIS.h>
+#include <Device/MassStorage/AHCI/FIS.h>
 
 namespace Rune::Device {
     DEFINE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0)

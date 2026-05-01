@@ -96,8 +96,7 @@ namespace Rune::Device {
      * @brief An entry in the GPT partition table represents a single partition on a drive.
      */
     struct GPTPartitionTableEntry {
-        /// @brief Actual length is 72 bytes, but for better decoding we define the buffer as U16
-        ///         therefore the size is 36
+
         static constexpr U8 PARTITION_NAME_SIZE     = 36;
         static constexpr U8 LBA_AND_ATTRIBUTES_SIZE = 8;
 
@@ -108,18 +107,12 @@ namespace Rune::Device {
         static constexpr U8 ATTRIBUTES_OFFSET            = 48;
         static constexpr U8 PARTITION_NAME_OFFSET        = 56;
 
-        GUID                            partition_type_guid{};
-        GUID                            unique_partition_guid{};
-        U64                             starting_lba = 0; // Little-endian
-        U64                             ending_lba   = 0; // Inclusive, Little-endian
-        U64                             attributes   = 0;
-        Array<U16, PARTITION_NAME_SIZE> name_buf{}; // UTF-16LE
-
-        /**
-         * @brief Note: Only ASCII characters are supported.
-         * @return Name of the partition.
-         */
-        auto get_name() -> String;
+        GUID partition_type_guid{};
+        GUID unique_partition_guid{};
+        U64  starting_lba = 0; // Little-endian
+        U64  ending_lba   = 0; // Inclusive, Little-endian
+        U64  attributes   = 0;
+        String name;
     };
 
 #define GPT_SCAN_STATUSES(X)                                                                       \

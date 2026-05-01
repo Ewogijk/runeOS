@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Device/AHCI/Port.h>
+#include <Device/MassStorage/AHCI/Port.h>
 
 namespace Rune::Device {
     DEFINE_TYPED_ENUM(SATADeviceType, U32, SATA_DEVICE_TYPES, 0x0)
