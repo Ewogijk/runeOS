@@ -51,11 +51,11 @@ namespace Rune::Device {
 
         [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
 
-        auto start(void* context) -> bool override;
+        auto start(DeviceHandle dev_handle, void* context) -> bool override;
 
-        auto stop() -> bool override;
+        auto stop(DeviceHandle dev_handle) -> bool override;
 
-        auto handle_request(IORequest request) -> IOResponse override;
+        auto handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus override;
 
         void discover_devices(DeviceHandle                 bus_device,
                               const DeviceMapper&          device_mapper,

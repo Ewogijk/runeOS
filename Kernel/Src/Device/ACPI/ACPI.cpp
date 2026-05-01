@@ -36,31 +36,29 @@ namespace Rune::Device {
     // ACPIDriver
     // ========================================================================================== //
 
-    void ACPIDriver::handle_get_acpi_info_request(IOResponse& response) {
+    auto ACPIDriver::handle_get_acpi_info_request(IORequest& request) -> IORequestStatus {
         ACPI_TABLE_RSDP* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
             Memory::physical_to_virtual_address(System::instance().get_boot_info().rsdp_addr));
-        response.m_status = IORequestStatus::HANDLED;
-        response.m_data   = new ACPIInfo{.m_oem      = String(rsdp->OemId, ACPI_OEM_ID_SIZE),
-                                         .m_revision = rsdp->Revision};
+        auto* acpi_info       = reinterpret_cast<ACPIInfo*>(request.m_out_buffer);
+        acpi_info->m_oem      = String(rsdp->OemId, ACPI_OEM_ID_SIZE);
+        acpi_info->m_revision = rsdp->Revision;
+        return IORequestStatus::HANDLED;
     }
 
-    void ACPIDriver::handle_shutdown_request(IOResponse& response) {
+    auto ACPIDriver::handle_shutdown_request(IORequest& request) -> IORequestStatus {
         ACPI_STATUS status = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiEnterSleepStatePrep(S5) failed. Status={}", status);
-            response.m_status = IORequestStatus::FAILED;
-            return;
+            return IORequestStatus::FAILED;
         }
 
         status = AcpiEnterSleepState(ACPI_STATE_S5);
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiEnterSleepState(S5) failed. Status={}", status);
-            response.m_status = IORequestStatus::FAILED;
-            return;
+            return IORequestStatus::FAILED;
         }
 
-        response.m_status = IORequestStatus::HANDLED;
-        response.m_data   = nullptr;
+        return IORequestStatus::HANDLED;
     }
 
     const BasicDeviceID ACPIDriver::ID_ACPI("ACPI");
@@ -69,7 +67,7 @@ namespace Rune::Device {
 
     auto ACPIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
 
-    auto ACPIDriver::start(void* context) -> bool {
+    auto ACPIDriver::start(DeviceHandle dev_handle, void* context) -> bool {
         SILENCE_UNUSED(context)
         ACPI_STATUS status = AcpiInitializeSubsystem();
         if (ACPI_FAILURE(status)) {
@@ -101,24 +99,22 @@ namespace Rune::Device {
             return false;
         }
         _acpi_initialized = true;
+        add_operated_device(dev_handle);
         return true;
     }
 
-    auto ACPIDriver::stop() -> bool { return true; }
+    auto ACPIDriver::stop(DeviceHandle dev_handle) -> bool { return true; }
 
-    auto ACPIDriver::handle_request(IORequest request) -> IOResponse {
-        if (!_acpi_initialized)
-            return IOResponse{.m_status = IORequestStatus::FAILED, .m_data = nullptr};
-        auto       req = reinterpret_cast<ACPIREQUEST*>(request);
-        IOResponse io_response;
+    auto ACPIDriver::handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus {
+        SILENCE_UNUSED(dev_handle)
+        if (!_acpi_initialized) return IORequestStatus::UNKNOWN_DEVICE;
+        auto req = reinterpret_cast<ACPIREQUEST*>(request.m_in_buffer);
 
         switch (*req) {
-            case ACPIREQUEST::GET_ACPI_INFO: handle_get_acpi_info_request(io_response); break;
-            case ACPIREQUEST::SHUTDOWN:      handle_shutdown_request(io_response); break;
-            default:                         io_response.m_status = IORequestStatus::BAD_ARGUMENT;
+            case ACPIREQUEST::GET_ACPI_INFO: return handle_get_acpi_info_request(request);
+            case ACPIREQUEST::SHUTDOWN:      return handle_shutdown_request(request);
+            default:                         return IORequestStatus::BAD_ARGUMENT;
         }
-
-        return io_response;
     }
 
     void ACPIDriver::discover_devices(DeviceHandle                 bus_device,
