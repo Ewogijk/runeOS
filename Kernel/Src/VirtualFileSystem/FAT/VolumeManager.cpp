@@ -16,17 +16,65 @@
 
 #include <VirtualFileSystem/FAT/VolumeManager.h>
 
+#include <KRE/System/System.h>
+
+#include <Device/DeviceModule.h>
+#include <Device/MassStorage/MassStorage.h>
+
 namespace Rune::VFS {
+
+    // ========================================================================================== //
+    // Private
+    // ========================================================================================== //
+
     auto VolumeManager::data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const
         -> size_t {
         return bpb->reserved_sector_count + (bpb->fat_count * _fat_engine->fat_get_size(bpb))
                + ((cluster - 2) * bpb->sectors_per_cluster);
     }
 
-    VolumeManager::VolumeManager(SharedPointer<FATEngine> fat_engine,
-                                 Device::AHCIDriver*      ahci_driver)
-        : _fat_engine(move(fat_engine)),
-          _ahci_driver(ahci_driver) {}
+    auto VolumeManager::mass_storage_device_read(Device::DeviceHandle dev_handle,
+                                                 void*                buf,
+                                                 size_t               buf_size,
+                                                 U32                  lba) const -> size_t {
+        auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::MassStorageDeviceRequest msd_req{.m_type =
+                                                     Device::MassStorageDeviceRequestType::READ,
+                                                 .m_lba         = lba,
+                                                 .m_buffer      = buf,
+                                                 .m_buffer_size = buf_size};
+        size_t                           bytes_read = 0;
+        Device::IORequest                io_req{
+                           .m_in_buffer  = &msd_req,
+                           .m_out_buffer = &bytes_read,
+        };
+        return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
+                   ? bytes_read
+                   : 0;
+    }
+
+    auto VolumeManager::mass_storage_device_write(Device::DeviceHandle dev_handle,
+                                                  void*                buf,
+                                                  size_t               buf_size,
+                                                  U32                  lba) const -> size_t {
+        auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::MassStorageDeviceRequest msd_req{.m_type =
+                                                     Device::MassStorageDeviceRequestType::WRITE,
+                                                 .m_lba         = lba,
+                                                 .m_buffer      = buf,
+                                                 .m_buffer_size = buf_size};
+        size_t                           bytes_read = 0;
+        Device::IORequest                io_req{
+                           .m_in_buffer  = &msd_req,
+                           .m_out_buffer = &bytes_read,
+        };
+        return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
+                   ? bytes_read
+                   : 0;
+    }
+
+    VolumeManager::VolumeManager(SharedPointer<FATEngine> fat_engine)
+        : _fat_engine(move(fat_engine)) {}
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          FAT Region Manipulation
@@ -36,54 +84,70 @@ namespace Rune::VFS {
         return _fat_engine->fat_get_eof_marker();
     }
 
-    auto VolumeManager::fat_read(U16 storage_id, BIOSParameterBlock* bpb, size_t cluster) const
-        -> U32 {
+    auto VolumeManager::fat_read(Device::DeviceHandle mass_storage_dev_handle,
+                                 BIOSParameterBlock*  bpb,
+                                 size_t               cluster) const -> U32 {
         U32 two_sector_size   = bpb->bytes_per_sector * 2;
         U32 byte_offset       = _fat_engine->fat_offset(cluster);
         U32 fat_sector_number = bpb->reserved_sector_count + (byte_offset / bpb->bytes_per_sector);
         U8  fat[two_sector_size]; // NOLINT
-        if (_ahci_driver->read(storage_id, fat, two_sector_size, fat_sector_number)
+        if (mass_storage_device_read(mass_storage_dev_handle,
+                                     fat,
+                                     two_sector_size,
+                                     fat_sector_number)
             < two_sector_size)
             return _fat_engine->fat_get_eof_marker();
         return _fat_engine->fat_get_entry(fat, byte_offset % bpb->bytes_per_sector);
     }
 
-    auto VolumeManager::fat_write(U16                 storage_dev,
-                                  BIOSParameterBlock* bpb,
-                                  size_t              cluster,
-                                  U32                 fat_value) -> bool {
+    auto VolumeManager::fat_write(Device::DeviceHandle mass_storage_dev_handle,
+                                  BIOSParameterBlock*  bpb,
+                                  size_t               cluster,
+                                  U32                  fat_value) -> bool {
         U32 two_sector_size   = bpb->bytes_per_sector * 2;
         U32 byte_offset       = _fat_engine->fat_offset(cluster);
         U32 fat_sector_number = bpb->reserved_sector_count + (byte_offset / bpb->bytes_per_sector);
         U8  fat[two_sector_size]; // NOLINT
-        if (_ahci_driver->read(storage_dev, fat, two_sector_size, fat_sector_number)
+        if (mass_storage_device_read(mass_storage_dev_handle,
+                                     fat,
+                                     two_sector_size,
+                                     fat_sector_number)
             < two_sector_size)
             return false;
         _fat_engine->fat_set_entry(fat, byte_offset % bpb->bytes_per_sector, fat_value);
-        if (_ahci_driver->write(storage_dev, fat, two_sector_size, fat_sector_number)
+        if (mass_storage_device_write(mass_storage_dev_handle,
+                                      fat,
+                                      two_sector_size,
+                                      fat_sector_number)
             < two_sector_size)
             return false;
 
         memset(fat, 0, two_sector_size);
         U32 fat_backup_sector_number = fat_sector_number + _fat_engine->fat_get_size(bpb);
-        if (_ahci_driver->read(storage_dev, fat, two_sector_size, fat_backup_sector_number)
+        if (mass_storage_device_read(mass_storage_dev_handle,
+                                     fat,
+                                     two_sector_size,
+                                     fat_backup_sector_number)
             < two_sector_size)
             return false;
 
         _fat_engine->fat_set_entry(fat, byte_offset % bpb->bytes_per_sector, fat_value);
-        return _ahci_driver->write(storage_dev, fat, two_sector_size, fat_backup_sector_number)
+        return mass_storage_device_write(mass_storage_dev_handle,
+                                         fat,
+                                         two_sector_size,
+                                         fat_backup_sector_number)
                == two_sector_size;
     }
 
-    auto VolumeManager::fat_find_next_free_cluster(U16 storage_dev, BIOSParameterBlock* bpb)
-        -> U32 {
+    auto VolumeManager::fat_find_next_free_cluster(Device::DeviceHandle mass_storage_dev_handle,
+                                                   BIOSParameterBlock*  bpb) -> U32 {
         auto cluster_size = static_cast<size_t>(bpb->bytes_per_sector * bpb->sectors_per_cluster);
         for (U32 i = 0; i < _fat_engine->fat_get_size(bpb); i += 2) {
             U8 fat[2 * cluster_size]; // NOLINT
-            if (_ahci_driver->read(storage_dev,
-                                   fat,
-                                   2 * cluster_size,
-                                   bpb->reserved_sector_count + i)
+            if (mass_storage_device_read(mass_storage_dev_handle,
+                                         fat,
+                                         2 * cluster_size,
+                                         bpb->reserved_sector_count + i)
                 < 2 * cluster_size)
                 return 0;
 
@@ -102,28 +166,28 @@ namespace Rune::VFS {
         return _fat_engine->get_max_cluster_count();
     }
 
-    auto VolumeManager::data_cluster_read(U16                      storage_dev,
+    auto VolumeManager::data_cluster_read(Device::DeviceHandle     mass_storage_dev_handle,
                                           VFS::BIOSParameterBlock* bpb,
                                           void*                    buf,
                                           size_t                   cluster) const -> bool {
         U32 cluster_size = bpb->bytes_per_sector * bpb->sectors_per_cluster;
-        return _ahci_driver->read(
-                   storage_dev,
+        return mass_storage_device_read(
+                   mass_storage_dev_handle,
                    buf,
                    static_cast<size_t>(bpb->bytes_per_sector * bpb->sectors_per_cluster),
                    data_cluster_to_lba(bpb, cluster))
                == cluster_size;
     }
 
-    auto VolumeManager::data_cluster_write(U16                      storage_dev,
+    auto VolumeManager::data_cluster_write(Device::DeviceHandle     mass_storage_dev_handle,
                                            VFS::BIOSParameterBlock* bpb,
                                            void*                    buf,
                                            size_t                   cluster) -> bool {
         U32 cluster_size = bpb->bytes_per_sector * bpb->sectors_per_cluster;
-        return _ahci_driver->write(storage_dev,
-                                   buf,
-                                   cluster_size,
-                                   data_cluster_to_lba(bpb, cluster))
+        return mass_storage_device_write(mass_storage_dev_handle,
+                                         buf,
+                                         cluster_size,
+                                         data_cluster_to_lba(bpb, cluster))
                == cluster_size;
     }
 

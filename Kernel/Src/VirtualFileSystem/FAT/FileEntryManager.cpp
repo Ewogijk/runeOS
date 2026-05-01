@@ -16,6 +16,8 @@
 
 #include <VirtualFileSystem/FAT/FileEntryManager.h>
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::VFS {
     DEFINE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0)
 

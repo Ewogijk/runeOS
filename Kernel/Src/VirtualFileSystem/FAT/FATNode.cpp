@@ -16,6 +16,7 @@
 
 #include <VirtualFileSystem/FAT/FATNode.h>
 
+#include <KRE/BitsAndBytes.h>
 #include <KRE/Math.h>
 
 #include <VirtualFileSystem/FAT/FATDirectoryIterator.h>
@@ -28,16 +29,16 @@ namespace Rune::VFS {
         U32 cluster = last_file_cluster;
         while (cluster != 0 && cluster < _volume_manager->get_max_cluster_count() + 1) {
             last_file_cluster = cluster;
-            cluster           = _volume_manager->fat_read(_mounted_storage->storage_dev,
-                                                _mounted_storage->BPB,
+            cluster           = _volume_manager->fat_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                _mounted_storage->m_BPB,
                                                 cluster);
             i++;
         }
 
         // Move the cluster cursor
         if (_node_io_mode == Ember::IOMode::APPEND) {
-            U32 cluster_size = _mounted_storage->BPB->bytes_per_sector
-                               * _mounted_storage->BPB->sectors_per_cluster;
+            U32 cluster_size = _mounted_storage->m_BPB->bytes_per_sector
+                               * _mounted_storage->m_BPB->sectors_per_cluster;
             _processed_clusters = i;
             if (_file_entry.file.file_size % cluster_size != 0) _processed_clusters--;
             _current_cluster = last_file_cluster;
@@ -51,8 +52,8 @@ namespace Rune::VFS {
     }
 
     auto FATNode::processed_bytes() const -> U32 {
-        return (_processed_clusters * _mounted_storage->BPB->bytes_per_sector
-                * _mounted_storage->BPB->sectors_per_cluster)
+        return (_processed_clusters * _mounted_storage->m_BPB->bytes_per_sector
+                * _mounted_storage->m_BPB->sectors_per_cluster)
                + _cluster_offset;
     }
 
@@ -62,7 +63,7 @@ namespace Rune::VFS {
                      LocationAwareFileEntry       file_entry,
                      VolumeManager*               volume_manager,
                      FileEntryManager*            file_entry_manager,
-                     SharedPointer<StorageDevRef> mounted_storage)
+                     SharedPointer<MassStorageDevRef> mounted_storage)
         : Node(move(on_close)),
           _path(move(path)),
           _node_io_mode(node_io_mode),
@@ -98,13 +99,13 @@ namespace Rune::VFS {
 
         if (buf_size == 0) return {.status = NodeIOStatus::OKAY, .byte_count = 0};
 
-        auto   cluster_size = static_cast<size_t>(_mounted_storage->BPB->bytes_per_sector
-                                                * _mounted_storage->BPB->sectors_per_cluster);
+        auto   cluster_size = static_cast<size_t>(_mounted_storage->m_BPB->bytes_per_sector
+                                                * _mounted_storage->m_BPB->sectors_per_cluster);
         U8     tmp_buf[cluster_size]; // NOLINT
         size_t buf_pos = 0;
         while (has_more() && buf_pos < buf_size) {
-            if (!_volume_manager->data_cluster_read(_mounted_storage->storage_dev,
-                                                    _mounted_storage->BPB,
+            if (!_volume_manager->data_cluster_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                    _mounted_storage->m_BPB,
                                                     tmp_buf,
                                                     _current_cluster))
                 return {.status = NodeIOStatus::DEV_ERROR, .byte_count = buf_pos};
@@ -119,8 +120,8 @@ namespace Rune::VFS {
             buf_pos         += b_to_copy;
 
             if (_cluster_offset >= cluster_size) {
-                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->storage_dev,
-                                                             _mounted_storage->BPB,
+                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                             _mounted_storage->m_BPB,
                                                              _current_cluster);
                 if (next_cluster >= _volume_manager->get_max_cluster_count() + 1) break;
                 _processed_clusters++;
@@ -144,8 +145,8 @@ namespace Rune::VFS {
 
         if (buf_size == 0) return {.status = NodeIOStatus::OKAY, .byte_count = 0};
 
-        auto   cluster_size   = static_cast<size_t>(_mounted_storage->BPB->bytes_per_sector
-                                                * _mounted_storage->BPB->sectors_per_cluster);
+        auto   cluster_size   = static_cast<size_t>(_mounted_storage->m_BPB->bytes_per_sector
+                                                * _mounted_storage->m_BPB->sectors_per_cluster);
         size_t buf_pos        = 0;
         bool   is_first_write = _processed_clusters == 0 && _cluster_offset == 0;
         while (buf_pos < buf_size) {
@@ -154,8 +155,8 @@ namespace Rune::VFS {
                        >= div_round_up(_file_entry.file.file_size, (U32) cluster_size)) {
                 // End of file reached -> Allocate new cluster
                 _current_cluster =
-                    _file_entry_manager->allocate_cluster(_mounted_storage->storage_dev,
-                                                          _mounted_storage->BPB,
+                    _file_entry_manager->allocate_cluster(_mounted_storage->m_mass_storage_dev_handle,
+                                                          _mounted_storage->m_BPB,
                                                           _file_entry,
                                                           _current_cluster);
                 if (_current_cluster == 0)
@@ -164,8 +165,8 @@ namespace Rune::VFS {
 
             // Read current cluster
             U8 w_buf[cluster_size]; // NOLINT
-            if (!_volume_manager->data_cluster_read(_mounted_storage->storage_dev,
-                                                    _mounted_storage->BPB,
+            if (!_volume_manager->data_cluster_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                    _mounted_storage->m_BPB,
                                                     w_buf,
                                                     _current_cluster))
                 return {.status = NodeIOStatus::DEV_ERROR, .byte_count = buf_pos};
@@ -178,8 +179,8 @@ namespace Rune::VFS {
                 memset(&w_buf[b_to_copy], 0, cluster_size - b_to_copy);
 
             // Write updated cluster to volume
-            if (!_volume_manager->data_cluster_write(_mounted_storage->storage_dev,
-                                                     _mounted_storage->BPB,
+            if (!_volume_manager->data_cluster_write(_mounted_storage->m_mass_storage_dev_handle,
+                                                     _mounted_storage->m_BPB,
                                                      w_buf,
                                                      _current_cluster))
                 return {.status = NodeIOStatus::DEV_ERROR, .byte_count = 0};
@@ -191,8 +192,8 @@ namespace Rune::VFS {
                 _processed_clusters++;
                 _cluster_offset = 0;
 
-                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->storage_dev,
-                                                             _mounted_storage->BPB,
+                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                             _mounted_storage->m_BPB,
                                                              _current_cluster);
                 if (next_cluster < _volume_manager->get_max_cluster_count() + 1)
                     _current_cluster = next_cluster;
@@ -213,14 +214,14 @@ namespace Rune::VFS {
             U32 eof_cluster = 0;
             U32 i           = 0;
             while (cluster != 0 && cluster < _volume_manager->get_max_cluster_count() + 1) {
-                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->storage_dev,
-                                                             _mounted_storage->BPB,
+                U32 next_cluster = _volume_manager->fat_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                             _mounted_storage->m_BPB,
                                                              cluster);
                 if (i == total_clusters - 1)
                     eof_cluster = cluster;
                 else if (i > total_clusters - 1)
-                    _volume_manager->fat_write(_mounted_storage->storage_dev,
-                                               _mounted_storage->BPB,
+                    _volume_manager->fat_write(_mounted_storage->m_mass_storage_dev_handle,
+                                               _mounted_storage->m_BPB,
                                                cluster,
                                                0);
                 cluster = next_cluster;
@@ -228,15 +229,15 @@ namespace Rune::VFS {
             }
 
             if (eof_cluster > 0)
-                _volume_manager->fat_write(_mounted_storage->storage_dev,
-                                           _mounted_storage->BPB,
+                _volume_manager->fat_write(_mounted_storage->m_mass_storage_dev_handle,
+                                           _mounted_storage->m_BPB,
                                            eof_cluster,
                                            _volume_manager->fat_get_eof_marker());
         }
 
         // Update the file entry on the volume
-        if (!_file_entry_manager->update(_mounted_storage->storage_dev,
-                                         _mounted_storage->BPB,
+        if (!_file_entry_manager->update(_mounted_storage->m_mass_storage_dev_handle,
+                                         _mounted_storage->m_BPB,
                                          _file_entry))
             return {.status = NodeIOStatus::DEV_ERROR, .byte_count = 0};
         return {.status = NodeIOStatus::OKAY, .byte_count = buf_pos};
@@ -247,8 +248,8 @@ namespace Rune::VFS {
         if (!has_attribute(Ember::NodeAttribute::FILE))
             return {.status = NodeIOStatus::NOT_SUPPORTED, .byte_count = 0};
 
-        const auto   cluster_size = static_cast<size_t>(_mounted_storage->BPB->sectors_per_cluster
-                                                      * _mounted_storage->BPB->bytes_per_sector);
+        const auto   cluster_size = static_cast<size_t>(_mounted_storage->m_BPB->sectors_per_cluster
+                                                      * _mounted_storage->m_BPB->bytes_per_sector);
         const size_t file_cursor  = (_processed_clusters * cluster_size) + _cluster_offset;
         bool         bad_offset   = false;
         switch (seek_mode) {
@@ -291,8 +292,8 @@ namespace Rune::VFS {
                 _cluster_offset = to_seek;
                 to_seek         = 0;
             } else {
-                cluster = _volume_manager->fat_read(_mounted_storage->storage_dev,
-                                                    _mounted_storage->BPB,
+                cluster = _volume_manager->fat_read(_mounted_storage->m_mass_storage_dev_handle,
+                                                    _mounted_storage->m_BPB,
                                                     cluster);
                 if (cluster == 0 && cluster >= _volume_manager->get_max_cluster_count() + 1)
                     return {.status = NodeIOStatus::DEV_ERROR, .byte_count = offset - to_seek};
@@ -328,8 +329,8 @@ namespace Rune::VFS {
             _file_entry.file.attributes |= n_attr;
         else
             _file_entry.file.attributes &= ~n_attr;
-        return _file_entry_manager->update(_mounted_storage->storage_dev,
-                                           _mounted_storage->BPB,
+        return _file_entry_manager->update(_mounted_storage->m_mass_storage_dev_handle,
+                                           _mounted_storage->m_BPB,
                                            _file_entry);
     }
 } // namespace Rune::VFS

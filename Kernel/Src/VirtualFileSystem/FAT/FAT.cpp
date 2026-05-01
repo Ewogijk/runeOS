@@ -144,11 +144,12 @@ namespace Rune::VFS {
     //                                    Mounted Storage Ref Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    StorageDevRef::StorageDevRef(U16 storage_dev, BIOSParameterBlock* bpb)
-        : storage_dev(storage_dev),
-          BPB(bpb) {}
+    MassStorageDevRef::MassStorageDevRef(Device::DeviceHandle mass_storage_dev_handle,
+                                         BIOSParameterBlock*  bpb)
+        : m_mass_storage_dev_handle(mass_storage_dev_handle),
+          m_BPB(bpb) {}
 
-    StorageDevRef::~StorageDevRef() { delete BPB; }
+    MassStorageDevRef::~MassStorageDevRef() { delete m_BPB; }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                     Long File Name Entry Functions

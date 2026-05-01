@@ -48,7 +48,7 @@ namespace Rune::VFS {
         /**
          * Search for the file entry at the given path.
          *
-         * @param storage_dev
+         * @param mass_storage_dev_handle
          * @param bpb
          * @param path      Path to a file entry.
          * @param out       If the VolumeAccessStatus is Okay, the file entry will be placed in this
@@ -56,7 +56,7 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        auto search(U16                     storage_dev,
+        auto search(Device::DeviceHandle    mass_storage_dev_handle,
                     BIOSParameterBlock*     bpb,
                     const Path&             path,
                     LocationAwareFileEntry& out) const -> VolumeAccessStatus;
@@ -71,7 +71,7 @@ namespace Rune::VFS {
          * clusters will be allocated until the requirement is satisfied.
          * </p>
          *
-         * @param storage_dev
+         * @param mass_storage_dev_handle
          * @param bpb
          * @param path      Path to a directory file entry.
          * @param rangeSize Size of the range.
@@ -80,7 +80,7 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        auto find_empty_file_entries(U16                                 storage_dev,
+        auto find_empty_file_entries(Device::DeviceHandle                mass_storage_dev_handle,
                                      BIOSParameterBlock*                 bpb,
                                      const Path&                         path,
                                      U16                                 range,
@@ -90,27 +90,28 @@ namespace Rune::VFS {
          * Get the file entry from the storage device that the given entry points to and update it
          * with the content of given entry.
          *
-         * @param storage_dev
+         * @param mass_storage_dev_handle
          * @param bpb
          * @param entry     An file entry with the same path as this one will be searched and
          * updated to exactly match this entry.
          *
          * @return True: The file entry is updated. False: It is not.
          */
-        auto update(U16 storage_dev, BIOSParameterBlock* bpb, const LocationAwareFileEntry& entry)
-            -> bool;
+        auto update(Device::DeviceHandle          mass_storage_dev_handle,
+                    BIOSParameterBlock*           bpb,
+                    const LocationAwareFileEntry& entry) -> bool;
 
         /**
          * allocate a new cluster for the given file.
          *
-         * @param storage_dev
+         * @param mass_storage_dev_handle
          * @param bpb
          * @param file
          * @param last_file_cluster Currently last cluster of the file. Is zero for empty files.
          *
          * @return Index of the allocated cluster. 0 if no free cluster was found.
          */
-        auto allocate_cluster(U16                     storage_dev,
+        auto allocate_cluster(Device::DeviceHandle    mass_storage_dev_handle,
                               BIOSParameterBlock*     bpb,
                               LocationAwareFileEntry& file,
                               U32                     last_file_cluster) -> U32;
