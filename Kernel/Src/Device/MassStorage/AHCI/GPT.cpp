@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <Device/AHCI/GPT.h>
+#include <Device/MassStorage/AHCI/GPT.h>
 
 #include <KRE/BitsAndBytes.h>
 #include <KRE/Utility.h>
@@ -85,7 +85,9 @@ namespace Rune::Device {
 
     DEFINE_ENUM(GPTScanStatus, GPT_SCAN_STATUSES, 0x0)
 
-    auto GPTPartitionTableEntry::get_name() -> String {
+    auto decode_gpt_string(Array<U16, GPTPartitionTableEntry::PARTITION_NAME_SIZE> name_buf)
+        -> String {
+        // name_buf is UTF-16LE encoded
         Array<U8, GPTPartitionTableEntry::PARTITION_NAME_SIZE> buf{};
         for (U8 i = 0; i < GPTPartitionTableEntry::PARTITION_NAME_SIZE; i++) {
             buf[i] = name_buf[i] & MASK_BYTE;
@@ -204,7 +206,7 @@ namespace Rune::Device {
         LinkedList<GPTPartitionTableEntry> p_e_table;
         U32                                p_e_buf_idx = 0;
         while (p_e_buf_idx < header.number_of_partition_entries) {
-            size_t byte_offset = p_e_buf_idx * sizeof(GPTPartitionTableEntry);
+            size_t byte_offset = p_e_buf_idx * header.size_of_partition_entry;
             if (memcmp(zeroes.data(), &partition_table_buf[byte_offset], GUID::SIZE) == 0) {
                 // Unused entry
                 p_e_buf_idx++;
@@ -232,9 +234,11 @@ namespace Rune::Device {
             pt_e.attributes  = LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
 
             pte_offset += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
-            memcpy(pt_e.name_buf.data(),
+            Array<U16, GPTPartitionTableEntry::PARTITION_NAME_SIZE> name_buf;
+            memcpy(name_buf.data(),
                    &partition_table_buf[byte_offset + pte_offset],
                    static_cast<size_t>(GPTPartitionTableEntry::PARTITION_NAME_SIZE) * 2);
+            pt_e.name = decode_gpt_string(name_buf);
 
             p_e_table.add_back(pt_e);
             p_e_buf_idx++;
