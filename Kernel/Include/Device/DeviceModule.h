@@ -107,23 +107,51 @@ namespace Rune::Device {
         auto load(const BootInfo& boot_info) -> bool override;
 
         // ====================================================================================== //
-        // Device Module API
+        // Device API
         // ====================================================================================== //
-
-        auto get_ahci_driver() -> AHCIDriver*;
 
         auto get_keyboard() -> VirtualKeyboard*;
 
-        // auto get_device_driver_handle_counter() -> HandleCounter<DriverHandle>&;
-        // auto register_device_driver(const SharedPointer<Driver>& driver) -> bool;
-
+        /// @brief Get all devices that have the given device_type casted to DeviceInterface*.
+        /// @tparam DeviceInterface Type to which all device pointers will be cast.
+        /// @param device_type Type of the devices that will be returned.
+        /// @return A list of pointers to devices casted to DeviceInterface.
         template <class DeviceInterface>
         auto get_devices(DeviceType device_type) -> LinkedList<DeviceInterface*> {
-            LinkedList<Device*> devices;
+            LinkedList<DeviceInterface*> devices;
             for (auto& device : m_device_registry_by_type[device_type])
                 devices.add_back(static_cast<DeviceInterface*>(device.get()));
             return devices;
         }
+
+        /// @brief Get the device with dev_handle, ensure it has the requested device type.
+        /// @tparam DeviceInterface Type to which the device will be cast.
+        /// @param device_type Type of the desired device.
+        /// @param dev_handle Handle of the desired device.
+        /// @return The requested device cast to DeviceInterface. Nullptr if no device with the
+        ///         handle was found or the device type does not match with device_type.
+        template <class DeviceInterface>
+        auto get_device(DeviceType device_type, DeviceHandle dev_handle) -> DeviceInterface* {
+            auto maybe_device = m_device_registry.find(dev_handle);
+            if (maybe_device == m_device_registry.end()) return nullptr;
+
+            auto device = *maybe_device->value;
+            if (device->get_device_type() != device_type) return nullptr;
+
+            return static_cast<DeviceInterface*>(device.get());
+        }
+
+        /// @brief Try to find the device with dev_handle and forward the io_request to its device
+        ///         driver.
+        /// @param dev_handle Handle of the device that should handle the IO request.
+        /// @param io_request IO request.
+        /// @return On successfully forwarded IO request: The status returned by the driver.
+        ///         Otherwise:<br>
+        ///         UNKNOWN_DEVICE: No device with dev_handle exists.
+        ///         DEVICE_NOT_OPERATIONAL: The device is not operated by a driver.
+        ///         UNKNOWN_DRIVER: The driver of the device does not exist.
+        auto control_device(DeviceHandle dev_handle, const IORequest& io_request)
+            -> IORequestStatus;
     };
 } // namespace Rune::Device
 

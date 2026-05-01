@@ -128,7 +128,7 @@ namespace Rune::Device {
 
     auto PS2Keyboard::get_target_device_ID() const -> const DeviceID* { return &ID_PS2_KEYBOARD; }
 
-    auto PS2Keyboard::start(void* ctx) -> bool {
+    auto PS2Keyboard::start(DeviceHandle dev_handle, void* ctx) -> bool {
         SILENCE_UNUSED(ctx)
         init_scan_set_one();
 
@@ -149,16 +149,19 @@ namespace Rune::Device {
             }
             return CPU::IRQState::HANDLED;
         };
-
+        add_operated_device(dev_handle);
         return CPU::irq_install_handler(1, get_handle(), get_name(), _irq_handler);
     }
 
-    auto PS2Keyboard::stop() -> bool { return CPU::irq_uninstall_handler(1, get_handle()); }
+    auto PS2Keyboard::stop(DeviceHandle dev_handle) -> bool {
+        return CPU::irq_uninstall_handler(1, get_handle());
+    }
 
-    auto PS2Keyboard::handle_request(IORequest request) -> IOResponse {
+    auto PS2Keyboard::handle_request(DeviceHandle dev_handle, IORequest request)
+        -> IORequestStatus {
+        SILENCE_UNUSED(dev_handle)
         SILENCE_UNUSED(request)
-        // Requests are not supported
-        return IOResponse{.m_status = IORequestStatus::FAILED, .m_data = nullptr};
+        return IORequestStatus::UNSUPPORTED;
     }
 
     void PS2Keyboard::discover_devices(DeviceHandle                 bus_device,

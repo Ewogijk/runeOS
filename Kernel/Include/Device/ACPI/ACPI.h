@@ -40,8 +40,8 @@ namespace Rune::Device {
     class ACPIDriver : public Driver {
         bool _acpi_initialized = false;
 
-        void handle_get_acpi_info_request(IOResponse& response);
-        void handle_shutdown_request(IOResponse& response);
+        auto handle_get_acpi_info_request(IORequest& request) -> IORequestStatus;
+        auto handle_shutdown_request(IORequest& request) -> IORequestStatus;
 
       public:
         const static BasicDeviceID ID_ACPI;
@@ -49,12 +49,12 @@ namespace Rune::Device {
         ACPIDriver(DriverHandle handle);
 
         [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
-        auto               start(void* context) -> bool override;
-        auto               stop() -> bool override;
-        auto               handle_request(IORequest request) -> IOResponse override;
-        void               discover_devices(DeviceHandle                 bus_device,
-                                            const DeviceMapper&          device_mapper,
-                                            HandleCounter<DeviceHandle>& dev_handle_counter) override;
+        auto               start(DeviceHandle dev_handle, void* context) -> bool override;
+        auto               stop(DeviceHandle dev_handle) -> bool override;
+        auto handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus override;
+        void discover_devices(DeviceHandle                 bus_device,
+                              const DeviceMapper&          device_mapper,
+                              HandleCounter<DeviceHandle>& dev_handle_counter) override;
     };
 } // namespace Rune::Device
 

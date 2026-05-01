@@ -91,7 +91,7 @@ namespace Rune::Device {
     /// - MASS_STORAGE_DEVICE: A device that stores large amounts of data, e.g., HDD, SSD, USB, etc.
     ///     - Interface: TBD
     /// - KEYBOARD: A computer keyboard.
-    ///     - Interface: VirtualKeyboard - Device/Keyboard/Keyboard.h
+    ///     - Interface: BasicDevice
     /// - GENERIC: A generic device, the catch-all category of devices.
     ///     - Interface: Device
     DECLARE_ENUM(DeviceType, DEVICE_TYPES, 0x0) // NOLINT
@@ -190,34 +190,37 @@ namespace Rune::Device {
     // Driver
     // ========================================================================================== //
 
-    /// @brief An IO request is a driver-specific context that contains information about an action
-    ///         a driver should perform.
-    using IORequest = void*;
+    /// @brief An IO request contains the driver-specific in and out buffers.
+    ///
+    /// - In Buffer: Contains information about an action a driver should perform.
+    /// - Out Buffer: If the requested action was performed successfully, the out buffer contains
+    ///                 the driver response, otherwise the buffer content is undefined.
+    struct IORequest {
+        void* m_in_buffer;
+        void* m_out_buffer;
+    };
 
 #define IO_REQUEST_STATES(X)                                                                       \
-    X(IORequestStatus, NO_DEVICE, 0x1)                                                             \
-    X(IORequestStatus, BAD_ARGUMENT, 0x2)                                                          \
-    X(IORequestStatus, FAILED, 0x3)                                                                \
-    X(IORequestStatus, HANDLED, 0x4)
+    X(IORequestStatus, UNSUPPORTED, 0x1)                                                           \
+    X(IORequestStatus, UNKNOWN_DEVICE, 0x2)                                                        \
+    X(IORequestStatus, DEVICE_NOT_OPERATIONAL, 0x3)                                                \
+    X(IORequestStatus, UNKNOWN_DRIVER, 0x4)                                                        \
+    X(IORequestStatus, BAD_ARGUMENT, 0x4)                                                          \
+    X(IORequestStatus, FAILED, 0x5)                                                                \
+    X(IORequestStatus, HANDLED, 0x6)
 
     /// @brief An IO Request status encodes the status of a request after the action was performed
     ///         by a driver.
     ///
-    /// - NO_DEVICE: The request could not be handled because the driver is not mapped to a device.
-    /// - BAD_ARGUMENT: The IO request contains an invalid argument.
-    /// - FAILED: The IO request could not be handled due to an error.
+    /// - UNSUPPORTED: IO requests are not supported.
+    /// - UNKNOWN_DEVICE: The requested device does not exist.
+    /// - DEVICE_NOT_OPERATIONAL: The IO request could not be handled because the device is not
+    ///                             operated by a driver.
+    /// - UNKNOWN_DRIVER: The required device driver does not exist.
+    /// - BAD_ARGUMENT: The IO request In buffer contains invalid arguments.
+    /// - FAILED: An error occurred handling the IO request.
     /// - HANDLED: The IO request was handled and the response contains valid data.
     DECLARE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0) // NOLINT
-
-    /// @brief An IO response is associated with an IO request and consists of the status of the
-    ///         request and driver-specific data containing a return value.
-    ///
-    /// If the response has the status IORequestStatus::HANDLED, it must contain valid data as
-    /// specified by the driver.
-    struct IOResponse {
-        IORequestStatus m_status = IORequestStatus::NONE;
-        void*           m_data   = nullptr;
-    };
 
     /// @brief A function that maps a device to a device driver.
     ///
@@ -233,6 +236,13 @@ namespace Rune::Device {
     class Driver : public Resource<DriverHandle> {
         LinkedList<DeviceHandle> m_operated_devices;
 
+      protected:
+        /// @brief
+        /// @param device_handle Handle of the device to operate.
+        void add_operated_device(DeviceHandle device_handle) {
+            m_operated_devices.add_back(device_handle);
+        }
+
       public:
         Driver(DriverHandle handle, const String& name);
         virtual ~Driver() = default;
@@ -244,12 +254,6 @@ namespace Rune::Device {
         }
 
         /// @brief
-        /// @param device_handle Handle of the device to operate.
-        void add_operated_device(DeviceHandle device_handle) {
-            m_operated_devices.add_back(device_handle);
-        }
-
-        /// @brief
         /// @return DeviceID of the device this driver intends to operate.
         /// The device driver always owns the pointer and must guarantue a valid pointer is
         /// returned at all times.
@@ -257,25 +261,28 @@ namespace Rune::Device {
 
         /// @brief Initialize the device to a working state so that it is able to handle IO
         ///         requests.
-        /// @param context A device driver specific context required to start it.
+        /// @param dev_handle Handle of the device to initialize.
+        /// @param context A device driver specific context required to initialize the device.
         /// @return True: Device initialization was successful, False: Otherwise.
         ///
-        /// The calling function has to guarantue that lifetime of context outlives the call to
-        /// start, otherwise the behavior is not defined.
-        virtual auto start(void* context) -> bool = 0;
+        /// The caller has to guarantue that lifetime of context outlives the call to start,
+        /// otherwise the behavior is not defined.
+        virtual auto start(DeviceHandle dev_handle, void* context) -> bool = 0;
 
         /// @brief Finish any ongoing IO requests, flush data to the device, if any, and shutdown
-        /// the
-        ///         device.
+        ///         the device.
+        /// @param dev_handle Handle of the device to stop.
         /// @return True: Device shutdown was successful, False: Otherwise.
         ///
         /// The device will not be able to handle IO requests anymore after it has been shutdown.
-        virtual auto stop() -> bool = 0;
+        virtual auto stop(DeviceHandle dev_handle) -> bool = 0;
 
-        /// @brief Perform a device driver-specific action as requested.
+        /// @brief Perform a device driver-specific action on the device with the given handle.
+        /// @param dev_handle Handle of the device that should perform an action.
         /// @param request An IO request.
         /// @return IO response containing the result of the action.
-        virtual auto handle_request(IORequest request) -> IOResponse = 0;
+        virtual auto handle_request(DeviceHandle dev_handle, IORequest request)
+            -> IORequestStatus = 0;
 
         /// @brief Scan the bus for devices.
         /// @return A list of devices connected to the bus.
@@ -290,7 +297,9 @@ namespace Rune::Device {
 namespace Rune {
     template <>
     struct Hash<Device::DeviceType> {
-        auto operator()(const Device::DeviceType& key) const -> size_t { return FNV::do_hash(key.to_value()); }
+        auto operator()(const Device::DeviceType& key) const -> size_t {
+            return FNV::do_hash(key.to_value());
+        }
     };
 } // namespace Rune
 

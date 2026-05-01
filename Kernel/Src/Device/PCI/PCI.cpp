@@ -16,6 +16,11 @@
 
 #include <Device/PCI/PCI.h>
 
+#include <KRE/BitsAndBytes.h>
+#include <KRE/Logging.h>
+
+#include <CPU/IO.h>
+
 #include <Device/PCI/ClassCode.h>
 #include <Device/PCI/VendorDB.h>
 
@@ -366,16 +371,19 @@ namespace Rune::Device {
 
     auto PCIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_PCI; }
 
-    auto PCIDriver::start(void* context) -> bool {
+    auto PCIDriver::start(DeviceHandle dev_handle, void* context) -> bool {
         SILENCE_UNUSED(context)
         pci_vendor_db_initialize();
+        add_operated_device(dev_handle);
         return true;
     }
 
-    auto PCIDriver::stop() -> bool { return false; }
+    auto PCIDriver::stop(DeviceHandle dev_handle) -> bool { return false; }
 
-    auto PCIDriver::handle_request(IORequest request) -> IOResponse {
-        return {IORequestStatus::FAILED, nullptr};
+    auto PCIDriver::handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus {
+        SILENCE_UNUSED(dev_handle)
+        SILENCE_UNUSED(request)
+        return IORequestStatus::UNSUPPORTED;
     }
 
     void PCIDriver::discover_devices(DeviceHandle                 bus_device,
