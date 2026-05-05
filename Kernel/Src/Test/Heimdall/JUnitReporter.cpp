@@ -33,16 +33,16 @@ namespace Heimdall {
         for (size_t i = 0; i < _test_suites.size(); i++) {
             JUnitTestSuite test_suite = _test_suites[i];
             xml = xml + HString("  <testsuite name=\"") + test_suite.name + "\" tests=\""
-                  + HString::number_to_string(test_suite.tests) + "\" failures=\""
-                  + HString::number_to_string(test_suite.failures)
+                  + HString::to_string(test_suite.tests) + "\" failures=\""
+                  + HString::to_string(test_suite.failures)
                   + R"(" errors="0" skipped="0" assertions=")"
-                  + HString::number_to_string(test_suite.assertions) + "\" time=\"0\">\n";
+                  + HString::to_string(test_suite.assertions) + "\" time=\"0\">\n";
 
             for (size_t j = 0; j < test_suite.test_list.size(); j++) {
                 JUnitTest test = test_suite.test_list[j];
                 xml            = xml + "    <testcase name=\"" + test.name + "\" assertions=\""
-                      + HString::number_to_string(test.assertions) + R"(" time="0" file=")"
-                      + test.file + "\" line=\"" + HString::number_to_string(test.line) + "\"";
+                      + HString::to_string(test.assertions) + R"(" time="0" file=")"
+                      + test.file + "\" line=\"" + HString::to_string(test.line) + "\"";
 
                 if (!test.passed) {
                     xml = xml + ">\n      <failure message=\"" + test.message
@@ -95,7 +95,7 @@ namespace Heimdall {
             _c_test_suite.failures++;
             _c_test.message = HString("Failed: ") + assertion_stats.expanded_assert + " with "
                               + assertion_stats.assert + " at " + assertion_stats.scl.file + ":"
-                              + HString::number_to_string(assertion_stats.scl.line);
+                              + HString::to_string(assertion_stats.scl.line);
         }
         _c_test.passed = assertion_stats.result;
     }

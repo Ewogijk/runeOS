@@ -59,10 +59,18 @@ namespace Heimdall {
         using Rune::swap;
         swap(fst._str_detail->str, sec._str_detail->str);
     }
+    //
+    // auto HString::number_to_string(size_t count) -> HString {
+    //     Rune::String num_str = Rune::String::format("{}", count);
+    //     return {num_str.to_cstr()};
+    // }
 
-    auto HString::number_to_string(size_t count) -> HString {
-        Rune::String num_str = Rune::String::format("{}", count);
-        return {num_str.to_cstr()};
+    auto HString::to_string(size_t count) -> HString {
+        return {Rune::String::format("{}", count).to_cstr()};
+    }
+
+    auto HString::to_string(void* ptr) -> HString {
+        return {Rune::String::format("{:#x}", ptr).to_cstr()};
     }
 
     auto HString::size() const -> size_t { return _str_detail->str.size(); }

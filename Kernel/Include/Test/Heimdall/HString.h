@@ -43,7 +43,10 @@ namespace Heimdall {
 
         friend void swap(HString& fst, HString& sec) noexcept;
 
-        static auto number_to_string(size_t count) -> HString;
+        // static auto number_to_string(size_t count) -> HString;
+
+        static auto to_string(size_t count) -> HString;
+        static auto to_string(void* ptr) -> HString;
 
         [[nodiscard]] auto size() const -> size_t;
         [[nodiscard]] auto is_empty() const -> bool;

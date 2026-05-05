@@ -62,9 +62,14 @@ namespace Heimdall {
         swap(fst._str_detail->str, sec._str_detail->str);
     }
 
-    auto HString::number_to_string(size_t count) -> HString {
-        std::string num_str = std::to_string(count);
-        return {num_str.c_str()};
+    // auto HString::number_to_string(size_t count) -> HString {
+    //     return {std::to_string(count).c_str()};
+    // }
+
+    auto HString::to_string(size_t count) -> HString { return {std::to_string(count).c_str()}; }
+
+    auto HString::to_string(void* ptr) -> HString {
+        return {std::format("0x{:x}", (size_t) ptr).c_str()};
     }
 
     auto HString::size() const -> size_t { return _str_detail->str.size(); }
