@@ -68,7 +68,7 @@ namespace Heimdall {
         auto get_result() -> bool { return _result; }
 
         auto get_expanded_expr() -> HString {
-            return HString::number_to_string(_lhs) + _op + HString::number_to_string(_rhs);
+            return HString::to_string(_lhs) + _op + HString::to_string(_rhs);
         }
 
         auto get_lhs() -> LHS { return _lhs; }
@@ -94,7 +94,7 @@ namespace Heimdall {
 
         auto get_result() -> bool { return static_cast<bool>(_value); }
 
-        auto get_expanded_expr() -> HString { return HString::number_to_string(_value); }
+        auto get_expanded_expr() -> HString { return HString::to_string(_value); }
 
         auto get_value() -> LHS_OR_Value { return _value; }
 

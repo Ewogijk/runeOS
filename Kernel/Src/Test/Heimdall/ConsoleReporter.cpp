@@ -49,10 +49,9 @@ namespace Heimdall {
 
     void ConsoleReporter::on_test_run_begin(const TestRunInfo& test_run_info) {
 
-        hre_log_console(HString("Heimdall v")
-                        + HString::number_to_string(test_run_info.heimdall_major) + "."
-                        + HString::number_to_string(test_run_info.heimdall_minor) + "."
-                        + HString::number_to_string(test_run_info.heimdall_patch) + "\n\n");
+        hre_log_console(HString("Heimdall v") + HString::to_string(test_run_info.heimdall_major)
+                        + "." + HString::to_string(test_run_info.heimdall_minor) + "."
+                        + HString::to_string(test_run_info.heimdall_patch) + "\n\n");
         hre_log_console(HString("Runtime Environment: ") + test_run_info.hre.to_c_str() + "\n");
 
         hre_log_console("Options: ");
@@ -78,16 +77,16 @@ namespace Heimdall {
         write_divider('=', "");
 
         write_tag("TOTAL",
-                  HString::number_to_string(test_run_stats.total_tests)
+                  HString::to_string(test_run_stats.total_tests)
                       + (test_run_stats.total_tests > 1 ? " Tests" : " Test"),
                   true);
         write_tag("PASS",
-                  HString::number_to_string(test_run_stats.passed_tests)
+                  HString::to_string(test_run_stats.passed_tests)
                       + (test_run_stats.passed_tests > 1 ? " Tests" : " Test"),
                   GREEN,
                   true);
         write_tag("FAIL",
-                  HString::number_to_string(test_run_stats.failed_tests)
+                  HString::to_string(test_run_stats.failed_tests)
                       + (test_run_stats.failed_tests > 1 ? " Tests" : " Test"),
                   VSCODE_RED,
                   true);
@@ -95,8 +94,7 @@ namespace Heimdall {
 
     void ConsoleReporter::on_test_suite_begin(const TestSuiteInfo& test_suite_info) {
         write_divider('-',
-                      test_suite_info.name + " ("
-                          + HString::number_to_string(test_suite_info.total_tests)
+                      test_suite_info.name + " (" + HString::to_string(test_suite_info.total_tests)
                           + (test_suite_info.total_tests > 1 ? " Tests" : " Test") + ")");
     }
 
@@ -124,7 +122,7 @@ namespace Heimdall {
     void ConsoleReporter::on_assertion_end(const AssertionStats& assertion_stats) {
         if (!assertion_stats.result) {
             hre_log_console(HString("             FAIL at ") + assertion_stats.scl.file + ":"
-                                + HString::number_to_string(assertion_stats.scl.line) + "\n",
+                                + HString::to_string(assertion_stats.scl.line) + "\n",
                             VSCODE_RED);
             hre_log_console(HString("                       ") + assertion_stats.expanded_assert
                                 + "\n",

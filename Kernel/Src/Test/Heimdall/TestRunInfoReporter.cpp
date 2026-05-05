@@ -22,9 +22,9 @@ namespace Heimdall {
     void TestRunInfoReporter::on_test_run_begin(const TestRunInfo& test_run_info) {
         SILENCE_UNUSED(test_run_info);
         HString env_info = HString("Heimdall v")
-                           + HString::number_to_string(test_run_info.heimdall_major) + "."
-                           + HString::number_to_string(test_run_info.heimdall_minor) + "."
-                           + HString::number_to_string(test_run_info.heimdall_patch) + "\n\n";
+                           + HString::to_string(test_run_info.heimdall_major) + "."
+                           + HString::to_string(test_run_info.heimdall_minor) + "."
+                           + HString::to_string(test_run_info.heimdall_patch) + "\n\n";
         env_info =
             env_info + HString("Runtime Environment: ") + test_run_info.hre.to_c_str() + "\n";
 
