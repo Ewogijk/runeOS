@@ -76,7 +76,7 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
     qemu_options.append(QemuOption(["-device", "ide-hd,drive=boot,bus=ahci.0"]))
 
     # RAM -> 128 MiBi
-    qemu_options.append(QemuOption(["-m", "128M"]))
+    qemu_options.append(QemuOption(["-m", "256M"]))
 
     if len(log) > 0:
         # Log interrupts and triple faults
