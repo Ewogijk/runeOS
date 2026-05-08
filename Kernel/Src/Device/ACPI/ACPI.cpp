@@ -62,6 +62,15 @@ namespace Rune::Device {
         return IORequestStatus::HANDLED;
     }
 
+    auto handle_reboot_request(IORequest& request) -> IORequestStatus {
+        ACPI_STATUS status = AcpiReset();
+        if (ACPI_FAILURE(status)) {
+            LOGGER->error("AcpiReset() failed. Status={}", status);
+            return IORequestStatus::FAILED;
+        }
+        return IORequestStatus::HANDLED;
+    }
+
     const BasicDeviceID ACPIDriver::ID_ACPI("ACPI");
 
     auto ACPIDriver::vendor() const -> String { return "Ewogjik"; };
@@ -134,6 +143,7 @@ namespace Rune::Device {
         switch (*req) {
             case ACPIRequest::GET_ACPI_INFO: return handle_get_acpi_info_request(request);
             case ACPIRequest::SHUTDOWN:      return handle_shutdown_request(request);
+            case ACPIRequest::REBOOT:        return handle_reboot_request(request);
             default:                         return IORequestStatus::BAD_ARGUMENT;
         }
     }

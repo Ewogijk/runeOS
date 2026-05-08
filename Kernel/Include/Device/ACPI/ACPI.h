@@ -24,12 +24,14 @@ namespace Rune::Device {
 
 #define ACPI_REQUESTS(X)                                                                           \
     X(ACPIREQUEST, GET_ACPI_INFO, 0x1)                                                             \
-    X(ACPIREQUEST, SHUTDOWN, 0x2)
+    X(ACPIREQUEST, SHUTDOWN, 0x2)                                                                  \
+    X(ACPIREQUEST, REBOOT, 0x3)
 
-    /// @brief TODO write doc
+    /// @brief All supported ACPI requests.
     ///
-    /// - GET_ACPI_INFO: A_DESCRIPTION
-    /// - SHUTDOWN: A_DESCRIPTION
+    /// - GET_ACPI_INFO: Get the OEM and Revision of ACPI.
+    /// - SHUTDOWN: Shut the system down.
+    /// - REBOOT: Reboot the system.
     DECLARE_ENUM(ACPIRequest, ACPI_REQUESTS, 0x0) // NOLINT
 
     struct ACPIInfo {
@@ -48,9 +50,9 @@ namespace Rune::Device {
         [[nodiscard]] auto vendor() const -> String override;
         [[nodiscard]] auto version() const -> Version override;
         [[nodiscard]] auto target_device_ID() const -> const DeviceID* override;
-        auto accept_device(const SharedPointer<Device>& device) -> bool override;
-        void remove_device(const SharedPointer<Device>& device) override;
-        auto handle_request(const SharedPointer<Device>& device, IORequest request)
+        auto               accept_device(const SharedPointer<Device>& device) -> bool override;
+        void               remove_device(const SharedPointer<Device>& device) override;
+        auto               handle_request(const SharedPointer<Device>& device, IORequest request)
             -> IORequestStatus override;
     };
 } // namespace Rune::Device
