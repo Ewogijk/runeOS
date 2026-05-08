@@ -49,6 +49,8 @@
 #include <Test/UnitTest/Runner.h>
 #endif
 
+#include <Device/ACPI/ACPI.h>
+
 namespace Rune {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");
 
@@ -221,13 +223,37 @@ namespace Rune {
     auto System::get_boot_info() -> BootInfo& { return _boot_info; }
 
     void System::shutdown() { // NOLINT
-        // Workaround solution to shut down the system
-        //  -> Disable DIVISION_BY_ZERO and DOUBLE_FAULT interrupt vectors to force a triple fault
-        //     instead a kernel panic.
-        // TODO Remove the workaround and perform an orderly shutdown by firmware
-        CPU::exception_set_enabled(CPU::ExceptionType::DIVISION_BY_ZERO, false);
-        CPU::exception_set_enabled(CPU::ExceptionType::DOUBLE_FAULT, false);
-        int a = 1 / 0; // NOLINT
+        auto*               dm    = get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::ACPIRequest a_req = Device::ACPIRequest::SHUTDOWN;
+        Device::IORequest   req{.m_in_buffer = &a_req, .m_out_buffer = nullptr};
+        dm->control_device(dm->device_tree()->get_handle(), req);
+
+        panic("Power off failed. Will spin forever... (Power off manually).");
+    }
+
+    void System::reboot() {
+        LOGGER->info("Performing reboot. Try ACPI reset...");
+        auto*               dm    = get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::ACPIRequest a_req = Device::ACPIRequest::REBOOT;
+        Device::IORequest   req{.m_in_buffer = &a_req, .m_out_buffer = nullptr};
+        dm->control_device(dm->device_tree()->get_handle(), req);
+
+        LOGGER->info("Fallback to PS/2 Controller reset...");
+        constexpr U8 PS2_COMMAND_PORT  = 0x64;
+        constexpr U8 PS2_RESET_COMMAND = 0xFE;
+        U8           PS2_status        = 0x02; // Initially assume input buffer full
+        while (bit_check(PS2_status, 1)) PS2_status = CPU::in_b(PS2_COMMAND_PORT);
+        CPU::out_b(PS2_COMMAND_PORT, PS2_RESET_COMMAND);
+        CPU::halt();
+
+        LOGGER->info("Fallback to reset control register...");
+        constexpr U16 RESET_CONTROL_REGISTER = 0xCF9;
+        constexpr U8  SYSTEM_RESET           = 0x02;
+        constexpr U8  RESET_CPU              = 0x04;
+        // constexpr U8  FULL_RESET             = 0x08; // Power cycle when set
+        CPU::out_b(RESET_CONTROL_REGISTER, SYSTEM_RESET | RESET_CPU);
+
+        panic("All reboot options failed. Will spin forever... (Restart manually).");
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
