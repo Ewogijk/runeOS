@@ -30,7 +30,7 @@ namespace Rune::Device {
      */
     class VirtualKeyboard : public TextStream, public Driver {
       public:
-        VirtualKeyboard(DriverHandle handle, const String& name);
+        VirtualKeyboard() = default;
 
         // ====================================================================================== //
         // TextStream API
@@ -57,23 +57,6 @@ namespace Rune::Device {
         void close() override;
 
         auto is_ansi_supported() -> bool override;
-
-        // ====================================================================================== //
-        // Driver API
-        // ====================================================================================== //
-
-        [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override = 0;
-
-        auto start(DeviceHandle dev_handle, void* context) -> bool override = 0;
-
-        auto stop(DeviceHandle dev_handle) -> bool override = 0;
-
-        auto handle_request(DeviceHandle dev_handle, IORequest request)
-            -> IORequestStatus override = 0;
-
-        void discover_devices(DeviceHandle                 bus_device,
-                              const DeviceMapper&          device_mapper,
-                              HandleCounter<DeviceHandle>& dev_handle_counter) override = 0;
     };
 } // namespace Rune::Device
 

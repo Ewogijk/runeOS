@@ -33,7 +33,7 @@ namespace Rune::VFS {
                + ((cluster - 2) * bpb->sectors_per_cluster);
     }
 
-    auto VolumeManager::mass_storage_device_read(Device::DeviceHandle dev_handle,
+    auto VolumeManager::mass_storage_device_read(Device::Handle dev_handle,
                                                  void*                buf,
                                                  size_t               buf_size,
                                                  U32                  lba) const -> size_t {
@@ -53,7 +53,7 @@ namespace Rune::VFS {
                    : 0;
     }
 
-    auto VolumeManager::mass_storage_device_write(Device::DeviceHandle dev_handle,
+    auto VolumeManager::mass_storage_device_write(Device::Handle dev_handle,
                                                   void*                buf,
                                                   size_t               buf_size,
                                                   U32                  lba) const -> size_t {
@@ -84,7 +84,7 @@ namespace Rune::VFS {
         return _fat_engine->fat_get_eof_marker();
     }
 
-    auto VolumeManager::fat_read(Device::DeviceHandle mass_storage_dev_handle,
+    auto VolumeManager::fat_read(Device::Handle mass_storage_dev_handle,
                                  BIOSParameterBlock*  bpb,
                                  size_t               cluster) const -> U32 {
         U32 two_sector_size   = bpb->bytes_per_sector * 2;
@@ -100,7 +100,7 @@ namespace Rune::VFS {
         return _fat_engine->fat_get_entry(fat, byte_offset % bpb->bytes_per_sector);
     }
 
-    auto VolumeManager::fat_write(Device::DeviceHandle mass_storage_dev_handle,
+    auto VolumeManager::fat_write(Device::Handle mass_storage_dev_handle,
                                   BIOSParameterBlock*  bpb,
                                   size_t               cluster,
                                   U32                  fat_value) -> bool {
@@ -139,7 +139,7 @@ namespace Rune::VFS {
                == two_sector_size;
     }
 
-    auto VolumeManager::fat_find_next_free_cluster(Device::DeviceHandle mass_storage_dev_handle,
+    auto VolumeManager::fat_find_next_free_cluster(Device::Handle mass_storage_dev_handle,
                                                    BIOSParameterBlock*  bpb) -> U32 {
         auto cluster_size = static_cast<size_t>(bpb->bytes_per_sector * bpb->sectors_per_cluster);
         for (U32 i = 0; i < _fat_engine->fat_get_size(bpb); i += 2) {
@@ -166,7 +166,7 @@ namespace Rune::VFS {
         return _fat_engine->get_max_cluster_count();
     }
 
-    auto VolumeManager::data_cluster_read(Device::DeviceHandle     mass_storage_dev_handle,
+    auto VolumeManager::data_cluster_read(Device::Handle     mass_storage_dev_handle,
                                           VFS::BIOSParameterBlock* bpb,
                                           void*                    buf,
                                           size_t                   cluster) const -> bool {
@@ -179,7 +179,7 @@ namespace Rune::VFS {
                == cluster_size;
     }
 
-    auto VolumeManager::data_cluster_write(Device::DeviceHandle     mass_storage_dev_handle,
+    auto VolumeManager::data_cluster_write(Device::Handle     mass_storage_dev_handle,
                                            VFS::BIOSParameterBlock* bpb,
                                            void*                    buf,
                                            size_t                   cluster) -> bool {

@@ -32,7 +32,6 @@ namespace Rune::BuiltInPlugin {
 
     auto PCIDriverPlugin::load() -> bool {
         auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        return ds->register_device_driver(
-            SharedPointer<Device::Driver>(new Device::PCIDriver(ds->get_device_driver_handle())));
+        return ds->register_device_driver(SharedPointer<Device::Driver>(new Device::PCIDriver()));
     }
 } // namespace Rune::BuiltInPlugin

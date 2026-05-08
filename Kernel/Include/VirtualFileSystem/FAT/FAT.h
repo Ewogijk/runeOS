@@ -354,10 +354,10 @@ namespace Rune::VFS {
      * Mapping of a storage device ID to a BPB.
      */
     struct MassStorageDevRef {
-        Device::DeviceHandle m_mass_storage_dev_handle = -1;
+        Device::Handle m_mass_storage_dev_handle = -1;
         BIOSParameterBlock*  m_BPB                     = nullptr;
 
-        MassStorageDevRef(Device::DeviceHandle mass_storage_dev_handle, BIOSParameterBlock* bpb);
+        MassStorageDevRef(Device::Handle mass_storage_dev_handle, BIOSParameterBlock* bpb);
 
         ~MassStorageDevRef();
     };

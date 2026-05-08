@@ -30,7 +30,7 @@ namespace Rune::Device {
     ///
     /// - GET_ACPI_INFO: A_DESCRIPTION
     /// - SHUTDOWN: A_DESCRIPTION
-    DECLARE_ENUM(ACPIREQUEST, ACPI_REQUESTS, 0x0) // NOLINT
+    DECLARE_ENUM(ACPIRequest, ACPI_REQUESTS, 0x0) // NOLINT
 
     struct ACPIInfo {
         String m_oem;
@@ -46,15 +46,15 @@ namespace Rune::Device {
       public:
         const static BasicDeviceID ID_ACPI;
 
-        ACPIDriver(DriverHandle handle);
+        ACPIDriver() = default;
 
-        [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
-        auto               start(DeviceHandle dev_handle, void* context) -> bool override;
-        auto               stop(DeviceHandle dev_handle) -> bool override;
-        auto handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus override;
-        void discover_devices(DeviceHandle                 bus_device,
-                              const DeviceMapper&          device_mapper,
-                              HandleCounter<DeviceHandle>& dev_handle_counter) override;
+        [[nodiscard]] auto vendor() const -> String override;
+        [[nodiscard]] auto version() const -> Version override;
+        [[nodiscard]] auto target_device_ID() const -> const DeviceID* override;
+        auto accept_device(const SharedPointer<Device>& device) -> bool override;
+        void remove_device(const SharedPointer<Device>& device) override;
+        auto handle_request(const SharedPointer<Device>& device, IORequest request)
+            -> IORequestStatus override;
     };
 } // namespace Rune::Device
 

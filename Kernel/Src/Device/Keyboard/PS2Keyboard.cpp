@@ -109,8 +109,8 @@ namespace Rune::Device {
 
     const BasicDeviceID PS2Keyboard::ID_PS2_KEYBOARD("PS2 Keyboard");
 
-    PS2Keyboard::PS2Keyboard(DriverHandle handle)
-        : VirtualKeyboard(handle, ID_PS2_KEYBOARD.get_string_ID()),
+    PS2Keyboard::PS2Keyboard()
+        : VirtualKeyboard(),
           _key_code_cache(),
           _irq_handler([] { return CPU::IRQState::PENDING; }) {}
 
@@ -126,10 +126,14 @@ namespace Rune::Device {
         _end   = 0;
     }
 
-    auto PS2Keyboard::get_target_device_ID() const -> const DeviceID* { return &ID_PS2_KEYBOARD; }
+    auto PS2Keyboard::vendor() const -> String { return "Ewogjik"; };
 
-    auto PS2Keyboard::start(DeviceHandle dev_handle, void* ctx) -> bool {
-        SILENCE_UNUSED(ctx)
+    auto PS2Keyboard::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
+
+    auto PS2Keyboard::target_device_ID() const -> const DeviceID* { return &ID_PS2_KEYBOARD; }
+
+    auto PS2Keyboard::accept_device(const SharedPointer<Device>& device) -> bool {
+        SILENCE_UNUSED(device)
         init_scan_set_one();
 
         _irq_handler = [this] {
@@ -149,24 +153,19 @@ namespace Rune::Device {
             }
             return CPU::IRQState::HANDLED;
         };
-        add_operated_device(dev_handle);
-        return CPU::irq_install_handler(1, get_handle(), get_name(), _irq_handler);
+        return CPU::irq_install_handler(1, 0, "PS2 Keyboard", _irq_handler);
     }
 
-    auto PS2Keyboard::stop(DeviceHandle dev_handle) -> bool {
-        return CPU::irq_uninstall_handler(1, get_handle());
+    void PS2Keyboard::remove_device(const SharedPointer<Device>& device) {
+        SILENCE_UNUSED(device)
+        CPU::irq_uninstall_handler(1, 1);
     }
 
-    auto PS2Keyboard::handle_request(DeviceHandle dev_handle, IORequest request)
+    auto PS2Keyboard::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> IORequestStatus {
-        SILENCE_UNUSED(dev_handle)
+        SILENCE_UNUSED(device)
         SILENCE_UNUSED(request)
         return IORequestStatus::UNSUPPORTED;
     }
 
-    void PS2Keyboard::discover_devices(DeviceHandle                 bus_device,
-                                       const DeviceMapper&          device_mapper,
-                                       HandleCounter<DeviceHandle>& dev_handle_counter) {
-        SILENCE_UNUSED(device_mapper)
-    }
 } // namespace Rune::Device

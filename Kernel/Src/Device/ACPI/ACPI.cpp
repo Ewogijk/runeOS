@@ -22,6 +22,7 @@
 
 #include <Memory/Paging.h>
 
+#include <Device/DeviceModule.h>
 #include <Device/Keyboard/PS2Keyboard.h>
 #include <Device/PCI/PCI.h>
 
@@ -63,12 +64,15 @@ namespace Rune::Device {
 
     const BasicDeviceID ACPIDriver::ID_ACPI("ACPI");
 
-    ACPIDriver::ACPIDriver(DriverHandle handle) : Driver(handle, ID_ACPI.get_string_ID()) {}
+    auto ACPIDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto ACPIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
+    auto ACPIDriver::version() const -> Version {
+        return {.major = 1, .minor = 0, .patch = 0};
+    }
 
-    auto ACPIDriver::start(DeviceHandle dev_handle, void* context) -> bool {
-        SILENCE_UNUSED(context)
+    auto ACPIDriver::target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
+
+    auto ACPIDriver::accept_device(const SharedPointer<Device>& device) -> bool {
         ACPI_STATUS status = AcpiInitializeSubsystem();
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiInitializeSubsystem failed. Status={}", status);
@@ -99,45 +103,41 @@ namespace Rune::Device {
             return false;
         }
         _acpi_initialized = true;
-        add_operated_device(dev_handle);
-        return true;
-    }
 
-    auto ACPIDriver::stop(DeviceHandle dev_handle) -> bool { return true; }
-
-    auto ACPIDriver::handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus {
-        SILENCE_UNUSED(dev_handle)
-        if (!_acpi_initialized) return IORequestStatus::UNKNOWN_DEVICE;
-        auto req = reinterpret_cast<ACPIREQUEST*>(request.m_in_buffer);
-
-        switch (*req) {
-            case ACPIREQUEST::GET_ACPI_INFO: return handle_get_acpi_info_request(request);
-            case ACPIREQUEST::SHUTDOWN:      return handle_shutdown_request(request);
-            default:                         return IORequestStatus::BAD_ARGUMENT;
-        }
-    }
-
-    void ACPIDriver::discover_devices(DeviceHandle                 bus_device,
-                                      const DeviceMapper&          device_mapper,
-                                      HandleCounter<DeviceHandle>& dev_handle_counter) {
+        auto* ds = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
         SharedPointer<Device> ps2_keyboard(
-            new BasicDevice(dev_handle_counter.acquire(),
+            new BasicDevice(ds->get_device_handle(),
                             PS2Keyboard::ID_PS2_KEYBOARD.get_string_ID(),
                             "",
                             "",
                             "",
                             DeviceType::KEYBOARD,
                             PS2Keyboard::ID_PS2_KEYBOARD));
-        device_mapper(bus_device, ps2_keyboard, nullptr);
+        ds->register_device(device, ps2_keyboard);
 
-        SharedPointer<Device> pci(new BasicDevice(dev_handle_counter.acquire(),
+        SharedPointer<Device> pci(new BasicDevice(ds->get_device_handle(),
                                                   PCIDriver::ID_PCI.get_string_ID(),
                                                   "",
                                                   "",
                                                   "",
                                                   DeviceType::GENERIC,
                                                   PCIDriver::ID_PCI));
-        device_mapper(bus_device, pci, nullptr);
+        ds->register_device(device, pci);
+        return true;
+    }
+
+    void ACPIDriver::remove_device(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
+
+    auto ACPIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
+        -> IORequestStatus {
+        if (!_acpi_initialized) return IORequestStatus::UNKNOWN_DEVICE;
+        auto req = reinterpret_cast<ACPIRequest*>(request.m_in_buffer);
+
+        switch (*req) {
+            case ACPIRequest::GET_ACPI_INFO: return handle_get_acpi_info_request(request);
+            case ACPIRequest::SHUTDOWN:      return handle_shutdown_request(request);
+            default:                         return IORequestStatus::BAD_ARGUMENT;
+        }
     }
 
 } // namespace Rune::Device

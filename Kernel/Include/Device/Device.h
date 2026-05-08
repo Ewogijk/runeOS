@@ -20,6 +20,7 @@
 
 #include <KRE/Memory.h>
 #include <KRE/String.h>
+#include <KRE/System/Module.h>
 #include <KRE/System/Resource.h>
 
 namespace Rune::Device {
@@ -75,10 +76,7 @@ namespace Rune::Device {
     class Driver;
 
     /// @brief Handle type of device.
-    using DeviceHandle = U16;
-
-    /// @brief Handle type of driver.
-    using DriverHandle = U16;
+    using Handle = U16;
 
 #define DEVICE_TYPES(X)                                                                            \
     X(DeviceType, MASS_STORAGE_DEVICE, 0x1)                                                        \
@@ -105,7 +103,7 @@ namespace Rune::Device {
     /// Devices are organized in a tree structure. Generally speaking, devices can be divided into
     /// two types of devices: Bus Devices and Leaf Devices. Bus devices like PCIe can contain
     /// other devices, while Leaf Devices do not, e.g., a keyboard.
-    class Device : public Resource<DeviceHandle> {
+    class Device : public Resource<Handle> {
         String m_oem;
 
         String m_revision;
@@ -115,14 +113,17 @@ namespace Rune::Device {
         DeviceType m_device_type;
 
         /// @brief The handle of the driver operating this device.
-        DriverHandle m_driver_handle = Resource<DriverHandle>::HANDLE_NONE;
+        SharedPointer<Driver> m_driver;
+
+        /// @brief
+        SharedPointer<Device> m_bus_device;
 
         /// @brief If this device is a bus device, this list contains all devices detected on the
         ///         bus.
-        LinkedList<DeviceHandle> m_child_devices;
+        LinkedList<SharedPointer<Device>> m_child_devices;
 
       public:
-        Device(DeviceHandle  handle,
+        Device(Handle        handle,
                const String& name,
                const String& oem,
                const String& revision,
@@ -131,40 +132,59 @@ namespace Rune::Device {
         virtual ~Device() = default;
 
         /// @brief
-        /// @return The OEM name of the device manufacturer.
-        [[nodiscard]] auto get_oem() const -> const String&;
+        /// @return The OEM name.
+        [[nodiscard]] auto oem() const -> const String&;
 
         /// @brief
         /// @return The hardware revision identifier of the device.
-        [[nodiscard]] auto get_revision() const -> const String&;
+        [[nodiscard]] auto revision() const -> const String&;
 
         /// @brief
-        /// @return The serial number uniquely identifying this device unit.
-        [[nodiscard]] auto get_serial_number() const -> const String&;
+        /// @return The serial number of the device.
+        [[nodiscard]] auto serial_number() const -> const String&;
 
         /// @brief
         /// @return The general category of this device.
-        [[nodiscard]] auto get_device_type() const -> DeviceType;
+        [[nodiscard]] auto device_type() const -> DeviceType;
 
         /// @brief
         /// @return The handle to the driver that operates this device.
         ///         Resource<DriverHandle>::HANDLE_NONE if no driver is mapped to the device.
-        [[nodiscard]] auto get_driver_handle() const -> DriverHandle;
+        [[nodiscard]] auto driver() const -> const SharedPointer<Driver>&;
 
-        /// @brief Set the handle of the driver that is operating this device.
-        /// @param driver_handle
-        void set_driver_handle(DriverHandle driver_handle);
+        /// @brief
+        /// @return The handle to the driver that operates this device.
+        ///         Resource<DriverHandle>::HANDLE_NONE if no driver is mapped to the device.
+        [[nodiscard]] auto driver() -> SharedPointer<Driver>&;
+
+        /// @brief
+        /// @return The bus device of this device.
+        ///         Resource::<DeviceHandle>::HANDLE_NONE for the root device.
+        ///
+        /// Every device except the root device always has to have a bus device.
+        [[nodiscard]] auto bus_device() const -> const SharedPointer<Device>&;
+
+        /// @brief
+        /// @return The bus device of this device.
+        ///         Resource::<DeviceHandle>::HANDLE_NONE for the root device.
+        ///
+        /// Every device except the root device always has to have a bus device.
+        [[nodiscard]] auto bus_device() -> SharedPointer<Device>&;
 
         /// @brief
         /// @return A reference to the list of child devices.
-        [[nodiscard]] auto get_child_devices() -> LinkedList<DeviceHandle>&;
+        [[nodiscard]] auto child_devices() const -> const LinkedList<SharedPointer<Device>>&;
+
+        /// @brief
+        /// @return A reference to the list of child devices.
+        [[nodiscard]] auto child_devices() -> LinkedList<SharedPointer<Device>>&;
 
         /// @brief
         /// @return A pointer to the Device ID.
         ///
         /// The device always owns the pointer and must guarantue a valid pointer is returned at all
         /// times.
-        [[nodiscard]] virtual auto get_device_ID() const -> const DeviceID* = 0;
+        [[nodiscard]] virtual auto device_ID() const -> const DeviceID* = 0;
     };
 
     // ========================================================================================== //
@@ -175,7 +195,7 @@ namespace Rune::Device {
         BasicDeviceID m_device_ID;
 
       public:
-        BasicDevice(DeviceHandle         handle,
+        BasicDevice(Handle               handle,
                     const String&        name,
                     const String&        oem,
                     const String&        revision,
@@ -183,7 +203,7 @@ namespace Rune::Device {
                     DeviceType           device_type,
                     const BasicDeviceID& device_ID);
 
-        [[nodiscard]] auto get_device_ID() const -> const DeviceID* override;
+        [[nodiscard]] auto device_ID() const -> const DeviceID* override;
     };
 
     // ========================================================================================== //
@@ -216,81 +236,57 @@ namespace Rune::Device {
     /// - UNKNOWN_DEVICE: The requested device does not exist.
     /// - DEVICE_NOT_OPERATIONAL: The IO request could not be handled because the device is not
     ///                             operated by a driver.
-    /// - UNKNOWN_DRIVER: The required device driver does not exist.
     /// - BAD_ARGUMENT: The IO request In buffer contains invalid arguments.
     /// - FAILED: An error occurred handling the IO request.
-    /// - HANDLED: The IO request was handled and the response contains valid data.
+    /// - HANDLED: The IO request was handled, and the response contains valid data.
     DECLARE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0) // NOLINT
 
-    /// @brief A function that maps a device to a device driver.
-    ///
-    /// - DeviceHandle: The handle of the bus device that has discovered the given device.
-    /// - Device: A pointer to a device discovered by a bus device.
-    /// - void*: A pointer to data required for device driver initialization.
-    using DeviceMapper = Function<void(DeviceHandle, SharedPointer<Device>, void*)>;
-
-    /// @brief A device driver operates a device in the system.
-    ///
-    /// Device drivers are mapped to devices automatically. Device drivers provide the name of the
-    /// supported, and the kernel will map it to the matching device once it is discovered.
-    class Driver : public Resource<DriverHandle> {
-        LinkedList<DeviceHandle> m_operated_devices;
-
-      protected:
-        /// @brief
-        /// @param device_handle Handle of the device to operate.
-        void add_operated_device(DeviceHandle device_handle) {
-            m_operated_devices.add_back(device_handle);
-        }
-
+    /// @brief A device driver operates devices in the system.
+    class Driver {
       public:
-        Driver(DriverHandle handle, const String& name);
+        Driver()          = default;
         virtual ~Driver() = default;
 
         /// @brief
-        /// @return A list handles of all operated devices.
-        [[nodiscard]] auto get_operated_devices() const -> LinkedList<DeviceHandle> {
-            return m_operated_devices;
-        }
+        /// @return Driver vendor.
+        [[nodiscard]] virtual auto vendor() const -> String = 0;
+
+        /// @brief
+        /// @return Driver version.
+        [[nodiscard]] virtual auto version() const -> Version = 0;
 
         /// @brief
         /// @return DeviceID of the device this driver intends to operate.
         /// The device driver always owns the pointer and must guarantue a valid pointer is
         /// returned at all times.
-        [[nodiscard]] virtual auto get_target_device_ID() const -> const DeviceID* = 0;
+        [[nodiscard]] virtual auto target_device_ID() const -> const DeviceID* = 0;
 
-        /// @brief Initialize the device to a working state so that it is able to handle IO
-        ///         requests.
-        /// @param dev_handle Handle of the device to initialize.
-        /// @param context A device driver specific context required to initialize the device.
-        /// @return True: Device initialization was successful, False: Otherwise.
+        /// @brief Is called when a device is discovered that matches with the target device ID of
+        ///         this driver.
+        /// @param device Handle of the device to initialize.
+        /// @return True: The device was accepted and initialized.
+        ///         False: Otherwise.
         ///
-        /// The caller has to guarantue that lifetime of context outlives the call to start,
-        /// otherwise the behavior is not defined.
-        virtual auto start(DeviceHandle dev_handle, void* context) -> bool = 0;
+        /// The device driver should initialize the device in a state that allows it to handle IO
+        /// requests if it means to accept the device. Accepting the device will bind to driver to
+        /// the device, which means IO requests will be routed to the driver.
+        virtual auto accept_device(const SharedPointer<Device>& device) -> bool = 0;
 
-        /// @brief Finish any ongoing IO requests, flush data to the device, if any, and shutdown
-        ///         the device.
+        /// @brief Is called before a device will be removed from the device tree.
         /// @param dev_handle Handle of the device to stop.
-        /// @return True: Device shutdown was successful, False: Otherwise.
         ///
-        /// The device will not be able to handle IO requests anymore after it has been shutdown.
-        virtual auto stop(DeviceHandle dev_handle) -> bool = 0;
+        /// The device driver should cancel ongoing IO requests and release any resource associated
+        /// with the device.
+        ///
+        /// The device driver will be unbound from the device after this function has been called.
+        virtual void remove_device(const SharedPointer<Device>& device) = 0;
 
         /// @brief Perform a device driver-specific action on the device with the given handle.
-        /// @param dev_handle Handle of the device that should perform an action.
+        /// @param device Reference to a bound device.
         /// @param request An IO request.
-        /// @return IO response containing the result of the action.
-        virtual auto handle_request(DeviceHandle dev_handle, IORequest request)
+        /// @return The status of the finished IO request.
+        virtual auto handle_request(const SharedPointer<Device>& device, IORequest request)
             -> IORequestStatus = 0;
-
-        /// @brief Scan the bus for devices.
-        /// @return A list of devices connected to the bus.
-        ///
-        /// If the operated device is a leaf device, an empty list must be returned.
-        virtual void discover_devices(DeviceHandle                 bus_device,
-                                      const DeviceMapper&          device_mapper,
-                                      HandleCounter<DeviceHandle>& dev_handle_counter) = 0;
     };
 } // namespace Rune::Device
 

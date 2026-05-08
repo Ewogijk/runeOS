@@ -34,7 +34,7 @@ namespace Rune::VFS {
         VolumeManager    _volume_manager;
         FileEntryManager _file_entry_manager;
 
-        [[nodiscard]] auto find_storage_dev_ref(Device::DeviceHandle mass_storage_dev_handle) const
+        [[nodiscard]] auto find_storage_dev_ref(Device::Handle mass_storage_dev_handle) const
             -> SharedPointer<MassStorageDevRef>;
 
         static auto node_attributes_to_fat_file_attributes(U8 node_attr) -> U8;
@@ -61,12 +61,12 @@ namespace Rune::VFS {
                               LocationAwareFileEntry&                 dir,
                               const Path&                             path) -> IOStatus;
 
-        auto mass_storage_device_read(Device::DeviceHandle dev_handle,
+        auto mass_storage_device_read(Device::Handle dev_handle,
                                       void*                buf,
                                       size_t               buf_size,
                                       U32                  lba) -> size_t;
 
-        auto mass_storage_device_write(Device::DeviceHandle dev_handle,
+        auto mass_storage_device_write(Device::Handle dev_handle,
                                        void*                buf,
                                        size_t               buf_size,
                                        U32                  lba) -> size_t;
@@ -78,32 +78,32 @@ namespace Rune::VFS {
 
         [[nodiscard]] auto get_name() const -> String override;
 
-        auto format(Device::DeviceHandle mass_storage_dev_handle) -> FormatStatus override;
+        auto format(Device::Handle mass_storage_dev_handle) -> FormatStatus override;
 
-        auto mount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus override;
+        auto mount(Device::Handle mass_storage_dev_handle) -> MountStatus override;
 
-        auto unmount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus override;
+        auto unmount(Device::Handle mass_storage_dev_handle) -> MountStatus override;
 
         [[nodiscard]] auto is_valid_file_path(const Path& path) const -> bool override;
 
-        auto create(Device::DeviceHandle mass_storage_dev_handle, const Path& path, U8 attributes)
+        auto create(Device::Handle mass_storage_dev_handle, const Path& path, U8 attributes)
             -> IOStatus override;
 
-        auto open(Device::DeviceHandle mass_storage_dev_handle,
+        auto open(Device::Handle mass_storage_dev_handle,
                   const Path&          mount_point,
                   const Path&          path,
                   Ember::IOMode        node_io_mode,
                   Function<void()>     on_close,
                   SharedPointer<Node>& out) -> IOStatus override;
 
-        auto find_node(Device::DeviceHandle mass_storage_dev_handle,
+        auto find_node(Device::Handle mass_storage_dev_handle,
                        const Path&          path,
                        NodeInfo&            out) -> IOStatus override;
 
-        auto delete_node(Device::DeviceHandle mass_storage_dev_handle, const Path& path)
+        auto delete_node(Device::Handle mass_storage_dev_handle, const Path& path)
             -> IOStatus override;
 
-        auto open_directory_stream(Device::DeviceHandle            mass_storage_dev_handle,
+        auto open_directory_stream(Device::Handle            mass_storage_dev_handle,
                                    const Path&                     path,
                                    const Function<void()>&         on_close,
                                    SharedPointer<DirectoryStream>& out) -> IOStatus override;

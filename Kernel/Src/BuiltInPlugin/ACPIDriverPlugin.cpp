@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-
 #include <BuiltInPlugin/ACPIDriverPlugin.h>
 
 #include <KRE/System/System.h>
 
-#include <Device/DeviceModule.h>
 #include <Device/ACPI/ACPI.h>
+#include <Device/DeviceModule.h>
 
 namespace Rune::BuiltInPlugin {
     const PluginInfo ACPI_INFO = {
@@ -33,8 +32,6 @@ namespace Rune::BuiltInPlugin {
 
     auto ACPIDriverPlugin::load() -> bool {
         auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-
-        return ds->register_device_driver(
-            SharedPointer<Device::Driver>(new Device::ACPIDriver(ds->get_device_driver_handle())));
+        return ds->register_device_driver(SharedPointer<Device::Driver>(new Device::ACPIDriver()));
     }
 } // namespace Rune::BuiltInPlugin

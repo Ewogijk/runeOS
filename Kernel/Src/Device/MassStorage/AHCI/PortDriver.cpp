@@ -21,91 +21,54 @@
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PortDriver");
 
-    PortDriver::PortDriver(DriverHandle handle)
-        : MassStorageDeviceDriver(handle, "AHCI Port Driver") {}
+    auto PortDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto PortDriver::get_target_device_ID() const -> const DeviceID* {
+    auto PortDriver::version() const -> Version {
+        return {.major = 1, .minor = 0, .patch = 0};
+    }
+
+    auto PortDriver::target_device_ID() const -> const DeviceID* {
         return &PortEngine::ID_ATA_DEVICE;
     }
 
-    auto PortDriver::start(DeviceHandle dev_handle, void* context) -> bool {
-        auto* pdc                     = static_cast<PortDriverContext*>(context);
-        m_port_engine                 = pdc->m_port_engine;
-        m_partition_table[dev_handle] = pdc->m_partition_range;
-        add_operated_device(dev_handle);
+    auto PortDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+        SILENCE_UNUSED(device)
         return true;
     }
 
-    auto PortDriver::stop(DeviceHandle dev_handle) -> bool {
-        m_port_engine->stop();
-        m_port_engine = SharedPointer<PortEngine>();
-        return true;
+    void PortDriver::remove_device(const SharedPointer<Device>& device) {
+        SharedPointer<AHCIDevice> ahci_device(device);
+        ahci_device->port_engine()->stop();
     }
 
-    auto PortDriver::handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus {
+    auto PortDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
+        -> IORequestStatus {
+        SharedPointer<AHCIDevice> ahci_device(device);
         auto* req = reinterpret_cast<MassStorageDeviceRequest*>(request.m_in_buffer);
         if (req->m_type == MassStorageDeviceRequestType::NONE) return IORequestStatus::BAD_ARGUMENT;
 
-        auto maybe_partition_range = m_partition_table.find(dev_handle);
-        if (maybe_partition_range == m_partition_table.end())
-            // Unknown device
-            return IORequestStatus::BAD_ARGUMENT;
-
-        auto   partition_range = *maybe_partition_range->value;
+        auto   partition_range = ahci_device->partition_range();
         size_t dev_lba         = req->m_lba + partition_range.m_start;
         if (dev_lba > partition_range.m_end)
             // LBA out of partition bounds
             return IORequestStatus::BAD_ARGUMENT;
 
+        auto port_engine = ahci_device->port_engine();
         if (req->m_type == MassStorageDeviceRequestType::READ) {
             auto read_dma_FIS = RegisterHost2DeviceFIS::ReadDMAExtended(
                 dev_lba,
-                div_round_up(req->m_buffer_size,
-                             static_cast<size_t>(m_port_engine->get_sector_size())));
+                div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
             *static_cast<size_t*>(request.m_out_buffer) =
-                m_port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, read_dma_FIS);
+                port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, read_dma_FIS);
 
             return IORequestStatus::HANDLED;
         } else {
             auto write_dma_FIS = RegisterHost2DeviceFIS::WriteDMAExtended(
                 dev_lba,
-                div_round_up(req->m_buffer_size,
-                             static_cast<size_t>(m_port_engine->get_sector_size())));
+                div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
             *static_cast<size_t*>(request.m_out_buffer) =
-                m_port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, write_dma_FIS);
+                port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, write_dma_FIS);
             return IORequestStatus::HANDLED;
         }
     }
-
-    void PortDriver::discover_devices(DeviceHandle                 bus_device,
-                                      const DeviceMapper&          device_mapper,
-                                      HandleCounter<DeviceHandle>& dev_handle_counter) {
-        SILENCE_UNUSED(bus_device)
-        SILENCE_UNUSED(device_mapper)
-        SILENCE_UNUSED(dev_handle_counter)
-        // No devices to discover
-    }
-
-    auto PortDriver::read(DeviceHandle dev_handle, void* buf, size_t buf_size, size_t lba)
-        -> size_t {
-        MassStorageDeviceRequest req{.m_type        = MassStorageDeviceRequestType::READ,
-                                     .m_lba         = lba,
-                                     .m_buffer      = buf,
-                                     .m_buffer_size = buf_size};
-        size_t                   bytes_read = 0;
-        handle_request(dev_handle, {.m_in_buffer = &req, .m_out_buffer = &bytes_read});
-        return bytes_read;
-    }
-
-    auto PortDriver::write(DeviceHandle dev_handle, void* buf, size_t buf_size, size_t lba)
-        -> size_t {
-        MassStorageDeviceRequest req{.m_type        = MassStorageDeviceRequestType::WRITE,
-                                     .m_lba         = lba,
-                                     .m_buffer      = buf,
-                                     .m_buffer_size = buf_size};
-        size_t                   bytes_written = 0;
-        handle_request(dev_handle, {.m_in_buffer = &req, .m_out_buffer = &bytes_written});
-        return bytes_written;
-    }
-
 } // namespace Rune::Device

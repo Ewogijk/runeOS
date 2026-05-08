@@ -56,7 +56,7 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        auto search(Device::DeviceHandle    mass_storage_dev_handle,
+        auto search(Device::Handle    mass_storage_dev_handle,
                     BIOSParameterBlock*     bpb,
                     const Path&             path,
                     LocationAwareFileEntry& out) const -> VolumeAccessStatus;
@@ -80,7 +80,7 @@ namespace Rune::VFS {
          *
          * @return Status of the volume access.
          */
-        auto find_empty_file_entries(Device::DeviceHandle                mass_storage_dev_handle,
+        auto find_empty_file_entries(Device::Handle                mass_storage_dev_handle,
                                      BIOSParameterBlock*                 bpb,
                                      const Path&                         path,
                                      U16                                 range,
@@ -97,7 +97,7 @@ namespace Rune::VFS {
          *
          * @return True: The file entry is updated. False: It is not.
          */
-        auto update(Device::DeviceHandle          mass_storage_dev_handle,
+        auto update(Device::Handle          mass_storage_dev_handle,
                     BIOSParameterBlock*           bpb,
                     const LocationAwareFileEntry& entry) -> bool;
 
@@ -111,7 +111,7 @@ namespace Rune::VFS {
          *
          * @return Index of the allocated cluster. 0 if no free cluster was found.
          */
-        auto allocate_cluster(Device::DeviceHandle    mass_storage_dev_handle,
+        auto allocate_cluster(Device::Handle    mass_storage_dev_handle,
                               BIOSParameterBlock*     bpb,
                               LocationAwareFileEntry& file,
                               U32                     last_file_cluster) -> U32;

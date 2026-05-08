@@ -14,6 +14,8 @@
  *  limitations under the License.
  */
 
+#include "Device/MassStorage/AHCI/PortDriver.h"
+
 #include <Device/MassStorage/AHCI/HostBusAdapterDriver.h>
 
 #include <KRE/System/System.h>
@@ -21,6 +23,8 @@
 #include <Memory/MemoryModule.h>
 
 #include <CPU/CPUModule.h>
+
+#include <Device/DeviceModule.h>
 
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER =
@@ -93,34 +97,27 @@ namespace Rune::Device {
 
     const PCIDeviceID HostBusAdapterDriver::ID_AHCI(0x1, 0x6, 0x1);
 
-    HostBusAdapterDriver::HostBusAdapterDriver(DriverHandle handle) : Driver(handle, "AHCI HBA") {
+    HostBusAdapterDriver::HostBusAdapterDriver() {
         auto& sys = System::instance();
         _heap     = sys.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY)->get_heap();
         _timer    = sys.get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();
     }
 
-    auto HostBusAdapterDriver::get_target_device_ID() const -> const DeviceID* { return &ID_AHCI; }
+    auto HostBusAdapterDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto HostBusAdapterDriver::start(DeviceHandle dev_handle, void* context) -> bool {
-        auto* pci_type0_header = static_cast<PCIConfigurationSpaceHeaderType0*>(context);
+    auto HostBusAdapterDriver::version() const -> Version {
+        return {.major = 1, .minor = 0, .patch = 0};
+    }
+
+    auto HostBusAdapterDriver::target_device_ID() const -> const DeviceID* { return &ID_AHCI; }
+
+    auto HostBusAdapterDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+        auto  pci_device       = SharedPointer<PCIDevice>(device);
+        auto& pci_type0_header = pci_device->pci_header();
         _hba                   = reinterpret_cast<HBAMemory*>(
-            Memory::physical_to_virtual_address(pci_type0_header->bar_5));
+            Memory::physical_to_virtual_address(pci_type0_header.bar_5));
         _hba->GHC.AE = 1;
-        add_operated_device(dev_handle);
-        return true;
-    }
 
-    auto HostBusAdapterDriver::stop(DeviceHandle dev_handle) -> bool { return true; }
-
-    auto HostBusAdapterDriver::handle_request(DeviceHandle dev_handle, IORequest request)
-        -> IORequestStatus {
-        SILENCE_UNUSED(request)
-        return IORequestStatus::UNSUPPORTED;
-    }
-
-    void HostBusAdapterDriver::discover_devices(DeviceHandle                 bus_device,
-                                                const DeviceMapper&          device_mapper,
-                                                HandleCounter<DeviceHandle>& dev_handle_counter) {
         U32  pi            = _hba->PI;
         U32  command_slots = _hba->CAP.NCS;
         bool s64_a         = _hba->CAP.S64A;
@@ -145,13 +142,37 @@ namespace Rune::Device {
                 _heap->free(system_memory->RFIS);
             }
 
-            for (auto& device : port_engine->detect_partitions(dev_handle_counter)) {
-                auto*             msd = static_cast<MassStorageDevice*>(device.get());
-                PortDriverContext pdc = {.m_port_engine     = port_engine,
-                                         .m_partition_range = msd->get_partition_range()};
-                device_mapper(bus_device, device, &pdc);
-            }
+            auto identify_device_data = port_engine->get_identify_device_data();
+
+            auto* ds = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
+            SharedPointer<Device> physical_device(
+                new AHCIDevice(ds->get_device_handle(),
+                               String::format("ATA Device {}", i),
+                               identify_device_data.m_model_number,
+                               identify_device_data.m_firmware_revision,
+                               identify_device_data.m_serial_number,
+                               DeviceType::MASS_STORAGE_DEVICE,
+                               PortEngine::ID_ATA_DEVICE,
+                               MassStorageDeviceType::PHYSICAL,
+                               identify_device_data.m_sector_count,
+                               identify_device_data.m_sector_size,
+                               PartitionRange::ENTIRE_DEVICE,
+                               port_engine));
+            ds->register_device(device, physical_device);
+            port_engine->detect_partitions(ds, physical_device, port_engine);
         }
+        return true;
+    }
+
+    void HostBusAdapterDriver::remove_device(const SharedPointer<Device>& device) {
+        SILENCE_UNUSED(device)
+    }
+
+    auto HostBusAdapterDriver::handle_request(const SharedPointer<Device>& device,
+                                              IORequest request) -> IORequestStatus {
+        SILENCE_UNUSED(device)
+        SILENCE_UNUSED(request)
+        return IORequestStatus::UNSUPPORTED;
     }
 
 } // namespace Rune::Device

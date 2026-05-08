@@ -34,13 +34,15 @@ namespace Rune::Device {
     };
 
 #define MASS_STORAGE_DEVICE_TYPES(X)                                                               \
-    X(MassStorageDeviceType, BOOT, 0x1)                                                            \
-    X(MassStorageDeviceType, GENERIC, 0x2)
+    X(MassStorageDeviceType, PHYSICAL, 0x1)                                                        \
+    X(MassStorageDeviceType, PARTITION, 0x2)                                                       \
+    X(MassStorageDeviceType, BOOT_PARTITION, 0x3)
 
     /// @brief Classification of mass storage devices depending on what type of data is stored.
     ///
-    /// - SYSTEM: The boot partition contains the boot loader and kernel application.
-    /// - GENERIC: A generic mass storage device containing arbitrary data.
+    /// - PHYSICAL: A mass storage device backed by a physical device.
+    /// - PARTITION: A generic partition on a physical mass storage device.
+    /// - BOOT_PARTITION: The EFI system partition containing the bootloader and kernel ELF.
     DECLARE_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0) // NOLINT
 
     /// @brief A MassStorageDevice contains the mass storage device type additionally to all
@@ -52,12 +54,13 @@ namespace Rune::Device {
     /// indeed represents a single physical device.
     class MassStorageDevice : public BasicDevice {
         MassStorageDeviceType m_mass_storage_device_type;
-        U64                   m_sector_count;
+        U64                   m_total_sector_count;
+        U64                   m_used_sector_count;
         U32                   m_sector_size;
         PartitionRange        m_partition_range;
 
       public:
-        MassStorageDevice(DeviceHandle          handle,
+        MassStorageDevice(Handle                handle,
                           const String&         name,
                           const String&         oem,
                           const String&         revision,
@@ -71,19 +74,27 @@ namespace Rune::Device {
 
         /// @brief
         /// @return The mass storage device type.
-        [[nodiscard]] auto get_mass_storage_device_type() const -> MassStorageDeviceType;
+        [[nodiscard]] auto mass_storage_device_type() const -> MassStorageDeviceType;
 
         /// @brief
         /// @return Number of total sectors.
-        [[nodiscard]] auto get_sector_count() const -> U32;
+        [[nodiscard]] auto total_sector_count() const -> U64;
+
+        /// @brief
+        /// @return Number of unused sectors.
+        [[nodiscard]] auto used_sector_count() const -> U64;
+
+        /// @brief
+        /// @return Number of unused sectors.
+        [[nodiscard]] auto used_sector_count() -> U64&;
 
         /// @brief
         /// @return Size of a sector in bytes.
-        [[nodiscard]] auto get_sector_size() const -> U32;
+        [[nodiscard]] auto sector_size() const -> U32;
 
         /// @brief
-        /// @return Range the partition covers on the physical device.
-        [[nodiscard]] auto get_partition_range() const -> PartitionRange;
+        /// @return LBA range of the partition.
+        [[nodiscard]] auto partition_range() const -> const PartitionRange&;
     };
 
     // ========================================================================================== //
@@ -110,35 +121,6 @@ namespace Rune::Device {
         size_t                       m_lba{};
         void*                        m_buffer{};
         size_t                       m_buffer_size{};
-    };
-
-    // ========================================================================================== //
-    // Driver
-    // ========================================================================================== //
-
-    class MassStorageDeviceDriver : public Driver {
-      public:
-        MassStorageDeviceDriver(DriverHandle handle, const String& name);
-
-        // ====================================================================================== //
-        // Mass Storage Device Driver API
-        // ====================================================================================== //
-
-        /// @brief Send a MassStorageDeviceRequest::READ request to a device.
-        /// @param buf      Data buffer.
-        /// @param buf_size Size of the buffer.
-        /// @param lba      Start LBA.
-        /// @return The number of bytes read from the device.
-        virtual auto read(DeviceHandle dev_handle, void* buf, size_t buf_size, size_t lba)
-            -> size_t = 0;
-
-        /// @brief Send a MassStorageDeviceRequest::WRITE request to a device.
-        /// @param buf      Data buffer.
-        /// @param buf_size Size of the buffer.
-        /// @param lba      Start LBA.
-        /// @return The number of bytes read from the device.
-        virtual auto write(DeviceHandle dev_handle, void* buf, size_t buf_size, size_t lba)
-            -> size_t = 0;
     };
 } // namespace Rune::Device
 

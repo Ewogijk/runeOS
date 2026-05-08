@@ -133,6 +133,17 @@ namespace Rune {
             return false;
         }
 
+        auto contains0(const T& element) const -> bool {
+            Node<T>* current = _head;
+            while (current != nullptr) {
+                if (current->element == element) {
+                    return true;
+                }
+                current = current->next;
+            }
+            return false;
+        }
+
         void free_nodes() {
             Node<T>* curr = _head;
             while (curr) {
@@ -344,12 +355,14 @@ namespace Rune {
          *
          * @return True: The element is in the list, False: Is not in the list.
          */
+        auto contains(const T& element) const -> bool { return contains0(element); }
         auto contains(const T& element) -> bool { return contains0(element); }
 
         /**
          *
          * @return True: The element is in the list, False: Is not in the list.
          */
+        auto contains(T&& element) const -> bool { return contains0(move(element)); }
         auto contains(T&& element) -> bool { return contains0(move(element)); }
 
         /**
