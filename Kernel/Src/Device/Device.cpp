@@ -27,7 +27,7 @@ namespace Rune::Device {
 
     auto BasicDeviceID::equals(const DeviceID* d_ID) const -> bool {
         if (d_ID->get_device_ID_type() != DeviceIDType::STRING) return false;
-        auto* str_d_ID = static_cast<const BasicDeviceID*>(d_ID);
+        const auto* str_d_ID = static_cast<const BasicDeviceID*>(d_ID);
         return m_string_ID == str_d_ID->m_string_ID;
     }
 
@@ -39,7 +39,7 @@ namespace Rune::Device {
 
     DEFINE_ENUM(DeviceType, DEVICE_TYPES, 0x0)
 
-    Device::Device(Handle  handle,
+    Device::Device(Handle        handle,
                    const String& name,
                    const String& oem,
                    const String& revision,
@@ -49,10 +49,7 @@ namespace Rune::Device {
           m_oem(oem),
           m_revision(revision),
           m_serial_number(serial_number),
-          m_device_type(device_type),
-          m_driver(),
-          m_bus_device(),
-          m_child_devices() {}
+          m_device_type(device_type) {}
 
     auto Device::oem() const -> const String& { return m_oem; }
 
@@ -77,15 +74,15 @@ namespace Rune::Device {
     // BasicDevice
     // ========================================================================================== //
 
-    BasicDevice::BasicDevice(Handle         handle,
-                             const String&        name,
-                             const String&        oem,
-                             const String&        revision,
-                             const String&        serial_number,
-                             DeviceType           device_type,
-                             const BasicDeviceID& device_ID)
+    BasicDevice::BasicDevice(Handle        handle,
+                             const String& name,
+                             const String& oem,
+                             const String& revision,
+                             const String& serial_number,
+                             DeviceType    device_type,
+                             BasicDeviceID device_ID)
         : Device(handle, name, oem, revision, serial_number, device_type),
-          m_device_ID(device_ID) {}
+          m_device_ID(move(device_ID)) {}
 
     auto BasicDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 

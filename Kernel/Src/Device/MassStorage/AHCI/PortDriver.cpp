@@ -23,9 +23,7 @@ namespace Rune::Device {
 
     auto PortDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto PortDriver::version() const -> Version {
-        return {.major = 1, .minor = 0, .patch = 0};
-    }
+    auto PortDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
     auto PortDriver::target_device_ID() const -> const DeviceID* {
         return &PortEngine::ID_ATA_DEVICE;
@@ -60,15 +58,13 @@ namespace Rune::Device {
                 div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
             *static_cast<size_t*>(request.m_out_buffer) =
                 port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, read_dma_FIS);
-
-            return IORequestStatus::HANDLED;
         } else {
             auto write_dma_FIS = RegisterHost2DeviceFIS::WriteDMAExtended(
                 dev_lba,
                 div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
             *static_cast<size_t*>(request.m_out_buffer) =
                 port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, write_dma_FIS);
-            return IORequestStatus::HANDLED;
         }
+        return IORequestStatus::HANDLED;
     }
 } // namespace Rune::Device

@@ -64,12 +64,12 @@ namespace Rune::Device {
         /// @brief
         /// @return True: The device may contain more than one function.
         ///         False: Otherwise.
-        auto is_multi_function_device() -> bool;
+        [[nodiscard]] auto is_multi_function_device() const -> bool;
 
         /// @brief Get the layout of the second part of the header.
         /// @return 0: Header type 0 - General Device
         ///         1: Header type 1 - PCI-to-PCI Bridge
-        auto get_header_layout() -> U8;
+        [[nodiscard]] auto get_header_layout() const -> U8;
     };
 
     /// @brief Type 0 configuration space header of generic devices.
@@ -120,13 +120,13 @@ namespace Rune::Device {
         PCIConfigurationSpaceHeaderType0 m_pci_header;
 
       public:
-        PCIDevice(Handle             handle,
-                  const String&      name,
-                  const String&      oem,
-                  const String&      revision,
-                  const String&      serial_number,
-                  DeviceType         device_type,
-                  const PCIDeviceID& device_ID,
+        PCIDevice(Handle                                  handle,
+                  const String&                           name,
+                  const String&                           oem,
+                  const String&                           revision,
+                  const String&                           serial_number,
+                  DeviceType                              device_type,
+                  PCIDeviceID                             device_ID,
                   const PCIConfigurationSpaceHeaderType0& pci_header);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;

@@ -104,19 +104,6 @@ namespace Rune::Device {
     // ========================================================================================== //
 
     class PCIDriver : public Driver {
-
-        /// @brief Try to map a PCI device to device driver.
-        /// @param bus
-        /// @param device
-        /// @param func
-        /// @param device_mapper
-        /// @param dev_handle_counter
-        /// @return True: The device is a multifunction device, False: Otherwise.
-        auto map_device(U16                          bus,
-                        U8                           device,
-                        U8                           func,
-                        const SharedPointer<Device>& bus_device) -> bool;
-
       public:
         const static BasicDeviceID ID_PCI;
 

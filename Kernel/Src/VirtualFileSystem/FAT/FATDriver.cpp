@@ -323,10 +323,8 @@ namespace Rune::VFS {
                    : IOStatus(IOStatus::DEV_ERROR);
     }
 
-    auto FATDriver::mass_storage_device_read(Device::Handle dev_handle,
-                                             void*          buf,
-                                             size_t         buf_size,
-                                             U32            lba) -> size_t {
+    auto fd_mass_storage_device_read(Device::Handle dev_handle, void* buf, size_t buf_size, U32 lba)
+        -> size_t {
         auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::MassStorageDeviceRequest msd_req{.m_type =
                                                      Device::MassStorageDeviceRequestType::READ,
@@ -343,10 +341,9 @@ namespace Rune::VFS {
                    : 0;
     }
 
-    auto FATDriver::mass_storage_device_write(Device::Handle dev_handle,
-                                              void*          buf,
-                                              size_t         buf_size,
-                                              U32            lba) -> size_t {
+    auto
+    fd_mass_storage_device_write(Device::Handle dev_handle, void* buf, size_t buf_size, U32 lba)
+        -> size_t {
         auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::MassStorageDeviceRequest msd_req{.m_type =
                                                      Device::MassStorageDeviceRequestType::WRITE,
@@ -388,16 +385,16 @@ namespace Rune::VFS {
             return FormatStatus::FORMAT_ERROR;
 
         auto* bpb = reinterpret_cast<BIOSParameterBlock*>(boot_record_buf);
-        if (mass_storage_device_write(mass_storage_dev_handle, boot_record_buf, sector_size, 0)
+        if (fd_mass_storage_device_write(mass_storage_dev_handle, boot_record_buf, sector_size, 0)
             < sector_size)
             return FormatStatus::DEV_ERROR;
 
         U16 backup_boot_sector = _fat_engine->get_backup_boot_record_sector(bpb);
         if (backup_boot_sector > 0
-            && mass_storage_device_write(mass_storage_dev_handle,
-                                         boot_record_buf,
-                                         sector_size,
-                                         backup_boot_sector)
+            && fd_mass_storage_device_write(mass_storage_dev_handle,
+                                            boot_record_buf,
+                                            sector_size,
+                                            backup_boot_sector)
                    < sector_size)
             return FormatStatus::DEV_ERROR;
 
@@ -407,7 +404,7 @@ namespace Rune::VFS {
         for (U32 i = bpb->reserved_sector_count;
              i < _fat_engine->fat_get_size(bpb) * bpb->fat_count;
              i++)
-            if (mass_storage_device_write(mass_storage_dev_handle, zeroes, sector_size, i) == 0)
+            if (fd_mass_storage_device_write(mass_storage_dev_handle, zeroes, sector_size, i) == 0)
                 return FormatStatus::DEV_ERROR;
 
         // Set first entry to media type
@@ -453,7 +450,7 @@ namespace Rune::VFS {
         U32   sector_size     = msd->sector_size();
         auto* boot_record_buf = new U8[sector_size];
         memset(boot_record_buf, 0, sector_size);
-        if (mass_storage_device_read(mass_storage_dev_handle, boot_record_buf, sector_size, 0)
+        if (fd_mass_storage_device_read(mass_storage_dev_handle, boot_record_buf, sector_size, 0)
             != sector_size)
             return MountStatus::DEV_ERROR;
 

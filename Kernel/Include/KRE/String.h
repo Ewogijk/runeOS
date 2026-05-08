@@ -377,22 +377,30 @@ namespace Rune {
         auto operator()(const String& key) const -> size_t { return c_str_hash(key.to_cstr()); }
     };
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          String Conversions
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ========================================================================================== //
+    // String Conversions
+    // ========================================================================================== //
+
+#define RADIXES(X)                                                                                 \
+    X(Radix, DECIMAL, 10)                                                                          \
+    X(Radix, HEX, 16)
+
+    /// @brief Common radix values.
+    DECLARE_ENUM(Radix, RADIXES, 0x0) // NOLINT
 
     template <class TNum>
-    auto int_to_string(TNum num, int radix) -> String {
+    auto int_to_string(TNum num, Radix radix) -> String {
         constexpr char hex_chars[] = "0123456789ABCDEF"; // NOLINT String shall not depend on Array
         constexpr U8   BUF_SIZE    = 32;
         char           buf[BUF_SIZE]; // NOLINT String shall not depend on Array
         memset(buf, 0, BUF_SIZE);
-        size_t pos = 0;
+        size_t pos       = 0;
+        size_t radix_val = radix.to_value();
         do { // NOLINT is tested
-            TNum rem = num % radix;
+            TNum rem = num % radix_val;
             // Fill the buffer in reverse order
             buf[BUF_SIZE - 1 - pos]  = hex_chars[rem]; // NOLINT is tested
-            num                     /= radix;
+            num                     /= radix_val;
             pos++;
         } while (num > 0 && pos < BUF_SIZE);
 

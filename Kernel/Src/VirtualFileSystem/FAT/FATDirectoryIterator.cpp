@@ -210,7 +210,7 @@ namespace Rune::VFS {
         _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
     }
 
-    FATDirectoryIterator::FATDirectoryIterator(Device::Handle   mass_storage_dev_handle,
+    FATDirectoryIterator::FATDirectoryIterator(Device::Handle         mass_storage_dev_handle,
                                                BIOSParameterBlock*    bpb,
                                                const VolumeManager*   volume_manager,
                                                U32                    start_cluster,
@@ -242,7 +242,7 @@ namespace Rune::VFS {
         }
     }
 
-    auto FATDirectoryIterator::navigate_to(Device::Handle        mass_storage_dev_handle,
+    auto FATDirectoryIterator::navigate_to(Device::Handle              mass_storage_dev_handle,
                                            BIOSParameterBlock*         bpb,
                                            const VolumeManager*        volume_manager,
                                            U32                         start_cluster,

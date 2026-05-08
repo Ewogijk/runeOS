@@ -975,4 +975,10 @@ namespace Rune {
     }
 
     auto operator!=(const String& a, const String& b) -> bool { return !(a == b); }
+
+    // ========================================================================================== //
+    // String Conversions
+    // ========================================================================================== //
+
+    DEFINE_ENUM(Radix, RADIXES, 0x0)
 } // namespace Rune

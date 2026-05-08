@@ -144,8 +144,8 @@ namespace Rune::VFS {
     //                                    Mounted Storage Ref Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    MassStorageDevRef::MassStorageDevRef(Device::Handle mass_storage_dev_handle,
-                                         BIOSParameterBlock*  bpb)
+    MassStorageDevRef::MassStorageDevRef(Device::Handle      mass_storage_dev_handle,
+                                         BIOSParameterBlock* bpb)
         : m_mass_storage_dev_handle(mass_storage_dev_handle),
           m_BPB(bpb) {}
 

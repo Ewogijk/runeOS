@@ -110,8 +110,7 @@ namespace Rune::Device {
     const BasicDeviceID PS2Keyboard::ID_PS2_KEYBOARD("PS2 Keyboard");
 
     PS2Keyboard::PS2Keyboard()
-        : VirtualKeyboard(),
-          _key_code_cache(),
+        : _key_code_cache(),
           _irq_handler([] { return CPU::IRQState::PENDING; }) {}
 
     auto PS2Keyboard::read() -> int {

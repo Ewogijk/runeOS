@@ -40,6 +40,7 @@ namespace Rune::Device {
         : BasicDevice(handle, name, oem, revision, serial_number, device_type, device_ID),
           m_mass_storage_device_type(mass_storage_device_type),
           m_total_sector_count(sector_count),
+          m_used_sector_count(0),
           m_sector_size(sector_size),
           m_partition_range(partition_range) {}
 

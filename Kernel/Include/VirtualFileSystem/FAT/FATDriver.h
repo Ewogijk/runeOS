@@ -61,16 +61,6 @@ namespace Rune::VFS {
                               LocationAwareFileEntry&                 dir,
                               const Path&                             path) -> IOStatus;
 
-        auto mass_storage_device_read(Device::Handle dev_handle,
-                                      void*                buf,
-                                      size_t               buf_size,
-                                      U32                  lba) -> size_t;
-
-        auto mass_storage_device_write(Device::Handle dev_handle,
-                                       void*                buf,
-                                       size_t               buf_size,
-                                       U32                  lba) -> size_t;
-
       public:
         explicit FATDriver(SharedPointer<FATEngine> fat_engine);
 
