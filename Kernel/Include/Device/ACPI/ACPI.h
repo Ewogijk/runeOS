@@ -40,9 +40,6 @@ namespace Rune::Device {
     class ACPIDriver : public Driver {
         bool _acpi_initialized = false;
 
-        auto handle_get_acpi_info_request(IORequest& request) -> IORequestStatus;
-        auto handle_shutdown_request(IORequest& request) -> IORequestStatus;
-
       public:
         const static BasicDeviceID ID_ACPI;
 

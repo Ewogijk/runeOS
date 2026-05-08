@@ -26,7 +26,7 @@ namespace Rune::VFS {
         : _fat_engine(move(fat_engine)),
           _volume_manager(volume_manager) {}
 
-    auto FileEntryManager::search(U16                     storage_dev,
+    auto FileEntryManager::search(U16                     mass_storage_dev_handle,
                                   BIOSParameterBlock*     bpb,
                                   const Path&             path,
                                   LocationAwareFileEntry& out) const -> VolumeAccessStatus {
@@ -48,22 +48,22 @@ namespace Rune::VFS {
             return VolumeAccessStatus::OKAY;
         }
 
-        LinkedListIterator<String> p_it    = p_split.begin();
-        NavigationResult           nav_res = FATDirectoryIterator::navigate_to(storage_dev,
+        LinkedListIterator<String> p_it = p_split.begin();
+        NavigationResult nav_res        = FATDirectoryIterator::navigate_to(mass_storage_dev_handle,
                                                                      bpb,
                                                                      _volume_manager,
                                                                      root_dummy.cluster(),
                                                                      p_it);
-        out                                = nav_res.file;
+        out                             = nav_res.file;
         if (nav_res.status == NavigationStatus::FOUND) return VolumeAccessStatus::OKAY;
         if (nav_res.status == NavigationStatus::NOT_FOUND) return VolumeAccessStatus::NOT_FOUND;
         return VolumeAccessStatus::DEV_ERROR;
     }
     // NOLINTBEGIN its complex, deal with it
-    auto FileEntryManager::find_empty_file_entries(U16                                 storage_dev,
-                                                   BIOSParameterBlock*                 bpb,
-                                                   const Path&                         path,
-                                                   U16                                 range,
+    auto FileEntryManager::find_empty_file_entries(U16                 mass_storage_dev_handle,
+                                                   BIOSParameterBlock* bpb,
+                                                   const Path&         path,
+                                                   U16                 range,
                                                    LinkedList<LocationAwareFileEntry>& out)
         -> VolumeAccessStatus {
         // NOLINTEND
@@ -84,13 +84,13 @@ namespace Rune::VFS {
             };
         } else {
             // Get the directory file entry
-            LinkedListIterator<String> p_it    = p_split.begin();
-            NavigationResult           nav_res = FATDirectoryIterator::navigate_to(storage_dev,
+            LinkedListIterator<String> p_it = p_split.begin();
+            NavigationResult nav_res = FATDirectoryIterator::navigate_to(mass_storage_dev_handle,
                                                                          bpb,
                                                                          _volume_manager,
                                                                          root_dummy.cluster(),
                                                                          p_it);
-            dir                                = nav_res.file;
+            dir                      = nav_res.file;
 
             if (nav_res.status != NavigationStatus::FOUND) {
                 if (nav_res.status == NavigationStatus::NOT_FOUND)
@@ -99,7 +99,7 @@ namespace Rune::VFS {
             }
         }
 
-        FATDirectoryIterator dIt(storage_dev,
+        FATDirectoryIterator dIt(mass_storage_dev_handle,
                                  bpb,
                                  _volume_manager,
                                  dir.file.first_cluster_high << SHIFT_16
@@ -142,7 +142,8 @@ namespace Rune::VFS {
             // Allocate new clusters until we have enough free space for the rest of the file
             // entries
             while (required_space > 0) {
-                U32 next_cluster = allocate_cluster(storage_dev, bpb, dir, current_cluster);
+                U32 next_cluster =
+                    allocate_cluster(mass_storage_dev_handle, bpb, dir, current_cluster);
                 if (next_cluster >= _fat_engine->get_max_cluster_count())
                     return VolumeAccessStatus::DEV_ERROR; // Cannot allocate enough clusters
 
@@ -157,7 +158,7 @@ namespace Rune::VFS {
             }
 
             // Add more free entries to "out"
-            FATDirectoryIterator after_end(storage_dev,
+            FATDirectoryIterator after_end(mass_storage_dev_handle,
                                            bpb,
                                            _volume_manager,
                                            first_new_cluster,
@@ -172,22 +173,28 @@ namespace Rune::VFS {
         return VolumeAccessStatus::OKAY;
     }
 
-    auto FileEntryManager::update(U16                           storage_dev,
+    auto FileEntryManager::update(Device::Handle                mass_storage_dev_handle,
                                   BIOSParameterBlock*           bpb,
                                   const LocationAwareFileEntry& entry) -> bool {
         U8 buf[bpb->bytes_per_sector * bpb->sectors_per_cluster]; // NOLINT
-        if (!_volume_manager->data_cluster_read(storage_dev, bpb, buf, entry.location.cluster))
+        if (!_volume_manager->data_cluster_read(mass_storage_dev_handle,
+                                                bpb,
+                                                buf,
+                                                entry.location.cluster))
             return false;
         auto* file_cluster                     = reinterpret_cast<FileEntry*>(buf);
         file_cluster[entry.location.entry_idx] = entry.file;
-        return _volume_manager->data_cluster_write(storage_dev, bpb, buf, entry.location.cluster);
+        return _volume_manager->data_cluster_write(mass_storage_dev_handle,
+                                                   bpb,
+                                                   buf,
+                                                   entry.location.cluster);
     }
 
-    auto FileEntryManager::allocate_cluster(U16                     storage_dev,
+    auto FileEntryManager::allocate_cluster(U16                     mass_storage_dev,
                                             BIOSParameterBlock*     bpb,
                                             LocationAwareFileEntry& file,
                                             U32                     last_file_cluster) -> U32 {
-        U32 free_cluster = _volume_manager->fat_find_next_free_cluster(storage_dev, bpb);
+        U32 free_cluster = _volume_manager->fat_find_next_free_cluster(mass_storage_dev, bpb);
         if (free_cluster == 0) return 0;
 
         if (last_file_cluster == 0) {
@@ -199,28 +206,28 @@ namespace Rune::VFS {
             //          of the world
             file.file.first_cluster_low  = word_get(free_cluster, 0);
             file.file.first_cluster_high = word_get(free_cluster, 1);
-            if (!update(storage_dev, bpb, file)) return 0;
-            if (!_volume_manager->fat_write(storage_dev,
+            if (!update(mass_storage_dev, bpb, file)) return 0;
+            if (!_volume_manager->fat_write(mass_storage_dev,
                                             bpb,
                                             free_cluster,
                                             _fat_engine->fat_get_eof_marker())) {
                 file.file.first_cluster_low  = 0;
                 file.file.first_cluster_high = 0;
-                update(storage_dev, bpb, file);
+                update(mass_storage_dev, bpb, file);
                 return 0;
             }
         } else {
             // File has at least one cluster -> Update the last file cluster in the FAT to point to
             // the new cluster and update the new cluster in the FAT to the EOF marker
             // NOLINTBEGIN
-            if (!_volume_manager->fat_write(storage_dev, bpb, last_file_cluster, free_cluster))
+            if (!_volume_manager->fat_write(mass_storage_dev, bpb, last_file_cluster, free_cluster))
                 return 0;
             // NOLINTEND
-            if (!_volume_manager->fat_write(storage_dev,
+            if (!_volume_manager->fat_write(mass_storage_dev,
                                             bpb,
                                             free_cluster,
                                             _fat_engine->fat_get_eof_marker())) {
-                _volume_manager->fat_write(storage_dev,
+                _volume_manager->fat_write(mass_storage_dev,
                                            bpb,
                                            last_file_cluster,
                                            _fat_engine->fat_get_eof_marker());

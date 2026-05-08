@@ -56,8 +56,7 @@ namespace Rune::VFS {
         }
 
         if (msd_handle == Resource<Device::Handle>::HANDLE_NONE) {
-            LOGGER->critical(
-                "Cannot mount root directory! No mass storage device found...");
+            LOGGER->critical("Cannot mount root directory! No mass storage device found...");
             return false;
         }
         // Mount root directory
@@ -288,7 +287,8 @@ namespace Rune::VFS {
         return st;
     }
 
-    auto VFSModule::mount(const Path& mount_point, U16 storage_device) -> MountStatus {
+    auto VFSModule::mount(const Path& mount_point, Device::Handle mass_storage_device_handle)
+        -> MountStatus {
         if (!mount_point.is_absolute()) return MountStatus::BAD_PATH;
 
         if (_mount_point_table.is_empty() && !mount_point.is_root()) {
@@ -315,25 +315,27 @@ namespace Rune::VFS {
                 LOGGER->warn(
 
                     R"(Mounting storage device {} on "{}" failed. Mount point does not exist.)",
-                    storage_device,
+                    mass_storage_device_handle,
                     mount_point.to_string());
                 return MountStatus::MOUNT_ERROR;
             }
         }
 
         for (const auto& dp : _driver_table) {
-            MountStatus ms = (*dp.value)->mount(storage_device); // NOLINT only end() is null
+            MountStatus ms =
+                (*dp.value)->mount(mass_storage_device_handle); // NOLINT only end() is null
             // It is fine that the driver complains about this
             // as long as it serves the device
             if (ms == MountStatus::ALREADY_MOUNTED) ms = MountStatus::MOUNTED;
             if (ms == MountStatus::MOUNTED) {
-                _mount_point_table.put(mount_point,
-                                       {.m_mount_point                = mount_point,
-                                        .m_driver_name                = (*dp.value)->get_name(),
-                                        .m_mass_storage_device_handle = storage_device});
+                _mount_point_table.put(
+                    mount_point,
+                    {.m_mount_point                = mount_point,
+                     .m_driver_name                = (*dp.value)->get_name(),
+                     .m_mass_storage_device_handle = mass_storage_device_handle});
                 LOGGER->info(R"(The {} formatted storage device {} is now mounted at "{}")",
                              (*dp.value)->get_name(),
-                             storage_device,
+                             mass_storage_device_handle,
                              mount_point.to_string());
                 return ms;
             }
@@ -342,7 +344,7 @@ namespace Rune::VFS {
         LOGGER->warn(
             R"(Failed to mount "{}". The Filesystem of storage device {} is not supported.)",
             mount_point.to_string(),
-            storage_device);
+            mass_storage_device_handle);
         return MountStatus::NOT_SUPPORTED;
     }
 

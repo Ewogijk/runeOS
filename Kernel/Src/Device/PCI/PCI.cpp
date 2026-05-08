@@ -191,7 +191,14 @@ namespace Rune::Device {
 
     const BasicDeviceID PCIDriver::ID_PCI("PCI");
 
-    auto PCIDriver::map_device(U16 bus, U8 device, U8 func, const SharedPointer<Device>& bus_device)
+    /// @brief Try to map a PCI device to device driver.
+    /// @param bus
+    /// @param device
+    /// @param func
+    /// @param device_mapper
+    /// @param dev_handle_counter
+    /// @return True: The device is a multifunction device, False: Otherwise.
+    auto pci_map_device(U16 bus, U8 device, U8 func, const SharedPointer<Device>& bus_device)
         -> bool {
         PCIConfigurationSpaceHeaderCommon header =
             pci_read_configuration_space_header_common(bus, device, func);
@@ -211,7 +218,7 @@ namespace Rune::Device {
                 new PCIDevice(ds->get_device_handle(),
                               resp.m_device_name,
                               resp.m_vendor_name,
-                              int_to_string(header.revision_id, 10),
+                              int_to_string(header.revision_id, Radix::DECIMAL),
                               "",
                               DeviceType::GENERIC,
                               PCIDeviceID(header.base_class_code,
@@ -228,9 +235,7 @@ namespace Rune::Device {
 
     auto PCIDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto PCIDriver::version() const -> Version {
-        return {.major = 1, .minor = 0, .patch = 0};
-    }
+    auto PCIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
     auto PCIDriver::target_device_ID() const -> const DeviceID* { return &ID_PCI; }
 
@@ -239,9 +244,9 @@ namespace Rune::Device {
         pci_vendor_db_initialize();
         for (U16 pci_bus = 0; pci_bus < BUS_LIMIT; pci_bus++) {
             for (U8 pci_device = 0; pci_device < DEVICE_LIMIT; pci_device++) {
-                if (map_device(pci_bus, pci_device, 0, device)) {
+                if (pci_map_device(pci_bus, pci_device, 0, device)) {
                     for (U8 func = 1; func < FUNCTION_LIMIT; func++) {
-                        map_device(pci_bus, pci_device, func, device);
+                        pci_map_device(pci_bus, pci_device, func, device);
                     }
                 }
             }

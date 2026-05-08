@@ -27,9 +27,12 @@ namespace Rune::Device {
         return !(lhs == rhs);
     }
 
+    // NOLINTBEGIN cppcoreguidelines-avoid-non-const-global-variables: must be mutable
     HashMap<PCIVendorDBRequest, PCIVendorDBResponse> VENDOR_DATABASE;
+    // NOLINTEND
 
     void pci_vendor_db_initialize() {
+        // NOLINTBEGIN cppcoreguidelines-avoid-magic-numbers: not worth the work
         VENDOR_DATABASE.put({.m_vendor_ID = 0x8086, .m_device_ID = 0x1237},
                             {.m_vendor_name = "Intel Corporation",
                              .m_device_name = "440FX - 82441FX PMC [Natoma]"});
@@ -46,6 +49,7 @@ namespace Rune::Device {
             {.m_vendor_ID = 0x8086, .m_device_ID = 0x2922},
             {.m_vendor_name = "Intel Corporation",
              .m_device_name = "82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode]"});
+        // NOLINTEND
     }
 
     auto pci_vendor_db_resolve(PCIVendorDBRequest vendor_db_request) -> PCIVendorDBResponse {

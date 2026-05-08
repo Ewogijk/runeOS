@@ -37,8 +37,8 @@ namespace Rune::Device {
     // ACPIDriver
     // ========================================================================================== //
 
-    auto ACPIDriver::handle_get_acpi_info_request(IORequest& request) -> IORequestStatus {
-        ACPI_TABLE_RSDP* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
+    auto handle_get_acpi_info_request(IORequest& request) -> IORequestStatus {
+        auto* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
             Memory::physical_to_virtual_address(System::instance().get_boot_info().rsdp_addr));
         auto* acpi_info       = reinterpret_cast<ACPIInfo*>(request.m_out_buffer);
         acpi_info->m_oem      = String(rsdp->OemId, ACPI_OEM_ID_SIZE);
@@ -46,7 +46,7 @@ namespace Rune::Device {
         return IORequestStatus::HANDLED;
     }
 
-    auto ACPIDriver::handle_shutdown_request(IORequest& request) -> IORequestStatus {
+    auto handle_shutdown_request(IORequest& request) -> IORequestStatus {
         ACPI_STATUS status = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiEnterSleepStatePrep(S5) failed. Status={}", status);
@@ -66,9 +66,7 @@ namespace Rune::Device {
 
     auto ACPIDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto ACPIDriver::version() const -> Version {
-        return {.major = 1, .minor = 0, .patch = 0};
-    }
+    auto ACPIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
     auto ACPIDriver::target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
 
@@ -131,7 +129,7 @@ namespace Rune::Device {
     auto ACPIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> IORequestStatus {
         if (!_acpi_initialized) return IORequestStatus::UNKNOWN_DEVICE;
-        auto req = reinterpret_cast<ACPIRequest*>(request.m_in_buffer);
+        auto* req = reinterpret_cast<ACPIRequest*>(request.m_in_buffer);
 
         switch (*req) {
             case ACPIRequest::GET_ACPI_INFO: return handle_get_acpi_info_request(request);

@@ -174,8 +174,7 @@ namespace Rune::Device {
         /// @return The requested device cast to DeviceInterface. Nullptr if no device with the
         ///         handle was found or the device type does not match with device_type.
         template <class DeviceInterface>
-        auto get_device(Handle dev_handle)
-            -> SharedPointer<DeviceInterface> {
+        auto get_device(Handle dev_handle) -> SharedPointer<DeviceInterface> {
             return SharedPointer<DeviceInterface>(find_device(m_device_tree, dev_handle));
         }
 

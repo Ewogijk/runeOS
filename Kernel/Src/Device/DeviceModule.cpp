@@ -34,20 +34,20 @@ namespace Rune::Device {
 
     auto DeviceModule::find_device(const SharedPointer<Device>& current_device, Handle dev_handle)
         -> SharedPointer<Device> {
-        if (dev_handle == Resource<Handle>::HANDLE_NONE) return SharedPointer<Device>();
+        if (dev_handle == Resource<Handle>::HANDLE_NONE) return {};
         if (dev_handle == current_device->get_handle()) return current_device;
         for (auto& child : current_device->child_devices()) {
             auto maybe_device = find_device(child, dev_handle);
             if (maybe_device) return maybe_device;
         }
-        return SharedPointer<Device>();
+        return {};
     }
 
     auto DeviceModule::find_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver> {
-        if (!device_ID) return SharedPointer<Driver>();
+        if (device_ID == nullptr) return {};
         for (auto& driver : m_driver_store)
             if (driver->target_device_ID()->equals(device_ID)) return driver;
-        return SharedPointer<Driver>();
+        return {};
     }
 
     void DeviceModule::match_devices(LinkedList<SharedPointer<Device>>& out_devices,
@@ -75,7 +75,7 @@ namespace Rune::Device {
     // Public Functions
     // ========================================================================================== //
 
-    DeviceModule::DeviceModule() {}
+    DeviceModule::DeviceModule() = default;
 
     auto DeviceModule::get_name() const -> String { return "Device"; }
 
@@ -104,7 +104,7 @@ namespace Rune::Device {
             return false;
         }
 
-        IORequest request;
+        IORequest request{};
         auto      acpi_req = ACPIRequest::GET_ACPI_INFO;
         ACPIInfo  acpi_info;
         request.m_in_buffer  = &acpi_req;
@@ -114,13 +114,15 @@ namespace Rune::Device {
             LOGGER->error("Failed to configure the root device.");
             return false;
         }
-        SharedPointer<Device> root_device(new BasicDevice(root_device_handle,
-                                                          ACPIDriver::ID_ACPI.get_string_ID(),
-                                                          acpi_info.m_oem,
-                                                          int_to_string(acpi_info.m_revision, 10),
-                                                          "",
-                                                          DeviceType::GENERIC,
-                                                          ACPIDriver::ID_ACPI));
+        constexpr int         RADIX_DECIMAL = 10;
+        SharedPointer<Device> root_device(
+            new BasicDevice(root_device_handle,
+                            ACPIDriver::ID_ACPI.get_string_ID(),
+                            acpi_info.m_oem,
+                            int_to_string(acpi_info.m_revision, RADIX_DECIMAL),
+                            "",
+                            DeviceType::GENERIC,
+                            ACPIDriver::ID_ACPI));
 
         // Replace the ACPI dummy device with the correct ACPI device object.
         m_device_tree = root_device;
@@ -212,6 +214,7 @@ namespace Rune::Device {
         return true;
     }
 
+    // NOLINTBEGIN readability-convert-member-functions-to-static: dont care
     auto DeviceModule::unregister_device(const SharedPointer<Device>& device) -> bool {
         if (!device) return false;
         if (!device->bus_device())
@@ -228,6 +231,7 @@ namespace Rune::Device {
         }
         return true;
     }
+    // NOLINTEND
 
     auto DeviceModule::control_device(Handle dev_handle, const IORequest& io_request)
         -> IORequestStatus {

@@ -46,18 +46,16 @@ namespace Rune::Device {
     static constexpr size_t IDENTIFY_DEVICE_BUFFER_SIZE = 256;
     static constexpr size_t DEFAULT_SECTOR_SIZE         = 512;
 
-    static constexpr U8 SERIAL_NUMBER_OFFSET                 = 10;
-    static constexpr U8 FIRMWARE_REVISION_OFFSET             = 23;
-    static constexpr U8 MODEL_NUMBER_OFFSET                  = 27;
-    static constexpr U8 COMMAND_AND_FEATURE_SET_OFFSET       = 83;
-    static constexpr U8 ADDITIONAL_PRODUCT_IDENTIFIER_OFFSET = 170;
-    static constexpr U8 CURRENT_MEDIA_SERIAL_NUMBER_OFFSET   = 176;
-    static constexpr U8 CAF_48_BIT_ADDR_BIT                  = 10;
-    static constexpr U8 SECTOR_COUNT_28BIT_OFFSET            = 60;
-    static constexpr U8 SECTOR_COUNT_48BIT_OFFSET            = 100;
-    static constexpr U8 PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET  = 106;
-    static constexpr U8 LOGICAL_SECTOR_SIZE_SUPPORTED_BIT    = 12;
-    static constexpr U8 LOGICAL_SECTOR_SIZE_OFFSET           = 117;
+    static constexpr U8 SERIAL_NUMBER_OFFSET                = 10;
+    static constexpr U8 FIRMWARE_REVISION_OFFSET            = 23;
+    static constexpr U8 MODEL_NUMBER_OFFSET                 = 27;
+    static constexpr U8 COMMAND_AND_FEATURE_SET_OFFSET      = 83;
+    static constexpr U8 CAF_48_BIT_ADDR_BIT                 = 10;
+    static constexpr U8 SECTOR_COUNT_28BIT_OFFSET           = 60;
+    static constexpr U8 SECTOR_COUNT_48BIT_OFFSET           = 100;
+    static constexpr U8 PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET = 106;
+    static constexpr U8 LOGICAL_SECTOR_SIZE_SUPPORTED_BIT   = 12;
+    static constexpr U8 LOGICAL_SECTOR_SIZE_OFFSET          = 117;
 
     // ========================================================================================== //
     // PortEngine
@@ -67,7 +65,6 @@ namespace Rune::Device {
 
     PortEngine::PortEngine(volatile HBAPort* port, bool s_64a, CPU::Timer* timer)
         : _port(port),
-          _system_memory(nullptr),
           _s64a(s_64a),
           _timer(timer) {};
 

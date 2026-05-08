@@ -73,34 +73,25 @@ namespace Rune::Device {
 
     auto pci_resolve_subclass_code(BaseClass base_class, U8 subclass_code) -> String {
         switch (base_class) {
-            case BaseClass::ANCIENT:
-                return AncientSubClass(subclass_code).to_string();
+            case BaseClass::ANCIENT: return AncientSubClass(subclass_code).to_string();
             case BaseClass::MASS_STORAGE_CONTROLLER:
                 return MassStorageSubClass(subclass_code).to_string();
-            case BaseClass::NETWORK_CONTROLLER:
-                return NetworkSubClass(subclass_code).to_string();
-            case BaseClass::DISPLAY_CONTROLLER:
-                return DisplaySubClass(subclass_code).to_string();
-            case BaseClass::MULTIMEDIA_DEVICE:
-                return MultimediaSubClass(subclass_code).to_string();
-            case BaseClass::MEMORY_CONTROLLER:
-                return MemorySubClass(subclass_code).to_string();
-            case BaseClass::BRIDGE_DEVICE:
-                return BridgeSubClass(subclass_code).to_string();
+            case BaseClass::NETWORK_CONTROLLER: return NetworkSubClass(subclass_code).to_string();
+            case BaseClass::DISPLAY_CONTROLLER: return DisplaySubClass(subclass_code).to_string();
+            case BaseClass::MULTIMEDIA_DEVICE:  return MultimediaSubClass(subclass_code).to_string();
+            case BaseClass::MEMORY_CONTROLLER:  return MemorySubClass(subclass_code).to_string();
+            case BaseClass::BRIDGE_DEVICE:      return BridgeSubClass(subclass_code).to_string();
             case BaseClass::SIMPLE_COMMUNICATION_CONTROLLER:
                 return SimpleCommunicationSubClass(subclass_code).to_string();
             case BaseClass::BASE_SYSTEM_PERIPHERAL:
                 return BaseSystemPeripheralSubClass(subclass_code).to_string();
-            case BaseClass::INPUT_DEVICE:
-                return InputDeviceSubClass(subclass_code).to_string();
+            case BaseClass::INPUT_DEVICE: return InputDeviceSubClass(subclass_code).to_string();
             case BaseClass::DOCKING_STATION:
                 return DockingStationSubClass(subclass_code).to_string();
-            case BaseClass::PROCESSOR:
-                return ProcessorSubClass(subclass_code).to_string();
+            case BaseClass::PROCESSOR: return ProcessorSubClass(subclass_code).to_string();
             case BaseClass::SERIAL_BUS_CONTROLLER:
                 return SerialBusSubClass(subclass_code).to_string();
-            case BaseClass::WIRELESS_CONTROLLER:
-                return WirelessSubClass(subclass_code).to_string();
+            case BaseClass::WIRELESS_CONTROLLER: return WirelessSubClass(subclass_code).to_string();
             case BaseClass::INTELLIGENT_IO_CONTROLLER:
                 return IntelligentIOSubClass(subclass_code).to_string();
             case BaseClass::SATELLITE_COMMUNICATION_CONTROLLER:
@@ -113,8 +104,7 @@ namespace Rune::Device {
                 return ProcessingAcceleratorSubClass(subclass_code).to_string();
             case BaseClass::NON_ESSENTIAL_INSTRUMENTATION:
                 return NonEssentialInstrumentationSubClass(subclass_code).to_string();
-            default:
-                return "NONE";
+            default: return "NONE";
         }
     }
 
@@ -137,22 +127,19 @@ namespace Rune::Device {
                         return NVMProgrammingInterface(programming_interface).to_string();
                     case MassStorageSubClass::UNIVERSAL_FLASH_STORAGE_CONTROLLER:
                         return UFSProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::DISPLAY_CONTROLLER:
                 switch (subclass_code) {
                     case DisplaySubClass::VGA_COMPATIBLE_CONTROLLER:
                         return VGAProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::MULTIMEDIA_DEVICE:
                 switch (subclass_code) {
                     case MultimediaSubClass::HIGH_DEFINITION_AUDIO:
                         return HDAudioProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::BRIDGE_DEVICE:
                 switch (subclass_code) {
@@ -164,8 +151,7 @@ namespace Rune::Device {
                     case BridgeSubClass::ADVANCED_SWITCHING_TO_PCI_HOST_BRIDGE:
                         return AdvancedSwitchingBridgeProgrammingInterface(programming_interface)
                             .to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::SIMPLE_COMMUNICATION_CONTROLLER:
                 switch (subclass_code) {
@@ -176,8 +162,7 @@ namespace Rune::Device {
                         return ParallelPortProgrammingInterface(programming_interface).to_string();
                     case SimpleCommunicationSubClass::MODEM:
                         return ModemProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::BASE_SYSTEM_PERIPHERAL:
                 switch (subclass_code) {
@@ -189,15 +174,13 @@ namespace Rune::Device {
                         return SystemTimerProgrammingInterface(programming_interface).to_string();
                     case BaseSystemPeripheralSubClass::RTC_CONTROLLER:
                         return RTCProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::INPUT_DEVICE:
                 switch (subclass_code) {
                     case InputDeviceSubClass::GAMEPORT_CONTROLLER:
                         return GameportProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
             case BaseClass::SERIAL_BUS_CONTROLLER:
                 switch (subclass_code) {
@@ -207,11 +190,9 @@ namespace Rune::Device {
                         return USBProgrammingInterface(programming_interface).to_string();
                     case SerialBusSubClass::IPMI:
                         return IPMIProgrammingInterface(programming_interface).to_string();
-                    default:
-                        return "NONE";
+                    default: return "NONE";
                 }
-            default:
-                return "NONE";
+            default: return "NONE";
         }
     }
 } // namespace Rune::Device

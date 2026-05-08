@@ -195,13 +195,13 @@ namespace Rune::Device {
         BasicDeviceID m_device_ID;
 
       public:
-        BasicDevice(Handle               handle,
-                    const String&        name,
-                    const String&        oem,
-                    const String&        revision,
-                    const String&        serial_number,
-                    DeviceType           device_type,
-                    const BasicDeviceID& device_ID);
+        BasicDevice(Handle        handle,
+                    const String& name,
+                    const String& oem,
+                    const String& revision,
+                    const String& serial_number,
+                    DeviceType    device_type,
+                    BasicDeviceID device_ID);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
     };

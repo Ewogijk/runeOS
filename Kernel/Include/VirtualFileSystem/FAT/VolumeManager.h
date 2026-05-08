@@ -37,16 +37,6 @@ namespace Rune::VFS {
          */
         auto data_cluster_to_lba(BIOSParameterBlock* bpb, size_t cluster) const -> size_t;
 
-        auto mass_storage_device_read(Device::Handle dev_handle,
-                                      void*                buf,
-                                      size_t               buf_size,
-                                      U32                  lba) const -> size_t;
-
-        auto mass_storage_device_write(Device::Handle dev_handle,
-                                       void*                buf,
-                                       size_t               buf_size,
-                                       U32                  lba) const -> size_t;
-
       public:
         explicit VolumeManager(SharedPointer<FATEngine> fat_engine);
 
