@@ -39,7 +39,7 @@ namespace Rune::Device {
 
     DEFINE_ENUM(DeviceType, DEVICE_TYPES, 0x0)
 
-    Device::Device(DriverHandle  handle,
+    Device::Device(Handle  handle,
                    const String& name,
                    const String& oem,
                    const String& revision,
@@ -50,30 +50,34 @@ namespace Rune::Device {
           m_revision(revision),
           m_serial_number(serial_number),
           m_device_type(device_type),
-          m_driver_handle(Resource<DriverHandle>::HANDLE_NONE),
+          m_driver(),
+          m_bus_device(),
           m_child_devices() {}
 
-    auto Device::get_oem() const -> const String& { return m_oem; }
+    auto Device::oem() const -> const String& { return m_oem; }
 
-    auto Device::get_revision() const -> const String& { return m_revision; }
+    auto Device::revision() const -> const String& { return m_revision; }
 
-    auto Device::get_serial_number() const -> const String& { return m_serial_number; }
+    auto Device::serial_number() const -> const String& { return m_serial_number; }
 
-    auto Device::get_device_type() const -> DeviceType { return m_device_type; }
+    auto Device::device_type() const -> DeviceType { return m_device_type; }
 
-    auto Device::get_driver_handle() const -> DriverHandle { return m_driver_handle; }
+    auto Device::driver() const -> const SharedPointer<Driver>& { return m_driver; }
+    auto Device::driver() -> SharedPointer<Driver>& { return m_driver; }
 
-    auto Device::set_driver_handle(DriverHandle driver_handle) -> void {
-        m_driver_handle = driver_handle;
+    auto Device::bus_device() const -> const SharedPointer<Device>& { return m_bus_device; }
+    auto Device::bus_device() -> SharedPointer<Device>& { return m_bus_device; }
+
+    auto Device::child_devices() const -> const LinkedList<SharedPointer<Device>>& {
+        return m_child_devices;
     }
-
-    auto Device::get_child_devices() -> LinkedList<DeviceHandle>& { return m_child_devices; }
+    auto Device::child_devices() -> LinkedList<SharedPointer<Device>>& { return m_child_devices; }
 
     // ========================================================================================== //
     // BasicDevice
     // ========================================================================================== //
 
-    BasicDevice::BasicDevice(DeviceHandle         handle,
+    BasicDevice::BasicDevice(Handle         handle,
                              const String&        name,
                              const String&        oem,
                              const String&        revision,
@@ -83,14 +87,12 @@ namespace Rune::Device {
         : Device(handle, name, oem, revision, serial_number, device_type),
           m_device_ID(device_ID) {}
 
-    auto BasicDevice::get_device_ID() const -> const DeviceID* { return &m_device_ID; }
+    auto BasicDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
     // ========================================================================================== //
     // Driver
     // ========================================================================================== //
 
     DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
-
-    Driver::Driver(DriverHandle handle, const String& name) : Resource(handle, name) {}
 
 } // namespace Rune::Device

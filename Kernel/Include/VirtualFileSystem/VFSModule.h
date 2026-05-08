@@ -55,7 +55,7 @@ namespace Rune::VFS {
     struct MountPointInfo {
         Path                 m_mount_point;
         String               m_driver_name;
-        Device::DeviceHandle m_mass_storage_device_handle;
+        Device::Handle m_mass_storage_device_handle;
     };
 
     /**
@@ -283,7 +283,7 @@ namespace Rune::VFS {
          * error happened.
          */
         [[nodiscard]] auto format(const String&        driver_name,
-                                  Device::DeviceHandle mass_storage_device_handle) const
+                                  Device::Handle mass_storage_device_handle) const
             -> FormatStatus;
 
         /**
@@ -311,7 +311,7 @@ namespace Rune::VFS {
          * directory or the directory does not exists. NOT_SUPPORTED:   No driver supports the
          * filesystem of the storage device. DEV_ERROR:       An IO error happened.
          */
-        auto mount(const Path& mount_point, Device::DeviceHandle mass_storage_device_handle)
+        auto mount(const Path& mount_point, Device::Handle mass_storage_device_handle)
             -> MountStatus;
 
         /**

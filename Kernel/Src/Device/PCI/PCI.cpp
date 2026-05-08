@@ -18,9 +18,11 @@
 
 #include <KRE/BitsAndBytes.h>
 #include <KRE/Logging.h>
+#include <KRE/System/System.h>
 
 #include <CPU/IO.h>
 
+#include <Device/DeviceModule.h>
 #include <Device/PCI/ClassCode.h>
 #include <Device/PCI/VendorDB.h>
 
@@ -183,143 +185,14 @@ namespace Rune::Device {
         };
     }
 
-    // void pci_check_device(AHCIDriver* ahci_driver, U8 bus, U8 device) {
-    //     PCIConfigurationSpaceHeaderCommon header =
-    //         pci_read_configuration_space_header_common(bus, device, 0);
-    //     if (header.vendor_id == INVALID_VENDOR) return;
-    //
-    //     PCIVendorDBResponse resp = pci_vendor_db_resolve(
-    //         {.m_vendor_ID = header.vendor_id, .m_device_ID = header.device_id});
-    //     BaseClass bc(header.base_class_code);
-    //     String    subclass = pci_resolve_subclass_code(bc, header.sub_class_code);
-    //     String    prog_int = pci_resolve_programming_interface(bc,
-    //                                                         header.sub_class_code,
-    //                                                         header.programming_interface);
-    //
-    //     LOGGER->debug("B{}-D{}-F{}: {}-{} ({:#x}:{:#x}) - {} ({:#x}), {} ({:#x}), {} ({:#x}),",
-    //                   bus,
-    //                   device,
-    //                   0,
-    //                   resp.m_vendor_name,
-    //                   resp.m_device_name,
-    //                   header.vendor_id,
-    //                   header.device_id,
-    //                   bc.to_string(),
-    //                   header.base_class_code,
-    //                   subclass,
-    //                   header.sub_class_code,
-    //                   prog_int,
-    //                   header.programming_interface);
-    //
-    //     constexpr U8  AHCI_QEMU_BASE_CLASS     = 0x1;
-    //     constexpr U8  AHCI_QEMU_SUB_CLASS_CODE = 0x6;
-    //     constexpr U16 AHCI_QEMU_VENDOR_ID      = 0x8086;
-    //     constexpr U16 AHCI_QEMU_DEVICE_ID      = 0x2922;
-    //     if (header.base_class_code == AHCI_QEMU_BASE_CLASS
-    //         && header.sub_class_code == AHCI_QEMU_SUB_CLASS_CODE
-    //         && header.vendor_id == AHCI_QEMU_VENDOR_ID && header.device_id ==
-    //         AHCI_QEMU_DEVICE_ID) { pci_write_word(bus, device, 0, 0x04, header.command.AsUInt16 |
-    //         0x4); // Enable DMA constexpr U8                     BAR_0_OFFSET = 0x10; constexpr
-    //         U8                     BAR_1_OFFSET                      = 0x14; constexpr U8
-    //         BAR_2_OFFSET                      = 0x18; constexpr U8 BAR_3_OFFSET = 0x1C; constexpr
-    //         U8                     BAR_4_OFFSET                      = 0x20; constexpr U8
-    //         BAR_5_OFFSET                      = 0x24; constexpr U8 CARD_BUS_CIS_POINTER_OFFSET =
-    //         0x28; constexpr U8                     SUBSYSTEM_VENDOR_ID_OFFSET        = 0x2C;
-    //         constexpr U8                     SUBSYSTEM_ID_OFFSET               = 0x2E;
-    //         constexpr U8                     EXPANSION_ROM_ADDRESS_BASE_OFFSET = 0x30;
-    //         constexpr U8                     CAPABILITIES_POINTER_OFFSET       = 0x34;
-    //         constexpr U8                     INTERRUPT_LINE_OFFSET             = 0x3C;
-    //         constexpr U8                     INTERRUPT_PIN_OFFSET              = 0x3D;
-    //         constexpr U8                     MAX_GRANT_OFFSET                  = 0x3E;
-    //         constexpr U8                     MAX_LATENCY_OFFSET                = 0x3F;
-    //         PCIConfigurationSpaceHeaderType0 ahci_header                       = {
-    //                                   .header               =
-    //                                   pci_read_configuration_space_header_common(bus, device, 0),
-    //                                   .bar_0                = pci_read_dword(bus, device, 0,
-    //                                   BAR_0_OFFSET), .bar_1                = pci_read_dword(bus,
-    //                                   device, 0, BAR_1_OFFSET), .bar_2                =
-    //                                   pci_read_dword(bus, device, 0, BAR_2_OFFSET), .bar_3 =
-    //                                   pci_read_dword(bus, device, 0, BAR_3_OFFSET), .bar_4 =
-    //                                   pci_read_dword(bus, device, 0, BAR_4_OFFSET), .bar_5 =
-    //                                   pci_read_dword(bus, device, 0, BAR_5_OFFSET),
-    //                                   .card_bus_cis_pointer = pci_read_dword(bus, device, 0,
-    //                                   CARD_BUS_CIS_POINTER_OFFSET), .subsystem_vendor_id  =
-    //                                   pci_read_word(bus, device, 0, SUBSYSTEM_VENDOR_ID_OFFSET),
-    //                                   .subsystem_id         = pci_read_word(bus, device, 0,
-    //                                   SUBSYSTEM_ID_OFFSET), .expansion_rom_address_base =
-    //                 pci_read_dword(bus, device, 0, EXPANSION_ROM_ADDRESS_BASE_OFFSET),
-    //                                   .capabilities_pointer = pci_read_byte(bus, device, 0,
-    //                                   CAPABILITIES_POINTER_OFFSET), .reserved_0           = 0,
-    //                                   .reserved_1           = 0,
-    //                                   .reserved_2           = 0,
-    //                                   .interrupt_line       = pci_read_byte(bus, device, 0,
-    //                                   INTERRUPT_LINE_OFFSET), .interrupt_pin        =
-    //                                   pci_read_byte(bus, device, 0, INTERRUPT_PIN_OFFSET),
-    //                                   .min_grant            = pci_read_byte(bus, device, 0,
-    //                                   MAX_GRANT_OFFSET), .max_latency          =
-    //                                   pci_read_byte(bus, device, 0, MAX_LATENCY_OFFSET),
-    //         };
-    //         volatile auto* hba = reinterpret_cast<HBAMemory*>(
-    //             Memory::physical_to_virtual_address(ahci_header.bar_5));
-    //         if (!ahci_driver->start(hba)) {
-    //             LOGGER->error("Failed to init AHCI");
-    //             while (true);
-    //         }
-    //     }
-    //
-    //     constexpr U8 FUNC_LIMIT            = 8;
-    //     constexpr U8 MULTI_FUNCTION_DEVICE = 0x80;
-    //     if ((header.header_type & MULTI_FUNCTION_DEVICE) != 0) {
-    //         for (U8 func = 1; func < FUNC_LIMIT; func++) {
-    //             header = pci_read_configuration_space_header_common(bus, device, func);
-    //             if (header.vendor_id == INVALID_VENDOR) continue;
-    //             PCIVendorDBResponse resp = pci_vendor_db_resolve(
-    //                 {.m_vendor_ID = header.vendor_id, .m_device_ID = header.device_id});
-    //             BaseClass bc(header.base_class_code);
-    //             String    subclass = pci_resolve_subclass_code(bc, header.sub_class_code);
-    //             String    prog_int = pci_resolve_programming_interface(bc,
-    //                                                                 header.sub_class_code,
-    //                                                                 header.programming_interface);
-    //             LOGGER->debug(
-    //                 "B{}-D{}-F{}: {}-{} ({:#x}:{:#x}) - {} ({:#x}), {} ({:#x}), {} ({:#x}),",
-    //                 bus,
-    //                 device,
-    //                 0,
-    //                 resp.m_vendor_name,
-    //                 resp.m_device_name,
-    //                 header.vendor_id,
-    //                 header.device_id,
-    //                 bc.to_string(),
-    //                 header.base_class_code,
-    //                 subclass,
-    //                 header.sub_class_code,
-    //                 prog_int,
-    //                 header.programming_interface);
-    //         }
-    //     }
-    // }
-    //
-    // void pci_discover_devices(AHCIDriver* ahci_driver) {
-    //     pci_vendor_db_initialize();
-    //     for (U16 bus = 0; bus < BUS_LIMIT; bus++) {
-    //         for (U8 device = 0; device < DEVICE_LIMIT; device++) {
-    //             pci_check_device(ahci_driver, bus, device);
-    //         }
-    //     }
-    // }
-
     // ========================================================================================== //
     // PCIDriver
     // ========================================================================================== //
 
     const BasicDeviceID PCIDriver::ID_PCI("PCI");
 
-    auto PCIDriver::map_device(U16                          bus,
-                               U8                           device,
-                               U8                           func,
-                               DeviceHandle                 bus_device,
-                               const DeviceMapper&          device_mapper,
-                               HandleCounter<DeviceHandle>& dev_handle_counter) -> bool {
+    auto PCIDriver::map_device(U16 bus, U8 device, U8 func, const SharedPointer<Device>& bus_device)
+        -> bool {
         PCIConfigurationSpaceHeaderCommon header =
             pci_read_configuration_space_header_common(bus, device, func);
         if (header.vendor_id == INVALID_VENDOR) return false;
@@ -332,34 +205,20 @@ namespace Rune::Device {
                                                             header.sub_class_code,
                                                             header.programming_interface);
 
-        LOGGER->debug("B{}-D{}-F{}: {}-{} ({:#x}:{:#x}) - {} ({:#x}), {} ({:#x}), {} ({:#x}),",
-                      bus,
-                      device,
-                      0,
-                      resp.m_vendor_name,
-                      resp.m_device_name,
-                      header.vendor_id,
-                      header.device_id,
-                      bc.to_string(),
-                      header.base_class_code,
-                      subclass,
-                      header.sub_class_code,
-                      prog_int,
-                      header.programming_interface);
-
-        SharedPointer<Device> dev(new PCIDevice(dev_handle_counter.acquire(),
-                                                resp.m_device_name,
-                                                resp.m_vendor_name,
-                                                int_to_string(header.revision_id, 10),
-                                                "",
-                                                DeviceType::GENERIC,
-                                                PCIDeviceID(header.base_class_code,
-                                                            header.sub_class_code,
-                                                            header.programming_interface)));
         if (header.get_header_layout() == 0x0) {
-            PCIConfigurationSpaceHeaderType0 csh_type0 =
-                pci_read_configuration_space_header_type0(header, bus, device, 0);
-            device_mapper(bus_device, dev, &csh_type0);
+            auto* ds = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
+            SharedPointer<Device> dev(
+                new PCIDevice(ds->get_device_handle(),
+                              resp.m_device_name,
+                              resp.m_vendor_name,
+                              int_to_string(header.revision_id, 10),
+                              "",
+                              DeviceType::GENERIC,
+                              PCIDeviceID(header.base_class_code,
+                                          header.sub_class_code,
+                                          header.programming_interface),
+                              pci_read_configuration_space_header_type0(header, bus, device, 0)));
+            ds->register_device(bus_device, dev);
         } else {
             LOGGER->warn("PCI Header Type{} detected but it is not supported yet!",
                          header.get_header_layout());
@@ -367,42 +226,36 @@ namespace Rune::Device {
         return header.is_multi_function_device();
     }
 
-    PCIDriver::PCIDriver(DriverHandle handle) : Driver(handle, ID_PCI.get_string_ID()) {}
+    auto PCIDriver::vendor() const -> String { return "Ewogjik"; };
 
-    auto PCIDriver::get_target_device_ID() const -> const DeviceID* { return &ID_PCI; }
+    auto PCIDriver::version() const -> Version {
+        return {.major = 1, .minor = 0, .patch = 0};
+    }
 
-    auto PCIDriver::start(DeviceHandle dev_handle, void* context) -> bool {
-        SILENCE_UNUSED(context)
+    auto PCIDriver::target_device_ID() const -> const DeviceID* { return &ID_PCI; }
+
+    auto PCIDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+        SILENCE_UNUSED(device)
         pci_vendor_db_initialize();
-        add_operated_device(dev_handle);
-        return true;
-    }
-
-    auto PCIDriver::stop(DeviceHandle dev_handle) -> bool { return false; }
-
-    auto PCIDriver::handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus {
-        SILENCE_UNUSED(dev_handle)
-        SILENCE_UNUSED(request)
-        return IORequestStatus::UNSUPPORTED;
-    }
-
-    void PCIDriver::discover_devices(DeviceHandle                 bus_device,
-                                     const DeviceMapper&          device_mapper,
-                                     HandleCounter<DeviceHandle>& dev_handle_counter) {
-        for (U16 bus = 0; bus < BUS_LIMIT; bus++) {
-            for (U8 device = 0; device < DEVICE_LIMIT; device++) {
-                if (map_device(bus, device, 0, bus_device, device_mapper, dev_handle_counter)) {
+        for (U16 pci_bus = 0; pci_bus < BUS_LIMIT; pci_bus++) {
+            for (U8 pci_device = 0; pci_device < DEVICE_LIMIT; pci_device++) {
+                if (map_device(pci_bus, pci_device, 0, device)) {
                     for (U8 func = 1; func < FUNCTION_LIMIT; func++) {
-                        map_device(bus,
-                                   device,
-                                   func,
-                                   bus_device,
-                                   device_mapper,
-                                   dev_handle_counter);
+                        map_device(pci_bus, pci_device, func, device);
                     }
                 }
             }
         }
+        return true;
+    }
+
+    void PCIDriver::remove_device(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
+
+    auto PCIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
+        -> IORequestStatus {
+        SILENCE_UNUSED(device)
+        SILENCE_UNUSED(request)
+        return IORequestStatus::UNSUPPORTED;
     }
 
 } // namespace Rune::Device

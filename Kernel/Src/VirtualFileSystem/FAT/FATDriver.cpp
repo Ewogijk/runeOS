@@ -32,7 +32,7 @@ namespace Rune::VFS {
     // Private
     // ========================================================================================== //
 
-    auto FATDriver::find_storage_dev_ref(Device::DeviceHandle mass_storage_dev_handle) const
+    auto FATDriver::find_storage_dev_ref(Device::Handle mass_storage_dev_handle) const
         -> SharedPointer<MassStorageDevRef> {
         for (auto& md : _storage_dev_ref_table)
             if (md->m_mass_storage_dev_handle == mass_storage_dev_handle) return md;
@@ -323,10 +323,10 @@ namespace Rune::VFS {
                    : IOStatus(IOStatus::DEV_ERROR);
     }
 
-    auto FATDriver::mass_storage_device_read(Device::DeviceHandle dev_handle,
-                                             void*                buf,
-                                             size_t               buf_size,
-                                             U32                  lba) -> size_t {
+    auto FATDriver::mass_storage_device_read(Device::Handle dev_handle,
+                                             void*          buf,
+                                             size_t         buf_size,
+                                             U32            lba) -> size_t {
         auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::MassStorageDeviceRequest msd_req{.m_type =
                                                      Device::MassStorageDeviceRequestType::READ,
@@ -343,10 +343,10 @@ namespace Rune::VFS {
                    : 0;
     }
 
-    auto FATDriver::mass_storage_device_write(Device::DeviceHandle dev_handle,
-                                              void*                buf,
-                                              size_t               buf_size,
-                                              U32                  lba) -> size_t {
+    auto FATDriver::mass_storage_device_write(Device::Handle dev_handle,
+                                              void*          buf,
+                                              size_t         buf_size,
+                                              U32            lba) -> size_t {
         auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::MassStorageDeviceRequest msd_req{.m_type =
                                                      Device::MassStorageDeviceRequestType::WRITE,
@@ -375,13 +375,11 @@ namespace Rune::VFS {
 
     auto FATDriver::get_name() const -> String { return _fat_engine->get_name(); }
 
-    auto FATDriver::format(Device::DeviceHandle mass_storage_dev_handle) -> FormatStatus {
-        auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        auto* msd =
-            dm->get_device<Device::MassStorageDevice>(Device::DeviceType::MASS_STORAGE_DEVICE,
-                                                      mass_storage_dev_handle);
-        U32 sector_size  = msd->get_sector_size();
-        U64 sector_count = msd->get_sector_count();
+    auto FATDriver::format(Device::Handle mass_storage_dev_handle) -> FormatStatus {
+        auto* dm  = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        auto  msd = dm->get_device<Device::MassStorageDevice>(mass_storage_dev_handle);
+        U32   sector_size  = msd->sector_size();
+        U64   sector_count = msd->total_sector_count();
 
         U8 boot_record_buf[sector_size]; // NOLINT
         memset(boot_record_buf, 0, sector_size);
@@ -447,14 +445,12 @@ namespace Rune::VFS {
                    : FormatStatus::DEV_ERROR;
     }
 
-    auto FATDriver::mount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus {
+    auto FATDriver::mount(Device::Handle mass_storage_dev_handle) -> MountStatus {
         if (find_storage_dev_ref(mass_storage_dev_handle)) return MountStatus::ALREADY_MOUNTED;
 
-        auto* dm = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        auto* msd =
-            dm->get_device<Device::MassStorageDevice>(Device::DeviceType::MASS_STORAGE_DEVICE,
-                                                      mass_storage_dev_handle);
-        U32   sector_size     = msd->get_sector_size();
+        auto* dm  = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        auto  msd = dm->get_device<Device::MassStorageDevice>(mass_storage_dev_handle);
+        U32   sector_size     = msd->sector_size();
         auto* boot_record_buf = new U8[sector_size];
         memset(boot_record_buf, 0, sector_size);
         if (mass_storage_device_read(mass_storage_dev_handle, boot_record_buf, sector_size, 0)
@@ -479,7 +475,7 @@ namespace Rune::VFS {
         return MountStatus::MOUNTED;
     }
 
-    auto FATDriver::unmount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus {
+    auto FATDriver::unmount(Device::Handle mass_storage_dev_handle) -> MountStatus {
         SharedPointer<MassStorageDevRef> md = find_storage_dev_ref(mass_storage_dev_handle);
         if (!md) return MountStatus::NOT_MOUNTED;
         _storage_dev_ref_table.remove(md);
@@ -492,9 +488,8 @@ namespace Rune::VFS {
         return true;
     }
 
-    auto FATDriver::create(Device::DeviceHandle mass_storage_dev_handle,
-                           const Path&          path,
-                           U8                   attributes) -> IOStatus {
+    auto FATDriver::create(Device::Handle mass_storage_dev_handle, const Path& path, U8 attributes)
+        -> IOStatus {
         SharedPointer<MassStorageDevRef> md = find_storage_dev_ref(mass_storage_dev_handle);
         if (!md) return IOStatus::DEV_UNKNOWN;
 
@@ -539,9 +534,9 @@ namespace Rune::VFS {
         }
     }
 
-    auto FATDriver::find_node(Device::DeviceHandle mass_storage_dev_handle,
-                              const Path&          path,
-                              VFS::NodeInfo&       out) -> IOStatus {
+    auto FATDriver::find_node(Device::Handle mass_storage_dev_handle,
+                              const Path&    path,
+                              VFS::NodeInfo& out) -> IOStatus {
         SharedPointer<MassStorageDevRef> md = find_storage_dev_ref(mass_storage_dev_handle);
         if (!md) return IOStatus::DEV_UNKNOWN;
 
@@ -570,7 +565,7 @@ namespace Rune::VFS {
         return IOStatus::FOUND;
     }
 
-    auto FATDriver::delete_node(Device::DeviceHandle mass_storage_dev_handle, const Path& path)
+    auto FATDriver::delete_node(Device::Handle mass_storage_dev_handle, const Path& path)
         -> IOStatus {
         SharedPointer<MassStorageDevRef> md = find_storage_dev_ref(mass_storage_dev_handle);
         if (!md) return IOStatus::DEV_UNKNOWN;

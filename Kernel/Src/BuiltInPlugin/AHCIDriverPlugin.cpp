@@ -32,12 +32,10 @@ namespace Rune::BuiltInPlugin {
     auto AHCIDriverPlugin::get_info() const -> PluginInfo { return AHCI_INFO; }
 
     auto AHCIDriverPlugin::load() -> bool {
-        System& system = System::instance();
-        auto*   ds     = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        auto hba_driver = SharedPointer<Device::Driver>(
-            new Device::HostBusAdapterDriver(ds->get_device_driver_handle()));
-        auto ahci_port_driver =
-            SharedPointer<Device::Driver>(new Device::PortDriver(ds->get_device_driver_handle()));
+        System& system     = System::instance();
+        auto*   ds         = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        auto    hba_driver = SharedPointer<Device::Driver>(new Device::HostBusAdapterDriver());
+        auto    ahci_port_driver = SharedPointer<Device::Driver>(new Device::PortDriver());
         return ds->register_device_driver(hba_driver)
                && ds->register_device_driver(ahci_port_driver);
     }

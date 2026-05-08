@@ -57,36 +57,55 @@ namespace Rune::Device {
     /// device that it wants to operate.<br>
     /// Device IDs are context-aware, that means the structure of a Device ID depends on the bus.
     class DeviceModule : public Module {
-        DeviceHandle m_root_device_handle;
 
-        HandleCounter<DeviceHandle> m_device_handle_counter;
-        HandleCounter<DriverHandle> m_driver_handle_counter;
+        HandleCounter<Handle> m_device_handle_counter;
 
-        /// @brief Contains all devices.
-        HashMap<DeviceHandle, SharedPointer<Device>> m_device_registry;
+        SharedPointer<Device> m_device_tree;
 
-        /// @brief Contains all device drivers.
-        HashMap<DriverHandle, SharedPointer<Driver>> m_device_driver_registry;
+        LinkedList<SharedPointer<Driver>> m_driver_store;
 
-        /// @brief Fast lookup for devices of a specific type.
-        HashMap<DeviceType, LinkedList<SharedPointer<Device>>> m_device_registry_by_type;
+        /// @brief Recursively get all devices in the device tree that have the same device type as
+        ///         device_type and cast them to the DeviceInterface type.
+        /// @tparam DeviceInterface Type that the devices will be cast to.
+        /// @param out_devices Matching devices will be added to this list.
+        /// @param current_device The current device that is matched with device_type.
+        /// @param device_type Device type that devices have to match against.
+        template <class DeviceInterface>
+        void get_devices_by_type(LinkedList<SharedPointer<DeviceInterface>>& out_devices,
+                                 const SharedPointer<Device>&                current_device,
+                                 DeviceType                                  device_type) {
+            if (current_device->device_type() == device_type)
+                out_devices.add_back(SharedPointer<DeviceInterface>(current_device));
 
+            for (const auto& dev : current_device->child_devices())
+                get_devices_by_type<DeviceInterface>(out_devices, dev, device_type);
+        }
+
+        /// @brief Iterate the device tree to find the device matching with dev_handle.
+        /// @param current_device
+        /// @param dev_handle
+        /// @return A pointer to the device matching with dev_handle, Otherwise: null.
+        auto find_device(const SharedPointer<Device>& current_device, Handle dev_handle)
+            -> SharedPointer<Device>;
 
         /// @brief Find the driver with the matching device ID.
         /// @param device_ID
         /// @return A pointer to the device driver if found, otherwise null.
-        auto search_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver>;
+        auto find_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver>;
 
-        /// @brief Map the root device to the root device driver.
-        /// @return True: The root device was mapped to the root device and initialized.
-        ///         False: Otherwise.
-        auto configure_root_device() -> bool;
+        /// @brief Iterate the device tree and find all devices matching with the device_id.
+        /// @param out_devices Matching devices will be added to this list.
+        /// @param current_device
+        /// @param device_id Device ID that devices have to match with.
+        void match_devices(LinkedList<SharedPointer<Device>>& out_devices,
+                           const SharedPointer<Device>&       current_device,
+                           const DeviceID*                    device_id);
 
-        /// @brief Discover and start devices on the bus of the given device, then recursively call
-        ///         this function on the discovered devices.
-        /// @param device
-        /// @param device_mapper
-        void build_device_tree(SharedPointer<Device> device, const DeviceMapper& device_mapper);
+        /// @brief Iterate the device tree and unbind all devices from the driver.
+        /// @param current_device
+        /// @param driver Driver that will be removed.
+        void remove_device_driver(const SharedPointer<Device>& current_device,
+                                  const SharedPointer<Driver>& driver);
 
       public:
         explicit DeviceModule();
@@ -108,30 +127,22 @@ namespace Rune::Device {
         // Device Driver API
         // ====================================================================================== //
 
-        /// @brief Get an unused device driver handle for a device driver.
-        /// @return A device driver handle.
-        ///
-        /// The device driver handle is intended to be assigned to a device driver that will be
-        /// instantiated.
-        auto get_device_driver_handle() -> DriverHandle;
+        /// @brief
+        /// @return A reference to the device driver store.
+        [[nodiscard]] auto device_driver_store() const -> const LinkedList<SharedPointer<Driver>>&;
 
-        /// @brief Register a device driver to the device module.
+        /// @brief Add the driver to the driver store and bind it to all devices with matching
+        ///         device IDs.
         /// @param driver Pointer to a device driver.
-        /// @return True: The device driver was registered, False: Otherwise.
-        auto register_device_driver(SharedPointer<Driver> driver) -> bool;
+        /// @return True: The device driver was registered,
+        ///         False: Driver is null or the driver was already registered.
+        auto register_device_driver(const SharedPointer<Driver>& driver) -> bool;
 
-        /// @brief Search for a device driver with dev_handle and return it cast to
-        ///         DeviceDriverInterface.
-        /// @tparam DeviceDriverInterface Type of the device driver that will be returned.
-        /// @param driver_handle Handle of a device driver.
-        /// @return A pointer to the device driver or nullptr if no device driver with driver_handle
-        ///         exists.
-        template <class DeviceDriverInterface>
-        auto get_device_driver(DriverHandle driver_handle) -> DeviceDriverInterface* {
-            auto maybe_driver = m_device_driver_registry.find(driver_handle);
-            if (maybe_driver == m_device_driver_registry.end()) return nullptr;
-            return static_cast<DeviceDriverInterface*>((*maybe_driver->value).get());
-        }
+        /// @brief Remove the driver from the driver store and unbind it from all bound devices.
+        /// @param driver
+        /// @return True: The driver was removed,
+        ///         False: Driver is null or the driver was not registered.
+        auto unregister_device_driver(const SharedPointer<Driver>& driver) -> bool;
 
         // ====================================================================================== //
         // Device API
@@ -139,15 +150,20 @@ namespace Rune::Device {
 
         auto get_keyboard() -> VirtualKeyboard*;
 
+        /// @brief
+        /// @return A pointer to the device tree.
+        [[nodiscard]] auto device_tree() const -> const SharedPointer<Device>&;
+
+        auto get_device_handle() -> Handle;
+
         /// @brief Get all devices that have the given device_type casted to DeviceInterface*.
         /// @tparam DeviceInterface Type to which all device pointers will be cast.
         /// @param device_type Type of the devices that will be returned.
         /// @return A list of pointers to devices casted to DeviceInterface.
         template <class DeviceInterface>
-        auto get_devices(DeviceType device_type) -> LinkedList<DeviceInterface*> {
-            LinkedList<DeviceInterface*> devices;
-            for (auto& device : m_device_registry_by_type[device_type])
-                devices.add_back(static_cast<DeviceInterface*>(device.get()));
+        auto get_devices(DeviceType device_type) -> LinkedList<SharedPointer<DeviceInterface>> {
+            LinkedList<SharedPointer<DeviceInterface>> devices;
+            get_devices_by_type(devices, m_device_tree, device_type);
             return devices;
         }
 
@@ -158,15 +174,25 @@ namespace Rune::Device {
         /// @return The requested device cast to DeviceInterface. Nullptr if no device with the
         ///         handle was found or the device type does not match with device_type.
         template <class DeviceInterface>
-        auto get_device(DeviceType device_type, DeviceHandle dev_handle) -> DeviceInterface* {
-            auto maybe_device = m_device_registry.find(dev_handle);
-            if (maybe_device == m_device_registry.end()) return nullptr;
-
-            auto device = *maybe_device->value;
-            if (device->get_device_type() != device_type) return nullptr;
-
-            return static_cast<DeviceInterface*>(device.get());
+        auto get_device(Handle dev_handle)
+            -> SharedPointer<DeviceInterface> {
+            return SharedPointer<DeviceInterface>(find_device(m_device_tree, dev_handle));
         }
+
+        /// @brief Add the device to the given bus_device and try to bind it to a registered driver.
+        /// @param bus_device Bus device.
+        /// @param device Device to add to the bus device.
+        /// @return True: The device was added to bus_device.
+        ///         False: The device or bus_device are null, device has the device type NONE,
+        ///         bus_device is not in the device tree, device is already in the device tree.
+        auto register_device(const SharedPointer<Device>& bus_device,
+                             const SharedPointer<Device>& device) -> bool;
+
+        /// @brief Remove the device from the device tree and unbind it from its device driver.
+        /// @param device
+        /// @return True: The device is removed from the device tree.
+        ///         False: The device is null.
+        auto unregister_device(const SharedPointer<Device>& device) -> bool;
 
         /// @brief Try to find the device with dev_handle and forward the io_request to its device
         ///         driver.
@@ -176,9 +202,7 @@ namespace Rune::Device {
         ///         Otherwise:<br>
         ///         UNKNOWN_DEVICE: No device with dev_handle exists.
         ///         DEVICE_NOT_OPERATIONAL: The device is not operated by a driver.
-        ///         UNKNOWN_DRIVER: The driver of the device does not exist.
-        auto control_device(DeviceHandle dev_handle, const IORequest& io_request)
-            -> IORequestStatus;
+        auto control_device(Handle dev_handle, const IORequest& io_request) -> IORequestStatus;
     };
 } // namespace Rune::Device
 

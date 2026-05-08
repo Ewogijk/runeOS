@@ -26,6 +26,10 @@
 namespace Rune::Device {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PortEngine");
 
+    // ========================================================================================== //
+    // PortEngine
+    // ========================================================================================== //
+
     template <size_t N>
     auto decode_ata_string(Array<U16, N> ata_string) -> String {
         Array<U8, 2 * N> decoded{};
@@ -71,7 +75,51 @@ namespace Rune::Device {
         return (_port != nullptr) && _port->CMD.ST && _port->CMD.FRE;
     }
 
-    auto PortEngine::get_sector_size() const -> U32 { return _sector_size; }
+    auto PortEngine::get_identify_device_data() -> ATAIdentifyDeviceData {
+        Array<U16, IDENTIFY_DEVICE_BUFFER_SIZE> buf{};
+        if (send_ata_command(buf.data(),
+                             IDENTIFY_DEVICE_BUFFER_SIZE * 2,
+                             RegisterHost2DeviceFIS::IdentifyDevice())
+            == 0) {
+            stop();
+            return {.m_serial_number     = "",
+                    .m_firmware_revision = "",
+                    .m_model_number      = "",
+                    .m_sector_size       = 0,
+                    .m_sector_count      = 0};
+        }
+        Array<U16, SERIAL_NUMBER_SIZE>     serial_number_buf{};
+        Array<U16, FIRMWARE_REVISION_SIZE> firmware_revision_buf{};
+        Array<U16, MODEL_NUMBER_SIZE>      model_number_buf{};
+        memcpy(serial_number_buf.data(), &buf[SERIAL_NUMBER_OFFSET], 2 * SERIAL_NUMBER_SIZE);
+        memcpy(firmware_revision_buf.data(),
+               &buf[FIRMWARE_REVISION_OFFSET],
+               2 * FIRMWARE_REVISION_SIZE);
+        memcpy(model_number_buf.data(), &buf[MODEL_NUMBER_OFFSET], 2 * MODEL_NUMBER_SIZE);
+
+        String model_number      = decode_ata_string<MODEL_NUMBER_SIZE>(model_number_buf);
+        String firmware_revision = decode_ata_string<FIRMWARE_REVISION_SIZE>(firmware_revision_buf);
+        String serial_number     = decode_ata_string<SERIAL_NUMBER_SIZE>(serial_number_buf);
+
+        U64 sector_count = 0;
+        if (bit_check(buf[COMMAND_AND_FEATURE_SET_OFFSET], CAF_48_BIT_ADDR_BIT)) {
+            sector_count =
+                LittleEndian::to_U32(reinterpret_cast<U8*>(&buf[SECTOR_COUNT_48BIT_OFFSET]));
+        } else {
+            sector_count =
+                LittleEndian::to_U32(reinterpret_cast<U8*>(&buf[SECTOR_COUNT_28BIT_OFFSET]));
+        }
+        U32 sector_size =
+            bit_check(buf[PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET], LOGICAL_SECTOR_SIZE_SUPPORTED_BIT)
+                ? static_cast<U32>(buf[LOGICAL_SECTOR_SIZE_OFFSET])
+                : DEFAULT_SECTOR_SIZE;
+
+        return {.m_serial_number     = serial_number,
+                .m_firmware_revision = firmware_revision,
+                .m_model_number      = model_number,
+                .m_sector_size       = sector_size,
+                .m_sector_count      = sector_count};
+    }
 
     auto PortEngine::start(SystemMemory* system_memory) -> bool {
         _system_memory = system_memory;
@@ -150,94 +198,48 @@ namespace Rune::Device {
         return !_port->CMD.FRE; // !_port->Cmd.FRE -> Port hung
     }
 
-    auto PortEngine::detect_partitions(HandleCounter<DeviceHandle>& dev_handle_counter)
-        -> LinkedList<SharedPointer<Device>> {
-        Array<U16, IDENTIFY_DEVICE_BUFFER_SIZE> buf{};
-        if (send_ata_command(buf.data(),
-                             IDENTIFY_DEVICE_BUFFER_SIZE * 2,
-                             RegisterHost2DeviceFIS::IdentifyDevice())
-            == 0) {
-            stop();
-            return LinkedList<SharedPointer<Device>>();
-        }
-        Array<U16, SERIAL_NUMBER_SIZE>     serial_number_buf{};
-        Array<U16, FIRMWARE_REVISION_SIZE> firmware_revision_buf{};
-        Array<U16, MODEL_NUMBER_SIZE>      model_number_buf{};
-        memcpy(serial_number_buf.data(), &buf[SERIAL_NUMBER_OFFSET], 2 * SERIAL_NUMBER_SIZE);
-        memcpy(firmware_revision_buf.data(),
-               &buf[FIRMWARE_REVISION_OFFSET],
-               2 * FIRMWARE_REVISION_SIZE);
-        memcpy(model_number_buf.data(), &buf[MODEL_NUMBER_OFFSET], 2 * MODEL_NUMBER_SIZE);
-
-        String model_number      = decode_ata_string<MODEL_NUMBER_SIZE>(model_number_buf);
-        String firmware_revision = decode_ata_string<FIRMWARE_REVISION_SIZE>(firmware_revision_buf);
-        String serial_number     = decode_ata_string<SERIAL_NUMBER_SIZE>(serial_number_buf);
-
-        U64 sector_count = 0;
-        if (bit_check(buf[COMMAND_AND_FEATURE_SET_OFFSET], CAF_48_BIT_ADDR_BIT)) {
-            sector_count =
-                LittleEndian::to_U32(reinterpret_cast<U8*>(&buf[SECTOR_COUNT_48BIT_OFFSET]));
-        } else {
-            sector_count =
-                LittleEndian::to_U32(reinterpret_cast<U8*>(&buf[SECTOR_COUNT_28BIT_OFFSET]));
-        }
-        _sector_size =
-            bit_check(buf[PHYSICAL_LOGICAL_SECTOR_SIZE_OFFSET], LOGICAL_SECTOR_SIZE_SUPPORTED_BIT)
-                ? static_cast<U32>(buf[LOGICAL_SECTOR_SIZE_OFFSET])
-                : DEFAULT_SECTOR_SIZE;
-
+    void PortEngine::detect_partitions(DeviceModule*                           ds,
+                                       const SharedPointer<MassStorageDevice>& physical_device,
+                                       const SharedPointer<PortEngine>&        port_engine) {
         // Scan for partitions
         // NOLINTBEGIN read function requires C-Array
         Function<size_t(U8[], size_t, U64)> sectorReader =
-            [this](U8 buf[], size_t bufSize, U64 lba) {
+            [this, &physical_device](U8 buf[], size_t bufSize, U64 lba) {
                 auto read_dma_FIS = RegisterHost2DeviceFIS::ReadDMAExtended(
                     lba,
-                    div_round_up(bufSize, static_cast<size_t>(_sector_size)));
+                    div_round_up(bufSize, static_cast<size_t>(physical_device->sector_size())));
                 return send_ata_command(buf, bufSize, read_dma_FIS);
             };
         // NOLINTEND
-        GPTScanResult                     scan_res = gpt_scan_device(sectorReader, _sector_size);
-        LinkedList<SharedPointer<Device>> partitions;
+        GPTScanResult scan_res = gpt_scan_device(sectorReader, physical_device->sector_size());
         if (scan_res.status == GPTScanStatus::DETECTED) {
+            int i = 0;
             for (auto& partition : scan_res.partition_table) {
-                bool is_system_partition = memcmp(partition.unique_partition_guid.buf.data(),
-                                                  BOOT_PARTITION_GUID.data(),
-                                                  GUID::SIZE)
-                                           == 0;
+                bool is_boot_partition = memcmp(partition.unique_partition_guid.buf.data(),
+                                                BOOT_PARTITION_GUID.data(),
+                                                GUID::SIZE)
+                                         == 0;
 
-                MassStorageDeviceType msdt = is_system_partition ? MassStorageDeviceType::BOOT
-                                                                 : MassStorageDeviceType::GENERIC;
-                partitions.add_back(SharedPointer<Device>(new MassStorageDevice(
-                    dev_handle_counter.acquire(),
-                    partition.name,
-                    model_number,
-                    firmware_revision,
-                    serial_number,
+                MassStorageDeviceType msdt = is_boot_partition
+                                                 ? MassStorageDeviceType::BOOT_PARTITION
+                                                 : MassStorageDeviceType::PARTITION;
+                SharedPointer<Device> part_device(new AHCIDevice(
+                    ds->get_device_handle(),
+                    String::format("{} P{}", physical_device->get_name(), i),
+                    physical_device->oem(),
+                    physical_device->revision(),
+                    physical_device->serial_number(),
                     DeviceType::MASS_STORAGE_DEVICE,
                     ID_ATA_DEVICE,
                     msdt,
-                    sector_count,
-                    _sector_size,
-                    {.m_start = partition.starting_lba, .m_end = partition.ending_lba})));
+                    partition.ending_lba - partition.starting_lba,
+                    physical_device->sector_size(),
+                    {.m_start = partition.starting_lba, .m_end = partition.ending_lba},
+                    port_engine));
+                ds->register_device(physical_device, part_device);
+                i++;
             }
-        } else {
-            // Fixing the GPT is not supported for now, therefore, we treat a corrupted GPT as if
-            // there is no GPT at all
-            // -> Create the implicit partition over the whole disk
-            partitions.add_back(
-                SharedPointer<Device>(new MassStorageDevice(dev_handle_counter.acquire(),
-                                                            ID_ATA_DEVICE.get_string_ID(),
-                                                            model_number,
-                                                            firmware_revision,
-                                                            serial_number,
-                                                            DeviceType::MASS_STORAGE_DEVICE,
-                                                            ID_ATA_DEVICE,
-                                                            MassStorageDeviceType::GENERIC,
-                                                            sector_count,
-                                                            _sector_size,
-                                                            PartitionRange::ENTIRE_DEVICE)));
         }
-        return partitions;
     }
 
     auto PortEngine::send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis)
@@ -287,4 +289,38 @@ namespace Rune::Device {
         request.status.as_U8 = 0;
         return _port->IS.TFES ? 0 : _system_memory->CL[slot].PRDBC;
     }
+
+    // ========================================================================================== //
+    // AHCI Device
+    // ========================================================================================== //
+
+    AHCIDevice::AHCIDevice(Handle                           handle,
+                           const String&                    name,
+                           const String&                    oem,
+                           const String&                    revision,
+                           const String&                    serial_number,
+                           DeviceType                       device_type,
+                           const BasicDeviceID&             device_ID,
+                           MassStorageDeviceType            mass_storage_device_type,
+                           U64                              sector_count,
+                           U32                              sector_size,
+                           PartitionRange                   partition_range,
+                           const SharedPointer<PortEngine>& port_engine)
+        : MassStorageDevice(handle,
+                            name,
+                            oem,
+                            revision,
+                            serial_number,
+                            device_type,
+                            device_ID,
+                            mass_storage_device_type,
+                            sector_count,
+                            sector_size,
+                            partition_range),
+          m_port_engine(port_engine) {}
+
+    auto AHCIDevice::port_engine() const -> const SharedPointer<PortEngine>& {
+        return m_port_engine;
+    }
+
 } // namespace Rune::Device

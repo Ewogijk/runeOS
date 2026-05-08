@@ -19,6 +19,7 @@
 
 #include <CPU/Time/Timer.h>
 
+#include <Device/DeviceModule.h>
 #include <Device/MassStorage/AHCI/Port.h>
 #include <Device/MassStorage/MassStorage.h>
 
@@ -77,6 +78,15 @@ namespace Rune::Device {
                                                       0x30,
                                                       0xc0};
 
+    /// @brief Part of the ATA Identify Device data.
+    struct ATAIdentifyDeviceData {
+        String m_serial_number;
+        String m_firmware_revision;
+        String m_model_number;
+        U32    m_sector_size;
+        U64    m_sector_count;
+    };
+
     struct SystemMemory {
         static constexpr U8 COMMAND_LIST_SIZE = 32;
 
@@ -111,9 +121,7 @@ namespace Rune::Device {
 
         CPU::Timer* _timer{nullptr};
 
-        U32 _sector_size{0};
-
-        bool start0();
+        auto start0() -> bool;
 
       public:
         static const BasicDeviceID ID_ATA_DEVICE;
@@ -122,7 +130,7 @@ namespace Rune::Device {
 
         [[nodiscard]] auto is_active() const -> bool;
 
-        [[nodiscard]] auto get_sector_size() const -> U32;
+        auto get_identify_device_data() -> ATAIdentifyDeviceData;
 
         auto start(SystemMemory* system_memory) -> bool;
 
@@ -130,15 +138,37 @@ namespace Rune::Device {
 
         auto stop() -> bool;
 
-        auto detect_partitions(HandleCounter<DeviceHandle>& dev_handle_counter)
-            -> LinkedList<SharedPointer<Device>>;
+        void detect_partitions(DeviceModule*                           ds,
+                               const SharedPointer<MassStorageDevice>& physical_device,
+                               const SharedPointer<PortEngine>&        port_engine);
 
         auto send_ata_command(void* buf, size_t bufSize, RegisterHost2DeviceFIS h2dFis) -> size_t;
     };
 
-    struct PortDriverContext {
+    // ========================================================================================== //
+    // AHCIDevice
+    // ========================================================================================== //
+
+    class AHCIDevice : public MassStorageDevice {
         SharedPointer<PortEngine> m_port_engine;
-        PartitionRange            m_partition_range;
+
+      public:
+        AHCIDevice(Handle                           handle,
+                   const String&                    name,
+                   const String&                    oem,
+                   const String&                    revision,
+                   const String&                    serial_number,
+                   DeviceType                       device_type,
+                   const BasicDeviceID&             device_ID,
+                   MassStorageDeviceType            mass_storage_device_type,
+                   U64                              sector_count,
+                   U32                              sector_size,
+                   PartitionRange                   partition_range,
+                   const SharedPointer<PortEngine>& port_engine);
+
+        /// @brief
+        /// @return The port engine handling the ATA device.
+        [[nodiscard]] auto port_engine() const -> const SharedPointer<PortEngine>&;
     };
 } // namespace Rune::Device
 

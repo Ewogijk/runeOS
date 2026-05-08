@@ -32,7 +32,6 @@ namespace Rune::BuiltInPlugin {
 
     auto PS2KeyboardDriverPlugin::load() -> bool {
         auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        return ds->register_device_driver(
-            SharedPointer<Device::Driver>(new Device::PS2Keyboard(ds->get_device_driver_handle())));
+        return ds->register_device_driver(SharedPointer<Device::Driver>(new Device::PS2Keyboard()));
     }
 } // namespace Rune::BuiltInPlugin

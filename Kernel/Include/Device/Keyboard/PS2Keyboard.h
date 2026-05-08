@@ -43,23 +43,19 @@ namespace Rune::Device {
       public:
         static const BasicDeviceID ID_PS2_KEYBOARD;
 
-        PS2Keyboard(DriverHandle handle);
+        PS2Keyboard();
 
         auto read() -> int override;
 
         void flush() override;
 
-        [[nodiscard]] auto get_target_device_ID() const -> const DeviceID* override;
-
-        auto start(DeviceHandle dev_handle, void* context) -> bool override;
-
-        auto stop(DeviceHandle dev_handle) -> bool override;
-
-        auto handle_request(DeviceHandle dev_handle, IORequest request) -> IORequestStatus override;
-
-        void discover_devices(DeviceHandle                 bus_device,
-                              const DeviceMapper&          device_mapper,
-                              HandleCounter<DeviceHandle>& dev_handle_counter) override;
+        [[nodiscard]] auto vendor() const -> String override;
+        [[nodiscard]] auto version() const -> Version override;
+        [[nodiscard]] auto target_device_ID() const -> const DeviceID* override;
+        auto accept_device(const SharedPointer<Device>& device) -> bool override;
+        void remove_device(const SharedPointer<Device>& device) override;
+        auto handle_request(const SharedPointer<Device>& device, IORequest request)
+            -> IORequestStatus override;
     };
 } // namespace Rune::Device
 

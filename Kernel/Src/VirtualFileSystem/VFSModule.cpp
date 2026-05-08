@@ -43,21 +43,21 @@ namespace Rune::VFS {
         _event_hook_table.put(EventHook(EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
 
-        System&              system = System::instance();
-        auto*                ds = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
-        Device::DeviceHandle msd_handle = Resource<Device::DeviceHandle>::HANDLE_NONE;
-        LinkedList<Device::MassStorageDevice*> msd_list =
+        System&        system     = System::instance();
+        auto*          ds         = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
+        Device::Handle msd_handle = Resource<Device::Handle>::HANDLE_NONE;
+        auto           msd_list =
             ds->get_devices<Device::MassStorageDevice>(Device::DeviceType::MASS_STORAGE_DEVICE);
-        for (auto* msd : msd_list) {
-            if (msd->get_mass_storage_device_type() == Device::MassStorageDeviceType::GENERIC) {
+        for (auto& msd : msd_list) {
+            if (msd->mass_storage_device_type() == Device::MassStorageDeviceType::PARTITION) {
                 msd_handle = msd->get_handle();
                 break;
             }
         }
 
-        if (msd_handle == Resource<Device::DeviceHandle>::HANDLE_NONE) {
+        if (msd_handle == Resource<Device::Handle>::HANDLE_NONE) {
             LOGGER->critical(
-                "Cannot mount root directory! No generic mass storage device found...");
+                "Cannot mount root directory! No mass storage device found...");
             return false;
         }
         // Mount root directory

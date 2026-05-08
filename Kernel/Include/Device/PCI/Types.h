@@ -22,41 +22,6 @@
 
 namespace Rune::Device {
     // ========================================================================================== //
-    // PCIDeviceID
-    // ========================================================================================== //
-    /// @brief PCI-specific device ID containing base class code, subclass code and programming
-    ///         interface.
-    class PCIDeviceID : public DeviceID {
-        U8 m_base_class_code;
-        U8 m_subclass_code;
-        U8 m_programming_interface;
-
-      public:
-        PCIDeviceID(U8 base_class_code, U8 subclass_code, U8 programming_interface);
-        [[nodiscard]] auto get_device_ID_type() const -> DeviceIDType override;
-        auto               equals(const DeviceID* d_ID) const -> bool override;
-    };
-
-    // ========================================================================================== //
-    // PCIDevice
-    // ========================================================================================== //
-
-    class PCIDevice : public Device {
-        PCIDeviceID m_device_ID;
-
-      public:
-        PCIDevice(DeviceHandle       handle,
-                  const String&      name,
-                  const String&      oem,
-                  const String&      revision,
-                  const String&      serial_number,
-                  DeviceType         device_type,
-                  const PCIDeviceID& device_ID);
-
-        [[nodiscard]] auto get_device_ID() const -> const DeviceID* override;
-    };
-
-    // ========================================================================================== //
     // Configuration Space
     // ========================================================================================== //
 
@@ -128,6 +93,47 @@ namespace Rune::Device {
         U8                                interrupt_pin{};
         U8                                min_grant{};
         U8                                max_latency{};
+    };
+
+    // ========================================================================================== //
+    // PCIDeviceID
+    // ========================================================================================== //
+    /// @brief PCI-specific device ID containing base class code, subclass code and programming
+    ///         interface.
+    class PCIDeviceID : public DeviceID {
+        U8 m_base_class_code;
+        U8 m_subclass_code;
+        U8 m_programming_interface;
+
+      public:
+        PCIDeviceID(U8 base_class_code, U8 subclass_code, U8 programming_interface);
+        [[nodiscard]] auto get_device_ID_type() const -> DeviceIDType override;
+        auto               equals(const DeviceID* d_ID) const -> bool override;
+    };
+
+    // ========================================================================================== //
+    // PCIDevice
+    // ========================================================================================== //
+
+    class PCIDevice : public Device {
+        PCIDeviceID                      m_device_ID;
+        PCIConfigurationSpaceHeaderType0 m_pci_header;
+
+      public:
+        PCIDevice(Handle             handle,
+                  const String&      name,
+                  const String&      oem,
+                  const String&      revision,
+                  const String&      serial_number,
+                  DeviceType         device_type,
+                  const PCIDeviceID& device_ID,
+                  const PCIConfigurationSpaceHeaderType0& pci_header);
+
+        [[nodiscard]] auto device_ID() const -> const DeviceID* override;
+
+        /// @brief
+        /// @return The PCI configuration space header type 0.
+        [[nodiscard]] auto pci_header() const -> const PCIConfigurationSpaceHeaderType0&;
     };
 } // namespace Rune::Device
 

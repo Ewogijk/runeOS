@@ -18,6 +18,18 @@
 
 namespace Rune::Device {
     // ========================================================================================== //
+    // PCI Header
+    // ========================================================================================== //
+
+    auto PCIConfigurationSpaceHeaderCommon::is_multi_function_device() -> bool {
+        return (header_type & MASK_MULTI_FUNCTION_DEVICE) != 0;
+    }
+
+    auto PCIConfigurationSpaceHeaderCommon::get_header_layout() -> U8 {
+        return header_type & MASK_HEADER_LAYOUT;
+    }
+
+    // ========================================================================================== //
     // PCIDeviceID
     // ========================================================================================== //
 
@@ -40,27 +52,22 @@ namespace Rune::Device {
     // PCIDevice
     // ========================================================================================== //
 
-    PCIDevice::PCIDevice(DeviceHandle       handle,
-                         const String&      name,
-                         const String&      oem,
-                         const String&      revision,
-                         const String&      serial_number,
-                         DeviceType         device_type,
-                         const PCIDeviceID& device_ID)
+    PCIDevice::PCIDevice(Handle                                  handle,
+                         const String&                           name,
+                         const String&                           oem,
+                         const String&                           revision,
+                         const String&                           serial_number,
+                         DeviceType                              device_type,
+                         const PCIDeviceID&                      device_ID,
+                         const PCIConfigurationSpaceHeaderType0& pci_header)
         : Device(handle, name, oem, revision, serial_number, device_type),
-          m_device_ID(device_ID) {}
+          m_device_ID(device_ID),
+          m_pci_header(pci_header) {}
 
-    auto PCIDevice::get_device_ID() const -> const DeviceID* { return &m_device_ID; }
+    auto PCIDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
-    // ========================================================================================== //
-    // PCI Header
-    // ========================================================================================== //
-
-    auto PCIConfigurationSpaceHeaderCommon::is_multi_function_device() -> bool {
-        return (header_type & MASK_MULTI_FUNCTION_DEVICE) != 0;
+    auto PCIDevice::pci_header() const -> const PCIConfigurationSpaceHeaderType0& {
+        return m_pci_header;
     }
 
-    auto PCIConfigurationSpaceHeaderCommon::get_header_layout() -> U8 {
-        return header_type & MASK_HEADER_LAYOUT;
-    }
 } // namespace Rune::Device

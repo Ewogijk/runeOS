@@ -62,7 +62,7 @@ namespace Rune::VFS {
          * Failure reason is specific to the file system implementation, check the logs.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto format(Device::DeviceHandle mass_storage_dev_handle) -> FormatStatus = 0;
+        virtual auto format(Device::Handle mass_storage_dev_handle) -> FormatStatus = 0;
 
         /**
          * A filesystem driver implementation shall be able to mount multiple storage devices at
@@ -79,7 +79,7 @@ namespace Rune::VFS {
          *          NotSupported:      The storage device is not formatted or uses an unknown
          * filesystem. StorageDevError:   An IO error happened.
          */
-        virtual auto mount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus = 0;
+        virtual auto mount(Device::Handle mass_storage_dev_handle) -> MountStatus = 0;
 
         /**
          *
@@ -94,7 +94,7 @@ namespace Rune::VFS {
          *          MountError:        The storage device could not be unmounted.
          *          StorageDevError:   An IO error happened.
          */
-        virtual auto unmount(Device::DeviceHandle mass_storage_dev_handle) -> MountStatus = 0;
+        virtual auto unmount(Device::Handle mass_storage_dev_handle) -> MountStatus = 0;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          File Manipulations
@@ -121,7 +121,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto create(Device::DeviceHandle mass_storage_dev_handle,
+        virtual auto create(Device::Handle mass_storage_dev_handle,
                             const Path&          path,
                             U8                   attributes) -> IOStatus = 0;
 
@@ -140,7 +140,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto open(Device::DeviceHandle mass_storage_dev_handle,
+        virtual auto open(Device::Handle mass_storage_dev_handle,
                           const Path&          mount_point,
                           const Path&          path,
                           Ember::IOMode        io_mode,
@@ -161,7 +161,7 @@ namespace Rune::VFS {
          *          DEV_UNKNOWN: The storage device is unknown to the driver.
          *          DEV_ERROR:   An IO error happened.
          */
-        virtual auto find_node(Device::DeviceHandle mass_storage_dev_handle,
+        virtual auto find_node(Device::Handle mass_storage_dev_handle,
                                const Path&          path,
                                NodeInfo&            out) -> IOStatus = 0;
 
@@ -175,7 +175,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto delete_node(Device::DeviceHandle mass_storage_dev_handle, const Path& path)
+        virtual auto delete_node(Device::Handle mass_storage_dev_handle, const Path& path)
             -> IOStatus = 0;
 
         /**
@@ -189,7 +189,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto open_directory_stream(Device::DeviceHandle            mass_storage_dev_handle,
+        virtual auto open_directory_stream(Device::Handle            mass_storage_dev_handle,
                                            const Path&                     path,
                                            const Function<void()>&         on_close,
                                            SharedPointer<DirectoryStream>& out) -> IOStatus = 0;

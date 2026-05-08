@@ -17,11 +17,16 @@
 #include <Device/MassStorage/MassStorage.h>
 
 namespace Rune::Device {
-    const PartitionRange PartitionRange::ENTIRE_DEVICE = {.m_start = 0, .m_end = 0};
+
+    // ========================================================================================== //
+    // Mass Storage Device
+    // ========================================================================================== //
+
+    const PartitionRange PartitionRange::ENTIRE_DEVICE = {0, 0xFFFFFFFFFFFFFFFF};
 
     DEFINE_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0)
 
-    MassStorageDevice::MassStorageDevice(DeviceHandle          handle,
+    MassStorageDevice::MassStorageDevice(Handle                handle,
                                          const String&         name,
                                          const String&         oem,
                                          const String&         revision,
@@ -34,23 +39,23 @@ namespace Rune::Device {
                                          PartitionRange        partition_range)
         : BasicDevice(handle, name, oem, revision, serial_number, device_type, device_ID),
           m_mass_storage_device_type(mass_storage_device_type),
-          m_sector_count(sector_count),
+          m_total_sector_count(sector_count),
           m_sector_size(sector_size),
           m_partition_range(partition_range) {}
 
-    auto MassStorageDevice::get_mass_storage_device_type() const -> MassStorageDeviceType {
+    auto MassStorageDevice::mass_storage_device_type() const -> MassStorageDeviceType {
         return m_mass_storage_device_type;
     }
 
-    auto MassStorageDevice::get_sector_count() const -> U32 { return m_sector_count; }
+    auto MassStorageDevice::total_sector_count() const -> U64 { return m_total_sector_count; }
 
-    auto MassStorageDevice::get_sector_size() const -> U32 { return m_sector_size; }
+    auto MassStorageDevice::used_sector_count() const -> U64 { return m_used_sector_count; }
 
-    auto MassStorageDevice::get_partition_range() const -> PartitionRange {
+    auto MassStorageDevice::used_sector_count() -> U64& { return m_used_sector_count; }
+
+    auto MassStorageDevice::sector_size() const -> U32 { return m_sector_size; }
+
+    auto MassStorageDevice::partition_range() const -> const PartitionRange& {
         return m_partition_range;
     }
-
-    MassStorageDeviceDriver::MassStorageDeviceDriver(DriverHandle handle, const String& name)
-        : Driver(handle, name) {}
-
 } // namespace Rune::Device
