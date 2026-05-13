@@ -329,17 +329,17 @@ def define_codegen_targets(env: Environment):
     isr_stubs_inc = env.Command(
         f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc",
         "Tools/GenerateISRStubsAssembly.py",
-        "python3 $SOURCE $TARGET",
+        f"{sys.executable} $SOURCE $TARGET",
     )
     isr_stubs_h = env.Command(
         f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
         "Tools/GenerateISRStubsCPP.py",
-        "python3 $SOURCE $TARGET",
+        f"{sys.executable} $SOURCE $TARGET",
     )
     lat_terminus = env.Command(
         "Include/KRE/System/Lat15-Terminus16.h",
         "Tools/PSF2ToCPP.py",
-        "python3 $SOURCE $TARGET Tools/Lat15-Terminus16.psf",
+        f"{sys.executable} $SOURCE $TARGET Tools/Lat15-Terminus16.psf",
     )
     # Update BuildHReplacements.json when BuildVariables.py changes
     build_h_replacements = env.Command(
@@ -350,7 +350,7 @@ def define_codegen_targets(env: Environment):
     build_h = env.Command(
         "Include/KRE/Build.h",
         "Tools/GenerateBuildHeader.py",
-        "python3 $SOURCE $TARGET Tools/BuildHReplacements.json && clang-format-19 $TARGET -i",
+        f"{sys.executable} $SOURCE $TARGET Tools/BuildHReplacements.json && clang-format $TARGET -i",
     )
     # Need to explicitly declare a dependency between Build.h and BuildHReplacements.json
     build_h_dep = env.Depends("Include/KRE/Build.h", "Tools/BuildHReplacements.json")
