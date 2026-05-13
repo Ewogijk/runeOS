@@ -160,10 +160,10 @@ def configure(brokk_config_yaml: str) -> bool:
         BuildConfig.C.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-gcc"),
         BuildConfig.CPP.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-g++"),
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(
-            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtbegin.o"
+            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "16.1.0" / "crtbegin.o"
         ),
         BuildConfig.CRT_END.to_yaml_key(): str(
-            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "13.2.0" / "crtend.o"
+            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "16.1.0" / "crtend.o"
         ),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
         BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[
