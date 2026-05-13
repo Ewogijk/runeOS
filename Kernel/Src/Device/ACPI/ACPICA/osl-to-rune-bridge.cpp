@@ -27,7 +27,6 @@
 
 #include <CPU/CPUModule.h>
 #include <CPU/IO.h>
-#include <CPU/Interrupt/Exception.h>
 
 #include <Device/PCI/PCI.h>
 
@@ -814,7 +813,7 @@ CLINK {
 
     constexpr U16 PCI_IO_PORT_MAX_BYTES = 0x100;
 
-    auto acpi_to_rune_read_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 * val, UINT32 width)
+    auto acpi_to_rune_read_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64 * val, UINT32 width)
         -> ACPI_STATUS {
         if (val == nullptr
             || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
@@ -826,21 +825,21 @@ CLINK {
             return AE_ERROR;
 
         if (width == BIT_COUNT_BYTE)
-            *val = Device::pci_read_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_byte(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
         else if (width == BIT_COUNT_WORD)
-            *val = Device::pci_read_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_word(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
         else if (width == BIT_COUNT_DWORD)
-            *val = Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+            *val = Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
         else {
             *val = static_cast<U64>(
-                       Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg + 4))
+                       Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg + 4))
                        << SHIFT_32
-                   | Device::pci_read_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg);
+                   | Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
         }
         return AE_OK;
     }
 
-    auto acpi_to_rune_write_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 val, UINT32 width)
+    auto acpi_to_rune_write_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64 val, UINT32 width)
         -> ACPI_STATUS {
         if (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
             && width != BIT_COUNT_QWORD)
@@ -851,20 +850,20 @@ CLINK {
             return AE_ERROR;
 
         if (width == BIT_COUNT_BYTE)
-            Device::pci_write_byte(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_byte(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
         else if (width == BIT_COUNT_WORD)
-            Device::pci_write_word(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_word(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
         else if (width == BIT_COUNT_DWORD)
-            Device::pci_write_dword(pci_id.Bus, pci_id.Device, pci_id.Function, reg, val);
+            Device::pci_write_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
         else {
-            Device::pci_write_dword(pci_id.Bus,
-                                    pci_id.Device,
-                                    pci_id.Function,
+            Device::pci_write_dword(pci_id->Bus,
+                                    pci_id->Device,
+                                    pci_id->Function,
                                     reg + 4,
                                     dword_get(val, 1));
-            Device::pci_write_dword(pci_id.Bus,
-                                    pci_id.Device,
-                                    pci_id.Function,
+            Device::pci_write_dword(pci_id->Bus,
+                                    pci_id->Device,
+                                    pci_id->Function,
                                     reg,
                                     dword_get(val, 0));
         }
@@ -1097,16 +1096,17 @@ CLINK {
         return AE_NOT_IMPLEMENTED;
     }
 
-    auto acpi_to_rune_get_table_by_index(UINT32 table_index,
-                                         ACPI_TABLE_HEADER * *out_table,
-                                         ACPI_PHYSICAL_ADDRESS * *out_address) -> ACPI_STATUS {
+    auto acpi_to_rune_get_table_by_index(UINT32 index,
+                                         ACPI_TABLE_HEADER * *table,
+                                         UINT32 * instance,
+                                         ACPI_PHYSICAL_ADDRESS * address) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 
     auto acpi_to_rune_get_table_by_name(char*                  signature,
                                         UINT32                 instance,
-                                        ACPI_TABLE_HEADER**    out_table,
-                                        ACPI_PHYSICAL_ADDRESS* out_address) -> ACPI_STATUS {
+                                        ACPI_TABLE_HEADER**    table,
+                                        ACPI_PHYSICAL_ADDRESS* address) -> ACPI_STATUS {
         return AE_NOT_IMPLEMENTED;
     }
 

@@ -92,9 +92,9 @@ extern ACPI_STATUS acpi_to_rune_write_port(ACPI_IO_ADDRESS port, UINT32 val, UIN
 
 /* PCI Configuration Space Access */
 extern ACPI_STATUS
-acpi_to_rune_read_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64* val, UINT32 width);
+acpi_to_rune_read_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64* val, UINT32 width);
 extern ACPI_STATUS
-acpi_to_rune_write_pci_config(ACPI_PCI_ID pci_id, UINT32 reg, UINT64 val, UINT32 width);
+acpi_to_rune_write_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64 val, UINT32 width);
 
 /* Formatted Output */
 extern void acpi_to_rune_vprintf(const char* format, va_list args);
@@ -104,13 +104,14 @@ extern void acpi_to_rune_redirect_output(void* destination);
 
 extern ACPI_STATUS acpi_to_rune_get_table_by_address(ACPI_PHYSICAL_ADDRESS address,
                                                      ACPI_TABLE_HEADER**   out_table);
-extern ACPI_STATUS acpi_to_rune_get_table_by_index(UINT32                  table_index,
-                                                   ACPI_TABLE_HEADER**     out_table,
-                                                   ACPI_PHYSICAL_ADDRESS** out_address);
-extern ACPI_STATUS acpi_to_rune_get_table_by_name(char*                   signature,
-                                                  UINT32                  instance,
-                                                  ACPI_TABLE_HEADER**     out_table,
-                                                  ACPI_PHYSICAL_ADDRESS** out_address);
+extern ACPI_STATUS acpi_to_rune_get_table_by_index(UINT32                 index,
+                                                   ACPI_TABLE_HEADER**    table,
+                                                   UINT32*                instance,
+                                                   ACPI_PHYSICAL_ADDRESS* address);
+extern ACPI_STATUS acpi_to_rune_get_table_by_name(char*                  signature,
+                                                  UINT32                 instance,
+                                                  ACPI_TABLE_HEADER**    table,
+                                                  ACPI_PHYSICAL_ADDRESS* address);
 
 /* Miscellaneous */
 extern UINT64      acpi_to_rune_get_timer();
@@ -182,9 +183,7 @@ AcpiOsGetPhysicalAddress(void* LogicalAddress, ACPI_PHYSICAL_ADDRESS* PhysicalAd
     return acpi_to_rune_get_physical_address(LogicalAddress, PhysicalAddress);
 }
 
-void* AcpiOsAllocate(ACPI_SIZE Size) {
-    return acpi_to_rune_allocate(Size);
-}
+void* AcpiOsAllocate(ACPI_SIZE Size) { return acpi_to_rune_allocate(Size); }
 
 void AcpiOsFree(void* Memory) { acpi_to_rune_free(Memory); }
 
@@ -303,12 +302,12 @@ ACPI_STATUS AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 ACPI_STATUS
-AcpiOsReadPciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64* Value, UINT32 Width) {
+AcpiOsReadPciConfiguration(ACPI_PCI_ID* PciId, UINT32 Register, UINT64* Value, UINT32 Width) {
     return acpi_to_rune_read_pci_config(PciId, Register, Value, Width);
 }
 
 ACPI_STATUS
-AcpiOsWritePciConfiguration(ACPI_PCI_ID PciId, UINT32 Register, UINT64 Value, UINT32 Width) {
+AcpiOsWritePciConfiguration(ACPI_PCI_ID* PciId, UINT32 Register, UINT64 Value, UINT32 Width) {
     return acpi_to_rune_write_pci_config(PciId, Register, Value, Width);
 }
 
@@ -335,17 +334,18 @@ ACPI_STATUS AcpiOsGetTableByAddress(ACPI_PHYSICAL_ADDRESS Address, ACPI_TABLE_HE
     return acpi_to_rune_get_table_by_address(Address, OutTable);
 }
 
-ACPI_STATUS AcpiOsGetTableByIndex(UINT32                  Index,
-                                  ACPI_TABLE_HEADER**     OutTable,
-                                  ACPI_PHYSICAL_ADDRESS** OutAddress) {
-    return acpi_to_rune_get_table_by_index(Index, OutTable, OutAddress);
+ACPI_STATUS AcpiOsGetTableByIndex(UINT32                 Index,
+                                  ACPI_TABLE_HEADER**    Table,
+                                  UINT32*                Instance,
+                                  ACPI_PHYSICAL_ADDRESS* Address) {
+    return acpi_to_rune_get_table_by_index(Index, Table, Instance, Address);
 }
 
-ACPI_STATUS AcpiOsGetTableByName(char*                   Signature,
-                                 UINT32                  Instance,
-                                 ACPI_TABLE_HEADER**     OutTable,
-                                 ACPI_PHYSICAL_ADDRESS** OutAddress) {
-    return acpi_to_rune_get_table_by_name(Signature, Instance, OutTable, OutAddress);
+ACPI_STATUS AcpiOsGetTableByName(char*                  Signature,
+                                 UINT32                 Instance,
+                                 ACPI_TABLE_HEADER**    Table,
+                                 ACPI_PHYSICAL_ADDRESS* Address) {
+    return acpi_to_rune_get_table_by_name(Signature, Instance, Table, Address);
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
