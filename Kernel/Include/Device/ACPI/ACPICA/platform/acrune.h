@@ -17,6 +17,44 @@
 #ifndef RUNEOS_ACRUNE_H
 #define RUNEOS_ACRUNE_H
 
+#include <stddef.h>
+
+// ============================================================================================== //
+// C Library Functions
+// ============================================================================================== //
+
+void* memset(void* dest, int chr, size_t count);
+
+void* memcpy(void* dest, const void* src, size_t count);
+
+int memcmp(const void* lhs, const void* rhs, size_t count);
+
+size_t strlen(const char* str);
+
+char* strcat(char* destination, const char* source);
+
+char* strncat(char* destination, const char* source, size_t num);
+
+char* strcpy(char* destination, const char* source);
+
+char* strncpy(char* destination, const char* source, size_t num);
+
+int strncmp(const char* str1, const char* str2, size_t num);
+
+int strcmp(const char* str1, const char* str2);
+
+int isdigit(int c);
+
+int isspace(int c);
+
+int isxdigit(int c);
+
+int isprint(int c);
+
+int tolower(int c);
+
+int toupper(int c);
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Component Selection
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -44,13 +82,6 @@
 #define ACPI_MUTEX_TYPE 1 // ACPI_OSL_MUTEX
 #define ACPI_USE_DO_WHILE_0
 #define ACPI_DEBUG_OUTPUT
-
-// The definitions in acpiosxf.h for these OSL do not match with the reference definitions, so we
-// deactivate them. But others do, why is that?
-#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsReadPciConfiguration
-#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsWritePciConfiguration
-#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsGetTableByName
-#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsGetTableByIndex
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                  Per-Compiler Configuration
