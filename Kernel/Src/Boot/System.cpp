@@ -30,7 +30,6 @@
 #include <CPU/CPUModule.h>
 #include <CPU/E9Stream.h>
 #include <CPU/Interrupt/Exception.h>
-#include <CPU/Interrupt/IRQ.h>
 
 #include <Memory/MemoryModule.h>
 
@@ -59,25 +58,23 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     /**
-     * Create a log file in the /System/Log directory named 'module_name'.log and register the log
-     * file as a logging target.
+     * Create a log file in the /System/Log directory named 'module_name'.log
+     * and register the log file as a logging target.
      * @param module_name Kernel module name.
      */
     void register_file_log_target(const String& module_name) {
-        auto* vfs_module = System::instance().get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        Path  log_file   = Path("/System/Log") / (module_name + ".log");
+        auto*      vfs_module = System::instance().get_module<VFS::VFSModule>(ModuleSelector::VFS);
+        const Path log_file   = Path("/System/Log") / (module_name + ".log");
         VFS::IOStatus stat =
             vfs_module->create(log_file, Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
         if (stat != VFS::IOStatus::CREATED && stat != VFS::IOStatus::FOUND) {
-            LOGGER->critical(R"("{}": Failed to create log file!)", log_file.to_string());
-            while (true) CPU::halt();
+            System::instance().panic(R"("{}": Failed to create log file!)", log_file.to_string());
         }
 
         SharedPointer<VFS::Node> node;
         stat = vfs_module->open(log_file, Ember::IOMode::WRITE, node);
         if (stat != VFS::IOStatus::OPENED) {
-            LOGGER->critical(R"("{}": Cannot open log file!)", log_file.to_string());
-            while (true) CPU::halt();
+            System::instance().panic(R"("{}": Cannot open log file!)", log_file.to_string());
         }
 
         LogContext::instance().register_target_stream(
@@ -163,24 +160,27 @@ namespace Rune {
             return;
         }
 
-        // Kernel boot phase 2 is still running on the implicit Bootstrap Thread using the
-        // bootloader resources (mainly the bootloader stack)
-        // The main goal here is to init dynamic memory, call global constructors, set up
+        // Kernel boot phase 2 is still running on the implicit Bootstrap Thread
+        // using the bootloader resources (mainly the bootloader stack) The main
+        // goal here is to init dynamic memory, call global constructors, set up
         // interrupts and scheduling to get a stable kernel
-        // Then we will run kernel boot phase 3 on our own resources instead of the bootloaders
+        // Then we will run kernel boot phase 3 on our own resources instead of
+        // the bootloaders
         _boot_info = boot_info;
 
-        // It is not possible to use a module loader for the memory module, because loggers are not
-        // instantiated yet. Global constructors would need to be called first, but we also want to
-        // have dynamic memory in global constructors... so here is a chicken-and-egg problem, hence
-        // we manually load the memory module
+        // It is not possible to use a module loader for the memory module,
+        // because loggers are not instantiated yet. Global constructors would
+        // need to be called first, but we also want to have dynamic memory in
+        // global constructors... so here is a chicken-and-egg problem, hence we
+        // manually load the memory module
 
-        // Furthermore, the memory module has to be statically allocated, but cannot be defined as
-        // global variable because it will not be initialized (no global constructor call yet),
-        // hence we use a little trick. Static local variables live in global scope but lazy
-        // initialized, this means the memory module will be initialized, will not go out of scope
-        // once boot phase2 is finished and the constructor will not be called again when global
-        // constructors are called
+        // Furthermore, the memory module has to be statically allocated, but
+        // cannot be defined as global variable because it will not be
+        // initialized (no global constructor call yet), hence we use a little
+        // trick. Static local variables live in global scope but lazy
+        // initialized, this means the memory module will be initialized, will
+        // not go out of scope once boot phase2 is finished and the constructor
+        // will not be called again when global constructors are called
         static Memory::MemoryModule mem_module;
         if (!mem_module.load(boot_info))
             while (true) CPU::halt();
@@ -241,8 +241,8 @@ namespace Rune {
         LOGGER->info("Fallback to PS/2 Controller reset...");
         constexpr U8 PS2_COMMAND_PORT  = 0x64;
         constexpr U8 PS2_RESET_COMMAND = 0xFE;
-        U8           PS2_status        = 0x02; // Initially assume input buffer full
-        while (bit_check(PS2_status, 1)) PS2_status = CPU::in_b(PS2_COMMAND_PORT);
+        U8           PS2_STATUS        = 0x02; // Initially assume input buffer full
+        while (bit_check(PS2_STATUS, 1)) PS2_STATUS = CPU::in_b(PS2_COMMAND_PORT);
         CPU::out_b(PS2_COMMAND_PORT, PS2_RESET_COMMAND);
         CPU::halt();
 
@@ -253,15 +253,16 @@ namespace Rune {
         // constexpr U8  FULL_RESET             = 0x08; // Power cycle when set
         CPU::out_b(RESET_CONTROL_REGISTER, SYSTEM_RESET | RESET_CPU);
 
-        panic("All reboot options failed. Will spin forever... (Restart manually).");
+        panic("All reboot options failed. Will spin forever... (Restart "
+              "manually).");
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Module Loader
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    // System will allocate the memory module and assign it to position 0 in the module registry,
-    // thus we start the module_index at 1
+    // System will allocate the memory module and assign it to position 0 in the
+    // module registry, thus we start the module_index at 1
     size_t ModuleLoader::module_index = 1;
 
     size_t ModuleLoader::plugin_index = 0;
