@@ -35,8 +35,8 @@ namespace Rune::CPU {
         // why we have to set it up, so it jumps to the thread startup function
         auto* stack_bottom = new U8[Thread::KERNEL_STACK_SIZE];
         auto  stack_top    = setup_trampoline_kernel_stack(memory_pointer_to_addr(stack_bottom)
-                                                           + Thread::KERNEL_STACK_SIZE,
-                                                       memory_pointer_to_addr(_thread_enter));
+                                                               + Thread::KERNEL_STACK_SIZE,
+                                                           memory_pointer_to_addr(_thread_enter));
 
         thread->kernel_stack_top    = stack_top;
         thread->kernel_stack_bottom = stack_bottom;
@@ -137,7 +137,7 @@ namespace Rune::CPU {
         : _running_thread(nullptr),
           _idle_thread(nullptr),
           _garbage_collector_thread(nullptr),
-          _on_context_switch([](Thread* next) { SILENCE_UNUSED(next) }) {}
+          _on_context_switch([](Thread* next) -> void { SILENCE_UNUSED(next) }) {}
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Properties
@@ -216,7 +216,7 @@ namespace Rune::CPU {
             unlock();
             return false;
         }
-        thread->state = ThreadState::READY;
+        // thread->state = ThreadState::READY;
         unlock();
         return true;
     }

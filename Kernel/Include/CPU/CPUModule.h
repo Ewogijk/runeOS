@@ -35,13 +35,13 @@
 namespace Rune::CPU {
 
 #define CPU_EVENT_HOOKS(X)                                                                         \
-    X(EventHook, THREAD_CREATED, 0x1)                                                              \
+    X(EventHook, THREAD_CREATED, 0x1)                                                            \
     X(EventHook, THREAD_STOPPED, 0x2)                                                              \
     X(EventHook, THREAD_PREEMPTED, 0x3)
 
     /// @brief CPU module event hooks
     ///
-    /// - THREAD_CREATED: A new thread object was created and is about to be scheduled
+    /// - THREAD_CREATED: A new thread was created and will be scheduled.
     ///                     Event Context - Thread*: The created thread.
     /// - THREAD_STOPPED: A thread has returned from main or requested to be stopped.
     ///                     Event Context - ThreadTerminatedContext*: Contains pointers to the
@@ -91,20 +91,13 @@ namespace Rune::CPU {
 
         Scheduler _scheduler;
 
-        HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _joining_threads;
+        HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Time Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         UniquePointer<Timer> _timer;
-
-        auto create_thread(MutexHandle      handle,
-                           const String&    thread_name,
-                           StartInfo*       start_info,
-                           PhysicalAddr     base_pt_addr,
-                           SchedulingPolicy policy,
-                           Stack            user_stack) -> SharedPointer<Thread>;
 
       public:
         CPUModule();
@@ -262,7 +255,7 @@ namespace Rune::CPU {
         ///
         /// After the calling thread is unblocked it is not guaranteed that the thread object of the
         /// joined thread is still available in the thread table.
-        auto join_thread(int handle) -> bool;
+        auto sync_on_thread_stop(ThreadHandle handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Mutex API

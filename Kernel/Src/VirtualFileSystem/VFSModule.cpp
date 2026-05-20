@@ -308,7 +308,7 @@ namespace Rune::VFS {
             MountPointInfo         mpi    = resolve(mount_point);
             UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
             NodeInfo               dummy;
-            IOStatus               as = (*driver)->find_node(mpi.m_mass_storage_device_handle,
+            IOStatus as = (*driver)->find_node(mpi.m_mass_storage_device_handle,
                                                mount_point.relative_to(mpi.m_mount_point),
                                                dummy);
             if (as != IOStatus::FOUND) {
@@ -416,8 +416,8 @@ namespace Rune::VFS {
         MountPointInfo         mpi    = resolve(path);
         UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
         IOStatus               st     = (*driver)->create(mpi.m_mass_storage_device_handle,
-                                        path.relative_to(mpi.m_mount_point),
-                                        attributes);
+                                                          path.relative_to(mpi.m_mount_point),
+                                                          attributes);
         if (st == IOStatus::CREATED)
             LOGGER->debug(R"(Created FILE "{}" with attributes {:0=#8b})",
                           path.to_string(),

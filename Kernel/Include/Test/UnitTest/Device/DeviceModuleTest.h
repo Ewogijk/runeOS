@@ -316,7 +316,7 @@ TEST("register_device - Device type is None", "DeviceModule") {
     // Setup
     auto* ds          = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
     auto  root_device = ds->device_tree();
-    auto  dummy_dev = SharedPointer<Device::Device>(new Device::BasicDevice(ds->get_device_handle(),
+    auto dummy_dev = SharedPointer<Device::Device>(new Device::BasicDevice(ds->get_device_handle(),
                                                                            "Dummy Device",
                                                                            "Dummy Inc.",
                                                                            "1.0",
@@ -364,7 +364,7 @@ TEST("register_device - Unknown bus device", "DeviceModule") {
     ds->unregister_device(dummy_dev);
 }
 
-TEST("register_device", "Bus Device and Device are the same device") {
+TEST("register_device - Bus Device and Device are the same device", "DeviceModule") {
     // Setup
     auto* ds        = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
     auto  dummy_dev = make_dummy_dev(ds->get_device_handle());

@@ -518,7 +518,7 @@ CLINK {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         for (const auto& started_threads : g_osl_config.m_acpi_threads)
             // NOLINTBEGIN clang-analyzer-core.NullDereference -> iterator is null checked
-            cpu_module->join_thread(*started_threads.key);
+            cpu_module->sync_on_thread_stop(*started_threads.key);
         // NOLINTEND
 
         // At this point all threads have finished execution or had already finished
