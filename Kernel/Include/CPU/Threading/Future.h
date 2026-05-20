@@ -24,19 +24,33 @@
 
 namespace Rune::CPU {
 
+    template <class ResultType>
+    struct FPSharedState {
+        Optional<ResultType> m_value;
+        ConditionVariable    m_cv;
+        Mutex                m_mutex;
+    };
+
     /// @brief Future allows it to get the result of an asynchronous operation.
     /// @tparam ResultType Type of the result value.
     template <class ResultType>
     class Future {
-        Optional<ResultType>* m_value;
-        ConditionVariable*    m_cv;
+        SharedPointer<FPSharedState<ResultType>> m_shared_state;
 
       public:
-        Future(Optional<ResultType>* value, ConditionVariable* cv) : m_value(value), m_cv(cv) {}
+        Future(SharedPointer<FPSharedState<ResultType>> shared_state)
+            : m_shared_state(shared_state) {}
 
         /// @brief Check if the result of the asynchronous operation is available.
         /// @return True: The asynchronous result value is available, False: Otherwise.
-        [[nodiscard]] auto is_finished() const -> bool { return m_value->has_value(); }
+        [[nodiscard]] auto is_finished() const -> bool {
+            bool is_finished = false;
+            {
+                CriticalSection _(m_shared_state->m_mutex);
+                is_finished = m_shared_state->m_value.has_value();
+            }
+            return is_finished;
+        }
 
         /// @brief Get the result of the asynchronous operation.
         /// @return The result of the asynchronous operation.
@@ -44,8 +58,10 @@ namespace Rune::CPU {
         /// If the result is not available, more specifically if 'is_finished == false', the calling
         /// thread will be blocked until the result is available.
         auto get() const -> ResultType {
-            if (!m_value->has_value()) m_cv->wait();
-            return m_value->value();
+            CriticalSection _(m_shared_state->m_mutex);
+            if (!m_shared_state->m_value.has_value())
+                m_shared_state->m_cv.wait(m_shared_state->m_mutex);
+            return m_shared_state->m_value.value();
         }
     };
 
@@ -54,16 +70,24 @@ namespace Rune::CPU {
     /// @tparam ResultType Type of the result value.
     template <class ResultType>
     class Promise {
-        Optional<ResultType> m_value;
-        ConditionVariable    m_cv;
-        Future<ResultType>   m_future;
-        void                 update_state(const ResultType& value) {
-            m_value = make_optional<ResultType>(value);
-            m_cv.notify_all();
+        SharedPointer<FPSharedState<ResultType>> m_shared_state;
+        Future<ResultType>                       m_future;
+
+        void update_state(const ResultType& value) {
+            {
+                CriticalSection _(m_shared_state->m_mutex);
+                m_shared_state->m_value = make_optional<ResultType>(value);
+            }
+            m_shared_state->m_cv.notify_all();
         }
 
       public:
-        Promise(Scheduler* scheduler) : m_value(), m_cv(scheduler), m_future(&m_value, &m_cv) {}
+        Promise(Scheduler* scheduler)
+            : m_shared_state(new FPSharedState<ResultType>(
+                  Optional<ResultType>(),
+                  ConditionVariable(scheduler),
+                  Mutex(Resource<MutexHandle>::HANDLE_NONE, "", scheduler))),
+              m_future(m_shared_state) {}
 
         /// @brief Get a reference to the future associated to this promise.
         /// @return A reference to the associated future.

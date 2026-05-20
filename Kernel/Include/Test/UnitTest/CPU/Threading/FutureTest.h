@@ -81,7 +81,7 @@ TEST("is_finished - Is finished", "Future") {
         REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
         return;
     }
-    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2)*WAIT_TIME_MILLIS);
+    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
     REQUIRE(promise.get_future().is_finished());
 
     // Cleanup
@@ -116,7 +116,7 @@ TEST("get - Is finished", "Future") {
         REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
         return;
     }
-    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2)*WAIT_TIME_MILLIS);
+    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
     REQUIRE(promise.get_future().get() == RESULT);
 
     // Cleanup

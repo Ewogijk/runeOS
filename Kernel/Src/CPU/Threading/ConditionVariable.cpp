@@ -35,13 +35,21 @@ namespace Rune::CPU {
         return copy;
     }
 
-    void ConditionVariable::wait() {
+    void ConditionVariable::wait(Mutex& mutex) {
         {
             CriticalSection<Spinlock> _(m_spinlock);
             m_waiters.add_back(m_scheduler->get_running_thread());
+            m_scheduler->await_block();
         }
-        m_scheduler->await_block();
+        mutex.unlock();
         m_scheduler->block();
+        mutex.lock();
+    }
+
+    void ConditionVariable::wait(Mutex& mutex, Function<bool()> predicate) {
+        while (!predicate()) {
+            wait(mutex);
+        }
     }
 
     void ConditionVariable::notify_one() {

@@ -14,6 +14,7 @@
 
 #include <CPU/CPUModule.h>
 #include <CPU/Threading/ConditionVariable.h>
+#include <CPU/Threading/Mutex.h>
 
 using namespace Rune;
 
@@ -22,13 +23,18 @@ struct TestThread {
     SharedPointer<CPU::StartInfo> m_start_info;
 };
 
-constexpr U8                          SLEEP_TIME_MS = 50;
-TestThread                            test_thread_a;
-TestThread                            test_thread_b;
-SharedPointer<CPU::ConditionVariable> condition_variable;
+constexpr U8                          SLEEP_TIME_MS = 100;
+TestThread                            TEST_THREAD_A;
+TestThread                            TEST_THREAD_B;
+SharedPointer<CPU::ConditionVariable> CONDITION_VARIABLE;
+SharedPointer<CPU::Mutex>             MUTEX;
+bool                                  IS_STILL_LOCKED = false;
 
 auto make_thread_wait(CPU::StartInfo* start_info) -> int {
-    condition_variable->wait();
+    MUTEX->lock();
+    CONDITION_VARIABLE->wait(*MUTEX);
+    IS_STILL_LOCKED = MUTEX->get_owner() != nullptr;
+    MUTEX->unlock();
     return 0;
 }
 
@@ -53,7 +59,7 @@ auto exec_test_thread(TestThread& tt) -> bool {
 }
 
 auto find_waiting_thread(CPU::ThreadHandle handle) -> CPU::Thread* {
-    for (auto* thread : condition_variable->get_waiting_threads()) {
+    for (auto* thread : CONDITION_VARIABLE->get_waiting_threads()) {
         if (thread->get_handle() == handle) return thread;
     }
     return nullptr;
@@ -61,134 +67,156 @@ auto find_waiting_thread(CPU::ThreadHandle handle) -> CPU::Thread* {
 
 TEST("wait - One Thread", "ConditionVariable") {
     // Setup
-    test_thread_a      = {};
-    test_thread_b      = {};
+    TEST_THREAD_A      = {};
+    TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    condition_variable = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
+                                                 "",
+                                                 cpu_module->get_scheduler());
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
 
     // Test Body
-    if (!exec_test_thread(test_thread_a)) {
+    if (!exec_test_thread(TEST_THREAD_A)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
-    auto* thread_a = find_waiting_thread(test_thread_a.m_thread_handle);
+    auto* thread_a = find_waiting_thread(TEST_THREAD_A.m_thread_handle);
     REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0));
     REQUIRE(thread_a->state == CPU::ThreadState::BLOCKED)
 
-    // Cleanupx
-    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    condition_variable = SharedPointer<CPU::ConditionVariable>();
+    // Cleanup
+    if (cpu_module->find_thread(TEST_THREAD_A.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_A.m_thread_handle);
+    CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
+    MUTEX              = SharedPointer<CPU::Mutex>();
+    IS_STILL_LOCKED = false;
 }
 
 TEST("wait - Multiple Threads", "ConditionVariable") {
     // Setup
-    test_thread_a      = {};
-    test_thread_b      = {};
+    TEST_THREAD_A      = {};
+    TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    condition_variable = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
+                                                 "",
+                                                 cpu_module->get_scheduler());
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
 
     // Test Body
-    if (!exec_test_thread(test_thread_a)) {
+    if (!exec_test_thread(TEST_THREAD_A)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
-    if (!exec_test_thread(test_thread_b)) {
+    if (!exec_test_thread(TEST_THREAD_B)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
 
-    auto* thread_a = find_waiting_thread(test_thread_a.m_thread_handle);
-    auto* thread_b = find_waiting_thread(test_thread_b.m_thread_handle);
+    auto* thread_a = find_waiting_thread(TEST_THREAD_A.m_thread_handle);
+    auto* thread_b = find_waiting_thread(TEST_THREAD_B.m_thread_handle);
     REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state == CPU::ThreadState::BLOCKED)
     REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_b.m_thread_handle);
-    condition_variable = SharedPointer<CPU::ConditionVariable>();
+    if (cpu_module->find_thread(TEST_THREAD_A.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_A.m_thread_handle);
+    if (cpu_module->find_thread(TEST_THREAD_B.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
+    CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
+    MUTEX              = SharedPointer<CPU::Mutex>();
+    IS_STILL_LOCKED = false;
 }
 
 TEST("notify_one", "ConditionVariable") {
     // Setup
-    test_thread_a      = {};
-    test_thread_b      = {};
+    TEST_THREAD_A      = {};
+    TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    condition_variable = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
+                                                 "",
+                                                 cpu_module->get_scheduler());
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
 
     // Test Body
-    if (!exec_test_thread(test_thread_a)) {
+    if (!exec_test_thread(TEST_THREAD_A)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
-    if (!exec_test_thread(test_thread_b)) {
+    if (!exec_test_thread(TEST_THREAD_B)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
 
-    auto* thread_a = cpu_module->find_thread(test_thread_a.m_thread_handle);
-    auto* thread_b = cpu_module->find_thread(test_thread_b.m_thread_handle);
-    condition_variable->notify_one();
+    auto* thread_a = cpu_module->find_thread(TEST_THREAD_A.m_thread_handle);
+    auto* thread_b = cpu_module->find_thread(TEST_THREAD_B.m_thread_handle);
+    CONDITION_VARIABLE->notify_one();
+    cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
     REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(TEST_THREAD_A.m_thread_handle))
             == static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state != CPU::ThreadState::BLOCKED)
+    REQUIRE(IS_STILL_LOCKED)
     REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(TEST_THREAD_B.m_thread_handle))
             != static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state == CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_b.m_thread_handle);
-    condition_variable = SharedPointer<CPU::ConditionVariable>();
+    if (cpu_module->find_thread(TEST_THREAD_A.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_A.m_thread_handle);
+    if (cpu_module->find_thread(TEST_THREAD_B.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
+    CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
+    MUTEX              = SharedPointer<CPU::Mutex>();
+    IS_STILL_LOCKED = false;
 }
 
 TEST("notify_all", "ConditionVariable") {
     // Setup
-    test_thread_a      = {};
-    test_thread_b      = {};
+    TEST_THREAD_A      = {};
+    TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    condition_variable = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
+                                                 "",
+                                                 cpu_module->get_scheduler());
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
 
     // Test Body
-    if (!exec_test_thread(test_thread_a)) {
+    if (!exec_test_thread(TEST_THREAD_A)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
-    if (!exec_test_thread(test_thread_b)) {
+    if (!exec_test_thread(TEST_THREAD_B)) {
         REQUIRE(1 == 0) // Test Thread not started -> FAIL the TC
         return;
     }
     cpu_module->get_system_timer()->sleep_milli(SLEEP_TIME_MS);
 
-    auto* thread_a = cpu_module->find_thread(test_thread_a.m_thread_handle);
-    auto* thread_b = cpu_module->find_thread(test_thread_b.m_thread_handle);
-    condition_variable->notify_all();
+    auto* thread_a = cpu_module->find_thread(TEST_THREAD_A.m_thread_handle);
+    auto* thread_b = cpu_module->find_thread(TEST_THREAD_B.m_thread_handle);
+    CONDITION_VARIABLE->notify_all();
     REQUIRE(reinterpret_cast<uintptr_t>(thread_a) != static_cast<uintptr_t>(0))
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_a.m_thread_handle))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(TEST_THREAD_A.m_thread_handle))
             == static_cast<uintptr_t>(0))
     REQUIRE(thread_a->state != CPU::ThreadState::BLOCKED)
     REQUIRE(reinterpret_cast<uintptr_t>(thread_b) != static_cast<uintptr_t>(0))
-    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(test_thread_b.m_thread_handle))
+    REQUIRE(reinterpret_cast<uintptr_t>(find_waiting_thread(TEST_THREAD_B.m_thread_handle))
             == static_cast<uintptr_t>(0))
     REQUIRE(thread_b->state != CPU::ThreadState::BLOCKED)
 
     // Cleanup
-    if (cpu_module->find_thread(test_thread_a.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_a.m_thread_handle);
-    if (cpu_module->find_thread(test_thread_b.m_thread_handle) != nullptr)
-        cpu_module->stop_thread(test_thread_b.m_thread_handle);
-    condition_variable = SharedPointer<CPU::ConditionVariable>();
+    if (cpu_module->find_thread(TEST_THREAD_A.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_A.m_thread_handle);
+    if (cpu_module->find_thread(TEST_THREAD_B.m_thread_handle) != nullptr)
+        cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
+    CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
+    MUTEX              = SharedPointer<CPU::Mutex>();
+    IS_STILL_LOCKED = false;
 }
 
 #endif // RUNEOS_CONDITIONVARIABLETEST_H
