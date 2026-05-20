@@ -18,8 +18,10 @@
 #define RUNEOS_CONDITIONVARIABLE_H
 
 #include <KRE/Collections/LinkedList.h>
+#include <KRE/Utility.h>
 
 #include <CPU/Threading/CriticalSection.h>
+#include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
 #include <CPU/Threading/Spinlock.h>
 
@@ -43,7 +45,14 @@ namespace Rune::CPU {
         [[nodiscard]] auto get_waiting_threads() const -> LinkedList<Thread*>;
 
         /// @brief Block the calling thread until the condition variable is notified.
-        void wait();
+        /// @param mutex Mutex that was locked by the calling thread.
+        void wait(Mutex& mutex);
+
+        /// @brief Block the calling thread until the condition variable is notified and predicate
+        /// returns true.
+        /// @param mutex Mutex that was locked by the calling thread.
+        /// @param predicate Predicate to check wether the waiting can be completed.
+        void wait(Mutex& mutex, Function<bool()> predicate);
 
         /// @brief Unblock a waiting thread.
         void notify_one();
