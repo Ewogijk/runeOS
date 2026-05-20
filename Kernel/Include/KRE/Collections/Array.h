@@ -151,9 +151,21 @@ namespace Rune {
 
         /**
          *
+         * @return Iterator to the first element.
+         */
+        auto begin() const -> ArrayIterator<const T> { return ArrayIterator<const T>(_array, 0, N); }
+
+        /**
+         *
          * @return Iterator to the element after the last element.
          */
         auto end() -> ArrayIterator<T> { return ArrayIterator<T>(_array, N, N); }
+
+        /**
+         *
+         * @return Iterator to the element after the last element.
+         */
+        auto end() const -> ArrayIterator<const T> { return ArrayIterator<const T>(_array, N, N); }
     };
 } // namespace Rune
 

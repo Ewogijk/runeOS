@@ -22,6 +22,7 @@
 
 #include <Test/UnitTest/CPU/Threading/ConditionVariableTest.h>
 #include <Test/UnitTest/CPU/Threading/FutureTest.h>
+#include <Test/UnitTest/CPU/Threading/ThreadPoolTest.h>
 
 #include <Test/UnitTest/Device/DeviceModuleTest.h>
 
