@@ -82,10 +82,16 @@ Once your PR gets accepted, it will be merged. That's it!
 ### Getting the Dependencies
 
 First of you will have to get the necessary tools to build the project. Begin with installing the
-required system packages:
+required system packages.
 
+On Ubuntu:
 ```shell
 sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
+```
+
+On Arch linux:
+```shell
+sudo pacman -S nasm ninja qemu-system-x86 qemu-ui-gtk dosfstools gdb gptfdisk
 ```
 
 Then install the python dependencies:
@@ -94,8 +100,7 @@ Then install the python dependencies:
 pip install scons click meson pyyaml
 ```
 
-Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk/runeToolchain) that
-provides the cross-compilers to build runeOS.
+Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk/runeToolchain).
 
 ### Building the Kernel
 
@@ -103,9 +108,6 @@ Brokk automates the project build and creates a bootable OS image alongside the 
 to run it with Qemu. It is not a build system in the classical meaning like SCons or Meson, but
 rather a tool that executes those two build systems and other build scripts that know how to build
 the project.
-
-While it is possible to build the project [manually](#building-manually), using Brokk is the
-recommended way of building since it simplifies the build process significantly.
 
 For general information about Brokk run:
 
