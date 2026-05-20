@@ -89,6 +89,7 @@ namespace Rune::CPU {
     void Mutex::unlock() {
         auto calling_thread = _scheduler->get_running_thread();
         // Only the owning thread is allowed to unlock the mutex
+        if (!_owner) return;
         if (calling_thread->get_handle() != _owner->get_handle()) return;
 
         SharedPointer<Thread> thread_to_wake;
