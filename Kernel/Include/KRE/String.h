@@ -408,7 +408,7 @@ namespace Rune {
     }
 
     template <class TNum>
-    auto parse_int(const String& str, TNum radix, TNum& out) -> bool {
+    auto parse_int(const String& str, Radix radix, TNum& out) -> bool {
         constexpr U8 RADIX_HEX         = 16;
         constexpr U8 DIGIT_MIN         = 48;
         constexpr U8 DIGIT_MAX         = 57;
