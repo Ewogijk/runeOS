@@ -27,7 +27,7 @@ jobs:
           find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
               -path 'Kernel/Build' -prune -o \
               -name '*.h' -o \
-              -name '*.cpp' -print | \ 
+              -name '*.cpp' -print | \
               xargs clang-format-22 --dry-run -Werror
           echo \> Check App code
           find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-22 --dry-run -Werror
