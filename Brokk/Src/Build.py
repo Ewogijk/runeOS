@@ -18,6 +18,7 @@ from pathlib import Path
 import subprocess
 import json
 import sys
+import os
 
 
 def exec_shell_cmd(cmd: list[str], wd: str) -> bool:
@@ -78,7 +79,8 @@ def post_process_compilation_database(
         print("> Looking for GCC system header include directories...")
         cmd = f"{gpp} -E -xc++ -v /dev/null".split(" ")
         print(f">>> {' '.join(cmd)}")
-        result = subprocess.run(cmd, input="", text=True, capture_output=True)
+        env = {**os.environ, "LC_ALL": "C"}  # Force GCC's language to english
+        result = subprocess.run(cmd, env=env, input="", text=True, capture_output=True)
         if result.returncode != 0:
             print(result.stderr, file=sys.stderr)
             return False
