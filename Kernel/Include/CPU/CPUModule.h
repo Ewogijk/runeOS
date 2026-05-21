@@ -35,7 +35,7 @@
 namespace Rune::CPU {
 
 #define CPU_EVENT_HOOKS(X)                                                                         \
-    X(EventHook, THREAD_CREATED, 0x1)                                                            \
+    X(EventHook, THREAD_CREATED, 0x1)                                                              \
     X(EventHook, THREAD_STOPPED, 0x2)                                                              \
     X(EventHook, THREAD_PREEMPTED, 0x3)
 

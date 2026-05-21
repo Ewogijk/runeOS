@@ -40,10 +40,13 @@ namespace Rune {
     }
 
     auto LittleEndian::to_U64(const U8* buf) -> U64 {
-        return (U64) buf[7] << BYTE_OFFSET_56 | (U64) buf[6] << BYTE_OFFSET_48   // NOLINT
-               | (U64) buf[5] << BYTE_OFFSET_40 | (U64) buf[4] << BYTE_OFFSET_32 // NOLINT
-               | (U64) buf[3] << BYTE_OFFSET_24 | (U64) buf[2] << BYTE_OFFSET_16
-               | (U64) buf[1] << BYTE_OFFSET_8 | (U64) buf[0];
+        return static_cast<U64>(buf[7]) << BYTE_OFFSET_56   // NOLINT
+               | static_cast<U64>(buf[6]) << BYTE_OFFSET_48 // NOLINT
+               | static_cast<U64>(buf[5]) << BYTE_OFFSET_40 // NOLINT
+               | static_cast<U64>(buf[4]) << BYTE_OFFSET_32
+               | static_cast<U64>(buf[3]) << BYTE_OFFSET_24
+               | static_cast<U64>(buf[2]) << BYTE_OFFSET_16
+               | static_cast<U64>(buf[1]) << BYTE_OFFSET_8 | static_cast<U64>(buf[0]);
     }
 
     void LittleEndian::to_bytes(U16 num, U8* buf) {
@@ -81,10 +84,13 @@ namespace Rune {
     }
 
     auto BigEndian::to_U64(const U8* buf) -> U64 {
-        return (U64) buf[0] << BYTE_OFFSET_56 | (U64) buf[1] << BYTE_OFFSET_48
-               | (U64) buf[2] << BYTE_OFFSET_40 | (U64) buf[3] << BYTE_OFFSET_32 // NOLINT
-               | (U64) buf[4] << BYTE_OFFSET_24 | (U64) buf[5] << BYTE_OFFSET_16 // NOLINT
-               | (U64) buf[6] << BYTE_OFFSET_8 | (U64) buf[7];                   // NOLINT
+        return static_cast<U64>(buf[0]) << BYTE_OFFSET_56
+               | static_cast<U64>(buf[1]) << BYTE_OFFSET_48
+               | static_cast<U64>(buf[2]) << BYTE_OFFSET_40
+               | static_cast<U64>(buf[3]) << BYTE_OFFSET_32
+               | static_cast<U64>(buf[4]) << BYTE_OFFSET_24
+               | static_cast<U64>(buf[5]) << BYTE_OFFSET_16                            // NOLINT
+               | static_cast<U64>(buf[6]) << BYTE_OFFSET_8 | static_cast<U64>(buf[7]); // NOLINT
     }
 
     void BigEndian::to_bytes(U16 num, U8* buf) {

@@ -80,7 +80,9 @@ namespace Rune::VFS {
 
         // Find enough empty entries for the LFN entries and the actual file entry
         U16 entry_range =
-            1 + (div_round_up(file_name.size(), (size_t) LongFileNameEntry::MAX_CHAR_PER_ENTRY));
+            1
+            + (div_round_up(file_name.size(),
+                            static_cast<size_t>(LongFileNameEntry::MAX_CHAR_PER_ENTRY)));
         VolumeAccessStatus st =
             _file_entry_manager.find_empty_file_entries(md->m_mass_storage_dev_handle,
                                                         md->m_BPB,
@@ -91,7 +93,7 @@ namespace Rune::VFS {
 
         // Create LFN
         char tmp[(entry_range - 1) * LongFileNameEntry::MAX_CHAR_PER_ENTRY]; // NOLINT
-        memcpy(tmp, (void*) file_name.to_cstr(), file_name.size());
+        memcpy(tmp, file_name.to_cstr(), file_name.size());
         tmp[file_name.size()] = '\0';
         memset(&tmp[file_name.size() + 1],
                MASK_BYTE,
@@ -104,7 +106,7 @@ namespace Rune::VFS {
         String                  short_file_name(tmp, 0, FileEntry::SHORT_NAME_MAIN_SIZE);
         short_file_name = short_file_name.upper();
         memcpy(e_file->file.short_name.as_array,
-               (void*) short_file_name.to_cstr(),
+               short_file_name.to_cstr(),
                FileEntry::SHORT_NAME_MAIN_SIZE);
         memset(&e_file->file.short_name.as_array[FileEntry::SHORT_NAME_MAIN_SIZE],
                FileEntry::TRAILING_SPACE,
@@ -333,8 +335,8 @@ namespace Rune::VFS {
                                                  .m_buffer_size = buf_size};
         size_t                           bytes_read = 0;
         Device::IORequest                io_req{
-                           .m_in_buffer  = &msd_req,
-                           .m_out_buffer = &bytes_read,
+            .m_in_buffer  = &msd_req,
+            .m_out_buffer = &bytes_read,
         };
         return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
                    ? bytes_read
@@ -352,8 +354,8 @@ namespace Rune::VFS {
                                                  .m_buffer_size = buf_size};
         size_t                           bytes_read = 0;
         Device::IORequest                io_req{
-                           .m_in_buffer  = &msd_req,
-                           .m_out_buffer = &bytes_read,
+            .m_in_buffer  = &msd_req,
+            .m_out_buffer = &bytes_read,
         };
         return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
                    ? bytes_read
@@ -415,7 +417,7 @@ namespace Rune::VFS {
             return FormatStatus::DEV_ERROR;
         // Set second entry to "end of valid clusters" value
         U16 root_dir_sectors = div_round_up(
-            (U16) (bpb->root_entry_count * BIOSParameterBlock::ROOT_ENTRY_COUNT_FACTOR),
+            static_cast<U16>(bpb->root_entry_count * BIOSParameterBlock::ROOT_ENTRY_COUNT_FACTOR),
             bpb->bytes_per_sector);
         U32 total_sectors =
             bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;
@@ -456,7 +458,7 @@ namespace Rune::VFS {
 
         auto* bpb              = reinterpret_cast<BIOSParameterBlock*>(boot_record_buf);
         U16   root_dir_sectors = div_round_up(
-            (U16) (bpb->root_entry_count * BIOSParameterBlock::ROOT_ENTRY_COUNT_FACTOR),
+            static_cast<U16>(bpb->root_entry_count * BIOSParameterBlock::ROOT_ENTRY_COUNT_FACTOR),
             bpb->bytes_per_sector);
         U32 total_sectors =
             bpb->total_sectors_16 == 0 ? bpb->total_sectors_32 : bpb->total_sectors_16;

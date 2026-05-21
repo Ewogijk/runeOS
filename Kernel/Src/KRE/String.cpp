@@ -149,7 +149,7 @@ namespace Rune {
         size_t       pad_left  = 0;
         size_t       pad_right = 0;
         if (align == '^') {
-            pad_left  = padding / 2 + 1;
+            pad_left  = (padding / 2) + 1;
             pad_right = padding - pad_left;
         } else if (align == '<') {
             pad_right = padding;
@@ -669,12 +669,12 @@ namespace Rune {
 
     void String::init(const char* c_str, const size_t offset, const size_t size) {
         if (size < BUF_SIZE) {
-            memcpy((void*) _storage._stackBuf, (void*) &c_str[offset], size);
+            memcpy(_storage._stackBuf, &c_str[offset], size);
             memset(&_storage._stackBuf[size], '\0', BUF_SIZE - size); // NOLINT
             _capacity = BUF_SIZE;
         } else {
             _storage._heapBuf = new char[size + 1];
-            memcpy((void*) _storage._heapBuf, (void*) &c_str[offset], size);
+            memcpy(_storage._heapBuf, &c_str[offset], size);
             _storage._heapBuf[size] = '\0'; // add null terminator
             _capacity               = size + 1;
         }
@@ -684,15 +684,15 @@ namespace Rune {
     void String::concat(const char* o_buf, const size_t o_size) {
         const size_t new_size = _size + o_size;
         if (new_size < BUF_SIZE) {
-            memcpy((void*) &_storage._stackBuf[_size], (void*) o_buf, o_size); // NOLINT
-            memset(&_storage._stackBuf[new_size], '\0', BUF_SIZE - new_size);  // NOLINT
+            memcpy(&_storage._stackBuf[_size], o_buf, o_size);                // NOLINT
+            memset(&_storage._stackBuf[new_size], '\0', BUF_SIZE - new_size); // NOLINT
         } else {
             auto* const n_buf = new char[new_size + 1];
-            memcpy(n_buf, (void*) get_buf(), _size);
-            memcpy(&n_buf[_size], (void*) o_buf, o_size);
+            memcpy(n_buf, get_buf(), _size);
+            memcpy(&n_buf[_size], o_buf, o_size);
             n_buf[new_size] = '\0';
             if (_size >= BUF_SIZE) {
-                memset((void*) _storage._heapBuf, '\0', _size);
+                memset(_storage._heapBuf, '\0', _size);
                 delete _storage._heapBuf;
             }
             _storage._heapBuf = n_buf;
@@ -708,14 +708,14 @@ namespace Rune {
     String::String(const char* arr_one, const char* arr_two, size_t size_one, size_t size_two) {
         const size_t size = size_one + size_two;
         if (size < BUF_SIZE) {
-            memcpy((void*) _storage._stackBuf, (void*) arr_one, size_one);
-            memcpy((void*) &_storage._stackBuf[size_one], (void*) arr_two, size_two); // NOLINT
-            memset(&_storage._stackBuf[size], '\0', BUF_SIZE - size);                 // NOLINT
+            memcpy(_storage._stackBuf, arr_one, size_one);
+            memcpy(&_storage._stackBuf[size_one], arr_two, size_two); // NOLINT
+            memset(&_storage._stackBuf[size], '\0', BUF_SIZE - size); // NOLINT
             _capacity = BUF_SIZE;
         } else {
             _storage._heapBuf = new char[size + 1];
-            memcpy((void*) _storage._heapBuf, (void*) arr_one, size_one);
-            memcpy(&_storage._heapBuf[size_one], (void*) arr_two, size_two);
+            memcpy(_storage._heapBuf, arr_one, size_one);
+            memcpy(&_storage._heapBuf[size_one], arr_two, size_two);
             _storage._heapBuf[size] = 0; // add null terminator
             _capacity               = size + 1;
         }
@@ -911,7 +911,7 @@ namespace Rune {
 
     auto String::operator+(char ch) const -> String {
         char n_buf[size() + 2]; // new char + null char, NOLINT String shall not depend on Array
-        memcpy(n_buf, (void*) get_buf(), size());
+        memcpy(n_buf, get_buf(), size());
         n_buf[size()]     = ch;
         n_buf[size() + 1] = 0;
         return {n_buf};
@@ -970,8 +970,8 @@ namespace Rune {
     auto operator==(const String& a, const String& b) -> bool {
         if (a._size != b._size) return false;
         if (a._size < String::BUF_SIZE)
-            return memcmp((void*) a._storage._stackBuf, (void*) b._storage._stackBuf, a._size) == 0;
-        return memcmp((void*) a._storage._heapBuf, (void*) b._storage._heapBuf, a._size) == 0;
+            return memcmp(a._storage._stackBuf, b._storage._stackBuf, a._size) == 0;
+        return memcmp(a._storage._heapBuf, b._storage._heapBuf, a._size) == 0;
     }
 
     auto operator!=(const String& a, const String& b) -> bool { return !(a == b); }

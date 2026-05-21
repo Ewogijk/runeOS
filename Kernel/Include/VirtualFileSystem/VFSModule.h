@@ -53,8 +53,8 @@ namespace Rune::VFS {
      * @brief Mapping of a mount point (path) to a driver name and storage device ID.
      */
     struct MountPointInfo {
-        Path                 m_mount_point;
-        String               m_driver_name;
+        Path           m_mount_point;
+        String         m_driver_name;
         Device::Handle m_mass_storage_device_handle;
     };
 
@@ -282,9 +282,8 @@ namespace Rune::VFS {
          * reason is specific to the file system implementation, check the logs. DEV_ERROR:    An IO
          * error happened.
          */
-        [[nodiscard]] auto format(const String&        driver_name,
-                                  Device::Handle mass_storage_device_handle) const
-            -> FormatStatus;
+        [[nodiscard]] auto format(const String&  driver_name,
+                                  Device::Handle mass_storage_device_handle) const -> FormatStatus;
 
         /**
          * Try to mount the storage with the given ID to the mount point.

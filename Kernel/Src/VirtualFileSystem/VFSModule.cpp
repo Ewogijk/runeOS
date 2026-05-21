@@ -449,10 +449,11 @@ namespace Rune::VFS {
             mpi.m_mount_point,
             p,
             node_io_mode,
-            [this, path, node_handle] {
+            [this, path, node_handle] mutable -> void {
                 // Remove node handle from node table
                 _node_table.remove(node_handle);
-                fire(EventHook(EventHook::NODE_CLOSED).to_string(), (void*) &node_handle);
+                fire(EventHook(EventHook::NODE_CLOSED).to_string(),
+                     reinterpret_cast<void*>(&node_handle));
 
                 // Decrement node ref count
                 auto it = _node_ref_table.find(path);
@@ -490,14 +491,15 @@ namespace Rune::VFS {
             out->handle = node_handle;
             _node_table.put(node_handle, out);
             out->name = path.get_file_name();
-            fire(EventHook(EventHook::NODE_OPENED).to_string(), (void*) &out->handle);
+            fire(EventHook(EventHook::NODE_OPENED).to_string(), &out->handle);
 
             // Increment FILE ref count
             auto it = _node_ref_table.find(path);
             if (it == _node_ref_table.end())
-                _node_ref_table.put(
-                    path,
-                    {.m_node_path = path, .m_ref_count = (U16) 1, .m_delete_this = false});
+                _node_ref_table.put(path,
+                                    {.m_node_path   = path,
+                                     .m_ref_count   = static_cast<U16>(1),
+                                     .m_delete_this = false});
             else
                 it->value->m_ref_count++;
 
@@ -598,11 +600,11 @@ namespace Rune::VFS {
         IOStatus               io_st             = (*driver)->open_directory_stream(
             mpi.m_mass_storage_device_handle,
             path.relative_to(mpi.m_mount_point),
-            [this, dir_stream_handle, path] {
+            [this, dir_stream_handle, path] mutable -> void {
                 // Remove FILE handle from FILE table
                 _dir_stream_table.remove(dir_stream_handle);
                 fire(EventHook(EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
-                     (void*) &dir_stream_handle);
+                     reinterpret_cast<void*>(&dir_stream_handle));
                 LOGGER->trace(R"(Closed directory stream "{}-{}".)",
                               dir_stream_handle,
                               path.to_string());
@@ -617,7 +619,8 @@ namespace Rune::VFS {
         out->name   = path.to_string();
         LOGGER->trace(R"(Opened directory stream "{}-{}".)", dir_stream_handle, out->name);
         _dir_stream_table.put(dir_stream_handle, out);
-        fire(EventHook(EventHook::DIRECTORY_STREAM_OPENED).to_string(), (void*) &dir_stream_handle);
+        fire(EventHook(EventHook::DIRECTORY_STREAM_OPENED).to_string(),
+             reinterpret_cast<void*>(&dir_stream_handle));
         return io_st;
     }
 } // namespace Rune::VFS

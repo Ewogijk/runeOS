@@ -25,7 +25,7 @@ namespace Rune::Memory {
     DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
     auto PhysicalMemoryManager::detect_memory_range() -> bool {
-        _mem_base            = (PhysicalAddr) -1;
+        _mem_base            = static_cast<PhysicalAddr>(-1);
         PhysicalAddr mem_end = 0;
 
         for (const auto& reg : *_mem_map) {
@@ -96,8 +96,8 @@ namespace Rune::Memory {
     auto PhysicalMemoryManager::get_managed_memory() const -> MemoryRegion {
         return MemoryRegion{.start = _mem_base,
                             .size  = _mem_base - 1
-                                    + (_mem_size * _page_size), // will overflow because it will be
-                                                                // max value of some type e.g. U32
+                                     + (_mem_size * _page_size), // will overflow because it will be
+                                                                 // max value of some type e.g. U32
                             .memory_type = MemoryRegionType::RESERVED};
     }
 

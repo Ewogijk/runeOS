@@ -60,7 +60,7 @@ namespace Rune::VFS {
             memset(_write_buf.data(), '\0', _write_buf_size);
             _write_buf_size = 0;
         }
-        _write_buf[_write_buf_size++] = (char) value;
+        _write_buf[_write_buf_size++] = static_cast<char>(value);
         return true;
     }
 

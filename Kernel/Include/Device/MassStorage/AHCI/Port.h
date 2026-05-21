@@ -99,7 +99,7 @@ namespace Rune::Device {
         struct {
             U32 Reserved : 10;
             /// Physical base address bits [31:10] of the 1 KB-aligned command list.
-            U32 Base     : 22;
+            U32 Base : 22;
         };
     };
 
@@ -114,7 +114,7 @@ namespace Rune::Device {
         struct {
             U32 Reserved : 8;
             /// Physical base address bits [31:8] of the 256-byte-aligned Received FIS structure.
-            U32 Base     : 24;
+            U32 Base : 24;
         };
     };
 
@@ -127,41 +127,42 @@ namespace Rune::Device {
      */
     struct InterruptStatus {
         /// D2H Register FIS received with the Interrupt bit set.
-        U32 DHRS      : 1;
+        U32 DHRS : 1;
         /// PIO Setup FIS received with the Interrupt bit set.
-        U32 PSS       : 1;
+        U32 PSS : 1;
         /// DMA Setup FIS received with the Interrupt bit set.
-        U32 DSS       : 1;
+        U32 DSS : 1;
         /// Set Device Bits FIS received with the Interrupt bit set, or the Error bit was set.
-        U32 SDBS      : 1;
-        /// Unknown FIS type received and stored in the Unknown FIS buffer (read-only; cleared by reset).
-        U32 UFS       : 1;
+        U32 SDBS : 1;
+        /// Unknown FIS type received and stored in the Unknown FIS buffer (read-only; cleared by
+        /// reset).
+        U32 UFS : 1;
         /// PRD with the Interrupt on Completion (I) bit set was processed.
-        U32 DPS       : 1;
+        U32 DPS : 1;
         /// Device presence on the port has changed (PhyRdy changed or cold-plug event).
-        U32 PCS       : 1;
+        U32 PCS : 1;
         /// Mechanical presence switch changed state and cleared CMD.MPSS.
         U32 DMPS      : 1;
         U32 Reserved0 : 14;
         /// PhyRdy signal changed from 1 to 0 while CMD.ST was set (indicates device removal).
-        U32 PRCS      : 1;
+        U32 PRCS : 1;
         /// Command was issued to a port multiplier port that is not present or not configured.
-        U32 IPMS      : 1;
+        U32 IPMS : 1;
         /// HBA received more bytes from the device than the PRD table described (overflow).
-        U32 OFS       : 1;
+        U32      OFS       : 1;
         uint32_t Reserved1 : 1;
         /// Non-fatal Serial ATA interface error (see SERR for details).
-        uint32_t INFS      : 1;
+        uint32_t INFS : 1;
         /// Fatal Serial ATA interface error; port is unusable until reset.
-        uint32_t IFS       : 1;
+        uint32_t IFS : 1;
         /// HBA encountered a data integrity error during host-bus (DMA) access.
-        uint32_t HBDS      : 1;
+        uint32_t HBDS : 1;
         /// HBA encountered a fatal host-bus error unrelated to data (e.g., address decode failure).
-        uint32_t HBFS      : 1;
+        uint32_t HBFS : 1;
         /// TFD.STS.ERR is set, indicating the device reported a command error.
-        uint32_t TFES      : 1;
+        uint32_t TFES : 1;
         /// Cold-presence detect signal changed while CMD.CPD is set.
-        uint32_t CPDS      : 1;
+        uint32_t CPDS : 1;
     };
 
     /**
@@ -175,41 +176,41 @@ namespace Rune::Device {
         uint32_t AsUInt32 = 0;
         struct {
             /// Enable interrupt on D2H Register FIS with Interrupt bit set.
-            uint32_t DHRE      : 1;
+            uint32_t DHRE : 1;
             /// Enable interrupt on PIO Setup FIS with Interrupt bit set.
-            uint32_t PSE       : 1;
+            uint32_t PSE : 1;
             /// Enable interrupt on DMA Setup FIS with Interrupt bit set.
-            uint32_t DSE       : 1;
+            uint32_t DSE : 1;
             /// Enable interrupt on Set Device Bits FIS with Interrupt or Error bit set.
-            uint32_t SDBE      : 1;
+            uint32_t SDBE : 1;
             /// Enable interrupt on unknown FIS type received.
-            uint32_t UFE       : 1;
+            uint32_t UFE : 1;
             /// Enable interrupt when a PRD with I=1 is processed.
-            uint32_t DPE       : 1;
+            uint32_t DPE : 1;
             /// Enable interrupt on port connect change (PhyRdy or cold-plug).
-            uint32_t PCE       : 1;
+            uint32_t PCE : 1;
             /// Enable interrupt on mechanical presence switch state change.
             uint32_t DMPE      : 1;
             uint32_t Reserved0 : 14;
             /// Enable interrupt on PhyRdy change while ST=1.
-            uint32_t PRCE      : 1;
+            uint32_t PRCE : 1;
             /// Enable interrupt on incorrect port multiplier configuration.
-            uint32_t IPME      : 1;
+            uint32_t IPME : 1;
             /// Enable interrupt on PRD overflow.
             uint32_t OFE       : 1;
             uint32_t Reserved1 : 1;
             /// Enable interrupt on non-fatal Serial ATA interface error.
-            uint32_t INFE      : 1;
+            uint32_t INFE : 1;
             /// Enable interrupt on fatal Serial ATA interface error.
-            uint32_t IFE       : 1;
+            uint32_t IFE : 1;
             /// Enable interrupt on host-bus data error.
-            uint32_t HBDE      : 1;
+            uint32_t HBDE : 1;
             /// Enable interrupt on fatal host-bus error.
-            uint32_t HBFE      : 1;
+            uint32_t HBFE : 1;
             /// Enable interrupt when TFD.STS.ERR is set.
-            uint32_t TFEE      : 1;
+            uint32_t TFEE : 1;
             /// Enable interrupt on cold-presence detect signal change.
-            uint32_t CPDE      : 1;
+            uint32_t CPDE : 1;
         };
     };
 
@@ -221,50 +222,52 @@ namespace Rune::Device {
      */
     struct CommandAndStatus {
         /// Start: 1 = enable command-list DMA processing; 0 = pause (wait for CR to clear).
-        uint32_t ST        : 1;
+        uint32_t ST : 1;
         /// Spin-Up Device: initiates staggered spin-up when CAP.SSS is set.
-        uint32_t SUD       : 1;
+        uint32_t SUD : 1;
         /// Power On Device: asserts power to the device when CMD.CPD is set.
-        uint32_t POD       : 1;
+        uint32_t POD : 1;
         /// Command List Override: clears BSY and DRQ in TFD without a reset; auto-cleared by HBA.
-        uint32_t CLO       : 1;
+        uint32_t CLO : 1;
         /// FIS Receive Enable: allows received FISes to be posted to the Received FIS structure.
         uint32_t FRE       : 1;
         uint32_t Reserved0 : 3;
-        /// Current Command Slot: index of the command slot the HBA is currently issuing (read-only).
-        uint32_t CCS       : 5;
+        /// Current Command Slot: index of the command slot the HBA is currently issuing
+        /// (read-only).
+        uint32_t CCS : 5;
         /// Mechanical Presence Switch State: reflects current switch position (read-only).
-        uint32_t MPSS      : 1;
+        uint32_t MPSS : 1;
         /// FIS Receive Running: set while the FIS receive DMA engine is active (read-only).
-        uint32_t FR        : 1;
+        uint32_t FR : 1;
         /// Command List Running: set while the command-list DMA engine is active (read-only).
-        uint32_t CR        : 1;
+        uint32_t CR : 1;
         /// Cold Presence State: reflects the cold-presence detect pin level (read-only).
-        uint32_t CPS       : 1;
+        uint32_t CPS : 1;
         /// Port Multiplier Attached: set when a port multiplier is connected.
-        uint32_t PMA       : 1;
+        uint32_t PMA : 1;
         /// Hot Plug Capable Port: set by firmware if the port supports hot-plug (read-only).
-        uint32_t HPCP      : 1;
+        uint32_t HPCP : 1;
         /// Mechanical Presence Switch Attached to Port (read-only).
-        uint32_t MPSP      : 1;
+        uint32_t MPSP : 1;
         /// Cold Presence Detection: set when the port has a cold-presence detect pin (read-only).
-        uint32_t CPD       : 1;
+        uint32_t CPD : 1;
         /// External SATA Port: set when the port connector is externally accessible (read-only).
-        uint32_t ESP       : 1;
+        uint32_t ESP : 1;
         /// FIS-Based Switching Capable Port (read-only).
-        uint32_t FBSCP     : 1;
+        uint32_t FBSCP : 1;
         /// Aggressive Power State Transition Enable: allows automatic PARTIAL/SLUMBER transitions.
-        uint32_t APSTE     : 1;
+        uint32_t APSTE : 1;
         /// Device Is ATAPI: controls LED behavior; set for ATAPI devices.
-        uint32_t ATAPI     : 1;
+        uint32_t ATAPI : 1;
         /// Drive LED on ATAPI Enable: when set, activity LED is driven for ATAPI commands.
-        uint32_t DLAE      : 1;
+        uint32_t DLAE : 1;
         /// Aggressive Link Power Management Enable: enables automatic link power-management.
-        uint32_t ALPE      : 1;
+        uint32_t ALPE : 1;
         /// Aggressive Slumber/Partial: when ALPE=1, prefer Slumber over Partial for transitions.
-        uint32_t ASP       : 1;
-        /// Interface Communication Control: request a specific link power state (write to transition).
-        uint32_t ICC       : 4;
+        uint32_t ASP : 1;
+        /// Interface Communication Control: request a specific link power state (write to
+        /// transition).
+        uint32_t ICC : 4;
     };
 
     /**
@@ -304,11 +307,11 @@ namespace Rune::Device {
             /// Sector Count register value from the initial D2H FIS.
             uint32_t SectorCountRegister : 8;
             /// LBA Low register value from the initial D2H FIS.
-            uint32_t LBALowRegister      : 8;
+            uint32_t LBALowRegister : 8;
             /// LBA Mid register value from the initial D2H FIS.
-            uint32_t LBAMidRegister      : 8;
+            uint32_t LBAMidRegister : 8;
             /// LBA High register value from the initial D2H FIS.
-            uint32_t LBAHighRegister     : 8;
+            uint32_t LBAHighRegister : 8;
         };
     };
 
@@ -320,9 +323,9 @@ namespace Rune::Device {
      */
     struct SerialATAStatus {
         /// Device detection state — see DeviceDetection enum.
-        uint32_t DET      : 4;
+        uint32_t DET : 4;
         /// Negotiated interface speed — see InterfaceSpeed enum.
-        uint32_t SPD      : 4;
+        uint32_t SPD : 4;
         /// Interface power-management state — see InterfacePowerManagement enum.
         uint32_t IPM      : 4;
         uint32_t Reserved : 20;
@@ -336,14 +339,14 @@ namespace Rune::Device {
      */
     struct SerialATAControl {
         /// Device Detection Initialization: write 1 to assert COMRESET, 0 to deassert.
-        uint32_t DET      : 4;
+        uint32_t DET : 4;
         /// Speed Allowed: limit the maximum negotiated speed (0 = no restriction).
-        uint32_t SPD      : 4;
+        uint32_t SPD : 4;
         /// Interface Power Management Allowed: bitmask disabling specific PM states
         /// (bit 1 = no PARTIAL, bit 2 = no SLUMBER, bit 4 = no DevSleep).
-        uint32_t IPM      : 4;
+        uint32_t IPM : 4;
         /// Select Power Management (port multiplier use only).
-        uint32_t SPM      : 4;
+        uint32_t SPM : 4;
         /// Port Multiplier Port (port multiplier use only).
         uint32_t PMP      : 4;
         uint32_t Reserved : 12;
@@ -361,16 +364,17 @@ namespace Rune::Device {
         struct {
             struct {
                 /// Recovered Data Integrity Error: error recovered by the interface.
-                U16 I         : 1;
+                U16 I : 1;
                 /// Recovered Communications Error: communications error recovered by retries.
                 U16 M         : 1;
                 U16 Reserved0 : 6;
                 /// Transient Data Integrity Error: transient error not recovered by the interface.
-                U16 T         : 1;
-                /// Persistent Communication or Data Integrity Error: unrecoverable data or link error.
-                U16 C         : 1;
+                U16 T : 1;
+                /// Persistent Communication or Data Integrity Error: unrecoverable data or link
+                /// error.
+                U16 C : 1;
                 /// Protocol Error: violation of the SATA protocol was detected.
-                U16 P         : 1;
+                U16 P : 1;
                 /// Internal Error: HBA-internal error (e.g., fatal DMA fault).
                 U16 E         : 1;
                 U16 Reserved1 : 4;
@@ -378,25 +382,25 @@ namespace Rune::Device {
 
             struct {
                 /// PhyRdy Change: PhyRdy signal changed state.
-                U16 N        : 1;
+                U16 N : 1;
                 /// Phy Internal Error: error internal to the Phy layer.
-                U16 I        : 1;
+                U16 I : 1;
                 /// Comm Wake: Comm Wake signal was detected on the link.
-                U16 W        : 1;
+                U16 W : 1;
                 /// 10B to 8B Decode Error: at least one 10B/8B decode error occurred.
-                U16 B        : 1;
+                U16 B : 1;
                 /// Disparity Error: a disparity error was detected on the received data stream.
-                U16 D        : 1;
+                U16 D : 1;
                 /// CRC Error: a CRC error was detected on the received FIS.
-                U16 C        : 1;
+                U16 C : 1;
                 /// Handshake Error: a handshake error (e.g., R_ERR) was received.
-                U16 H        : 1;
+                U16 H : 1;
                 /// Link Sequence Error: incorrect primitive sequence was received.
-                U16 S        : 1;
+                U16 S : 1;
                 /// Transport State Transition Error: invalid transport-layer state was detected.
-                U16 T        : 1;
+                U16 T : 1;
                 /// Unknown FIS Type: a FIS with an unrecognized type was received.
-                U16 F        : 1;
+                U16 F : 1;
                 /// Exchanged: device identity changed (e.g., hot-swap or port multiplier switch).
                 U16 X        : 1;
                 U16 Reserved : 5;
@@ -425,16 +429,16 @@ namespace Rune::Device {
      */
     struct FISBasedSwitchingControl {
         /// Enable FIS-Based Switching; requires a port multiplier that supports FBS.
-        uint32_t EN        : 1;
+        uint32_t EN : 1;
         /// Device Error Clear: write 1 to clear SDE and DEV fields; auto-cleared by hardware.
-        uint32_t DEC       : 1;
+        uint32_t DEC : 1;
         /// Single Device Error: set when exactly one device behind the PM encountered an error.
         uint32_t SDE       : 1;
         uint32_t Reserved0 : 5;
         /// Device To Issue: port multiplier port number to route the next command to.
-        uint32_t DEV       : 4;
+        uint32_t DEV : 4;
         /// Active Device Optimization: hint to HBA for optimizing PM port switching order.
-        uint32_t ADO       : 4;
+        uint32_t ADO : 4;
         /// Device With Error: port multiplier port that triggered a fatal error.
         uint32_t DWE       : 4;
         uint32_t Reserved1 : 12;
@@ -449,15 +453,16 @@ namespace Rune::Device {
      */
     struct DeviceSleep {
         /// Aggressive Device Sleep Enable: HBA automatically transitions device to DevSleep.
-        uint32_t ADSE     : 1;
+        uint32_t ADSE : 1;
         /// Device Sleep Present: indicates the DEVSLP signal pin is wired (read-only).
-        uint32_t DSP      : 1;
+        uint32_t DSP : 1;
         /// Device Sleep Exit Timeout in ms (0 = 20 ms default; otherwise value × 1 ms).
-        uint32_t DETO     : 8;
-        /// Minimum Device Attach Time in ms; device must be ready within this window after DEVSLP exit.
-        uint32_t MDAT     : 5;
+        uint32_t DETO : 8;
+        /// Minimum Device Attach Time in ms; device must be ready within this window after DEVSLP
+        /// exit.
+        uint32_t MDAT : 5;
         /// Device Idle to Sleep Timeout in ms; idle time before ADSE triggers DevSleep entry.
-        uint32_t DITO     : 10;
+        uint32_t DITO : 10;
         /// DITO Multiplier: effective DITO = DITO × 2^DM (allows coarser timeouts).
         uint32_t DM       : 4;
         uint32_t Reserved : 3;
@@ -472,43 +477,44 @@ namespace Rune::Device {
      */
     struct HBAPort {
         /// Command List Base Address lower 32 bits (CLB); 1 KB aligned.
-        CommandListBaseAddress   CLB;
+        CommandListBaseAddress CLB;
         /// Command List Base Address upper 32 bits (CLBU); forms 64-bit address with CLB.
-        uint32_t                 CLBU{};
+        uint32_t CLBU{};
         /// FIS Base Address lower 32 bits (FB); 256-byte aligned.
-        FISBaseAddress           FB;
+        FISBaseAddress FB;
         /// FIS Base Address upper 32 bits (FBU); forms 64-bit address with FB.
-        uint32_t                 FBU{};
+        uint32_t FBU{};
         /// Interrupt Status (IS); write 1 to clear individual bits.
-        InterruptStatus          IS{};
+        InterruptStatus IS{};
         /// Interrupt Enable (IE); controls which IS bits assert the port interrupt.
-        InterruptEnable          IE;
+        InterruptEnable IE;
         /// Command and Status (CMD).
-        CommandAndStatus         CMD{};
-        uint32_t                 Reserved{};
+        CommandAndStatus CMD{};
+        uint32_t         Reserved{};
         /// Task File Data (TFD); read-only shadow of ATA Status and Error registers.
-        TaskFileData             TFD{};
+        TaskFileData TFD{};
         /// Signature (SIG); identifies the device type from the initial D2H Register FIS.
-        Signature                SIG;
+        Signature SIG;
         /// Serial ATA Status (SSTS); read-only link state (DET, SPD, IPM).
-        SerialATAStatus          SSTS{};
+        SerialATAStatus SSTS{};
         /// Serial ATA Control (SCTL); controls link initialization and PM policy.
-        SerialATAControl         SCTL{};
+        SerialATAControl SCTL{};
         /// Serial ATA Error (SERR); accumulated error and diagnostic bits (RWC).
-        SerialATAError           SERR;
+        SerialATAError SERR;
         /// Serial ATA Active (SACT); bitmask of command slots with outstanding NCQ commands.
-        uint32_t                 SACT{};
-        /// Command Issue (CI); write a bit to issue the corresponding command slot; cleared by HBA on completion.
-        uint32_t                 CI{};
+        uint32_t SACT{};
+        /// Command Issue (CI); write a bit to issue the corresponding command slot; cleared by HBA
+        /// on completion.
+        uint32_t CI{};
         /// Serial ATA Notification (SNTF); port multiplier Asynchronous Notification bits (RWC).
-        SerialATANotification    SNTF{};
+        SerialATANotification SNTF{};
         /// FIS-Based Switching Control (FBS).
         FISBasedSwitchingControl FBS{};
         /// Device Sleep (DEVSLP).
-        DeviceSleep              DEVSLP{};
-        Array<U32, 10>           Reserved2; // Registers 0x48–0x6F // NOLINT
+        DeviceSleep    DEVSLP{};
+        Array<U32, 10> Reserved2; // Registers 0x48–0x6F // NOLINT
         /// Vendor-specific registers (VS); 16 bytes at offset 0x70.
-        Array<U32, 4>            VS;
+        Array<U32, 4> VS;
     };
 
     /**
@@ -548,7 +554,7 @@ namespace Rune::Device {
         struct {
             uint32_t Reserved : 7;
             /// Physical base address bits [31:7] of the 128-byte-aligned CommandTable.
-            uint32_t Base     : 25;
+            uint32_t Base : 25;
         };
     };
 
@@ -561,22 +567,22 @@ namespace Rune::Device {
      */
     struct CommandHeader {
         /// Command FIS Length in DW (dwords); valid range 2–16 (8–64 bytes).
-        uint32_t CFL       : 5 {};
+        uint32_t CFL : 5 {};
         /// ATAPI: set for ATAPI commands; causes HBA to send ATAPI Command from ACMD.
-        uint32_t A         : 1 {};
+        uint32_t A : 1 {};
         /// Write: 1 = host-to-device (write); 0 = device-to-host (read).
-        uint32_t W         : 1 {};
+        uint32_t W : 1 {};
         /// Prefetchable: HBA may prefetch PRD entries and data before the command completes.
-        uint32_t P         : 1 {};
+        uint32_t P : 1 {};
         /// Reset: HBA sends a SYNC escape and then issues the FIS; used for software reset.
-        uint32_t R         : 1 {};
+        uint32_t R : 1 {};
         /// BIST: HBA sends a BIST Activate FIS and enters loopback mode.
-        uint32_t B         : 1 {};
+        uint32_t B : 1 {};
         /// Clear Busy on R_OK: HBA clears BSY in TFD when the device sends R_OK.
         uint32_t C         : 1 {};
         uint32_t Reserved0 : 1 {};
         /// Port Multiplier Port: target port multiplier port for this command.
-        uint32_t PMP       : 4 {};
+        uint32_t PMP : 4 {};
         /// PRDT Length: number of entries in the Physical Region Descriptor Table (0 = no data).
         uint32_t PRDTL : 16 {};
 
@@ -601,7 +607,7 @@ namespace Rune::Device {
         struct {
             uint32_t Reserved : 1;
             /// Physical data buffer address bits [31:1] (2-byte aligned).
-            uint32_t DBA      : 31;
+            uint32_t DBA : 31;
         };
     };
 
@@ -616,14 +622,14 @@ namespace Rune::Device {
         /// Data Base Address lower 32 bits; 2-byte aligned.
         DataBaseAddress DBA;
         /// Data Base Address upper 32 bits; forms 64-bit address with DBA.
-        uint32_t        DBAU{};
-        uint32_t        Reserved0{};
+        uint32_t DBAU{};
+        uint32_t Reserved0{};
 
         /// Data Byte Count minus 1 (22 bits); max value 0x3FFFFF = 4 MB - 1.
         uint32_t DBC       : 22 {};
         uint32_t Reserved1 : 9 {};
         /// Interrupt on Completion: when set, HBA sets IS.DPS after processing this entry.
-        uint32_t I         : 1 {};
+        uint32_t I : 1 {};
     };
 
     /**
@@ -634,7 +640,8 @@ namespace Rune::Device {
      * Must be 128-byte aligned; this struct is padded to exactly 256 bytes.
      */
     struct CommandTable {
-        /// Command FIS sent to the device (H2D Register FIS; up to 64 bytes; actual length from CommandHeader.CFL).
+        /// Command FIS sent to the device (H2D Register FIS; up to 64 bytes; actual length from
+        /// CommandHeader.CFL).
         RegisterHost2DeviceFIS CFIS;
         Array<U8, 44>          CFISPadding; // NOLINT
 
@@ -643,7 +650,8 @@ namespace Rune::Device {
 
         Array<U8, 48> Reserved; // NOLINT
 
-        /// Physical Region Descriptor Table; actual entry count given by CommandHeader.PRDTL. // NOLINT
+        /// Physical Region Descriptor Table; actual entry count given by CommandHeader.PRDTL. //
+        /// NOLINT
         Array<PRDTEntry, 1> PRDT;
 
         Array<U8, 112> Reserved1; // Pad to 256 bytes to ensure 128-byte alignment. // NOLINT

@@ -50,10 +50,10 @@ namespace Rune::VFS {
 
         LinkedListIterator<String> p_it = p_split.begin();
         NavigationResult nav_res        = FATDirectoryIterator::navigate_to(mass_storage_dev_handle,
-                                                                     bpb,
-                                                                     _volume_manager,
-                                                                     root_dummy.cluster(),
-                                                                     p_it);
+                                                                            bpb,
+                                                                            _volume_manager,
+                                                                            root_dummy.cluster(),
+                                                                            p_it);
         out                             = nav_res.file;
         if (nav_res.status == NavigationStatus::FOUND) return VolumeAccessStatus::OKAY;
         if (nav_res.status == NavigationStatus::NOT_FOUND) return VolumeAccessStatus::NOT_FOUND;

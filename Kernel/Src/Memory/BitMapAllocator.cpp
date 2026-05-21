@@ -91,7 +91,8 @@ namespace Rune::Memory {
         // Protect reserved memory regions from being freed
         for (const auto& region : *_mem_map) {
             if (region.memory_type != MemoryRegionType::USABLE
-                && region.contains({.start = p_addr, .size = (U32) frames * _page_size})) {
+                && region.contains(
+                    {.start = p_addr, .size = static_cast<U32>(frames) * _page_size})) {
                 return -2;
             }
         }
@@ -99,7 +100,7 @@ namespace Rune::Memory {
     }
 
     auto BitMapAllocator::compute_memory_index_size() -> MemorySize {
-        _bitmap_size = div_round_up(_mem_size, (U32) BIT_COUNT_BYTE);
+        _bitmap_size = div_round_up(_mem_size, static_cast<U32>(BIT_COUNT_BYTE));
         return _bitmap_size;
     }
 
@@ -117,7 +118,9 @@ namespace Rune::Memory {
             }
         }
 
-        MemoryRegion mi_reg    = {p_memory_index, _bitmap_size, MemoryRegionType::RESERVED};
+        MemoryRegion mi_reg    = {.start       = p_memory_index,
+                                  .size        = _bitmap_size,
+                                  .memory_type = MemoryRegionType::RESERVED};
         bool         init_good = mark_memory_region(p_memory_index, _bitmap_size, true);
         init_good              = init_good && _mem_map->claim(mi_reg, _page_size);
         if (init_good) _init = true;
@@ -127,7 +130,7 @@ namespace Rune::Memory {
     BitMapAllocator::BitMapAllocator() = default;
 
     auto BitMapAllocator::get_memory_index_region() const -> MemoryRegion {
-        return MemoryRegion{.start       = (PhysicalAddr) (uintptr_t) _p_bitmap,
+        return MemoryRegion{.start       = static_cast<PhysicalAddr>(_p_bitmap),
                             .size        = _bitmap_size,
                             .memory_type = MemoryRegionType::RESERVED};
     }
@@ -228,7 +231,7 @@ namespace Rune::Memory {
                                                  size_t        buf_size,
                                                  PhysicalAddr  start,
                                                  PhysicalAddr  end) -> size_t {
-        if (start < _mem_base || end > _mem_base + _mem_size * _page_size) return 0;
+        if (start < _mem_base || end > _mem_base + (_mem_size * _page_size)) return 0;
 
         if (!memory_is_aligned(start, _page_size)) start = memory_align(start, _page_size, false);
         if (!memory_is_aligned(end, _page_size))

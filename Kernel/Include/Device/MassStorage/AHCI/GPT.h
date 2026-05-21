@@ -107,11 +107,11 @@ namespace Rune::Device {
         static constexpr U8 ATTRIBUTES_OFFSET            = 48;
         static constexpr U8 PARTITION_NAME_OFFSET        = 56;
 
-        GUID partition_type_guid{};
-        GUID unique_partition_guid{};
-        U64  starting_lba = 0; // Little-endian
-        U64  ending_lba   = 0; // Inclusive, Little-endian
-        U64  attributes   = 0;
+        GUID   partition_type_guid{};
+        GUID   unique_partition_guid{};
+        U64    starting_lba = 0; // Little-endian
+        U64    ending_lba   = 0; // Inclusive, Little-endian
+        U64    attributes   = 0;
         String name;
     };
 

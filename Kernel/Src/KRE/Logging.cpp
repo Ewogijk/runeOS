@@ -45,7 +45,7 @@ namespace Rune {
             // Setting the background color in all cases looks strange on other terminals
             // e.g. Clion, powershell, etc.
             if (log_level == LogLevel::CRITICAL) target->set_background_color(BG_COLOR_CRITICAL);
-            target->set_foreground_color(FG_COLOR[(int) log_level - 1]);
+            target->set_foreground_color(FG_COLOR[log_level - 1]);
         }
         target->write_line(formatted_log_msg);
         if (target->is_ansi_supported()) target->reset_style();

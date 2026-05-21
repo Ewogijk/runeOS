@@ -21,11 +21,19 @@
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
 
-    enum Channel { ZERO = 0x40, COMMAND = 0x43 };
+#define CHANNELS(X)                                                                                \
+    X(Channel, ZERO, 0x40)                                                                         \
+    X(Channel, COMMAND, 0x43)
 
-    enum Mode { SQUARE_WAVE_GENERATOR = 0x36 };
+    DECLARE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0)
 
-    PIT::PIT() : _irq_handler([] { return IRQState::PENDING; }) {}
+#define MODES(X) X(Mode, SQUARE_WAVE_GENERATOR, 0x36)
+
+    DECLARE_TYPED_ENUM(Mode, U8, MODES, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Mode, U8, MODES, 0x0)
+
+    PIT::PIT() : _irq_handler([] -> Rune::CPU::IRQState::_E { return IRQState::PENDING; }) {}
 
     auto PIT::get_name() const -> String { return "PIT"; }
 
@@ -75,7 +83,7 @@ namespace Rune::CPU {
         out_b(Channel::ZERO, byte_get(pit_divider, 0)); // Transmit low byte first
         out_b(Channel::ZERO, byte_get(pit_divider, 1)); // Then high byte
 
-        _irq_handler = [this] {
+        _irq_handler = [this] -> Rune::CPU::IRQState::_E {
             _count++;
             _sleeping_threads.update_wake_time(_time_between_irq);
             bool do_preempt = false;

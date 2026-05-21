@@ -99,7 +99,7 @@ namespace Rune {
             glyph[i] = font->glyphs[(static_cast<U8>(ch) * font->glyph_size) + i];
         }
         U8 row_width = font->pixel_width / BITS_PER_BYTE;
-        if (font->pixel_width - row_width * BITS_PER_BYTE > 0) row_width++;
+        if (font->pixel_width - (row_width * BITS_PER_BYTE) > 0) row_width++;
 
         Array<U8, 4> bg_c{};
         to_raw_pixel(bg_color, bg_c);
@@ -175,11 +175,11 @@ namespace Rune {
             if (error > threshold) {
                 x     -= _bytes_per_pixel;
                 error += e_diag;
-                tk     = tk + 2 * dy;
+                tk     = tk + (2 * dy);
             }
             error += e_square;
             y      = sy ? y + static_cast<int>(_pitch) : y - static_cast<int>(_pitch);
-            tk     = tk + 2 * dx;
+            tk     = tk + (2 * dx);
         }
 
         x     = x0;
@@ -311,7 +311,7 @@ namespace Rune {
             const int e_square  = 2 * dy;
             for (int i = 0; i < dx; i++) {
                 memcpy(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(_address) + y + x),
-                       (void*) raw_color.data(),
+                       raw_color.data(),
                        4);
                 // To make diagonal lines thicker we will draw perpendicular lines to the left and
                 // right of the center line, this will be done whenever a pixel of the center line

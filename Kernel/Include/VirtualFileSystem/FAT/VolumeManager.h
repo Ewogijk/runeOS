@@ -59,9 +59,9 @@ namespace Rune::VFS {
          *
          * @return FAT entry for the given cluster.
          */
-        [[nodiscard]] auto fat_read(Device::Handle mass_storage_dev_handle,
-                                    BIOSParameterBlock*  bpb,
-                                    size_t               cluster) const -> U32;
+        [[nodiscard]] auto fat_read(Device::Handle      mass_storage_dev_handle,
+                                    BIOSParameterBlock* bpb,
+                                    size_t              cluster) const -> U32;
 
         /**
          * Update the FAT entry of a cluster.
@@ -73,10 +73,10 @@ namespace Rune::VFS {
          *
          * @return True: The FAT entry is updated, False: It is not.
          */
-        auto fat_write(Device::Handle mass_storage_dev_handle,
-                       BIOSParameterBlock*  bpb,
-                       size_t               cluster,
-                       U32                  fat_value) -> bool;
+        auto fat_write(Device::Handle      mass_storage_dev_handle,
+                       BIOSParameterBlock* bpb,
+                       size_t              cluster,
+                       U32                 fat_value) -> bool;
 
         /**
          * Search the FAT for a free cluster. The first free encountered cluster will be returned.
@@ -87,8 +87,8 @@ namespace Rune::VFS {
          * @return The next free cluster in the FAT. 0 if no cluster is free or a storage error
          * happened.
          */
-        auto fat_find_next_free_cluster(Device::Handle mass_storage_dev_handle,
-                                        BIOSParameterBlock*  bpb) -> U32;
+        auto fat_find_next_free_cluster(Device::Handle      mass_storage_dev_handle,
+                                        BIOSParameterBlock* bpb) -> U32;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Data Region Manipulation
@@ -111,10 +111,10 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was read. False: It was not.
          */
-        auto data_cluster_read(Device::Handle mass_storage_dev_handle,
-                               BIOSParameterBlock*  bpb,
-                               void*                buf,
-                               size_t               cluster) const -> bool;
+        auto data_cluster_read(Device::Handle      mass_storage_dev_handle,
+                               BIOSParameterBlock* bpb,
+                               void*               buf,
+                               size_t              cluster) const -> bool;
 
         /**
          * Overwrite a single data cluster, that is a cluster after the reserved and FAT parts of
@@ -127,10 +127,10 @@ namespace Rune::VFS {
          *
          * @return True: The cluster was written. False: It was not.
          */
-        auto data_cluster_write(Device::Handle mass_storage_dev_handle,
-                                BIOSParameterBlock*  bpb,
-                                void*                buf,
-                                size_t               cluster) -> bool;
+        auto data_cluster_write(Device::Handle      mass_storage_dev_handle,
+                                BIOSParameterBlock* bpb,
+                                void*               buf,
+                                size_t              cluster) -> bool;
     };
 } // namespace Rune::VFS
 

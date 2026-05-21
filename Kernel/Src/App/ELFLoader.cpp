@@ -42,7 +42,8 @@ namespace Rune::App {
             if (_buf_pos >= _buf_limit) {
                 if (!get_next_buffer()) return b_pos;
             }
-            U16 b_to_copy = min((U16) (buf_size - b_pos), (U16) (_buf_limit - _buf_pos));
+            U16 b_to_copy =
+                min(static_cast<U16>(buf_size - b_pos), static_cast<U16>(_buf_limit - _buf_pos));
             memcpy(&(static_cast<U8*>(buf))[b_pos], &_file_buf[_buf_pos], b_to_copy);
             b_pos    += b_to_copy;
             _buf_pos += b_to_copy;
@@ -349,7 +350,7 @@ namespace Rune::App {
         size_t argv_strings_offset = 0;
         for (int i = 0; i < argc; i++) {
             String s(args[i]);
-            memcpy(&cla_area[argv_strings_offset], (void*) s.to_cstr(), s.size() + 1);
+            memcpy(&cla_area[argv_strings_offset], s.to_cstr(), s.size() + 1);
             argv_area[i]         = &cla_area[argv_strings_offset];
             argv_strings_offset += s.size() + 1;
         }
@@ -357,7 +358,7 @@ namespace Rune::App {
 
         // Setup ph area
         auto*  ph_area = reinterpret_cast<U8*>(bootstrap_area_begin + start_info_size + argv_size
-                                              + cla_area_size);
+                                               + cla_area_size);
         size_t ph_area_offset = 0;
         for (auto& ph : elf_file.program_headers) {
             memcpy(&ph_area[ph_area_offset], &ph, elf64_ph_size);

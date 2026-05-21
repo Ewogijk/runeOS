@@ -121,9 +121,8 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto create(Device::Handle mass_storage_dev_handle,
-                            const Path&          path,
-                            U8                   attributes) -> IOStatus = 0;
+        virtual auto create(Device::Handle mass_storage_dev_handle, const Path& path, U8 attributes)
+            -> IOStatus = 0;
 
         /**
          * If the path is empty the root node of the filesystem shall be returned.
@@ -140,7 +139,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto open(Device::Handle mass_storage_dev_handle,
+        virtual auto open(Device::Handle       mass_storage_dev_handle,
                           const Path&          mount_point,
                           const Path&          path,
                           Ember::IOMode        io_mode,
@@ -162,8 +161,8 @@ namespace Rune::VFS {
          *          DEV_ERROR:   An IO error happened.
          */
         virtual auto find_node(Device::Handle mass_storage_dev_handle,
-                               const Path&          path,
-                               NodeInfo&            out) -> IOStatus = 0;
+                               const Path&    path,
+                               NodeInfo&      out) -> IOStatus = 0;
 
         /**
          * @brief Delete a file on the storage device.
@@ -189,7 +188,7 @@ namespace Rune::VFS {
          *          StorageDevUnknown:  The storage device is unknown.
          *          StorageDevError:    An IO error happened.
          */
-        virtual auto open_directory_stream(Device::Handle            mass_storage_dev_handle,
+        virtual auto open_directory_stream(Device::Handle                  mass_storage_dev_handle,
                                            const Path&                     path,
                                            const Function<void()>&         on_close,
                                            SharedPointer<DirectoryStream>& out) -> IOStatus = 0;

@@ -102,8 +102,9 @@ namespace Rune::CPU {
         for (U16 i = 0; i < INTERRUPT_VECTOR_COUNT; i++) {
             GateDescriptor gd = idt_get()->entry[i];
 
-            auto handler_addr = ((VirtualAddr) gd.offset_high) << SHIFT_32
-                                | ((VirtualAddr) gd.offset_mid) << SHIFT_16 | gd.offset_low;
+            auto handler_addr = static_cast<VirtualAddr>(gd.offset_high) << SHIFT_32
+                                | static_cast<VirtualAddr>(gd.offset_mid) << SHIFT_16
+                                | gd.offset_low;
 
             PrivilegeLevel pl = PrivilegeLevel::NONE;
 
@@ -112,7 +113,7 @@ namespace Rune::CPU {
             else if (gd.flags.dpl == 3)
                 pl = PrivilegeLevel::USER;
 
-            ivt.add_back({.vector       = (U8) i,
+            ivt.add_back({.vector       = static_cast<U8>(i),
                           .handler_addr = handler_addr,
                           .level        = pl,
                           .active       = gd.flags.p > 0
@@ -260,8 +261,9 @@ namespace Rune::CPU {
         stream->write_formatted("------------------ Global Descriptor Table -----------------\n");
         stream->write_formatted("  Sel           Base         Limit  A RW DC E S DPL P L DB G\n");
         for (int i = 0; i < 5; i++) { // NOLINT Number of GDT entries defined in GDT.cpp
-            SegmentDescriptor sd = GDT.entry[i];
-            U32 limit            = (U32) sd.limit_flags.limit_high << SHIFT_16 | (U32) sd.limit_low;
+            SegmentDescriptor sd    = GDT.entry[i];
+            U32               limit = static_cast<U32>(sd.limit_flags.limit_high) << SHIFT_16
+                                      | static_cast<U32>(sd.limit_low);
             stream->write_formatted(
                 " {:0=#2x}    {:0=#16x} {:0=#5x} {} {}  {}  {} {}  {}  {} {} {}  {}\n",
                 i * sizeof(SegmentDescriptor),

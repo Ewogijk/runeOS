@@ -22,7 +22,8 @@ namespace Rune::Device {
     // Mass Storage Device
     // ========================================================================================== //
 
-    const PartitionRange PartitionRange::ENTIRE_DEVICE = {0, 0xFFFFFFFFFFFFFFFF};
+    const PartitionRange PartitionRange::ENTIRE_DEVICE = {.m_start = 0,
+                                                          .m_end   = 0xFFFFFFFFFFFFFFFF};
 
     DEFINE_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0)
 
