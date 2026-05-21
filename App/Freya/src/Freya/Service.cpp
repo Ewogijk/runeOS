@@ -34,7 +34,8 @@ namespace Freya {
             auto& service = entry.second;
             for (auto& dependency : service.dependencies) {
                 if (!_services.contains(dependency))
-                    missing_dependencies.push_back({service.name, dependency});
+                    missing_dependencies.push_back(
+                        {.service = service.name, .dependency = dependency});
             }
         }
         return missing_dependencies;

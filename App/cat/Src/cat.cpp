@@ -18,6 +18,7 @@
 
 #include <Forge/VFS.h>
 
+#include <array>
 #include <iostream>
 #include <string>
 
@@ -58,7 +59,7 @@ auto parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) -> bool { /
     return file_seen || args_out.help;
 }
 
-CLINK auto main(const int argc, char* argv[]) -> int {
+auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 
@@ -83,13 +84,13 @@ CLINK auto main(const int argc, char* argv[]) -> int {
         return -1;
     }
 
-    U8                buf[BUF_SIZE];
-    Ember::StatusCode bytes_read =
-        Forge::vfs_read(file_ID, buf, BUF_SIZE - 1); // leave space for null terminator
+    std::array<U8, BUF_SIZE> buf{};
+    Ember::StatusCode        bytes_read =
+        Forge::vfs_read(file_ID, buf.data(), BUF_SIZE - 1); // leave space for null terminator
     while (bytes_read > Ember::Status::OKAY) {
         buf[BUF_SIZE - 1] = 0;
-        std::cout << reinterpret_cast<const char*>(buf);
-        bytes_read = Forge::vfs_read(file_ID, buf, BUF_SIZE - 1);
+        std::cout << reinterpret_cast<const char*>(buf.data());
+        bytes_read = Forge::vfs_read(file_ID, buf.data(), BUF_SIZE - 1);
     }
     if (bytes_read < Ember::Status::OKAY) {
         switch (bytes_read) {
