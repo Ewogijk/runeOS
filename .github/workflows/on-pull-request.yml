@@ -8,15 +8,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install ruff and clang-format-22
+      - name: Install ruff and clang-format
         run: |
           echo \> Installing clang-format-22
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 22
           sudo apt-get install -y clang-format-22
-          echo \> Verifying clang-format-22 installation:
-          clang-format-22 --version
+          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+          echo \> Verifying clang-format installation:
+          clang-format --version
           echo \> Installing ruff
           pip install ruff
           echo \> Verifying Ruff installation:
@@ -28,9 +29,13 @@ jobs:
               -path 'Kernel/Build' -prune -o \
               -name '*.h' -o \
               -name '*.cpp' -print | \
-              xargs clang-format-22 --dry-run -Werror
+              xargs clang-format --dry-run -Werror
           echo \> Check App code
-          find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-22 --dry-run -Werror
+          find App/ -path App/Freya/subprojects -prune -o \
+              -name 'App/**/Build' -prune -o \
+              -name '*.h' -o \
+              -name '*.cpp' -print | \
+              xargs clang-format --dry-run -Werror
       - name: Check Python Code Formatting
         run: |
           echo \> Check Kernel code
@@ -44,7 +49,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install System & Python Dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb clang-format-19
+          echo /> Installing system dependencies
+          sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+          sudo apt-get install -y clang-format-22
+          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+          echo \> Verifying clang-format installation:
+          clang-format --version
+          echo \> Installing python dependencies
           pip install scons click meson pyyaml
       - name: Download runeToolchain
         id: rune_toolchain_download
@@ -142,17 +156,23 @@ jobs:
           path: ${{ github.workspace }}
       - name: Install Dependencies
         run: |
-          echo \> Installing clang-tidy, scons and clang-format-19
-          sudo apt install clang-tidy scons clang-format-19
-          echo >\ Clang-tidy Version:
+          echo \> Installing clang-tidy, scons and clang-format
+          sudo apt install clang-tidy scons
+          echo >\ Verifying clang-tidy installation:
           echo clang-tidy --version
-          echo >\ Clang-format Version:
-          echo clang-format-19 --version
-          echo >\ scons Version:
+          echo \> Installing clang-format-22
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+          sudo apt-get install -y clang-format-22
+          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+          echo \> Verifying clang-format installation:
+          clang-format --version
+          echo >\ Verifying scons installation:
           echo scons --version
           echo \> Installing ruff
           pip install ruff
-          echo \> Ruff version:
+          echo \> Verifying ruff installation:
           echo ruff --version
       - name: Download runeToolchain
         id: rune_toolchain_download
