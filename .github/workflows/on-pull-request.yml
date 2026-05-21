@@ -9,9 +9,9 @@ jobs:
       matrix:
         path:
           - check: 'Kernel'
-            exclude: '(Kernel/Include/Device/ACPI/ACPICA|Kernel/Build)'
+            exclude: '(ACPICA|Build)'
           - check: 'App'
-            exclude: 'App/**/Build'
+            exclude: 'Build'
     steps:
       - uses: actions/checkout@v4
       - name: Check C/C++ Code Formatting
