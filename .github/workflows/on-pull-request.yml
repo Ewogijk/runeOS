@@ -3,35 +3,38 @@ on:
   pull_request:
 
 jobs:
-  format:
+  code-formatting-check:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - check: 'Kernel'
+            exclude: '(Kernel/Include/Device/ACPI/ACPICA|Kernel/Build)'
+          - check: 'App'
+            exclude: 'App/**/Build'
     steps:
       - uses: actions/checkout@v4
-      - name: Install ruff and clang-format-19
+      - name: Check C/C++ Code Formatting
+        uses: jidicula/clang-format-action@v4.18.0
+        with:
+          clang-format-version: '22'
+          check-path: $ {{ matrix.path['check'] }}
+          exclude-regex: $ {{ matrix.path['exclude'] }}
+      - name: Install ruff
         run: |
-          echo \> Installing clang-format-19
-          sudo apt install clang-format-19
-          echo >\ Clang-format Version:
-          echo clang-format-19 --version
           echo \> Installing ruff
           pip install ruff
           echo \> Ruff version:
           echo ruff --version
-      - name: Check C/C++ Code Formatting
-        run: |
-          echo \> Check Kernel code
-          find Kernel/ -path Kernel/Include/Device/ACPI/ACPICA -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
-          echo \> Check App code
-          find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
-      - name: Check Python Code
+      - name: Check Python Code Formatting
         run: |
           echo \> Check Kernel code
           ruff format --check Kernel/
           echo \> Check Brokk code
           ruff format --check Brokk/
-  build-test:
+  build-test-kernel:
     runs-on: ubuntu-latest
-    needs: format
+    needs: code-formatting-check
     steps:
       - uses: actions/checkout@v4
       - name: Install System & Python Dependencies
@@ -123,9 +126,9 @@ jobs:
         with:
           name: compilation-databases
           path: ${{ github.workspace }}/CompilationDatabases.tar.gz
-  lint:
+  linter-check:
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: build-test-kernel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v5
