@@ -14,7 +14,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 22
-          sudo apt install -y clang-format-22
+          sudo apt-get install -y clang-format-22
           echo \> Verifying clang-format-22 installation:
           clang-format-22 --version
           echo \> Installing ruff
