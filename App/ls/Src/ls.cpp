@@ -98,7 +98,7 @@ void print_node_info(const CLIArgs& args, const Ember::NodeInfo& node_info) {
     }
 }
 
-CLINK auto main(const int argc, char* argv[]) -> int {
+auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

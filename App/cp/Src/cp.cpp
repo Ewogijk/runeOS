@@ -246,7 +246,7 @@ auto copy_dir_content(const std::string& src, const std::string& dest) -> bool {
     return true;
 }
 
-CLINK auto main(const int argc, char* argv[]) -> int {
+auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 
