@@ -19,7 +19,7 @@ jobs:
         with:
           clang-format-version: '22'
           check-path: 'Kernel'
-          exclude-regex: 'ACPICA|Build'
+          exclude-regex: '(ACPICA|Build)'
       - name: Install ruff
         run: |
           echo \> Installing ruff
