@@ -24,7 +24,7 @@ namespace Rune::CPU {
     /// @brief A lock that enables/disables external interrupts intended to be used with a
     ///         critical section.
     class InterruptLock {
-    public:
+      public:
         /// @brief Disable external interrupts.
         void lock();
 
@@ -37,13 +37,13 @@ namespace Rune::CPU {
     class InterruptSaveLock {
         Register _flags;
 
-    public:
+      public:
         /// @brief Save the content of the Flags register and disable external interrupts.
         void lock();
 
         /// @brief Restore the previously saved Flags register content and enable interrupts.
         void unlock() const;
     };
-}
+} // namespace Rune::CPU
 
 #endif // RUNEOS_INTERRUPTLOCK_H

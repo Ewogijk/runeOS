@@ -30,7 +30,7 @@ namespace Rune::VFS {
         jmpboot[0] = JMPBOOT0;
         jmpboot[1] = JMPBOOT1;
         jmpboot[2] = JMPBOOT2;
-        memcpy(oemid, (void*) RUNEOS_OEM, OEMID_SIZE);
+        memcpy(oemid, RUNEOS_OEM, OEMID_SIZE);
     }
 
     ExtendedBIOSParameterBlock1216::ExtendedBIOSParameterBlock1216()
@@ -95,11 +95,11 @@ namespace Rune::VFS {
     }
 
     auto FileEntry::is_empty_end() const -> bool {
-        return (unsigned char) short_name.as_array[0] == MARK_EMPTY_END;
+        return short_name.as_array[0] == MARK_EMPTY_END;
     }
 
     auto FileEntry::is_empty_middle() const -> bool {
-        return (unsigned char) short_name.as_array[0] == MARK_EMPTY_MIDDLE;
+        return short_name.as_array[0] == MARK_EMPTY_MIDDLE;
     }
 
     auto FileEntry::make_short_name() const -> String {

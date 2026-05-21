@@ -77,8 +77,8 @@ namespace Rune::Device {
 
     void pci_write_word(U8 bus, U8 device, U8 func, U8 offset, U16 value) {
         if ((offset & 0x03) > 2) {
-            pci_write_byte(bus, device, func, offset, (U8) value);
-            pci_write_byte(bus, device, func, offset + 1, (U8) value >> SHIFT_8);
+            pci_write_byte(bus, device, func, offset, static_cast<U8>(value));
+            pci_write_byte(bus, device, func, offset + 1, static_cast<U8>(value) >> SHIFT_8);
         }
         CPU::out_dw(PCI_CONFIG,
                     (1 << ENABLE_BIT_SHIFT | (bus << BUS_NUMBER_SHIFT)
@@ -101,8 +101,8 @@ namespace Rune::Device {
 
     void pci_write_dword(U8 bus, U8 device, U8 func, U8 offset, U32 value) {
         if ((offset & 0x03) > 2) {
-            pci_write_word(bus, device, func, offset, (uint16_t) value);
-            pci_write_word(bus, device, func, offset + 2, (uint16_t) value >> SHIFT_16);
+            pci_write_word(bus, device, func, offset, static_cast<U16>(value));
+            pci_write_word(bus, device, func, offset + 2, static_cast<U16>(value) >> SHIFT_16);
         }
         CPU::out_dw(PCI_CONFIG,
                     (1 << ENABLE_BIT_SHIFT | (bus << BUS_NUMBER_SHIFT)
@@ -209,8 +209,8 @@ namespace Rune::Device {
         BaseClass bc(header.base_class_code);
         String    subclass = pci_resolve_subclass_code(bc, header.sub_class_code);
         String    prog_int = pci_resolve_programming_interface(bc,
-                                                            header.sub_class_code,
-                                                            header.programming_interface);
+                                                               header.sub_class_code,
+                                                               header.programming_interface);
 
         if (header.get_header_layout() == 0x0) {
             auto* ds = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);

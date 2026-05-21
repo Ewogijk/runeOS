@@ -60,7 +60,7 @@ namespace Rune::Device {
             return nullptr;
         }
         sys_mem->CT           = reinterpret_cast<CommandTable*>(ct);
-        sys_mem->CommandSlots = (int8_t) ct_count;
+        sys_mem->CommandSlots = static_cast<int8_t>(ct_count);
 
         for (U32 j = 0; j < ct_count; j++) {
             PhysicalAddr p_ctba{0};
@@ -74,7 +74,7 @@ namespace Rune::Device {
                 return nullptr;
             }
 
-            sys_mem->CL[j].CTBA.AsUInt32 = (U32) p_ctba;
+            sys_mem->CL[j].CTBA.AsUInt32 = static_cast<U32>(p_ctba);
             if (sys_mem->CL[j].CTBA.Reserved != 0) {
                 LOGGER->error("Command table base address is not 128 byte aligned!");
                 _heap->free(sys_mem->CL);

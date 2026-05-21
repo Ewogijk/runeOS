@@ -34,7 +34,7 @@ namespace Heimdall {
         : _dict_detail(new DictDetail{other._dict_detail->map}) {}
 
     TestTracker::TestTracker(TestTracker&& other) noexcept
-        : _dict_detail(new(std::nothrow) DictDetail{other._dict_detail->map}) {
+        : _dict_detail(new (std::nothrow) DictDetail{other._dict_detail->map}) {
         delete other._dict_detail;
         other._dict_detail = nullptr;
     }

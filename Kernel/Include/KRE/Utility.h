@@ -450,7 +450,7 @@ namespace Rune {
 
     template <typename F, typename R, typename... A>
     class Callable : public ICallable<R, A...> {
-        F _function;
+        mutable F _function;
 
       public:
         explicit Callable(F function) : _function(move(function)) {}

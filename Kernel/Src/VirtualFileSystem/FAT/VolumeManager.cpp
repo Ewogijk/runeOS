@@ -43,8 +43,8 @@ namespace Rune::VFS {
                                                  .m_buffer_size = buf_size};
         size_t                           bytes_read = 0;
         Device::IORequest                io_req{
-                           .m_in_buffer  = &msd_req,
-                           .m_out_buffer = &bytes_read,
+            .m_in_buffer  = &msd_req,
+            .m_out_buffer = &bytes_read,
         };
         return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
                    ? bytes_read
@@ -62,8 +62,8 @@ namespace Rune::VFS {
                                                  .m_buffer_size = buf_size};
         size_t                           bytes_read = 0;
         Device::IORequest                io_req{
-                           .m_in_buffer  = &msd_req,
-                           .m_out_buffer = &bytes_read,
+            .m_in_buffer  = &msd_req,
+            .m_out_buffer = &bytes_read,
         };
         return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
                    ? bytes_read

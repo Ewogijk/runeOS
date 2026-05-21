@@ -90,7 +90,7 @@ namespace Rune::CPU {
      */
     struct IRQContainer {
         IRQTableEntry entry;
-        IRQHandler    handler = [] { return IRQState::PENDING; };
+        IRQHandler    handler = [] -> Rune::CPU::IRQState::_E { return IRQState::PENDING; };
 
         friend auto operator==(const IRQContainer& a, const IRQContainer& b) -> bool {
             return a.entry.device_handle == b.entry.device_handle;
@@ -240,7 +240,7 @@ namespace Rune::CPU {
             auto* driver = *pic_drivers[i];
             if (driver->start()) {
                 PIC     = driver;
-                pic_idx = (int) i;
+                pic_idx = static_cast<int>(i);
                 break;
             }
         }

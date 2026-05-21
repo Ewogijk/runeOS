@@ -31,9 +31,10 @@ namespace Rune::SystemCall {
         }
         U16   key_code        = key.get_key_code();
         auto* key_code_buffer = reinterpret_cast<U16*>(key_code_out);
-        return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) &key_code,
-                                                                         (void*) key_code_buffer,
-                                                                         2)
+        return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user(
+                   reinterpret_cast<void*>(&key_code),
+                   reinterpret_cast<void*>(key_code_buffer),
+                   2)
                    ? 0
                    : Ember::Status::BAD_ARG;
     }
@@ -232,9 +233,10 @@ namespace Rune::SystemCall {
             app_syscall_ctx->app_module->get_active_app()->working_directory.to_string();
         if (b_size < wd.size() + 1) return Ember::Status::BAD_ARG;
 
-        if (!app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user((void*) wd.to_cstr(),
-                                                                       u_wd_out,
-                                                                       wd.size() + 1))
+        if (!app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user(
+                const_cast<char*>(wd.to_cstr()), // NOLINT cppcoreguidelines-pro-type-const-cast
+                u_wd_out,
+                wd.size() + 1))
             return Ember::Status::BAD_ARG;
         return Ember::Status::OKAY;
     }

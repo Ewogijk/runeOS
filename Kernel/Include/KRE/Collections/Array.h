@@ -153,7 +153,9 @@ namespace Rune {
          *
          * @return Iterator to the first element.
          */
-        auto begin() const -> ArrayIterator<const T> { return ArrayIterator<const T>(_array, 0, N); }
+        auto begin() const -> ArrayIterator<const T> {
+            return ArrayIterator<const T>(_array, 0, N);
+        }
 
         /**
          *

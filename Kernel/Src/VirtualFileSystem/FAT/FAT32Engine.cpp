@@ -68,11 +68,9 @@ namespace Rune::VFS {
         br32->EBPB.signature        = 0;
         br32->EBPB.volume_id        = 0; // TODO combine current date and time into 32 bit value
         memcpy(br32->EBPB.volume_label,
-               (void*) "NO NAME    ",
+               "NO NAME    ",
                ExtendedBIOSParameterBlock32::VOLUME_LABEL_SIZE);
-        memcpy(br32->EBPB.system_id,
-               (void*) "FAT32   ",
-               ExtendedBIOSParameterBlock32::SYSTEM_ID_SIZE);
+        memcpy(br32->EBPB.system_id, "FAT32   ", ExtendedBIOSParameterBlock32::SYSTEM_ID_SIZE);
         memset(br32->EBPB.boot_code, 0, ExtendedBIOSParameterBlock32::BOOT_CODE_SIZE);
         br32->EBPB.signature_word = ExtendedBIOSParameterBlock32::SIGNATURE_WORD;
         return true;

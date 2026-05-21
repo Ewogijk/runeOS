@@ -90,7 +90,7 @@ TEST("wait - One Thread", "ConditionVariable") {
         cpu_module->stop_thread(TEST_THREAD_A.m_thread_handle);
     CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
     MUTEX              = SharedPointer<CPU::Mutex>();
-    IS_STILL_LOCKED = false;
+    IS_STILL_LOCKED    = false;
 }
 
 TEST("wait - Multiple Threads", "ConditionVariable") {
@@ -128,7 +128,7 @@ TEST("wait - Multiple Threads", "ConditionVariable") {
         cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
     CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
     MUTEX              = SharedPointer<CPU::Mutex>();
-    IS_STILL_LOCKED = false;
+    IS_STILL_LOCKED    = false;
 }
 
 TEST("notify_one", "ConditionVariable") {
@@ -173,7 +173,7 @@ TEST("notify_one", "ConditionVariable") {
         cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
     CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
     MUTEX              = SharedPointer<CPU::Mutex>();
-    IS_STILL_LOCKED = false;
+    IS_STILL_LOCKED    = false;
 }
 
 TEST("notify_all", "ConditionVariable") {
@@ -216,7 +216,7 @@ TEST("notify_all", "ConditionVariable") {
         cpu_module->stop_thread(TEST_THREAD_B.m_thread_handle);
     CONDITION_VARIABLE = SharedPointer<CPU::ConditionVariable>();
     MUTEX              = SharedPointer<CPU::Mutex>();
-    IS_STILL_LOCKED = false;
+    IS_STILL_LOCKED    = false;
 }
 
 #endif // RUNEOS_CONDITIONVARIABLETEST_H

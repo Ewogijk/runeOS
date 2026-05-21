@@ -40,7 +40,7 @@ namespace Heimdall {
 
             for (size_t j = 0; j < test_suite.test_list.size(); j++) {
                 JUnitTest test = test_suite.test_list[j];
-                xml            = xml + "    <testcase name=\"" + test.name + "\" assertions=\""
+                xml = xml + "    <testcase name=\"" + test.name + "\" assertions=\""
                       + HString::to_string(test.assertions) + R"(" time="0" file=")" + test.file
                       + "\" line=\"" + HString::to_string(test.line) + "\"";
 

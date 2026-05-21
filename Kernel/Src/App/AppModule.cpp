@@ -70,7 +70,8 @@ namespace Rune::App {
                                                  node);
             if (st == VFS::IOStatus::NOT_FOUND) {
                 // File not found -> Create it
-                st = _vfs_module->create(resolved_path, (int) Ember::NodeAttribute::FILE);
+                st = _vfs_module->create(resolved_path,
+                                         static_cast<int>(Ember::NodeAttribute::FILE));
                 if (st != VFS::IOStatus::CREATED) return {};
 
                 // Try to open it again

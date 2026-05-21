@@ -37,7 +37,7 @@ namespace Heimdall {
         : _str_detail(new StringDetail{other._str_detail->str}) {}
 
     HString::HString(HString&& other) noexcept
-        : _str_detail(new(std::nothrow) StringDetail{other._str_detail->str}) {
+        : _str_detail(new (std::nothrow) StringDetail{other._str_detail->str}) {
 
         delete other._str_detail;
         other._str_detail = nullptr;
@@ -117,7 +117,7 @@ namespace Heimdall {
         : _list_detail(new HStringListDetail{other._list_detail->list}) {}
 
     HStringList::HStringList(HStringList&& other) noexcept
-        : _list_detail(new(std::nothrow) HStringListDetail{other._list_detail->list}) {
+        : _list_detail(new (std::nothrow) HStringListDetail{other._list_detail->list}) {
         delete other._list_detail;
         other._list_detail = nullptr;
     }

@@ -55,86 +55,9 @@ namespace Rune::VFS {
         _current_entry_as_laf.file_name       = "";
         _current_entry_as_laf.file            = *_current_entry;
         _current_entry_as_laf.location        = {.cluster   = _current_cluster,
-                                                 .entry_idx = (U16) _entry_index};
+                                                 .entry_idx = static_cast<U16>(_entry_index)};
         _current_entry_as_laf.first_lfn_entry = {};
     }
-
-    // auto FATDirectoryIterator::parse_used_file_entry() -> void { // NOLINT
-    //     String            file_name = "";
-    //     FileEntryLocation first_lfn_entry;
-    //     // The current file entry is a used file or directory
-    //     if (_current_entry->attributes == FATFileAttribute::LONG_FILE_NAME) {
-    //         // Parse it's long file name entries
-    //         if ((nibble_get(_current_entry->short_name.as_array[0], 1))
-    //             != LongFileNameEntry::LAST_LFN_ENTRY) {
-    //             _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
-    //             return;
-    //         }
-    //         first_lfn_entry = {.cluster = _current_cluster, .entry_idx = (U16) _entry_index};
-    //         U8 lfne_count   = nibble_get(_current_entry->short_name.as_array[0], 0);
-    //         U8 c_order      = lfne_count;
-    //         while (c_order > 0) {
-    //             auto* c_long_file_name_entry =
-    //             reinterpret_cast<LongFileNameEntry*>(_current_entry); if
-    //             (nibble_get(c_long_file_name_entry->order, 0) != c_order) {
-    //                 _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
-    //                 return;
-    //             }
-    //             // Copy file name to temp buffer
-    //             // Encoding is UCS-2/UTF-16, but we only get the first byte of each char
-    //             // because the kernel only supports ASCII (for ASCII the second byte is always 0
-    //             // padding) Should a non ASCII character be part of the name we will embrace
-    //             chaos
-    // // NOLINTBEGIN
-    // char tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
-    //          + LongFileNameEntry::FN3_SIZE];
-    // for (U8 i = 0; i < LongFileNameEntry::FN1_SIZE; i++)
-    //     tmp[i] = (char) (byte_get(c_long_file_name_entry->file_name_1[i], 0));
-    // for (U8 i = 0; i < LongFileNameEntry::FN2_SIZE; i++)
-    //     tmp[LongFileNameEntry::FN1_SIZE + i] =
-    //         (char) (byte_get(c_long_file_name_entry->file_name_2[i], 0));
-    // for (U8 i = 0; i < LongFileNameEntry::FN3_SIZE; i++)
-    //     tmp[LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE + i] =
-    //         (char) (byte_get(c_long_file_name_entry->file_name_3[i], 0));
-    //
-    // int pStart = 0;
-    // int pEnd   = LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
-    //            + LongFileNameEntry::FN3_SIZE;
-    // if (c_order == lfne_count) {
-    //     // Skip trailing whitespace
-    //     while (tmp[pEnd - 1] == MASK_BYTE
-    //            || tmp[pEnd - 1] == '\0') // string will implicitly be null terminated
-    //         pEnd--;
-    // } else if (c_order == 1) {
-    //     // Skip leading whitespace
-    //     while (tmp[pStart] == ' ') pStart++;
-    // }
-    // // NOLINTEND
-    //
-    //             // Long file name entries are in reverse order
-    //             file_name = String(tmp, pStart, pEnd) + file_name;
-    //             _current_entry++;
-    //             _entry_index++;
-    //             c_order--;
-    //             if (_entry_index >= _max_entries_per_cluster) {
-    //                 // The next long file name entry is located in the next directory cluster ->
-    //                 Get
-    //                 // it!
-    //                 get_next_cluster();
-    //                 if (_state != DirectoryIteratorState::ITERATING)
-    //                     return; // StorageError or EndOfDirectory
-    //             }
-    //         }
-    //     } else {
-    //         // It does not use a long file name entry
-    //         file_name = _current_entry->make_short_name();
-    //     }
-    //     _current_entry_as_laf.file_name       = file_name;
-    //     _current_entry_as_laf.file            = *_current_entry;
-    //     _current_entry_as_laf.location        = {.cluster   = _current_cluster,
-    //                                              .entry_idx = (U16) _entry_index};
-    //     _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
-    // }
 
     auto FATDirectoryIterator::parse_used_file_entry() -> void { // NOLINT
         String            file_name = "";
@@ -147,7 +70,8 @@ namespace Rune::VFS {
                 _state = DirectoryIteratorState::CORRUPT_LFN_ENTRY;
                 return;
             }
-            first_lfn_entry = {.cluster = _current_cluster, .entry_idx = (U16) _entry_index};
+            first_lfn_entry = {.cluster   = _current_cluster,
+                               .entry_idx = static_cast<U16>(_entry_index)};
             U8 lfne_count   = nibble_get(_current_entry->short_name.as_array[0], 0);
             U8 c_order      = lfne_count;
             while (c_order > 0) {
@@ -174,7 +98,7 @@ namespace Rune::VFS {
 
                 int pStart = 0;
                 int pEnd   = LongFileNameEntry::FN1_SIZE + LongFileNameEntry::FN2_SIZE
-                           + LongFileNameEntry::FN3_SIZE;
+                             + LongFileNameEntry::FN3_SIZE;
                 if (c_order == lfne_count) {
                     // Skip trailing whitespace
                     while (tmp[pEnd - 1] == (char) MASK_BYTE
@@ -206,7 +130,7 @@ namespace Rune::VFS {
         _current_entry_as_laf.file_name       = file_name;
         _current_entry_as_laf.file            = *_current_entry;
         _current_entry_as_laf.location        = {.cluster   = _current_cluster,
-                                                 .entry_idx = (U16) _entry_index};
+                                                 .entry_idx = static_cast<U16>(_entry_index)};
         _current_entry_as_laf.first_lfn_entry = first_lfn_entry;
     }
 
@@ -231,7 +155,7 @@ namespace Rune::VFS {
             U32 cluster_size         = bpb->bytes_per_sector * bpb->sectors_per_cluster;
             _current_cluster         = start_cluster;
             _cluster_buf             = SharedPointer<U8>(new U8[cluster_size]);
-            _max_entries_per_cluster = (int) (cluster_size / sizeof(FileEntry));
+            _max_entries_per_cluster = static_cast<int>(cluster_size / sizeof(FileEntry));
             // Load the very first cluster -> Can transition only to "StorageError" state because
             // there must always be a "dot" and "dotdot"
             get_next_cluster();

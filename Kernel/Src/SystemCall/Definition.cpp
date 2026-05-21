@@ -27,24 +27,23 @@ namespace Rune::SystemCall {
                                     Ember::SystemCallArgument,
                                     Ember::SystemCallArgument)>& handler,
                  void*                                           context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1),
-                                       forward<Ember::SystemCallArgument>(arg2),
-                                       forward<Ember::SystemCallArgument>(arg3),
-                                       forward<Ember::SystemCallArgument>(arg4),
-                                       forward<Ember::SystemCallArgument>(arg5),
-                                       forward<Ember::SystemCallArgument>(arg6));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4),
+                                   forward<Ember::SystemCallArgument>(arg5),
+                                   forward<Ember::SystemCallArgument>(arg6));
+                },
                 .context = context};
     }
 
@@ -57,24 +56,23 @@ namespace Rune::SystemCall {
                                     Ember::SystemCallArgument,
                                     Ember::SystemCallArgument)>& handler,
                  void*                                           context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1),
-                                       forward<Ember::SystemCallArgument>(arg2),
-                                       forward<Ember::SystemCallArgument>(arg3),
-                                       forward<Ember::SystemCallArgument>(arg4),
-                                       forward<Ember::SystemCallArgument>(arg5));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4),
+                                   forward<Ember::SystemCallArgument>(arg5));
+                },
                 .context = context};
     }
 
@@ -86,24 +84,23 @@ namespace Rune::SystemCall {
                                     Ember::SystemCallArgument,
                                     Ember::SystemCallArgument)>& handler,
                  void*                                           context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg5)
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1),
-                                       forward<Ember::SystemCallArgument>(arg2),
-                                       forward<Ember::SystemCallArgument>(arg3),
-                                       forward<Ember::SystemCallArgument>(arg4));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3),
+                                   forward<Ember::SystemCallArgument>(arg4));
+                },
                 .context = context};
     }
 
@@ -114,24 +111,23 @@ namespace Rune::SystemCall {
                                     Ember::SystemCallArgument,
                                     Ember::SystemCallArgument)>& handler,
                  void*                                           context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg4)
-                        SILENCE_UNUSED(arg5)
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1),
-                                       forward<Ember::SystemCallArgument>(arg2),
-                                       forward<Ember::SystemCallArgument>(arg3));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2),
+                                   forward<Ember::SystemCallArgument>(arg3));
+                },
                 .context = context};
     }
 
@@ -140,24 +136,23 @@ namespace Rune::SystemCall {
         const String&                                                                     name,
         const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
         void* context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg3)
-                        SILENCE_UNUSED(arg4)
-                        SILENCE_UNUSED(arg5)
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1),
-                                       forward<Ember::SystemCallArgument>(arg2));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1),
+                                   forward<Ember::SystemCallArgument>(arg2));
+                },
                 .context = context};
     }
 
@@ -165,24 +160,23 @@ namespace Rune::SystemCall {
                  const String&                                          name,
                  const Function<S64(void*, Ember::SystemCallArgument)>& handler,
                  void*                                                  context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg2)
-                        SILENCE_UNUSED(arg3)
-                        SILENCE_UNUSED(arg4)
-                        SILENCE_UNUSED(arg5)
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx),
-                                       forward<Ember::SystemCallArgument>(arg1));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx),
+                                   forward<Ember::SystemCallArgument>(arg1));
+                },
                 .context = context};
     }
 
@@ -190,24 +184,23 @@ namespace Rune::SystemCall {
                  const String&               name,
                  const Function<S64(void*)>& handler,
                  void*                       context) -> Definition {
-        return {.ID   = ID,
-                .name = name,
-                .sys_call_handler =
-                    [handler](void* sys_call_ctx,
-                              Ember::SystemCallArgument arg1,
-                              Ember::SystemCallArgument arg2,
-                              Ember::SystemCallArgument arg3,
-                              Ember::SystemCallArgument arg4,
-                              Ember::SystemCallArgument arg5,
-                              Ember::SystemCallArgument arg6) {
-                        SILENCE_UNUSED(arg1)
-                        SILENCE_UNUSED(arg2)
-                        SILENCE_UNUSED(arg3)
-                        SILENCE_UNUSED(arg4)
-                        SILENCE_UNUSED(arg5)
-                        SILENCE_UNUSED(arg6)
-                        return handler(forward<void*>(sys_call_ctx));
-                    },
+        return {.ID               = ID,
+                .name             = name,
+                .sys_call_handler = [handler](void*                     sys_call_ctx,
+                                              Ember::SystemCallArgument arg1,
+                                              Ember::SystemCallArgument arg2,
+                                              Ember::SystemCallArgument arg3,
+                                              Ember::SystemCallArgument arg4,
+                                              Ember::SystemCallArgument arg5,
+                                              Ember::SystemCallArgument arg6) -> long {
+                    SILENCE_UNUSED(arg1)
+                    SILENCE_UNUSED(arg2)
+                    SILENCE_UNUSED(arg3)
+                    SILENCE_UNUSED(arg4)
+                    SILENCE_UNUSED(arg5)
+                    SILENCE_UNUSED(arg6)
+                    return handler(forward<void*>(sys_call_ctx));
+                },
                 .context = context};
     }
 } // namespace Rune::SystemCall
