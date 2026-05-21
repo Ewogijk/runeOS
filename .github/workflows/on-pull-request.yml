@@ -5,27 +5,31 @@ on:
 jobs:
   code-formatting-check:
     runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        path:
-#          - check: 'Kernel'
-#            exclude: '(ACPICA|Build)'
-#          - check: 'App'
-#            exclude: 'Build'
+
     steps:
       - uses: actions/checkout@v4
-      - name: Check C/C++ Code Formatting
-        uses: jidicula/clang-format-action@v4.18.0
-        with:
-          clang-format-version: '22'
-          check-path: 'Kernel'
-          exclude-regex: '(ACPICA|Build)'
-      - name: Install ruff
+      - name: Install ruff and clang-format-22
         run: |
+          echo \> Installing clang-format-22
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 22
+          echo \> Verifying clang-format-22 installation:
+          clang-format-22 --version
           echo \> Installing ruff
           pip install ruff
-          echo \> Ruff version:
+          echo \> Verifying Ruff installation:
           echo ruff --version
+      - name: Check C/C++ Code Formatting
+        run: |
+          echo \> Check Kernel code
+          find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
+              -path 'Kernel/Build' -prune -o \
+              -name '*.h' -o \
+              -name '*.cpp' -print | \ 
+              xargs clang-format-22 --dry-run -Werror
+          echo \> Check App code
+          find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-2 --dry-run -Werror
       - name: Check Python Code Formatting
         run: |
           echo \> Check Kernel code
