@@ -156,10 +156,10 @@ namespace Rune::CPU {
          * @param handler
          * @return True: The IRQ handler is installed. False: Installation failed.
          */
-        auto install_irq_handler(U8                irq_line,
-                                 U16               dev_handle,
-                                 const String&     dev_name,
-                                 const IRQHandler& handler) -> bool;
+        auto install_irq_handler(U8                          irq_line,
+                                 U16                         dev_handle,
+                                 const String&               dev_name,
+                                 const FastInterruptHandler& handler) -> bool;
 
         /**
          * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.

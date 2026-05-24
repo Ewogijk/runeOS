@@ -136,7 +136,7 @@ namespace Rune::CPU {
 
         install_event_handler(EventHook(EventHook::THREAD_STOPPED).to_string(),
                               "Thread Table Cleaner",
-                              [this](void* evt_ctx) {
+                              [this](void* evt_ctx) -> void {
                                   auto* ctx = reinterpret_cast<ThreadPreemptionContext*>(evt_ctx);
                                   SharedPointer<Thread> to_remove(nullptr);
                                   for (const auto& t : _thread_table) {
@@ -216,7 +216,7 @@ namespace Rune::CPU {
             return false;
         }
         SCHEDULER          = &_scheduler;
-        NOTIFY_THREAD_BOOM = [this](Thread* term, Thread* next) {
+        NOTIFY_THREAD_BOOM = [this](Thread* term, Thread* next) -> void {
             ThreadPreemptionContext tt_ctx = {.stopped = move(term), .next_scheduled = move(next)};
 
             // Wake up joining threads
@@ -230,10 +230,11 @@ namespace Rune::CPU {
                 _joining_threads.remove(term->get_handle());
             }
 
-            fire(EventHook(EventHook::THREAD_STOPPED).to_string(), (void*) &tt_ctx);
+            fire(EventHook(EventHook::THREAD_STOPPED).to_string(),
+                 reinterpret_cast<void*>(&tt_ctx));
         };
-        _scheduler.set_on_context_switch([this](Thread* next) {
-            fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), (void*) next);
+        _scheduler.set_on_context_switch([this](Thread* next) -> void {
+            fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), reinterpret_cast<void*>(next));
         });
         _thread_table.put(_scheduler.get_running_thread()->get_handle(),
                           _scheduler.get_running_thread());
@@ -280,16 +281,17 @@ namespace Rune::CPU {
     }
 
     // NOLINTBEGIN For consistency, these are members
-    auto CPUModule::install_irq_handler(U8                irq_line,
-                                        U16               dev_handle,
-                                        const String&     dev_name,
-                                        const IRQHandler& handler) -> bool {
+    auto CPUModule::install_irq_handler(U8                          irq_line,
+                                        U16                         dev_handle,
+                                        const String&               dev_name,
+                                        const FastInterruptHandler& handler) -> bool {
         return irq_install_handler(irq_line, dev_handle, dev_name, handler);
     }
 
     auto CPUModule::uninstall_irq_handler(U8 irq_line, U16 dev_handle) -> bool {
         return irq_uninstall_handler(irq_line, dev_handle);
     }
+
     // NOLINTEND
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      High Level Threading API

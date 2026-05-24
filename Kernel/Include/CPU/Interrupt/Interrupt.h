@@ -19,6 +19,8 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/Utility.h>
+
 #include <CPU/CPU.h>
 
 namespace Rune::CPU {
@@ -55,6 +57,60 @@ namespace Rune::CPU {
     /// @param flags Flags register content saved previously.
     CLINK void interrupt_irq_restore(Register flags);
 
+    // ========================================================================================== //
+    // Interrupt Handler
+    // ========================================================================================== //
+
+#define INTERRUPT_STATES(X)                                                                        \
+    X(InterruptState, PENDING, 0x1)                                                                \
+    X(InterruptState, HANDLED, 0x2)
+
+    /// @brief The state of an interrupt after running an interrupt handler.
+    ///
+    /// - PENDING: The interrupt has not been handled yet.
+    /// - HANDLED: The interrupt has been successfully handled.
+    DECLARE_ENUM(InterruptState, INTERRUPT_STATES, 0x0) // NOLINT
+
+    /// @brief The InterruptFrame defines what interrupt was raised by the CPU and the CPU state
+    ///         at the time of the interrupt.
+    ///
+    /// This class defines the architecture independent part of an interrupt frame with the
+    /// information about the interrupt. Each architecture shall provide a specialization of this
+    /// struct containing the CPU state at the time of interrupt.
+    struct InterruptFrame {
+        /// @brief CPU supplied error code
+        Register m_error_code;
+        /// @brief Interrupt vector
+        Register m_vector;
+    };
+
+    /// @brief Fast interrupt handlers (FIH) are called by the interrupt dispatcher to handle the
+    ///         interrupt they are registered to.
+    ///
+    /// FIHs run in the interrupt context, that means blocking calls are not allowed. This includes
+    /// sleeping, blocking threads, and syncing with threads. If any such call is made, the behavior
+    /// is undefined.
+    ///
+    /// Additionally, if the interrupt is an IRQ, then the fast interrupt handler must send an "end
+    /// of interrupt" signal to the interrupt controller when the IRQ has been handled.
+    ///
+    /// What does this mean for a FIH? An FIH should be a fast-running routine in terms of execution
+    /// time. Heavy work should be deferred to a Delayed Interrupt Handler (DIH) for processing.
+    using FastInterruptHandler = Function<InterruptState(InterruptFrame*)>;
+
+    /// @brief Interrupt Packets are used by FIHs to communicate with a DIH, they contain the data
+    ///         that needs to be processed.
+    struct InterruptPacket {
+        static constexpr U16   PACKET_SIZE = 512;
+        Array<U8, PACKET_SIZE> m_data;
+    };
+
+    /// @brief Delayed Interrupt Handlers (DIH) are scheduled by FIHs. They are intended to do the
+    ///         heavy work of processing InterruptPackets.
+    ///
+    /// DIHs are not running in the interrupt context, meaning there are no time or functional
+    /// constraints.
+    using DelayedInterruptHandler = Function<void(InterruptPacket)>;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_INTERRUPT_H

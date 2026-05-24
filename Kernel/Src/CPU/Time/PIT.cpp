@@ -25,7 +25,11 @@ namespace Rune::CPU {
 
     enum Mode { SQUARE_WAVE_GENERATOR = 0x36 };
 
-    PIT::PIT() : _irq_handler([] { return IRQState::PENDING; }) {}
+    PIT::PIT()
+        : _irq_handler([](InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+              SILENCE_UNUSED(i_frame);
+              return InterruptState::PENDING;
+          }) {}
 
     auto PIT::get_name() const -> String { return "PIT"; }
 
@@ -75,7 +79,8 @@ namespace Rune::CPU {
         out_b(Channel::ZERO, byte_get(pit_divider, 0)); // Transmit low byte first
         out_b(Channel::ZERO, byte_get(pit_divider, 1)); // Then high byte
 
-        _irq_handler = [this] {
+        _irq_handler = [this](InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+            SILENCE_UNUSED(i_frame)
             _count++;
             _sleeping_threads.update_wake_time(_time_between_irq);
             bool do_preempt = false;
@@ -102,7 +107,7 @@ namespace Rune::CPU {
 
             if (!eoi_triggered) irq_send_eoi();
             if (do_preempt) _scheduler->preempt_running_thread();
-            return IRQState::HANDLED;
+            return InterruptState::HANDLED;
         };
 
         return irq_install_handler(0, 0, "PIT", _irq_handler);

@@ -702,14 +702,19 @@ CLINK {
                                             .handler    = handler,
                                             .context    = ctx};
 
-        bool registered =
-            System::instance()
-                .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                ->install_irq_handler(irq, int_ctx.dev_handle, int_ctx.dev_name, [&handler, &ctx] {
-                    UINT32 ret = handler(ctx);
-                    return ret == ACPI_INTERRUPT_HANDLED ? CPU::IRQState::HANDLED
-                                                         : CPU::IRQState::PENDING;
-                });
+        bool registered = System::instance()
+                              .get_module<CPU::CPUModule>(ModuleSelector::CPU)
+                              ->install_irq_handler(irq,
+                                                    int_ctx.dev_handle,
+                                                    int_ctx.dev_name,
+                                                    [&handler, &ctx](CPU::InterruptFrame* i_frame)
+                                                        -> Rune::CPU::InterruptState::_E {
+                                                        SILENCE_UNUSED(i_frame)
+                                                        UINT32 ret = handler(ctx);
+                                                        return ret == ACPI_INTERRUPT_HANDLED
+                                                                   ? CPU::InterruptState::HANDLED
+                                                                   : CPU::InterruptState::PENDING;
+                                                    });
 
         if (!registered) return AE_ALREADY_EXISTS;
         g_osl_config.m_interrupt_handlers.add_back(int_ctx);
@@ -813,7 +818,7 @@ CLINK {
 
     constexpr U16 PCI_IO_PORT_MAX_BYTES = 0x100;
 
-    auto acpi_to_rune_read_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64 * val, UINT32 width)
+    auto acpi_to_rune_read_pci_config(ACPI_PCI_ID * pci_id, UINT32 reg, UINT64 * val, UINT32 width)
         -> ACPI_STATUS {
         if (val == nullptr
             || (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
@@ -824,22 +829,23 @@ CLINK {
             // -> Report error because we cannot serve this request
             return AE_ERROR;
 
-        if (width == BIT_COUNT_BYTE)
+        if (width == BIT_COUNT_BYTE) {
             *val = Device::pci_read_byte(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
-        else if (width == BIT_COUNT_WORD)
+        } else if (width == BIT_COUNT_WORD) {
             *val = Device::pci_read_word(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
-        else if (width == BIT_COUNT_DWORD)
+        } else if (width == BIT_COUNT_DWORD) {
             *val = Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
-        else {
-            *val = static_cast<U64>(
-                       Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg + 4))
-                       << SHIFT_32
-                   | Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
+        } else {
+            *val =
+                static_cast<U64>(
+                    Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg + 4))
+                    << SHIFT_32
+                | Device::pci_read_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg);
         }
         return AE_OK;
     }
 
-    auto acpi_to_rune_write_pci_config(ACPI_PCI_ID* pci_id, UINT32 reg, UINT64 val, UINT32 width)
+    auto acpi_to_rune_write_pci_config(ACPI_PCI_ID * pci_id, UINT32 reg, UINT64 val, UINT32 width)
         -> ACPI_STATUS {
         if (width != BIT_COUNT_BYTE && width != BIT_COUNT_WORD && width != BIT_COUNT_DWORD
             && width != BIT_COUNT_QWORD)
@@ -849,13 +855,13 @@ CLINK {
             // -> Report error because we cannot serve this request
             return AE_ERROR;
 
-        if (width == BIT_COUNT_BYTE)
+        if (width == BIT_COUNT_BYTE) {
             Device::pci_write_byte(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
-        else if (width == BIT_COUNT_WORD)
+        } else if (width == BIT_COUNT_WORD) {
             Device::pci_write_word(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
-        else if (width == BIT_COUNT_DWORD)
+        } else if (width == BIT_COUNT_DWORD) {
             Device::pci_write_dword(pci_id->Bus, pci_id->Device, pci_id->Function, reg, val);
-        else {
+        } else {
             Device::pci_write_dword(pci_id->Bus,
                                     pci_id->Device,
                                     pci_id->Function,
