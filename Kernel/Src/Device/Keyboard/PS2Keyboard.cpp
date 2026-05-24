@@ -21,23 +21,31 @@
 #include <CPU/IO.h>
 
 namespace Rune::Device {
-    enum Port { DATA = 0x60, COMMAND_WRITE = 0x64, STATUS_READ = 0x64 };
+#define PORTS(X)                                                                                   \
+    X(Port, DATA, 0x60)                                                                            \
+    X(Port, COMMAND_WRITE, 0x64)                                                                   \
+    X(Port, STATUS_READ, 0x64)
 
-    enum Command {
-        // ECHO                 = 0xEE,
-        GET_SET_SCANCODE_SET = 0xF0
-    };
+    DECLARE_TYPED_ENUM(Port, U8, PORTS, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Port, U8, PORTS, 0x0)
 
-    enum Response {
-        KEY_ERROR_OR_BUF_OVERRUN  = 0x00,
-        SELF_TEST_PASSED          = 0xAA,
-        ECHO                      = 0xEE,
-        ACK                       = 0xFA,
-        SELF_TEST_FAILED          = 0xFC,
-        SELF_TEST_FAILED2         = 0xFD,
-        RESEND                    = 0xFE,
-        KEY_ERROR_OR_BUF_OVERRUN2 = 0xFF
-    };
+#define COMMANDS(X) X(Command, GET_SET_SCANCODE_SET, 0xF0)
+
+    DECLARE_TYPED_ENUM(Command, U8, COMMANDS, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Command, U8, COMMANDS, 0x0)
+
+#define RESPONSES(X)                                                                               \
+    X(Response, KEY_ERROR_OR_BUF_OVERRUN, 0x00)                                                    \
+    X(Response, SELF_TEST_PASSED, 0xAA)                                                            \
+    X(Response, ECHO, 0xEE)                                                                        \
+    X(Response, ACK, 0xFA)                                                                         \
+    X(Response, SELF_TEST_FAILED, 0xFC)                                                            \
+    X(Response, SELF_TEST_FAILED2, 0xFD)                                                           \
+    X(Response, RESEND, 0xFE)                                                                      \
+    X(Response, KEY_ERROR_OR_BUF_OVERRUN2, 0xFF)
+
+    DECLARE_TYPED_ENUM(Response, U8, RESPONSES, 0x01) // NOLINT
+    DEFINE_TYPED_ENUM(Response, U8, RESPONSES, 0x01)  // NOLINT
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          PS2 Scan Code Set 1

@@ -19,10 +19,10 @@
 #include <Memory/Paging.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.CPUSubsystem");
+    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.CPUModule");
     // NOLINTBEGIN
-    Scheduler*                       SCHEDULER          = nullptr;
-    Function<void(Thread*, Thread*)> NOTIFY_THREAD_BOOM = [](Thread* term, Thread* next) {
+    Scheduler*                       SCHEDULER         = nullptr;
+    Function<void(Thread*, Thread*)> ON_THREAD_STOPPED = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)
         SILENCE_UNUSED(next)
     };
@@ -40,7 +40,7 @@ namespace Rune::CPU {
 
     void thread_enter() {
         SCHEDULER->on_thread_enter();
-        // Use raw pointer -> See "ThreadExit" for explanation
+        // Use raw pointer -> See "thread_exit" for explanation
         auto* t = SCHEDULER->get_running_thread().get();
         if (t->user_stack.stack_top == 0) {
             LOGGER->trace("Will execute main in kernel mode.");
@@ -77,7 +77,7 @@ namespace Rune::CPU {
 
                 auto* next = SCHEDULER->get_ready_queue()->peek();
                 if (next == nullptr) next = SCHEDULER->get_idle_thread().get();
-                NOTIFY_THREAD_BOOM(forward<Thread*>(dT.get()), forward<Thread*>(next));
+                ON_THREAD_STOPPED(forward<Thread*>(dT.get()), forward<Thread*>(next));
                 delete[] dT->kernel_stack_bottom;
 
                 if (dT.get_ref_count() > 1) {
@@ -105,12 +105,12 @@ namespace Rune::CPU {
     StartInfo CPUModule::GCT_START_INFO;
     StartInfo CPUModule::IDLE_THREAD_START_INFO;
 
-    auto CPUModule::create_thread(MutexHandle      handle,
-                                  const String&    thread_name,
-                                  StartInfo*       start_info,
-                                  PhysicalAddr     base_pt_addr,
-                                  SchedulingPolicy policy,
-                                  Stack            user_stack) -> SharedPointer<Thread> {
+    auto create_thread(MutexHandle      handle,
+                       const String&    thread_name,
+                       StartInfo*       start_info,
+                       PhysicalAddr     base_pt_addr,
+                       SchedulingPolicy policy,
+                       Stack            user_stack) -> SharedPointer<Thread> {
         SharedPointer<Thread> new_thread    = make_shared<Thread>(handle, move(thread_name));
         new_thread->start_info              = start_info;
         new_thread->base_page_table_address = base_pt_addr;
@@ -215,19 +215,19 @@ namespace Rune::CPU {
             LOGGER->critical("Failed to start the scheduler!");
             return false;
         }
-        SCHEDULER          = &_scheduler;
-        NOTIFY_THREAD_BOOM = [this](Thread* term, Thread* next) -> void {
+        SCHEDULER         = &_scheduler;
+        ON_THREAD_STOPPED = [this](Thread* term, Thread* next) -> void {
             ThreadPreemptionContext tt_ctx = {.stopped = move(term), .next_scheduled = move(next)};
 
             // Wake up joining threads
-            auto maybe_wait_list = _joining_threads.find(term->get_handle());
-            if (maybe_wait_list != _joining_threads.end()) {
+            auto maybe_wait_list = _on_stop_syncing_threads.find(term->get_handle());
+            if (maybe_wait_list != _on_stop_syncing_threads.end()) {
                 for (SharedPointer<Thread>& t : *maybe_wait_list->value) {
-                    t->join_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
+                    t->m_sync_stop_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
                     _scheduler.unblock(t);
                 }
                 maybe_wait_list->value->clear();
-                _joining_threads.remove(term->get_handle());
+                _on_stop_syncing_threads.remove(term->get_handle());
             }
 
             fire(EventHook(EventHook::THREAD_STOPPED).to_string(),
@@ -342,8 +342,8 @@ namespace Rune::CPU {
                                                          base_pt_addr,
                                                          policy,
                                                          move(user_stack));
+        fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
         if (!_scheduler.schedule(new_thread)) return Resource<ThreadHandle>::HANDLE_NONE;
-
         _thread_table.put(new_thread->get_handle(), new_thread);
         return new_thread->get_handle();
     }
@@ -414,7 +414,7 @@ namespace Rune::CPU {
                         }
                     }
                     if (!m) {
-                        LOGGER->error("No mutex with ID {} was found.",
+                        LOGGER->error("No mutex with handle {} was found.",
                                       da_thread->get_handle(),
                                       da_thread->get_name(),
                                       da_thread->mutex_handle);
@@ -438,16 +438,19 @@ namespace Rune::CPU {
         return true;
     }
 
-    auto CPUModule::join_thread(int handle) -> bool {
-        if (_thread_table.find(handle) == _thread_table.end()) return false;
+    auto CPUModule::sync_on_thread_stop(ThreadHandle handle) -> bool {
+        auto maybe_thread = _thread_table.find(handle);
+        if (maybe_thread == _thread_table.end()) return false;
+        auto thread = *maybe_thread->value;
 
         auto calling_thread  = _scheduler.get_running_thread();
-        auto maybe_wait_list = _joining_threads.find(handle);
-        if (maybe_wait_list == _joining_threads.end()) {
-            _joining_threads[handle] = LinkedList<SharedPointer<Thread>>();
-            maybe_wait_list          = _joining_threads.find(handle);
+        auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
+        if (maybe_wait_list == _on_stop_syncing_threads.end()) {
+            _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
+            maybe_wait_list                  = _on_stop_syncing_threads.find(handle);
         }
         maybe_wait_list->value->add_back(calling_thread);
+        calling_thread->m_sync_stop_thread_handle = thread->get_handle();
         _scheduler.await_block();
         _scheduler.block(calling_thread);
         return true;

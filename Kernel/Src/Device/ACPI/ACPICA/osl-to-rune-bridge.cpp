@@ -518,7 +518,7 @@ CLINK {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         for (const auto& started_threads : g_osl_config.m_acpi_threads)
             // NOLINTBEGIN clang-analyzer-core.NullDereference -> iterator is null checked
-            cpu_module->join_thread(*started_threads.key);
+            cpu_module->sync_on_thread_stop(*started_threads.key);
         // NOLINTEND
 
         // At this point all threads have finished execution or had already finished
@@ -707,13 +707,11 @@ CLINK {
                               ->install_irq_handler(irq,
                                                     int_ctx.dev_handle,
                                                     int_ctx.dev_name,
-                                                    [&handler, &ctx](CPU::InterruptFrame* i_frame)
-                                                        -> Rune::CPU::InterruptState::_E {
-                                                        SILENCE_UNUSED(i_frame)
+                                                    [&handler, &ctx] -> Rune::CPU::IRQState::_E {
                                                         UINT32 ret = handler(ctx);
                                                         return ret == ACPI_INTERRUPT_HANDLED
-                                                                   ? CPU::InterruptState::HANDLED
-                                                                   : CPU::InterruptState::PENDING;
+                                                                   ? CPU::IRQState::HANDLED
+                                                                   : CPU::IRQState::PENDING;
                                                     });
 
         if (!registered) return AE_ALREADY_EXISTS;

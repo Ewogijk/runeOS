@@ -92,9 +92,11 @@ namespace Rune::SystemCall {
             // The user memory string is bigger than expected
             return false;
 
-        memcpy((void*) kernel_str,
-               (void*) user_str,
-               size + 1);                           // size + 1 -> Include the null terminator
+        // NOLINTBEGIN cppcoreguidelines-pro-type-const-cast
+        memcpy(const_cast<char*>(kernel_str),
+               const_cast<char*>(user_str),
+               size + 1); // size + 1 -> Include the null terminator
+        // NOLINTEND
         const_cast<char*>(kernel_str)[size] = '\0'; // NOLINT
         return true;
     }

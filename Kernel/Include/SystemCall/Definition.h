@@ -37,7 +37,7 @@ namespace Rune::SystemCall {
     /**
      * @brief Convenience constant that defines a system call handler that simply returns -1.
      */
-    inline const Handler SYS_CALL_HANDLER_NONE = [](const void* sys_call_ctx,
+    inline const Handler SYS_CALL_HANDLER_NONE = [](const void*                     sys_call_ctx,
                                                     const Ember::SystemCallArgument arg1,
                                                     const Ember::SystemCallArgument arg2,
                                                     const Ember::SystemCallArgument arg3,

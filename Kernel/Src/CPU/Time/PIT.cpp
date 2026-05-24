@@ -21,9 +21,17 @@
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
 
-    enum Channel { ZERO = 0x40, COMMAND = 0x43 };
+#define CHANNELS(X)                                                                                \
+    X(Channel, ZERO, 0x40)                                                                         \
+    X(Channel, COMMAND, 0x43)
 
-    enum Mode { SQUARE_WAVE_GENERATOR = 0x36 };
+    DECLARE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0)
+
+#define MODES(X) X(Mode, SQUARE_WAVE_GENERATOR, 0x36)
+
+    DECLARE_TYPED_ENUM(Mode, U8, MODES, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(Mode, U8, MODES, 0x0)
 
     PIT::PIT()
         : _irq_handler([](InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {

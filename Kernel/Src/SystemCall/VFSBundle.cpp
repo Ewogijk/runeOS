@@ -40,7 +40,7 @@ namespace Rune::SystemCall {
         if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(
                 reinterpret_cast<void*>(node_info_out),
                 sizeof(VFS::NodeInfo),
-                (void*) &k_node_info_buf))
+                &k_node_info_buf))
             return Ember::Status::BAD_ARG;
 
         switch (VFS::IOStatus io_status =
@@ -50,8 +50,8 @@ namespace Rune::SystemCall {
                 // The node info will only contain the node name -> set it to the path the caller
                 // has provided
                 if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
-                        (void*) k_node_info_buf.node_path.to_cstr(),
-                        (void*) u_node_info->node_path,
+                        const_cast<char*>(k_node_info_buf.node_path.to_cstr()), // NOLINT
+                        u_node_info->node_path,
                         k_node_info_buf.node_path.size()
                             + 1 // size() does not include null terminator
                         )) {
@@ -78,7 +78,7 @@ namespace Rune::SystemCall {
         if (!vfs_ctx->k_guard->copy_byte_buffer_user_to_kernel(
                 reinterpret_cast<void*>(node_info_out),
                 sizeof(VFS::NodeInfo),
-                (void*) &k_node_info_buf))
+                &k_node_info_buf))
             return Ember::Status::BAD_ARG;
 
         VFS::IOStatus io_status = vfs_ctx->vfs_module->get_node_info(node_ID, k_node_info_buf);
@@ -88,8 +88,8 @@ namespace Rune::SystemCall {
         // The node info will only contain the node name -> set it to the path the caller
         // has provided
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
-                (void*) k_node_info_buf.node_path.to_cstr(),
-                (void*) u_node_info->node_path,
+                const_cast<char*>(k_node_info_buf.node_path.to_cstr()), // NOLINT
+                u_node_info->node_path,
                 k_node_info_buf.node_path.size() + 1 // size() does not include null terminator
                 )) {
             return Ember::Status::BAD_ARG;
@@ -327,7 +327,7 @@ namespace Rune::SystemCall {
         const auto& k_node_info = maybe_node_info.value();
         auto*       u_node_info = reinterpret_cast<Ember::NodeInfo*>(node_info_ptr);
         if (!vfs_ctx->k_guard->copy_byte_buffer_kernel_to_user(
-                (void*) k_node_info.node_path.to_cstr(),
+                const_cast<char*>(k_node_info.node_path.to_cstr()), // NOLINT
                 &u_node_info->node_path,
                 k_node_info.node_path.size() + 1 // size() does not include null terminator
                 ))

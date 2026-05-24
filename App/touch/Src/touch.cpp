@@ -53,7 +53,7 @@ auto parse_cli_args(const int argc, char* argv[], CLIArgs& args_out) -> bool { /
     return file_seen || args_out.help;
 }
 
-CLINK auto main(const int argc, char* argv[]) -> int {
+auto main(const int argc, char* argv[]) -> int {
     CLIArgs args;
     if (!parse_cli_args(argc, argv, args)) return -1;
 

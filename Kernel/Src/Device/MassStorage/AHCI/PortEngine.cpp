@@ -34,8 +34,8 @@ namespace Rune::Device {
     auto decode_ata_string(Array<U16, N> ata_string) -> String {
         Array<U8, 2 * N> decoded{};
         for (size_t i = 0; i < N; i++) {
-            decoded[2 * i]       = (U8) (ata_string[i] >> SHIFT_8);
-            decoded[(2 * i) + 1] = (U8) ata_string[i];
+            decoded[2 * i]       = static_cast<U8>(ata_string[i] >> SHIFT_8);
+            decoded[(2 * i) + 1] = static_cast<U8>(ata_string[i]);
         }
         return String(reinterpret_cast<const char*>(decoded.data()), decoded.size()).trim();
     }
@@ -135,8 +135,8 @@ namespace Rune::Device {
             return false;
         }
 
-        _port->CLB.AsUInt32 = (U32) p_clb;
-        _port->FB.AsUInt32  = (U32) p_fb;
+        _port->CLB.AsUInt32 = static_cast<U32>(p_clb);
+        _port->FB.AsUInt32  = static_cast<U32>(p_fb);
         if (_port->CLB.Reserved != 0) {
             LOGGER->error("Command list base address is not 1024 byte aligned!");
             return false;
@@ -154,7 +154,7 @@ namespace Rune::Device {
 
         while (_port->CMD.CR);
 
-        _port->SERR.AsUInt32 = (U32) -1;
+        _port->SERR.AsUInt32 = static_cast<U32>(-1);
         _port->CMD.FRE       = 1;
         _port->CMD.ST        = 1;
         return true;
@@ -166,7 +166,7 @@ namespace Rune::Device {
         _port->SCTL.DET = 0;
 
         while (_port->SSTS.DET != 3); // Wait until port reset finished
-        _port->SERR.AsUInt32 = (U32) -1;
+        _port->SERR.AsUInt32 = static_cast<U32>(-1);
         return true;
     }
 
@@ -261,7 +261,7 @@ namespace Rune::Device {
             return 0;
 
         CommandTable& ct        = _system_memory->CT[slot];
-        ct.PRDT[0].DBA.AsUInt32 = (U32) p_buf;
+        ct.PRDT[0].DBA.AsUInt32 = static_cast<U32>(p_buf);
         if (ct.PRDT[0].DBA.Reserved != 0) return 0;
 
 #ifdef IS_64_BIT

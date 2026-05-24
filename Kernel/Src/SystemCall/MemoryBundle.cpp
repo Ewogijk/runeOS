@@ -99,7 +99,7 @@ namespace Rune::SystemCall {
 
         if (!bit_check(page_protection, 1)) {
             // Memory was requested as readonly -> remove the write allowed flag
-            for (VirtualAddr c_addr  = kv_addr; c_addr < kv_addr + num_pages * page_size;
+            for (VirtualAddr c_addr  = kv_addr; c_addr < kv_addr + (num_pages * page_size);
                  c_addr             += page_size) {
                 Memory::PageTableAccess pta =
                     Memory::modify_page_flags(base_pt,

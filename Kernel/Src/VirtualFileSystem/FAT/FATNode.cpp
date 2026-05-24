@@ -37,17 +37,17 @@ namespace Rune::VFS {
 
         // Move the cluster cursor
         if (_node_io_mode == Ember::IOMode::APPEND) {
-            U32 cluster_size = _mounted_storage->m_BPB->bytes_per_sector
-                               * _mounted_storage->m_BPB->sectors_per_cluster;
+            U32 cluster_size    = _mounted_storage->m_BPB->bytes_per_sector
+                                  * _mounted_storage->m_BPB->sectors_per_cluster;
             _processed_clusters = i;
             if (_file_entry.file.file_size % cluster_size != 0) _processed_clusters--;
             _current_cluster = last_file_cluster;
-            _cluster_offset  = _file_entry.file.file_size - _processed_clusters * cluster_size;
+            _cluster_offset  = _file_entry.file.file_size - (_processed_clusters * cluster_size);
         } else {
             _processed_clusters = 0;
             _current_cluster    = _file_entry.file.first_cluster_high << SHIFT_16
-                               | _file_entry.file.first_cluster_low;
-            _cluster_offset = 0;
+                                  | _file_entry.file.first_cluster_low;
+            _cluster_offset     = 0;
         }
     }
 
@@ -100,7 +100,7 @@ namespace Rune::VFS {
         if (buf_size == 0) return {.status = NodeIOStatus::OKAY, .byte_count = 0};
 
         auto   cluster_size = static_cast<size_t>(_mounted_storage->m_BPB->bytes_per_sector
-                                                * _mounted_storage->m_BPB->sectors_per_cluster);
+                                                  * _mounted_storage->m_BPB->sectors_per_cluster);
         U8     tmp_buf[cluster_size]; // NOLINT
         size_t buf_pos = 0;
         while (has_more() && buf_pos < buf_size) {
@@ -112,9 +112,10 @@ namespace Rune::VFS {
 
             // 1. Min: Copy no more bytes than in the file or buffer left
             // 2. Min: Copy no more bytes than in the cluster or "1. Min" left
-            size_t b_to_copy = min(
-                min((size_t) _file_entry.file.file_size - processed_bytes(), buf_size - buf_pos),
-                cluster_size - _cluster_offset);
+            size_t b_to_copy =
+                min(min(static_cast<size_t>(_file_entry.file.file_size) - processed_bytes(),
+                        buf_size - buf_pos),
+                    cluster_size - _cluster_offset);
             memcpy(&(reinterpret_cast<U8*>(buf))[buf_pos], &tmp_buf[_cluster_offset], b_to_copy);
             _cluster_offset += b_to_copy;
             buf_pos         += b_to_copy;
@@ -147,13 +148,13 @@ namespace Rune::VFS {
         if (buf_size == 0) return {.status = NodeIOStatus::OKAY, .byte_count = 0};
 
         auto   cluster_size   = static_cast<size_t>(_mounted_storage->m_BPB->bytes_per_sector
-                                                * _mounted_storage->m_BPB->sectors_per_cluster);
+                                                    * _mounted_storage->m_BPB->sectors_per_cluster);
         size_t buf_pos        = 0;
         bool   is_first_write = _processed_clusters == 0 && _cluster_offset == 0;
         while (buf_pos < buf_size) {
             if (_current_cluster == 0
-                || _processed_clusters
-                       >= div_round_up(_file_entry.file.file_size, (U32) cluster_size)) {
+                || _processed_clusters >= div_round_up(_file_entry.file.file_size,
+                                                       static_cast<U32>(cluster_size))) {
                 // End of file reached -> Allocate new cluster
                 _current_cluster = _file_entry_manager->allocate_cluster(
                     _mounted_storage->m_mass_storage_dev_handle,
@@ -210,9 +211,10 @@ namespace Rune::VFS {
 
         if (_file_entry.file.file_size < old_size) {
             // The file shrunk -> Free excess FAT clusters
-            U32 total_clusters = div_round_up(_file_entry.file.file_size, (U32) cluster_size);
-            U32 cluster        = _file_entry.file.first_cluster_high << SHIFT_16
-                          | _file_entry.file.first_cluster_low;
+            U32 total_clusters =
+                div_round_up(_file_entry.file.file_size, static_cast<U32>(cluster_size));
+            U32 cluster     = _file_entry.file.first_cluster_high << SHIFT_16
+                              | _file_entry.file.first_cluster_low;
             U32 eof_cluster = 0;
             U32 i           = 0;
             while (cluster != 0 && cluster < _volume_manager->get_max_cluster_count() + 1) {
@@ -251,10 +253,10 @@ namespace Rune::VFS {
         if (!has_attribute(Ember::NodeAttribute::FILE))
             return {.status = NodeIOStatus::NOT_SUPPORTED, .byte_count = 0};
 
-        const auto   cluster_size = static_cast<size_t>(_mounted_storage->m_BPB->sectors_per_cluster
-                                                      * _mounted_storage->m_BPB->bytes_per_sector);
-        const size_t file_cursor  = (_processed_clusters * cluster_size) + _cluster_offset;
-        bool         bad_offset   = false;
+        const auto cluster_size  = static_cast<size_t>(_mounted_storage->m_BPB->sectors_per_cluster
+                                                       * _mounted_storage->m_BPB->bytes_per_sector);
+        const size_t file_cursor = (_processed_clusters * cluster_size) + _cluster_offset;
+        bool         bad_offset  = false;
         switch (seek_mode) {
             case Ember::SeekMode::BEGIN:
                 bad_offset =

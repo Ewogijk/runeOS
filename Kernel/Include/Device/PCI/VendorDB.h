@@ -30,7 +30,8 @@ namespace Rune::Device {
 
         friend auto operator==(const PCIVendorDBRequest& lhs, const PCIVendorDBRequest& rhs)
             -> bool;
-        friend auto operator!=(const PCIVendorDBRequest& lhs, const PCIVendorDBRequest& rhs) -> bool;
+        friend auto operator!=(const PCIVendorDBRequest& lhs, const PCIVendorDBRequest& rhs)
+            -> bool;
     };
 
     /// @brief A pair of vendor name and device name.

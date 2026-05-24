@@ -67,13 +67,14 @@ namespace Rune::Device {
         U8 FISType;
 
         /// Port multiplier port address (bits [3:0]).
-        U8 PMPort       : 4;
-        U8 Reserved0    : 1;
+        U8 PMPort    : 4;
+        U8 Reserved0 : 1;
         /// Transfer direction: 1 = transmitter-to-receiver, 0 = receiver-to-transmitter.
-        U8 Direction    : 1;
+        U8 Direction : 1;
         /// When set, the receiver shall generate an interrupt upon DMA transfer completion.
-        U8 Interrupt    : 1;
-        /// Auto-activate: when set, the receiver activates the DMA engine without waiting for an Activate FIS.
+        U8 Interrupt : 1;
+        /// Auto-activate: when set, the receiver activates the DMA engine without waiting for an
+        /// Activate FIS.
         U8 AutoActivate : 1;
 
         Array<U8, 2> Reserved1;
@@ -168,41 +169,43 @@ namespace Rune::Device {
                 /// Port multiplier port address (bits [3:0]).
                 U8 PMPort    : 4;
                 U8 Reserved0 : 3;
-                /// Command/Control: 1 = Command register write (new command), 0 = Control register write.
-                U8 C         : 1;
+                /// Command/Control: 1 = Command register write (new command), 0 = Control register
+                /// write.
+                U8 C : 1;
             };
         } DW0B1;
 
         /// ATA command code to execute (e.g., READ DMA EXT = 0x25).
-        U8 Command  = 0;
+        U8 Command = 0;
         /// Features register bits [7:0] (command-specific sub-function or flags).
         U8 Features = 0;
 
         /// LBA bits [7:0] — LBA Low register.
-        U8 LBALow  = 0;
+        U8 LBALow = 0;
         /// LBA bits [15:8] — LBA Mid register.
-        U8 LBAMid  = 0;
+        U8 LBAMid = 0;
         /// LBA bits [23:16] — LBA High register.
         U8 LBAHigh = 0;
         /// Device/Head register; for 48-bit LBA commands bit 6 shall be 1 (ACS-4 §7.21).
-        U8 Device  = 0;
+        U8 Device = 0;
 
         /// LBA bits [31:24] — LBA Low Exp register (48-bit addressing).
-        U8 LBALowE   = 0;
+        U8 LBALowE = 0;
         /// LBA bits [39:32] — LBA Mid Exp register (48-bit addressing).
-        U8 LBAMidE   = 0;
+        U8 LBAMidE = 0;
         /// LBA bits [47:40] — LBA High Exp register (48-bit addressing).
-        U8 LBAHighE  = 0;
+        U8 LBAHighE = 0;
         /// Features register bits [15:8] — Features Exp register (command-specific).
         U8 FeaturesE = 0;
 
         /// Sector count bits [7:0] — Count register.
-        U8 Count   = 0;
+        U8 Count = 0;
         /// Sector count bits [15:8] — Count Exp register (48-bit sector count).
-        U8 CountE  = 0;
+        U8 CountE = 0;
         /// Isochronous Command Completion (ICC): time limit for command completion in 100 µs units.
-        U8 ICC     = 0;
-        /// Device Control register: bit 2 (SRST) triggers software reset; bit 1 (nIEN) masks interrupts.
+        U8 ICC = 0;
+        /// Device Control register: bit 2 (SRST) triggers software reset; bit 1 (nIEN) masks
+        /// interrupts.
         U8 Control = 0;
 
         /// Auxiliary register bits [7:0] (command-specific; zero for most commands).
@@ -297,7 +300,7 @@ namespace Rune::Device {
         U8 Reserved2;
 
         /// Sector count bits [7:0] — shadow register block Count register.
-        U8           Count;
+        U8 Count;
         /// Sector count bits [15:8] — shadow register block Count Exp register.
         U8           CountS;
         Array<U8, 6> Reserved3; // NOLINT
@@ -316,16 +319,16 @@ namespace Rune::Device {
         U8 FISType;
 
         /// Port multiplier port address (bits [3:0]).
-        U8 PMPort       : 4;
-        U8 Reserved0    : 2;
+        U8 PMPort    : 4;
+        U8 Reserved0 : 2;
         /// When set, the device requests a host interrupt.
-        U8 Interrupt    : 1;
+        U8 Interrupt : 1;
         /// Status Notification: when set, the SActive register has been updated by the device.
         U8 Notification : 1;
 
         /// New value for Status register bits [2:0] (ERR, IDX, CORR) in the shadow register block.
-        U8 StatusLow  : 3;
-        U8 Reserved1  : 1;
+        U8 StatusLow : 3;
+        U8 Reserved1 : 1;
         /// New value for Status register bits [6:4] (DRDY, DSC, DWF) in the shadow register block.
         U8 StatusHigh : 3;
         U8 Reserved2  : 1;

@@ -48,15 +48,17 @@ namespace Rune::Memory {
     constexpr U8 IS_ACCESSED_BIT         = 5;
     constexpr U8 IS_DIRTY_BIT            = 6;
 
-    enum x86_64PageFlag : U16 {
-        PRESENT          = 0x01,
-        WRITE_ALLOWED    = 0x02,
-        USER_MODE_ACCESS = 0x04,
-        WRITE_THROUGH    = 0x08,
-        CACHE_DISABLE    = 0x10,
-        ACCESSED         = 0x20,
-        DIRTY            = 0x40,
-    };
+#define X86_64_PAGEFLAGS(X)                                                                        \
+    X(x86_64PageFlag, PRESENT, 0x01)                                                               \
+    X(x86_64PageFlag, WRITE_ALLOWED, 0x02)                                                         \
+    X(x86_64PageFlag, USER_MODE_ACCESS, 0x04)                                                      \
+    X(x86_64PageFlag, WRITE_THROUGH, 0x08)                                                         \
+    X(x86_64PageFlag, CACHE_DISABLE, 0x10)                                                         \
+    X(x86_64PageFlag, ACCESSED, 0x20)                                                              \
+    X(x86_64PageFlag, DIRTY, 0x40)
+
+    DECLARE_TYPED_ENUM(x86_64PageFlag, U16, X86_64_PAGEFLAGS, 0x0) // NOLINT
+    DEFINE_TYPED_ENUM(x86_64PageFlag, U16, X86_64_PAGEFLAGS, 0x0)
 
     auto to_x86_64_flags(U16 flags) -> U16 {
         return flags; // Page flag values are already x86_64 flags
@@ -127,8 +129,8 @@ namespace Rune::Memory {
         //  | ShiftLeft | Address | ShiftRight |
         // -> Shift by (ShiftLeft + ShiftRight) number of bits to get address mask
         U8                   p_addr_width = PHYSICAL_ADDRESS_WIDTH;
-        NativePageTableEntry mask =
-            ((NativePageTableEntry) -1) >> (BIT_COUNT_QWORD - p_addr_width + PTTE_BIT_SIZE);
+        NativePageTableEntry mask         = static_cast<NativePageTableEntry>(-1)
+                                            >> (BIT_COUNT_QWORD - p_addr_width + PTTE_BIT_SIZE);
         return ((native_entry >> PTTE_BIT_SIZE) & mask) << PTTE_BIT_SIZE;
     }
 
@@ -157,7 +159,7 @@ namespace Rune::Memory {
 
     auto PageTable::operator[](U16 idx) const -> PageTableEntry {
         if (idx >= PT_MAX_SIZE) return {.native_entry = 0, .level = PageTableEntry::BAD_LEVEL};
-        return {.native_entry = _pt[idx], .level = (U8) (_level - 1)};
+        return {.native_entry = _pt[idx], .level = static_cast<U8>(_level - 1)};
     }
 
     auto PageTable::entry_as_page_table(U16 idx) const -> PageTable {
@@ -175,7 +177,7 @@ namespace Rune::Memory {
     //                                          Paging Configuration
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto get_page_size() -> MemorySize { return 4 * (MemorySize) MemoryUnit::KiB; }
+    auto get_page_size() -> MemorySize { return 4 * static_cast<MemorySize>(MemoryUnit::KiB); }
 
     void init_paging(U8 physical_address_width) { PHYSICAL_ADDRESS_WIDTH = physical_address_width; }
 
@@ -201,8 +203,9 @@ namespace Rune::Memory {
     auto to_canonical_form(VirtualAddr v_addr) -> VirtualAddr {
         if ((v_addr >> (VIRTUAL_ADDR_SIZE - 1) & 1) == 1)
             // Bit 47 is 1 -> apply sign extension
-            v_addr =
-                (((NativePageTableEntry) -1) >> VIRTUAL_ADDR_SIZE) << VIRTUAL_ADDR_SIZE | v_addr;
+            v_addr = (static_cast<NativePageTableEntry>(-1) >> VIRTUAL_ADDR_SIZE)
+                         << VIRTUAL_ADDR_SIZE
+                     | v_addr;
         else
             // Bit 47 is 0 -> ensure that bits 49-63 are zero
             v_addr = v_addr & MASK_ADDRESS;
@@ -316,8 +319,8 @@ namespace Rune::Memory {
 
             NativePageTableEntry n_pte = pt_page_frame | pt_flags;
             parent_pt.update((v_addr >> shift) & PT_IDX_MASK, n_pte);
-            pta.path[i] = {.native_entry = n_pte, .level = (U8) i};
-            if (i == 0) pta.pte_after = {.native_entry = n_pte, .level = (U8) i};
+            pta.path[i] = {.native_entry = n_pte, .level = static_cast<U8>(i)};
+            if (i == 0) pta.pte_after = {.native_entry = n_pte, .level = static_cast<U8>(i)};
         }
 
         // At least the page frame was not allocated and no errors happened during allocation ->
@@ -337,7 +340,7 @@ namespace Rune::Memory {
         // We only free the page tables until the L3 page table since the L4 page table is the base
         // page table and freeing it would delete the whole virtual address space
         for (int i = 0; i < 4; i++) {
-            PageTable      parent_pt(pta.path[i + 1].get_address(),
+            PageTable parent_pt(pta.path[i + 1].get_address(),
                                 reinterpret_cast<NativePageTableEntry*>(
                                     physical_to_virtual_address(pta.path[i + 1].get_address())),
                                 i + 1);

@@ -118,7 +118,7 @@ namespace Crucible {
         int pos      = 0;
         for (const auto& aof : _arguments_or_flags) {
             std::string aof_str = aof->evaluate(shell_env);
-            memcpy(&args.get()[pos], (void*) aof_str.c_str(), aof_str.size() + 1);
+            memcpy(&args.get()[pos], aof_str.c_str(), aof_str.size() + 1);
             argv[argv_idx++]  = &args.get()[pos];
             pos              += static_cast<int>(aof_str.size()) + 1;
             if (pos >= ARGV_LIMIT) {

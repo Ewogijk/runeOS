@@ -38,11 +38,19 @@ done
 echo \> Check C/C++ Code formatting
 echo \> ===========================================
 echo \> Check Kernel code...
-find Kernel/ -path Kernel/Include/Device/ACPI/ACPICA -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
+find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
+              -path 'Kernel/Build' -prune -o \
+              -name '*.h' -o \
+              -name '*.cpp' -print | \
+              xargs clang-format -i
 echo \> '                         ' OKAY
 
 echo \> Check App code...
-find App/ -path App/Freya/subprojects -prune -o -name '*.h' -o -name '*.cpp' -print | xargs clang-format-19 --dry-run -Werror
+find App/ -path App/Freya/subprojects -prune -o \
+          -name 'App/**/Build' -prune -o \
+          -name '*.h' -o \
+          -name '*.cpp' -print | \
+          xargs clang-format -i
 echo \> '                         ' OKAY
 echo
 

@@ -43,10 +43,10 @@ namespace Rune::App {
                      app->working_directory.to_string());
 
         int t_id    = _cpu_module->schedule_new_thread("main",
-                                                    start_info,
-                                                    app->base_page_table_address,
-                                                    CPU::SchedulingPolicy::NORMAL,
-                                                    user_stack);
+                                                       start_info,
+                                                       app->base_page_table_address,
+                                                       CPU::SchedulingPolicy::NORMAL,
+                                                       user_stack);
         app->handle = _app_handle_counter.acquire();
         _app_table.put(app->handle, app);
         _cpu_module->find_thread(t_id)->app_handle = app->handle;
@@ -64,13 +64,14 @@ namespace Rune::App {
             if (std_stream == StdStream::IN) return {}; // Not supported
 
             SharedPointer<VFS::Node> node;
-            VFS::IOStatus            st = _vfs_module->open(resolved_path,
+            VFS::IOStatus st = _vfs_module->open(resolved_path,
                                                  std_stream == StdStream::IN ? Ember::IOMode::READ
-                                                                                        : Ember::IOMode::WRITE,
+                                                                             : Ember::IOMode::WRITE,
                                                  node);
             if (st == VFS::IOStatus::NOT_FOUND) {
                 // File not found -> Create it
-                st = _vfs_module->create(resolved_path, (int) Ember::NodeAttribute::FILE);
+                st = _vfs_module->create(resolved_path,
+                                         static_cast<int>(Ember::NodeAttribute::FILE));
                 if (st != VFS::IOStatus::CREATED) return {};
 
                 // Try to open it again
@@ -139,14 +140,14 @@ namespace Rune::App {
         _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_CREATED).to_string(),
             "App Thread Table Manager - ThreadCreated",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 auto* t       = reinterpret_cast<CPU::Thread*>(evt_ctx);
                 t->app_handle = _active_app->handle;
             });
         _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_STOPPED).to_string(),
             "App Thread Table Manager - ThreadTerminated",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 // Find the app this thread belongs to
                 auto* tt_ctx = reinterpret_cast<CPU::ThreadPreemptionContext*>(evt_ctx);
                 SharedPointer<Info> finished_app(nullptr);
@@ -189,6 +190,8 @@ namespace Rune::App {
                 }
 
                 // Switch the active app if the next thread does belong to another app
+                // LOGGER->warn("Active App: {}", _active_app.get() != nullptr);
+                // LOGGER->warn("Next Scheduled: {}", tt_ctx->next_scheduled != nullptr);
                 if (_active_app->handle != tt_ctx->next_scheduled->app_handle) {
                     SharedPointer<Info> next_active(nullptr);
                     for (const auto& app_entry : _app_table) {
@@ -204,7 +207,7 @@ namespace Rune::App {
         _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_PREEMPTED).to_string(),
             "App Thread Table Manager - ContextSwitch",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 auto* next = reinterpret_cast<CPU::Thread*>(evt_ctx);
                 // Switch the active app if the next thead belongs to another app
                 if (next->app_handle != _active_app->handle) {
@@ -226,7 +229,7 @@ namespace Rune::App {
         _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::NODE_OPENED).to_string(),
             "App Node Table Manager - On Open",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 U16 handle = *reinterpret_cast<U16*>(evt_ctx);
                 LOGGER->trace(R"(Add node handle {} to node table of app "{}-{}".)",
                               handle,
@@ -237,7 +240,7 @@ namespace Rune::App {
         _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::NODE_CLOSED).to_string(),
             "App Node Table Manager - On Close",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 U16 handle = *reinterpret_cast<U16*>(evt_ctx);
                 LOGGER->trace(R"(Remove node handle {} from the node table of app "{}-{}".)",
                               handle,
@@ -249,7 +252,7 @@ namespace Rune::App {
         _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::DIRECTORY_STREAM_OPENED).to_string(),
             "App Directory Stream Table Manager - On Open",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 U16 handle = *reinterpret_cast<U16*>(evt_ctx);
                 LOGGER->trace(
 
@@ -262,7 +265,7 @@ namespace Rune::App {
         _vfs_module->install_event_handler(
             VFS::EventHook(VFS::EventHook::DIRECTORY_STREAM_CLOSED).to_string(),
             "App Directory Stream Table Manager - On Close",
-            [this](void* evt_ctx) {
+            [this](void* evt_ctx) -> void {
                 U16 handle = *reinterpret_cast<U16*>(evt_ctx);
                 LOGGER->trace(
 
@@ -352,11 +355,11 @@ namespace Rune::App {
         LOGGER->info("Loading System Loader: {}", system_loader_executable.to_string());
         char*      dummy_args[1] = {nullptr}; // NOLINT syscall arg, must use ptr
         LoadStatus load_status   = loader.load(system_loader_executable,
-                                             dummy_args,
-                                             app,
-                                             user_stack,
-                                             start_info_addr,
-                                             true);
+                                               dummy_args,
+                                               app,
+                                               user_stack,
+                                               start_info_addr,
+                                               true);
         if (load_status != LoadStatus::LOADED) {
             LOGGER->warn("Failed to load System Loader. Status: {}", load_status.to_string());
             return load_status;
@@ -435,9 +438,9 @@ namespace Rune::App {
         app->std_out = move(std_out);
         app->std_err = move(std_err);
         int app_id   = schedule_for_start(app,
-                                        user_stack,
-                                        memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
-                                        move(working_directory));
+                                          user_stack,
+                                          memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
+                                          move(working_directory));
         return {.load_result = LoadStatus::RUNNING, .handle = app_id};
     }
 

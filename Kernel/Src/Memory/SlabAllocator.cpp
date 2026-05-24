@@ -109,7 +109,7 @@ namespace Rune::Memory {
         if (allocated_count == object_count) return nullptr;
 
         auto* obj       = memory_addr_to_pointer<void>(memory_pointer_to_addr(page)
-                                                 + (free_buf.free_object * object_size));
+                                                       + (free_buf.free_object * object_size));
         auto* free_list = memory_addr_to_pointer<U8>(memory_pointer_to_addr(this) - object_count);
         free_buf.free_object = free_list[free_buf.free_object];
         allocated_count++;
@@ -213,7 +213,7 @@ namespace Rune::Memory {
         VirtualAddr page = (_free_page_list != nullptr) ? _free_page_list->mem_addr : _limit;
         // Align size to requested alignment
         size_t aligned_size =
-            _align == 0 ? _object_size : _align * ((_object_size - 1) / _align + 1);
+            _align == 0 ? _object_size : _align * (((_object_size - 1) / _align) + 1);
         // Align size to page size
         size_t slab_size = aligned_size;
         if (!memory_is_aligned(slab_size, Memory::get_page_size()))
@@ -337,7 +337,7 @@ namespace Rune::Memory {
         if (_type == CacheType::ON_SLAB) {
             auto page = memory_pointer_to_addr(obj)
                         >> 12 << 12; // NOLINT TODO add function to get page of address??
-            slab = memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
+            slab      = memory_addr_to_pointer<Slab>(page + Memory::get_page_size() - sizeof(Slab));
             if (slab->page != memory_addr_to_pointer<void>(page)) return;
 
             old_alloc_count  = slab->allocated_count;

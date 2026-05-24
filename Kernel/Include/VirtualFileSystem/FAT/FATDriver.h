@@ -79,21 +79,20 @@ namespace Rune::VFS {
         auto create(Device::Handle mass_storage_dev_handle, const Path& path, U8 attributes)
             -> IOStatus override;
 
-        auto open(Device::Handle mass_storage_dev_handle,
+        auto open(Device::Handle       mass_storage_dev_handle,
                   const Path&          mount_point,
                   const Path&          path,
                   Ember::IOMode        node_io_mode,
                   Function<void()>     on_close,
                   SharedPointer<Node>& out) -> IOStatus override;
 
-        auto find_node(Device::Handle mass_storage_dev_handle,
-                       const Path&          path,
-                       NodeInfo&            out) -> IOStatus override;
+        auto find_node(Device::Handle mass_storage_dev_handle, const Path& path, NodeInfo& out)
+            -> IOStatus override;
 
         auto delete_node(Device::Handle mass_storage_dev_handle, const Path& path)
             -> IOStatus override;
 
-        auto open_directory_stream(Device::Handle            mass_storage_dev_handle,
+        auto open_directory_stream(Device::Handle                  mass_storage_dev_handle,
                                    const Path&                     path,
                                    const Function<void()>&         on_close,
                                    SharedPointer<DirectoryStream>& out) -> IOStatus override;

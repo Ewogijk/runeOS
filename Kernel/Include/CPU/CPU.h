@@ -218,7 +218,7 @@ namespace Rune::CPU {
         SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
 
         /// @brief Handle of the thread that this thread is waiting for to exit.
-        ThreadHandle join_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
+        ThreadHandle m_sync_stop_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
 
         /// @brief ID of the application this thread is waiting for to exit.
         int join_app_id = -1;

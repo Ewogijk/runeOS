@@ -153,12 +153,12 @@ namespace Rune::Memory {
         // Create PMM reserved kernel space entries
         MemoryRegion pmm_bk = _pmm->get_memory_index_region();
         ksear               = allocate_kernel_space_entries(base_pt,
-                                              k_space_layout.pmm_reserved,
-                                              pmm_bk,
-                                              p_flags,
-                                              MemoryRegionType::PMM_RESERVED,
-                                              v_map,
-                                              "Physical Memory Manager");
+                                                            k_space_layout.pmm_reserved,
+                                                            pmm_bk,
+                                                            p_flags,
+                                                            MemoryRegionType::PMM_RESERVED,
+                                                            v_map,
+                                                            "Physical Memory Manager");
         if (ksear.has_error) {
             _start_fail = VMMStartFailure::PMM_MAPPING_FAIL;
             _ksear      = ksear;
@@ -172,11 +172,11 @@ namespace Rune::Memory {
         if (!v_map->claim(kernel_heap, get_page_size())) {
             _start_fail = VMMStartFailure::KERNEL_HEAP_MAPPING_FAIL;
             _ksear      = {
-                     .region      = "Kernel Heap",
-                     .has_error   = true,
-                     .alloc_pta   = {.status = PageTableAccessStatus::OKAY, .path = {}},
-                     .free_pta    = {.status = PageTableAccessStatus::OKAY, .path = {}},
-                     .claim_error = true
+                .region      = "Kernel Heap",
+                .has_error   = true,
+                .alloc_pta   = {.status = PageTableAccessStatus::OKAY, .path = {}},
+                .free_pta    = {.status = PageTableAccessStatus::OKAY, .path = {}},
+                .claim_error = true
             };
             return _start_fail;
         }

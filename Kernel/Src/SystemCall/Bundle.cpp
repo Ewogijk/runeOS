@@ -105,9 +105,9 @@ namespace Rune::SystemCall {
         auto*   app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   vfs_module = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
         VFS_SYSCALL_CTX    = {
-               .k_guard    = k_guard,
-               .vfs_module = vfs_module,
-               .app_module = app_module,
+            .k_guard    = k_guard,
+            .vfs_module = vfs_module,
+            .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
@@ -174,9 +174,9 @@ namespace Rune::SystemCall {
         auto*   app_module    = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   memory_module = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         MM_SYSCALL_CTX        = {
-                   .k_guard    = k_guard,
-                   .mem_module = memory_module,
-                   .app_module = app_module,
+            .k_guard    = k_guard,
+            .mem_module = memory_module,
+            .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
@@ -206,9 +206,9 @@ namespace Rune::SystemCall {
         auto*   app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
         auto*   cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
         T_SYSCALL_CTX      = {
-                 .k_guard    = k_guard,
-                 .cpu_module = cpu_module,
-                 .app_module = app_module,
+            .k_guard    = k_guard,
+            .cpu_module = cpu_module,
+            .app_module = app_module,
         };
 
         LinkedList<Definition> defs;
