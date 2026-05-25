@@ -1,0 +1,90 @@
+
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef RUNEOS_CONTRACTS_H
+#define RUNEOS_CONTRACTS_H
+
+// NOLINTBEGIN
+// GCC 16.1 implementation of std::source_location
+
+#include <source_location>
+
+namespace std {
+    namespace contracts {
+        // From P2900R14
+
+        enum class assertion_kind : __UINT16_TYPE__ {
+            pre    = 1,
+            post   = 2,
+            assert = 3,
+
+            /* Implementation-defined values should have a minimum value of 1000. */
+        };
+
+        enum class evaluation_semantic : __UINT16_TYPE__ {
+            ignore        = 1,
+            observe       = 2,
+            enforce       = 3,
+            quick_enforce = 4,
+
+            /* Implementation-defined values should have a minimum value of 1000.  */
+        };
+
+        enum class detection_mode : __UINT16_TYPE__ {
+            predicate_false      = 1,
+            evaluation_exception = 2,
+
+            /* Implementation-defined values should have a minimum value of 1000. */
+        };
+
+        using __vendor_ext = void;
+
+        class contract_violation {
+            __UINT16_TYPE__     _M_version;
+            assertion_kind      _M_assertion_kind;
+            evaluation_semantic _M_evaluation_semantic;
+            detection_mode      _M_detection_mode;
+            const char*         _M_comment;
+            const void*         _M_src_loc_ptr;
+            __vendor_ext*       _M_ext;
+
+          public:
+            // cannot be copied or moved or assigned to
+            contract_violation(const contract_violation&)            = delete;
+            contract_violation& operator=(const contract_violation&) = delete;
+
+            assertion_kind       kind() const noexcept { return _M_assertion_kind; }
+            evaluation_semantic  semantic() const noexcept { return _M_evaluation_semantic; }
+            detection_mode       mode() const noexcept { return _M_detection_mode; }
+            const char*          comment() const noexcept { return _M_comment; }
+            std::source_location location() const noexcept {
+                std::source_location __loc;
+                __loc._M_impl = static_cast<const source_location::__impl*>(_M_src_loc_ptr);
+                return __loc;
+            }
+            bool is_terminating() const noexcept {
+                return _M_evaluation_semantic == std::contracts::evaluation_semantic::enforce
+                       || _M_evaluation_semantic
+                              == std::contracts::evaluation_semantic::quick_enforce;
+            }
+        };
+
+        void invoke_default_contract_violation_handler(const contract_violation&) noexcept;
+
+    } // namespace contracts
+} // namespace std
+// NOLINTEND
+
+#endif // RUNEOS_CONTRACTS_H

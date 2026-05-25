@@ -16,7 +16,8 @@
 
 #include <KRE/System/System.h>
 
-#include <KRE/CppRTS.h>
+#include <KRE/CRL/CRL.h>
+#include <KRE/CRL/GlobalConstructor.h>
 
 #include <BuiltInPlugin/8259PICDriverPlugin.h>
 #include <BuiltInPlugin/ACPIDriverPlugin.h>
@@ -88,6 +89,36 @@ namespace Rune {
 
     void on_stack_guard_fail_callback() {
         System::instance().panic("Stack guard failure detected!");
+    }
+
+    void on_std_terminate() { System::instance().panic("std::terminate was called!"); }
+
+    void
+    on_handle_contract_violation(std::contracts::contract_violation const& contract_violation) {
+        Array<const char*, 3> kind_to_string     = {"pre", "post", "assert"};
+        Array<const char*, 4> semantic_to_string = {"ignore",
+                                                    "observe",
+                                                    "enforce",
+                                                    "quick_enforce"};
+        Array<const char*, 2> mode_to_string     = {"predicate_false", "evaluation_exception"};
+
+        auto kind     = contract_violation.kind();
+        auto semantic = contract_violation.semantic();
+        auto mode     = contract_violation.mode();
+        auto location = contract_violation.location();
+
+        LOGGER->critical("Contract violation detected (semantic={}, mode={})",
+                         semantic_to_string[static_cast<int>(semantic) - 1],
+                         mode_to_string[static_cast<int>(mode) - 1]);
+        LOGGER->critical("{}:{}:{}: Contract of {} was violated.",
+                         location.file_name(),
+                         location.line(),
+                         location.column(),
+                         location.function_name());
+        LOGGER->critical("          {} condition: {}",
+                         kind_to_string[static_cast<int>(kind) - 1],
+                         contract_violation.comment());
+        System::instance().panic("Terminating kernel execution...");
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -202,7 +233,10 @@ namespace Rune {
 
         _panic_stream = SharedPointer<TextStream>(new CPU::E9Stream);
         CPU::exception_install_panic_stream(_panic_stream);
-        init_cpp_runtime_support(&on_pure_virtual_function_callback, &on_stack_guard_fail_callback);
+        init_cpp_runtime_layer(&on_pure_virtual_function_callback,
+                               &on_stack_guard_fail_callback,
+                               &on_std_terminate,
+                               &on_handle_contract_violation);
 
         auto*          cpu_module    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
         char*          dummy_args[1] = {nullptr}; // NOLINT

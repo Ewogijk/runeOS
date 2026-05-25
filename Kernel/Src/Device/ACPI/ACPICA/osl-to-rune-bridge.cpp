@@ -707,11 +707,12 @@ CLINK {
                               ->install_irq_handler(irq,
                                                     int_ctx.dev_handle,
                                                     int_ctx.dev_name,
-                                                    [&handler, &ctx] -> Rune::CPU::IRQState::_E {
+                                                    [&handler, &ctx] (CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+                                                        SILENCE_UNUSED(i_frame)
                                                         UINT32 ret = handler(ctx);
                                                         return ret == ACPI_INTERRUPT_HANDLED
-                                                                   ? CPU::IRQState::HANDLED
-                                                                   : CPU::IRQState::PENDING;
+                                                                   ? CPU::InterruptState::HANDLED
+                                                                   : CPU::InterruptState::PENDING;
                                                     });
 
         if (!registered) return AE_ALREADY_EXISTS;

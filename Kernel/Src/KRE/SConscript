@@ -16,8 +16,10 @@ from SCons.Environment import *
 
 Import("build_env")
 build_env: Environment
+arch = build_env["arch"]
 sources = [
-    build_env.File("CppRTS.cpp"),
+    build_env.File(f"CRL/CRL.cpp"),
+    build_env.File(f"HAL/{arch}/CRL/GlobalConstructor-a.asm"),
     build_env.File("Logging.cpp"),
     build_env.File("Memory.cpp"),
     build_env.File("Stream.cpp"),

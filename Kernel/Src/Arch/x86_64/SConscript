@@ -35,7 +35,6 @@ sources = [
     build_env.File("CPU/IO-a.asm"),
     build_env.File("CPU/X64Core.cpp"),
     build_env.File("CPU/X64Core-a.asm"),
-    build_env.File("KRE/CppRuntimeSupport-a.asm"),
     build_env.File("Memory/Paging.cpp"),
     build_env.File("Memory/Paging-a.asm"),
     build_env.File("Memory/VirtualMemory.cpp"),

@@ -17,6 +17,7 @@
 #include "GDT.h"
 
 #include <KRE/BitsAndBytes.h>
+#include <KRE/CRL/CRL.h>
 #include <KRE/Memory.h>
 
 namespace Rune::CPU {

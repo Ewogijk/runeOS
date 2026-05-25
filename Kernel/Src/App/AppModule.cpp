@@ -322,7 +322,7 @@ namespace Rune::App {
 
     void AppModule::dump_app_table(const SharedPointer<TextStream>& stream) const {
         constexpr U8 COLUMN_COUNT = 7;
-        Table<SharedPointer<Info>, COLUMN_COUNT>::make_table(
+        TableFormatter<SharedPointer<Info>, COLUMN_COUNT>::make_table(
             [this](const SharedPointer<Info>& info) -> Array<String, COLUMN_COUNT> {
                 return {
                     String::format("{}-{}", info->handle, info->name),

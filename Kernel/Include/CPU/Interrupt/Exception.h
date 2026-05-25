@@ -27,23 +27,6 @@
 #include <CPU/CPU.h>
 
 namespace Rune::CPU {
-    // /**
-    //  * The interrupt frame contains interrupt related information and the CPU state when the
-    //  * interrupt occurred.
-    //  */
-    // struct InterruptContextDeprecated {
-    //     Register error_code; // Error code pushed by CPU
-    //     Register vector;     // Interrupt ID
-    // };
-    //
-    // /**
-    //  * @brief A exception handler tries to recover the kernel from exception raised by the CPU.
-    //  It
-    //  * either succeeds and returns or it fails in which case it must panic and halt the kernel
-    //  * forever.
-    //  */
-    // using ExceptionHandler = Function<void(InterruptContextDeprecated*, const char*)>;
-
     /**
      * @brief Different types of exceptions e.g., page fault, etc.
      * <ul>

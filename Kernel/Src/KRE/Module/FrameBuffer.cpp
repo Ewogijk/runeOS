@@ -18,7 +18,7 @@
 
 #include <limits.h> // NOLINT climits does not exist
 
-#include <KRE/CppRTS.h>
+#include <KRE/CRL/CRL.h>
 #include <KRE/Math.h>
 #include <KRE/Utility.h>
 

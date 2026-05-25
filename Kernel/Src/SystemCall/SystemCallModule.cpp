@@ -70,7 +70,7 @@ namespace Rune::SystemCall {
     }
 
     void SystemCallModule::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
-        Table<SystemCallInfo, 2>::make_table([](const SystemCallInfo& sci) -> Array<String, 2> {
+        TableFormatter<SystemCallInfo, 2>::make_table([](const SystemCallInfo& sci) -> Array<String, 2> {
             return {String::format("{}-{}", sci.handle, sci.name),
                     String::format("{}", sci.requested)};
         })

@@ -24,21 +24,6 @@
 #include <CPU/Interrupt/PIC.h>
 
 namespace Rune::CPU {
-    //     /**
-    //      * @brief The state of an interrupt after a interrupt handler has been notified.
-    //      * <ul>
-    //      *  <li>Pending: The interrupt was not handled by interrupt handler.</li>
-    //      *  <li>Handled: The interrupt was handled by the interrupt handler</li>
-    //      * </ul>
-    //      *
-    //      */
-    // #define IRQ_STATES(X) \
-    //     X(IRQState, PENDING, 0x1) \ X(IRQState, HANDLED, 0x2)
-    //
-    //     DECLARE_ENUM(IRQState, IRQ_STATES, 0x0) // NOLINT
-    //
-    //     using IRQHandler = Function<IRQState()>;
-
     /**
      * @brief General information about an installed IRQ handler.
      */

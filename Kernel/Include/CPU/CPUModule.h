@@ -89,7 +89,7 @@ namespace Rune::CPU {
         HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
         HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
 
-        Scheduler _scheduler;
+        // Scheduler _scheduler;
 
         HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
