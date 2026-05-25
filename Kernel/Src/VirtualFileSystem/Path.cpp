@@ -32,12 +32,12 @@ namespace Rune {
 
     auto Path::get_file_name_without_extension() const -> String {
         LinkedList<String> name_and_ext = get_file_name().split('.');
-        return name_and_ext.size() > 0 ? *name_and_ext.head() : "";
+        return name_and_ext.size() > 0 ? name_and_ext.first() : "";
     }
 
     auto Path::get_file_extension() const -> String {
         LinkedList<String> name_and_ext = get_file_name().split('.');
-        return name_and_ext.size() > 1 ? *name_and_ext.tail() : "";
+        return name_and_ext.size() > 1 ? name_and_ext.last() : "";
     }
 
     auto Path::get_parent() const -> Path {

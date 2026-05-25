@@ -64,26 +64,23 @@ namespace Rune::CPU {
         SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_irq_disable();
-            auto*                 tgb = Scheduler::instance().get_thread_garbage_bin();
-            SharedPointer<Thread> cT =
-                !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
-            tgb->remove_front();
+            auto*                           tgb = Scheduler::instance().get_thread_garbage_bin();
+            Optional<SharedPointer<Thread>> cT  = tgb->remove_front();
             while (cT) {
                 auto dT = cT;
-                cT      = !tgb->is_empty() ? *tgb->head() : SharedPointer<Thread>(nullptr);
-                tgb->remove_front();
-                LOGGER->trace(R"(Terminating thread: {})", dT->get_unique_name());
+                cT      = tgb->remove_front();
+                LOGGER->trace(R"(Terminating thread: {})", dT.value()->get_unique_name());
 
                 auto* next = Scheduler::instance().get_ready_queue()->peek();
                 if (next == nullptr) next = Scheduler::instance().get_idle_thread().get();
-                ON_THREAD_STOPPED(forward<Thread*>(dT.get()), forward<Thread*>(next));
-                delete[] dT->kernel_stack_bottom;
+                ON_THREAD_STOPPED(forward<Thread*>(dT.value().get()), forward<Thread*>(next));
+                delete[] dT.value()->kernel_stack_bottom;
 
-                if (dT.get_ref_count() > 1) {
+                if (dT.value().get_ref_count() > 1) {
                     LOGGER->warn(
                         R"(>> Memory Leak << - {} has {} references but expected 1. Thread struct will not be freed.)",
-                        dT->get_unique_name(),
-                        dT.get_ref_count());
+                        dT.value()->get_unique_name(),
+                        dT.value().get_ref_count());
                 }
                 // dT gets deleted here after it goes out of scope
             }
@@ -158,7 +155,7 @@ namespace Rune::CPU {
         // Init Interrupts/IRQs
         LOGGER->debug("Loading interrupt vector table...");
         interrupt_load_vector_table();
-        if (_pic_driver_table.is_empty()) {
+        if (_pic_driver_table.empty()) {
             LOGGER->critical("No PIC drivers are installed...");
             return false;
         }
@@ -168,7 +165,7 @@ namespace Rune::CPU {
             LOGGER->critical("No PIC device could be detected...");
             return false;
         }
-        _active_pic = _pic_driver_table[pic_idx]->get();
+        _active_pic = _pic_driver_table[pic_idx].get();
         LOGGER->debug(R"("{}" has been initialized.)", _active_pic->get_name());
 
         // Init Scheduling
@@ -207,9 +204,9 @@ namespace Rune::CPU {
                           SchedulingPolicy::NONE,
                           {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
         if (!Scheduler::instance().init(bootstrap_thread,
-                             le_idle_thread,
-                             garbage_collector_thread,
-                             &thread_enter)) {
+                                        le_idle_thread,
+                                        garbage_collector_thread,
+                                        &thread_enter)) {
             LOGGER->critical("Failed to start the scheduler!");
             return false;
         }
@@ -581,7 +578,8 @@ namespace Rune::CPU {
 
     auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
         if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
-        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name, &Scheduler::instance());
+        auto sp =
+            make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name, &Scheduler::instance());
         _spinlock_table.put(sp->get_handle(), sp);
         return sp;
     }

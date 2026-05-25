@@ -69,20 +69,19 @@ namespace Rune::CPU {
 
             auto* thread_pool = memory_addr_to_pointer<ThreadPool>(tp_addr);
             while (true) {
-                Task task = [] -> void {};
+                Optional<Task> task;
                 {
                     CriticalSection _(thread_pool->m_task_queue_mutex);
 
                     thread_pool->m_cv.wait(thread_pool->m_task_queue_mutex, [&] -> bool {
-                        return !thread_pool->m_task_queue.is_empty() || !thread_pool->m_running;
+                        return !thread_pool->m_task_queue.empty() || !thread_pool->m_running;
                     });
 
-                    if (!thread_pool->m_running && thread_pool->m_task_queue.is_empty()) return 0;
+                    if (!thread_pool->m_running && thread_pool->m_task_queue.empty()) return 0;
 
-                    task = *thread_pool->m_task_queue.head();
-                    thread_pool->m_task_queue.remove_front();
+                    task = thread_pool->m_task_queue.remove_front();
                 }
-                task();
+                task.and_then([](Task& task) -> void { task(); });
             }
         }
 

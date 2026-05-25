@@ -121,10 +121,8 @@ namespace Rune {
         /// @brief
         /// @return
         auto operator++(int) -> Handle {
-            if (!m_free_list.is_empty()) {
-                auto* handle = m_free_list.tail();
-                m_free_list.remove_back();
-                return *handle;
+            if (!m_free_list.empty()) {
+                return m_free_list.remove_back().value();
             }
 
             return ++m_counter;
@@ -296,7 +294,7 @@ namespace Rune {
             print_divider(stream);
 
             // Write the table entries
-            for (size_t i = 0; i < _rows.size(); i++) print_data_row(stream, *_rows[i], '<');
+            for (size_t i = 0; i < _rows.size(); i++) print_data_row(stream, _rows[i], '<');
             return *this;
         }
     };

@@ -95,9 +95,8 @@ namespace Rune::CPU {
         SharedPointer<Thread> thread_to_wake;
         {
             CriticalSection<Spinlock> lock(_wait_queue_lock);
-            if (!_wait_queue.is_empty()) {
-                thread_to_wake = *_wait_queue.head();
-                _wait_queue.remove_front();
+            if (!_wait_queue.empty()) {
+                thread_to_wake = _wait_queue.remove_front().value();
             }
             _owner = thread_to_wake;
         }

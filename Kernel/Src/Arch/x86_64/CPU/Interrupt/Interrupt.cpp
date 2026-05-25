@@ -178,7 +178,7 @@ namespace Rune::CPU {
             U8 irq_line = vector - PIC->get_irq_line_offset();
             CURRENT_IRQ = irq_line;
 
-            if (!IRQ_HANDLER_TABLE[irq_line].is_empty()) {
+            if (!IRQ_HANDLER_TABLE[irq_line].empty()) {
                 InterruptState i_state = InterruptState::PENDING;
                 for (auto irq_container : IRQ_HANDLER_TABLE[irq_line]) {
                     i_state = irq_container.handler(forward<InterruptFrame*>(&i_frame));
@@ -256,7 +256,7 @@ namespace Rune::CPU {
     auto irq_init(const LinkedList<PICDriver*>& pic_drivers) -> int {
         int pic_idx = -1;
         for (size_t i = 0; i < pic_drivers.size(); i++) {
-            auto* driver = *pic_drivers[i];
+            auto* driver = pic_drivers[i];
             if (driver->start()) {
                 PIC     = driver;
                 pic_idx = static_cast<int>(i);
@@ -331,7 +331,7 @@ namespace Rune::CPU {
         }
         // NOLINTBEGIN done bounds check on irq_line
         IRQ_HANDLER_TABLE[irq_line].remove(to_remove);
-        if (IRQ_HANDLER_TABLE[irq_line].is_empty()) {
+        if (IRQ_HANDLER_TABLE[irq_line].empty()) {
             U8 vector = PIC->get_irq_line_offset() + irq_line;
             PIC->mask(irq_line); // Disable IRQ on PIC
             idt_get()->entry[vector].flags.p =

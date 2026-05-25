@@ -37,8 +37,8 @@ namespace Rune::VFS {
         root_dummy.first_cluster_high = word_get(root_cluster, 1);
 
         LinkedList<String> p_split = path.split();
-        if (p_split.is_empty()
-            || (p_split.size() == 1 && (*p_split.head() == "." || *p_split.head() == ".."))) {
+        if (p_split.empty()
+            || (p_split.size() == 1 && (p_split.first() == "." || p_split.first() == ".."))) {
             out = {
                 .file_name       = "",
                 .file            = root_dummy,
@@ -75,7 +75,7 @@ namespace Rune::VFS {
 
         LinkedList<String>     p_split = path.split();
         LocationAwareFileEntry dir;
-        if (p_split.is_empty()) {
+        if (p_split.empty()) {
             dir = {
                 .file_name       = "",
                 .file            = root_dummy,

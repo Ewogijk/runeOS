@@ -155,7 +155,7 @@ namespace Rune::App {
                     auto& app = *app_entry.value;
                     if (app->handle == tt_ctx->stopped->app_handle) {
                         app->thread_table.remove(tt_ctx->stopped->get_handle());
-                        if (app->thread_table.is_empty()) finished_app = app;
+                        if (app->thread_table.empty()) finished_app = app;
                         break;
                     }
                 }

@@ -43,7 +43,7 @@ namespace Rune::CPU {
     }
 
     auto Scheduler::next_scheduled_thread() -> SharedPointer<Thread> {
-        if (!_thread_garbage_bin.is_empty()) // Clean up terminated threads whenever possible
+        if (!_thread_garbage_bin.empty()) // Clean up terminated threads whenever possible
             return _garbage_collector_thread;
 
         auto t = _ready_queue->dequeue();

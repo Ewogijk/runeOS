@@ -61,7 +61,7 @@ namespace Heimdall {
         swap(fst._list_detail->list, sec._list_detail->list);
     }
 
-    auto ReporterRegistry::is_empty() const -> bool { return _list_detail->list.is_empty(); }
+    auto ReporterRegistry::is_empty() const -> bool { return _list_detail->list.empty(); }
 
     auto ReporterRegistry::size() const -> size_t { return _list_detail->list.size(); }
 

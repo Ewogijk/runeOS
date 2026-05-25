@@ -181,7 +181,6 @@ namespace Rune {
                          system_loader.to_string(),
                          ls.to_string());
         }
-
         return 0;
     }
 
@@ -205,12 +204,12 @@ namespace Rune {
         // global constructors... so here is a chicken-and-egg problem, hence we
         // manually load the memory module
 
-        // Furthermore, the memory module has to be statically allocated, but
-        // cannot be defined as global variable because it will not be
+        // Furthermore, the memory module has to be statically allocated but
+        // cannot be defined as a global variable because it will not be
         // initialized (no global constructor call yet), hence we use a little
-        // trick. Static local variables live in global scope but lazy
+        // trick. Static local variables live in global scope but are lazily
         // initialized, this means the memory module will be initialized, will
-        // not go out of scope once boot phase2 is finished and the constructor
+        // not go out of scope once boot phase2 is finished, and the constructor
         // will not be called again when global constructors are called
         static Memory::MemoryModule mem_module;
         if (!mem_module.load(boot_info))

@@ -40,7 +40,7 @@ namespace Rune::CPU {
     auto MultiLevelQueue::peek() -> Thread* {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
-            if (!c_thread_q->_threads.is_empty()) return (*c_thread_q->_threads.head()).get();
+            if (!c_thread_q->_threads.empty()) return c_thread_q->_threads.first().get();
             c_thread_q = c_thread_q->_lower_policy_queue;
         }
         return nullptr;
@@ -61,10 +61,8 @@ namespace Rune::CPU {
     auto MultiLevelQueue::dequeue() -> SharedPointer<Thread> {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
-            if (!c_thread_q->_threads.is_empty()) {
-                SharedPointer<Thread> t = *c_thread_q->_threads.head();
-                c_thread_q->_threads.remove_front();
-                return t;
+            if (!c_thread_q->_threads.empty()) {
+                return c_thread_q->_threads.remove_front().value();
             }
             c_thread_q = c_thread_q->_lower_policy_queue;
         }

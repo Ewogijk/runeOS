@@ -231,7 +231,7 @@ CLINK {
         // Check if enough ACPI memory is available. If yes, get a virtual address
         VirtualAddr v_addr              = 0x0;
         bool        memory_gap_selected = false;
-        if (g_osl_config.m_acpi_memory_gaps.is_empty()) {
+        if (g_osl_config.m_acpi_memory_gaps.empty()) {
             // No free memory gaps -> Allocate at memory limit
             if (!check_acpi_memory_available(aligned_size)) return nullptr; // Out of virtual memory
             v_addr = g_osl_config.m_acpi_memory_limit;
