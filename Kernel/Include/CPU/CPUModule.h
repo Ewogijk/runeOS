@@ -187,7 +187,36 @@ namespace Rune::CPU {
          */
         auto find_thread(int handle) -> Thread*;
 
-
+        /**
+         * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue
+         * it to be scheduled in the future.
+         *
+         * Each thread will be assigned a unique ID, the kernel stack is allocated and setup for the
+         * first context switch. As part of the setup a null frame is pushed onto the stack to
+         * enable stack tracing.
+         *
+         * <p>
+         *  Note: The user stack must already be setup! The scheduler cannot do so, because the user
+         * stack may be in another VAS and therefore inaccessible.
+         * </p>
+         *
+         * @param thread_name    Name of the thread.
+         * @param start_info     The thread start info contains the thread arguments, thread main
+         * and more info.
+         *
+         * @param base_pt_addr   Address of the base page table defining the virtual address space
+         * of the thread.
+         * @param policy         Scheduling policy to use for the thread.
+         * @param user_stack     The user mode stack.
+         *
+         * @return The ID if the scheduled thread, 0 if the thread could not be created or
+         * scheduled.
+         */
+        auto schedule_new_thread(const String&    thread_name,
+                                 StartInfo*       start_info,
+                                 PhysicalAddr     base_pt_addr,
+                                 SchedulingPolicy policy,
+                                 Stack            user_stack) -> U16;
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the
@@ -231,7 +260,7 @@ namespace Rune::CPU {
          * @brief A list of all currently acquired mutexes.
          * @return The mutex table.
          */
-        auto get_mutex_table() -> LinkedList<Mutex*>;
+        auto get_mutex_table() -> LinkedList<SharedPointer<Mutex>>;
 
         /**
          * @brief Try to find the mutex with the given handle.

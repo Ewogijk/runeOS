@@ -304,9 +304,9 @@ namespace Rune {
 
         /// @brief
         /// @return Return a raw-pointer copy of all resources in the table.
-        [[nodiscard]] auto get_resources() const -> LinkedList<ResourceType*> {
-            LinkedList<ResourceType*> copy;
-            for (const auto& resource : m_resources) copy.add_back(resource.value->get());
+        [[nodiscard]] auto get_resources() const -> LinkedList<SharedPointer<ResourceType>> {
+            LinkedList<SharedPointer<ResourceType>> copy;
+            for (const auto& resource : m_resources) copy.add_back(*resource.value);
             return copy;
         }
 

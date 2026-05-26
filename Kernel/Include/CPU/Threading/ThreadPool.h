@@ -18,7 +18,6 @@
 #define RUNEOS_THREADPOOL_H
 
 #include <KRE/Collections/Array.h>
-#include <KRE/Collections/LinkedList.h>
 
 #include <KRE/System/System.h>
 
@@ -29,8 +28,7 @@
 #include <CPU/Threading/Mutex.h>
 
 namespace Rune::CPU {
-
-    /// @brief
+    /// @brief A task to be executed in a thread pool.
     using Task = Function<void()>;
 
     struct WorkerThread {
@@ -46,7 +44,11 @@ namespace Rune::CPU {
         }
     };
 
-    /// @brief
+    /// @brief A RAII-style implementation of a thread pool for executing tasks concurrently.
+    /// @tparam N Number of worker threads in the pool.
+    ///
+    /// Worker threads have to be manually started to allow thread pool initialization as global
+    /// variable but worker threads are stopped in the destructor.
     template <size_t N>
     class ThreadPool {
         ConditionVariable      m_cv;
@@ -57,7 +59,7 @@ namespace Rune::CPU {
         Mutex                        m_task_queue_mutex;
         LinkedList<Function<void()>> m_task_queue;
 
-        bool m_running{true};
+        bool m_running{false};
 
         /// @brief Thread pool name for debugging purposes.
         String m_name;
@@ -81,7 +83,7 @@ namespace Rune::CPU {
 
                     task = thread_pool->m_task_queue.remove_front();
                 }
-                task.and_then([](Task& task) -> void { task(); });
+                if (task) task.value()();
             }
         }
 
@@ -96,26 +98,10 @@ namespace Rune::CPU {
                   System::instance().get_module<CPUModule>(ModuleSelector::CPU)->get_scheduler()),
               m_name(thread_pool_name) {
 
-            auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
             // NOLINTBEGIN
             // cppcoreguidelines-pro-type-const-cast: Needed for assignment
             m_worker_thread_argv[0] = const_cast<char*>(m_this_addr.to_cstr());
             // NOLINTEND
-
-            for (size_t i = 0; i < N; i++) {
-                m_threads[i].m_start_info.argc = 1;
-                m_threads[i].m_start_info.argv = m_worker_thread_argv;
-                m_threads[i].m_start_info.main = &exec_worker_thread;
-
-                ThreadHandle handle = cpu_module->schedule_new_thread(
-                    String::format("{}#{}", thread_pool_name, i),
-                    &m_threads[i].m_start_info,
-                    Memory::get_base_page_table_address(),
-                    SchedulingPolicy::LOW_LATENCY,
-                    {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-
-                if (handle != Resource<ThreadHandle>::HANDLE_NONE) m_threads[i].m_handle = handle;
-            }
         }
 
         ~ThreadPool() {
@@ -131,9 +117,17 @@ namespace Rune::CPU {
                 cpu_module->sync_on_thread_stop(worker_thread.m_handle);
         }
 
-        [[nodiscard]] auto get_thread_pool_name() const -> String { return m_name; }
+        /// @brief
+        /// @return True: Worker threads are running. False: No worker threads are running.
+        [[nodiscard]] auto running() const -> bool { return m_running; }
 
-        [[nodiscard]] auto get_worker_threads() const -> LinkedList<ThreadHandle> {
+        /// @brief
+        /// @return The name of the thread pool.
+        [[nodiscard]] auto thread_pool_name() const -> String { return m_name; }
+
+        /// @brief
+        /// @return A list of handles of the worker threads.
+        [[nodiscard]] auto worker_threads() const -> LinkedList<ThreadHandle> {
             LinkedList<ThreadHandle> out_list;
             for (const auto& worker_thread : m_threads) {
                 out_list.add_back(worker_thread.m_handle);
@@ -141,7 +135,30 @@ namespace Rune::CPU {
             return out_list;
         }
 
+        /// @brief Start all worker threads.
+        void start() {
+            m_running        = true;
+            auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
+            for (size_t i = 0; i < N; i++) {
+                m_threads[i].m_start_info.argc = 1;
+                m_threads[i].m_start_info.argv = m_worker_thread_argv;
+                m_threads[i].m_start_info.main = &exec_worker_thread;
+
+                ThreadHandle handle = cpu_module->schedule_new_thread(
+                    String::format("{}#{}", m_name, i),
+                    &m_threads[i].m_start_info,
+                    Memory::get_base_page_table_address(),
+                    SchedulingPolicy::LOW_LATENCY,
+                    {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
+
+                if (handle != Resource<ThreadHandle>::HANDLE_NONE) m_threads[i].m_handle = handle;
+            }
+        }
+
+        /// @brief Submit a task to the thread pool for execution.
+        /// @param task The task to be executed by a worker thread.
         void submit(Task task) {
+            if (!m_running) return;
             CriticalSection _(m_task_queue_mutex);
             m_task_queue.add_back(move(task));
             m_cv.notify_one();
