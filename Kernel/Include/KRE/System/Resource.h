@@ -72,7 +72,7 @@ namespace Rune {
     };
 
     // ========================================================================================== //
-    // Handle Counter
+    // HandleFactory
     // ========================================================================================== //
 
     /// @brief The handle counter provides unique handles for newly created resources.
@@ -107,10 +107,10 @@ namespace Rune {
         }
     };
 
-    /// @brief
+    /// @brief Type of handle.
     using Handle = U32;
 
-    /// @brief
+    /// @brief The handle factory is responsible to provide unique handles and
     class HandleFactory {
         Handle             m_counter{0};
         LinkedList<Handle> m_free_list;
@@ -120,7 +120,7 @@ namespace Rune {
 
         /// @brief
         /// @return
-        auto operator++(int) -> Handle {
+        auto borrow() -> Handle {
             if (!m_free_list.empty()) {
                 return m_free_list.remove_back().value();
             }
@@ -130,21 +130,19 @@ namespace Rune {
 
         /// @brief
         /// @param handle
-        auto free(Handle handle) -> void {
+        auto give_back(Handle handle) -> void {
             SILENCE_UNUSED(handle)
             m_free_list.add_back(handle);
         }
     };
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      Table
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ====================================================================================== //
+    // Table Formatter
+    // ====================================================================================== //
 
-    /**
-     * A table formatter that prints resource properties in tabular format to a stream.
-     * @tparam ResourceType Type of the resource.
-     * @tparam ColumnCount Number of table columns.
-     */
+    /// @brief A table formatter that prints resource properties in tabular format to a stream.
+    /// @tparam ResourceType Type of the resource.
+    /// @tparam ColumnCount Number of table columns.
     template <typename ResourceType, size_t ColumnCount>
     class TableFormatter {
         // Padding before and after a data row
@@ -160,11 +158,9 @@ namespace Rune {
         LinkedList<Array<String, ColumnCount>>                    _rows;
         size_t                                                    _table_width{0};
 
-        /**
-         * Increase width of column cold_idx if _column_widths[col_idx] < new_width.
-         * @param col_idx
-         * @param new_width
-         */
+        /// @brief Increase width of column cold_idx if _column_widths[col_idx] < new_width.
+        /// @param col_idx
+        /// @param new_width
         void adjust_column_width(size_t col_idx, size_t new_width) {
             size_t col_width = _column_widths[col_idx];
             if (col_width < new_width) {
@@ -177,12 +173,10 @@ namespace Rune {
             return String::format(":{}{}{}", fill, align, width);
         }
 
-        /**
-         * Print a single row of data.
-         * @param stream
-         * @param data A row of data.
-         * @param align Alignment for the string format function.
-         */
+        /// @brief Print a single row of data.
+        /// @param stream
+        /// @param data A row of data.
+        /// @param align Alignment for the string format function.
         void print_data_row(const SharedPointer<TextStream>& stream,
                             Array<String, ColumnCount>&      data,
                             char                             align) {
@@ -200,10 +194,8 @@ namespace Rune {
             stream->write('\n');
         }
 
-        /**
-         * Print a horizontal divider as wide as the table.
-         * @param stream
-         */
+        /// @brief Print a horizontal divider as wide as the table.
+        /// @param stream
         void print_divider(const SharedPointer<TextStream>& stream) {
             for (size_t i = 0; i < _table_width; i++) stream->write(DIVIDER_CHAR);
             stream->write('\n');
@@ -226,34 +218,28 @@ namespace Rune {
                 adjust_column_width(i, _column_headers[i].size());
         }
 
-        /**
-         * Create a new table with the provided row constructor.
-         * @param row_converter
-         * @return A table instance.
-         */
+        /// @brief Create a new table with the provided row constructor.
+        /// @param row_converter
+        /// @return A table instance.
         static auto
         make_table(Function<Array<String, ColumnCount>(const ResourceType&)> row_converter)
             -> TableFormatter<ResourceType, ColumnCount> {
             return TableFormatter<ResourceType, ColumnCount>(move(row_converter));
         }
 
-        /**
-         * Add all resource objects in the provided collection to the table.
-         * @tparam CollectionType Type of the collection.
-         * @param collection An iterable collection.
-         * @return This table instance.
-         */
+        /// @brief Add all resource objects in the provided collection to the table.
+        /// @tparam CollectionType Type of the collection.
+        /// @param collection An iterable collection.
+        /// @return This table instance.
         template <typename CollectionType>
         auto with_data(CollectionType collection) -> TableFormatter<ResourceType, ColumnCount> {
             for (const ResourceType& resource : collection) add_row(resource);
             return *this;
         }
 
-        /**
-         * Set the headers of the table.
-         * @param headers Array of headers.
-         * @return This table instance.
-         */
+        /// @brief Set the headers of the table.
+        /// @param headers Array of headers.
+        /// @return This table instance.
         auto with_headers(Array<String, ColumnCount> headers)
             -> TableFormatter<ResourceType, ColumnCount>& {
             _column_headers = move(headers);
@@ -262,12 +248,10 @@ namespace Rune {
             return *this;
         }
 
-        /**
-         * Add a new table row with the values of the given resource.
-         *
-         * @param resource Instance of a resource.
-         * @return This table instance.
-         */
+        /// @brief Add a new table row with the values of the given resource.
+        ///
+        /// @param resource Instance of a resource.
+        /// @return This table instance.
         auto add_row(const ResourceType& resource) -> TableFormatter<ResourceType, ColumnCount>& {
             Array<String, ColumnCount> row_values = _row_converter(resource);
             // Check if the column widths need to be increased
@@ -279,12 +263,10 @@ namespace Rune {
             return *this;
         }
 
-        /**
-         * Print the table to the provided text stream.
-         *
-         * @param stream
-         * @return This table instance.
-         */
+        /// @brief Print the table to the provided text stream.
+        ///
+        /// @param stream
+        /// @return This table instance.
         auto print(const SharedPointer<TextStream>& stream)
             -> TableFormatter<ResourceType, ColumnCount>& {
             if (!stream || !stream->is_write_supported()) return *this;
@@ -305,12 +287,11 @@ namespace Rune {
 
     /// @brief A cache of userspace accessible resources e.g., files or mutexes.
     /// @tparam ResourceType Type of the stored resource.
-    /// @tparam Handle       Handle type of the stored resource.
     /// @tparam ColumnCount  Number of columns used when printing the table.
-    template <typename ResourceType, Integer Handle, size_t ColumnCount>
+    template <typename ResourceType, size_t ColumnCount>
     class ResourceCache {
         HashMap<Handle, SharedPointer<ResourceType>>                             m_resources{};
-        HandleCounter<Handle>                                                    m_handle_counter;
+        HandleFactory                                                            m_handle_factory;
         Array<String, ColumnCount>                                               m_column_headers;
         Function<Array<String, ColumnCount>(const SharedPointer<ResourceType>&)> m_row_converter;
 
@@ -335,11 +316,9 @@ namespace Rune {
         /// @param args Resource constructor arguments.
         /// @return The created resource, or null if no handles are available.
         template <typename... Args>
-        auto create(const String& name, Args&&... args) -> SharedPointer<ResourceType> {
-            if (!m_handle_counter.has_more()) return SharedPointer<ResourceType>();
-
+        auto allocate(const String& name, Args&&... args) -> SharedPointer<ResourceType> {
             auto resource =
-                make_shared<ResourceType>(m_handle_counter.acquire(), name, forward<Args>(args)...);
+                make_shared<ResourceType>(m_handle_factory.borrow(), name, forward<Args>(args)...);
             m_resources.put(resource->get_handle(), resource);
             return resource;
         }
@@ -352,7 +331,11 @@ namespace Rune {
          * @param handle Handle of the resource to delete.
          * @return True if the resource was deleted, false if no such resource exists.
          */
-        auto remove(Handle handle) -> bool { return m_resources.remove(handle); }
+        auto free(Handle handle) -> bool {
+            bool freed = m_resources.remove(handle);
+            if (freed) m_handle_factory.give_back(handle);
+            return freed;
+        }
 
         /**
          * @brief Search for a resource instance by handle.

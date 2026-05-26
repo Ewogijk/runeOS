@@ -455,53 +455,58 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     auto CPUModule::get_mutex_table() -> LinkedList<Mutex*> {
-        LinkedList<Mutex*> copy;
-        for (const auto& m : _mutex_table) copy.add_back(m.value->get());
-        return copy;
+        // LinkedList<Mutex*> copy;
+        // for (const auto& m : _mutex_table) copy.add_back(m.value->get());
+        // return copy;
+        return g_mutex_cache.get_resources();
     }
 
     auto CPUModule::find_mutex(U16 mutex_handle) -> SharedPointer<Mutex> {
-        auto it = _mutex_table.find(mutex_handle);
-        return it == _mutex_table.end() ? SharedPointer<Mutex>() : *it->value;
+        // auto it = _mutex_table.find(mutex_handle);
+        // return it == _mutex_table.end() ? SharedPointer<Mutex>() : *it->value;
+        return g_mutex_cache.find(mutex_handle);
     }
 
     void CPUModule::dump_mutex_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<SharedPointer<Mutex>, 3>::make_table(
-            [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
-                Thread* owner           = mutex->get_owner();
-                String  waiting_threads = "";
-                for (auto& t : mutex->get_waiting_threads())
-                    waiting_threads += t->get_unique_name();
-                if (waiting_threads.is_empty()) waiting_threads = "-";
-                return {mutex->get_unique_name(),
-                        owner != nullptr ? owner->get_unique_name() : "-",
-                        waiting_threads};
-            })
-            .with_headers({"ID-Name", "Owner", "WaitQueue"})
-            .with_data(_mutex_table.values())
-            .print(stream);
+        // TableFormatter<SharedPointer<Mutex>, 3>::make_table(
+        //     [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
+        //         Thread* owner           = mutex->get_owner();
+        //         String  waiting_threads = "";
+        //         for (auto& t : mutex->get_waiting_threads())
+        //             waiting_threads += t->get_unique_name();
+        //         if (waiting_threads.is_empty()) waiting_threads = "-";
+        //         return {mutex->get_unique_name(),
+        //                 owner != nullptr ? owner->get_unique_name() : "-",
+        //                 waiting_threads};
+        //     })
+        //     .with_headers({"ID-Name", "Owner", "WaitQueue"})
+        //     .with_data(_mutex_table.values())
+        //     .print(stream);
+        return g_mutex_cache.print(stream);
     }
 
     auto CPUModule::create_mutex(String name) -> SharedPointer<Mutex> {
-        if (!_mutex_handle_counter.has_more()) return SharedPointer<Mutex>(nullptr);
-        auto m = SharedPointer<Mutex>(
-            new Mutex(_mutex_handle_counter.acquire(), move(name), &Scheduler::instance()));
-        _mutex_table.put(m->get_handle(), m);
-        return m;
+        // if (!_mutex_handle_counter.has_more()) return SharedPointer<Mutex>(nullptr);
+        // auto m = SharedPointer<Mutex>(
+        //     new Mutex(_mutex_handle_counter.acquire(), move(name), &Scheduler::instance()));
+        // _mutex_table.put(m->get_handle(), m);
+        // return m;
+        return g_mutex_cache.allocate(move(name), &Scheduler::instance());
     }
 
     auto CPUModule::release_mutex(U16 mutex_handle) -> bool {
-        SharedPointer<Mutex> to_remove;
-        for (const auto& m : _mutex_table) {
-            if (m.value->get()->get_handle() == mutex_handle) { // NOLINT Only end() is null
-                to_remove = *m.value;
-                break;
-            }
-        }
-        if (!to_remove) return false;
-
-        _mutex_table.remove(to_remove->get_handle());
-        return true;
+        // SharedPointer<Mutex> to_remove;
+        // for (const auto& m : _mutex_table) {
+        //     if (m.value->get()->get_handle() == mutex_handle) { // NOLINT Only end() is null
+        //         to_remove = *m.value;
+        //         break;
+        //     }
+        // }
+        // if (!to_remove) return false;
+        //
+        // _mutex_table.remove(to_remove->get_handle());
+        // return true;
+        return g_mutex_cache.free(mutex_handle);
     }
 
     // ========================================================================================== //

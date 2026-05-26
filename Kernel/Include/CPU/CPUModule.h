@@ -80,16 +80,11 @@ namespace Rune::CPU {
         HashMap<ThreadHandle, SharedPointer<Thread>> _thread_table;
         HandleCounter<ThreadHandle>                  _thread_handle_counter;
 
-        HashMap<MutexHandle, SharedPointer<Mutex>> _mutex_table;
-        HandleCounter<MutexHandle>                 _mutex_handle_counter;
-
         HashMap<SemaphoreHandle, SharedPointer<Semaphore>> _semaphore_table;
         HandleCounter<SemaphoreHandle>                     _semaphore_handle_counter;
 
         HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
         HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
-
-        // Scheduler _scheduler;
 
         HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
@@ -192,36 +187,7 @@ namespace Rune::CPU {
          */
         auto find_thread(int handle) -> Thread*;
 
-        /**
-         * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue
-         * it to be scheduled in the future.
-         *
-         * Each thread will be assigned a unique ID, the kernel stack is allocated and setup for the
-         * first context switch. As part of the setup a null frame is pushed onto the stack to
-         * enable stack tracing.
-         *
-         * <p>
-         *  Note: The user stack must already be setup! The scheduler cannot do so, because the user
-         * stack may be in another VAS and therefore inaccessible.
-         * </p>
-         *
-         * @param thread_name    Name of the thread.
-         * @param start_info     The thread start info contains the thread arguments, thread main
-         * and more info.
-         *
-         * @param base_pt_addr   Address of the base page table defining the virtual address space
-         * of the thread.
-         * @param policy         Scheduling policy to use for the thread.
-         * @param user_stack     The user mode stack.
-         *
-         * @return The ID if the scheduled thread, 0 if the thread could not be created or
-         * scheduled.
-         */
-        auto schedule_new_thread(const String&    thread_name,
-                                 StartInfo*       start_info,
-                                 PhysicalAddr     base_pt_addr,
-                                 SchedulingPolicy policy,
-                                 Stack            user_stack) -> U16;
+
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the
