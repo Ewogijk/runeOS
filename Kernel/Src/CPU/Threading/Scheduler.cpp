@@ -139,7 +139,6 @@ namespace Rune::CPU {
           _garbage_collector_thread(nullptr),
           _on_context_switch([](Thread* next) -> void { SILENCE_UNUSED(next) }) {}
 
-
     auto Scheduler::instance() -> Scheduler& {
         static Scheduler instance;
         return instance;

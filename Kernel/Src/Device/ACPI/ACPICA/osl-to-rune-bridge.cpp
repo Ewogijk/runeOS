@@ -707,7 +707,8 @@ CLINK {
                               ->install_irq_handler(irq,
                                                     int_ctx.dev_handle,
                                                     int_ctx.dev_name,
-                                                    [&handler, &ctx] (CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+                                                    [&handler, &ctx](CPU::InterruptFrame* i_frame)
+                                                        -> Rune::CPU::InterruptState::_E {
                                                         SILENCE_UNUSED(i_frame)
                                                         UINT32 ret = handler(ctx);
                                                         return ret == ACPI_INTERRUPT_HANDLED

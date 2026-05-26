@@ -70,10 +70,11 @@ namespace Rune::SystemCall {
     }
 
     void SystemCallModule::dump_system_call_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<SystemCallInfo, 2>::make_table([](const SystemCallInfo& sci) -> Array<String, 2> {
-            return {String::format("{}-{}", sci.handle, sci.name),
-                    String::format("{}", sci.requested)};
-        })
+        TableFormatter<SystemCallInfo, 2>::make_table(
+            [](const SystemCallInfo& sci) -> Array<String, 2> {
+                return {String::format("{}-{}", sci.handle, sci.name),
+                        String::format("{}", sci.requested)};
+            })
             .with_headers({"ID-Name", "Requested"})
             .with_data(system_call_get_table())
             .print(stream);

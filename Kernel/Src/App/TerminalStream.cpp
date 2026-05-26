@@ -121,7 +121,7 @@ namespace Rune::App {
                 if (line_offset < off + len && off < line_offset + txt_size) {
                     if (line_offset < off) {
                         // Only part of the text is erased -> Keep the beginning
-                        st.text   = st.text.substring(0, off - line_offset);
+                        st.text    = st.text.substring(0, off - line_offset);
                         line_size -= txt_size - off + line_offset;
                     } else {
                         indices_to_remove.add_back(i);
@@ -407,8 +407,7 @@ namespace Rune::App {
         switch (_csi_cmd_selector) {
             case 'm':
                 // First append raw text buffer content with current color
-                scroll_back_buffer_get_last_line().style_raw_text(_state.bg_color,
-                                                                   _state.fg_color);
+                scroll_back_buffer_get_last_line().style_raw_text(_state.bg_color, _state.fg_color);
                 if (_csi_argv[0] == SGR_SET_FOREGROUND && _csi_argv[1] == 2) {
                     // Change foreground color
                     _state.fg_color = {.red   = _csi_argv[2],
@@ -495,13 +494,13 @@ namespace Rune::App {
             case 'J': {
                 if (_state.scroll_back_buffer.empty()) break;
 
-                U8        del_op                   = _csi_argv[0];
-                size_t    scroll_back_buffer_start = 0;
-                size_t    scroll_back_buffer_end   = 0;
-                size_t    x_start                  = 0;
-                size_t    x_end                    = 0;
-                bool      clear_scroll_back_buffer = false;
-                auto& cursor_line = _state.scroll_back_buffer[_state.cursor_sbb.line];
+                U8     del_op                   = _csi_argv[0];
+                size_t scroll_back_buffer_start = 0;
+                size_t scroll_back_buffer_end   = 0;
+                size_t x_start                  = 0;
+                size_t x_end                    = 0;
+                bool   clear_scroll_back_buffer = false;
+                auto&  cursor_line              = _state.scroll_back_buffer[_state.cursor_sbb.line];
                 if (del_op == 0) {
                     // Clear from cursor to end of display
                     scroll_back_buffer_start = _state.cursor_sbb.line + 1;
@@ -562,10 +561,10 @@ namespace Rune::App {
             case 'K': {
                 if (_state.scroll_back_buffer.empty()) break;
 
-                U8        del_op    = _csi_argv[0];
-                size_t    x_start   = 0;
-                size_t    x_end     = 0;
-                auto& text_line = _state.scroll_back_buffer[_state.cursor_sbb.line];
+                U8     del_op    = _csi_argv[0];
+                size_t x_start   = 0;
+                size_t x_end     = 0;
+                auto&  text_line = _state.scroll_back_buffer[_state.cursor_sbb.line];
                 if (del_op == 0) {
                     x_start = _state.cursor_sbb.column;
                     x_end   = text_line.line_size;

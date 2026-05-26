@@ -21,8 +21,7 @@
 namespace Rune::CPU {
     void ConditionVariable::wake_one() {
         auto thread = m_waiters.remove_front();
-        if (thread.has_value())
-            m_scheduler->unblock(thread.value());
+        if (thread.has_value()) m_scheduler->unblock(thread.value());
     }
 
     ConditionVariable::ConditionVariable(Scheduler* scheduler)

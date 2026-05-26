@@ -206,9 +206,10 @@ namespace Rune::VFS {
     }
 
     void VFSModule::dump_node_ref_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<NodeRefCount, 3>::make_table([](const NodeRefCount& nrc) -> Array<String, 3> {
-            return {nrc.m_node_path.to_string(), String::format("{}", nrc.m_ref_count)};
-        })
+        TableFormatter<NodeRefCount, 3>::make_table(
+            [](const NodeRefCount& nrc) -> Array<String, 3> {
+                return {nrc.m_node_path.to_string(), String::format("{}", nrc.m_ref_count)};
+            })
             .with_headers({"Path", "RefCount"})
             .with_data(_node_ref_table.values())
             .print(stream);
@@ -255,11 +256,12 @@ namespace Rune::VFS {
     }
 
     void VFSModule::dump_mount_point_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<MountPointInfo, 3>::make_table([](const MountPointInfo& mpi) -> Array<String, 3> {
-            return {mpi.m_mount_point.to_string(),
-                    mpi.m_driver_name,
-                    String::format("{}", mpi.m_mass_storage_device_handle)};
-        })
+        TableFormatter<MountPointInfo, 3>::make_table(
+            [](const MountPointInfo& mpi) -> Array<String, 3> {
+                return {mpi.m_mount_point.to_string(),
+                        mpi.m_driver_name,
+                        String::format("{}", mpi.m_mass_storage_device_handle)};
+            })
             .with_headers({"Mount Point", "Driver", "Storage Device"})
             .with_data(_mount_point_table.values())
             .print(stream);

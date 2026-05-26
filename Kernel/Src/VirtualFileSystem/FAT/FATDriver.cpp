@@ -151,7 +151,7 @@ namespace Rune::VFS {
         IOStatus                           as = make_long_file_name_entries(md, path, file_entries);
         if (as != IOStatus::NONE) return as;
 
-        auto& e_file  = file_entries.last();
+        auto& e_file                   = file_entries.last();
         e_file.file.first_cluster_low  = 0;
         e_file.file.first_cluster_high = 0;
         e_file.file.attributes         = attributes;
@@ -185,9 +185,9 @@ namespace Rune::VFS {
         IOStatus                           as = make_long_file_name_entries(md, path, file_entries);
         if (as != IOStatus::NONE) return as;
 
-        auto& e_file = file_entries.last();
-        e_file.file.file_size         = 0;
-        e_file.file.attributes        = attributes;
+        auto& e_file           = file_entries.last();
+        e_file.file.file_size  = 0;
+        e_file.file.attributes = attributes;
 
         // Find cluster for directory content
         U32 cluster =
