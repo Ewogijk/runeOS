@@ -29,7 +29,6 @@ using namespace Rune;
 const String     THREAD_POOL_NAME("Test ThreadPool");
 constexpr size_t NUM_THREADS = 2;
 
-
 TEST("Destruction", "ThreadPool") {
     // Setup
     LinkedList<CPU::ThreadHandle> worker_threads;
@@ -39,7 +38,7 @@ TEST("Destruction", "ThreadPool") {
         // Force destruction of thread pool, then check that threads have been stopped
         CPU::ThreadPool<NUM_THREADS> thread_pool(THREAD_POOL_NAME);
         thread_pool.start();
-        worker_threads = thread_pool.get_worker_threads();
+        worker_threads = thread_pool.worker_threads();
     }
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     for (const auto thread_handle : worker_threads) {
@@ -55,7 +54,7 @@ TEST("start", "ThreadPool") {
 
     // Test body
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    for (const auto thread_handle : thread_pool.get_worker_threads()) {
+    for (const auto thread_handle : thread_pool.worker_threads()) {
         auto* thread = cpu_module->find_thread(thread_handle);
         REQUIRE(thread != nullptr);
     }
@@ -65,9 +64,9 @@ TEST("submit", "ThreadPool") {
     // Setup
     CPU::ThreadPool<NUM_THREADS> thread_pool(THREAD_POOL_NAME);
     thread_pool.start();
-    constexpr U8                 SLEEP_TIME_MS  = 250;
-    int                          counter        = 0;
-    int                          counter_target = 2 * NUM_THREADS;
+    constexpr U8 SLEEP_TIME_MS  = 250;
+    int          counter        = 0;
+    int          counter_target = 2 * NUM_THREADS;
 
     // Test body
     for (int i = 0; i < counter_target; i++) {
