@@ -34,8 +34,8 @@ namespace Rune::CPU {
          */
         static constexpr U64 QUARTZ_FREQUENCY_HZ = 1193182;
 
-        Scheduler* _scheduler{nullptr};
-        IRQHandler _irq_handler;
+        Scheduler*           _scheduler{nullptr};
+        FastInterruptHandler _irq_handler;
 
         DeltaQueue _sleeping_threads;
         U64        _count{0}; // Ticks since boot

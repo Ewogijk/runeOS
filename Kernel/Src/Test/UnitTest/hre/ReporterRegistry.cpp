@@ -61,7 +61,7 @@ namespace Heimdall {
         swap(fst._list_detail->list, sec._list_detail->list);
     }
 
-    auto ReporterRegistry::is_empty() const -> bool { return _list_detail->list.is_empty(); }
+    auto ReporterRegistry::is_empty() const -> bool { return _list_detail->list.empty(); }
 
     auto ReporterRegistry::size() const -> size_t { return _list_detail->list.size(); }
 
@@ -71,7 +71,6 @@ namespace Heimdall {
     }
 
     auto ReporterRegistry::operator[](size_t index) const -> Reporter* {
-        Rune::SharedPointer<Reporter>* reporter = _list_detail->list[index];
-        return (reporter != nullptr) ? reporter->get() : nullptr;
+        return _list_detail->list[index].get();
     }
 } // namespace Heimdall

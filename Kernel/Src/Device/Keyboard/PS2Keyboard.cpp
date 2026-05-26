@@ -119,7 +119,10 @@ namespace Rune::Device {
 
     PS2Keyboard::PS2Keyboard()
         : _key_code_cache(),
-          _irq_handler([] -> Rune::CPU::IRQState::_E { return CPU::IRQState::PENDING; }) {}
+          _irq_handler([](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+              SILENCE_UNUSED(i_frame);
+              return CPU::InterruptState::PENDING;
+          }) {}
 
     auto PS2Keyboard::read() -> int {
         if (_start == _end) return Ember::VirtualKey::NONE_KEY_CODE;
@@ -143,11 +146,12 @@ namespace Rune::Device {
         SILENCE_UNUSED(device)
         init_scan_set_one();
 
-        _irq_handler = [this] -> Rune::CPU::IRQState::_E {
+        _irq_handler = [this](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+            SILENCE_UNUSED(i_frame);
             U8 scan_code = CPU::in_b(DATA_REGISTER);
             if (scan_code == EXTENDED_BYTE) {
                 _wait_key_e0 = true;
-                return CPU::IRQState::HANDLED;
+                return CPU::InterruptState::HANDLED;
             }
 
             Ember::VirtualKey key =
@@ -158,7 +162,7 @@ namespace Rune::Device {
 
                 if (_wait_key_e0) _wait_key_e0 = false;
             }
-            return CPU::IRQState::HANDLED;
+            return CPU::InterruptState::HANDLED;
         };
         return CPU::irq_install_handler(1, 0, "PS2 Keyboard", _irq_handler);
     }

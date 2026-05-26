@@ -80,16 +80,11 @@ namespace Rune::CPU {
         HashMap<ThreadHandle, SharedPointer<Thread>> _thread_table;
         HandleCounter<ThreadHandle>                  _thread_handle_counter;
 
-        HashMap<MutexHandle, SharedPointer<Mutex>> _mutex_table;
-        HandleCounter<MutexHandle>                 _mutex_handle_counter;
-
         HashMap<SemaphoreHandle, SharedPointer<Semaphore>> _semaphore_table;
         HandleCounter<SemaphoreHandle>                     _semaphore_handle_counter;
 
         HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
         HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
-
-        Scheduler _scheduler;
 
         HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
@@ -149,10 +144,10 @@ namespace Rune::CPU {
          * @param handler
          * @return True: The IRQ handler is installed. False: Installation failed.
          */
-        auto install_irq_handler(U8                irq_line,
-                                 U16               dev_handle,
-                                 const String&     dev_name,
-                                 const IRQHandler& handler) -> bool;
+        auto install_irq_handler(U8                          irq_line,
+                                 U16                         dev_handle,
+                                 const String&               dev_name,
+                                 const FastInterruptHandler& handler) -> bool;
 
         /**
          * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
@@ -265,7 +260,7 @@ namespace Rune::CPU {
          * @brief A list of all currently acquired mutexes.
          * @return The mutex table.
          */
-        auto get_mutex_table() -> LinkedList<Mutex*>;
+        auto get_mutex_table() -> LinkedList<SharedPointer<Mutex>>;
 
         /**
          * @brief Try to find the mutex with the given handle.

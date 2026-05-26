@@ -231,7 +231,7 @@ namespace Rune::App {
          * @brief Get the last line in the scroll back buffer.
          * @return
          */
-        auto scroll_back_buffer_get_last_line() -> TextLine*;
+        auto scroll_back_buffer_get_last_line() -> TextLine&;
 
         /**
          * @brief Set the style of the last line in the scroll back buffer to the current fg and bg

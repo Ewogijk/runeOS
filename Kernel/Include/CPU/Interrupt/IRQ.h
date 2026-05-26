@@ -17,27 +17,13 @@
 #ifndef RUNEOS_IRQ_H
 #define RUNEOS_IRQ_H
 
+#include "Interrupt.h"
+
 #include <Ember/Enum.h>
 
 #include <CPU/Interrupt/PIC.h>
 
 namespace Rune::CPU {
-    /**
-     * @brief The state of an interrupt after a interrupt handler has been notified.
-     * <ul>
-     *  <li>Pending: The interrupt was not handled by interrupt handler.</li>
-     *  <li>Handled: The interrupt was handled by the interrupt handler</li>
-     * </ul>
-     *
-     */
-#define IRQ_STATES(X)                                                                              \
-    X(IRQState, PENDING, 0x1)                                                                      \
-    X(IRQState, HANDLED, 0x2)
-
-    DECLARE_ENUM(IRQState, IRQ_STATES, 0x0) // NOLINT
-
-    using IRQHandler = Function<IRQState()>;
-
     /**
      * @brief General information about an installed IRQ handler.
      */
@@ -90,22 +76,24 @@ namespace Rune::CPU {
     auto irq_get_table_for(U8 irq_line) -> IRQTable;
 
     /**
-     * @brief Install the IRQ handler for a device on the specified IRQ line.
+     * @brief Install the fast interrupt handler for a device on the specified IRQ line.
      * @param irq_line   Requested IRQ.
      * @param dev_handle Unique device ID.
      * @param dev_name   Name of the device.
      * @param handler
-     * @return True: The IRQ handler is installed. False: Installation failed.
+     * @return True: The fast interrupt handler is installed. False: Installation failed.
      */
-    auto
-    irq_install_handler(U8 irq_line, U16 dev_handle, const String& dev_name, IRQHandler handler)
-        -> bool;
+    auto irq_install_handler(U8                   irq_line,
+                             U16                  dev_handle,
+                             const String&        dev_name,
+                             FastInterruptHandler handler) -> bool;
 
     /**
-     * @brief Uninstall the IRQ handler for the given device ID from the specified IRQ line.
+     * @brief Uninstall the fast interrupt handler for the given device ID from the specified IRQ
+     * line.
      * @param irq_line
      * @param dev_handle
-     * @return True: The IRQ handler is uninstalled. False: Uninstalling failed.
+     * @return True: The fast interrupt handler is uninstalled. False: Uninstalling failed.
      */
     auto irq_uninstall_handler(U8 irq_line, U16 dev_handle) -> bool;
 

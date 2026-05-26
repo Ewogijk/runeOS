@@ -138,16 +138,16 @@ namespace Rune {
         LinkedList<String> parts = selector.split('.');
         switch (parts.size()) {
             case 1: {
-                String part0 = *parts[0];
+                String part0 = parts[0];
                 if (part0 != "*" && !is_identifier(part0)) return NULL_OPT;
-                return make_optional<Selector>(*parts[0], "");
+                return make_optional<Selector>(parts[0], "");
             }
             case 2: {
-                String part0 = *parts[0];
-                String part1 = *parts[1];
+                String part0 = parts[0];
+                String part1 = parts[1];
                 if (part0 == "*" || !is_identifier(part0)) return NULL_OPT;
                 if (part1 != "*" && !is_identifier(part1)) return NULL_OPT;
-                return make_optional<Selector>(*parts[0], *parts[1]);
+                return make_optional<Selector>(parts[0], parts[1]);
             }
             default: return NULL_OPT;
         }
@@ -224,7 +224,7 @@ namespace Rune {
     auto LogContext::set_log_level(const String& selector, LogLevel level) -> bool {
         auto change_level = [this, level](Selector sel) -> Optional<bool> {
             LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
-            if (filter_list.is_empty()) return NULL_OPT;
+            if (filter_list.empty()) return NULL_OPT;
             for (auto& logger : filter_list) logger->set_log_level(level);
             return make_optional<bool>(true);
         };
@@ -234,7 +234,7 @@ namespace Rune {
     auto LogContext::set_layout_ref(const String& selector, const String& layout_ref) -> bool {
         auto change_layout_ref = [this, &layout_ref](Selector sel) -> Optional<bool> {
             LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
-            if (filter_list.is_empty()) return NULL_OPT;
+            if (filter_list.empty()) return NULL_OPT;
             for (auto& logger : filter_list) logger->set_layout_ref(layout_ref);
             return make_optional<bool>(true);
         };

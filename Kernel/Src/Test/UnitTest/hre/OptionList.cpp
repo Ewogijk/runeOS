@@ -59,8 +59,5 @@ namespace Heimdall {
 
     void OptionList::insert(const Option& option) { _list_detail->list.add_back(option); }
 
-    auto OptionList::operator[](size_t index) const -> Option {
-        Option* t = _list_detail->list[index];
-        return (t != nullptr) ? *t : Option();
-    }
+    auto OptionList::operator[](size_t index) const -> Option { return _list_detail->list[index]; }
 } // namespace Heimdall

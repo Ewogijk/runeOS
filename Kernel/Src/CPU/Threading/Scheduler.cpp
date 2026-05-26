@@ -43,7 +43,7 @@ namespace Rune::CPU {
     }
 
     auto Scheduler::next_scheduled_thread() -> SharedPointer<Thread> {
-        if (!_thread_garbage_bin.is_empty()) // Clean up terminated threads whenever possible
+        if (!_thread_garbage_bin.empty()) // Clean up terminated threads whenever possible
             return _garbage_collector_thread;
 
         auto t = _ready_queue->dequeue();
@@ -138,6 +138,11 @@ namespace Rune::CPU {
           _idle_thread(nullptr),
           _garbage_collector_thread(nullptr),
           _on_context_switch([](Thread* next) -> void { SILENCE_UNUSED(next) }) {}
+
+    auto Scheduler::instance() -> Scheduler& {
+        static Scheduler instance;
+        return instance;
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Properties

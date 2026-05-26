@@ -1,0 +1,72 @@
+
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef RUNEOS_SOURCE_LOCATION_H
+#define RUNEOS_SOURCE_LOCATION_H
+
+// NOLINTBEGIN
+// GCC 16.1 implementation of std::source_location
+namespace std {
+    namespace contracts {
+        class contract_violation;
+    }
+
+    /// A class that describes a location in source code.
+    struct source_location {
+      private:
+        using uint_least32_t = __UINT_LEAST32_TYPE__;
+        struct __impl {
+            const char* _M_file_name;
+            const char* _M_function_name;
+            unsigned    _M_line;
+            unsigned    _M_column;
+        };
+        using __builtin_ret_type = decltype(__builtin_source_location());
+
+      public:
+        // [support.srcloc.cons], creation
+        static consteval source_location
+        current(__builtin_ret_type __p = __builtin_source_location()) noexcept {
+            source_location __ret;
+            __ret._M_impl = static_cast<const __impl*>(__p);
+            return __ret;
+        }
+
+        constexpr source_location() noexcept {}
+
+        // [support.srcloc.obs], observers
+        constexpr uint_least32_t line() const noexcept { return _M_impl ? _M_impl->_M_line : 0u; }
+
+        constexpr uint_least32_t column() const noexcept {
+            return _M_impl ? _M_impl->_M_column : 0u;
+        }
+
+        constexpr const char* file_name() const noexcept {
+            return _M_impl ? _M_impl->_M_file_name : "";
+        }
+
+        constexpr const char* function_name() const noexcept {
+            return _M_impl ? _M_impl->_M_function_name : "";
+        }
+
+      private:
+        const __impl* _M_impl = nullptr;
+
+        friend class std::contracts::contract_violation;
+    };
+} // namespace std
+// NOLINTEND
+
+#endif // RUNEOS_SOURCE_LOCATION_H

@@ -187,7 +187,7 @@ namespace Rune::App {
             program_headers.add_back(elf_64_ph);
             if (st == SegmentType::NOTE) note_ph = elf_64_ph;
         }
-        if (program_headers.is_empty()) {
+        if (program_headers.empty()) {
             // Need at least one loadable PH
             LOGGER->error("No loadable program headers found.");
             return LoadStatus::BAD_SEGMENT;
@@ -215,13 +215,13 @@ namespace Rune::App {
         -> bool {
         Memory::VirtualMemoryManager* vmm = _memory_subsys->get_virtual_memory_manager();
         for (size_t i = 0; i < elf64_file.program_headers.size(); i++) {
-            const ELF64ProgramHeader* ph = elf64_file.program_headers[i];
-            if (SegmentType(ph->type) != SegmentType::LOAD) continue;
+            const auto& ph = elf64_file.program_headers[i];
+            if (SegmentType(ph.type) != SegmentType::LOAD) continue;
 
             const VirtualAddr v_start =
-                memory_align(ph->virtual_address, Memory::get_page_size(), false);
+                memory_align(ph.virtual_address, Memory::get_page_size(), false);
             VirtualAddr v_end =
-                memory_align(ph->virtual_address + ph->memory_size, Memory::get_page_size(), true);
+                memory_align(ph.virtual_address + ph.memory_size, Memory::get_page_size(), true);
             const size_t num_pages = (v_end - v_start) / Memory::get_page_size();
 
             // Set the start of the app heap to the end of the app code area
@@ -240,13 +240,13 @@ namespace Rune::App {
                 // The pages of the current program header are already freed
                 // -> Need to only free the pages of prior program headers
                 for (size_t j = 0; j < i; j++) {
-                    const ELF64ProgramHeader* ph_old = elf64_file.program_headers[j];
-                    if (SegmentType(ph_old->type) != SegmentType::LOAD) continue;
+                    const auto& ph_old = elf64_file.program_headers[j];
+                    if (SegmentType(ph_old.type) != SegmentType::LOAD) continue;
 
                     const VirtualAddr v_start_old =
-                        memory_align(ph_old->virtual_address, Memory::get_page_size(), false);
+                        memory_align(ph_old.virtual_address, Memory::get_page_size(), false);
                     const size_t num_pages_old =
-                        div_round_up(ph_old->memory_size, Memory::get_page_size());
+                        div_round_up(ph_old.memory_size, Memory::get_page_size());
 
                     if (!vmm->free(v_start_old, num_pages_old)) {
                         LOGGER->warn("PH{}: Failed to free {:0=#16x}-{:0=#16x}",
@@ -264,18 +264,18 @@ namespace Rune::App {
     auto ELFLoader::load_segments(const ELF64File& elf_file) -> bool {
         const Memory::PageTable base_pt = Memory::get_base_page_table();
         for (size_t i = 0; i < elf_file.program_headers.size(); i++) {
-            ELF64ProgramHeader* ph = elf_file.program_headers[i];
-            if (SegmentType(ph->type) != SegmentType::LOAD) continue;
+            auto& ph = elf_file.program_headers[i];
+            if (SegmentType(ph.type) != SegmentType::LOAD) continue;
 
             // Skip to PH content in FILE
-            if (!seek(ph->offset)) {
-                LOGGER->error("Failed to skip {:0=#16x} bytes to PH{} content.", ph->offset, i);
+            if (!seek(ph.offset)) {
+                LOGGER->error("Failed to skip {:0=#16x} bytes to PH{} content.", ph.offset, i);
                 return false;
             }
 
             // Load the segment
-            size_t to_copy        = ph->file_size;
-            auto*  ph_dest        = memory_addr_to_pointer<U8>(ph->virtual_address);
+            size_t to_copy        = ph.file_size;
+            auto*  ph_dest        = memory_addr_to_pointer<U8>(ph.virtual_address);
             size_t ph_dest_offset = 0;
             while (to_copy > 0) {
                 Array<U8, BUF_SIZE> b{};
@@ -287,16 +287,16 @@ namespace Rune::App {
             }
 
             // Init the rest of the memory with zeroes
-            if (ph->memory_size > ph->file_size)
-                memset(&ph_dest[ph_dest_offset], '\0', ph->memory_size - ph->file_size);
+            if (ph.memory_size > ph.file_size)
+                memset(&ph_dest[ph_dest_offset], '\0', ph.memory_size - ph.file_size);
 
             // Set correct page flags
             const VirtualAddr v_start =
-                memory_align(ph->virtual_address, Memory::get_page_size(), false);
+                memory_align(ph.virtual_address, Memory::get_page_size(), false);
             const VirtualAddr v_end =
-                memory_align(ph->virtual_address + ph->memory_size, Memory::get_page_size(), true);
+                memory_align(ph.virtual_address + ph.memory_size, Memory::get_page_size(), true);
             U16 flags = Memory::PageFlag::PRESENT | Memory::PageFlag::USER_MODE_ACCESS;
-            if ((ph->flags & SegmentPermission(SegmentPermission::WRITE).to_value()) != 0)
+            if ((ph.flags & SegmentPermission(SegmentPermission::WRITE).to_value()) != 0)
                 flags |= Memory::PageFlag::WRITE_ALLOWED;
 
             for (VirtualAddr v = v_start; v < v_end; v += Memory::get_page_size())

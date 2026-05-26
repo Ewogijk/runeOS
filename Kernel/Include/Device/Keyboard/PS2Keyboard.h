@@ -38,7 +38,7 @@ namespace Rune::Device {
 
         bool _wait_key_e0{false};
 
-        CPU::IRQHandler _irq_handler;
+        CPU::FastInterruptHandler _irq_handler;
 
       public:
         static const BasicDeviceID ID_PS2_KEYBOARD;

@@ -205,7 +205,7 @@ TEST("get_devices - Valid DeviceType", "DeviceModule") {
 
     // Test Body
     auto generic_devs = ds->get_devices<Device::Device>(Device::DeviceType::GENERIC);
-    REQUIRE(!generic_devs.is_empty())
+    REQUIRE(!generic_devs.empty())
 }
 
 TEST("get_devices - Invalid DeviceType", "DeviceModule") {
@@ -214,7 +214,7 @@ TEST("get_devices - Invalid DeviceType", "DeviceModule") {
 
     // Test Body
     auto generic_devs = ds->get_devices<Device::Device>(Device::DeviceType::NONE);
-    REQUIRE(generic_devs.is_empty())
+    REQUIRE(generic_devs.empty())
 }
 
 // ========================================================================================== //

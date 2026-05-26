@@ -26,7 +26,7 @@ namespace Rune {
     }
 
     void EventHookTableEntry::dump(const SharedPointer<TextStream>& stream) const {
-        Table<EventHandlerStats, 2>::make_table(
+        TableFormatter<EventHandlerStats, 2>::make_table(
             [](const EventHandlerStats stats) -> Array<String, 2> {
                 return {String::format("{}-{}", stats.handle, stats.name),
                         String::format("{}", stats.notified)};

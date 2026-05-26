@@ -17,6 +17,8 @@
 #ifndef RUNEOS_EXCEPTION_H
 #define RUNEOS_EXCEPTION_H
 
+#include "Interrupt.h"
+
 #include <Ember/Enum.h>
 #include <KRE/Utility.h>
 
@@ -26,23 +28,7 @@
 
 namespace Rune::CPU {
     /**
-     * The interrupt frame contains interrupt related information and the CPU state when the
-     * interrupt occurred.
-     */
-    struct InterruptContext {
-        Register error_code; // Error code pushed by CPU
-        Register vector;     // Interrupt ID
-    };
-
-    /**
-     * @brief A exception handler tries to recover the kernel from exception raised by the CPU. It
-     * either succeeds and returns or it fails in which case it must panic and halt the kernel
-     * forever.
-     */
-    using ExceptionHandler = Function<void(InterruptContext*, const char*)>;
-
-    /**
-     * @brief Different types of exceptions e.g. page fault, etc.
+     * @brief Different types of exceptions e.g., page fault, etc.
      * <ul>
      *  <li>PageFault: Indicates all kinds of errors related to accessing a virtual memory
      * address.</li>
@@ -73,7 +59,8 @@ namespace Rune::CPU {
         U64 raised = 0;
 
         /**
-         * @brief True: An exception handler is installed, False: No exception handler is installed.
+         * @brief True: A fast interrupt handler is installed,
+         *          False: No fast interrupt handler is installed.
          */
         bool handled = false;
     };
@@ -100,14 +87,16 @@ namespace Rune::CPU {
     /// @param panic_stream Output stream
     void exception_install_panic_stream(SharedPointer<TextStream> panic_stream);
 
-    /// @brief Tries to install an exception handler for a exception.
-    /// Only a single exception handler can be installed per exception and once installed it is not
-    /// intended to replace the handler.
+    /// @brief Tries to install an fast interrupt handler for a exception.
+    /// Only a single fast interrupt handler can be installed per exception and once installed it is
+    /// not intended to replace the handler.
     /// @param type
     /// @param exception_handler
-    /// @return True: The exception handler is installed, False: An exception handler is already
-    ///         installed for the requested exception, this exception handler was not installed.
-    auto exception_install_handler(ExceptionType type, ExceptionHandler* exception_handler) -> bool;
+    /// @return True: The fast interrupt handler is installed,
+    ///         False: An fast interrupt handler is already installed for the requested exception,
+    ///         this fast interrupt handler was not installed.
+    auto exception_install_handler(ExceptionType type, FastInterruptHandler exception_handler)
+        -> bool;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_EXCEPTION_H

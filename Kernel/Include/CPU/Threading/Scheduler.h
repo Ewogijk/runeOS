@@ -88,8 +88,16 @@ namespace Rune::CPU {
         /// Note: This function is NOT thread safe!
         void perform_context_switch();
 
-      public:
         Scheduler();
+
+      public:
+        ~Scheduler() = default;
+
+        /**
+         *
+         * @return Get the instance of the scheduler.
+         */
+        static auto instance() -> Scheduler&;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Properties

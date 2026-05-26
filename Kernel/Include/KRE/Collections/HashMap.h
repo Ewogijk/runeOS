@@ -5,7 +5,7 @@
 #ifndef RUNEOS_DICTIONARY_H
 #define RUNEOS_DICTIONARY_H
 
-#include <KRE/CppRTS.h>
+#include <KRE/CRL/CRL.h>
 #include <KRE/Utility.h>
 
 namespace Rune {

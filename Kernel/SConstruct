@@ -207,9 +207,11 @@ def configure_compiler(env: Environment) -> None:
     # Include directories
     env["CPPPATH"] = [
         str(Path.cwd() / "Include"),
+        # Shortcut to the Cpp Runtime Layer to allow std style include of std headers
+        str(Path.cwd() / "Include" / "KRE" / "CRL"),
         # ACPICA sources expect the ACPICA include directories on CPPPATH, which points into the Device
         # module
-        str(Path.cwd() / "Include" / "Device" / "ACPI" / "ACPICA" ),
+        str(Path.cwd() / "Include" / "Device" / "ACPI" / "ACPICA"),
     ]
     # Compiler Flags
     # CCFLAGS are also appended in CXXFLAGS, therefore common gcc/g++ compiler flags are only defined
@@ -229,7 +231,8 @@ def configure_compiler(env: Environment) -> None:
         "-mincoming-stack-boundary=3",
     ]
     env["CXXFLAGS"] = [
-        "-std=c++23",
+        "-std=c++26",
+        "-fcontracts",
         "-fno-exceptions",
         "-fno-rtti",
         "-fno-threadsafe-statics",

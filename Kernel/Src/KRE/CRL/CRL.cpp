@@ -12,15 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <KRE/CppRTS.h>
+#include <KRE/CRL/CRL.h>
 
-void (*ON_CXA_PURE_VIRTUAL)() = [] {}; // NOLINT
-
-void (*ON_STACK_GUARD_FAIL)() = [] {}; // NOLINT
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//                              C/C++ Compiler expects these to be defined
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+// ============================================================================================== //
+// C/C++ Compiler expects these to be defined
+// ============================================================================================== //
 
 auto memset(void* dest, const int chr, const size_t count) -> void* {
     auto* dest_ch = static_cast<unsigned char*>(dest);
@@ -82,16 +78,20 @@ auto memcmp(const void* lhs, const void* rhs, const size_t count) -> int {
     return 0;
 }
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+// ============================================================================================== //
 // Will be called when there is no implementation of a pure virtual function
 // (should not happen because compiler cries)
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+// ============================================================================================== //
+
+void (*ON_CXA_PURE_VIRTUAL)() = [] -> void {}; // NOLINT
 
 CLINK void __cxa_pure_virtual() { ON_CXA_PURE_VIRTUAL(); } // NOLINT
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-//                                      Stack smash protection
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+// ============================================================================================== //
+// Stack smash protection
+// ============================================================================================== //
+
+void (*ON_STACK_GUARD_FAIL)() = [] -> void {}; // NOLINT
 
 // TODO __stack_chk_guard should be a randomly generated value
 #if UINT32_MAX == UINTPTR_MAX
@@ -104,16 +104,48 @@ uintptr_t __stack_chk_guard = STACK_CHK_GUARD; // NOLINT
 
 CLINK void __stack_chk_fail(void) { ON_STACK_GUARD_FAIL(); } // NOLINT
 
+// ============================================================================================== //
+// Other compiler requirements
+// ============================================================================================== //
+
 auto atexit(void (*func)()) -> int {
     // NOP, because after the kernel exits there is only darkness
     SILENCE_UNUSED(func)
     return 0;
 }
 
-namespace Rune {
+// ============================================================================================== //
+// Contracts
+// ============================================================================================== //
 
-    void init_cpp_runtime_support(void (*on_cxa_pure_virtual)(), void (*on_stack_guard_fail)()) {
-        ON_CXA_PURE_VIRTUAL = on_cxa_pure_virtual;
-        ON_STACK_GUARD_FAIL = on_stack_guard_fail;
+void (*ON_TERMINATE)() = [] -> void {}; // NOLINT
+
+namespace std {
+    auto terminate() -> void { ON_TERMINATE(); } // NOLINT
+} // namespace std
+
+// NOLINTBEGIN
+void (*ON_HANDLE_CONTRACT_VIOLATION)(std::contracts::contract_violation const&) =
+    [](std::contracts::contract_violation const& cv) -> void {};
+// NOLINTEND
+
+auto handle_contract_violation(std::contracts::contract_violation const& cv) -> void {
+    ON_HANDLE_CONTRACT_VIOLATION(cv);
+}
+
+// ============================================================================================== //
+// CRL Initialization
+// ============================================================================================== //
+
+namespace Rune {
+    void init_cpp_runtime_layer(
+        void (*on_cxa_pure_virtual)(),
+        void (*on_stack_guard_fail)(),
+        void (*on_terminate)(),
+        void (*on_handle_contract_violation)(std::contracts::contract_violation const&)) {
+        ON_CXA_PURE_VIRTUAL          = on_cxa_pure_virtual;
+        ON_STACK_GUARD_FAIL          = on_stack_guard_fail;
+        ON_TERMINATE                 = on_terminate;
+        ON_HANDLE_CONTRACT_VIOLATION = on_handle_contract_violation;
     }
 } // namespace Rune

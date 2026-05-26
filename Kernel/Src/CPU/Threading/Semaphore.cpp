@@ -91,9 +91,8 @@ namespace Rune::CPU {
         if (_units >= _unit_max) return;
         _units++;
         SharedPointer<Thread> thread_to_wake;
-        if (!_wait_queue.is_empty()) {
-            thread_to_wake = *_wait_queue.head();
-            _wait_queue.remove_front();
+        if (!_wait_queue.empty()) {
+            thread_to_wake = _wait_queue.remove_front().value();
         }
         _scheduler->get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
         _scheduler->unblock(thread_to_wake);

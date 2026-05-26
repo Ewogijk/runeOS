@@ -20,8 +20,8 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/CRL/CRL.h>
 #include <KRE/Collections/LinkedList.h>
-#include <KRE/CppRTS.h>
 
 namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

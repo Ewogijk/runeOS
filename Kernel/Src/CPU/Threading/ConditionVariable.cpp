@@ -20,9 +20,8 @@
 
 namespace Rune::CPU {
     void ConditionVariable::wake_one() {
-        SharedPointer<Thread> thread = *m_waiters.head();
-        m_waiters.remove_front();
-        m_scheduler->unblock(thread);
+        auto thread = m_waiters.remove_front();
+        if (thread.has_value()) m_scheduler->unblock(thread.value());
     }
 
     ConditionVariable::ConditionVariable(Scheduler* scheduler)
@@ -54,12 +53,12 @@ namespace Rune::CPU {
 
     void ConditionVariable::notify_one() {
         CriticalSection<Spinlock> _(m_spinlock);
-        if (m_waiters.is_empty()) return;
+        if (m_waiters.empty()) return;
         wake_one();
     }
 
     void ConditionVariable::notify_all() {
         CriticalSection<Spinlock> _(m_spinlock);
-        while (!m_waiters.is_empty()) wake_one();
+        while (!m_waiters.empty()) wake_one();
     }
 } // namespace Rune::CPU

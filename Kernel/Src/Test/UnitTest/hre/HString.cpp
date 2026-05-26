@@ -147,7 +147,6 @@ namespace Heimdall {
     void HStringList::insert(const HString& str) { _list_detail->list.add_back(str.to_c_str()); }
 
     auto HStringList::operator[](size_t index) const -> HString {
-        HString* str = _list_detail->list[index];
-        return (str != nullptr) ? *str : HString();
+        return _list_detail->list[index];
     }
 } // namespace Heimdall

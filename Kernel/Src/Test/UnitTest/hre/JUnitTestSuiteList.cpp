@@ -64,7 +64,6 @@ namespace Heimdall {
     }
 
     auto JUnitTestSuiteList::operator[](size_t idx) -> JUnitTestSuite {
-        auto* test_suite = _list_detail->list[idx];
-        return (test_suite != nullptr) ? *test_suite : JUnitTestSuite();
+        return _list_detail->list[idx];
     }
 } // namespace Heimdall

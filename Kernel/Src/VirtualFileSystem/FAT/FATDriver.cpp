@@ -102,22 +102,22 @@ namespace Rune::VFS {
 
         // Set the file short name
         // TODO switch to the ~ naming
-        LocationAwareFileEntry* e_file = out.tail();
+        LocationAwareFileEntry& e_file = out.last();
         String                  short_file_name(tmp, 0, FileEntry::SHORT_NAME_MAIN_SIZE);
         short_file_name = short_file_name.upper();
-        memcpy(e_file->file.short_name.as_array,
+        memcpy(e_file.file.short_name.as_array,
                short_file_name.to_cstr(),
                FileEntry::SHORT_NAME_MAIN_SIZE);
-        memset(&e_file->file.short_name.as_array[FileEntry::SHORT_NAME_MAIN_SIZE],
+        memset(&e_file.file.short_name.as_array[FileEntry::SHORT_NAME_MAIN_SIZE],
                FileEntry::TRAILING_SPACE,
                FileEntry::SHORT_NAME_EXT_SIZE);
 
         // Fill the LFN entry file name entries with information
-        U8     short_name_checksum = e_file->file.compute_short_name_checksum();
+        U8     short_name_checksum = e_file.file.compute_short_name_checksum();
         size_t tmp_pos             = 0;
         U8     ordinal             = 1;
         for (int i = entry_range - 2; i >= 0; i--) {
-            auto* lfne = reinterpret_cast<LongFileNameEntry*>(&out[i]->file);
+            auto* lfne = reinterpret_cast<LongFileNameEntry*>(&out[i].file);
             // NOLINTBEGIN
             for (int j = 0; j < LongFileNameEntry::FN1_SIZE; j++) // NOLINT
                 lfne->file_name_1[j] = 0x0000 | tmp[tmp_pos++];
@@ -151,10 +151,10 @@ namespace Rune::VFS {
         IOStatus                           as = make_long_file_name_entries(md, path, file_entries);
         if (as != IOStatus::NONE) return as;
 
-        LocationAwareFileEntry* e_file  = file_entries.tail();
-        e_file->file.first_cluster_low  = 0;
-        e_file->file.first_cluster_high = 0;
-        e_file->file.attributes         = attributes;
+        auto& e_file                   = file_entries.last();
+        e_file.file.first_cluster_low  = 0;
+        e_file.file.first_cluster_high = 0;
+        e_file.file.attributes         = attributes;
 
         for (auto& entry : file_entries)
             if (!_file_entry_manager.update(md->m_mass_storage_dev_handle, md->m_BPB, entry))
@@ -185,16 +185,16 @@ namespace Rune::VFS {
         IOStatus                           as = make_long_file_name_entries(md, path, file_entries);
         if (as != IOStatus::NONE) return as;
 
-        LocationAwareFileEntry* e_file = file_entries.tail();
-        e_file->file.file_size         = 0;
-        e_file->file.attributes        = attributes;
+        auto& e_file           = file_entries.last();
+        e_file.file.file_size  = 0;
+        e_file.file.attributes = attributes;
 
         // Find cluster for directory content
         U32 cluster =
             _volume_manager.fat_find_next_free_cluster(md->m_mass_storage_dev_handle, md->m_BPB);
         if (cluster == 0) return IOStatus::DEV_OUT_OF_MEMORY;
-        e_file->file.first_cluster_low  = word_get(cluster, 0);
-        e_file->file.first_cluster_high = word_get(cluster, 1);
+        e_file.file.first_cluster_low  = word_get(cluster, 0);
+        e_file.file.first_cluster_high = word_get(cluster, 1);
 
         // Create the "dot" and "dotdot" entries
         auto cluster_size =
@@ -233,9 +233,9 @@ namespace Rune::VFS {
                                        md->m_BPB,
                                        cluster,
                                        _fat_engine->fat_get_eof_marker())) {
-            e_file->file.first_cluster_low  = 0;
-            e_file->file.first_cluster_high = 0;
-            _file_entry_manager.update(md->m_mass_storage_dev_handle, md->m_BPB, *e_file);
+            e_file.file.first_cluster_low  = 0;
+            e_file.file.first_cluster_high = 0;
+            _file_entry_manager.update(md->m_mass_storage_dev_handle, md->m_BPB, e_file);
             return IOStatus::DEV_ERROR;
         }
         return IOStatus::CREATED;
@@ -492,7 +492,7 @@ namespace Rune::VFS {
         SharedPointer<MassStorageDevRef> md = find_storage_dev_ref(mass_storage_dev_handle);
         if (!md) return IOStatus::DEV_UNKNOWN;
 
-        if (path.split().is_empty()) return IOStatus::BAD_PATH;
+        if (path.split().empty()) return IOStatus::BAD_PATH;
 
         IOStatus st = exists(md, path);
         if (st != IOStatus::NOT_FOUND) return st;
@@ -570,7 +570,7 @@ namespace Rune::VFS {
         if (!md) return IOStatus::DEV_UNKNOWN;
 
         LinkedList<String> split_path = path.split();
-        if (split_path.is_empty()) return IOStatus::BAD_PATH;
+        if (split_path.empty()) return IOStatus::BAD_PATH;
         LocationAwareFileEntry to_delete;
         VolumeAccessStatus     st =
             _file_entry_manager.search(mass_storage_dev_handle, md->m_BPB, path, to_delete);

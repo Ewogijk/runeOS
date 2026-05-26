@@ -60,8 +60,5 @@ namespace Heimdall {
 
     void TestList::insert(const Test& test) { _list_detail->list.add_back(test); }
 
-    auto TestList::operator[](size_t index) const -> Test {
-        Test* t = _list_detail->list[index];
-        return (t != nullptr) ? *t : Test();
-    }
+    auto TestList::operator[](size_t index) const -> Test { return _list_detail->list[index]; }
 } // namespace Heimdall

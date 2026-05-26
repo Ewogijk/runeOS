@@ -231,7 +231,7 @@ CLINK {
         // Check if enough ACPI memory is available. If yes, get a virtual address
         VirtualAddr v_addr              = 0x0;
         bool        memory_gap_selected = false;
-        if (g_osl_config.m_acpi_memory_gaps.is_empty()) {
+        if (g_osl_config.m_acpi_memory_gaps.empty()) {
             // No free memory gaps -> Allocate at memory limit
             if (!check_acpi_memory_available(aligned_size)) return nullptr; // Out of virtual memory
             v_addr = g_osl_config.m_acpi_memory_limit;
@@ -707,11 +707,13 @@ CLINK {
                               ->install_irq_handler(irq,
                                                     int_ctx.dev_handle,
                                                     int_ctx.dev_name,
-                                                    [&handler, &ctx] -> Rune::CPU::IRQState::_E {
+                                                    [&handler, &ctx](CPU::InterruptFrame* i_frame)
+                                                        -> Rune::CPU::InterruptState::_E {
+                                                        SILENCE_UNUSED(i_frame)
                                                         UINT32 ret = handler(ctx);
                                                         return ret == ACPI_INTERRUPT_HANDLED
-                                                                   ? CPU::IRQState::HANDLED
-                                                                   : CPU::IRQState::PENDING;
+                                                                   ? CPU::InterruptState::HANDLED
+                                                                   : CPU::InterruptState::PENDING;
                                                     });
 
         if (!registered) return AE_ALREADY_EXISTS;
