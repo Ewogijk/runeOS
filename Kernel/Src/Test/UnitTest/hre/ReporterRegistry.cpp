@@ -71,7 +71,6 @@ namespace Heimdall {
     }
 
     auto ReporterRegistry::operator[](size_t index) const -> Reporter* {
-        Rune::SharedPointer<Reporter>* reporter = _list_detail->list[index];
-        return (reporter != nullptr) ? reporter->get() : nullptr;
+        return _list_detail->list[index].get();
     }
 } // namespace Heimdall
