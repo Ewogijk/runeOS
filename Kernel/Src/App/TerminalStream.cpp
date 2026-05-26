@@ -116,7 +116,7 @@ namespace Rune::App {
             LinkedList<size_t> indices_to_remove;
             size_t             line_offset = 0;
             for (size_t i = 0; i < styled_text.size(); i++) {
-                auto  st       = styled_text[i];
+                auto&  st       = styled_text[i];
                 size_t txt_size = st.text.size();
                 if (line_offset < off + len && off < line_offset + txt_size) {
                     if (line_offset < off) {
