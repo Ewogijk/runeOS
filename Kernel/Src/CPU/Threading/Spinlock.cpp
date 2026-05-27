@@ -25,38 +25,17 @@
 
 namespace Rune::CPU {
 
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Spinlock");
-
-    Spinlock::Spinlock(SpinlockHandle handle, String name)
-        : Resource(handle, name) {}
-
-    auto Spinlock::get_owner() const -> ThreadHandle { return _owner; }
+    Spinlock::Spinlock() = default;
 
     void Spinlock::lock() {
         while (true) {
             // Try to claim the spinlock
-            if (!atomic_flag_test_and_set(&_lock)) {
-                // Spinlock is claimed
-                // For debugging: Track ownership
-                auto calling_thread = g_scheduler.get_running_thread();
-                LOGGER->trace(R"({}: {} lock)",
-                              get_unique_name(),
-                              calling_thread->get_unique_name());
-                _owner                          = calling_thread->get_handle();
-                calling_thread->spinlock_handle = get_handle();
-                return;
-            }
-
-            auto calling_thread = g_scheduler.get_running_thread();
-            LOGGER->trace(R"({}: {} busy wait)",
-                          get_unique_name(),
-                          calling_thread->get_unique_name());
-            calling_thread->spinlock_handle = get_handle();
+            if (!atomic_flag_test_and_set(&_lock)) return; // Spinlock is claimed
 
             // The spinlock is already claimed -> Wait until it is free
             //  1. Only read the _lock to prevent cache line bouncing introduced by
             //      read-modify-write instructions
-            //  2. Use CPU::pause() which runs an architecture specific wait instruction optimized
+            //  2. Use CPU::pause() which runs an architecture-specific wait instruction optimized
             //      for efficient waiting
             while (atomic_flag_test(&_lock)) CPU::pause();
             // The spinlock has been unlocked -> Try to claim it again
@@ -69,16 +48,7 @@ namespace Rune::CPU {
         return flags;
     }
 
-    void Spinlock::unlock() {
-        // Should unlocking by not owner threads be disallowed?
-        atomic_flag_clear(&_lock);
-
-        // For debugging: Track ownership
-        auto t = g_scheduler.get_running_thread();
-        LOGGER->trace(R"({}: {} unlock)", get_unique_name(), t->get_unique_name());
-        _owner             = Resource<ThreadHandle>::HANDLE_NONE;
-        t->spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
-    }
+    void Spinlock::unlock() { atomic_flag_clear(&_lock); }
 
     void Spinlock::unlock_safe(Register restore_flags) {
         unlock();

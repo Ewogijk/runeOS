@@ -39,9 +39,7 @@ namespace Rune::CPU {
                          int             counter_max)
         : Resource(handle, name),
           _units(counter_start),
-          _unit_max(counter_max),
-          _lock(Resource<SpinlockHandle>::HANDLE_NONE,
-                String::format("{}Lock", get_unique_name())) {}
+          _unit_max(counter_max) {}
 
     auto Semaphore::get_available_units() const -> int { return _units; }
 

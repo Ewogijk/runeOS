@@ -19,10 +19,22 @@
 
 namespace Rune {
 
-    /**
-     * Check if a type is an integral type.
-     * @tparam T
-     */
+    struct false_type {
+        static constexpr bool value = false;
+        constexpr             operator bool() const noexcept { return value; }
+    };
+
+    struct true_type {
+        static constexpr bool value = true;
+        constexpr             operator bool() const noexcept { return value; }
+    };
+
+    // ========================================================================================== //
+    // Basic types
+    // ========================================================================================== //
+
+    /// @brief Check if a type is an integral type.
+    /// @tparam T
     template <typename T>
     struct is_integral {
         static bool constexpr value = false;
@@ -72,10 +84,8 @@ namespace Rune {
         static bool constexpr value = true;
     };
 
-    /**
-     * Check if a type is a floating-point type.
-     * @tparam T
-     */
+    /// @brief Check if a type is a floating-point type.
+    /// @tparam T
     template <typename T>
     struct is_floating_point {
         static bool constexpr value = false;
@@ -104,6 +114,10 @@ namespace Rune {
     template <typename T>
     concept Number = is_integral<T>::value || is_floating_point<T>::value;
 
+    // ========================================================================================== //
+    // std::add_lvalue_reference port
+    // ========================================================================================== //
+
     template <typename T>
     struct AddLValueRef {
         using type = T&;
@@ -112,6 +126,71 @@ namespace Rune {
     struct AddLValueRef<void> {
         using type = void;
     };
+
+    // ========================================================================================== //
+    // std::remove_ref
+    // ========================================================================================== //
+
+    template <typename T>
+    struct RemoveRef {
+        using type = T;
+    };
+
+    template <typename T>
+    struct RemoveRef<T&> {
+        using type = T;
+    };
+
+    template <typename T>
+    struct RemoveRef<T&&> {
+        using type = T;
+    };
+
+    // ========================================================================================== //
+    // std::remove_const port
+    // ========================================================================================== //
+
+    template <class T>
+    struct RemoveConst {
+        using type = T;
+    };
+    template <class T>
+    struct RemoveConst<const T> {
+        using type = T;
+    };
+
+    // ========================================================================================== //
+    // std::remove_volatile port
+    // ========================================================================================== //
+
+    template <class T>
+    struct RemoveVolatile {
+        using type = T;
+    };
+    template <class T>
+    struct RemoveVolatile<volatile T> {
+        using type = T;
+    };
+
+    // ========================================================================================== //
+    // std::remove_cv port
+    // ========================================================================================== //
+
+    template <class T>
+    struct RemoveCV {
+        using type = RemoveConst<RemoveVolatile<T>>::type;
+    };
+
+    // ========================================================================================== //
+    // std::is_same port
+    // ========================================================================================== //
+
+    template <class T, class U>
+    struct is_same : false_type {};
+
+    template <class T>
+    struct is_same<T, T> : true_type {};
+
 } // namespace Rune
 
 #endif // RUNEOS_TYPETRAITS_H

@@ -122,26 +122,26 @@ namespace Rune {
             return Optional<T>(forward<T>(removed_ele));
         }
 
-        auto contains0(const T& element) -> bool {
-            Node<T>* current = m_first;
-            while (current != nullptr) {
-                if (current->m_element == element) {
-                    return true;
+        auto index_of0(const T& element) -> int {
+            int idx = 0;
+            for (auto& node : *this) {
+                if (node == element) {
+                    return idx;
                 }
-                current = current->m_next;
+                idx++;
             }
-            return false;
+            return -1;
         }
 
-        auto contains0(const T& element) const -> bool {
-            Node<T>* current = m_first;
-            while (current != nullptr) {
-                if (current->m_element == element) {
-                    return true;
+        auto index_of0(const T& element) const -> int {
+            int idx = 0;
+            for (auto& node : *this) {
+                if (node == element) {
+                    return idx;
                 }
-                current = current->m_next;
+                idx++;
             }
-            return false;
+            return -1;
         }
 
         void free_nodes() {
@@ -308,25 +308,53 @@ namespace Rune {
             return remove0(to_remove);
         }
 
-        /// @brief
+        /// @brief Get the index of the element in the list.
         /// @param element
-        /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(const T& element) const -> bool { return contains0(element); }
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(const T& element) const -> int {
+            return index_of0(element);
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(const T& element) -> int {
+            return index_of0(element);
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(T&& element) const -> int {
+            return index_of0(move(element));
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(T&& element) -> int {
+            return index_of0(move(element));
+        }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(const T& element) -> bool { return contains0(element); }
+        auto contains(const T& element) const -> bool { return index_of(element) >= 0; }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(T&& element) const -> bool { return contains0(move(element)); }
+        auto contains(const T& element) -> bool { return index_of(element) >= 0; }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(T&& element) -> bool { return contains0(move(element)); }
+        auto contains(T&& element) const -> bool { return index_of(move(element)) >= 0; }
+
+        /// @brief
+        /// @param element
+        /// @return True: The element is in the list, False: Is not in the list.
+        auto contains(T&& element) -> bool { return index_of(move(element)) >= 0; }
 
         /// @brief Remove all elements from the list.
         void clear() {

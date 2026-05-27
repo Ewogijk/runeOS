@@ -51,8 +51,6 @@ namespace Rune::CPU {
     using TimerHandle = U16;
     /// @brief Handle type of thread.
     using ThreadHandle = U16;
-    /// @brief Handle type of spinlock.
-    using SpinlockHandle = U16;
     /// @brief Handle type of mutex.
     using MutexHandle = U16;
     /// @brief Handle type of semaphore.
@@ -210,9 +208,6 @@ namespace Rune::CPU {
 
         /// @brief Handle of the mutex that maintains the thread.
         MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
-
-        /// @brief Handle of the spinlock that maintains the thread.
-        SpinlockHandle spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;
 
         /// @brief Handle of the semaphore that maintains the thread.
         SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;

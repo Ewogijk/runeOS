@@ -24,8 +24,7 @@ namespace Rune::CPU {
         if (thread.has_value()) g_scheduler.unblock(thread.value());
     }
 
-    ConditionVariable::ConditionVariable()
-        : m_spinlock(Resource<MutexHandle>::HANDLE_NONE, "CV") {}
+    ConditionVariable::ConditionVariable() : m_spinlock() {}
 
     auto ConditionVariable::get_waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;

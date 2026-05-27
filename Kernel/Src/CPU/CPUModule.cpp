@@ -525,38 +525,38 @@ namespace Rune::CPU {
     // ========================================================================================== //
     // Spinlock API
     // ========================================================================================== //
-
-    auto CPUModule::get_spinlock_table() -> LinkedList<Spinlock*> {
-        LinkedList<Spinlock*> copy;
-        for (const auto& sp : _spinlock_table) copy.add_back(sp.value->get());
-        return copy;
-    }
-
-    auto CPUModule::find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock> {
-        auto it = _spinlock_table.find(handle);
-        return it == _spinlock_table.end() ? SharedPointer<Spinlock>() : *it->value;
-    }
-
-    void CPUModule::dump_spinlock_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<SharedPointer<Spinlock>, 2>::make_table(
-            [](const SharedPointer<Spinlock>& sp) -> Array<String, 2> {
-                return {sp->get_unique_name(), String::format("", sp->get_owner())};
-            })
-            .with_headers({"ID-Name", "Owner Handle"})
-            .with_data(_spinlock_table.values())
-            .print(stream);
-    }
-
-    auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
-        if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
-        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name);
-        _spinlock_table.put(sp->get_handle(), sp);
-        return sp;
-    }
-
-    auto CPUModule::free_spinlock(SpinlockHandle handle) -> bool {
-        return _spinlock_table.remove(handle);
-    }
+    //
+    // auto CPUModule::get_spinlock_table() -> LinkedList<Spinlock*> {
+    //     LinkedList<Spinlock*> copy;
+    //     for (const auto& sp : _spinlock_table) copy.add_back(sp.value->get());
+    //     return copy;
+    // }
+    //
+    // auto CPUModule::find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock> {
+    //     auto it = _spinlock_table.find(handle);
+    //     return it == _spinlock_table.end() ? SharedPointer<Spinlock>() : *it->value;
+    // }
+    //
+    // void CPUModule::dump_spinlock_table(const SharedPointer<TextStream>& stream) const {
+    //     TableFormatter<SharedPointer<Spinlock>, 2>::make_table(
+    //         [](const SharedPointer<Spinlock>& sp) -> Array<String, 2> {
+    //             return {sp->get_unique_name(), String::format("", sp->get_owner())};
+    //         })
+    //         .with_headers({"ID-Name", "Owner Handle"})
+    //         .with_data(_spinlock_table.values())
+    //         .print(stream);
+    // }
+    //
+    // auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
+    //     if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
+    //     auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name);
+    //     _spinlock_table.put(sp->get_handle(), sp);
+    //     return sp;
+    // }
+    //
+    // auto CPUModule::free_spinlock(SpinlockHandle handle) -> bool {
+    //     return _spinlock_table.remove(handle);
+    // }
 
     // ========================================================================================== //
     // Time API

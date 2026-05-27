@@ -29,21 +29,6 @@ namespace Rune {
     //                                      General Stuff
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    template <typename T>
-    struct RemoveRef {
-        using Type = T;
-    };
-
-    template <typename T>
-    struct RemoveRef<T&> {
-        using Type = T;
-    };
-
-    template <typename T>
-    struct RemoveRef<T&&> {
-        using Type = T;
-    };
-
     /**
      * Implementation of std::move.
      *
@@ -52,8 +37,8 @@ namespace Rune {
      * @return
      */
     template <typename T>
-    auto move(T&& param) -> typename RemoveRef<T>::Type&& { // NOLINT
-        return static_cast<typename RemoveRef<T>::Type&&>(param);
+    auto move(T&& param) -> typename RemoveRef<T>::type&& { // NOLINT
+        return static_cast<typename RemoveRef<T>::type&&>(param);
     }
 
     /**
@@ -64,7 +49,7 @@ namespace Rune {
      * @return
      */
     template <typename T>
-    constexpr auto forward(typename RemoveRef<T>::Type& param) -> T&& {
+    constexpr auto forward(typename RemoveRef<T>::type& param) -> T&& {
         return static_cast<T&&>(param);
     }
 
@@ -76,7 +61,7 @@ namespace Rune {
      * @return
      */
     template <typename T>
-    constexpr auto forward(typename RemoveRef<T>::Type&& param) -> T&& { // NOLINT
+    constexpr auto forward(typename RemoveRef<T>::type&& param) -> T&& { // NOLINT
         return static_cast<T&&>(param);
     }
 
@@ -607,11 +592,6 @@ namespace Rune {
       public:
         Optional() noexcept {};
 
-        template <typename U>
-        Optional(const U& obj) : _has_value(true) {
-            new (&_data) T(obj);
-        }
-
         Optional(const NullOptional& null_opt) noexcept {SILENCE_UNUSED(null_opt)}
 
         Optional(const Optional& other)
@@ -632,6 +612,12 @@ namespace Rune {
         Optional(Inplace inplace, Args&&... args) : _has_value(true) {
             SILENCE_UNUSED(inplace);
             new (&_data) T(forward<Args>(args)...);
+        }
+
+        template <typename U = RemoveCV<T>::type>
+        requires(!is_same<typename RemoveRef<U>::type, Optional<T>>::value)
+        Optional(U&& obj) : _has_value(true) {
+            new (&_data) T(forward(obj));
         }
 
         auto operator=(const Optional<T>& other) -> Optional<T>& {

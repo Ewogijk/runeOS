@@ -32,10 +32,7 @@ namespace Rune::CPU {
                       wq);
     }
 
-    Mutex::Mutex(MutexHandle handle, const String& name)
-        : Resource(handle, name),
-          _wait_queue_lock(Resource<SpinlockHandle>::HANDLE_NONE,
-                           String::format("{}WQLock", get_unique_name())) {}
+    Mutex::Mutex(MutexHandle handle, const String& name) : Resource(handle, name) {}
 
     auto Mutex::get_owner() const -> Thread* { return _owner ? _owner.get() : nullptr; }
 
@@ -126,7 +123,8 @@ namespace Rune::CPU {
         return true;
     }
 
-    ResourceCache<Mutex, 3> g_mutex_cache({"ID-Name", "Owner", "WaitQueue"},
+    ResourceCache<Mutex, 3>
+        g_mutex_cache({"ID-Name", "Owner", "WaitQueue"},
                       [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
                           Thread* owner           = mutex->get_owner();
                           String  waiting_threads = "";

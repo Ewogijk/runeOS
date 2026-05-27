@@ -82,9 +82,9 @@ namespace Rune::CPU {
 
         HashMap<SemaphoreHandle, SharedPointer<Semaphore>> _semaphore_table;
         HandleCounter<SemaphoreHandle>                     _semaphore_handle_counter;
-
-        HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
-        HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
+        //
+        // HashMap<SpinlockHandle, SharedPointer<Spinlock>> _spinlock_table;
+        // HandleCounter<SpinlockHandle>                    _spinlock_handle_counter;
 
         HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
@@ -328,32 +328,32 @@ namespace Rune::CPU {
         /// @return True: The semaphore was freed, False: No semaphore with the handle was found.
         auto free_semaphore(SemaphoreHandle handle) -> bool;
 
-        // ====================================================================================== //
-        // Spinlock API
-        // ====================================================================================== //
-
-        /// @brief A list of all currently created spinlocks.
-        /// @return The spinlock table.
-        auto get_spinlock_table() -> LinkedList<Spinlock*>;
-
-        /// @brief Try to find the spinlock with the given handle.
-        /// @param handle Handle of a spinlock.
-        /// @return A pointer to a spinlock, null if not found.
-        auto find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock>;
-
-        /// @brief Dump the spinlock table to the stream.
-        /// @param stream
-        void dump_spinlock_table(const SharedPointer<TextStream>& stream) const;
-
-        /// @brief Create a new spinlock instance and add it to the spinlock table.
-        /// @param name          Name of the spinlock.
-        /// @return A new spinlock instance.
-        auto create_spinlock(String name) -> SharedPointer<Spinlock>;
-
-        /// @brief Free the memory of the spinlock with the given handle.
-        /// @param handle Handle of a spinlock
-        /// @return True: The spinlock was freed, False: No spinlock with the handle was found.
-        auto free_spinlock(SpinlockHandle handle) -> bool;
+        // // ====================================================================================== //
+        // // Spinlock API
+        // // ====================================================================================== //
+        //
+        // /// @brief A list of all currently created spinlocks.
+        // /// @return The spinlock table.
+        // auto get_spinlock_table() -> LinkedList<Spinlock*>;
+        //
+        // /// @brief Try to find the spinlock with the given handle.
+        // /// @param handle Handle of a spinlock.
+        // /// @return A pointer to a spinlock, null if not found.
+        // auto find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock>;
+        //
+        // /// @brief Dump the spinlock table to the stream.
+        // /// @param stream
+        // void dump_spinlock_table(const SharedPointer<TextStream>& stream) const;
+        //
+        // /// @brief Create a new spinlock instance and add it to the spinlock table.
+        // /// @param name          Name of the spinlock.
+        // /// @return A new spinlock instance.
+        // auto create_spinlock(String name) -> SharedPointer<Spinlock>;
+        //
+        // /// @brief Free the memory of the spinlock with the given handle.
+        // /// @param handle Handle of a spinlock
+        // /// @return True: The spinlock was freed, False: No spinlock with the handle was found.
+        // auto free_spinlock(SpinlockHandle handle) -> bool;
 
         // ====================================================================================== //
         // Time API
