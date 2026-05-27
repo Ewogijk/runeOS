@@ -21,12 +21,11 @@
 namespace Rune::CPU {
     void ConditionVariable::wake_one() {
         auto thread = m_waiters.remove_front();
-        if (thread.has_value()) m_scheduler->unblock(thread.value());
+        if (thread.has_value()) g_scheduler.unblock(thread.value());
     }
 
-    ConditionVariable::ConditionVariable(Scheduler* scheduler)
-        : m_scheduler(scheduler),
-          m_spinlock(Resource<MutexHandle>::HANDLE_NONE, "CV", scheduler) {}
+    ConditionVariable::ConditionVariable()
+        : m_spinlock(Resource<MutexHandle>::HANDLE_NONE, "CV") {}
 
     auto ConditionVariable::get_waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
@@ -37,11 +36,11 @@ namespace Rune::CPU {
     void ConditionVariable::wait(Mutex& mutex) {
         {
             CriticalSection<Spinlock> _(m_spinlock);
-            m_waiters.add_back(m_scheduler->get_running_thread());
-            m_scheduler->await_block();
+            m_waiters.add_back(g_scheduler.get_running_thread());
+            g_scheduler.await_block();
         }
         mutex.unlock();
-        m_scheduler->block();
+        g_scheduler.block();
         mutex.lock();
     }
 

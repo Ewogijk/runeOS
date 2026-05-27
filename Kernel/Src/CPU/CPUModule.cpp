@@ -31,16 +31,16 @@ namespace Rune::CPU {
         // Use the raw pointer to avoid referencing the shared pointer which will never be cleaned
         // up because of the context switch in "unlock", so C++ never gets to call the destructor on
         // "t"
-        auto* t = Scheduler::instance().get_running_thread().get();
+        auto* t = g_scheduler.get_running_thread().get();
         LOGGER->trace(R"(Thread {} has finished. Exit Code: {})", t->get_unique_name(), exit_code);
 
-        Scheduler::instance().stop();
+        g_scheduler.stop();
     }
 
     void thread_enter() {
-        Scheduler::instance().on_thread_enter();
+        g_scheduler.on_thread_enter();
         // Use raw pointer -> See "thread_exit" for explanation
-        auto* t = Scheduler::instance().get_running_thread().get();
+        auto* t = g_scheduler.get_running_thread().get();
         if (t->user_stack.stack_top == 0) {
             LOGGER->trace("Will execute main in kernel mode.");
             current_core()->execute_in_kernel_mode(t, memory_pointer_to_addr(&thread_exit));
@@ -64,15 +64,15 @@ namespace Rune::CPU {
         SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_irq_disable();
-            auto*                           tgb = Scheduler::instance().get_thread_garbage_bin();
+            auto*                           tgb = g_scheduler.get_thread_garbage_bin();
             Optional<SharedPointer<Thread>> cT  = tgb->remove_front();
             while (cT) {
                 auto dT = cT;
                 cT      = tgb->remove_front();
                 LOGGER->trace(R"(Terminating thread: {})", dT.value()->get_unique_name());
 
-                auto* next = Scheduler::instance().get_ready_queue()->peek();
-                if (next == nullptr) next = Scheduler::instance().get_idle_thread().get();
+                auto* next = g_scheduler.get_ready_queue()->peek();
+                if (next == nullptr) next = g_scheduler.get_idle_thread().get();
                 ON_THREAD_STOPPED(forward<Thread*>(dT.value().get()), forward<Thread*>(next));
                 delete[] dT.value()->kernel_stack_bottom;
 
@@ -84,9 +84,9 @@ namespace Rune::CPU {
                 }
                 // dT gets deleted here after it goes out of scope
             }
-            Scheduler::instance().await_block();
+            g_scheduler.await_block();
             interrupt_irq_enable();
-            Scheduler::instance().block();
+            g_scheduler.block();
         }
         return 0;
     }
@@ -203,10 +203,10 @@ namespace Rune::CPU {
                           base_pt_addr,
                           SchedulingPolicy::NONE,
                           {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        if (!Scheduler::instance().init(bootstrap_thread,
-                                        le_idle_thread,
-                                        garbage_collector_thread,
-                                        &thread_enter)) {
+        if (!g_scheduler.init(bootstrap_thread,
+                              le_idle_thread,
+                              garbage_collector_thread,
+                              &thread_enter)) {
             LOGGER->critical("Failed to start the scheduler!");
             return false;
         }
@@ -218,7 +218,7 @@ namespace Rune::CPU {
             if (maybe_wait_list != _on_stop_syncing_threads.end()) {
                 for (SharedPointer<Thread>& t : *maybe_wait_list->value) {
                     t->m_sync_stop_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
-                    Scheduler::instance().unblock(t);
+                    g_scheduler.unblock(t);
                 }
                 maybe_wait_list->value->clear();
                 _on_stop_syncing_threads.remove(term->get_handle());
@@ -227,11 +227,11 @@ namespace Rune::CPU {
             fire(EventHook(EventHook::THREAD_STOPPED).to_string(),
                  reinterpret_cast<void*>(&tt_ctx));
         };
-        Scheduler::instance().set_on_context_switch([this](Thread* next) -> void {
+        g_scheduler.set_on_context_switch([this](Thread* next) -> void {
             fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), reinterpret_cast<void*>(next));
         });
-        _thread_table.put(Scheduler::instance().get_running_thread()->get_handle(),
-                          Scheduler::instance().get_running_thread());
+        _thread_table.put(g_scheduler.get_running_thread()->get_handle(),
+                          g_scheduler.get_running_thread());
         _thread_table.put(garbage_collector_thread->get_handle(), garbage_collector_thread);
         _thread_table.put(le_idle_thread->get_handle(), le_idle_thread);
 
@@ -243,7 +243,7 @@ namespace Rune::CPU {
         }
         constexpr U64 TIMER_FREQ = 1000;
         constexpr U32 QUANTUM    = 50000000; // Each thread can run for a maximum of 50ms at a time
-        if (!_timer->start(&Scheduler::instance(), TimerMode::PERIODIC, TIMER_FREQ, QUANTUM)) {
+        if (!_timer->start(&g_scheduler, TimerMode::PERIODIC, TIMER_FREQ, QUANTUM)) {
             LOGGER->critical("Could not start the timer!");
             return false;
         }
@@ -291,7 +291,7 @@ namespace Rune::CPU {
     //                                      High Level Threading API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto CPUModule::get_scheduler() -> Scheduler* { return &Scheduler::instance(); }
+    auto CPUModule::get_scheduler() -> Scheduler* { return &g_scheduler; }
 
     auto CPUModule::get_thread_table() -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
@@ -337,7 +337,7 @@ namespace Rune::CPU {
                                                          policy,
                                                          move(user_stack));
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
-        if (!Scheduler::instance().schedule(new_thread)) return Resource<ThreadHandle>::HANDLE_NONE;
+        if (!g_scheduler.schedule(new_thread)) return Resource<ThreadHandle>::HANDLE_NONE;
         _thread_table.put(new_thread->get_handle(), new_thread);
         return new_thread->get_handle();
     }
@@ -367,7 +367,7 @@ namespace Rune::CPU {
                 // to stop it
                 return true;
             case ThreadState::READY:
-                if (!Scheduler::instance().get_ready_queue()->remove(handle)) {
+                if (!g_scheduler.get_ready_queue()->remove(handle)) {
                     LOGGER->error(R"({} is missing from the ready queue.)",
                                   da_thread->get_unique_name());
                     return false;
@@ -379,12 +379,12 @@ namespace Rune::CPU {
                 LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
                 return true;
             case ThreadState::AWAIT_BLOCK:
-                if (Scheduler::instance().get_running_thread()->get_handle()
+                if (g_scheduler.get_running_thread()->get_handle()
                     == static_cast<ThreadHandle>(handle)) {
                     LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
                     return true;
                 } else {
-                    if (!Scheduler::instance().get_ready_queue()->remove(handle)) {
+                    if (!g_scheduler.get_ready_queue()->remove(handle)) {
                         LOGGER->error(R"({} is missing from the ready queue.)",
                                       da_thread->get_unique_name());
                         return false;
@@ -428,7 +428,7 @@ namespace Rune::CPU {
                 break;
         }
 
-        Scheduler::instance().stop(da_thread);
+        g_scheduler.stop(da_thread);
         return true;
     }
 
@@ -437,7 +437,7 @@ namespace Rune::CPU {
         if (maybe_thread == _thread_table.end()) return false;
         auto thread = *maybe_thread->value;
 
-        auto calling_thread  = Scheduler::instance().get_running_thread();
+        auto calling_thread  = g_scheduler.get_running_thread();
         auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
         if (maybe_wait_list == _on_stop_syncing_threads.end()) {
             _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
@@ -445,8 +445,8 @@ namespace Rune::CPU {
         }
         maybe_wait_list->value->add_back(calling_thread);
         calling_thread->m_sync_stop_thread_handle = thread->get_handle();
-        Scheduler::instance().await_block();
-        Scheduler::instance().block(calling_thread);
+        g_scheduler.await_block();
+        g_scheduler.block(calling_thread);
         return true;
     }
 
@@ -468,7 +468,7 @@ namespace Rune::CPU {
     }
 
     auto CPUModule::create_mutex(String name) -> SharedPointer<Mutex> {
-        return g_mutex_cache.allocate(move(name), &Scheduler::instance());
+        return g_mutex_cache.allocate(move(name));
     }
 
     auto CPUModule::release_mutex(U16 mutex_handle) -> bool {
@@ -512,7 +512,6 @@ namespace Rune::CPU {
         if (!_semaphore_handle_counter.has_more()) return SharedPointer<Semaphore>(nullptr);
         auto sem = make_shared<Semaphore>(_semaphore_handle_counter.acquire(),
                                           name,
-                                          &Scheduler::instance(),
                                           counter_start,
                                           counter_max);
         _semaphore_table.put(sem->get_handle(), sem);
@@ -550,8 +549,7 @@ namespace Rune::CPU {
 
     auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
         if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
-        auto sp =
-            make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name, &Scheduler::instance());
+        auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name);
         _spinlock_table.put(sp->get_handle(), sp);
         return sp;
     }

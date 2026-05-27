@@ -71,7 +71,6 @@ namespace Rune::CPU {
     template <class ResultType>
     class Promise {
         SharedPointer<FPSharedState<ResultType>> m_shared_state;
-        Future<ResultType>                       m_future;
 
         void update_state(const ResultType& value) {
             {
@@ -82,16 +81,15 @@ namespace Rune::CPU {
         }
 
       public:
-        Promise(Scheduler* scheduler)
+        Promise()
             : m_shared_state(new FPSharedState<ResultType>(
                   Optional<ResultType>(),
-                  ConditionVariable(scheduler),
-                  Mutex(Resource<MutexHandle>::HANDLE_NONE, "", scheduler))),
-              m_future(m_shared_state) {}
+                  ConditionVariable(),
+                  Mutex(Resource<MutexHandle>::HANDLE_NONE, ""))) {}
 
         /// @brief Get a reference to the future associated to this promise.
         /// @return A reference to the associated future.
-        auto get_future() const -> const Future<ResultType>& { return m_future; }
+        auto get_future() const -> Future<ResultType> { return Future(m_shared_state); }
 
         /// @brief Set the result value and notify all waiting threads.
         /// @param value Result value.

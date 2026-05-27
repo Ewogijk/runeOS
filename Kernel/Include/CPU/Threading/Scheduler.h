@@ -88,16 +88,10 @@ namespace Rune::CPU {
         /// Note: This function is NOT thread safe!
         void perform_context_switch();
 
+      public:
         Scheduler();
 
-      public:
         ~Scheduler() = default;
-
-        /**
-         *
-         * @return Get the instance of the scheduler.
-         */
-        static auto instance() -> Scheduler&;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Properties
@@ -293,6 +287,9 @@ namespace Rune::CPU {
         /// Note: This function is thread safe.
         void stop();
     };
+
+    /// @brief Kernel-wide scheduler instance.
+    extern Scheduler g_scheduler;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_SCHEDULER_H

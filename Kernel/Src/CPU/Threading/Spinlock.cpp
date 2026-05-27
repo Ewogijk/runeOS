@@ -27,9 +27,8 @@ namespace Rune::CPU {
 
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Spinlock");
 
-    Spinlock::Spinlock(SpinlockHandle handle, String name, Scheduler* scheduler)
-        : Resource(handle, name),
-          _scheduler(scheduler) {}
+    Spinlock::Spinlock(SpinlockHandle handle, String name)
+        : Resource(handle, name) {}
 
     auto Spinlock::get_owner() const -> ThreadHandle { return _owner; }
 
@@ -39,7 +38,7 @@ namespace Rune::CPU {
             if (!atomic_flag_test_and_set(&_lock)) {
                 // Spinlock is claimed
                 // For debugging: Track ownership
-                auto calling_thread = _scheduler->get_running_thread();
+                auto calling_thread = g_scheduler.get_running_thread();
                 LOGGER->trace(R"({}: {} lock)",
                               get_unique_name(),
                               calling_thread->get_unique_name());
@@ -48,7 +47,7 @@ namespace Rune::CPU {
                 return;
             }
 
-            auto calling_thread = _scheduler->get_running_thread();
+            auto calling_thread = g_scheduler.get_running_thread();
             LOGGER->trace(R"({}: {} busy wait)",
                           get_unique_name(),
                           calling_thread->get_unique_name());
@@ -75,7 +74,7 @@ namespace Rune::CPU {
         atomic_flag_clear(&_lock);
 
         // For debugging: Track ownership
-        auto t = _scheduler->get_running_thread();
+        auto t = g_scheduler.get_running_thread();
         LOGGER->trace(R"({}: {} unlock)", get_unique_name(), t->get_unique_name());
         _owner             = Resource<ThreadHandle>::HANDLE_NONE;
         t->spinlock_handle = Resource<SpinlockHandle>::HANDLE_NONE;

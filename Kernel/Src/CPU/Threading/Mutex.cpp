@@ -32,12 +32,10 @@ namespace Rune::CPU {
                       wq);
     }
 
-    Mutex::Mutex(MutexHandle handle, const String& name, Scheduler* scheduler)
+    Mutex::Mutex(MutexHandle handle, const String& name)
         : Resource(handle, name),
-          _scheduler(scheduler),
           _wait_queue_lock(Resource<SpinlockHandle>::HANDLE_NONE,
-                           String::format("{}WQLock", get_unique_name()),
-                           scheduler) {}
+                           String::format("{}WQLock", get_unique_name())) {}
 
     auto Mutex::get_owner() const -> Thread* { return _owner ? _owner.get() : nullptr; }
 
@@ -53,17 +51,17 @@ namespace Rune::CPU {
         //              simply claim the mutex, because another thread could swoop in and claim the
         //              lock before the woken thread comes to atomic_compare_exchange.
         while (!atomic_compare_exchange_acquire(&_lock, 0, 1)) {
-            auto calling_thread = _scheduler->get_running_thread();
+            auto calling_thread = g_scheduler.get_running_thread();
             // _wait_queue is a non synchronized linkedlist -> need spinlock protection here
             // Could also use lock-free queue implementation. Is maybe better?
             {
                 CriticalSection<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
-                _scheduler->await_block();
+                g_scheduler.await_block();
             }
             trace_state("lock-fail");
             // await_block()/block() mechanic solves the lost wakeup problem
-            _scheduler->block();
+            g_scheduler.block();
 
             // Check if fast handoff to calling thread was done in unlock()
             // If yes, just return because _lock == 1 and _owner == calling_thread
@@ -72,7 +70,7 @@ namespace Rune::CPU {
                 return;
             }
         }
-        _owner = _scheduler->get_running_thread();
+        _owner = g_scheduler.get_running_thread();
         trace_state("lock-good");
     }
 
@@ -81,13 +79,13 @@ namespace Rune::CPU {
             trace_state("try_lock-fail");
             return false;
         }
-        _owner = _scheduler->get_running_thread();
+        _owner = g_scheduler.get_running_thread();
         trace_state("try_lock-good");
         return true;
     }
 
     void Mutex::unlock() {
-        auto calling_thread = _scheduler->get_running_thread();
+        auto calling_thread = g_scheduler.get_running_thread();
         // Only the owning thread is allowed to unlock the mutex
         if (!_owner) return;
         if (calling_thread->get_handle() != _owner->get_handle()) return;
@@ -103,14 +101,14 @@ namespace Rune::CPU {
         trace_state("unlock");
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);
-        _scheduler->unblock(thread_to_wake);
+        g_scheduler.unblock(thread_to_wake);
     }
 
     auto Mutex::remove_thread(MutexHandle handle) -> bool {
         if (atomic_load_acquire(&_lock) == 0) return false;
 
         if (_owner->get_handle() == handle) {
-            _scheduler->block(_owner);
+            g_scheduler.block(_owner);
             unlock();
         } else {
             SharedPointer<Thread> to_remove;
@@ -127,4 +125,16 @@ namespace Rune::CPU {
         }
         return true;
     }
+
+    ResourceCache<Mutex, 3> g_mutex_cache({"ID-Name", "Owner", "WaitQueue"},
+                      [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
+                          Thread* owner           = mutex->get_owner();
+                          String  waiting_threads = "";
+                          for (auto& t : mutex->get_waiting_threads())
+                              waiting_threads += t->get_unique_name();
+                          if (waiting_threads.is_empty()) waiting_threads = "-";
+                          return {mutex->get_unique_name(),
+                                  owner != nullptr ? owner->get_unique_name() : "-",
+                                  waiting_threads};
+                      });
 } // namespace Rune::CPU

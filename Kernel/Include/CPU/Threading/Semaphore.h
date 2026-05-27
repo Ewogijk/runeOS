@@ -33,7 +33,6 @@ namespace Rune::CPU {
         int _units    = 0;
         int _unit_max = 0;
 
-        Scheduler*                        _scheduler;
         Spinlock                          _lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
 
@@ -44,7 +43,6 @@ namespace Rune::CPU {
       public:
         Semaphore(SemaphoreHandle handle,
                   const String&   name,
-                  Scheduler*      scheduler,
                   int             counter_start,
                   int             counter_max);
 

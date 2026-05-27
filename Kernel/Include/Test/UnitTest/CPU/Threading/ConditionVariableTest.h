@@ -70,10 +70,8 @@ TEST("wait - One Thread", "ConditionVariable") {
     TEST_THREAD_A      = {};
     TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
-                                                 "",
-                                                 cpu_module->get_scheduler());
-    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE, "");
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>();
 
     // Test Body
     if (!exec_test_thread(TEST_THREAD_A)) {
@@ -98,10 +96,8 @@ TEST("wait - Multiple Threads", "ConditionVariable") {
     TEST_THREAD_A      = {};
     TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
-                                                 "",
-                                                 cpu_module->get_scheduler());
-    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+    MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE, "");
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>();
 
     // Test Body
     if (!exec_test_thread(TEST_THREAD_A)) {
@@ -137,9 +133,8 @@ TEST("notify_one", "ConditionVariable") {
     TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
-                                                 "",
-                                                 cpu_module->get_scheduler());
-    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+                                                 "");
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>();
 
     // Test Body
     if (!exec_test_thread(TEST_THREAD_A)) {
@@ -182,9 +177,8 @@ TEST("notify_all", "ConditionVariable") {
     TEST_THREAD_B      = {};
     auto* cpu_module   = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     MUTEX              = make_shared<CPU::Mutex>(Resource<CPU::MutexHandle>::HANDLE_NONE,
-                                                 "",
-                                                 cpu_module->get_scheduler());
-    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>(cpu_module->get_scheduler());
+                                                 "");
+    CONDITION_VARIABLE = make_shared<CPU::ConditionVariable>();
 
     // Test Body
     if (!exec_test_thread(TEST_THREAD_A)) {

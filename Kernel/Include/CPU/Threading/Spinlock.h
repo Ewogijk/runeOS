@@ -31,10 +31,8 @@ namespace Rune::CPU {
         bool         _lock  = false;
         ThreadHandle _owner = Resource<ThreadHandle>::HANDLE_NONE;
 
-        Scheduler* _scheduler;
-
       public:
-        Spinlock(SpinlockHandle handle, String name, Scheduler* scheduler);
+        Spinlock(SpinlockHandle handle, String name);
 
         Spinlock(const Spinlock& other)                    = delete;
         Spinlock(Spinlock&& other)                         = delete;

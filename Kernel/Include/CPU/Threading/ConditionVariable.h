@@ -29,8 +29,6 @@ namespace Rune::CPU {
     /// @brief A condition variable is a synchronization primitive that blocks one or more threads
     ///         until the condition variable is notified.
     class ConditionVariable {
-        Scheduler* m_scheduler;
-
         Spinlock                          m_spinlock;
         LinkedList<SharedPointer<Thread>> m_waiters;
 
@@ -38,7 +36,7 @@ namespace Rune::CPU {
         void wake_one();
 
       public:
-        ConditionVariable(Scheduler* scheduler);
+        ConditionVariable();
 
         /// @brief
         /// @return A list of threads waiting for the condition variable to be notified.

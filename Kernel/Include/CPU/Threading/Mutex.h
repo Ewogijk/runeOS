@@ -30,7 +30,6 @@ namespace Rune::CPU {
     class Mutex : public Resource<MutexHandle> {
         int _lock = 0;
 
-        Scheduler*                        _scheduler;
         SharedPointer<Thread>             _owner;
         Spinlock                          _wait_queue_lock;
         LinkedList<SharedPointer<Thread>> _wait_queue;
@@ -40,7 +39,7 @@ namespace Rune::CPU {
         void trace_state(const String& action);
 
       public:
-        Mutex(MutexHandle handle, const String& name, Scheduler* scheduler);
+        Mutex(MutexHandle handle, const String& name);
 
         Mutex(const Mutex&)                    = delete;
         Mutex(Mutex&&)                         = delete;
@@ -87,20 +86,8 @@ namespace Rune::CPU {
         auto remove_thread(MutexHandle handle) -> bool;
     };
 
-    // NOLINTBEGIN cppcoreguidelines-avoid-non-const-global-variables
-    static ResourceCache<Mutex, 3>
-        g_mutex_cache({"ID-Name", "Owner", "WaitQueue"},
-                      [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
-                          Thread* owner           = mutex->get_owner();
-                          String  waiting_threads = "";
-                          for (auto& t : mutex->get_waiting_threads())
-                              waiting_threads += t->get_unique_name();
-                          if (waiting_threads.is_empty()) waiting_threads = "-";
-                          return {mutex->get_unique_name(),
-                                  owner != nullptr ? owner->get_unique_name() : "-",
-                                  waiting_threads};
-                      });
-    // NOLINTEND
+    /// @brief Kernel-wide cache for mutexes.
+    extern ResourceCache<Mutex, 3> g_mutex_cache;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_MUTEX_H

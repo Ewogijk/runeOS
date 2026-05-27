@@ -89,13 +89,9 @@ namespace Rune::CPU {
 
       public:
         explicit ThreadPool(const String& thread_pool_name)
-            : m_cv(System::instance().get_module<CPUModule>(ModuleSelector::CPU)->get_scheduler()),
-              m_this_addr(int_to_string(memory_pointer_to_addr(this), Radix::HEX)),
+            : m_this_addr(int_to_string(memory_pointer_to_addr(this), Radix::HEX)),
               m_worker_thread_argv(),
-              m_task_queue_mutex(
-                  Resource<MutexHandle>::HANDLE_NONE,
-                  "ThreadPool Mutex",
-                  System::instance().get_module<CPUModule>(ModuleSelector::CPU)->get_scheduler()),
+              m_task_queue_mutex(Resource<MutexHandle>::HANDLE_NONE, "ThreadPool Mutex"),
               m_name(thread_pool_name) {
 
             // NOLINTBEGIN
