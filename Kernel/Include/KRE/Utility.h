@@ -617,7 +617,7 @@ namespace Rune {
         template <typename U = RemoveCV<T>::type>
         requires(!is_same<typename RemoveRef<U>::type, Optional<T>>::value)
         Optional(U&& obj) : _has_value(true) {
-            new (&_data) T(forward(obj));
+            new (&_data) T(forward<T>(obj));
         }
 
         auto operator=(const Optional<T>& other) -> Optional<T>& {

@@ -30,14 +30,10 @@ constexpr U8      RESULT           = 42;
 constexpr U8      WAIT_TIME_MILLIS = 50;
 CPU::Promise<U8>* PROMISE;
 
-const SharedPointer<Logger> FLOGGER = LogContext::instance().get_logger("CPU.FutureTest");
-
 auto set_value_async(CPU::StartInfo* start_info) -> int {
-    FLOGGER->info("AHOY");
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     cpu_module->get_system_timer()->sleep_milli(WAIT_TIME_MILLIS);
     PROMISE->set_value(RESULT);
-    FLOGGER->info("Set value async complete");
     return 0;
 }
 

@@ -28,6 +28,7 @@
 #include <BuiltInPlugin/PS2KeyboardDriverPlugin.h>
 
 #include <CPU/CPU.h>
+#include <CPU/Threading/Thread.h>
 #include <CPU/CPUModule.h>
 #include <CPU/E9Stream.h>
 #include <CPU/Interrupt/Exception.h>
@@ -160,6 +161,10 @@ namespace Rune {
             "detailed-layout",
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
+
+
+        auto e9 = make_shared<CPU::E9Stream>();
+        CPU::g_thread_cache.print(e9);
 
 #ifdef RUN_UNIT_TESTS
         LOGGER->info("Run kernel unit tests");

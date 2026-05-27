@@ -101,13 +101,12 @@ namespace Rune::CPU {
     StartInfo CPUModule::GCT_START_INFO;
     StartInfo CPUModule::IDLE_THREAD_START_INFO;
 
-    auto create_thread(MutexHandle      handle,
-                       const String&    thread_name,
+    auto create_thread(const String&    thread_name,
                        StartInfo*       start_info,
                        PhysicalAddr     base_pt_addr,
                        SchedulingPolicy policy,
                        Stack            user_stack) -> SharedPointer<Thread> {
-        SharedPointer<Thread> new_thread    = make_shared<Thread>(handle, move(thread_name));
+        SharedPointer<Thread> new_thread    = g_thread_cache.allocate(thread_name);
         new_thread->start_info              = start_info;
         new_thread->base_page_table_address = base_pt_addr;
         new_thread->policy                  = policy;
@@ -134,9 +133,9 @@ namespace Rune::CPU {
                               [this](void* evt_ctx) -> void {
                                   auto* ctx = reinterpret_cast<ThreadPreemptionContext*>(evt_ctx);
                                   SharedPointer<Thread> to_remove(nullptr);
-                                  for (const auto& t : _thread_table) {
-                                      if (ctx->stopped->get_handle() == (*t.value)->get_handle()) {
-                                          to_remove = *t.value;
+                                  for (const auto& t : g_thread_cache.get_resources()) {
+                                      if (ctx->stopped->get_handle() == t->get_handle()) {
+                                          to_remove = t;
                                           break;
                                       }
                                   }
@@ -144,7 +143,7 @@ namespace Rune::CPU {
                                   if (to_remove) {
                                       LOGGER->trace(R"(Removing {} from the thread table.)",
                                                     to_remove->get_unique_name());
-                                      _thread_table.remove(to_remove->get_handle());
+                                      g_thread_cache.free(to_remove->get_handle());
                                   } else {
                                       LOGGER->warn(
                                           R"(Stopped thread {} was not found in the thread table.)",
@@ -176,8 +175,8 @@ namespace Rune::CPU {
         // The idea is to make further initializations and then ditch the bootstrap thread as soon
         // as possible because the stack provided by limine lies in a reclaimed memory region
         // thus it will be reused sooner than later and the initial thread will crash at this point
-        auto bootstrap_thread =
-            make_shared<Thread>(_thread_handle_counter.acquire(), BOOTSTRAP_THREAD_NAME);
+        auto bootstrap_thread = g_thread_cache.allocate(BOOTSTRAP_THREAD_NAME);
+
         bootstrap_thread->base_page_table_address = base_pt_addr;
         bootstrap_thread->kernel_stack_top        = boot_info.stack;
         bootstrap_thread->policy                  = SchedulingPolicy::LOW_LATENCY;
@@ -187,8 +186,7 @@ namespace Rune::CPU {
         GCT_START_INFO.argv = DUMMY_ARGS;
         GCT_START_INFO.main = &thread_garbage_collector;
         auto garbage_collector_thread =
-            create_thread(_thread_handle_counter.acquire(),
-                          GARBAGE_COLLECTOR_THREAD_NAME,
+            create_thread(GARBAGE_COLLECTOR_THREAD_NAME,
                           &GCT_START_INFO,
                           base_pt_addr,
                           SchedulingPolicy::NONE,
@@ -197,8 +195,7 @@ namespace Rune::CPU {
         IDLE_THREAD_START_INFO.argv = DUMMY_ARGS;
         IDLE_THREAD_START_INFO.main = &idle_thread;
         auto le_idle_thread =
-            create_thread(_thread_handle_counter.acquire(),
-                          IDLE_THREAD_NAME,
+            create_thread(IDLE_THREAD_NAME,
                           &IDLE_THREAD_START_INFO,
                           base_pt_addr,
                           SchedulingPolicy::NONE,
@@ -230,10 +227,6 @@ namespace Rune::CPU {
         g_scheduler.set_on_context_switch([this](Thread* next) -> void {
             fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), reinterpret_cast<void*>(next));
         });
-        _thread_table.put(g_scheduler.get_running_thread()->get_handle(),
-                          g_scheduler.get_running_thread());
-        _thread_table.put(garbage_collector_thread->get_handle(), garbage_collector_thread);
-        _thread_table.put(le_idle_thread->get_handle(), le_idle_thread);
 
         // Init Timer
         LOGGER->debug("Starting the timer...");
@@ -291,63 +284,45 @@ namespace Rune::CPU {
     //                                      High Level Threading API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
+    // NOLINTBEGIN Kept for backwards compatibility
     auto CPUModule::get_scheduler() -> Scheduler* { return &g_scheduler; }
 
-    auto CPUModule::get_thread_table() -> LinkedList<Thread*> {
-        LinkedList<Thread*> copy;
-        for (const auto& t : _thread_table) copy.add_back(t.value->get());
-        return copy;
+    auto CPUModule::get_thread_table() -> LinkedList<SharedPointer<Thread>> {
+        return g_thread_cache.get_resources();
     }
 
     void CPUModule::dump_thread_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<SharedPointer<Thread>, 4>::make_table(
-            [](const SharedPointer<Thread>& thread) -> Array<String, 4> {
-                return {thread->get_unique_name(),
-                        thread->state.to_string(),
-                        thread->policy.to_string(),
-                        String::format("{}", thread->app_handle)};
-            })
-            .with_headers({"ID-Name", "State", "Policy", "App"})
-            .with_data(_thread_table.values())
-            .print(stream);
+        g_thread_cache.print(stream);
     }
 
-    auto CPUModule::find_thread(int handle) -> Thread* {
-        Thread* le_thread = nullptr;
-        for (const auto& t : _thread_table) {
-            if (t.value->get()->get_handle() == handle) { // NOLINT Only end() is null
-                le_thread = t.value->get();
-                break;
-            }
-        }
-        return le_thread;
+    auto CPUModule::find_thread(Handle handle) -> SharedPointer<Thread> {
+        return g_thread_cache.find(handle);
     }
+    // NOLINTEND
 
     auto CPUModule::schedule_new_thread(const String&    thread_name,
                                         StartInfo*       start_info,
                                         PhysicalAddr     base_pt_addr,
                                         SchedulingPolicy policy,
                                         Stack            user_stack) -> ThreadHandle {
-        if (!_thread_handle_counter.has_more()) return Resource<ThreadHandle>::HANDLE_NONE;
-
-        SharedPointer<Thread> new_thread = create_thread(_thread_handle_counter.acquire(),
-                                                         thread_name,
-                                                         move(start_info),
-                                                         base_pt_addr,
-                                                         policy,
-                                                         move(user_stack));
+        SharedPointer<Thread> new_thread =
+            create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
-        if (!g_scheduler.schedule(new_thread)) return Resource<ThreadHandle>::HANDLE_NONE;
-        _thread_table.put(new_thread->get_handle(), new_thread);
+        if (!g_scheduler.schedule(new_thread))
+        {
+            g_thread_cache.free(new_thread->get_handle());
+            return Resource<ThreadHandle>::HANDLE_NONE;
+        }
+
         return new_thread->get_handle();
     }
 
     auto CPUModule::stop_thread(int handle) -> bool { // NOLINT
         // Check if a thread with the handle exists
         SharedPointer<Thread> da_thread(nullptr);
-        for (const auto& t : _thread_table) {
-            if (t.value->get()->get_handle() == handle) { // NOLINT Only end() is null
-                da_thread = *t.value;
+        for (const auto& t : g_thread_cache.get_resources()) {
+            if (t.get()->get_handle() == handle) { // NOLINT Only end() is null
+                da_thread = t;
                 break;
             }
         }
@@ -433,9 +408,8 @@ namespace Rune::CPU {
     }
 
     auto CPUModule::sync_on_thread_stop(ThreadHandle handle) -> bool {
-        auto maybe_thread = _thread_table.find(handle);
-        if (maybe_thread == _thread_table.end()) return false;
-        auto thread = *maybe_thread->value;
+        auto thread = g_thread_cache.find(handle);
+        if (!thread ) return false;
 
         auto calling_thread  = g_scheduler.get_running_thread();
         auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
@@ -521,42 +495,6 @@ namespace Rune::CPU {
     auto CPUModule::free_semaphore(SemaphoreHandle handle) -> bool {
         return _semaphore_table.remove(handle);
     }
-
-    // ========================================================================================== //
-    // Spinlock API
-    // ========================================================================================== //
-    //
-    // auto CPUModule::get_spinlock_table() -> LinkedList<Spinlock*> {
-    //     LinkedList<Spinlock*> copy;
-    //     for (const auto& sp : _spinlock_table) copy.add_back(sp.value->get());
-    //     return copy;
-    // }
-    //
-    // auto CPUModule::find_spinlock(SpinlockHandle handle) -> SharedPointer<Spinlock> {
-    //     auto it = _spinlock_table.find(handle);
-    //     return it == _spinlock_table.end() ? SharedPointer<Spinlock>() : *it->value;
-    // }
-    //
-    // void CPUModule::dump_spinlock_table(const SharedPointer<TextStream>& stream) const {
-    //     TableFormatter<SharedPointer<Spinlock>, 2>::make_table(
-    //         [](const SharedPointer<Spinlock>& sp) -> Array<String, 2> {
-    //             return {sp->get_unique_name(), String::format("", sp->get_owner())};
-    //         })
-    //         .with_headers({"ID-Name", "Owner Handle"})
-    //         .with_data(_spinlock_table.values())
-    //         .print(stream);
-    // }
-    //
-    // auto CPUModule::create_spinlock(String name) -> SharedPointer<Spinlock> {
-    //     if (!_spinlock_handle_counter.has_more()) return SharedPointer<Spinlock>(nullptr);
-    //     auto sp = make_shared<Spinlock>(_spinlock_handle_counter.acquire(), name);
-    //     _spinlock_table.put(sp->get_handle(), sp);
-    //     return sp;
-    // }
-    //
-    // auto CPUModule::free_spinlock(SpinlockHandle handle) -> bool {
-    //     return _spinlock_table.remove(handle);
-    // }
 
     // ========================================================================================== //
     // Time API
