@@ -41,11 +41,11 @@ namespace Rune::CPU {
           _units(counter_start),
           _unit_max(counter_max) {}
 
-    auto Semaphore::get_available_units() const -> int { return _units; }
+    auto Semaphore::available_units() const -> int { return _units; }
 
-    auto Semaphore::get_unit_max() const -> int { return _unit_max; }
+    auto Semaphore::unit_max() const -> int { return _unit_max; }
 
-    auto Semaphore::get_waiting_threads() const -> LinkedList<Thread*> {
+    auto Semaphore::waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
         for (auto& t : _wait_queue) copy.add_back(t.get());
         return copy;
@@ -94,5 +94,18 @@ namespace Rune::CPU {
         memory_barrier_write();
         trace_state("unlock");
     }
+
+    ResourceCache<Semaphore, 4>
+        g_semaphore_cache({"ID-Name", "Units", "Unit Max", "Wait Queue"},
+                          [](const SharedPointer<Semaphore>& sem) -> Array<String, 4> {
+                              String waiting_threads = "";
+                              for (auto& t : sem->waiting_threads())
+                                  waiting_threads += t->get_unique_name();
+                              if (waiting_threads.is_empty()) waiting_threads = "-";
+                              return {sem->get_unique_name(),
+                                      String::format("", sem->available_units()),
+                                      String::format("", sem->unit_max()),
+                                      waiting_threads};
+                          });
 
 } // namespace Rune::CPU

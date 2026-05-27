@@ -77,9 +77,6 @@ namespace Rune::CPU {
         //                                      Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        HashMap<SemaphoreHandle, SharedPointer<Semaphore>> _semaphore_table;
-        HandleCounter<SemaphoreHandle>                     _semaphore_handle_counter;
-
         HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -298,7 +295,7 @@ namespace Rune::CPU {
 
         /// @brief A list of all currently created semaphores.
         /// @return The semaphore table.
-        auto get_semaphore_table() -> LinkedList<Semaphore*>;
+        auto get_semaphore_table() -> LinkedList<SharedPointer<Semaphore>>;
 
         /// @brief Try to find the semaphore with the given handle.
         /// @param handle Handle of a semaphore.

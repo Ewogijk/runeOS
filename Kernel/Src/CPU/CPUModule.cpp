@@ -308,8 +308,7 @@ namespace Rune::CPU {
         SharedPointer<Thread> new_thread =
             create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
-        if (!g_scheduler.schedule(new_thread))
-        {
+        if (!g_scheduler.schedule(new_thread)) {
             g_thread_cache.free(new_thread->get_handle());
             return Resource<ThreadHandle>::HANDLE_NONE;
         }
@@ -409,7 +408,7 @@ namespace Rune::CPU {
 
     auto CPUModule::sync_on_thread_stop(ThreadHandle handle) -> bool {
         auto thread = g_thread_cache.find(handle);
-        if (!thread ) return false;
+        if (!thread) return false;
 
         auto calling_thread  = g_scheduler.get_running_thread();
         auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
@@ -454,47 +453,28 @@ namespace Rune::CPU {
     // Semaphore API
     // ========================================================================================== //
 
-    auto CPUModule::get_semaphore_table() -> LinkedList<Semaphore*> {
-        LinkedList<Semaphore*> copy;
-        for (const auto& sem : _semaphore_table) copy.add_back(sem.value->get());
-        return copy;
+    // NOLINTBEGIN Kept for backward compatibility
+    auto CPUModule::get_semaphore_table() -> LinkedList<SharedPointer<Semaphore>> {
+        return g_semaphore_cache.get_resources();
     }
 
     auto CPUModule::find_semaphore(SemaphoreHandle handle) -> SharedPointer<Semaphore> {
-        auto it = _semaphore_table.find(handle);
-        return it == _semaphore_table.end() ? SharedPointer<Semaphore>() : *it->value;
+        return g_semaphore_cache.find(handle);
     }
 
     void CPUModule::dump_semaphore_table(const SharedPointer<TextStream>& stream) const {
-        TableFormatter<SharedPointer<Semaphore>, 4>::make_table(
-            [](const SharedPointer<Semaphore>& sem) -> Array<String, 4> {
-                String waiting_threads = "";
-                for (auto& t : sem->get_waiting_threads()) waiting_threads += t->get_unique_name();
-                if (waiting_threads.is_empty()) waiting_threads = "-";
-                return {sem->get_unique_name(),
-                        String::format("", sem->get_available_units()),
-                        String::format("", sem->get_unit_max()),
-                        waiting_threads};
-            })
-            .with_headers({"ID-Name", "Units", "Unit Max", "Wait Queue"})
-            .with_data(_semaphore_table.values())
-            .print(stream);
+        g_semaphore_cache.print(stream);
     }
 
     auto CPUModule::create_semaphore(String name, int counter_start, int counter_max)
         -> SharedPointer<Semaphore> {
-        if (!_semaphore_handle_counter.has_more()) return SharedPointer<Semaphore>(nullptr);
-        auto sem = make_shared<Semaphore>(_semaphore_handle_counter.acquire(),
-                                          name,
-                                          counter_start,
-                                          counter_max);
-        _semaphore_table.put(sem->get_handle(), sem);
-        return sem;
+        return g_semaphore_cache.allocate(name, counter_start, counter_max);
     }
 
     auto CPUModule::free_semaphore(SemaphoreHandle handle) -> bool {
-        return _semaphore_table.remove(handle);
+        return g_semaphore_cache.free(handle);
     }
+    // NOLINTEND
 
     // ========================================================================================== //
     // Time API

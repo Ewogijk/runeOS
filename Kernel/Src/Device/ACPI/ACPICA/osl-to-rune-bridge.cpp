@@ -658,7 +658,7 @@ CLINK {
         auto*  s       = reinterpret_cast<CPU::Semaphore*>(sem);
         UINT32 c_units = 0;
         while (c_units < units) {
-            if (s->get_available_units() >= s->get_unit_max()) return AE_LIMIT;
+            if (s->available_units() >= s->unit_max()) return AE_LIMIT;
             s->unlock();
             c_units++;
         }

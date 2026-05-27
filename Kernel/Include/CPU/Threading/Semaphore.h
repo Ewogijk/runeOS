@@ -25,7 +25,7 @@
 
 namespace Rune::CPU {
 
-    /// @brief A counting semaphore using a spinlock for synchronization.
+    /// @brief Counting semaphore using a spinlock for synchronization.
     ///
     /// The semaphore keeps track of a maximum value for the counter, it cannot be incremented
     /// beyond this value.
@@ -41,10 +41,7 @@ namespace Rune::CPU {
         void trace_state(const String& action);
 
       public:
-        Semaphore(SemaphoreHandle handle,
-                  const String&   name,
-                  int             counter_start,
-                  int             counter_max);
+        Semaphore(SemaphoreHandle handle, const String& name, int counter_start, int counter_max);
 
         Semaphore(const Semaphore&)                    = delete;
         Semaphore(Semaphore&&)                         = delete;
@@ -53,15 +50,15 @@ namespace Rune::CPU {
 
         /// @brief
         /// @return The number of currently available units.
-        [[nodiscard]] auto get_available_units() const -> int;
+        [[nodiscard]] auto available_units() const -> int;
 
         /// @brief
         /// @return The maximum available units.
-        [[nodiscard]] auto get_unit_max() const -> int;
+        [[nodiscard]] auto unit_max() const -> int;
 
         /// @brief
         /// @return A list of all currently waiting threads.
-        [[nodiscard]] auto get_waiting_threads() const -> LinkedList<Thread*>;
+        [[nodiscard]] auto waiting_threads() const -> LinkedList<Thread*>;
 
         /// @brief Try to request a unit from the semaphore.
         ///
@@ -79,6 +76,9 @@ namespace Rune::CPU {
         /// any waiting threads.
         void unlock();
     };
+
+    /// @brief Kernel-wide semaphore resource cache.
+    extern ResourceCache<Semaphore, 4> g_semaphore_cache;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_SEMAPHORE_H
