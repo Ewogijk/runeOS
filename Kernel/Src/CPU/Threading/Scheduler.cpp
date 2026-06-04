@@ -149,11 +149,11 @@ namespace Rune::CPU {
         return &_thread_garbage_bin;
     }
 
-    auto Scheduler::get_running_thread() -> SharedPointer<Thread> { return _running_thread; }
+    auto Scheduler::get_running_thread() -> SharedPointer<Thread>& { return _running_thread; }
 
-    auto Scheduler::get_idle_thread() -> SharedPointer<Thread> { return _idle_thread; }
+    auto Scheduler::get_idle_thread() -> SharedPointer<Thread>& { return _idle_thread; }
 
-    auto Scheduler::get_garbage_collector_thread() -> SharedPointer<Thread> {
+    auto Scheduler::get_garbage_collector_thread() -> SharedPointer<Thread>& {
         return _garbage_collector_thread;
     }
 
@@ -216,7 +216,6 @@ namespace Rune::CPU {
             unlock();
             return false;
         }
-        // thread->state = ThreadState::READY;
         unlock();
         return true;
     }
@@ -242,9 +241,6 @@ namespace Rune::CPU {
             return;
         }
         if (thread->state != ThreadState::AWAIT_BLOCK) {
-            LOGGER->error(R"({}: Invalid thread state "{}" (block))",
-                          _running_thread->get_unique_name(),
-                          _running_thread->state.to_string());
             unlock();
             return;
         }

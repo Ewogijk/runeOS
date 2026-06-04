@@ -111,16 +111,16 @@ namespace Rune::CPU {
 
         /// @brief
         /// @return Get a reference to the thread is currently running.
-        auto get_running_thread() -> SharedPointer<Thread>;
+        auto get_running_thread() -> SharedPointer<Thread>&;
 
         /// @brief Return the Idle Thread that will be run when the ready queue is empty.
         /// @return A reference to the Idle Thread.
-        auto get_idle_thread() -> SharedPointer<Thread>;
+        auto get_idle_thread() -> SharedPointer<Thread>&;
 
         /// @brief Return the Garbage Collector Thread  (GCT) that frees the memory allocated for
         ///         stopped threads.
         /// @return A reference to the Garbage Collector Thread .
-        auto get_garbage_collector_thread() -> SharedPointer<Thread>;
+        auto get_garbage_collector_thread() -> SharedPointer<Thread>&;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks

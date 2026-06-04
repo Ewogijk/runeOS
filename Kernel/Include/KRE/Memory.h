@@ -53,7 +53,7 @@ namespace Rune {
 
         explicit UniquePointer(T* ptr)
             : m_ptr(ptr),
-              m_deleter([](void* p) { delete static_cast<T*>(p); }) {}
+              m_deleter([](void* p) -> void { delete static_cast<T*>(p); }) {}
 
         ~UniquePointer() {
             if (m_ptr) m_deleter(m_ptr);
@@ -126,7 +126,7 @@ namespace Rune {
             if (ptr == nullptr) return;
             m_refs            = new RefControlBlock;
             m_refs->m_raw_ptr = ptr;
-            m_refs->m_deleter = [](void* p) { delete static_cast<T*>(p); };
+            m_refs->m_deleter = [](void* p) -> void { delete static_cast<T*>(p); };
             ++m_refs->m_strong_ref_count;
         }
 
@@ -140,6 +140,16 @@ namespace Rune {
             other.m_refs              = tmp_refs;
         }
 
+        void reset0() {
+            --m_refs->m_strong_ref_count;
+            if (m_refs->m_strong_ref_count == 0) {
+                m_refs->m_deleter(m_refs->m_raw_ptr);
+                delete m_refs;
+            }
+            m_ptr  = nullptr;
+            m_refs = nullptr;
+        }
+
       public:
         SharedPointer() : m_ptr(nullptr), m_refs(nullptr) {}
 
@@ -147,11 +157,7 @@ namespace Rune {
 
         ~SharedPointer() {
             if (m_refs == nullptr) return;
-            --m_refs->m_strong_ref_count;
-            if (m_refs->m_strong_ref_count == 0) {
-                m_refs->m_deleter(m_refs->m_raw_ptr);
-                delete m_refs;
-            }
+            reset0();
         }
 
         SharedPointer(const SharedPointer<T>& other) noexcept
@@ -171,13 +177,8 @@ namespace Rune {
             if (this == &other) return *this;
             if (m_refs == other.m_refs) return *this;
 
-            if (m_refs != nullptr) {
-                --m_refs->m_strong_ref_count;
-                if (m_refs->m_strong_ref_count == 0) {
-                    m_refs->m_deleter(m_refs->m_raw_ptr);
-                    delete m_refs;
-                }
-            }
+            if (m_refs != nullptr) reset0();
+
             m_ptr  = other.m_ptr;
             m_refs = other.m_refs;
             if (m_refs != nullptr) ++m_refs->m_strong_ref_count;
@@ -201,6 +202,15 @@ namespace Rune {
 
         auto get_ref_count() -> size_t {
             return m_refs != nullptr ? m_refs->m_strong_ref_count : 0;
+        }
+
+        auto get_ref_count() const -> size_t {
+            return m_refs != nullptr ? m_refs->m_strong_ref_count : 0;
+        }
+
+        auto reset() -> void {
+            if (m_refs == nullptr) return;
+            reset0();
         }
 
         explicit operator bool() const { return m_ptr != nullptr; }

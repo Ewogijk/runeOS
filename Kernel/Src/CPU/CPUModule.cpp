@@ -132,18 +132,9 @@ namespace Rune::CPU {
                               "Thread Table Cleaner",
                               [this](void* evt_ctx) -> void {
                                   auto* ctx = reinterpret_cast<ThreadPreemptionContext*>(evt_ctx);
-                                  SharedPointer<Thread> to_remove(nullptr);
-                                  for (const auto& t : g_thread_cache.get_resources()) {
-                                      if (ctx->stopped->get_handle() == t->get_handle()) {
-                                          to_remove = t;
-                                          break;
-                                      }
-                                  }
-
-                                  if (to_remove) {
+                                  if (g_thread_cache.free(ctx->stopped->get_handle())) {
                                       LOGGER->trace(R"(Removing {} from the thread table.)",
-                                                    to_remove->get_unique_name());
-                                      g_thread_cache.free(to_remove->get_handle());
+                                                    ctx->stopped->get_unique_name());
                                   } else {
                                       LOGGER->warn(
                                           R"(Stopped thread {} was not found in the thread table.)",
@@ -318,23 +309,17 @@ namespace Rune::CPU {
 
     auto CPUModule::stop_thread(int handle) -> bool { // NOLINT
         // Check if a thread with the handle exists
-        SharedPointer<Thread> da_thread(nullptr);
-        for (const auto& t : g_thread_cache.get_resources()) {
-            if (t.get()->get_handle() == handle) { // NOLINT Only end() is null
-                da_thread = t;
-                break;
-            }
-        }
-        if (!da_thread) {
+        SharedPointer<Thread> thread_to_stop = g_thread_cache.find(handle);
+        if (!thread_to_stop) {
             LOGGER->debug("No thread with handle {} exists", handle);
             return false;
         }
 
         // Check where the thread currently is e.g. locked by a mutex and remove it from the queue
-        LOGGER->trace(R"(Terminating thread {})", da_thread->get_unique_name());
-        switch (da_thread->state) { // NOLINT All cases are handled
+        LOGGER->trace(R"(Terminating thread {})", thread_to_stop->get_unique_name());
+        switch (thread_to_stop->state) { // NOLINT All cases are handled
             case ThreadState::NONE:
-                LOGGER->error(R"({} has invalid state "None".)", da_thread->get_unique_name());
+                LOGGER->error(R"({} has invalid state "None".)", thread_to_stop->get_unique_name());
                 return false;
             case ThreadState::CREATED:
                 // NOOP -> Thread has been created and is not yet scheduled, thus there is no need
@@ -343,72 +328,73 @@ namespace Rune::CPU {
             case ThreadState::READY:
                 if (!g_scheduler.get_ready_queue()->remove(handle)) {
                     LOGGER->error(R"({} is missing from the ready queue.)",
-                                  da_thread->get_unique_name());
+                                  thread_to_stop->get_unique_name());
                     return false;
                 }
                 break;
             case ThreadState::RUNNING:
                 // Do not stop the running thread because we do not want a context switch to
                 // happen
-                LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
+                LOGGER->trace(R"({} is running, will not stop.)",
+                              thread_to_stop->get_unique_name());
                 return true;
             case ThreadState::AWAIT_BLOCK:
                 if (g_scheduler.get_running_thread()->get_handle()
                     == static_cast<ThreadHandle>(handle)) {
-                    LOGGER->trace(R"({} is running, will not stop.)", da_thread->get_unique_name());
+                    LOGGER->trace(R"({} is running, will not stop.)",
+                                  thread_to_stop->get_unique_name());
                     return true;
                 } else {
                     if (!g_scheduler.get_ready_queue()->remove(handle)) {
                         LOGGER->error(R"({} is missing from the ready queue.)",
-                                      da_thread->get_unique_name());
+                                      thread_to_stop->get_unique_name());
                         return false;
                     }
                 }
                 break;
             case ThreadState::BLOCKED:
-                if (da_thread->timer_handle > 0) {
+                if (thread_to_stop->timer_handle > 0) {
                     if (!_timer->remove_sleeping_thread(handle)) {
                         LOGGER->error(R"({} is missing from the wait queue of the timer.)",
-                                      da_thread->get_unique_name());
+                                      thread_to_stop->get_unique_name());
                         return false;
                     }
-                } else if (da_thread->mutex_handle > 0) {
+                } else if (thread_to_stop->mutex_handle > 0) {
                     SharedPointer<Mutex> m(nullptr);
                     for (const auto& mm : g_mutex_cache.get_resources()) {
                         if (mm->get_handle() // NOLINT Only end() is null
-                            == da_thread->mutex_handle) {
+                            == thread_to_stop->mutex_handle) {
                             m = mm;
                             break;
                         }
                     }
                     if (!m) {
                         LOGGER->error("No mutex with handle {} was found.",
-                                      da_thread->get_handle(),
-                                      da_thread->get_name(),
-                                      da_thread->mutex_handle);
+                                      thread_to_stop->get_handle(),
+                                      thread_to_stop->get_name(),
+                                      thread_to_stop->mutex_handle);
                         return false;
                     }
 
-                    if (!m->remove_thread(da_thread->get_handle())) {
+                    if (!m->remove_thread(thread_to_stop->get_handle())) {
                         LOGGER->error(R"({} was not the owner or in the waiting queue of {})",
-                                      da_thread->get_unique_name(),
+                                      thread_to_stop->get_unique_name(),
                                       m->get_unique_name());
                         return false;
                     }
                 }
                 break;
             case ThreadState::STOPPED:
-                LOGGER->trace(R"({} is already stopped.)", da_thread->get_unique_name());
+                LOGGER->trace(R"({} is already stopped.)", thread_to_stop->get_unique_name());
                 break;
         }
 
-        g_scheduler.stop(da_thread);
+        g_scheduler.stop(thread_to_stop);
         return true;
     }
 
     auto CPUModule::sync_on_thread_stop(ThreadHandle handle) -> bool {
-        auto thread = g_thread_cache.find(handle);
-        if (!thread) return false;
+        if (!g_thread_cache.find(handle)) return false;
 
         auto calling_thread  = g_scheduler.get_running_thread();
         auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
@@ -417,7 +403,7 @@ namespace Rune::CPU {
             maybe_wait_list                  = _on_stop_syncing_threads.find(handle);
         }
         maybe_wait_list->value->add_back(calling_thread);
-        calling_thread->m_sync_stop_thread_handle = thread->get_handle();
+        calling_thread->m_sync_stop_thread_handle = handle;
         g_scheduler.await_block();
         g_scheduler.block(calling_thread);
         return true;

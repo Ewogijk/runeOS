@@ -82,7 +82,7 @@ namespace Rune::CPU {
     }
 
     void Mutex::unlock() {
-        auto calling_thread = g_scheduler.get_running_thread();
+        auto& calling_thread = g_scheduler.get_running_thread();
         // Only the owning thread is allowed to unlock the mutex
         if (!_owner) return;
         if (calling_thread->get_handle() != _owner->get_handle()) return;
@@ -95,9 +95,9 @@ namespace Rune::CPU {
             }
             _owner = thread_to_wake;
         }
-        trace_state("unlock");
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);
+        trace_state("unlock");
         g_scheduler.unblock(thread_to_wake);
     }
 
