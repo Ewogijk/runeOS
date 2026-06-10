@@ -22,10 +22,10 @@
 namespace Rune::CPU {
 
     struct DQNode {
-        SharedPointer<Thread> sleeping_thread = SharedPointer<Thread>(nullptr);
-        DQNode*               prev            = nullptr;
-        DQNode*               next            = nullptr;
-        U64                   wake_time       = 0;
+        SharedPointer<Thread> m_sleeping_thread = SharedPointer<Thread>(nullptr);
+        DQNode*               m_prev            = nullptr;
+        DQNode*               m_next            = nullptr;
+        U64                   m_wake_time       = 0;
     };
 
     /**
@@ -33,11 +33,14 @@ namespace Rune::CPU {
      * time than others will be put before threads that are woken at a later time.
      */
     class DeltaQueue {
-        DQNode* _first{nullptr};
-        DQNode* _last{nullptr};
+        DQNode* m_first{nullptr};
+        DQNode* m_last{nullptr};
+
+        auto remove(DQNode* node) -> SharedPointer<Thread>;
 
       public:
         explicit DeltaQueue();
+        ~DeltaQueue();
 
         [[nodiscard]] auto first() const -> DQNode*;
 
@@ -51,7 +54,7 @@ namespace Rune::CPU {
         auto dequeue() -> SharedPointer<Thread>;
 
         // Remove a waiting thread at any position from the queue.
-        auto remove_waiting_thread(U16 t_id) -> bool;
+        auto remove_waiting_thread(Handle thread_handle) -> bool;
     };
 } // namespace Rune::CPU
 

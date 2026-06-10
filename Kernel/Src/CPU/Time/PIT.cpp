@@ -47,8 +47,8 @@ namespace Rune::CPU {
         LinkedList<SleepingThread> l;
         DQNode*                    c = _sleeping_threads.first();
         while (c != nullptr) {
-            l.add_back({.sleeper = c->sleeping_thread.get(), .wake_time = c->wake_time});
-            c = c->next;
+            l.add_back({.sleeper = c->m_sleeping_thread.get(), .wake_time = c->m_wake_time});
+            c = c->m_next;
         }
         return l;
     }
@@ -133,14 +133,15 @@ namespace Rune::CPU {
         }
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
-        auto r_t = _scheduler->get_running_thread();
-        LOGGER->trace(R"(1-{}: {} sleep until {}ns)",
+        auto& calling_thread = _scheduler->get_running_thread();
+        LOGGER->trace(R"(1-{}: {} R{} sleep until {}ns)",
                       get_name(),
-                      r_t->get_unique_name(),
+                      calling_thread->get_unique_name(),
+                      calling_thread.get_ref_count(),
                       sleep_time_nanos);
-        _sleeping_threads.enqueue(r_t, sleep_time_nanos);
-        r_t->timer_handle  = 1;
-        _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
+        _sleeping_threads.enqueue(calling_thread, sleep_time_nanos);
+        calling_thread->timer_handle = 1;
+        _quantum_remaining           = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->await_block();
         _scheduler->block();
     }
