@@ -18,8 +18,12 @@
 
 #include <Memory/Paging.h>
 
+#include <CPU/Interrupt/InterruptLock.h>
+#include <CPU/Threading/CriticalSection.h>
+
 namespace Rune::CPU {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.CPUModule");
+
     // NOLINTBEGIN
     Function<void(Thread*, Thread*)> ON_THREAD_STOPPED = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)
@@ -128,20 +132,6 @@ namespace Rune::CPU {
         _event_hook_table.put(EventHook(EventHook::THREAD_PREEMPTED).to_string(),
                               LinkedList<EventHandlerTableEntry>());
 
-        install_event_handler(EventHook(EventHook::THREAD_STOPPED).to_string(),
-                              "Thread Table Cleaner",
-                              [this](void* evt_ctx) -> void {
-                                  auto* ctx = reinterpret_cast<ThreadPreemptionContext*>(evt_ctx);
-                                  if (g_thread_cache.free(ctx->stopped->get_handle())) {
-                                      LOGGER->trace(R"(Removing {} from the thread table.)",
-                                                    ctx->stopped->get_unique_name());
-                                  } else {
-                                      LOGGER->warn(
-                                          R"(Stopped thread {} was not found in the thread table.)",
-                                          ctx->stopped->get_unique_name());
-                                  }
-                              });
-
         // Init Interrupts/IRQs
         LOGGER->debug("Loading interrupt vector table...");
         interrupt_load_vector_table();
@@ -214,6 +204,12 @@ namespace Rune::CPU {
 
             fire(EventHook(EventHook::THREAD_STOPPED).to_string(),
                  reinterpret_cast<void*>(&tt_ctx));
+
+            if (g_thread_cache.free(term->get_handle())) {
+                LOGGER->trace(R"(Removed {} from the thread cache)", term->get_unique_name());
+            } else {
+                LOGGER->warn(R"({} was not found in the thread cache)", term->get_unique_name());
+            }
         };
         g_scheduler.set_on_context_switch([this](Thread* next) -> void {
             fire(EventHook(EventHook::THREAD_PREEMPTED).to_string(), reinterpret_cast<void*>(next));
@@ -309,84 +305,94 @@ namespace Rune::CPU {
 
     auto CPUModule::stop_thread(int handle) -> bool { // NOLINT
         // Check if a thread with the handle exists
-        SharedPointer<Thread> thread_to_stop = g_thread_cache.find(handle);
+        auto thread_to_stop = g_thread_cache.find(handle);
         if (!thread_to_stop) {
             LOGGER->debug("No thread with handle {} exists", handle);
             return false;
         }
 
-        // Check where the thread currently is e.g. locked by a mutex and remove it from the queue
-        LOGGER->trace(R"(Terminating thread {})", thread_to_stop->get_unique_name());
-        switch (thread_to_stop->state) { // NOLINT All cases are handled
-            case ThreadState::NONE:
-                LOGGER->error(R"({} has invalid state "None".)", thread_to_stop->get_unique_name());
-                return false;
-            case ThreadState::CREATED:
-                // NOOP -> Thread has been created and is not yet scheduled, thus there is no need
-                // to stop it
-                return true;
-            case ThreadState::READY:
-                if (!g_scheduler.get_ready_queue()->remove(handle)) {
-                    LOGGER->error(R"({} is missing from the ready queue.)",
+        {
+            // Disable external interrupts, thus disabling context switches
+            // Fixes memory leak warnings in case the calling thread is preempted and thread_to_stop
+            // stops execution -> Thread garbage collector would report a memory leak because
+            // thread_to_stop holds a reference
+            InterruptSaveLock                  lock;
+            CriticalSection<InterruptSaveLock> _(lock);
+            // Check where the thread currently is e.g. locked by a mutex and remove it from the
+            // queue
+            LOGGER->trace(R"(Terminating thread {})", thread_to_stop->get_unique_name());
+            switch (thread_to_stop->state) { // NOLINT All cases are handled
+                case ThreadState::NONE:
+                    LOGGER->error(R"({} has invalid state "None".)",
                                   thread_to_stop->get_unique_name());
                     return false;
-                }
-                break;
-            case ThreadState::RUNNING:
-                // Do not stop the running thread because we do not want a context switch to
-                // happen
-                LOGGER->trace(R"({} is running, will not stop.)",
-                              thread_to_stop->get_unique_name());
-                return true;
-            case ThreadState::AWAIT_BLOCK:
-                if (g_scheduler.get_running_thread()->get_handle()
-                    == static_cast<ThreadHandle>(handle)) {
-                    LOGGER->trace(R"({} is running, will not stop.)",
-                                  thread_to_stop->get_unique_name());
+                case ThreadState::CREATED:
+                    // NOOP -> Thread has been created and is not yet scheduled, thus there is no
+                    // need to stop it
                     return true;
-                } else {
+                case ThreadState::READY:
                     if (!g_scheduler.get_ready_queue()->remove(handle)) {
                         LOGGER->error(R"({} is missing from the ready queue.)",
                                       thread_to_stop->get_unique_name());
                         return false;
                     }
-                }
-                break;
-            case ThreadState::BLOCKED:
-                if (thread_to_stop->timer_handle > 0) {
-                    if (!_timer->remove_sleeping_thread(handle)) {
-                        LOGGER->error(R"({} is missing from the wait queue of the timer.)",
+                    break;
+                case ThreadState::RUNNING:
+                    // Do not stop the running thread because we do not want a context switch to
+                    // happen
+                    LOGGER->trace(R"({} is running, will not stop.)",
+                                  thread_to_stop->get_unique_name());
+                    return true;
+                case ThreadState::AWAIT_BLOCK:
+                    if (g_scheduler.get_running_thread()->get_handle()
+                        == static_cast<ThreadHandle>(handle)) {
+                        LOGGER->trace(R"({} is running, will not stop.)",
                                       thread_to_stop->get_unique_name());
-                        return false;
-                    }
-                } else if (thread_to_stop->mutex_handle > 0) {
-                    SharedPointer<Mutex> m(nullptr);
-                    for (const auto& mm : g_mutex_cache.get_resources()) {
-                        if (mm->get_handle() // NOLINT Only end() is null
-                            == thread_to_stop->mutex_handle) {
-                            m = mm;
-                            break;
+                        return true;
+                    } else {
+                        if (!g_scheduler.get_ready_queue()->remove(handle)) {
+                            LOGGER->error(R"({} is missing from the ready queue.)",
+                                          thread_to_stop->get_unique_name());
+                            return false;
                         }
                     }
-                    if (!m) {
-                        LOGGER->error("No mutex with handle {} was found.",
-                                      thread_to_stop->get_handle(),
-                                      thread_to_stop->get_name(),
-                                      thread_to_stop->mutex_handle);
-                        return false;
-                    }
+                    break;
+                case ThreadState::BLOCKED:
+                    if (thread_to_stop->timer_handle > 0) {
+                        if (!_timer->remove_sleeping_thread(handle)) {
+                            LOGGER->error(R"({} is missing from the wait queue of the timer.)",
+                                          thread_to_stop->get_unique_name());
+                            return false;
+                        }
+                    } else if (thread_to_stop->mutex_handle > 0) {
+                        SharedPointer<Mutex> m(nullptr);
+                        for (const auto& mm : g_mutex_cache.get_resources()) {
+                            if (mm->get_handle() // NOLINT Only end() is null
+                                == thread_to_stop->mutex_handle) {
+                                m = mm;
+                                break;
+                            }
+                        }
+                        if (!m) {
+                            LOGGER->error("No mutex with handle {} was found.",
+                                          thread_to_stop->get_handle(),
+                                          thread_to_stop->get_name(),
+                                          thread_to_stop->mutex_handle);
+                            return false;
+                        }
 
-                    if (!m->remove_thread(thread_to_stop->get_handle())) {
-                        LOGGER->error(R"({} was not the owner or in the waiting queue of {})",
-                                      thread_to_stop->get_unique_name(),
-                                      m->get_unique_name());
-                        return false;
+                        if (!m->remove_thread(thread_to_stop->get_handle())) {
+                            LOGGER->error(R"({} was not the owner or in the waiting queue of {})",
+                                          thread_to_stop->get_unique_name(),
+                                          m->get_unique_name());
+                            return false;
+                        }
                     }
-                }
-                break;
-            case ThreadState::STOPPED:
-                LOGGER->trace(R"({} is already stopped.)", thread_to_stop->get_unique_name());
-                break;
+                    break;
+                case ThreadState::STOPPED:
+                    LOGGER->trace(R"({} is already stopped.)", thread_to_stop->get_unique_name());
+                    return true;
+            }
         }
 
         g_scheduler.stop(thread_to_stop);
@@ -402,6 +408,11 @@ namespace Rune::CPU {
             _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
             maybe_wait_list                  = _on_stop_syncing_threads.find(handle);
         }
+        LOGGER->trace("{} R{} sync on {} R{} stop",
+                      calling_thread->get_unique_name(),
+                      calling_thread.get_ref_count(),
+                      g_thread_cache.find(handle)->get_unique_name(),
+                      g_thread_cache.find(handle).get_ref_count());
         maybe_wait_list->value->add_back(calling_thread);
         calling_thread->m_sync_stop_thread_handle = handle;
         g_scheduler.await_block();
