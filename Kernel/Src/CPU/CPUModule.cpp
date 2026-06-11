@@ -18,7 +18,6 @@
 
 #include <Memory/Paging.h>
 
-#include <CPU/Interrupt/InterruptLock.h>
 #include <CPU/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
@@ -316,8 +315,7 @@ namespace Rune::CPU {
             // Fixes memory leak warnings in case the calling thread is preempted and thread_to_stop
             // stops execution -> Thread garbage collector would report a memory leak because
             // thread_to_stop holds a reference
-            InterruptSaveLock                  lock;
-            CriticalSection<InterruptSaveLock> _(lock);
+            CriticalSection<InterruptSaveLock> _(m_lock);
             // Check where the thread currently is e.g. locked by a mutex and remove it from the
             // queue
             LOGGER->trace(R"(Terminating thread {})", thread_to_stop->get_unique_name());
@@ -399,11 +397,11 @@ namespace Rune::CPU {
         return true;
     }
 
-    auto CPUModule::sync_on_thread_stop(ThreadHandle handle) -> bool {
+    auto CPUModule::sync_with_thread_stop(ThreadHandle handle) -> bool {
+        CriticalSection<InterruptSaveLock> _(m_lock);
         if (!g_thread_cache.find(handle)) return false;
-
-        auto calling_thread  = g_scheduler.get_running_thread();
-        auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
+        auto                               calling_thread  = g_scheduler.get_running_thread();
+        auto                               maybe_wait_list = _on_stop_syncing_threads.find(handle);
         if (maybe_wait_list == _on_stop_syncing_threads.end()) {
             _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
             maybe_wait_list                  = _on_stop_syncing_threads.find(handle);

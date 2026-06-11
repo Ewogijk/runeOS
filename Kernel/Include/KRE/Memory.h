@@ -204,7 +204,7 @@ namespace Rune {
             return m_refs != nullptr ? m_refs->m_strong_ref_count : 0;
         }
 
-        auto get_ref_count() const -> size_t {
+        [[nodiscard]] auto get_ref_count() const -> size_t {
             return m_refs != nullptr ? m_refs->m_strong_ref_count : 0;
         }
 

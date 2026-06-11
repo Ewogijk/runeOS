@@ -24,6 +24,7 @@
 #include <CPU/CPU.h>
 #include <CPU/Interrupt/IRQ.h>
 #include <CPU/Interrupt/Interrupt.h>
+#include <CPU/Interrupt/InterruptLock.h>
 
 #include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
@@ -84,6 +85,8 @@ namespace Rune::CPU {
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         UniquePointer<Timer> _timer;
+
+        InterruptSaveLock m_lock;
 
       public:
         CPUModule();
@@ -241,7 +244,7 @@ namespace Rune::CPU {
         ///
         /// After the calling thread is unblocked it is not guaranteed that the thread object of the
         /// joined thread is still available in the thread table.
-        auto sync_on_thread_stop(ThreadHandle handle) -> bool;
+        auto sync_with_thread_stop(ThreadHandle handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Mutex API

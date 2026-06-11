@@ -108,8 +108,8 @@ namespace Rune::CPU {
             g_scheduler.block(_owner);
             unlock();
         } else {
+            CriticalSection<Spinlock> _(_wait_queue_lock);
             SharedPointer<Thread> to_remove;
-            _wait_queue_lock.lock();
             for (auto& waiting : _wait_queue) {
                 if (waiting->get_handle() == handle) {
                     to_remove = waiting;
@@ -118,21 +118,19 @@ namespace Rune::CPU {
             }
             if (!to_remove) return false;
             _wait_queue.remove(to_remove);
-            _wait_queue_lock.unlock();
         }
         return true;
     }
 
-    ResourceCache<Mutex, 3>
-        g_mutex_cache({"ID-Name", "Owner", "WaitQueue"},
-                      [](const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
-                          Thread* owner           = mutex->get_owner();
-                          String  waiting_threads = "";
-                          for (auto& t : mutex->get_waiting_threads())
-                              waiting_threads += t->get_unique_name();
-                          if (waiting_threads.is_empty()) waiting_threads = "-";
-                          return {mutex->get_unique_name(),
-                                  owner != nullptr ? owner->get_unique_name() : "-",
-                                  waiting_threads};
-                      });
+    auto mutex_row_converter(const SharedPointer<Mutex>& mutex) -> Array<String, 3> {
+        Thread* owner           = mutex->get_owner();
+        String  waiting_threads = "";
+        for (auto& t : mutex->get_waiting_threads()) waiting_threads += t->get_unique_name();
+        if (waiting_threads.is_empty()) waiting_threads = "-";
+        return {mutex->get_unique_name(),
+                owner != nullptr ? owner->get_unique_name() : "-",
+                waiting_threads};
+    }
+
+    ResourceCache<Mutex, 3> g_mutex_cache({"ID-Name", "Owner", "WaitQueue"}, &mutex_row_converter);
 } // namespace Rune::CPU

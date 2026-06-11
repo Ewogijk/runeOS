@@ -91,7 +91,8 @@ namespace Rune::CPU {
         explicit ThreadPool(const String& thread_pool_name)
             : m_this_addr(int_to_string(memory_pointer_to_addr(this), Radix::HEX)),
               m_worker_thread_argv(),
-              m_task_queue_mutex(Resource<MutexHandle>::HANDLE_NONE, "ThreadPool Mutex"),
+              m_task_queue_mutex(Resource<MutexHandle>::HANDLE_NONE,
+                                 String::format("{} Mutex", thread_pool_name)),
               m_name(thread_pool_name) {
 
             // NOLINTBEGIN
@@ -110,7 +111,7 @@ namespace Rune::CPU {
             auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
 
             for (const auto& worker_thread : m_threads)
-                cpu_module->sync_on_thread_stop(worker_thread.m_handle);
+                cpu_module->sync_with_thread_stop(worker_thread.m_handle);
         }
 
         /// @brief
