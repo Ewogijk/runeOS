@@ -85,7 +85,7 @@ namespace Rune::CPU {
             : m_shared_state(new FPSharedState<ResultType>(
                   Optional<ResultType>(),
                   ConditionVariable(),
-                  Mutex(Resource<MutexHandle>::HANDLE_NONE, ""))) {}
+                  Mutex(Resource<MutexHandle>::HANDLE_NONE, "FuturePrivateLock"))) {}
 
         /// @brief Get a reference to the future associated to this promise.
         /// @return A reference to the associated future.

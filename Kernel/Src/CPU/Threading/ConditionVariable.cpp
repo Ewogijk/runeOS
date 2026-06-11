@@ -24,7 +24,11 @@ namespace Rune::CPU {
         if (thread.has_value()) g_scheduler.unblock(thread.value());
     }
 
-    ConditionVariable::ConditionVariable() : m_spinlock() {}
+    ConditionVariable::ConditionVariable() = default;
+
+    ConditionVariable::~ConditionVariable() {
+        m_waiters.clear();
+    }
 
     auto ConditionVariable::get_waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
@@ -36,7 +40,7 @@ namespace Rune::CPU {
         {
             CriticalSection<Spinlock> _(m_spinlock);
             m_waiters.add_back(g_scheduler.get_running_thread());
-            g_scheduler.await_block();
+            g_scheduler.mark_as_block_pending();
         }
         mutex.unlock();
         g_scheduler.block();

@@ -37,6 +37,7 @@ namespace Rune::CPU {
 
       public:
         ConditionVariable();
+        ~ConditionVariable();
 
         /// @brief
         /// @return A list of threads waiting for the condition variable to be notified.
