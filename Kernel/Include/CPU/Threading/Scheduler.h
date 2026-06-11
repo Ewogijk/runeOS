@@ -200,10 +200,10 @@ namespace Rune::CPU {
         /// Thread state transition:
         /// - Running thread
         ///     - ThreadState::RUNNING -> ThreadState::READY
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::BLOCK_PENDING
         /// - Next thread:
         ///     - ThreadState::READY -> ThreadState::RUNNING
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::BLOCK_PENDING
         ///
         /// Note: This function is thread safe.
         void preempt_running_thread();
@@ -218,15 +218,15 @@ namespace Rune::CPU {
         /// unblocked, because it was already and thus removed from the wait queue.
         ///
         /// The intention of this function is to plan to block a thread by making a state transition
-        /// to ThreadState::AWAIT_BLOCK state and later call block() which atomically triggers a
+        /// to ThreadState::BLOCK_PENDING state and later call block() which atomically triggers a
         /// context switch if and only if the thread is still in said state.
         ///
-        /// Thread state transition: ThreadState::RUNNING -> ThreadState::AWAIT_BLOCK
+        /// Thread state transition: ThreadState::RUNNING -> ThreadState::BLOCK_PENDING
         ///
         /// Note: This function is thread safe.
-        void await_block();
+        void mark_as_block_pending();
 
-        /// @brief Preempt the given thread if and only if it is in the ThreadState::AWAIT_BLOCK
+        /// @brief Preempt the given thread if and only if it is in the ThreadState::BLOCK_PENDING
         ///         state.
         /// @param thread The thread to be blocked.
         ///
@@ -235,16 +235,16 @@ namespace Rune::CPU {
         /// to the thread will no longer be maintained by the scheduler, it is the callers
         /// responsibility to do so.
         ///
-        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        /// Thread state transition: ThreadState::BLOCK_PENDING -> ThreadState::BLOCKED
         ///
         /// Note: This function is thread safe.
         void block(const SharedPointer<Thread>& thread);
 
-        /// @brief Preempt the running thread if it is in the ThreadState::AWAIT_BLOCK state.
+        /// @brief Preempt the running thread if it is in the ThreadState::BLOCK_PENDING state.
         ///
         /// This function is a shortcut for: block(get_running_thread()).
         ///
-        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        /// Thread state transition: ThreadState::BLOCK_PENDING -> ThreadState::BLOCKED
         ///
         /// Note: This function is thread safe.
         void block();
@@ -259,7 +259,7 @@ namespace Rune::CPU {
         ///
         /// Thread state transition:
         ///     - ThreadState::BLOCKED -> ThreadState::READY
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::READY
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::READY
         ///
         /// Note: This function is thread safe.
         void unblock(const SharedPointer<Thread>& thread);

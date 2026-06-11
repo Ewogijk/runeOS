@@ -249,7 +249,7 @@ namespace Rune {
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        cpu_module->get_scheduler()->await_block();
+        cpu_module->get_scheduler()->mark_as_block_pending();
         cpu_module->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
 

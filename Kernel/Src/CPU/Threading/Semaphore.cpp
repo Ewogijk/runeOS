@@ -56,7 +56,7 @@ namespace Rune::CPU {
         while (_units <= 0) {
             auto calling_thread = g_scheduler.get_running_thread();
             _wait_queue.add_back(calling_thread);
-            g_scheduler.await_block();
+            g_scheduler.mark_as_block_pending();
             trace_state("lock-fail");
             // Release the spinlock for the block duration to allow threads holding the semaphore
             // to unlock it or other threads to try to lock it

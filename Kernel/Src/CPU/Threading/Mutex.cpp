@@ -54,7 +54,7 @@ namespace Rune::CPU {
             {
                 CriticalSection<Spinlock> lock(_wait_queue_lock);
                 _wait_queue.add_back(calling_thread);
-                g_scheduler.await_block();
+                g_scheduler.mark_as_block_pending();
             }
             trace_state("lock-fail");
             // await_block()/block() mechanic solves the lost wakeup problem

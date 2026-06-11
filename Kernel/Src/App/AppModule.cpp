@@ -529,7 +529,7 @@ namespace Rune::App {
         app->joining_thread_table.add_back(r_t);
         // The "block" call will trigger a context switch to whatever next thread will be run and
         // this thread will wait until it is scheduled again in the "exit_running_app" function.
-        scheduler->await_block();
+        scheduler->mark_as_block_pending();
         scheduler->block();
         // The application has exited here, meaning this thread was rescheduled in
         // "exit_running_app" at some point thus the exit_code of the app is now set

@@ -87,7 +87,7 @@ namespace Rune::CPU {
                 }
                 // dT gets deleted here after it goes out of scope
             }
-            g_scheduler.await_block();
+            g_scheduler.mark_as_block_pending();
             interrupt_irq_enable();
             g_scheduler.block();
         }
@@ -341,7 +341,7 @@ namespace Rune::CPU {
                     LOGGER->trace(R"({} is running, will not stop.)",
                                   thread_to_stop->get_unique_name());
                     return true;
-                case ThreadState::AWAIT_BLOCK:
+                case ThreadState::BLOCK_PENDING:
                     if (g_scheduler.get_running_thread()->get_handle()
                         == static_cast<ThreadHandle>(handle)) {
                         LOGGER->trace(R"({} is running, will not stop.)",
@@ -413,7 +413,7 @@ namespace Rune::CPU {
                       g_thread_cache.find(handle).get_ref_count());
         maybe_wait_list->value->add_back(calling_thread);
         calling_thread->m_sync_stop_thread_handle = handle;
-        g_scheduler.await_block();
+        g_scheduler.mark_as_block_pending();
         g_scheduler.block(calling_thread);
         return true;
     }

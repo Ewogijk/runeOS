@@ -92,21 +92,21 @@ namespace Rune::CPU {
                                  _running_thread->state.to_string());
                     break;
                 case ThreadState::RUNNING:
-                case ThreadState::AWAIT_BLOCK:
+                case ThreadState::BLOCK_PENDING:
                     if (!_ready_queue->enqueue(_running_thread)) {
                         LOGGER->warn(
                             R"({}: Reschedule failed (perform_context_switch) (going to {}))",
                             _running_thread->get_unique_name(),
                             next_thread->get_unique_name());
                     } else {
-                        // Only change from RUNNING -> READY state not AWAIT_BLOCK -> READY
+                        // Only change from RUNNING -> READY state not BLOCK_PENDING -> READY
                         // Why? Use case of await_block function is following:
                         //
                         // scheduler->await_block();
                         // ... more code <-- Timer interrupt and preemption could happen
                         // scheduler->block();
                         //
-                        // A thread that is in the AWAIT_BLOCK state could be preempted anytime
+                        // A thread that is in the BLOCK_PENDING state could be preempted anytime
                         // before it is blocked, therefore, the state must be preserved across
                         // context switches, otherwise the block() call will fail
                         if (_running_thread->state == ThreadState::RUNNING)
@@ -126,8 +126,8 @@ namespace Rune::CPU {
 
         auto* old_thread       = _running_thread.get();
         _running_thread        = move(next_thread);
-        _running_thread->state = _running_thread->state == ThreadState::AWAIT_BLOCK
-                                     ? ThreadState::AWAIT_BLOCK
+        _running_thread->state = _running_thread->state == ThreadState::BLOCK_PENDING
+                                     ? ThreadState::BLOCK_PENDING
                                      : ThreadState::RUNNING;
         _on_context_switch(forward<Thread*>(_running_thread.get()));
         current_core()->switch_to_thread(old_thread, _running_thread.get());
@@ -228,9 +228,9 @@ namespace Rune::CPU {
         unlock();
     }
 
-    void Scheduler::await_block() {
+    void Scheduler::mark_as_block_pending() {
         lock();
-        _running_thread->state = ThreadState::AWAIT_BLOCK;
+        _running_thread->state = ThreadState::BLOCK_PENDING;
         unlock();
     }
 
@@ -240,7 +240,7 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        if (thread->state != ThreadState::AWAIT_BLOCK) {
+        if (thread->state != ThreadState::BLOCK_PENDING) {
             unlock();
             return;
         }
@@ -262,10 +262,22 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::AWAIT_BLOCK) {
+        if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::BLOCK_PENDING) {
             LOGGER->error(R"({}: Invalid thread state "{}" (unblock))",
                           thread->get_unique_name(),
                           thread->state.to_string());
+            unlock();
+            return;
+        }
+
+        // The running thread is being unblocked before a block call due to some race condition
+        // Adding it to the ready queue could lead to a stack-corrupting context switch:
+        // running thread -> running thread
+        // Thus, just let the thread keep running
+        if (thread == _running_thread) {
+            LOGGER->trace(R"({}: Unblock of running thread. Will ignore.)",
+                          thread->get_unique_name());
+            thread->state = ThreadState::RUNNING;
             unlock();
             return;
         }

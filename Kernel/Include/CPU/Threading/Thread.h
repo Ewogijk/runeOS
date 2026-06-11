@@ -44,7 +44,7 @@ namespace Rune::CPU {
     /// - CREATED: The thread has been created but has not started execution yet.
     /// - READY: The thread is in the ready queue of the scheduler and waiting to be scheduled.
     /// - RUNNING: The thread code is currently being executed.
-    /// - AWAIT_BLOCK: The thread is running but planned to be blocked in the future.
+    /// - BLOCK_PENDING: The thread is running but planned to be blocked in the future.
     /// - BLOCKED: The thread is not in the ready queue of the scheduler and waiting for a condition
     ///             to fulfill before it will be scheduled again.
     /// - STOPPED: The thread has finished execution, but its heap memory has yet to be freed.
@@ -52,7 +52,7 @@ namespace Rune::CPU {
     X(ThreadState, CREATED, 0x1)                                                                   \
     X(ThreadState, READY, 0x2)                                                                     \
     X(ThreadState, RUNNING, 0x3)                                                                   \
-    X(ThreadState, AWAIT_BLOCK, 0x4)                                                               \
+    X(ThreadState, BLOCK_PENDING, 0x4)                                                               \
     X(ThreadState, BLOCKED, 0x5)                                                                   \
     X(ThreadState, STOPPED, 0x6)
 
