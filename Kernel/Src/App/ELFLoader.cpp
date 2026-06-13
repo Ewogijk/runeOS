@@ -232,8 +232,13 @@ namespace Rune::App {
             constexpr U16 flags = Memory::PageFlag::PRESENT | Memory::PageFlag::WRITE_ALLOWED
                                   | Memory::PageFlag::USER_MODE_ACCESS;
 
+            LOGGER->debug("Mapping Segment {}: {:0=#16x}-{:0=#16x} ({} bytes)",
+                          i,
+                          v_start,
+                          v_end,
+                          (v_end - v_start) / Memory::get_page_size());
             if (!vmm->allocate(v_start, flags, num_pages)) {
-                LOGGER->error("PH{}: Failed to allocate {:0=#16x}-{:0=#16x}",
+                LOGGER->error("Segment {}: Failed to allocate {:0=#16x}-{:0=#16x}",
                               i,
                               v_start,
                               v_start + (num_pages * Memory::get_page_size()));
@@ -277,6 +282,11 @@ namespace Rune::App {
             size_t to_copy        = ph.file_size;
             auto*  ph_dest        = memory_addr_to_pointer<U8>(ph.virtual_address);
             size_t ph_dest_offset = 0;
+            LOGGER->debug("Load Segment {}: {:0=#16x}-{:0=#16x} ({} bytes)",
+                          i,
+                          ph.virtual_address,
+                          ph.virtual_address + ph.memory_size,
+                          ph.memory_size);
             while (to_copy > 0) {
                 Array<U8, BUF_SIZE> b{};
                 const size_t        mem_read = read_bytes(b.data(), BUF_SIZE);
@@ -416,11 +426,13 @@ namespace Rune::App {
         PhysicalAddr                  base_pt_addr{0};
         if (keep_vas) {
             base_pt_addr = curr_app_vas;
+            LOGGER->debug("Keeping VAS at {:0=#16x}", base_pt_addr);
         } else {
             if (!vmm->allocate_virtual_address_space(base_pt_addr)) {
                 LOGGER->error("Failed to allocate virtual address space.");
                 return LoadStatus::MEMORY_ERROR;
             }
+            LOGGER->debug("Load new VAS at: {:0=#16x}", base_pt_addr);
             vmm->load_virtual_address_space(base_pt_addr);
         }
 

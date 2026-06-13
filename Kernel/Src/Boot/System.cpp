@@ -58,31 +58,6 @@ namespace Rune {
     //                                  Helper Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * Create a log file in the /System/Log directory named 'module_name'.log
-     * and register the log file as a logging target.
-     * @param module_name Kernel module name.
-     */
-    void register_file_log_target(const String& module_name) {
-        auto*      vfs_module = System::instance().get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        const Path log_file   = Path("/System/Log") / (module_name + ".log");
-        VFS::IOStatus stat =
-            vfs_module->create(log_file, Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
-        if (stat != VFS::IOStatus::CREATED && stat != VFS::IOStatus::FOUND) {
-            System::instance().panic(R"("{}": Failed to create log file!)", log_file.to_string());
-        }
-
-        SharedPointer<VFS::Node> node;
-        stat = vfs_module->open(log_file, Ember::IOMode::WRITE, node);
-        if (stat != VFS::IOStatus::OPENED) {
-            System::instance().panic(R"("{}": Cannot open log file!)", log_file.to_string());
-        }
-
-        LogContext::instance().register_target_stream(
-            module_name,
-            SharedPointer<TextStream>(new VFS::FileStream(node)));
-    }
-
     void on_pure_virtual_function_callback() {
         System::instance().panic("Pure virtual function not implemented!");
     }
@@ -371,16 +346,6 @@ namespace Rune {
 
     void VFSModuleLoader::on_post_load(Module* module) {
         SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target("Boot");
-        register_file_log_target(
-            system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY)->get_name());
-        register_file_log_target(
-            system.get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_name());
-        register_file_log_target(
-            system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE)->get_name());
-        register_file_log_target(
-            system.get_module<VFS::VFSModule>(ModuleSelector::VFS)->get_name());
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -393,9 +358,6 @@ namespace Rune {
 
     void AppModuleLoader::on_post_load(Module* module) {
         SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target(
-            system.get_module<App::AppModule>(ModuleSelector::APP)->get_name());
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -410,9 +372,5 @@ namespace Rune {
 
     void SystemCallModuleLoader::on_post_load(Module* module) {
         SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target(
-            system.get_module<SystemCall::SystemCallModule>(ModuleSelector::SYSTEMCALL)
-                ->get_name());
     }
 } // namespace Rune
