@@ -47,10 +47,10 @@ namespace Rune::CPU {
         /// @param mutex Mutex that was locked by the calling thread.
         void wait(Mutex& mutex);
 
-        /// @brief Block the calling thread until the condition variable is notified and predicate
-        /// returns true.
+        /// @brief Block the calling thread until the condition variable is notified and the
+        /// predicate returns true.
         /// @param mutex Mutex that was locked by the calling thread.
-        /// @param predicate Predicate to check wether the waiting can be completed.
+        /// @param predicate Predicate to check whether the waiting can be completed.
         void wait(Mutex& mutex, Function<bool()> predicate);
 
         /// @brief Unblock a waiting thread.

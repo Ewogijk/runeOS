@@ -23,6 +23,7 @@
 #include <KRE/Logging.h>
 #include <KRE/Memory.h>
 
+#include <CPU/Interrupt/InterruptLock.h>
 #include <CPU/Threading/MultiLevelQueue.h>
 
 namespace Rune::CPU {
@@ -43,8 +44,7 @@ namespace Rune::CPU {
         ///         has yet to be freed by the Garbage Collector Thread.
         LinkedList<SharedPointer<Thread>> _thread_garbage_bin;
 
-        /// @brief If (_irqDisableCounter != 0), IRQs are disabled.
-        int _irq_disable_counter{0};
+        InterruptSaveLock m_lock;
 
         SharedPointer<Thread>   _idle_thread;
         SharedPointer<Thread>   _garbage_collector_thread;

@@ -51,15 +51,9 @@ namespace Rune::CPU {
         return t;
     }
 
-    void Scheduler::lock() {
-        if (_irq_disable_counter == 0) interrupt_irq_disable();
-        _irq_disable_counter++;
-    }
+    void Scheduler::lock() { m_lock.lock(); }
 
-    void Scheduler::unlock() {
-        if (_irq_disable_counter > 0) _irq_disable_counter--;
-        if (_irq_disable_counter == 0) interrupt_irq_enable();
-    }
+    void Scheduler::unlock() { m_lock.unlock(); }
 
     void Scheduler::perform_context_switch() {
         auto next_thread = next_scheduled_thread();

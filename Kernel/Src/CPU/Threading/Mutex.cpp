@@ -56,28 +56,28 @@ namespace Rune::CPU {
                 _wait_queue.add_back(calling_thread);
                 g_scheduler.mark_as_block_pending();
             }
-            trace_state("lock-fail");
+            trace_state("block");
             // await_block()/block() mechanic solves the lost wakeup problem
             g_scheduler.block();
 
             // Check if fast handoff to calling thread was done in unlock()
             // If yes, just return because _lock == 1 and _owner == calling_thread
             if (_owner->get_handle() == calling_thread->get_handle()) {
-                trace_state("lock-fast-handoff");
+                trace_state("fast-handoff");
                 return;
             }
         }
         _owner = g_scheduler.get_running_thread();
-        trace_state("lock-good");
+        trace_state("acquire");
     }
 
     auto Mutex::try_lock() -> bool {
         if (!atomic_compare_exchange_acquire(&_lock, 0, 1)) {
-            trace_state("try_lock-fail");
+            trace_state("try-acquire-fail");
             return false;
         }
         _owner = g_scheduler.get_running_thread();
-        trace_state("try_lock-good");
+        trace_state("try-acquire");
         return true;
     }
 
@@ -98,6 +98,7 @@ namespace Rune::CPU {
         // Perform fast handoff if the mutex has a new owner, otherwise unlock it
         if (!_owner) atomic_store_release(&_lock, 0);
         trace_state("unlock");
+        // if (thread_to_wake) g_scheduler.unblock(thread_to_wake);
         g_scheduler.unblock(thread_to_wake);
     }
 
@@ -109,7 +110,7 @@ namespace Rune::CPU {
             unlock();
         } else {
             CriticalSection<Spinlock> _(_wait_queue_lock);
-            SharedPointer<Thread> to_remove;
+            SharedPointer<Thread>     to_remove;
             for (auto& waiting : _wait_queue) {
                 if (waiting->get_handle() == handle) {
                     to_remove = waiting;
