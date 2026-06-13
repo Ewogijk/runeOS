@@ -195,6 +195,8 @@ namespace Rune {
 
         void concat(const char* o_buf, size_t o_size);
 
+        void clear();
+
         String(const char* arr_one, const char* arr_two, size_t size_one, size_t size_two);
 
       public:
