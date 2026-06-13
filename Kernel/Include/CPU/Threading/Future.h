@@ -28,7 +28,7 @@ namespace Rune::CPU {
     struct FPSharedState {
         Optional<ResultType> m_value;
         ConditionVariable    m_cv;
-        Mutex                m_mutex;
+        Mutex                m_lock;
     };
 
     /// @brief Future allows it to get the result of an asynchronous operation.
@@ -46,7 +46,7 @@ namespace Rune::CPU {
         [[nodiscard]] auto is_finished() const -> bool {
             bool is_finished = false;
             {
-                CriticalSection _(m_shared_state->m_mutex);
+                CriticalSection _(m_shared_state->m_lock);
                 is_finished = m_shared_state->m_value.has_value();
             }
             return is_finished;
@@ -57,10 +57,11 @@ namespace Rune::CPU {
         ///
         /// If the result is not available, more specifically if 'is_finished == false', the calling
         /// thread will be blocked until the result is available.
-        auto get() const -> ResultType {
-            CriticalSection _(m_shared_state->m_mutex);
-            if (!m_shared_state->m_value.has_value())
-                m_shared_state->m_cv.wait(m_shared_state->m_mutex);
+        auto get() const -> ResultType& {
+            CriticalSection _(m_shared_state->m_lock);
+            m_shared_state->m_cv.wait(m_shared_state->m_lock, [this]() -> bool {
+                return m_shared_state->m_value.has_value();
+            });
             return m_shared_state->m_value.value();
         }
     };
@@ -71,27 +72,30 @@ namespace Rune::CPU {
     template <class ResultType>
     class Promise {
         SharedPointer<FPSharedState<ResultType>> m_shared_state;
-        Future<ResultType>                       m_future;
 
-        void update_state(const ResultType& value) {
+        void update_state(ResultType value) {
             {
-                CriticalSection _(m_shared_state->m_mutex);
-                m_shared_state->m_value = make_optional<ResultType>(value);
+                CriticalSection _(m_shared_state->m_lock);
+                m_shared_state->m_value = make_optional<ResultType>(move(value));
             }
             m_shared_state->m_cv.notify_all();
         }
 
       public:
-        Promise(Scheduler* scheduler)
-            : m_shared_state(new FPSharedState<ResultType>(
-                  Optional<ResultType>(),
-                  ConditionVariable(scheduler),
-                  Mutex(Resource<MutexHandle>::HANDLE_NONE, "", scheduler))),
-              m_future(m_shared_state) {}
+        Promise()
+            : m_shared_state(new FPSharedState<ResultType>(Optional<ResultType>(),
+                                                           ConditionVariable(),
+                                                           Mutex(0, "FutureLock"))) {}
+
+        Promise(const Promise&)                    = delete;
+        auto operator=(const Promise&) -> Promise& = delete;
+
+        Promise(Promise&&)                    = default;
+        auto operator=(Promise&&) -> Promise& = default;
 
         /// @brief Get a reference to the future associated to this promise.
         /// @return A reference to the associated future.
-        auto get_future() const -> const Future<ResultType>& { return m_future; }
+        auto get_future() const -> Future<ResultType> { return Future(m_shared_state); }
 
         /// @brief Set the result value and notify all waiting threads.
         /// @param value Result value.

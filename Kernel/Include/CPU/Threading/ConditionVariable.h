@@ -29,8 +29,6 @@ namespace Rune::CPU {
     /// @brief A condition variable is a synchronization primitive that blocks one or more threads
     ///         until the condition variable is notified.
     class ConditionVariable {
-        Scheduler* m_scheduler;
-
         Spinlock                          m_spinlock;
         LinkedList<SharedPointer<Thread>> m_waiters;
 
@@ -38,7 +36,8 @@ namespace Rune::CPU {
         void wake_one();
 
       public:
-        ConditionVariable(Scheduler* scheduler);
+        ConditionVariable();
+        ~ConditionVariable();
 
         /// @brief
         /// @return A list of threads waiting for the condition variable to be notified.
@@ -48,10 +47,10 @@ namespace Rune::CPU {
         /// @param mutex Mutex that was locked by the calling thread.
         void wait(Mutex& mutex);
 
-        /// @brief Block the calling thread until the condition variable is notified and predicate
-        /// returns true.
+        /// @brief Block the calling thread until the condition variable is notified and the
+        /// predicate returns true.
         /// @param mutex Mutex that was locked by the calling thread.
-        /// @param predicate Predicate to check wether the waiting can be completed.
+        /// @param predicate Predicate to check whether the waiting can be completed.
         void wait(Mutex& mutex, Function<bool()> predicate);
 
         /// @brief Unblock a waiting thread.

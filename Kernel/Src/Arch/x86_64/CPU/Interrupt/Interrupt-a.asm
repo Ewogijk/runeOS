@@ -59,7 +59,6 @@ interrupt_irq_restore:
 
     push rdi
     popfq
-    sti
 
     leave
     ret

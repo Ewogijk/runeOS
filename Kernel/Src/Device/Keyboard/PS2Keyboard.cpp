@@ -173,10 +173,12 @@ namespace Rune::Device {
     }
 
     auto PS2Keyboard::handle_request(const SharedPointer<Device>& device, IORequest request)
-        -> IORequestStatus {
+        -> CPU::Future<IORequestStatus> {
         SILENCE_UNUSED(device)
         SILENCE_UNUSED(request)
-        return IORequestStatus::UNSUPPORTED;
+        CPU::Promise<IORequestStatus> p;
+        p.set_value(IORequestStatus::UNSUPPORTED);
+        return p.get_future();
     }
 
 } // namespace Rune::Device

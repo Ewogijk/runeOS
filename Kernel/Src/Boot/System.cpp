@@ -58,31 +58,6 @@ namespace Rune {
     //                                  Helper Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * Create a log file in the /System/Log directory named 'module_name'.log
-     * and register the log file as a logging target.
-     * @param module_name Kernel module name.
-     */
-    void register_file_log_target(const String& module_name) {
-        auto*      vfs_module = System::instance().get_module<VFS::VFSModule>(ModuleSelector::VFS);
-        const Path log_file   = Path("/System/Log") / (module_name + ".log");
-        VFS::IOStatus stat =
-            vfs_module->create(log_file, Ember::NodeAttribute::FILE | Ember::NodeAttribute::SYSTEM);
-        if (stat != VFS::IOStatus::CREATED && stat != VFS::IOStatus::FOUND) {
-            System::instance().panic(R"("{}": Failed to create log file!)", log_file.to_string());
-        }
-
-        SharedPointer<VFS::Node> node;
-        stat = vfs_module->open(log_file, Ember::IOMode::WRITE, node);
-        if (stat != VFS::IOStatus::OPENED) {
-            System::instance().panic(R"("{}": Cannot open log file!)", log_file.to_string());
-        }
-
-        LogContext::instance().register_target_stream(
-            module_name,
-            SharedPointer<TextStream>(new VFS::FileStream(node)));
-    }
-
     void on_pure_virtual_function_callback() {
         System::instance().panic("Pure virtual function not implemented!");
     }
@@ -249,7 +224,7 @@ namespace Rune {
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        cpu_module->get_scheduler()->await_block();
+        cpu_module->get_scheduler()->mark_as_block_pending();
         cpu_module->get_scheduler()->block(); // Stop Bootstrap Thread and switch to Boot thread
     }
 
@@ -369,19 +344,7 @@ namespace Rune {
         load_plugin(new BuiltInPlugin::FATDriverPlugin());
     }
 
-    void VFSModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target("Boot");
-        register_file_log_target(
-            system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY)->get_name());
-        register_file_log_target(
-            system.get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_name());
-        register_file_log_target(
-            system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE)->get_name());
-        register_file_log_target(
-            system.get_module<VFS::VFSModule>(ModuleSelector::VFS)->get_name());
-    }
+    void VFSModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  App Module Loader
@@ -391,12 +354,7 @@ namespace Rune {
 
     void AppModuleLoader::on_pre_load(Module* module) { SILENCE_UNUSED(module) }
 
-    void AppModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target(
-            system.get_module<App::AppModule>(ModuleSelector::APP)->get_name());
-    }
+    void AppModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                              SystemCall Module Loader
@@ -408,11 +366,5 @@ namespace Rune {
 
     void SystemCallModuleLoader::on_pre_load(Module* module) { SILENCE_UNUSED(module) }
 
-    void SystemCallModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-        System& system = System::instance();
-        register_file_log_target(
-            system.get_module<SystemCall::SystemCallModule>(ModuleSelector::SYSTEMCALL)
-                ->get_name());
-    }
+    void SystemCallModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 } // namespace Rune

@@ -18,11 +18,17 @@
 #ifndef RUNEOS_FUTURETEST_H
 #define RUNEOS_FUTURETEST_H
 
-#include <CPU/CPUModule.h>
-#include <CPU/Threading/Future.h>
-#include <KRE/System/System.h>
-#include <Memory/Paging.h>
 #include <Test/Heimdall/Heimdall.h>
+
+#include <CPU/Threading/Future.h>
+
+#include <Test/UnitTest/CPU/Threading/ThreadingTestCommon.h>
+
+#include <KRE/System/System.h>
+
+#include <CPU/CPUModule.h>
+
+#include <Memory/Paging.h>
 
 using namespace Rune;
 
@@ -37,34 +43,21 @@ auto set_value_async(CPU::StartInfo* start_info) -> int {
     return 0;
 }
 
-auto run_set_value_async_job() -> bool {
-    auto* cpu_module     = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    char* dummy_args[1]  = {nullptr}; // NOLINT
-    auto  start_info     = make_shared<CPU::StartInfo>();
-    start_info->argc     = 0;
-    start_info->argv     = dummy_args;
-    start_info->main     = &set_value_async;
-    CPU::ThreadHandle th = cpu_module->schedule_new_thread(
-        "FutureTest",
-        start_info.get(),
-        Memory::get_base_page_table_address(),
-        CPU::SchedulingPolicy::LOW_LATENCY,
-        {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-    return th != Resource<CPU::ThreadHandle>::HANDLE_NONE;
-}
-
 TEST("is_finished - Is unfinished", "Future") {
     // Setup
-    auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    auto  promise    = CPU::Promise<U8>(cpu_module->get_scheduler());
-    PROMISE          = &promise;
+    auto promise = CPU::Promise<U8>();
+    PROMISE      = &promise;
+    auto future  = promise.get_future();
 
     // Test Body
-    if (!run_set_value_async_job()) {
-        REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
-        return;
+    {
+        TestThread tt("FutureTest", set_value_async, true);
+        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+            REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
+            return;
+        }
+        REQUIRE(!future.is_finished());
     }
-    REQUIRE(!promise.get_future().is_finished());
 
     // Cleanup
     PROMISE = nullptr;
@@ -73,16 +66,20 @@ TEST("is_finished - Is unfinished", "Future") {
 TEST("is_finished - Is finished", "Future") {
     // Setup
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    auto  promise    = CPU::Promise<U8>(cpu_module->get_scheduler());
+    auto  promise    = CPU::Promise<U8>();
     PROMISE          = &promise;
+    auto future      = promise.get_future();
 
     // Test Body
-    if (!run_set_value_async_job()) {
-        REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
-        return;
+    {
+        TestThread tt("FutureTest", set_value_async, true);
+        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+            REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
+            return;
+        }
+        cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
+        REQUIRE(future.is_finished());
     }
-    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
-    REQUIRE(promise.get_future().is_finished());
 
     // Cleanup
     PROMISE = nullptr;
@@ -90,16 +87,19 @@ TEST("is_finished - Is finished", "Future") {
 
 TEST("get - Is unfinished", "Future") {
     // Setup
-    auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    auto  promise    = CPU::Promise<U8>(cpu_module->get_scheduler());
-    PROMISE          = &promise;
+    auto promise = CPU::Promise<U8>();
+    PROMISE      = &promise;
+    auto future  = promise.get_future();
 
     // Test Body
-    if (!run_set_value_async_job()) {
-        REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
-        return;
+    {
+        TestThread tt("FutureTest", set_value_async, true);
+        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+            REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
+            return;
+        }
+        REQUIRE(future.get() == RESULT);
     }
-    REQUIRE(promise.get_future().get() == RESULT);
 
     // Cleanup
     PROMISE = nullptr;
@@ -108,16 +108,20 @@ TEST("get - Is unfinished", "Future") {
 TEST("get - Is finished", "Future") {
     // Setup
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    auto  promise    = CPU::Promise<U8>(cpu_module->get_scheduler());
+    auto  promise    = CPU::Promise<U8>();
     PROMISE          = &promise;
+    auto future      = promise.get_future();
 
     // Test Body
-    if (!run_set_value_async_job()) {
-        REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
-        return;
+    {
+        TestThread tt("FutureTest", set_value_async, true);
+        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+            REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
+            return;
+        }
+        cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
+        REQUIRE(future.get() == RESULT);
     }
-    cpu_module->get_system_timer()->sleep_milli(static_cast<U64>(2) * WAIT_TIME_MILLIS);
-    REQUIRE(promise.get_future().get() == RESULT);
 
     // Cleanup
     PROMISE = nullptr;
@@ -125,15 +129,15 @@ TEST("get - Is finished", "Future") {
 
 TEST("Promise.set_value", "Future") {
     // Setup
-    auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-    auto  promise    = CPU::Promise<U8>(cpu_module->get_scheduler());
-    PROMISE          = &promise;
+    auto promise = CPU::Promise<U8>();
+    PROMISE      = &promise;
+    auto future  = promise.get_future();
 
     // Test Body
-    REQUIRE(!promise.get_future().is_finished());
+    REQUIRE(!future.is_finished());
     promise.set_value(RESULT);
-    REQUIRE(promise.get_future().is_finished());
-    REQUIRE(promise.get_future().get() == RESULT);
+    REQUIRE(future.is_finished());
+    REQUIRE(future.get() == RESULT);
 
     // Cleanup
     PROMISE = nullptr;

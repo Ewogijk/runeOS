@@ -338,7 +338,7 @@ namespace Rune::VFS {
             .m_in_buffer  = &msd_req,
             .m_out_buffer = &bytes_read,
         };
-        return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
+        return dm->control_device(dev_handle, io_req).get() == Device::IORequestStatus::HANDLED
                    ? bytes_read
                    : 0;
     }
@@ -357,7 +357,7 @@ namespace Rune::VFS {
             .m_in_buffer  = &msd_req,
             .m_out_buffer = &bytes_read,
         };
-        return dm->control_device(dev_handle, io_req) == Device::IORequestStatus::HANDLED
+        return dm->control_device(dev_handle, io_req).get() == Device::IORequestStatus::HANDLED
                    ? bytes_read
                    : 0;
     }

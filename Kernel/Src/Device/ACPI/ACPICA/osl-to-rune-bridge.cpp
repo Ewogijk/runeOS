@@ -115,6 +115,8 @@ CLINK {
 
         LinkedList<ACPIInterruptHandlerContext> m_interrupt_handlers;
         U16                                     m_interrupt_handler_counter = 0;
+
+        LinkedList<UniquePointer<CPU::Spinlock>> m_spinlocks;
     };
     OSLConfig g_osl_config;
 
@@ -518,7 +520,7 @@ CLINK {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         for (const auto& started_threads : g_osl_config.m_acpi_threads)
             // NOLINTBEGIN clang-analyzer-core.NullDereference -> iterator is null checked
-            cpu_module->sync_on_thread_stop(*started_threads.key);
+            cpu_module->sync_with_thread_stop(*started_threads.key);
         // NOLINTEND
 
         // At this point all threads have finished execution or had already finished
@@ -656,7 +658,7 @@ CLINK {
         auto*  s       = reinterpret_cast<CPU::Semaphore*>(sem);
         UINT32 c_units = 0;
         while (c_units < units) {
-            if (s->get_available_units() >= s->get_unit_max()) return AE_LIMIT;
+            if (s->available_units() >= s->unit_max()) return AE_LIMIT;
             s->unlock();
             c_units++;
         }
@@ -666,19 +668,20 @@ CLINK {
     auto acpi_to_rune_spinlock_create(ACPI_SPINLOCK * out_handle) -> ACPI_STATUS {
         if (out_handle == nullptr) return AE_BAD_PARAMETER;
 
-        auto sp = System::instance()
-                      .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                      ->create_spinlock(String::format("ACPI-Spinlock-{}",
-                                                       g_osl_config.m_spinlock_name_counter++));
+        auto sp = make_unique<CPU::Spinlock>();
         if (!sp) return AE_NO_MEMORY;
         *out_handle = sp.get();
+        g_osl_config.m_spinlocks.add_back(move(sp));
         return AE_OK;
     }
 
     void acpi_to_rune_spinlock_delete(ACPI_SPINLOCK lock) {
-        System::instance()
-            .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-            ->free_spinlock(reinterpret_cast<CPU::Spinlock*>(lock)->get_handle());
+        for (auto& spinlock : g_osl_config.m_spinlocks) {
+            if (spinlock.get() == reinterpret_cast<CPU::Spinlock*>(lock)) {
+                g_osl_config.m_spinlocks.remove(spinlock);
+                return;
+            }
+        }
     }
 
     auto acpi_to_rune_spinlock_acquire(ACPI_SPINLOCK lock) -> ACPI_CPU_FLAGS {

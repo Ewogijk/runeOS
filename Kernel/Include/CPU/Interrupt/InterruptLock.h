@@ -35,7 +35,7 @@ namespace Rune::CPU {
     /// @brief A lock that enables/disables external interrupts and additionally saves and restores
     ///         the Flags register content. Intended to be used with a critical section.
     class InterruptSaveLock {
-        Register _flags;
+        Register _flags = 0;
 
       public:
         /// @brief Save the content of the Flags register and disable external interrupts.

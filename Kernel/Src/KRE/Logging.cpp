@@ -61,20 +61,8 @@ namespace Rune {
     auto LogEventDistributor::register_target_stream(const String&             name,
                                                      SharedPointer<TextStream> target) -> bool {
         if (_target_streams.find(name) != _target_streams.end()) return false;
-        bool success = _target_streams.put(name, move(target)) != _target_streams.end();
-        if (success) {
-            // Flush the log event cache
-            auto maybe_cache = _log_event_cache.find(name);
-            if (maybe_cache != _log_event_cache.end()) {
-                LinkedList<LogEvent> cache = *maybe_cache->value;
-                for (auto& log_event : *maybe_cache->value)
-                    deliver_log_event(target, log_event.log_level, log_event.formatted_log_msg);
-                cache.clear();
-                _log_event_cache.remove(name);
-            }
-        }
-
-        return success;
+        return _target_streams.put(name, move(target)) != _target_streams.end();
+        ;
     }
 
     void LogEventDistributor::log(LogLevel                  log_level,
@@ -92,12 +80,7 @@ namespace Rune {
 
         for (auto& target : target_refs) {
             auto maybe_target = _target_streams.find(target);
-            if (maybe_target == _target_streams.end()) {
-                // Creates list if missing
-                _log_event_cache[target].add_back(
-                    {.log_level = log_level, .formatted_log_msg = formatted_log_message});
-                continue;
-            }
+            if (maybe_target == _target_streams.end()) continue;
 
             SharedPointer<TextStream> target_stream = (*maybe_target->value);
             deliver_log_event(target_stream, log_level, formatted_log_message);

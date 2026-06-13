@@ -70,7 +70,7 @@ namespace Rune {
     template <typename T>
     class LinkedList {
         Node<T>* m_first;
-        Node<T>* m_tail;
+        Node<T>* m_last;
         size_t   m_size{0};
 
         // Add to front or back, add at index not needed atm
@@ -78,16 +78,16 @@ namespace Rune {
             if (m_first == nullptr) {
                 node->m_next     = nullptr;
                 node->m_previous = nullptr;
-                m_first = m_tail = node;
+                m_first = m_last = node;
             } else {
                 if (front) {
                     node->m_next        = m_first;
                     m_first->m_previous = node;
                     m_first             = node;
                 } else {
-                    node->m_previous = m_tail;
-                    m_tail->m_next   = node;
-                    m_tail           = node;
+                    node->m_previous = m_last;
+                    m_last->m_next   = node;
+                    m_last           = node;
                 }
             }
             m_size++;
@@ -107,11 +107,11 @@ namespace Rune {
             if (node->m_next != nullptr) {
                 node->m_next->m_previous = node->m_previous;
             } else {
-                m_tail = node->m_previous;
+                m_last = node->m_previous;
             }
 
             if (node->m_next == nullptr && node->m_previous == nullptr) {
-                m_first = m_tail = nullptr;
+                m_first = m_last = nullptr;
             }
 
             T removed_ele    = move(node->m_element);
@@ -122,26 +122,26 @@ namespace Rune {
             return Optional<T>(forward<T>(removed_ele));
         }
 
-        auto contains0(const T& element) -> bool {
-            Node<T>* current = m_first;
-            while (current != nullptr) {
-                if (current->m_element == element) {
-                    return true;
+        auto index_of0(const T& element) -> int {
+            int idx = 0;
+            for (auto& node : *this) {
+                if (node == element) {
+                    return idx;
                 }
-                current = current->m_next;
+                idx++;
             }
-            return false;
+            return -1;
         }
 
-        auto contains0(const T& element) const -> bool {
-            Node<T>* current = m_first;
-            while (current != nullptr) {
-                if (current->m_element == element) {
-                    return true;
+        auto index_of0(const T& element) const -> int {
+            int idx = 0;
+            for (auto& node : *this) {
+                if (node == element) {
+                    return idx;
                 }
-                current = current->m_next;
+                idx++;
             }
-            return false;
+            return -1;
         }
 
         void free_nodes() {
@@ -155,7 +155,7 @@ namespace Rune {
 
         void copy(const LinkedList<T>& other) {
             if (other.m_size == 0) {
-                m_first = m_tail = nullptr;
+                m_first = m_last = nullptr;
                 m_size           = 0;
                 return;
             }
@@ -174,8 +174,8 @@ namespace Rune {
                 if (o_curr == other.m_first) {
                     m_first = t_curr;
                 }
-                if (o_curr == other.m_tail) {
-                    m_tail = t_curr;
+                if (o_curr == other.m_last) {
+                    m_last = t_curr;
                 }
 
                 o_curr = o_curr->m_next;
@@ -185,9 +185,9 @@ namespace Rune {
         }
 
       public:
-        explicit LinkedList() : m_first(nullptr), m_tail(nullptr) {}
+        explicit LinkedList() : m_first(nullptr), m_last(nullptr) {}
 
-        LinkedList(std::initializer_list<T> values) : m_first(nullptr), m_tail(nullptr) {
+        LinkedList(std::initializer_list<T> values) : m_first(nullptr), m_last(nullptr) {
             for (const auto& value : values) add_back(value);
         }
 
@@ -207,16 +207,16 @@ namespace Rune {
 
         LinkedList(LinkedList<T>&& other) noexcept : m_size(other.m_size) {
             swap(m_first, other.m_first);
-            swap(m_tail, other.m_tail);
+            swap(m_last, other.m_last);
 
             other.m_first = nullptr;
-            other.m_tail  = nullptr;
+            other.m_last  = nullptr;
             other.m_size  = 0;
         }
 
         auto operator=(LinkedList<T>&& other) noexcept -> LinkedList& {
             swap(m_first, other.m_first);
-            swap(m_tail, other.m_tail);
+            swap(m_last, other.m_last);
             m_size       = other.m_size;
             other.m_size = 0;
             return *this;
@@ -231,7 +231,7 @@ namespace Rune {
 
         /// @brief
         /// @return Last element.
-        [[nodiscard]] auto last() const -> T& pre(m_size > 0) { return m_tail->m_element; }
+        [[nodiscard]] auto last() const -> T& pre(m_size > 0) { return m_last->m_element; }
 
         /// @brief
         /// @return True if the list contains no elements.
@@ -271,7 +271,7 @@ namespace Rune {
 
         /// @brief Remove the last element.
         /// @return An optional with the removed element.
-        auto remove_back() -> Optional<T> { return remove0(m_tail); }
+        auto remove_back() -> Optional<T> { return remove0(m_last); }
 
         /// @brief Remove the element from the list.
         /// @param element
@@ -308,30 +308,58 @@ namespace Rune {
             return remove0(to_remove);
         }
 
-        /// @brief
+        /// @brief Get the index of the element in the list.
         /// @param element
-        /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(const T& element) const -> bool { return contains0(element); }
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(const T& element) const -> int {
+            return index_of0(element);
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(const T& element) -> int {
+            return index_of0(element);
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(T&& element) const -> int {
+            return index_of0(move(element));
+        }
+
+        /// @brief Get the index of the element in the list.
+        /// @param element
+        /// @return The index of the element, or -1 if not found.
+        auto index_of(T&& element) -> int {
+            return index_of0(move(element));
+        }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(const T& element) -> bool { return contains0(element); }
+        auto contains(const T& element) const -> bool { return index_of(element) >= 0; }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(T&& element) const -> bool { return contains0(move(element)); }
+        auto contains(const T& element) -> bool { return index_of(element) >= 0; }
 
         /// @brief
         /// @param element
         /// @return True: The element is in the list, False: Is not in the list.
-        auto contains(T&& element) -> bool { return contains0(move(element)); }
+        auto contains(T&& element) const -> bool { return index_of(move(element)) >= 0; }
+
+        /// @brief
+        /// @param element
+        /// @return True: The element is in the list, False: Is not in the list.
+        auto contains(T&& element) -> bool { return index_of(move(element)) >= 0; }
 
         /// @brief Remove all elements from the list.
         void clear() {
             free_nodes();
-            m_first = m_tail = nullptr;
+            m_first = m_last = nullptr;
             m_size           = 0;
         }
 

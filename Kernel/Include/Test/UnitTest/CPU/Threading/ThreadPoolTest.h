@@ -42,8 +42,8 @@ TEST("Destruction", "ThreadPool") {
     }
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     for (const auto thread_handle : worker_threads) {
-        auto* thread = cpu_module->find_thread(thread_handle);
-        REQUIRE(thread == nullptr);
+        auto thread = cpu_module->find_thread(thread_handle);
+        REQUIRE(thread.get() == nullptr);
     }
 }
 
@@ -55,8 +55,8 @@ TEST("start", "ThreadPool") {
     // Test body
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     for (const auto thread_handle : thread_pool.worker_threads()) {
-        auto* thread = cpu_module->find_thread(thread_handle);
-        REQUIRE(thread != nullptr);
+        auto thread = cpu_module->find_thread(thread_handle);
+        REQUIRE(thread.get() != nullptr);
     }
 }
 

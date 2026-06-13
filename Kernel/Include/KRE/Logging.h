@@ -107,7 +107,7 @@ namespace Rune {
 
         HashMap<String, SharedPointer<Layout>>     _layouts;
         HashMap<String, SharedPointer<TextStream>> _target_streams;
-        HashMap<String, LinkedList<LogEvent>>      _log_event_cache;
+        // HashMap<String, LinkedList<LogEvent>>      _log_event_cache;
 
         static void deliver_log_event(const SharedPointer<TextStream>& target,
                                       LogLevel                         log_level,

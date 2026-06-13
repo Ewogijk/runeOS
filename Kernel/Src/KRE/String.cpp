@@ -692,13 +692,18 @@ namespace Rune {
             memcpy(&n_buf[_size], o_buf, o_size);
             n_buf[new_size] = '\0';
             if (_size >= BUF_SIZE) {
-                memset(_storage._heapBuf, '\0', _size);
-                delete _storage._heapBuf;
+                clear();
             }
             _storage._heapBuf = n_buf;
             _capacity         = new_size + 1;
         }
         _size = new_size;
+    }
+
+    void String::clear() {
+        memset(_storage._heapBuf, '\0', _size);
+        delete[] _storage._heapBuf;
+        _storage._heapBuf = nullptr;
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -750,15 +755,19 @@ namespace Rune {
 
     String::~String() {
         if (_size >= BUF_SIZE) {
-            memset(_storage._heapBuf, '\0', _size);
-            delete[] _storage._heapBuf;
+            clear();
         }
     }
 
     String::String(const String& o) { init(o.to_cstr(), 0, o.size()); }
 
     auto String::operator=(const String& o) -> String& {
-        if (this != &o) init(o.to_cstr(), 0, o.size());
+        if (this != &o) {
+            if (_size >= BUF_SIZE) {
+                clear();
+            }
+            init(o.to_cstr(), 0, o.size());
+        }
         return *this;
     }
 

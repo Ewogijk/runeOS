@@ -60,10 +60,12 @@ class DummyDriver : public Device::Driver {
     }
 
     auto handle_request(const SharedPointer<Device::Device>& device, Device::IORequest request)
-        -> Device::IORequestStatus override {
+        -> CPU::Future<Device::IORequestStatus> override {
         SILENCE_UNUSED(device)
         SILENCE_UNUSED(request)
-        return Device::IORequestStatus::UNSUPPORTED;
+        CPU::Promise<Device::IORequestStatus> promise;
+        promise.set_value(Device::IORequestStatus::UNSUPPORTED);
+        return promise.get_future();
     }
 };
 
@@ -457,7 +459,7 @@ TEST("control_device - Valid Input", "DeviceModule") {
     Device::IORequest req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
     REQUIRE(ds->register_device_driver(dummy_driver))
     REQUIRE(ds->register_device(root_device, dummy_dev))
-    REQUIRE(ds->control_device(dummy_dev->get_handle(), req)
+    REQUIRE(ds->control_device(dummy_dev->get_handle(), req).get()
             == Device::IORequestStatus::UNSUPPORTED)
 
     // Cleanup
@@ -472,7 +474,7 @@ TEST("control_device - Unknown Device", "DeviceModule") {
     // Test Body
     Device::IORequest       req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
     Device::IORequestStatus req_status =
-        ds->control_device(Resource<Device::Handle>::HANDLE_NONE, req);
+        ds->control_device(Resource<Device::Handle>::HANDLE_NONE, req).get();
     REQUIRE(req_status == Device::IORequestStatus::UNKNOWN_DEVICE)
 }
 
@@ -485,7 +487,7 @@ TEST("control_device - Non-operational Device", "DeviceModule") {
     // Test Body
     Device::IORequest req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
     REQUIRE(ds->register_device(root_device, dummy_dev))
-    REQUIRE(ds->control_device(dummy_dev->get_handle(), req)
+    REQUIRE(ds->control_device(dummy_dev->get_handle(), req).get()
             == Device::IORequestStatus::DEVICE_NOT_OPERATIONAL)
 
     // Cleanup

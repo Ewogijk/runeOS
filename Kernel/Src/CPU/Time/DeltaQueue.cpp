@@ -17,101 +17,102 @@
 #include <CPU/Time/DeltaQueue.h>
 
 namespace Rune::CPU {
+    auto DeltaQueue::remove(DQNode* node) -> SharedPointer<Thread> {
+        if (node == nullptr) return {};
+
+        if (node->m_next != nullptr) {
+            if (node->m_wake_time > 0) node->m_next->m_wake_time += node->m_wake_time;
+            node->m_next->m_prev = node->m_prev;
+        }
+        if (node->m_prev != nullptr) node->m_prev->m_next = node->m_next;
+
+        if (node == m_first) m_first = node->m_next;
+        if (node == m_last) m_last = node->m_prev;
+
+        auto t                  = node->m_sleeping_thread;
+        node->m_prev            = nullptr;
+        node->m_next            = nullptr;
+        node->m_wake_time       = 0;
+        node->m_sleeping_thread = SharedPointer<Thread>();
+        delete node;
+
+        return t;
+    }
+
     DeltaQueue::DeltaQueue() = default;
 
-    auto DeltaQueue::first() const -> DQNode* { return _first; }
+    DeltaQueue::~DeltaQueue() {
+        while (m_first != nullptr) {
+            auto* node = m_first;
+            m_first    = m_first->m_next;
+            delete node;
+        }
+    }
+
+    auto DeltaQueue::first() const -> DQNode* { return m_first; }
 
     void DeltaQueue::update_wake_time(U64 time_decrement) {
-        if (_first != nullptr) _first->wake_time -= time_decrement;
+        if (m_first != nullptr) m_first->m_wake_time -= time_decrement;
     }
 
     void DeltaQueue::enqueue(const SharedPointer<Thread>& thread, U64 wake_time) {
         if (!thread) return;
 
-        auto* new_dq_node            = new DQNode();
-        new_dq_node->sleeping_thread = thread;
-        new_dq_node->wake_time       = wake_time;
-        if (_first == nullptr) {
-            _first = _last = new_dq_node;
+        auto* new_dq_node              = new DQNode();
+        new_dq_node->m_sleeping_thread = thread;
+        new_dq_node->m_wake_time       = wake_time;
+        if (m_first == nullptr) {
+            m_first = m_last = new_dq_node;
         } else {
-            auto* c_dq_node = _first;
+            auto* c_dq_node = m_first;
             while (c_dq_node != nullptr) {
-                if (new_dq_node->wake_time >= c_dq_node->wake_time) {
-                    new_dq_node->wake_time -= c_dq_node->wake_time;
+                if (new_dq_node->m_wake_time >= c_dq_node->m_wake_time) {
+                    new_dq_node->m_wake_time -= c_dq_node->m_wake_time;
                 } else {
-                    if (c_dq_node->prev == nullptr) {
-                        c_dq_node->prev   = new_dq_node;
-                        new_dq_node->next = _first;
-                        _first            = new_dq_node;
+                    if (c_dq_node->m_prev == nullptr) {
+                        c_dq_node->m_prev   = new_dq_node;
+                        new_dq_node->m_next = m_first;
+                        m_first             = new_dq_node;
                     } else {
-                        c_dq_node->prev->next = new_dq_node;
-                        new_dq_node->prev     = c_dq_node->prev;
-                        c_dq_node->prev       = new_dq_node;
-                        new_dq_node->next     = c_dq_node;
+                        c_dq_node->m_prev->m_next = new_dq_node;
+                        new_dq_node->m_prev       = c_dq_node->m_prev;
+                        c_dq_node->m_prev         = new_dq_node;
+                        new_dq_node->m_next       = c_dq_node;
                     }
-                    // Update next nodes wake times
-                    auto* ccDQNode = new_dq_node->next;
-                    while (ccDQNode != nullptr) {
-                        ccDQNode->wake_time -= new_dq_node->wake_time;
-                        ccDQNode             = ccDQNode->next;
-                    }
+                    // Update m_next nodes wake time
+                    if (new_dq_node->m_next != nullptr)
+                        new_dq_node->m_next->m_wake_time -= new_dq_node->m_wake_time;
                     return;
                 }
-                c_dq_node = c_dq_node->next;
+                c_dq_node = c_dq_node->m_next;
             }
-            _last->next       = new_dq_node;
-            new_dq_node->prev = _last;
-            _last             = new_dq_node;
+            m_last->m_next      = new_dq_node;
+            new_dq_node->m_prev = m_last;
+            m_last              = new_dq_node;
         }
     }
 
     auto DeltaQueue::dequeue() -> SharedPointer<Thread> {
-        if (_first == nullptr) return SharedPointer<Thread>(nullptr);
-
-        if (_first->wake_time == 0) {
-            DQNode* f = _first;
-            _first    = _first->next;
-            if (_first == nullptr)
-                _last = nullptr;
-            else
-                _first->prev = nullptr;
-            auto t             = f->sleeping_thread;
-            f->sleeping_thread = SharedPointer<Thread>(nullptr);
-            f->prev            = nullptr;
-            f->next            = nullptr;
-            delete f;
-            return t;
+        if (m_first == nullptr) return {};
+        if (m_first->m_wake_time == 0) {
+            return remove(m_first);
         }
-        return SharedPointer<Thread>(nullptr);
+        return {};
     }
 
-    auto DeltaQueue::remove_waiting_thread(U16 t_id) -> bool {
-        if (_first == nullptr) return false;
+    auto DeltaQueue::remove_waiting_thread(Handle thread_handle) -> bool {
+        if (m_first == nullptr) return false;
 
-        DQNode* c_node  = _first;
-        bool    removed = false;
+        DQNode* to_remove = nullptr;
+        DQNode* c_node    = m_first;
         while (c_node != nullptr) {
-            if (c_node->sleeping_thread->get_handle() == t_id) {
-                DQNode* next = c_node->next;
-                if (next != nullptr) {
-                    next->wake_time += c_node->wake_time;
-                    next->prev       = c_node->prev;
-                }
-
-                DQNode* prev = c_node->prev;
-                if (prev != nullptr) prev->next = next;
-
-                removed                 = true;
-                c_node->prev            = nullptr;
-                c_node->next            = nullptr;
-                c_node->wake_time       = 0;
-                c_node->sleeping_thread = SharedPointer<Thread>(nullptr);
-                delete c_node;
+            if (c_node->m_sleeping_thread->get_handle() == thread_handle) {
+                to_remove = c_node;
                 break;
             }
-            c_node = c_node->next;
+            c_node = c_node->m_next;
         }
-        return removed;
+        return remove(to_remove).get() != nullptr;
     }
 
 } // namespace Rune::CPU

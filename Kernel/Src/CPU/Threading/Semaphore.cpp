@@ -35,22 +35,17 @@ namespace Rune::CPU {
 
     Semaphore::Semaphore(SemaphoreHandle handle,
                          const String&   name,
-                         Scheduler*      scheduler,
                          int             counter_start,
                          int             counter_max)
         : Resource(handle, name),
           _units(counter_start),
-          _unit_max(counter_max),
-          _scheduler(scheduler),
-          _lock(Resource<SpinlockHandle>::HANDLE_NONE,
-                String::format("{}Lock", get_unique_name()),
-                scheduler) {}
+          _unit_max(counter_max) {}
 
-    auto Semaphore::get_available_units() const -> int { return _units; }
+    auto Semaphore::available_units() const -> int { return _units; }
 
-    auto Semaphore::get_unit_max() const -> int { return _unit_max; }
+    auto Semaphore::unit_max() const -> int { return _unit_max; }
 
-    auto Semaphore::get_waiting_threads() const -> LinkedList<Thread*> {
+    auto Semaphore::waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
         for (auto& t : _wait_queue) copy.add_back(t.get());
         return copy;
@@ -59,18 +54,18 @@ namespace Rune::CPU {
     void Semaphore::lock() {
         _lock.lock();
         while (_units <= 0) {
-            auto calling_thread = _scheduler->get_running_thread();
+            auto calling_thread = g_scheduler.get_running_thread();
             _wait_queue.add_back(calling_thread);
-            _scheduler->await_block();
+            g_scheduler.mark_as_block_pending();
             trace_state("lock-fail");
             // Release the spinlock for the block duration to allow threads holding the semaphore
             // to unlock it or other threads to try to lock it
             _lock.unlock();
-            _scheduler->block();
+            g_scheduler.block();
             _lock.lock();
         }
         --_units;
-        _scheduler->get_running_thread()->semaphore_handle = get_handle();
+        g_scheduler.get_running_thread()->semaphore_handle = get_handle();
         trace_state("lock-good");
         _lock.unlock();
     }
@@ -94,10 +89,23 @@ namespace Rune::CPU {
         if (!_wait_queue.empty()) {
             thread_to_wake = _wait_queue.remove_front().value();
         }
-        _scheduler->get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
-        _scheduler->unblock(thread_to_wake);
+        g_scheduler.get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
+        g_scheduler.unblock(thread_to_wake);
         memory_barrier_write();
         trace_state("unlock");
     }
+
+    ResourceCache<Semaphore, 4>
+        g_semaphore_cache({"ID-Name", "Units", "Unit Max", "Wait Queue"},
+                          [](const SharedPointer<Semaphore>& sem) -> Array<String, 4> {
+                              String waiting_threads = "";
+                              for (auto& t : sem->waiting_threads())
+                                  waiting_threads += t->get_unique_name();
+                              if (waiting_threads.is_empty()) waiting_threads = "-";
+                              return {sem->get_unique_name(),
+                                      String::format("", sem->available_units()),
+                                      String::format("", sem->unit_max()),
+                                      waiting_threads};
+                          });
 
 } // namespace Rune::CPU

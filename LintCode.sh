@@ -20,9 +20,7 @@ set -euo pipefail
 help() {
   echo Usage "./CI-Checker.sh [-h]"
   echo
-  echo Run code formatter and linter on the project code as if it was run in the CI. This tool can
-  echo be used to check if code changes would pass code formatting and linting checks of the CI.
-  echo While it does not guarante code changes will pass CI checks, chances are good.
+  echo Run linter tools on the C/C++ and python code.
   echo
   echo Options:
   echo "    -h - Print this help text"
@@ -34,36 +32,6 @@ while getopts "h" option; do
          exit
    esac
 done
-
-echo \> Check C/C++ Code formatting
-echo \> ===========================================
-echo \> Check Kernel code...
-find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
-              -path 'Kernel/Build' -prune -o \
-              -name '*.h' -o \
-              -name '*.cpp' -print | \
-              xargs clang-format -i
-echo \> '                         ' OKAY
-
-echo \> Check App code...
-find App/ -path App/Freya/subprojects -prune -o \
-          -name 'App/**/Build' -prune -o \
-          -name '*.h' -o \
-          -name '*.cpp' -print | \
-          xargs clang-format -i
-echo \> '                         ' OKAY
-echo
-
-echo \> Check Python Code formatting
-echo \> ===========================================
-echo \> Check Kernel code...
-ruff format --check Kernel/
-echo \> '                         ' OKAY
-
-echo \> Check Brokk code...
-ruff format --check Brokk/
-echo \> '                         ' OKAY
-echo
 
 echo \> Lint C/C++ Code
 echo \> ===========================================

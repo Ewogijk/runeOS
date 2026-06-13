@@ -23,6 +23,7 @@
 #include <KRE/Logging.h>
 #include <KRE/Memory.h>
 
+#include <CPU/Interrupt/InterruptLock.h>
 #include <CPU/Threading/MultiLevelQueue.h>
 
 namespace Rune::CPU {
@@ -43,8 +44,7 @@ namespace Rune::CPU {
         ///         has yet to be freed by the Garbage Collector Thread.
         LinkedList<SharedPointer<Thread>> _thread_garbage_bin;
 
-        /// @brief If (_irqDisableCounter != 0), IRQs are disabled.
-        int _irq_disable_counter{0};
+        InterruptSaveLock m_lock;
 
         SharedPointer<Thread>   _idle_thread;
         SharedPointer<Thread>   _garbage_collector_thread;
@@ -88,16 +88,10 @@ namespace Rune::CPU {
         /// Note: This function is NOT thread safe!
         void perform_context_switch();
 
+      public:
         Scheduler();
 
-      public:
         ~Scheduler() = default;
-
-        /**
-         *
-         * @return Get the instance of the scheduler.
-         */
-        static auto instance() -> Scheduler&;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Properties
@@ -117,16 +111,16 @@ namespace Rune::CPU {
 
         /// @brief
         /// @return Get a reference to the thread is currently running.
-        auto get_running_thread() -> SharedPointer<Thread>;
+        auto get_running_thread() -> SharedPointer<Thread>&;
 
         /// @brief Return the Idle Thread that will be run when the ready queue is empty.
         /// @return A reference to the Idle Thread.
-        auto get_idle_thread() -> SharedPointer<Thread>;
+        auto get_idle_thread() -> SharedPointer<Thread>&;
 
         /// @brief Return the Garbage Collector Thread  (GCT) that frees the memory allocated for
         ///         stopped threads.
         /// @return A reference to the Garbage Collector Thread .
-        auto get_garbage_collector_thread() -> SharedPointer<Thread>;
+        auto get_garbage_collector_thread() -> SharedPointer<Thread>&;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                          Event Hooks
@@ -206,10 +200,10 @@ namespace Rune::CPU {
         /// Thread state transition:
         /// - Running thread
         ///     - ThreadState::RUNNING -> ThreadState::READY
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::BLOCK_PENDING
         /// - Next thread:
         ///     - ThreadState::READY -> ThreadState::RUNNING
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::AWAIT_BLOCK
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::BLOCK_PENDING
         ///
         /// Note: This function is thread safe.
         void preempt_running_thread();
@@ -224,15 +218,15 @@ namespace Rune::CPU {
         /// unblocked, because it was already and thus removed from the wait queue.
         ///
         /// The intention of this function is to plan to block a thread by making a state transition
-        /// to ThreadState::AWAIT_BLOCK state and later call block() which atomically triggers a
+        /// to ThreadState::BLOCK_PENDING state and later call block() which atomically triggers a
         /// context switch if and only if the thread is still in said state.
         ///
-        /// Thread state transition: ThreadState::RUNNING -> ThreadState::AWAIT_BLOCK
+        /// Thread state transition: ThreadState::RUNNING -> ThreadState::BLOCK_PENDING
         ///
         /// Note: This function is thread safe.
-        void await_block();
+        void mark_as_block_pending();
 
-        /// @brief Preempt the given thread if and only if it is in the ThreadState::AWAIT_BLOCK
+        /// @brief Preempt the given thread if and only if it is in the ThreadState::BLOCK_PENDING
         ///         state.
         /// @param thread The thread to be blocked.
         ///
@@ -241,16 +235,16 @@ namespace Rune::CPU {
         /// to the thread will no longer be maintained by the scheduler, it is the callers
         /// responsibility to do so.
         ///
-        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        /// Thread state transition: ThreadState::BLOCK_PENDING -> ThreadState::BLOCKED
         ///
         /// Note: This function is thread safe.
         void block(const SharedPointer<Thread>& thread);
 
-        /// @brief Preempt the running thread if it is in the ThreadState::AWAIT_BLOCK state.
+        /// @brief Preempt the running thread if it is in the ThreadState::BLOCK_PENDING state.
         ///
         /// This function is a shortcut for: block(get_running_thread()).
         ///
-        /// Thread state transition: ThreadState::AWAIT_BLOCK -> ThreadState::BLOCKED
+        /// Thread state transition: ThreadState::BLOCK_PENDING -> ThreadState::BLOCKED
         ///
         /// Note: This function is thread safe.
         void block();
@@ -265,7 +259,7 @@ namespace Rune::CPU {
         ///
         /// Thread state transition:
         ///     - ThreadState::BLOCKED -> ThreadState::READY
-        ///     - ThreadState::AWAIT_BLOCK -> ThreadState::READY
+        ///     - ThreadState::BLOCK_PENDING -> ThreadState::READY
         ///
         /// Note: This function is thread safe.
         void unblock(const SharedPointer<Thread>& thread);
@@ -293,6 +287,9 @@ namespace Rune::CPU {
         /// Note: This function is thread safe.
         void stop();
     };
+
+    /// @brief Kernel-wide scheduler instance.
+    extern Scheduler g_scheduler;
 } // namespace Rune::CPU
 
 #endif // RUNEOS_SCHEDULER_H
