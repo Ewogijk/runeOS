@@ -40,16 +40,22 @@ namespace Rune::Device {
     }
 
     auto PortDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
-        -> IORequestStatus {
+        -> CPU::Future<IORequestStatus> {
         SharedPointer<AHCIDevice> ahci_device(device);
         auto* req = reinterpret_cast<MassStorageDeviceRequest*>(request.m_in_buffer);
-        if (req->m_type == MassStorageDeviceRequestType::NONE) return IORequestStatus::BAD_ARGUMENT;
+        CPU::Promise<IORequestStatus> p;
+        if (req->m_type == MassStorageDeviceRequestType::NONE) {
+            p.set_value(IORequestStatus::BAD_ARGUMENT);
+            return p.get_future();
+        }
 
         auto   partition_range = ahci_device->partition_range();
         size_t dev_lba         = req->m_lba + partition_range.m_start;
-        if (dev_lba > partition_range.m_end)
+        if (dev_lba > partition_range.m_end) {
             // LBA out of partition bounds
-            return IORequestStatus::BAD_ARGUMENT;
+            p.set_value(IORequestStatus::BAD_ARGUMENT);
+            return p.get_future();
+        }
 
         auto port_engine = ahci_device->port_engine();
         if (req->m_type == MassStorageDeviceRequestType::READ) {
@@ -65,6 +71,7 @@ namespace Rune::Device {
             *static_cast<size_t*>(request.m_out_buffer) =
                 port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, write_dma_FIS);
         }
-        return IORequestStatus::HANDLED;
+        p.set_value(IORequestStatus::HANDLED);
+        return p.get_future();
     }
 } // namespace Rune::Device

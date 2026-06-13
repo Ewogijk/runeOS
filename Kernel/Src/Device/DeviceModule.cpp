@@ -110,7 +110,7 @@ namespace Rune::Device {
         request.m_in_buffer  = &acpi_req;
         request.m_out_buffer = &acpi_info;
         auto req_status      = root_device_driver->handle_request(root_device_dummy, request);
-        if (req_status != IORequestStatus::HANDLED) {
+        if (req_status.get() != IORequestStatus::HANDLED) {
             LOGGER->error("Failed to configure the root device.");
             return false;
         }
@@ -234,10 +234,17 @@ namespace Rune::Device {
     // NOLINTEND
 
     auto DeviceModule::control_device(Handle dev_handle, const IORequest& io_request)
-        -> IORequestStatus {
+        -> CPU::Future<IORequestStatus> {
+        CPU::Promise<IORequestStatus> p;
         auto device = find_device(m_device_tree, dev_handle);
-        if (!device) return IORequestStatus::UNKNOWN_DEVICE;
-        if (!device->driver()) return IORequestStatus::DEVICE_NOT_OPERATIONAL;
+        if (!device) {
+            p.set_value(IORequestStatus::UNKNOWN_DEVICE);
+            return p.get_future();
+        }
+        if (!device->driver()) {
+            p.set_value(IORequestStatus::DEVICE_NOT_OPERATIONAL);
+            return p.get_future();
+        }
 
         return device->driver()->handle_request(device, io_request);
     }

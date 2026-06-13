@@ -201,7 +201,8 @@ namespace Rune::Device {
         ///         Otherwise:<br>
         ///         UNKNOWN_DEVICE: No device with dev_handle exists.
         ///         DEVICE_NOT_OPERATIONAL: The device is not operated by a driver.
-        auto control_device(Handle dev_handle, const IORequest& io_request) -> IORequestStatus;
+        auto control_device(Handle dev_handle, const IORequest& io_request)
+            -> CPU::Future<IORequestStatus>;
     };
 } // namespace Rune::Device
 

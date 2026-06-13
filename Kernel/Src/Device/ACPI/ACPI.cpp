@@ -136,16 +136,23 @@ namespace Rune::Device {
     void ACPIDriver::remove_device(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
 
     auto ACPIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
-        -> IORequestStatus {
-        if (!_acpi_initialized) return IORequestStatus::UNKNOWN_DEVICE;
+        -> CPU::Future<IORequestStatus> {
+        CPU::Promise<IORequestStatus> p;
+        if (!_acpi_initialized) {
+            p.set_value(IORequestStatus::UNKNOWN_DEVICE);
+            return p.get_future();
+        }
         auto* req = reinterpret_cast<ACPIRequest*>(request.m_in_buffer);
 
         switch (*req) {
-            case ACPIRequest::GET_ACPI_INFO: return handle_get_acpi_info_request(request);
-            case ACPIRequest::SHUTDOWN:      return handle_shutdown_request(request);
-            case ACPIRequest::REBOOT:        return handle_reboot_request(request);
-            default:                         return IORequestStatus::BAD_ARGUMENT;
+            case ACPIRequest::GET_ACPI_INFO:
+                p.set_value(handle_get_acpi_info_request(request));
+                break;
+            case ACPIRequest::SHUTDOWN: p.set_value(handle_shutdown_request(request)); break;
+            case ACPIRequest::REBOOT:   p.set_value(handle_reboot_request(request)); break;
+            default:                    p.set_value(IORequestStatus::BAD_ARGUMENT);
         }
+        return p.get_future();
     }
 
 } // namespace Rune::Device
