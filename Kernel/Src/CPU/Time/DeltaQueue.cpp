@@ -29,7 +29,7 @@ namespace Rune::CPU {
         if (node == m_first) m_first = node->m_next;
         if (node == m_last) m_last = node->m_prev;
 
-        auto t                = node->m_sleeping_thread;
+        auto t                  = node->m_sleeping_thread;
         node->m_prev            = nullptr;
         node->m_next            = nullptr;
         node->m_wake_time       = 0;
@@ -44,7 +44,7 @@ namespace Rune::CPU {
     DeltaQueue::~DeltaQueue() {
         while (m_first != nullptr) {
             auto* node = m_first;
-            m_first     = m_first->m_next;
+            m_first    = m_first->m_next;
             delete node;
         }
     }
@@ -58,7 +58,7 @@ namespace Rune::CPU {
     void DeltaQueue::enqueue(const SharedPointer<Thread>& thread, U64 wake_time) {
         if (!thread) return;
 
-        auto* new_dq_node            = new DQNode();
+        auto* new_dq_node              = new DQNode();
         new_dq_node->m_sleeping_thread = thread;
         new_dq_node->m_wake_time       = wake_time;
         if (m_first == nullptr) {
@@ -72,12 +72,12 @@ namespace Rune::CPU {
                     if (c_dq_node->m_prev == nullptr) {
                         c_dq_node->m_prev   = new_dq_node;
                         new_dq_node->m_next = m_first;
-                        m_first            = new_dq_node;
+                        m_first             = new_dq_node;
                     } else {
                         c_dq_node->m_prev->m_next = new_dq_node;
-                        new_dq_node->m_prev     = c_dq_node->m_prev;
-                        c_dq_node->m_prev       = new_dq_node;
-                        new_dq_node->m_next     = c_dq_node;
+                        new_dq_node->m_prev       = c_dq_node->m_prev;
+                        c_dq_node->m_prev         = new_dq_node;
+                        new_dq_node->m_next       = c_dq_node;
                     }
                     // Update m_next nodes wake time
                     if (new_dq_node->m_next != nullptr)
@@ -86,9 +86,9 @@ namespace Rune::CPU {
                 }
                 c_dq_node = c_dq_node->m_next;
             }
-            m_last->m_next       = new_dq_node;
+            m_last->m_next      = new_dq_node;
             new_dq_node->m_prev = m_last;
-            m_last             = new_dq_node;
+            m_last              = new_dq_node;
         }
     }
 

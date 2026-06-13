@@ -400,8 +400,8 @@ namespace Rune::CPU {
     auto CPUModule::sync_with_thread_stop(ThreadHandle handle) -> bool {
         CriticalSection<InterruptSaveLock> _(m_lock);
         if (!g_thread_cache.find(handle)) return false;
-        auto                               calling_thread  = g_scheduler.get_running_thread();
-        auto                               maybe_wait_list = _on_stop_syncing_threads.find(handle);
+        auto calling_thread  = g_scheduler.get_running_thread();
+        auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
         if (maybe_wait_list == _on_stop_syncing_threads.end()) {
             _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
             maybe_wait_list                  = _on_stop_syncing_threads.find(handle);

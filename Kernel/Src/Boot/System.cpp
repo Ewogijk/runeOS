@@ -344,9 +344,7 @@ namespace Rune {
         load_plugin(new BuiltInPlugin::FATDriverPlugin());
     }
 
-    void VFSModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-    }
+    void VFSModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  App Module Loader
@@ -356,9 +354,7 @@ namespace Rune {
 
     void AppModuleLoader::on_pre_load(Module* module) { SILENCE_UNUSED(module) }
 
-    void AppModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-    }
+    void AppModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                              SystemCall Module Loader
@@ -370,7 +366,5 @@ namespace Rune {
 
     void SystemCallModuleLoader::on_pre_load(Module* module) { SILENCE_UNUSED(module) }
 
-    void SystemCallModuleLoader::on_post_load(Module* module) {
-        SILENCE_UNUSED(module);
-    }
+    void SystemCallModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
 } // namespace Rune

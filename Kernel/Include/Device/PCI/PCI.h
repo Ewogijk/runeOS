@@ -115,7 +115,7 @@ namespace Rune::Device {
         auto               accept_device(const SharedPointer<Device>& device) -> bool override;
         void               remove_device(const SharedPointer<Device>& device) override;
         auto               handle_request(const SharedPointer<Device>& device, IORequest request)
-            -> IORequestStatus override;
+            -> CPU::Future<IORequestStatus> override;
     };
 } // namespace Rune::Device
 

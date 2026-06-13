@@ -61,7 +61,8 @@ namespace Rune {
     auto LogEventDistributor::register_target_stream(const String&             name,
                                                      SharedPointer<TextStream> target) -> bool {
         if (_target_streams.find(name) != _target_streams.end()) return false;
-        return _target_streams.put(name, move(target)) != _target_streams.end();;
+        return _target_streams.put(name, move(target)) != _target_streams.end();
+        ;
     }
 
     void LogEventDistributor::log(LogLevel                  log_level,

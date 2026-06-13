@@ -23,6 +23,8 @@
 #include <KRE/System/Module.h>
 #include <KRE/System/Resource.h>
 
+#include <CPU/Threading/Future.h>
+
 namespace Rune::Device {
     // ========================================================================================== //
     // DeviceID
@@ -286,7 +288,7 @@ namespace Rune::Device {
         /// @param request An IO request.
         /// @return The status of the finished IO request.
         virtual auto handle_request(const SharedPointer<Device>& device, IORequest request)
-            -> IORequestStatus = 0;
+            -> CPU::Future<IORequestStatus> = 0;
     };
 } // namespace Rune::Device
 

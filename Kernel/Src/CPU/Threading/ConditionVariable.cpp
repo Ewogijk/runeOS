@@ -26,9 +26,7 @@ namespace Rune::CPU {
 
     ConditionVariable::ConditionVariable() = default;
 
-    ConditionVariable::~ConditionVariable() {
-        m_waiters.clear();
-    }
+    ConditionVariable::~ConditionVariable() { m_waiters.clear(); }
 
     auto ConditionVariable::get_waiting_threads() const -> LinkedList<Thread*> {
         LinkedList<Thread*> copy;
