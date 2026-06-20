@@ -24,6 +24,7 @@ sources = [
     build_env.File("PCIDriverPlugin.cpp"),
     build_env.File("PITDriverPlugin.cpp"),
     build_env.File("PS2KeyboardDriverPlugin.cpp"),
+    build_env.File("USBPlugin.cpp"),
 ]
 BuiltInPlugin = build_env.StaticLibrary("BuiltInPlugin.o", build_env.Object(sources))
 Export("BuiltInPlugin")

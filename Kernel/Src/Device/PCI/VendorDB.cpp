@@ -49,6 +49,9 @@ namespace Rune::Device {
             {.m_vendor_ID = 0x8086, .m_device_ID = 0x2922},
             {.m_vendor_name = "Intel Corporation",
              .m_device_name = "82801IR/IO/IH (ICH9R/DO/DH) 6 port SATA Controller [AHCI mode]"});
+        VENDOR_DATABASE.put(
+            {.m_vendor_ID = 0x1B36, .m_device_ID = 0x000D},
+            {.m_vendor_name = "Red Hat, Inc.", .m_device_name = "QEMU XHCI Host Controller"});
         // NOLINTEND
     }
 

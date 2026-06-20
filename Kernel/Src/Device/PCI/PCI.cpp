@@ -214,17 +214,18 @@ namespace Rune::Device {
 
         if (header.get_header_layout() == 0x0) {
             auto* ds = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
-            SharedPointer<Device> dev(
-                new PCIDevice(ds->get_device_handle(),
-                              resp.m_device_name,
-                              resp.m_vendor_name,
-                              int_to_string(header.revision_id, Radix::DECIMAL),
-                              "",
-                              DeviceType::GENERIC,
-                              PCIDeviceID(header.base_class_code,
-                                          header.sub_class_code,
-                                          header.programming_interface),
-                              pci_read_configuration_space_header_type0(header, bus, device, 0)));
+            SharedPointer<Device> dev(new PCIDevice(
+                ds->get_device_handle(),
+                resp.m_device_name,
+                resp.m_vendor_name,
+                int_to_string(header.revision_id, Radix::DECIMAL),
+                "",
+                DeviceType::GENERIC,
+                PCIDeviceID(header.base_class_code,
+                            header.sub_class_code,
+                            header.programming_interface),
+                PCIConfigurationSpaceID{.m_bus = bus, .m_device = device, .m_func = func},
+                pci_read_configuration_space_header_type0(header, bus, device, 0)));
             ds->register_device(bus_device, dev);
         } else {
             LOGGER->warn("PCI Header Type{} detected but it is not supported yet!",

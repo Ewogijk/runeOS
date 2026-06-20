@@ -69,7 +69,7 @@ namespace Rune::Device {
     ///   processing controller.
     /// - PROCESSING_ACCELERATOR (0x12): Processing accelerator.
     /// - NON_ESSENTIAL_INSTRUMENTATION (0x13): Non-essential instrumentation function.
-    DECLARE_ENUM(BaseClass, BASE_CLASS_CODES, 0xFF) // NOLINT
+    DECLARE_TYPED_ENUM(BaseClass, U8, BASE_CLASS_CODES, 0xFF) // NOLINT
 
 #define ANCIENT_SUB_CLASS_CODES(X)                                                                 \
     X(AncientSubClass, ALL_EXCEPT_VGA, 0x0)                                                        \
@@ -591,7 +591,7 @@ namespace Rune::Device {
     /// - CANBUS (0x09): CANbus controller.
     /// - MIPI_I3C (0x0A): MIPI I3C host controller.
     /// - OTHER (0x80): Other serial bus controller.
-    DECLARE_ENUM(SerialBusSubClass, SERIAL_BUS_SUB_CLASS_CODES, 0xFF) // NOLINT
+    DECLARE_TYPED_ENUM(SerialBusSubClass, U8, SERIAL_BUS_SUB_CLASS_CODES, 0xFF) // NOLINT
 
 #define FIREWIRE_PROGRAMMING_INTERFACE_CODES(X)                                                    \
     X(FireWireProgrammingInterface, GENERIC, 0x0)                                                  \
@@ -619,7 +619,7 @@ namespace Rune::Device {
     /// - XHCI (0x30): eXtensible Host Controller Interface (USB 3.x).
     /// - NO_SPECIFIC_INTERFACE (0x80): No specific programming interface.
     /// - USB_DEVICE (0xFE): USB device (not a host controller).
-    DECLARE_ENUM(USBProgrammingInterface, USB_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    DECLARE_TYPED_ENUM(USBProgrammingInterface, U8, USB_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
 
 #define IPMI_PROGRAMMING_INTERFACE_CODES(X)                                                        \
     X(IPMIProgrammingInterface, SMIC, 0x0)                                                         \
