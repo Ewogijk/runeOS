@@ -40,6 +40,15 @@ namespace Rune {
     auto abs(TNum num) -> TNum {
         return num >= 0 ? num : -num;
     }
+
+    template <Number TNum>
+    auto pow(TNum base, TNum exponent) -> TNum {
+        TNum result = 1;
+        for (TNum i = 0; i < exponent; i++) {
+            result *= base;
+        }
+        return result;
+    }
 } // namespace Rune
 
 #endif // RUNEOS_MATH_H

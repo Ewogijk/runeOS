@@ -34,6 +34,8 @@ sources = [
     build_env.File("PCI/PCI.cpp"),
     build_env.File("PCI/Types.cpp"),
     build_env.File("PCI/VendorDB.cpp"),
+    build_env.File("USB/XHCI/RegisterInterface.cpp"),
+    build_env.File("USB/XHCI/XHCI.cpp"),
     build_env.File("Device.cpp"),
     build_env.File("DeviceModule.cpp"),
 ]

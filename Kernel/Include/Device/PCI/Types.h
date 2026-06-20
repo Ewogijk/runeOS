@@ -74,6 +74,9 @@ namespace Rune::Device {
 
     /// @brief Type 0 configuration space header of generic devices.
     struct PCIConfigurationSpaceHeaderType0 {
+        static constexpr U8 MASK_64BIT_ENCODING = 0x6; // 0b110
+        static constexpr U8 BASE_REGISTER_64BIT = 0x2; // 0b10
+
         PCIConfigurationSpaceHeaderCommon header;
         U32                               bar_0{};
         U32                               bar_1{};
@@ -93,6 +96,16 @@ namespace Rune::Device {
         U8                                interrupt_pin{};
         U8                                min_grant{};
         U8                                max_latency{};
+
+        /// @brief
+        /// @param bar_idx
+        /// @return
+        [[nodiscard]] auto is_64bit_bar(size_t bar_idx) const -> bool;
+
+        /// @brief
+        /// @param bar_idx
+        /// @return
+        [[nodiscard]] auto is_prefetchable_bar(size_t bar_idx) const -> bool;
     };
 
     // ========================================================================================== //
@@ -112,11 +125,23 @@ namespace Rune::Device {
     };
 
     // ========================================================================================== //
+    // PCIConfigurationSpaceID
+    // ========================================================================================== //
+
+    /// @brief PCI bus, device and function.
+    struct PCIConfigurationSpaceID {
+        U16 m_bus;
+        U8  m_device;
+        U8  m_func;
+    };
+
+    // ========================================================================================== //
     // PCIDevice
     // ========================================================================================== //
 
     class PCIDevice : public Device {
         PCIDeviceID                      m_device_ID;
+        PCIConfigurationSpaceID          m_config_space_ID;
         PCIConfigurationSpaceHeaderType0 m_pci_header;
 
       public:
@@ -127,9 +152,12 @@ namespace Rune::Device {
                   const String&                           serial_number,
                   DeviceType                              device_type,
                   PCIDeviceID                             device_ID,
+                  PCIConfigurationSpaceID                 config_space_ID,
                   const PCIConfigurationSpaceHeaderType0& pci_header);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
+
+        [[nodiscard]] auto config_space_ID() const -> const PCIConfigurationSpaceID&;
 
         /// @brief
         /// @return The PCI configuration space header type 0.
