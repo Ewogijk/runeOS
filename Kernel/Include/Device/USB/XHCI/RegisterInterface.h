@@ -20,6 +20,8 @@
 
 #include <KRE/Collections/Array.h>
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::Device::USB {
 
     // ========================================================================================== //
@@ -44,10 +46,136 @@ namespace Rune::Device::USB {
     DECLARE_TYPED_ENUM(PortLinkState, U8, PORT_LINK_STATES, 0xFF) // NOLINT
 
     // ========================================================================================== //
+    // Capability Parameters 1 — xHCI 2.0 §5.3.6 Table 5-13 (All RO)
+    // ========================================================================================== //
+
+    struct HCCParams1 {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto AC64() const volatile -> bool;
+        [[nodiscard]] auto BNC() const volatile -> bool;
+        [[nodiscard]] auto CSZ() const volatile -> bool;
+        [[nodiscard]] auto PPC() const volatile -> bool;
+        [[nodiscard]] auto PIND() const volatile -> bool;
+        [[nodiscard]] auto LHRC() const volatile -> bool;
+        [[nodiscard]] auto LTC() const volatile -> bool;
+        [[nodiscard]] auto NSS() const volatile -> bool;
+        [[nodiscard]] auto PAE() const volatile -> bool;
+        [[nodiscard]] auto SPC() const volatile -> bool;
+        [[nodiscard]] auto SEC() const volatile -> bool;
+        [[nodiscard]] auto CFC() const volatile -> bool;
+        [[nodiscard]] auto max_psa_size() const volatile -> U8;
+        [[nodiscard]] auto XECP() const volatile -> U16;
+
+      private:
+        static constexpr U8  AC64_BIT_OFFSET   = 0;
+        static constexpr U8  BNC_BIT_OFFSET    = 1;
+        static constexpr U8  CSZ_BIT_OFFSET    = 2;
+        static constexpr U8  PPC_BIT_OFFSET    = 3;
+        static constexpr U8  PIND_BIT_OFFSET   = 4;
+        static constexpr U8  LHRC_BIT_OFFSET   = 5;
+        static constexpr U8  LTC_BIT_OFFSET    = 6;
+        static constexpr U8  NSS_BIT_OFFSET    = 7;
+        static constexpr U8  PAE_BIT_OFFSET    = 8;
+        static constexpr U8  SPC_BIT_OFFSET    = 9;
+        static constexpr U8  SEC_BIT_OFFSET    = 10;
+        static constexpr U8  CFC_BIT_OFFSET    = 11;
+        static constexpr U32 MAX_PSA_SIZE_MASK = 0x0000F000; // bits [15:12]
+        static constexpr U32 XECP_MASK         = 0xFFFF0000; // bits [31:16]
+    };
+
+    // ========================================================================================== //
+    // Structural Parameters 1 — xHCI 2.0 §5.3.3 Table 5-4 (All RO)
+    // ========================================================================================== //
+
+    struct HCSParams1 {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto max_slots() const volatile -> U8;
+        [[nodiscard]] auto max_intrs() const volatile -> U16;
+        [[nodiscard]] auto max_ports() const volatile -> U8;
+
+      private:
+        static constexpr U32 MAX_SLOTS_MASK = 0x000000FF; // bits [7:0]
+        static constexpr U32 MAX_INTRS_MASK = 0x0007FF00; // bits [18:8]
+        static constexpr U32 MAX_PORTS_MASK = 0xFF000000; // bits [31:24]
+    };
+
+    // ========================================================================================== //
+    // Structural Parameters 2 — xHCI 2.0 §5.3.4 Table 5-5 (All RO)
+    // ========================================================================================== //
+
+    struct HCSParams2 {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto IST() const volatile -> U8;
+        [[nodiscard]] auto ERST_max() const volatile -> U8;
+        [[nodiscard]] auto max_scratch_hi() const volatile -> U8;
+        [[nodiscard]] auto SPR() const volatile -> bool;
+        [[nodiscard]] auto max_scratch_lo() const volatile -> U8;
+
+      private:
+        static constexpr U32 IST_MASK            = 0x0000000F; // bits [3:0]
+        static constexpr U32 ERST_MAX_MASK       = 0x000000F0; // bits [7:4]
+        static constexpr U32 MAX_SCRATCH_HI_MASK = 0x03E00000; // bits [25:21]
+        static constexpr U8  SPR_BIT_OFFSET      = 26;
+        static constexpr U32 MAX_SCRATCH_LO_MASK = 0xF8000000; // bits [31:27]
+    };
+
+    // ========================================================================================== //
+    // Structural Parameters 3 — xHCI 2.0 §5.3.5 Table 5-6 (All RO)
+    // ========================================================================================== //
+
+    struct HCSParams3 {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto u1_exit_latency() const volatile -> U8;
+        [[nodiscard]] auto u2_exit_latency() const volatile -> U16;
+
+      private:
+        static constexpr U32 U1_EXIT_LATENCY_MASK = 0x000000FF; // bits [7:0]
+        static constexpr U32 U2_EXIT_LATENCY_MASK = 0xFFFF0000; // bits [31:16]
+    };
+
+    // ========================================================================================== //
+    // Capability Parameters 2 — xHCI 2.0 §5.3.9 Table 5-16 (All RO)
+    // ========================================================================================== //
+
+    struct HCCParams2 {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto U3C() const volatile -> bool;
+        [[nodiscard]] auto CMC() const volatile -> bool;
+        [[nodiscard]] auto FSC() const volatile -> bool;
+        [[nodiscard]] auto CTC() const volatile -> bool;
+        [[nodiscard]] auto LEC() const volatile -> bool;
+        [[nodiscard]] auto CIC() const volatile -> bool;
+        [[nodiscard]] auto ETC() const volatile -> bool;
+        [[nodiscard]] auto ETC_TSC() const volatile -> bool;
+        [[nodiscard]] auto GSC() const volatile -> bool;
+        [[nodiscard]] auto VTC() const volatile -> bool;
+        [[nodiscard]] auto ETSC() const volatile -> bool;
+        [[nodiscard]] auto ECC() const volatile -> bool;
+
+      private:
+        static constexpr U8 U3C_BIT_OFFSET     = 0;
+        static constexpr U8 CMC_BIT_OFFSET     = 1;
+        static constexpr U8 FSC_BIT_OFFSET     = 2;
+        static constexpr U8 CTC_BIT_OFFSET     = 3;
+        static constexpr U8 LEC_BIT_OFFSET     = 4;
+        static constexpr U8 CIC_BIT_OFFSET     = 5;
+        static constexpr U8 ETC_BIT_OFFSET     = 6;
+        static constexpr U8 ETC_TSC_BIT_OFFSET = 7;
+        static constexpr U8 GSC_BIT_OFFSET     = 8;
+        static constexpr U8 VTC_BIT_OFFSET     = 9;
+        static constexpr U8 ETSC_BIT_OFFSET    = 10;
+        static constexpr U8 ECC_BIT_OFFSET     = 13;
+    };
+
+    // ========================================================================================== //
     // Capability Registers — xHCI 2.0 §5.3 Table 5-9 (at BAR0, all RO)
     // ========================================================================================== //
 
-    /// @brief xHCI capability registers (xHCI 2.0 §5.3 Table 5-9). All fields are RO.
     struct CapabilityRegisters {
         static constexpr size_t SIZE = 36; // 0x24 bytes
 
@@ -55,346 +183,442 @@ namespace Rune::Device::USB {
         U8  m_reserved_0 = 0; // 0x01
         U16 m_hciversion = 0; // 0x02  BCD-encoded spec revision (e.g. 0x0200 = xHCI 2.0)
 
-        union HCSParams1 {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_max_slots  : 8;  // number of Device Slot contexts supported
-                U32 m_max_intrs  : 11; // number of interrupters supported [10:0]
-                U32 m_reserved_0 : 5;
-                U32 m_max_ports  : 8; // number of root-hub downstream ports [31:24]
-            };
-        } m_hcsparams1; // 0x04
-
-        union HCSParams2 {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_ist            : 4; // Isochronous Scheduling Threshold
-                U32 m_erst_max       : 4; // ERST max entries exponent (up to 2^N segments)
-                U32 m_reserved_0     : 13;
-                U32 m_max_scratch_hi : 5; // MaxScratchpadBufs bits [9:5] (high part)
-                U32 m_spr            : 1; // Scratchpad Restore
-                U32 m_max_scratch_lo : 5; // MaxScratchpadBufs bits [4:0] (low part)
-            };
-            // Total scratchpad count: (m_max_scratch_hi << 5) | m_max_scratch_lo
-        } m_hcsparams2; // 0x08
-
-        union HCSParams3 {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_u1_exit_latency : 8; // U1 Device Exit Latency in µs (0–10)
-                U32 m_reserved_0      : 8;
-                U32 m_u2_exit_latency : 16; // U2 Device Exit Latency in µs×256 (0–2047.75)
-            };
-        } m_hcsparams3; // 0x0C
-
-        union HCCParams1 {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_ac64         : 1; // 64-bit Addressing Capability
-                U32 m_bnc          : 1; // BW Negotiation Capability
-                U32 m_csz          : 1; // Context Size: 0=32 bytes, 1=64 bytes
-                U32 m_ppc          : 1; // Port Power Control
-                U32 m_pind         : 1; // Port Indicators
-                U32 m_lhrc         : 1; // Light HC Reset Capability
-                U32 m_ltc          : 1; // Latency Tolerance Messaging Capability
-                U32 m_nss          : 1; // No Secondary SID Support
-                U32 m_pae          : 1; // Parse All Event Data
-                U32 m_spc          : 1; // Stopped-Short Packet Capability
-                U32 m_sec          : 1; // Stopped EDTLA Capability
-                U32 m_cfc          : 1; // Contiguous Frame ID Capability
-                U32 m_max_psa_size : 4; // Maximum Primary Stream Array Size exponent
-                U32 m_xecp : 16; // xHCI Extended Capabilities Pointer (DWORD offset from BAR0)
-            };
-        } m_hccparams1; // 0x10
+        HCSParams1 m_hcsparams1; // 0x04
+        HCSParams2 m_hcsparams2; // 0x08
+        HCSParams3 m_hcsparams3; // 0x0C
+        HCCParams1 m_hccparams1; // 0x10
 
         U32 m_dboff  = 0; // 0x14  Doorbell Array offset from BAR0 (bits[1:0] RsvdZ)
         U32 m_rtsoff = 0; // 0x18  Runtime Register Space offset from BAR0 (bits[4:0] RsvdZ)
 
-        union HCCParams2 {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_u3c        : 1; // U3 Entry Capability
-                U32 m_cmc        : 1; // Configure Endpoint Command Max Exit Latency Too Large Cap.
-                U32 m_fsc        : 1; // Force Save Context Capability
-                U32 m_ctc        : 1; // Compliance Transition Capability
-                U32 m_lec        : 1; // Large ESIT Payload Capability
-                U32 m_cic        : 1; // Configuration Information Capability
-                U32 m_etc        : 1; // Extended TBC Capability
-                U32 m_etc_tsc    : 1; // Extended TBC TRB Status Capability
-                U32 m_gsc        : 1; // Get/Set Extended Property Capability
-                U32 m_vtc        : 1; // Virtualization Based Trusted I/O Capability
-                U32 m_etsc       : 1; // Extended TBC Status Capability
-                U32 m_reserved_0 : 2;
-                U32 m_ecc        : 1; // Extended Context Capability
-                U32 m_reserved_1 : 18;
-            };
-        } m_hccparams2; // 0x1C
+        HCCParams2 m_hccparams2; // 0x1C
 
-        U32 m_vtiosoff =
-            0; // 0x20  VTIO Register Space offset from BAR0 (4K-aligned, bits[11:0] RsvdZ)
+        U32 m_vtiosoff = 0; // 0x20  VTIO Register Space offset from BAR0
     };
     static_assert(sizeof(CapabilityRegisters) == CapabilityRegisters::SIZE);
+
+    // ========================================================================================== //
+    // Port Status and Control — xHCI 2.0 §5.4.8 Table 5-27/5-29
+    // ========================================================================================== //
+
+    struct PORTSC {
+        U32 m_register = 0;
+
+        // Getters
+        [[nodiscard]] auto CCS() const volatile -> bool;      // Current Connect Status (ROS)
+        [[nodiscard]] auto PED() const volatile -> bool;      // Port Enabled/Disabled (RW1CS)
+        [[nodiscard]] auto TM() const volatile -> bool;       // Tunneled Mode (RO)
+        [[nodiscard]] auto OCA() const volatile -> bool;      // Over-current Active (RO)
+        [[nodiscard]] auto PR() const volatile -> bool;       // Port Reset (RW1S)
+        [[nodiscard]] auto PLS() const volatile -> U8;        // Port Link State [8:5] (RWS)
+        [[nodiscard]] auto PP() const volatile -> bool;       // Port Power (RWS)
+        [[nodiscard]] auto port_speed() const volatile -> U8; // Port Speed [13:10] (ROS)
+        [[nodiscard]] auto PIC() const volatile -> U8;   // Port Indicator Control [15:14] (RWS)
+        [[nodiscard]] auto CSC() const volatile -> bool; // Connect Status Change (RW1CS)
+        [[nodiscard]] auto PEC() const volatile -> bool; // Port Enabled/Disabled Change (RW1CS)
+        [[nodiscard]] auto WRC() const volatile -> bool; // Warm Port Reset Change (RW1CS/RsvdZ)
+        [[nodiscard]] auto OCC() const volatile -> bool; // Over-current Change (RW1CS)
+        [[nodiscard]] auto PRC() const volatile -> bool; // Port Reset Change (RW1CS)
+        [[nodiscard]] auto PLC() const volatile -> bool; // Port Link State Change (RW1CS)
+        [[nodiscard]] auto CEC() const volatile -> bool; // Port Config Error Change (RW1CS/RsvdZ)
+        [[nodiscard]] auto CAS() const volatile -> bool; // Cold Attach Status (RO)
+        [[nodiscard]] auto WCE() const volatile -> bool; // Wake on Connect Enable (RWS)
+        [[nodiscard]] auto WDE() const volatile -> bool; // Wake on Disconnect Enable (RWS)
+        [[nodiscard]] auto WOE() const volatile -> bool; // Wake on Over-current Enable (RWS)
+        [[nodiscard]] auto DR() const volatile -> bool;  // Device Removable (RO)
+
+        // Setters — RW1CS "clear" functions write 1 to that bit only (0 to all others)
+        auto set_PR(bool v) volatile -> void;      // Port Reset (RW1S)
+        auto set_PED(bool v) volatile -> void;     // Port Enabled/Disabled (RW1CS)
+        auto set_PLS_LWS(U8 val) volatile -> void; // PLS + LWS=1 simultaneously
+        auto set_PP(bool v) volatile -> void;      // Port Power (RWS)
+        auto set_PIC(U8 val) volatile -> void;     // Port Indicator Control (RWS)
+        auto clear_CSC() volatile -> void;
+        auto clear_PEC() volatile -> void;
+        auto clear_WRC() volatile -> void;
+        auto clear_OCC() volatile -> void;
+        auto clear_PRC() volatile -> void;
+        auto clear_PLC() volatile -> void;
+        auto clear_CEC() volatile -> void;
+        auto set_WCE(bool v) volatile -> void;
+        auto set_WDE(bool v) volatile -> void;
+        auto set_WOE(bool v) volatile -> void;
+        auto set_WPR(bool v) volatile -> void; // Warm Port Reset (RW1S/RsvdZ)
+
+      private:
+        static constexpr U8  CCS_BIT_OFFSET  = 0;
+        static constexpr U8  PED_BIT_OFFSET  = 1;
+        static constexpr U8  TM_BIT_OFFSET   = 2;
+        static constexpr U8  OCA_BIT_OFFSET  = 3;
+        static constexpr U8  PR_BIT_OFFSET   = 4;
+        static constexpr U32 PLS_MASK        = 0x000001E0; // bits [8:5]
+        static constexpr U8  PP_BIT_OFFSET   = 9;
+        static constexpr U32 PORT_SPEED_MASK = 0x00003C00; // bits [13:10]
+        static constexpr U32 PIC_MASK        = 0x0000C000; // bits [15:14]
+        static constexpr U8  LWS_BIT_OFFSET  = 16;
+        static constexpr U8  CSC_BIT_OFFSET  = 17;
+        static constexpr U8  PEC_BIT_OFFSET  = 18;
+        static constexpr U8  WRC_BIT_OFFSET  = 19;
+        static constexpr U8  OCC_BIT_OFFSET  = 20;
+        static constexpr U8  PRC_BIT_OFFSET  = 21;
+        static constexpr U8  PLC_BIT_OFFSET  = 22;
+        static constexpr U8  CEC_BIT_OFFSET  = 23;
+        static constexpr U8  CAS_BIT_OFFSET  = 24;
+        static constexpr U8  WCE_BIT_OFFSET  = 25;
+        static constexpr U8  WDE_BIT_OFFSET  = 26;
+        static constexpr U8  WOE_BIT_OFFSET  = 27;
+        static constexpr U8  DR_BIT_OFFSET   = 30;
+        static constexpr U8  WPR_BIT_OFFSET  = 31;
+    };
 
     // ========================================================================================== //
     // Port Register Set — xHCI 2.0 §5.4.8 Table 5-19
     // (at Operational Base + 0x400 + n×STRIDE, for root-hub port n)
     // ========================================================================================== //
 
-    /// @brief Per-port register set (xHCI 2.0 §5.4.8 Table 5-19, stride STRIDE bytes per port).
     struct PortRegisterSet {
         static constexpr U8 STRIDE = 0x14; // spec-mandated inter-port stride in bytes
 
-        union PORTSC {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_ccs : 1; // Current Connect Status (ROS)
-                U32 m_ped : 1; // Port Enabled/Disabled (RW1CS)
-                U32 m_tm  : 1; // Tunneled Mode (RO)
-                U32 m_oca : 1; // Over-current Active (RO)
-                U32 m_pr  : 1; // Port Reset (RW1S)
-                U32 m_pls : 4; // Port Link State — PortLinkState::* (RWS); set LWS=1 to write
-                U32 m_pp  : 1; // Port Power (RWS)
-                U32 m_port_speed : 4; // Port Speed ID (ROS) — see USB Supported Protocol Cap. §7.2
-                U32 m_pic        : 2; // Port Indicator Control (RWS)
-                U32 m_lws        : 1; // Link Write Strobe — must be 1 when writing PLS (RW)
-                U32 m_csc        : 1; // Connect Status Change (RW1CS)
-                U32 m_pec        : 1; // Port Enabled/Disabled Change (RW1CS)
-                U32 m_wrc        : 1; // Warm Port Reset Change (RW1CS/RsvdZ)
-                U32 m_occ        : 1; // Over-current Change (RW1CS)
-                U32 m_prc        : 1; // Port Reset Change (RW1CS)
-                U32 m_plc        : 1; // Port Link State Change (RW1CS)
-                U32 m_cec        : 1; // Port Config Error Change (RW1CS/RsvdZ)
-                U32 m_cas        : 1; // Cold Attach Status (RO)
-                U32 m_wce        : 1; // Wake on Connect Enable (RWS)
-                U32 m_wde        : 1; // Wake on Disconnect Enable (RWS)
-                U32 m_woe        : 1; // Wake on Over-current Enable (RWS)
-                U32 m_reserved_1 : 2;
-                U32 m_dr         : 1; // Device Removable (RO)
-                U32 m_wpr        : 1; // Warm Port Reset (RW1S/RsvdZ)
-            };
-        } m_portsc; // 0x00
-
-        U32 m_portpmsc  = 0; // 0x04  Port PM Status and Control
-        U32 m_portli    = 0; // 0x08  Port Link Info
-        U32 m_porthlpmc = 0; // 0x0C  Port Hardware LPM Control
-        U32 m_portexsc  = 0; // 0x10  Port Extended Status/Control (xHCI 2.0 only)
+        PORTSC m_portsc;        // 0x00
+        U32    m_portpmsc  = 0; // 0x04  Port PM Status and Control
+        U32    m_portli    = 0; // 0x08  Port Link Info
+        U32    m_porthlpmc = 0; // 0x0C  Port Hardware LPM Control
+        U32    m_portexsc  = 0; // 0x10  Port Extended Status/Control (xHCI 2.0 only)
     };
     static_assert(sizeof(PortRegisterSet) == PortRegisterSet::STRIDE);
+
+    // ========================================================================================== //
+    // USB Command — xHCI 2.0 §5.4.1 Table 5-20 (RW unless noted)
+    // ========================================================================================== //
+
+    struct USBCMD {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto RS() const volatile -> bool;     // Run/Stop (RW)
+        [[nodiscard]] auto HCRST() const volatile -> bool;  // Host Controller Reset (RW)
+        [[nodiscard]] auto INTE() const volatile -> bool;   // Interrupter Enable (RW)
+        [[nodiscard]] auto HSEE() const volatile -> bool;   // Host System Error Enable (RW)
+        [[nodiscard]] auto LHCRST() const volatile -> bool; // Light HC Reset (RW)
+        [[nodiscard]] auto CSS() const volatile -> bool;    // Controller Save State (RW)
+        [[nodiscard]] auto CRS() const volatile -> bool;    // Controller Restore State (RW)
+        [[nodiscard]] auto EWE() const volatile -> bool;    // Enable Wrap Event (RW)
+        [[nodiscard]] auto EU3S() const volatile -> bool;   // Enable U3 MFINDEX Stop (RW)
+        [[nodiscard]] auto CME() const volatile -> bool;    // CEM Enable (RW)
+        [[nodiscard]] auto ETE() const volatile -> bool;    // Extended TBC Enable (RW)
+        [[nodiscard]] auto TSC_EN() const volatile -> bool; // TBC Status Column Enable (RW)
+        [[nodiscard]] auto VTIOE() const volatile -> bool;  // VTIO Enable (RW)
+        [[nodiscard]] auto ETSE() const volatile -> bool;   // Extended TD Size Enable (RW)
+        [[nodiscard]] auto ECCE() const volatile -> bool;   // Extended CNR Capability Enable (RW)
+
+        auto set_RS(bool v) volatile -> void;
+        auto set_HCRST(bool v) volatile -> void;
+        auto set_INTE(bool v) volatile -> void;
+        auto set_HSEE(bool v) volatile -> void;
+        auto set_LHCRST(bool v) volatile -> void;
+        auto set_CSS(bool v) volatile -> void;
+        auto set_CRS(bool v) volatile -> void;
+        auto set_EWE(bool v) volatile -> void;
+        auto set_EU3S(bool v) volatile -> void;
+        auto set_CME(bool v) volatile -> void;
+        auto set_ETE(bool v) volatile -> void;
+        auto set_TSC_EN(bool v) volatile -> void;
+        auto set_VTIOE(bool v) volatile -> void;
+        auto set_ETSE(bool v) volatile -> void;
+        auto set_ECCE(bool v) volatile -> void;
+
+      private:
+        static constexpr U8 RS_BIT_OFFSET     = 0;
+        static constexpr U8 HCRST_BIT_OFFSET  = 1;
+        static constexpr U8 INTE_BIT_OFFSET   = 2;
+        static constexpr U8 HSEE_BIT_OFFSET   = 3;
+        static constexpr U8 LHCRST_BIT_OFFSET = 7;
+        static constexpr U8 CSS_BIT_OFFSET    = 8;
+        static constexpr U8 CRS_BIT_OFFSET    = 9;
+        static constexpr U8 EWE_BIT_OFFSET    = 10;
+        static constexpr U8 EU3S_BIT_OFFSET   = 11;
+        static constexpr U8 CME_BIT_OFFSET    = 13;
+        static constexpr U8 ETE_BIT_OFFSET    = 14;
+        static constexpr U8 TSC_EN_BIT_OFFSET = 15;
+        static constexpr U8 VTIOE_BIT_OFFSET  = 16;
+        static constexpr U8 ETSE_BIT_OFFSET   = 17;
+        static constexpr U8 ECCE_BIT_OFFSET   = 18;
+    };
+
+    // ========================================================================================== //
+    // USB Status — xHCI 2.0 §5.4.2 Table 5-21
+    // ========================================================================================== //
+
+    struct USBSTS {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto HCH() const volatile -> bool;  // HCHalted (RO)
+        [[nodiscard]] auto HSE() const volatile -> bool;  // Host System Error (RW1C)
+        [[nodiscard]] auto EINT() const volatile -> bool; // Event Interrupt (RW1C)
+        [[nodiscard]] auto PCD() const volatile -> bool;  // Port Change Detect (RW1C)
+        [[nodiscard]] auto SSS() const volatile -> bool;  // Save State Status (RO)
+        [[nodiscard]] auto RSS() const volatile -> bool;  // Restore State Status (RO)
+        [[nodiscard]] auto SRE() const volatile -> bool;  // Save/Restore Error (RW1C)
+        [[nodiscard]] auto CNR() const volatile -> bool;  // Controller Not Ready (RO)
+        [[nodiscard]] auto HCE() const volatile -> bool;  // Host Controller Error (RO)
+
+        auto clear_HSE() volatile -> void; // write 1 to clear
+        auto clear_EINT() volatile -> void;
+        auto clear_PCD() volatile -> void;
+        auto clear_SRE() volatile -> void;
+
+      private:
+        static constexpr U8 HCH_BIT_OFFSET  = 0;
+        static constexpr U8 HSE_BIT_OFFSET  = 2;
+        static constexpr U8 EINT_BIT_OFFSET = 3;
+        static constexpr U8 PCD_BIT_OFFSET  = 4;
+        static constexpr U8 SSS_BIT_OFFSET  = 8;
+        static constexpr U8 RSS_BIT_OFFSET  = 9;
+        static constexpr U8 SRE_BIT_OFFSET  = 10;
+        static constexpr U8 CNR_BIT_OFFSET  = 11;
+        static constexpr U8 HCE_BIT_OFFSET  = 12;
+    };
+
+    // ========================================================================================== //
+    // Device Notification Control — xHCI 2.0 §5.4.4 Table 5-23 (RW)
+    // ========================================================================================== //
+
+    struct DNCTRL {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto notification_enable() const volatile -> U16; // bits [15:0]
+        auto               set_notification_enable(U16 mask) volatile -> void;
+
+      private:
+        static constexpr U32 N_MASK = 0x0000FFFF; // bits [15:0]
+    };
+
+    // ========================================================================================== //
+    // Command Ring Control — xHCI 2.0 §5.4.5 Table 5-24 (64-bit)
+    // ========================================================================================== //
+
+    struct CRCR {
+        U64 m_register = 0;
+
+        [[nodiscard]] auto RCS() const volatile -> bool; // Ring Cycle State (RW)
+        [[nodiscard]] auto CRR() const volatile -> bool; // Command Ring Running (RO)
+
+        auto set_RCS(bool v) volatile -> void;
+        auto set_CS(bool v) volatile -> void;   // Command Stop (RW1S)
+        auto set_CA(bool v) volatile -> void;   // Command Abort (RW1S)
+        auto set_ptr(U64 val) volatile -> void; // val = phys_addr >> 6 (bits [63:6])
+
+      private:
+        static constexpr U8  RCS_BIT_OFFSET = 0;
+        static constexpr U8  CS_BIT_OFFSET  = 1;
+        static constexpr U8  CA_BIT_OFFSET  = 2;
+        static constexpr U8  CRR_BIT_OFFSET = 3;
+        static constexpr U64 FLAGS_MASK     = 0x000000000000003FULL; // bits [5:0]
+        static constexpr U64 PTR_MASK       = 0xFFFFFFFFFFFFFFC0ULL; // bits [63:6]
+    };
+
+    // ========================================================================================== //
+    // Device Context Base Address Array Pointer — xHCI 2.0 §5.4.6 Table 5-25 (64-bit)
+    // ========================================================================================== //
+
+    struct DCBAAP {
+        U64 m_register = 0;
+
+        [[nodiscard]] auto ptr() const volatile -> U64; // bits [63:6], val = phys_addr >> 6
+        auto               set_ptr(U64 val) volatile -> void;
+
+      private:
+        static constexpr U64 PTR_MASK = 0xFFFFFFFFFFFFFFC0ULL; // bits [63:6]
+    };
+
+    // ========================================================================================== //
+    // Configure — xHCI 2.0 §5.4.7 Table 5-26 (RW)
+    // ========================================================================================== //
+
+    struct CONFIG {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto max_slots_en() const volatile -> U8; // bits [7:0]
+        [[nodiscard]] auto U3E() const volatile -> bool;        // bit 8
+        [[nodiscard]] auto CIE() const volatile -> bool;        // bit 9
+
+        auto set_max_slots_en(U8 val) volatile -> void;
+        auto set_U3E(bool v) volatile -> void;
+        auto set_CIE(bool v) volatile -> void;
+
+      private:
+        static constexpr U32 MAX_SLOTS_EN_MASK = 0x000000FF; // bits [7:0]
+        static constexpr U8  U3E_BIT_OFFSET    = 8;
+        static constexpr U8  CIE_BIT_OFFSET    = 9;
+    };
 
     // ========================================================================================== //
     // Operational Registers — xHCI 2.0 §5.4 Table 5-18 (at BAR0 + CAPLENGTH)
     // ========================================================================================== //
 
-    /// @brief xHCI operational registers (xHCI 2.0 §5.4 Table 5-18).
-    ///        Port register sets begin at offset PORT_REGISTER_OFFSET from this struct's base.
     struct OperationalRegisters {
         static constexpr size_t PORT_REGISTER_OFFSET = 0x400;
 
-        union USBCMD {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_rs         : 1; // Run/Stop
-                U32 m_hcrst      : 1; // Host Controller Reset
-                U32 m_inte       : 1; // Interrupter Enable
-                U32 m_hsee       : 1; // Host System Error Enable
-                U32 m_reserved_0 : 3;
-                U32 m_lhcrst     : 1; // Light Host Controller Reset
-                U32 m_css        : 1; // Controller Save State
-                U32 m_crs        : 1; // Controller Restore State
-                U32 m_ewe        : 1; // Enable Wrap Event
-                U32 m_eu3s       : 1; // Enable U3 MFINDEX Stop
-                U32 m_reserved_1 : 1;
-                U32 m_cme        : 1; // CEM Enable
-                U32 m_ete        : 1; // Extended TBC Enable
-                U32 m_tsc_en     : 1; // TBC Status Column Enable
-                U32 m_vtioe      : 1; // VTIO Enable
-                U32 m_etse       : 1; // Extended TD Size Enable
-                U32 m_ecce       : 1; // Extended CNR Capability Enable
-                U32 m_reserved_2 : 13;
-            };
-        } m_usbcmd; // 0x00
-
-        union USBSTS {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_hch        : 1; // HCHalted (RO)
-                U32 m_reserved_0 : 1;
-                U32 m_hse        : 1; // Host System Error (RW1C)
-                U32 m_eint       : 1; // Event Interrupt (RW1C)
-                U32 m_pcd        : 1; // Port Change Detect (RW1C)
-                U32 m_reserved_1 : 3;
-                U32 m_sss        : 1; // Save State Status (RO)
-                U32 m_rss        : 1; // Restore State Status (RO)
-                U32 m_sre        : 1; // Save/Restore Error (RW1C)
-                U32 m_cnr        : 1; // Controller Not Ready (RO)
-                U32 m_hce        : 1; // Host Controller Error (RO)
-                U32 m_reserved_2 : 19;
-            };
-        } m_usbsts; // 0x04
-
-        U32 m_pagesize = 0; // 0x08  Page Size: bit n set → system supports 2^(n+12)-byte pages
+        USBCMD        m_usbcmd;       // 0x00
+        USBSTS        m_usbsts;       // 0x04
+        U32           m_pagesize = 0; // 0x08
         Array<U32, 2> m_reserved_0{}; // 0x0C
-        union DNCTRL {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 n_n0 : 1;
-                U32 n_n1 : 1;
-                U32 n_n2 : 1;
-                U32 n_n3 : 1;
-                U32 n_n4 : 1;
-                U32 n_n5 : 1;
-                U32 n_n6 : 1;
-                U32 n_n7 : 1;
-                U32 n_n8 : 1;
-                U32 n_n9 : 1;
-                U32 n_n10 : 1;
-                U32 n_n11 : 1;
-                U32 n_n12 : 1;
-                U32 n_n13 : 1;
-                U32 n_n14 : 1;
-                U32 n_n15 : 1;
-                U32 m_reserved_0 : 16;
-            };
-        } m_dnctrl; // 0x14  Device Notification Control: bits[15:1] enable types 1–15
-
-        // CRCR[0]=RCS, [1]=CS(RW1S), [2]=CA(RW1S), [3]=CRR(RO), [5:4]=RsvdZ, [63:6]=Pointer
-        union CRCR {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_rcs        : 1; // Ring Cycle State
-                U64 m_cs         : 1; // Command Stop (RW1S)
-                U64 m_ca         : 1; // Command Abort (RW1S)
-                U64 m_crr        : 1; // Command Ring Running (RO)
-                U64 m_reserved_0 : 2;
-                U64 m_ptr        : 58; // Command Ring base address >> 6 (64-byte aligned)
-            };
-        } m_crcr; // 0x18
-
+        DNCTRL        m_dnctrl;       // 0x14
+        CRCR          m_crcr;         // 0x18  (64-bit)
         Array<U32, 4> m_reserved_1{}; // 0x20
+        DCBAAP        m_dcbaap;       // 0x30  (64-bit)
+        CONFIG        m_config;       // 0x38
 
-        // DCBAAP: physical address of the Device Context Base Address Array (64-byte aligned)
-        union DCBAAP {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_reserved_0 : 6;  // must be zero (64-byte aligned)
-                U64 m_ptr        : 58; // physical address >> 6
-            };
-        } m_dcbaap; // 0x30
-
-        union CONFIG {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_max_slots_en : 8; // Maximum Device Slots Enabled (1–MaxSlots)
-                U32 m_u3e          : 1; // U3 Entry Enable
-                U32 m_cie          : 1; // Configuration Information Enable
-                U32 m_reserved_0   : 22;
-            };
-        } m_config; // 0x38
-
-        // Padding from 0x3C to PORT_REGISTER_OFFSET; port registers begin at PORT_REGISTER_OFFSET.
         static constexpr size_t RESERVED_PAD_DWORDS = (PORT_REGISTER_OFFSET - 0x3C) / sizeof(U32);
         Array<U32, RESERVED_PAD_DWORDS> m_reserved_2{}; // 0x3C
     };
     static_assert(sizeof(OperationalRegisters) == OperationalRegisters::PORT_REGISTER_OFFSET);
 
     // ========================================================================================== //
+    // Interrupter Management — xHCI 2.0 §5.5.2.1 Table 5-40
+    // ========================================================================================== //
+
+    struct IMAN {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto IP() const volatile -> bool; // Interrupt Pending (RW1C)
+        [[nodiscard]] auto IE() const volatile -> bool; // Interrupt Enable (RW)
+
+        auto clear_IP() volatile -> void; // write 1 to clear
+        auto set_IE(bool v) volatile -> void;
+
+      private:
+        static constexpr U8 IP_BIT_OFFSET = 0;
+        static constexpr U8 IE_BIT_OFFSET = 1;
+    };
+
+    // ========================================================================================== //
+    // Interrupter Moderation — xHCI 2.0 §5.5.2.2 Table 5-41 (RW)
+    // ========================================================================================== //
+
+    struct IMOD {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto imodi() const volatile -> U16; // bits [15:0]  (×250 ns units)
+        [[nodiscard]] auto imodc() const volatile -> U16; // bits [31:16]
+
+        auto set_imodi(U16 val) volatile -> void;
+        auto set_imodc(U16 val) volatile -> void;
+
+      private:
+        static constexpr U32 IMODI_MASK = 0x0000FFFF; // bits [15:0]
+        static constexpr U32 IMODC_MASK = 0xFFFF0000; // bits [31:16]
+    };
+
+    // ========================================================================================== //
+    // Event Ring Segment Table Size — xHCI 2.0 §5.5.2.3.1 Table 5-42 (RW)
+    // ========================================================================================== //
+
+    struct ERSTSZ {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto erst_size() const volatile -> U16; // bits [15:0]
+        auto               set_erst_size(U16 val) volatile -> void;
+
+      private:
+        static constexpr U32 ERST_SIZE_MASK = 0x0000FFFF; // bits [15:0]
+    };
+
+    // ========================================================================================== //
+    // Event Ring Segment Table Base Address — xHCI 2.0 §5.5.2.3.2 Table 5-43 (64-bit, RW)
+    // ========================================================================================== //
+
+    struct ERSTBA {
+        U64 m_register = 0;
+
+        [[nodiscard]] auto ptr() const volatile -> U64; // bits [63:6], val = phys_addr >> 6
+        auto               set_ptr(U64 val) volatile -> void;
+
+      private:
+        static constexpr U64 PTR_MASK = 0xFFFFFFFFFFFFFFC0ULL; // bits [63:6]
+    };
+
+    // ========================================================================================== //
+    // Event Ring Dequeue Pointer — xHCI 2.0 §5.5.2.3.3 Table 5-44 (64-bit)
+    // ========================================================================================== //
+
+    struct ERDP {
+        U64 m_register = 0;
+
+        [[nodiscard]] auto DESI() const volatile
+            -> U8; // bits [2:0]  Dequeue ERST Segment Index (RW)
+        [[nodiscard]] auto EHB() const volatile -> bool; // bit 3       Event Handler Busy (RW1C)
+        [[nodiscard]] auto ptr() const volatile -> U64;  // bits [63:4] val = phys_addr >> 4 (RW)
+
+        auto clear_EHB() volatile -> void; // write 1 to clear
+        auto set_DESI(U8 val) volatile -> void;
+        auto set_ptr(U64 val) volatile -> void; // val = phys_addr >> 4
+
+      private:
+        static constexpr U64 DESI_MASK      = 0x0000000000000007ULL; // bits [2:0]
+        static constexpr U8  EHB_BIT_OFFSET = 3;
+        static constexpr U64 PTR_MASK       = 0xFFFFFFFFFFFFFFF0ULL; // bits [63:4]
+    };
+
+    // ========================================================================================== //
     // Interrupter Register Set — xHCI 2.0 §5.5.2 Table 5-39
     // (at Runtime Base + INTERRUPTER_BASE_OFFSET + n×STRIDE, for interrupter n)
     // ========================================================================================== //
 
-    /// @brief One interrupter register set (xHCI 2.0 §5.5.2 Table 5-39, stride STRIDE bytes).
     struct InterrupterRegisterSet {
-        static constexpr U8 STRIDE = 0x20; // spec-mandated inter-interrupter stride in bytes
+        static constexpr U8 STRIDE = 0x20;
 
-        union IMAN {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_ip         : 1; // Interrupt Pending (RW1C)
-                U32 m_ie         : 1; // Interrupt Enable (RW)
-                U32 m_reserved_0 : 30;
-            };
-        } m_iman; // 0x00
-
-        union IMOD {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_imodi : 16; // Interrupt Moderation Interval (×500 ns units)
-                U32 m_imodc : 16; // Interrupt Moderation Counter
-            };
-        } m_imod; // 0x04
-
-        union ERSTSZ {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_erst_size  : 16; // Event Ring Segment Table Size (number of segments)
-                U32 m_reserved_0 : 16;
-            };
-        } m_erstsz; // 0x08
-
-        U32 m_reserved_0 = 0; // 0x0C
-
-        // ERSTBA: 64-byte aligned base address of the Event Ring Segment Table
-        union ERSTBA {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_reserved_0 : 6;  // must be zero (64-byte aligned)
-                U64 m_ptr        : 58; // ERST base address >> 6
-            };
-        } m_erstba; // 0x10
-
-        // ERDP[2:0]=DESI, [3]=EHB(RW1C), [63:4]=Event Ring Dequeue Pointer (16-byte aligned)
-        union ERDP {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_desi : 3;  // Dequeue ERST Segment Index
-                U64 m_ehb  : 1;  // Event Handler Busy (RW1C) — write 1 to clear after processing
-                U64 m_ptr  : 60; // Event Ring Dequeue Pointer >> 4
-            };
-        } m_erdp; // 0x18
+        IMAN   m_iman;           // 0x00
+        IMOD   m_imod;           // 0x04
+        ERSTSZ m_erstsz;         // 0x08
+        U32    m_reserved_0 = 0; // 0x0C
+        ERSTBA m_erstba;         // 0x10  (64-bit)
+        ERDP   m_erdp;           // 0x18  (64-bit)
     };
     static_assert(sizeof(InterrupterRegisterSet) == InterrupterRegisterSet::STRIDE);
+
+    // ========================================================================================== //
+    // Microframe Index — xHCI 2.0 §5.5.1 Table 5-38 (RO)
+    // ========================================================================================== //
+
+    struct MFINDEX {
+        U32 m_register = 0;
+
+        [[nodiscard]] auto mf_index() const volatile -> U16; // bits [13:0]
+
+      private:
+        static constexpr U32 MF_INDEX_MASK = 0x00003FFF; // bits [13:0]
+    };
 
     // ========================================================================================== //
     // Runtime Registers — xHCI 2.0 §5.5 Table 5-37 (at BAR0 + RTSOFF)
     // ========================================================================================== //
 
-    /// @brief xHCI runtime registers (xHCI 2.0 §5.5 Table 5-37).
-    ///        Interrupter register sets begin at offset INTERRUPTER_BASE_OFFSET from this struct's
-    ///        base.
     struct RuntimeRegisters {
-        static constexpr U8 INTERRUPTER_BASE_OFFSET =
-            0x20; // offset to first interrupter register set
+        static constexpr U8 INTERRUPTER_BASE_OFFSET = 0x20;
 
-        union MFINDEX {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_mf_index   : 14; // Microframe Index (0–16383); wraps every 2.048 s
-                U32 m_reserved_0 : 18;
-            };
-        } m_mfindex; // 0x00
-
-        Array<U32, 7> m_reserved_0{}; // 0x04–0x1F
+        MFINDEX       m_mfindex;      // 0x00
+        Array<U32, 7> m_reserved_0{}; // NOLINT 0x04–0x1F
     };
     static_assert(sizeof(RuntimeRegisters) == RuntimeRegisters::INTERRUPTER_BASE_OFFSET);
 
     // ========================================================================================== //
-    // Doorbell Register — xHCI 2.0 §5.6
+    // Doorbell Register — xHCI 2.0 §5.6 Table 5-45 (RW)
     // (at BAR0 + DBOFF, array of 256 × 4-byte entries)
     // ========================================================================================== //
 
-    /// @brief One doorbell register entry (xHCI 2.0 §5.6).
-    ///        Entry 0 is the host-controller command doorbell; entries 1–255 are device doorbells.
     struct DoorbellRegister {
-        static constexpr U8 HC_COMMAND_TARGET = 0; // target value for the command ring (DB[0] only)
+        static constexpr U8 HC_COMMAND_TARGET = 0;
 
-        union {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_db_target    : 8; // Doorbell Target: 0=command ring, 1=ctrl EP0, 2+=EP n
-                U32 m_reserved_0   : 8;
-                U32 m_db_stream_id : 16; // Doorbell Stream ID (for streams; 0 otherwise)
-            };
-        };
+        U32 m_register = 0;
+
+        [[nodiscard]] auto db_target() const volatile -> U8;     // bits [7:0]
+        [[nodiscard]] auto db_stream_id() const volatile -> U16; // bits [31:16]
+
+        auto ring(U8 target, U16 stream_id = 0) volatile -> void;
+
+      private:
+        static constexpr U32 DB_TARGET_MASK    = 0x000000FF; // bits [7:0]
+        static constexpr U32 DB_STREAM_ID_MASK = 0xFFFF0000; // bits [31:16]
     };
     static_assert(sizeof(DoorbellRegister) == sizeof(U32));
 
@@ -402,25 +626,20 @@ namespace Rune::Device::USB {
     // RegisterInterface — accessor container for the four xHCI MMIO register regions
     // ========================================================================================== //
 
-    /// @brief Volatile pointers into the four xHCI register regions derived from a BAR0 base
-    /// address.
     struct RegisterInterface {
         volatile CapabilityRegisters*  m_capability;  // BAR0
         volatile OperationalRegisters* m_operational; // BAR0 + CAPLENGTH
         volatile RuntimeRegisters*     m_runtime;     // BAR0 + (RTSOFF & ~0x1F)
         volatile DoorbellRegister*     m_doorbell;    // BAR0 + (DBOFF & ~0x3), array of 256
 
-        /// @brief Returns port register set n (0-based) from the operational register space.
         [[nodiscard]] auto port(U8 n) const -> volatile PortRegisterSet& {
             return *(reinterpret_cast<volatile PortRegisterSet*>(m_operational + 1) + n);
         }
 
-        /// @brief Returns interrupter register set n (0-based, up to MaxIntrs-1).
         [[nodiscard]] auto interrupter(U16 n) const -> volatile InterrupterRegisterSet& {
             return *(reinterpret_cast<volatile InterrupterRegisterSet*>(m_runtime + 1) + n);
         }
 
-        /// @brief Derive all four MMIO regions from the virtual address of BAR0.
         static auto from_base(void* base) -> RegisterInterface;
     };
 

@@ -26,7 +26,6 @@ namespace Rune::Device::USB {
 
     // ========================================================================================== //
     // Transfer Ring / Command Ring — §4.9.2, §4.9.3
-    // A ring is a circular array of TRBs; the last slot holds a Link TRB.
     // ========================================================================================== //
 
     /// @brief Transfer Ring — N-1 transfer TRB slots followed by one Link TRB (xHCI 2.0 §4.9.2).
@@ -48,22 +47,21 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     /// @brief One entry of the Event Ring Segment Table (xHCI 2.0 Table 6-11).
-    ///        Describes one contiguous buffer of Event TRBs.
     struct EventRingSegmentTableEntry {
-        union RingSegmentBaseAddr {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_reserved_0   : 6; // must be zero (64-byte aligned)
-                U64 m_base_address : 58;
-            };
+        struct RingSegmentBaseAddr {
+            U64 m_register = 0;
+            [[nodiscard]] auto ptr() const -> U64; // bits [63:6], val = phys >> 6
+            auto set_ptr(U64 val) -> void;         // val = phys >> 6
+          private:
+            static constexpr U64 PTR_MASK = 0xFFFFFFFFFFFFFFC0ULL; // [63:6]
         } m_ring_segment_base_address;
 
-        union RingSegmentSize {
-            U64 m_as_u64 = 0;
-            struct {
-                U64 m_segment_size : 16; // number of TRBs in this segment
-                U64 m_reserved_0   : 48;
-            };
+        struct RingSegmentSize {
+            U64 m_register = 0;
+            [[nodiscard]] auto segment_size() const -> U16; // bits [15:0]
+            auto set_segment_size(U16 val) -> void;
+          private:
+            static constexpr U64 SEGMENT_SIZE_MASK = 0x000000000000FFFFULL; // [15:0]
         } m_ring_segment_size;
     };
     static_assert(sizeof(EventRingSegmentTableEntry) == 2 * sizeof(U64));
@@ -73,9 +71,6 @@ namespace Rune::Device::USB {
 
     /// @brief Event Ring — one or more TRB segments paired with their ERST entries
     ///        (xHCI 2.0 §4.9.4).
-    ///
-    ///        SegmentSize is the number of TRBs per segment; SegmentCount is the number
-    ///        of segments (= number of ERST entries, max XHCI_MAX_ERST_ENTRIES).
     template <size_t SegmentSize, size_t SegmentCount = 1>
     struct EventRing {
         static_assert(SegmentSize >= XHCI_MIN_EVENT_SEGMENT_TRBS,
@@ -85,6 +80,7 @@ namespace Rune::Device::USB {
         Array<Array<TRB, SegmentSize>, SegmentCount>    m_segments{};
         Array<EventRingSegmentTableEntry, SegmentCount> m_erst{};
     };
+
 } // namespace Rune::Device::USB
 
 #endif // RUNEOS_RING_H

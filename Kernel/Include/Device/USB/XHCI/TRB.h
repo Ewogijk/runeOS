@@ -107,8 +107,7 @@ namespace Rune::Device::USB {
     // All TRBs are exactly 16 bytes (four DWORDs).
     // ========================================================================================== //
 
-    /// @brief Generic TRB providing raw 4-DWORD access. Used where a ring slot is addressed
-    ///        without knowing its concrete type yet.
+    /// @brief Generic TRB providing raw 4-DWORD access.
     struct TRB {
         U32 m_dw0 = 0;
         U32 m_dw1 = 0;
@@ -128,31 +127,53 @@ namespace Rune::Device::USB {
         U32 m_data_buffer_pointer_lo = 0;
         U32 m_data_buffer_pointer_hi = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_trb_transfer_length : 17; // bytes remaining in the TD
-                U32 m_td_size             : 5;  // number of packets remaining
-                U32 m_interrupter_target  : 10;
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto trb_transfer_length() const -> U32;
+            [[nodiscard]] auto td_size()             const -> U8;
+            [[nodiscard]] auto interrupter_target()  const -> U16;
+            auto set_trb_transfer_length(U32 val) -> void;
+            auto set_td_size(U8 val)              -> void;
+            auto set_interrupter_target(U16 val)  -> void;
+          private:
+            static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
+            static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle            : 1;
-                U32 m_ent              : 1; // Evaluate Next TRB
-                U32 m_isp              : 1; // Interrupt-on Short Packet
-                U32 m_ns               : 1; // No Snoop
-                U32 m_chain            : 1;
-                U32 m_ioc              : 1; // Interrupt on Completion
-                U32 m_idt              : 1; // Immediate Data
-                U32 m_reserved_0       : 2;
-                U32 m_bei              : 1; // Block Event Interrupt
-                U32 m_trb_type         : 6; // = TYPE
-                U32 m_td_size_extended : 7;
-                U32 m_reserved_1       : 9;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()            const -> bool;
+            [[nodiscard]] auto ENT()              const -> bool;
+            [[nodiscard]] auto ISP()              const -> bool;
+            [[nodiscard]] auto NS()               const -> bool;
+            [[nodiscard]] auto chain()            const -> bool;
+            [[nodiscard]] auto IOC()              const -> bool;
+            [[nodiscard]] auto IDT()              const -> bool;
+            [[nodiscard]] auto BEI()              const -> bool;
+            [[nodiscard]] auto trb_type()         const -> U8;
+            [[nodiscard]] auto td_size_extended() const -> U8;
+            auto set_cycle(bool v)            -> void;
+            auto set_ENT(bool v)              -> void;
+            auto set_ISP(bool v)              -> void;
+            auto set_NS(bool v)               -> void;
+            auto set_chain(bool v)            -> void;
+            auto set_IOC(bool v)              -> void;
+            auto set_IDT(bool v)              -> void;
+            auto set_BEI(bool v)              -> void;
+            auto set_trb_type(U8 val)         -> void;
+            auto set_td_size_extended(U8 val) -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET      = 0;
+            static constexpr U8  ENT_BIT_OFFSET        = 1;
+            static constexpr U8  ISP_BIT_OFFSET        = 2;
+            static constexpr U8  NS_BIT_OFFSET         = 3;
+            static constexpr U8  CHAIN_BIT_OFFSET      = 4;
+            static constexpr U8  IOC_BIT_OFFSET        = 5;
+            static constexpr U8  IDT_BIT_OFFSET        = 6;
+            static constexpr U8  BEI_BIT_OFFSET        = 9;
+            static constexpr U32 TRB_TYPE_MASK         = 0x0000FC00; // [15:10]
+            static constexpr U32 TD_SIZE_EXTENDED_MASK = 0x007F0000; // [22:16]
         } m_control;
     };
     static_assert(sizeof(NormalTRB) == sizeof(TRB));
@@ -160,48 +181,64 @@ namespace Rune::Device::USB {
     /// @brief Setup Stage TRB for control transfers (xHCI 2.0 §6.4.1.2.1, type = 2).
     struct SetupStageTRB {
         static constexpr U8 TYPE         = TRBType::SETUP_STAGE;
-        static constexpr U8 TRT_NO_DATA  = 0; // Transfer Type — no data stage
-        static constexpr U8 TRT_OUT_DATA = 2; // Transfer Type — OUT data stage
-        static constexpr U8 TRT_IN_DATA  = 3; // Transfer Type — IN data stage
+        static constexpr U8 TRT_NO_DATA  = 0;
+        static constexpr U8 TRT_OUT_DATA = 2;
+        static constexpr U8 TRT_IN_DATA  = 3;
 
-        union RequestDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_bm_request_type : 8;
-                U32 m_b_request       : 8;
-                U32 m_w_value         : 16;
-            };
+        struct RequestDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto bm_request_type() const -> U8;
+            [[nodiscard]] auto b_request()       const -> U8;
+            [[nodiscard]] auto w_value()         const -> U16;
+            auto set_bm_request_type(U8 val)  -> void;
+            auto set_b_request(U8 val)        -> void;
+            auto set_w_value(U16 val)         -> void;
+          private:
+            static constexpr U32 BM_REQUEST_TYPE_MASK = 0x000000FF; // [7:0]
+            static constexpr U32 B_REQUEST_MASK       = 0x0000FF00; // [15:8]
+            static constexpr U32 W_VALUE_MASK         = 0xFFFF0000; // [31:16]
         } m_request;
 
-        union IndexLengthDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_w_index  : 16;
-                U32 m_w_length : 16;
-            };
+        struct IndexLengthDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto w_index()  const -> U16;
+            [[nodiscard]] auto w_length() const -> U16;
+            auto set_w_index(U16 val)  -> void;
+            auto set_w_length(U16 val) -> void;
+          private:
+            static constexpr U32 W_INDEX_MASK  = 0x0000FFFF; // [15:0]
+            static constexpr U32 W_LENGTH_MASK = 0xFFFF0000; // [31:16]
         } m_index_length;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_trb_transfer_length : 17; // always 8 for Setup Stage
-                U32 m_reserved_0          : 5;
-                U32 m_interrupter_target  : 10;
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto trb_transfer_length() const -> U32;
+            [[nodiscard]] auto interrupter_target()  const -> U16;
+            auto set_trb_transfer_length(U32 val) -> void;
+            auto set_interrupter_target(U16 val)  -> void;
+          private:
+            static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 4;
-                U32 m_ioc        : 1; // Interrupt on Completion
-                U32 m_idt        : 1; // Immediate Data — must be 1 for Setup Stage
-                U32 m_reserved_1 : 3;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_trt        : 2; // Transfer Type (TRT_*)
-                U32 m_reserved_2 : 14;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto IOC()      const -> bool;
+            [[nodiscard]] auto IDT()      const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto TRT()      const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_IOC(bool v)      -> void;
+            auto set_IDT(bool v)      -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_TRT(U8 val)      -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  IOC_BIT_OFFSET   = 5;
+            static constexpr U8  IDT_BIT_OFFSET   = 6;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 TRT_MASK         = 0x00030000; // [17:16]
         } m_control;
     };
     static_assert(sizeof(SetupStageTRB) == sizeof(TRB));
@@ -213,30 +250,50 @@ namespace Rune::Device::USB {
         U32 m_data_buffer_pointer_lo = 0;
         U32 m_data_buffer_pointer_hi = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_trb_transfer_length : 17;
-                U32 m_td_size             : 5;
-                U32 m_interrupter_target  : 10;
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto trb_transfer_length() const -> U32;
+            [[nodiscard]] auto td_size()             const -> U8;
+            [[nodiscard]] auto interrupter_target()  const -> U16;
+            auto set_trb_transfer_length(U32 val) -> void;
+            auto set_td_size(U8 val)              -> void;
+            auto set_interrupter_target(U16 val)  -> void;
+          private:
+            static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
+            static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_ent        : 1; // Evaluate Next TRB
-                U32 m_isp        : 1; // Interrupt-on Short Packet
-                U32 m_ns         : 1; // No Snoop
-                U32 m_chain      : 1;
-                U32 m_ioc        : 1; // Interrupt on Completion
-                U32 m_idt        : 1; // Immediate Data
-                U32 m_reserved_0 : 3;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_dir        : 1; // Transfer Direction: 0=OUT, 1=IN
-                U32 m_reserved_1 : 15;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto ENT()      const -> bool;
+            [[nodiscard]] auto ISP()      const -> bool;
+            [[nodiscard]] auto NS()       const -> bool;
+            [[nodiscard]] auto chain()    const -> bool;
+            [[nodiscard]] auto IOC()      const -> bool;
+            [[nodiscard]] auto IDT()      const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto DIR()      const -> bool;
+            auto set_cycle(bool v)    -> void;
+            auto set_ENT(bool v)      -> void;
+            auto set_ISP(bool v)      -> void;
+            auto set_NS(bool v)       -> void;
+            auto set_chain(bool v)    -> void;
+            auto set_IOC(bool v)      -> void;
+            auto set_IDT(bool v)      -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_DIR(bool v)      -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  ENT_BIT_OFFSET   = 1;
+            static constexpr U8  ISP_BIT_OFFSET   = 2;
+            static constexpr U8  NS_BIT_OFFSET    = 3;
+            static constexpr U8  CHAIN_BIT_OFFSET = 4;
+            static constexpr U8  IOC_BIT_OFFSET   = 5;
+            static constexpr U8  IDT_BIT_OFFSET   = 6;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  DIR_BIT_OFFSET   = 16;
         } m_control;
     };
     static_assert(sizeof(DataStageTRB) == sizeof(TRB));
@@ -248,65 +305,76 @@ namespace Rune::Device::USB {
         U32 m_reserved_0 = 0;
         U32 m_reserved_1 = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0         : 22;
-                U32 m_interrupter_target : 10;
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto interrupter_target() const -> U16;
+            auto set_interrupter_target(U16 val) -> void;
+          private:
+            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_ent        : 1; // Evaluate Next TRB
-                U32 m_reserved_0 : 3;
-                U32 m_ioc        : 1; // Interrupt on Completion
-                U32 m_reserved_1 : 4;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_dir        : 1; // Transfer Direction: 0=OUT, 1=IN
-                U32 m_reserved_2 : 15;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto ENT()      const -> bool;
+            [[nodiscard]] auto IOC()      const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto DIR()      const -> bool;
+            auto set_cycle(bool v)    -> void;
+            auto set_ENT(bool v)      -> void;
+            auto set_IOC(bool v)      -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_DIR(bool v)      -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  ENT_BIT_OFFSET   = 1;
+            static constexpr U8  IOC_BIT_OFFSET   = 5;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  DIR_BIT_OFFSET   = 16;
         } m_control;
     };
     static_assert(sizeof(StatusStageTRB) == sizeof(TRB));
 
-    /// @brief Link TRB — links ring segments within a Transfer or Command Ring
-    ///        (xHCI 2.0 §6.4.4.1, type = 6).
+    /// @brief Link TRB — links ring segments (xHCI 2.0 §6.4.4.1, type = 6).
     struct LinkTRB {
         static constexpr U8 TYPE = TRBType::LINK;
 
-        union RingSegmentPtrLoDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0              : 4; // must be zero (16-byte aligned)
-                U32 m_ring_segment_pointer_lo : 28;
-            };
+        struct RingSegmentPtrLoDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto ptr() const -> U32; // bits [31:4], val = phys >> 4
+            auto set_ptr(U32 val) -> void;         // val = phys >> 4
+          private:
+            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
         } m_ring_segment_pointer_lo;
 
         U32 m_ring_segment_pointer_hi = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0         : 22;
-                U32 m_interrupter_target : 10;
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto interrupter_target() const -> U16;
+            auto set_interrupter_target(U16 val) -> void;
+          private:
+            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle        : 1;
-                U32 m_toggle_cycle : 1; // TC: invert the cycle bit for the next segment
-                U32 m_reserved_0   : 2;
-                U32 m_chain        : 1;
-                U32 m_ioc          : 1; // Interrupt on Completion
-                U32 m_reserved_1   : 4;
-                U32 m_trb_type     : 6; // = TYPE
-                U32 m_reserved_2   : 16;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()        const -> bool;
+            [[nodiscard]] auto toggle_cycle() const -> bool;
+            [[nodiscard]] auto chain()        const -> bool;
+            [[nodiscard]] auto IOC()          const -> bool;
+            [[nodiscard]] auto trb_type()     const -> U8;
+            auto set_cycle(bool v)        -> void;
+            auto set_toggle_cycle(bool v) -> void;
+            auto set_chain(bool v)        -> void;
+            auto set_IOC(bool v)          -> void;
+            auto set_trb_type(U8 val)     -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET        = 0;
+            static constexpr U8  TOGGLE_CYCLE_BIT_OFFSET = 1;
+            static constexpr U8  CHAIN_BIT_OFFSET        = 4;
+            static constexpr U8  IOC_BIT_OFFSET          = 5;
+            static constexpr U32 TRB_TYPE_MASK           = 0x0000FC00; // [15:10]
         } m_control;
     };
     static_assert(sizeof(LinkTRB) == sizeof(TRB));
@@ -323,15 +391,18 @@ namespace Rune::Device::USB {
         U32 m_reserved_1 = 0;
         U32 m_reserved_2 = 0;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 9;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_slot_type  : 5;
-                U32 m_reserved_1 : 11;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()     const -> bool;
+            [[nodiscard]] auto trb_type()  const -> U8;
+            [[nodiscard]] auto slot_type() const -> U8;
+            auto set_cycle(bool v)     -> void;
+            auto set_trb_type(U8 val)  -> void;
+            auto set_slot_type(U8 val) -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 SLOT_TYPE_MASK   = 0x001F0000; // [20:16]
         } m_control;
     };
     static_assert(sizeof(EnableSlotCommandTRB) == sizeof(TRB));
@@ -344,15 +415,18 @@ namespace Rune::Device::USB {
         U32 m_reserved_1 = 0;
         U32 m_reserved_2 = 0;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 9;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_reserved_1 : 8;
-                U32 m_slot_id    : 8;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto slot_id()  const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_slot_id(U8 val)  -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
     static_assert(sizeof(DisableSlotCommandTRB) == sizeof(TRB));
@@ -361,27 +435,32 @@ namespace Rune::Device::USB {
     struct AddressDeviceCommandTRB {
         static constexpr U8 TYPE = TRBType::ADDRESS_DEVICE;
 
-        union InputContextPtrLoDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0           : 4; // must be zero (16-byte aligned)
-                U32 m_input_context_ptr_lo : 28;
-            };
+        struct InputContextPtrLoDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto ptr() const -> U32; // bits [31:4], val = phys >> 4
+            auto set_ptr(U32 val) -> void;
+          private:
+            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
         } m_input_context_ptr_lo;
 
         U32 m_input_context_ptr_hi = 0;
         U32 m_reserved_0           = 0;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 8;
-                U32 m_bsr        : 1; // Block Set Address Request: keep device in Default state
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_reserved_1 : 8;
-                U32 m_slot_id    : 8;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto BSR()      const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto slot_id()  const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_BSR(bool v)      -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_slot_id(U8 val)  -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  BSR_BIT_OFFSET   = 9;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
     static_assert(sizeof(AddressDeviceCommandTRB) == sizeof(TRB));
@@ -390,27 +469,32 @@ namespace Rune::Device::USB {
     struct ConfigureEndpointCommandTRB {
         static constexpr U8 TYPE = TRBType::CONFIGURE_ENDPOINT;
 
-        union InputContextPtrLoDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0           : 4;
-                U32 m_input_context_ptr_lo : 28;
-            };
+        struct InputContextPtrLoDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto ptr() const -> U32; // bits [31:4], val = phys >> 4
+            auto set_ptr(U32 val) -> void;
+          private:
+            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
         } m_input_context_ptr_lo;
 
         U32 m_input_context_ptr_hi = 0;
         U32 m_reserved_0           = 0;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 8;
-                U32 m_dc         : 1; // Deconfigure: release all allocated bandwidth
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_reserved_1 : 8;
-                U32 m_slot_id    : 8;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto DC()       const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto slot_id()  const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_DC(bool v)       -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_slot_id(U8 val)  -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  DC_BIT_OFFSET    = 9;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
     static_assert(sizeof(ConfigureEndpointCommandTRB) == sizeof(TRB));
@@ -423,14 +507,15 @@ namespace Rune::Device::USB {
         U32 m_reserved_1 = 0;
         U32 m_reserved_2 = 0;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 9;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_reserved_1 : 16;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_trb_type(U8 val) -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
         } m_control;
     };
     static_assert(sizeof(NoOpCommandTRB) == sizeof(TRB));
@@ -439,108 +524,125 @@ namespace Rune::Device::USB {
     // Event TRBs — §6.4.2
     // ========================================================================================== //
 
-    /// @brief Transfer Event TRB — posted by the HC after a transfer completes
-    ///        (xHCI 2.0 §6.4.2.1, type = 32).
+    /// @brief Transfer Event TRB (xHCI 2.0 §6.4.2.1, type = 32).
     struct TransferEventTRB {
         static constexpr U8 TYPE = TRBType::TRANSFER_EVENT;
 
-        U32 m_trb_pointer_lo = 0; // pointer to the TRB that caused this event
+        U32 m_trb_pointer_lo = 0;
         U32 m_trb_pointer_hi = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_trb_transfer_length : 24; // bytes NOT transferred
-                U32 m_completion_code     : 8;  // CompletionCode::*
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto trb_transfer_length() const -> U32;
+            [[nodiscard]] auto completion_code()     const -> U8;
+            auto set_trb_transfer_length(U32 val) -> void;
+            auto set_completion_code(U8 val)      -> void;
+          private:
+            static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x00FFFFFF; // [23:0]
+            static constexpr U32 COMPLETION_CODE_MASK     = 0xFF000000; // [31:24]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle       : 1;
-                U32 m_reserved_0  : 1;
-                U32 m_ed          : 1; // Event Data: trb_pointer points to an Event Data TRB
-                U32 m_reserved_1  : 7;
-                U32 m_trb_type    : 6; // = TYPE
-                U32 m_endpoint_id : 5; // 1-based endpoint that generated this event
-                U32 m_reserved_2  : 3;
-                U32 m_slot_id     : 8;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()       const -> bool;
+            [[nodiscard]] auto ED()          const -> bool;
+            [[nodiscard]] auto trb_type()    const -> U8;
+            [[nodiscard]] auto endpoint_id() const -> U8;
+            [[nodiscard]] auto slot_id()     const -> U8;
+            auto set_cycle(bool v)       -> void;
+            auto set_ED(bool v)          -> void;
+            auto set_trb_type(U8 val)    -> void;
+            auto set_endpoint_id(U8 val) -> void;
+            auto set_slot_id(U8 val)     -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET   = 0;
+            static constexpr U8  ED_BIT_OFFSET      = 2;
+            static constexpr U32 TRB_TYPE_MASK      = 0x0000FC00; // [15:10]
+            static constexpr U32 ENDPOINT_ID_MASK   = 0x001F0000; // [20:16]
+            static constexpr U32 SLOT_ID_MASK       = 0xFF000000; // [31:24]
         } m_control;
     };
     static_assert(sizeof(TransferEventTRB) == sizeof(TRB));
 
-    /// @brief Command Completion Event TRB — posted after a command TRB completes
-    ///        (xHCI 2.0 §6.4.2.2, type = 33).
+    /// @brief Command Completion Event TRB (xHCI 2.0 §6.4.2.2, type = 33).
     struct CommandCompletionEventTRB {
         static constexpr U8 TYPE = TRBType::CMD_COMPLETION;
 
-        union CommandTrbPtrLoDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0             : 4;
-                U32 m_command_trb_pointer_lo : 28;
-            };
+        struct CommandTrbPtrLoDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto ptr() const -> U32; // bits [31:4], val = phys >> 4
+            auto set_ptr(U32 val) -> void;
+          private:
+            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
         } m_command_trb_pointer_lo;
 
         U32 m_command_trb_pointer_hi = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_completion_parameter : 24; // command-specific
-                U32 m_completion_code      : 8;  // CompletionCode::*
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto completion_parameter() const -> U32;
+            [[nodiscard]] auto completion_code()      const -> U8;
+            auto set_completion_parameter(U32 val) -> void;
+            auto set_completion_code(U8 val)       -> void;
+          private:
+            static constexpr U32 COMPLETION_PARAMETER_MASK = 0x00FFFFFF; // [23:0]
+            static constexpr U32 COMPLETION_CODE_MASK      = 0xFF000000; // [31:24]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 9;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_vf_id      : 8;
-                U32 m_slot_id    : 8;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto vf_id()    const -> U8;
+            [[nodiscard]] auto slot_id()  const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_trb_type(U8 val) -> void;
+            auto set_vf_id(U8 val)    -> void;
+            auto set_slot_id(U8 val)  -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 VF_ID_MASK       = 0x00FF0000; // [23:16]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
     static_assert(sizeof(CommandCompletionEventTRB) == sizeof(TRB));
 
-    /// @brief Port Status Change Event TRB — posted when a root-hub port changes state
-    ///        (xHCI 2.0 §6.4.2.3, type = 34).
+    /// @brief Port Status Change Event TRB (xHCI 2.0 §6.4.2.3, type = 34).
     struct PortStatusChangeEventTRB {
         static constexpr U8 TYPE = TRBType::PORT_STATUS_CHANGE;
 
-        union PortIdDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0 : 24;
-                U32 m_port_id    : 8; // 1-based root-hub port number
-            };
+        struct PortIdDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto port_id() const -> U8; // bits [31:24]
+            auto set_port_id(U8 val) -> void;
+          private:
+            static constexpr U32 PORT_ID_MASK = 0xFF000000; // [31:24]
         } m_port_id;
 
         U32 m_reserved_0 = 0;
 
-        union StatusDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_reserved_0      : 24;
-                U32 m_completion_code : 8; // CompletionCode::*
-            };
+        struct StatusDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto completion_code() const -> U8; // bits [31:24]
+            auto set_completion_code(U8 val) -> void;
+          private:
+            static constexpr U32 COMPLETION_CODE_MASK = 0xFF000000; // [31:24]
         } m_status;
 
-        union ControlDWord {
-            U32 m_as_u32 = 0;
-            struct {
-                U32 m_cycle      : 1;
-                U32 m_reserved_0 : 9;
-                U32 m_trb_type   : 6; // = TYPE
-                U32 m_reserved_1 : 16;
-            };
+        struct ControlDWord {
+            U32 m_register = 0;
+            [[nodiscard]] auto cycle()    const -> bool;
+            [[nodiscard]] auto trb_type() const -> U8;
+            auto set_cycle(bool v)    -> void;
+            auto set_trb_type(U8 val) -> void;
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
         } m_control;
     };
     static_assert(sizeof(PortStatusChangeEventTRB) == sizeof(TRB));
-}
+
+} // namespace Rune::Device::USB
 
 #endif // RUNEOS_TRB_H

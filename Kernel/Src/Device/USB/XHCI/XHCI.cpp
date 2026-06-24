@@ -27,9 +27,7 @@
 
 #include <Device/PCI/ClassCode.h>
 #include <Device/PCI/PCI.h>
-#include <Device/USB/XHCI/DeviceContext.h>
-#include <Device/USB/XHCI/RegisterInterface.h>
-#include <Device/USB/XHCI/Ring.h>
+#include <Device/USB/XHCI/ExtendedCapability.h>
 
 namespace Rune::Device::USB {
     const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.xHCI");
@@ -88,13 +86,14 @@ namespace Rune::Device::USB {
 
         m_ri = RegisterInterface::from_base(memory_addr_to_pointer<void>(MMIO_BASE_ADDR));
 
-        U16    max_intrs = m_ri.m_capability->m_hcsparams1.m_max_intrs;
-        size_t doorbell_end =
+        U16          max_intrs = m_ri.m_capability->m_hcsparams1.max_intrs();
+        PhysicalAddr doorbell_end =
             m_ri.m_capability->m_dboff + (DOORBELL_REGISTER_COUNT * sizeof(DoorbellRegister));
-        size_t runtime_end = m_ri.m_capability->m_rtsoff + RuntimeRegisters::INTERRUPTER_BASE_OFFSET
-                             + (max_intrs * sizeof(InterrupterRegisterSet));
-        size_t mmio_end    = doorbell_end > runtime_end ? doorbell_end : runtime_end;
-        size_t additional_req_pages = div_round_up(mmio_end, Memory::get_page_size()) - 1;
+        PhysicalAddr runtime_end          = m_ri.m_capability->m_rtsoff
+                                            + RuntimeRegisters::INTERRUPTER_BASE_OFFSET
+                                            + (max_intrs * sizeof(InterrupterRegisterSet));
+        PhysicalAddr mmio_end             = doorbell_end > runtime_end ? doorbell_end : runtime_end;
+        size_t       additional_req_pages = div_round_up(mmio_end, Memory::get_page_size()) - 1;
         if (additional_req_pages > 0) {
             for (size_t i = 0; i < additional_req_pages; i++) {
                 auto pta =
@@ -108,26 +107,36 @@ namespace Rune::Device::USB {
                 }
             }
         }
+        LOGGER->debug("Allocating register interface: {:0=#16x}-{:0=#16x}",
+                      MMIO_BASE_ADDR,
+                      MMIO_BASE_ADDR + (Memory::get_page_size() * (additional_req_pages + 1)));
+        LOGGER->debug("Is at physical address: {:0=#16x}-{:0=#16x}",
+                      xhci_mmio_base_addr,
+                      xhci_mmio_base_addr + mmio_end);
         return true;
     }
 
     auto XHCIDriver::perform_chip_hardware_reset() const -> void {
-        while (m_ri.m_operational->m_usbsts.m_cnr != 0) CPU::pause();
-        m_ri.m_operational->m_usbcmd.m_hcrst = 1;
-        while (m_ri.m_operational->m_usbcmd.m_hcrst != 0) CPU::pause();
-        while (m_ri.m_operational->m_usbsts.m_cnr != 0) CPU::pause();
+        LOGGER->debug("Performing chip hardware reset");
+        while (m_ri.m_operational->m_usbsts.CNR()) CPU::pause();
+        m_ri.m_operational->m_usbcmd.set_HCRST(true);
+        while (m_ri.m_operational->m_usbcmd.HCRST()) CPU::pause();
+        while (m_ri.m_operational->m_usbsts.CNR()) CPU::pause();
     }
 
     auto XHCIDriver::allocate_device_context_base_address_array() -> bool {
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
 
-        // Define the number of enabled device slots
-        m_ri.m_operational->m_config.m_max_slots_en = DEVICE_SLOTS;
+        // Slot 0 is reserved for the scratchpad buffer array.
+        U32 dbbaa_size = m_ri.m_capability->m_hcsparams1.max_slots() + 1;
+        m_ri.m_operational->m_config.set_max_slots_en(static_cast<U8>(dbbaa_size));
+        LOGGER->debug("Allocating device context base address array supporting {} device slots",
+                      dbbaa_size);
 
-        m_dcbaa = reinterpret_cast<DeviceContextBaseAddressArray<DEVICE_SLOTS>*>(
-            mm->get_heap()->allocate_dma(sizeof(DeviceContextBaseAddressArray<DEVICE_SLOTS>)));
+        m_dcbaa = reinterpret_cast<U64*>(
+            mm->get_heap()->allocate_dma(sizeof(DeviceContextBaseAddressArray) * dbbaa_size));
         // xHCI expects zeroed memory
-        memset(m_dcbaa->m_entries.data(), 0, sizeof(m_dcbaa->m_entries));
+        memset(m_dcbaa, 0, sizeof(U64) * dbbaa_size);
         PhysicalAddr dcbaa_phys = 0;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(m_dcbaa), dcbaa_phys)) {
             System::instance().panic("Failed to get physical address of DCBAAP");
@@ -135,9 +144,10 @@ namespace Rune::Device::USB {
 
         // Check if xHC demands scratchpad buffers
         constexpr U8 MAX_SCRATCH_HI_OFFSET = 5;
-        U32 max_scratch = (m_ri.m_capability->m_hcsparams2.m_max_scratch_hi << MAX_SCRATCH_HI_OFFSET
-                           | m_ri.m_capability->m_hcsparams2.m_max_scratch_lo);
+        U32 max_scratch = (m_ri.m_capability->m_hcsparams2.max_scratch_hi() << MAX_SCRATCH_HI_OFFSET
+                           | m_ri.m_capability->m_hcsparams2.max_scratch_lo());
         if (max_scratch > 0) {
+            LOGGER->debug("Allocating {} scratchpad buffers", max_scratch);
             // Get the buffer size
             U32    page_size_reg          = m_ri.m_operational->m_pagesize;
             size_t scratchpad_buffer_size = 0;
@@ -169,14 +179,33 @@ namespace Rune::Device::USB {
                 System::instance().panic(
                     "Failed to get physical address of Scratchpad Buffer Array");
             }
-            m_dcbaa->m_entries[0] = scratchpad_buffer_array_phys;
+            m_dcbaa[0] = scratchpad_buffer_array_phys;
         }
 
-        m_ri.m_operational->m_dcbaap.m_ptr = dcbaa_phys >> BASE_ADDR_SHIFT;
+        m_ri.m_operational->m_dcbaap.set_ptr(dcbaa_phys >> BASE_ADDR_SHIFT);
+
+        volatile auto* ex_cap =
+            reinterpret_cast<volatile ExtendedCapabilityPointerRegister*>(m_ri.m_capability)
+            + m_ri.m_capability->m_hccparams1.XECP();
+        while (true) {
+            U8 cap      = ex_cap->m_extended_capability_pointer_register.capability_id();
+            U8 next_cap = ex_cap->m_extended_capability_pointer_register.next_capability();
+
+            if (ExtendedCapabilityCode(cap) == ExtendedCapabilityCode::SUPPORTED_PROTOCOL) {
+                volatile auto* spc =
+                    reinterpret_cast<volatile SupportedProtocolCapability*>(ex_cap);
+                U32 p_offest = spc->m_port_protocol_register.port_offset();
+                U8  p_count  = spc->m_port_protocol_register.port_count();
+            }
+            if (next_cap == 0) break;
+            ex_cap += next_cap;
+        }
+
         return true;
     }
 
     auto XHCIDriver::allocate_command_ring() -> bool {
+        LOGGER->debug("Allocating command ring, size={} (single segment)", COMMAND_RING_SIZE);
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
 
         m_command_ring = reinterpret_cast<CommandRing<COMMAND_RING_SIZE>*>(
@@ -188,18 +217,21 @@ namespace Rune::Device::USB {
             return false;
 
         auto* link_trb = reinterpret_cast<LinkTRB*>(&m_command_ring->m_entries[1]);
-        link_trb->m_ring_segment_pointer_lo.m_ring_segment_pointer_lo = cmd_ring_phys >> 4;
+        link_trb->m_ring_segment_pointer_lo.set_ptr(static_cast<U32>(cmd_ring_phys) >> 4);
         link_trb->m_ring_segment_pointer_hi = static_cast<U32>(cmd_ring_phys >> SHIFT_32);
-        link_trb->m_control.m_trb_type      = LinkTRB::TYPE;
-        link_trb->m_control.m_toggle_cycle  = 1;
-        link_trb->m_control.m_cycle         = 1;
+        link_trb->m_control.set_trb_type(LinkTRB::TYPE);
+        link_trb->m_control.set_toggle_cycle(true);
+        link_trb->m_control.set_cycle(true);
 
-        m_ri.m_operational->m_crcr.m_ptr = cmd_ring_phys >> BASE_ADDR_SHIFT;
-        m_ri.m_operational->m_crcr.m_rcs = 1;
+        m_ri.m_operational->m_crcr.set_ptr(cmd_ring_phys >> BASE_ADDR_SHIFT);
+        m_ri.m_operational->m_crcr.set_RCS(true);
         return true;
     }
 
     auto XHCIDriver::allocate_event_ring() -> bool {
+        LOGGER->debug("Allocating event ring, segment_size={}, segment_count={}",
+                      EVENT_RING_SEGMENT_SIZE,
+                      EVENT_RING_SEGMENT_COUNT);
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
 
         m_event_ring =
@@ -214,9 +246,8 @@ namespace Rune::Device::USB {
                 ers_phys)) {
             System::instance().panic("Failed to get physical address of Event Ring Segment 0");
         }
-        m_event_ring->m_erst[0].m_ring_segment_base_address.m_base_address =
-            ers_phys >> BASE_ADDR_SHIFT;
-        m_event_ring->m_erst[0].m_ring_segment_size.m_segment_size = EVENT_RING_SEGMENT_SIZE;
+        m_event_ring->m_erst[0].m_ring_segment_base_address.set_ptr(ers_phys >> BASE_ADDR_SHIFT);
+        m_event_ring->m_erst[0].m_ring_segment_size.set_segment_size(EVENT_RING_SEGMENT_SIZE);
 
         PhysicalAddr erst_ba_phys = 0;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(&m_event_ring->m_erst),
@@ -224,10 +255,10 @@ namespace Rune::Device::USB {
             System::instance().panic("Failed to get physical address of ERST");
         }
 
-        m_ri.interrupter(0).m_erstsz.m_erst_size = 1;
-        m_ri.interrupter(0).m_erdp.m_ptr         = ers_phys >> 4;
-        m_ri.interrupter(0).m_erstba.m_ptr       = erst_ba_phys >> BASE_ADDR_SHIFT;
-        m_ri.interrupter(0).m_imod.m_imodi       = IMODI_DEFAULT;
+        m_ri.interrupter(0).m_erstsz.set_erst_size(1);
+        m_ri.interrupter(0).m_erdp.set_ptr(ers_phys >> 4);
+        m_ri.interrupter(0).m_erstba.set_ptr(erst_ba_phys >> BASE_ADDR_SHIFT);
+        m_ri.interrupter(0).m_imod.set_imodi(IMODI_DEFAULT);
 
         return true;
     }
@@ -237,8 +268,9 @@ namespace Rune::Device::USB {
             m_xhci->pci_header(),
             m_xhci->config_space_ID());
         if (xhci_pci_header.m_pci_header.interrupt_pin > 0) {
-            U8   interrupt_line = xhci_pci_header.m_pci_header.interrupt_line;
-            auto cmd            = xhci_pci_header.m_pci_header.header.command;
+            U8 interrupt_line = xhci_pci_header.m_pci_header.interrupt_line;
+            LOGGER->debug("Installing IRQ handler at line {}", interrupt_line);
+            auto cmd = xhci_pci_header.m_pci_header.header.command;
             if (cmd.interrupt_disable == 1) {
                 const auto& csi       = m_xhci->config_space_ID();
                 cmd.interrupt_disable = 0;
@@ -258,8 +290,8 @@ namespace Rune::Device::USB {
                 ->get_active_pic()
                 ->clear_mask(interrupt_line);
 
-            m_ri.m_operational->m_usbcmd.m_inte = 1;
-            m_ri.interrupter(0).m_iman.m_ie     = 1;
+            m_ri.m_operational->m_usbcmd.set_INTE(true);
+            m_ri.interrupter(0).m_iman.set_IE(true);
         }
     }
 
@@ -309,7 +341,18 @@ namespace Rune::Device::USB {
         configure_interrupts();
 
         // Turn the Host Controller on
-        m_ri.m_operational->m_usbcmd.m_rs = 1;
+        m_ri.m_operational->m_usbcmd.set_RS(true);
+
+        for (int i = 0; i < 16; i++) {
+            volatile PortRegisterSet& prs = m_ri.port(i);
+            LOGGER->debug("Device Slot {}: State: {}, Powered: {}",
+                          i,
+                          PortLinkState(prs.m_portsc.PLS()).to_string(),
+                          prs.m_portsc.PP());
+            if (PortLinkState(prs.m_portsc.PLS()) == PortLinkState::RX_DETECT) {
+                int a = 0;
+            }
+        }
 
         return true;
     }
