@@ -76,7 +76,8 @@ namespace Rune::Device::USB {
         // Dynamically Allocated Memory
         // ====================================================================================== //
 
-        DeviceContextBaseAddressArray<DEVICE_SLOTS>*                  m_dcbaa{};
+        // Size is defined as followed: m_ri.m_capability->m_hcsparams1.m_max_slots + 1
+        DeviceContextBaseAddressArray                                 m_dcbaa{};
         U64*                                                          m_scratchpad_buffer_array{};
         CommandRing<COMMAND_RING_SIZE>*                               m_command_ring{};
         EventRing<EVENT_RING_SEGMENT_SIZE, EVENT_RING_SEGMENT_COUNT>* m_event_ring;
