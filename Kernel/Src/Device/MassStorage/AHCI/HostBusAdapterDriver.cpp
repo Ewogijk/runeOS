@@ -109,9 +109,11 @@ namespace Rune::Device {
         return {.major = 1, .minor = 0, .patch = 0};
     }
 
-    auto HostBusAdapterDriver::target_device_ID() const -> const DeviceID* { return &ID_AHCI; }
+    auto HostBusAdapterDriver::can_bind(const DeviceID* device_ID) -> bool {
+        return ID_AHCI.equals(device_ID);
+    }
 
-    auto HostBusAdapterDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+    auto HostBusAdapterDriver::bind(const SharedPointer<Device>& device) -> bool {
         auto        pci_device       = SharedPointer<PCIDevice>(device);
         const auto& pci_type0_header = pci_device->pci_header();
         _hba                         = reinterpret_cast<HBAMemory*>(
@@ -164,7 +166,7 @@ namespace Rune::Device {
         return true;
     }
 
-    void HostBusAdapterDriver::remove_device(const SharedPointer<Device>& device) {
+    void HostBusAdapterDriver::unbind(const SharedPointer<Device>& device) {
         SILENCE_UNUSED(device)
     }
 

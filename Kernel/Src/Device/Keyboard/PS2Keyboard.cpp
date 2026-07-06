@@ -140,9 +140,11 @@ namespace Rune::Device {
 
     auto PS2Keyboard::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
-    auto PS2Keyboard::target_device_ID() const -> const DeviceID* { return &ID_PS2_KEYBOARD; }
+    auto PS2Keyboard::can_bind(const DeviceID* device_ID) -> bool {
+        return ID_PS2_KEYBOARD.equals(device_ID);
+    }
 
-    auto PS2Keyboard::accept_device(const SharedPointer<Device>& device) -> bool {
+    auto PS2Keyboard::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)
         init_scan_set_one();
 
@@ -167,7 +169,7 @@ namespace Rune::Device {
         return CPU::irq_install_handler(1, 0, "PS2 Keyboard", _irq_handler);
     }
 
-    void PS2Keyboard::remove_device(const SharedPointer<Device>& device) {
+    void PS2Keyboard::unbind(const SharedPointer<Device>& device) {
         SILENCE_UNUSED(device)
         CPU::irq_uninstall_handler(1, 1);
     }

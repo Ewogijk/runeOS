@@ -238,9 +238,11 @@ namespace Rune::Device {
 
     auto PCIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
-    auto PCIDriver::target_device_ID() const -> const DeviceID* { return &ID_PCI; }
+    auto PCIDriver::can_bind(const DeviceID* device_ID) -> bool {
+        return ID_PCI.equals(device_ID);
+    }
 
-    auto PCIDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+    auto PCIDriver::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)
         pci_vendor_db_initialize();
         for (U16 pci_bus = 0; pci_bus < BUS_LIMIT; pci_bus++) {
@@ -255,7 +257,7 @@ namespace Rune::Device {
         return true;
     }
 
-    void PCIDriver::remove_device(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
+    void PCIDriver::unbind(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
 
     auto PCIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> CPU::Future<IORequestStatus> {

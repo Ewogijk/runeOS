@@ -15,8 +15,8 @@
  *  limitations under the License.
  */
 
-#ifndef RUNEOS_CLASSCODE_H
-#define RUNEOS_CLASSCODE_H
+#ifndef RUNEOS_PCI_CLASSCODE_H
+#define RUNEOS_PCI_CLASSCODE_H
 
 #include <Ember/Enum.h>
 
@@ -756,4 +756,4 @@ namespace Rune::Device {
                                            U8        programming_interface) -> String;
 } // namespace Rune::Device
 
-#endif // RUNEOS_CLASSCODE_H
+#endif // RUNEOS_PCI_CLASSCODE_H

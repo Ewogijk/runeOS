@@ -65,6 +65,7 @@ namespace Rune::Device {
     auto PCIDeviceID::get_device_ID_type() const -> DeviceIDType { return DeviceIDType::PCI; }
 
     auto PCIDeviceID::equals(const DeviceID* d_ID) const -> bool {
+        if (d_ID == nullptr) return false;
         if (d_ID->get_device_ID_type() != DeviceIDType::PCI) return false;
         const auto* pci_d_ID = static_cast<const PCIDeviceID*>(d_ID);
         return m_base_class_code == pci_d_ID->m_base_class_code
