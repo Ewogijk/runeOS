@@ -46,18 +46,16 @@ class DummyDriver : public Device::Driver {
         return {.major = 1, .minor = 0, .patch = 0};
     }
 
-    [[nodiscard]] auto target_device_ID() const -> const Device::DeviceID* override {
-        return &DUMMY_DEV_ID;
+    auto can_bind(const Device::DeviceID* device_ID) -> bool override {
+        return DUMMY_DEV_ID.equals(device_ID);
     }
 
-    auto accept_device(const SharedPointer<Device::Device>& device) -> bool override {
+    auto bind(const SharedPointer<Device::Device>& device) -> bool override {
         m_bound_dev_count++;
         return true;
     }
 
-    void remove_device(const SharedPointer<Device::Device>& device) override {
-        m_bound_dev_count--;
-    }
+    void unbind(const SharedPointer<Device::Device>& device) override { m_bound_dev_count--; }
 
     auto handle_request(const SharedPointer<Device::Device>& device, Device::IORequest request)
         -> CPU::Future<Device::IORequestStatus> override {

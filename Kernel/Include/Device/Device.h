@@ -32,7 +32,8 @@ namespace Rune::Device {
 
 #define DEVICE_ID_TYPES(X)                                                                         \
     X(DeviceIDType, STRING, 0x1)                                                                   \
-    X(DeviceIDType, PCI, 0x2)
+    X(DeviceIDType, PCI, 0x2)                                                                      \
+    X(DeviceIDType, USB, 0x3)
 
     /// @brief Helper type to differentiate between DeviceID subclasses.
     ///
@@ -151,24 +152,24 @@ namespace Rune::Device {
 
         /// @brief
         /// @return The handle to the driver that operates this device.
-        ///         Resource<DriverHandle>::HANDLE_NONE if no driver is mapped to the device.
+        ///         nullptr if no driver is mapped to the device.
         [[nodiscard]] auto driver() const -> const SharedPointer<Driver>&;
 
         /// @brief
         /// @return The handle to the driver that operates this device.
-        ///         Resource<DriverHandle>::HANDLE_NONE if no driver is mapped to the device.
+        ///         nullptr if no driver is mapped to the device.
         [[nodiscard]] auto driver() -> SharedPointer<Driver>&;
 
         /// @brief
         /// @return The bus device of this device.
-        ///         Resource::<DeviceHandle>::HANDLE_NONE for the root device.
+        ///         nullptr for the root device.
         ///
         /// Every device except the root device always has to have a bus device.
         [[nodiscard]] auto bus_device() const -> const SharedPointer<Device>&;
 
         /// @brief
         /// @return The bus device of this device.
-        ///         Resource::<DeviceHandle>::HANDLE_NONE for the root device.
+        ///         nullptr for the root device.
         ///
         /// Every device except the root device always has to have a bus device.
         [[nodiscard]] auto bus_device() -> SharedPointer<Device>&;
@@ -184,7 +185,7 @@ namespace Rune::Device {
         /// @brief
         /// @return A pointer to the Device ID.
         ///
-        /// The device always owns the pointer and must guarantue a valid pointer is returned at all
+        /// The device always owns the pointer and must guarantee a valid pointer is returned at all
         /// times.
         [[nodiscard]] virtual auto device_ID() const -> const DeviceID* = 0;
     };
@@ -258,30 +259,30 @@ namespace Rune::Device {
         [[nodiscard]] virtual auto version() const -> Version = 0;
 
         /// @brief
-        /// @return DeviceID of the device this driver intends to operate.
-        /// The device driver always owns the pointer and must guarantue a valid pointer is
-        /// returned at all times.
-        [[nodiscard]] virtual auto target_device_ID() const -> const DeviceID* = 0;
+        /// @param device_ID ID of a device.
+        /// @return True: This driver can bind to the device.
+        ///         False: Otherwise.
+        virtual auto can_bind(const DeviceID* device_ID) -> bool = 0;
 
-        /// @brief Is called when a device is discovered that matches with the target device ID of
-        ///         this driver.
+        /// @brief Initialize the device to a state that allows it to handle IO requests.
         /// @param device Handle of the device to initialize.
-        /// @return True: The device was accepted and initialized.
+        /// @return True: The device is initialized.
         ///         False: Otherwise.
         ///
-        /// The device driver should initialize the device in a state that allows it to handle IO
-        /// requests if it means to accept the device. Accepting the device will bind to driver to
-        /// the device, which means IO requests will be routed to the driver.
-        virtual auto accept_device(const SharedPointer<Device>& device) -> bool = 0;
+        /// If device initialization succeeds, the driver will be bound to the device which means
+        /// IO requests for the device will be forwarded to this driver.
+        ///
+        /// This function will be called when the driver returned true after a call the can_bind().
+        virtual auto bind(const SharedPointer<Device>& device) -> bool = 0;
 
-        /// @brief Is called before a device will be removed from the device tree.
+        /// @brief Cancel any ongoing IO requests and release any resources associated with the
+        ///         device.
         /// @param dev_handle Handle of the device to stop.
         ///
-        /// The device driver should cancel ongoing IO requests and release any resource associated
-        /// with the device.
-        ///
         /// The device driver will be unbound from the device after this function has been called.
-        virtual void remove_device(const SharedPointer<Device>& device) = 0;
+        ///
+        /// This function is called before a device will be removed from the device tree.
+        virtual void unbind(const SharedPointer<Device>& device) = 0;
 
         /// @brief Perform a device driver-specific action on the device with the given handle.
         /// @param device Reference to a bound device.

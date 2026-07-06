@@ -46,16 +46,16 @@ namespace Rune::Device {
     auto DeviceModule::find_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver> {
         if (device_ID == nullptr) return {};
         for (auto& driver : m_driver_store)
-            if (driver->target_device_ID()->equals(device_ID)) return driver;
+            if (driver->can_bind(device_ID)) return driver;
         return {};
     }
 
     void DeviceModule::match_devices(LinkedList<SharedPointer<Device>>& out_devices,
                                      const SharedPointer<Device>&       current_device,
-                                     const DeviceID*                    device_id) {
-        if (current_device->device_ID()->equals(device_id)) out_devices.add_back(current_device);
+                                     const SharedPointer<Driver>&        driver) {
+        if (driver->can_bind(current_device->device_ID())) out_devices.add_back(current_device);
         for (auto& child : current_device->child_devices())
-            match_devices(out_devices, child, device_id);
+            match_devices(out_devices, child, driver);
     }
 
     void DeviceModule::remove_device_driver(const SharedPointer<Device>& current_device,
@@ -65,7 +65,7 @@ namespace Rune::Device {
                           current_device->get_unique_name(),
                           driver->vendor(),
                           driver->version().to_string());
-            current_device->driver()->remove_device(current_device);
+            current_device->driver()->unbind(current_device);
             current_device->driver() = SharedPointer<Driver>();
         }
         for (auto& child : current_device->child_devices()) remove_device_driver(child, driver);
@@ -99,7 +99,7 @@ namespace Rune::Device {
                                                                 DeviceType::GENERIC,
                                                                 ACPIDriver::ID_ACPI));
         m_device_tree = root_device_dummy;
-        if (!root_device_driver->accept_device(root_device_dummy)) {
+        if (!root_device_driver->bind(root_device_dummy)) {
             LOGGER->error("Failed to bind the root device");
             return false;
         }
@@ -149,10 +149,10 @@ namespace Rune::Device {
 
         if (m_device_tree) {
             LinkedList<SharedPointer<Device>> matching_devices;
-            match_devices(matching_devices, m_device_tree, driver->target_device_ID());
+            match_devices(matching_devices, m_device_tree, driver);
 
             for (auto& dev : matching_devices) {
-                if (driver->accept_device(dev)) {
+                if (driver->bind(dev)) {
                     LOGGER->debug(R"({}: Bind device to driver by {} v{})",
                                   dev->get_unique_name(),
                                   driver->vendor(),
@@ -204,7 +204,7 @@ namespace Rune::Device {
         auto driver = find_device_driver(device->device_ID());
         if (!driver) return true;
 
-        if (driver->accept_device(device)) {
+        if (driver->bind(device)) {
             LOGGER->debug(R"({}: Bind device to driver by {} v{})",
                           device->get_unique_name(),
                           driver->vendor(),
@@ -226,7 +226,7 @@ namespace Rune::Device {
         device->bus_device() = SharedPointer<Device>();
 
         if (device->driver()) {
-            device->driver()->remove_device(device);
+            device->driver()->unbind(device);
             device->driver() = SharedPointer<Driver>();
         }
         return true;

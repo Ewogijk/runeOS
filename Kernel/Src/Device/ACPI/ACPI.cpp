@@ -77,9 +77,11 @@ namespace Rune::Device {
 
     auto ACPIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
-    auto ACPIDriver::target_device_ID() const -> const DeviceID* { return &ID_ACPI; }
+    auto ACPIDriver::can_bind(const DeviceID* device_ID) -> bool {
+        return ID_ACPI.equals(device_ID);
+    }
 
-    auto ACPIDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+    auto ACPIDriver::bind(const SharedPointer<Device>& device) -> bool {
         ACPI_STATUS status = AcpiInitializeSubsystem();
         if (ACPI_FAILURE(status)) {
             LOGGER->error("AcpiInitializeSubsystem failed. Status={}", status);
@@ -133,7 +135,7 @@ namespace Rune::Device {
         return true;
     }
 
-    void ACPIDriver::remove_device(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
+    void ACPIDriver::unbind(const SharedPointer<Device>& device) { SILENCE_UNUSED(device) }
 
     auto ACPIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> CPU::Future<IORequestStatus> {

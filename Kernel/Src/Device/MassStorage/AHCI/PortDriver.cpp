@@ -25,16 +25,16 @@ namespace Rune::Device {
 
     auto PortDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
-    auto PortDriver::target_device_ID() const -> const DeviceID* {
-        return &PortEngine::ID_ATA_DEVICE;
+    auto PortDriver::can_bind(const DeviceID* device_ID) -> bool {
+        return PortEngine::ID_ATA_DEVICE.equals(device_ID);
     }
 
-    auto PortDriver::accept_device(const SharedPointer<Device>& device) -> bool {
+    auto PortDriver::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)
         return true;
     }
 
-    void PortDriver::remove_device(const SharedPointer<Device>& device) {
+    void PortDriver::unbind(const SharedPointer<Device>& device) {
         SharedPointer<AHCIDevice> ahci_device(device);
         ahci_device->port_engine()->stop();
     }

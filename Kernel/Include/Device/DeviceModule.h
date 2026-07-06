@@ -93,13 +93,14 @@ namespace Rune::Device {
         /// @return A pointer to the device driver if found, otherwise null.
         auto find_device_driver(const DeviceID* device_ID) -> SharedPointer<Driver>;
 
-        /// @brief Iterate the device tree and find all devices matching with the device_id.
+        /// @brief Iterate the device tree and find all devices the driver can bind with.
         /// @param out_devices Matching devices will be added to this list.
         /// @param current_device
+        /// @param driver
         /// @param device_id Device ID that devices have to match with.
         void match_devices(LinkedList<SharedPointer<Device>>& out_devices,
                            const SharedPointer<Device>&       current_device,
-                           const DeviceID*                    device_id);
+                           const SharedPointer<Driver>&       driver);
 
         /// @brief Iterate the device tree and unbind all devices from the driver.
         /// @param current_device
@@ -156,10 +157,10 @@ namespace Rune::Device {
 
         auto get_device_handle() -> Handle;
 
-        /// @brief Get all devices that have the given device_type casted to DeviceInterface*.
+        /// @brief Get all devices that have the given device_type cast to DeviceInterface*.
         /// @tparam DeviceInterface Type to which all device pointers will be cast.
         /// @param device_type Type of the devices that will be returned.
-        /// @return A list of pointers to devices casted to DeviceInterface.
+        /// @return A list of pointers to devices cast to DeviceInterface.
         template <class DeviceInterface>
         auto get_devices(DeviceType device_type) -> LinkedList<SharedPointer<DeviceInterface>> {
             LinkedList<SharedPointer<DeviceInterface>> devices;

@@ -28,9 +28,9 @@ namespace Rune::Device {
 
         [[nodiscard]] auto vendor() const -> String override;
         [[nodiscard]] auto version() const -> Version override;
-        [[nodiscard]] auto target_device_ID() const -> const DeviceID* override;
-        auto               accept_device(const SharedPointer<Device>& device) -> bool override;
-        void               remove_device(const SharedPointer<Device>& device) override;
+        auto               can_bind(const DeviceID* device_ID) -> bool override;
+        auto               bind(const SharedPointer<Device>& device) -> bool override;
+        void               unbind(const SharedPointer<Device>& device) override;
         auto               handle_request(const SharedPointer<Device>& device, IORequest request)
             -> CPU::Future<IORequestStatus> override;
     };

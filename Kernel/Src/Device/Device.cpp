@@ -26,6 +26,7 @@ namespace Rune::Device {
     auto BasicDeviceID::get_device_ID_type() const -> DeviceIDType { return DeviceIDType::STRING; }
 
     auto BasicDeviceID::equals(const DeviceID* d_ID) const -> bool {
+        if (d_ID == nullptr) return false;
         if (d_ID->get_device_ID_type() != DeviceIDType::STRING) return false;
         const auto* str_d_ID = static_cast<const BasicDeviceID*>(d_ID);
         return m_string_ID == str_d_ID->m_string_ID;
