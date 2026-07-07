@@ -176,6 +176,12 @@ namespace Rune::CPU {
     void _8259PIC::clear_mask(U8 irq_line) {
         _imr &= ~(1 << irq_line);
         update_selected_8259_imr(irq_line);
+        // Slave-PIC lines (IRQ 8-15) are routed to the CPU through the cascade
+        // line on the master PIC, so it must be unmasked as well.
+        if (irq_line >= PIC2_IRQ_BOUNDARY) {
+            _imr &= ~(1 << ICW3::PIC2_ID);
+            update_selected_8259_imr(ICW3::PIC2_ID);
+        }
     }
 
     void _8259PIC::mask_all() {
