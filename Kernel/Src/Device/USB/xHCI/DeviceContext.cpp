@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Device/USB/XHCI/DeviceContext.h>
+#include <Device/USB/xHCI/DeviceContext.h>
 
 #include <KRE/BitsAndBytes.h>
 

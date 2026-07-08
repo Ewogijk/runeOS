@@ -17,7 +17,7 @@
 #include <KRE/System/System.h>
 
 #include <Device/DeviceModule.h>
-#include <Device/USB/XHCI/XHCI.h>
+#include <Device/USB/xHCI/xHCI.h>
 
 namespace Rune::BuiltInPlugin {
     const PluginInfo PS2KEYBOARD_INFO = {

@@ -12,32 +12,27 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Device/USB/XHCI/Ring.h>
+#include <Device/USB/Descriptor.h>
 
 namespace Rune::Device::USB {
-
     // ========================================================================================== //
-    // EventRingSegmentTableEntry::RingSegmentBaseAddr — xHCI 2.0 Table 6-11
+    // USB Configuration Descriptor
     // ========================================================================================== //
 
-    [[nodiscard]] auto EventRingSegmentTableEntry::RingSegmentBaseAddr::ptr() const -> U64 {
-        return (m_register & PTR_MASK) >> 6;
+    auto ConfigurationDescriptor::self_powered() const -> bool {
+        return (m_bm_attributes & BM_ATTRIBUTES_SELF_POWERED) != 0;
     }
-
-    auto EventRingSegmentTableEntry::RingSegmentBaseAddr::set_ptr(U64 val) -> void {
-        m_register = val << 6;
+    auto ConfigurationDescriptor::remote_wakeup() const -> bool {
+        return (m_bm_attributes & BM_ATTRIBUTES_REMOTE_WAKEUP) != 0;
     }
 
     // ========================================================================================== //
-    // EventRingSegmentTableEntry::RingSegmentSize — xHCI 2.0 Table 6-11
+    // USB Endpoint Descriptor
     // ========================================================================================== //
 
-    [[nodiscard]] auto EventRingSegmentTableEntry::RingSegmentSize::segment_size() const -> U16 {
-        return static_cast<U16>(m_register & SEGMENT_SIZE_MASK);
-    }
-
-    auto EventRingSegmentTableEntry::RingSegmentSize::set_segment_size(U16 val) -> void {
-        m_register = (m_register & ~SEGMENT_SIZE_MASK) | (static_cast<U64>(val) & SEGMENT_SIZE_MASK);
-    }
-
+    DEFINE_TYPED_ENUM(Direction, U8, ENDPOINT_DIRECTIONS, 0xFF)
+    DEFINE_TYPED_ENUM(TransferType, U8, ENDPOINT_TRANSFER_TYPES, 0xFF)
+    DEFINE_TYPED_ENUM(SyncType, U8, ENDPOINT_SYNC_TYPES, 0xFF)
+    DEFINE_TYPED_ENUM(IsochronousUsageType, U8, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF)
+    DEFINE_TYPED_ENUM(InterruptUsageType, U8, INTERRUPT_ENDPOINT_USAGE_TYPES, 0xFF)
 } // namespace Rune::Device::USB
