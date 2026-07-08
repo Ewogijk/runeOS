@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Device/USB/XHCI/RegisterInterface.h>
+#include <Device/USB/xHCI/RegisterInterface.h>
 
 namespace Rune::Device::USB {
 
@@ -186,6 +186,8 @@ namespace Rune::Device::USB {
     // Port Status and Control — xHCI 2.0 §5.4.8 Table 5-27/5-29
     // ========================================================================================== //
 
+    DEFINE_ENUM(PortSpeed, PORT_SPEEDS, 0x0)
+
     [[nodiscard]] auto PORTSC::CCS() const volatile -> bool {
         return bit_check(m_register, CCS_BIT_OFFSET);
     }
@@ -214,8 +216,8 @@ namespace Rune::Device::USB {
         return bit_check(m_register, PP_BIT_OFFSET);
     }
 
-    [[nodiscard]] auto PORTSC::port_speed() const volatile -> U8 {
-        return static_cast<U8>((m_register & PORT_SPEED_MASK) >> 10); // NOLINT
+    [[nodiscard]] auto PORTSC::port_speed() const volatile -> PortSpeed {
+        return PortSpeed(static_cast<U8>((m_register & PORT_SPEED_MASK) >> 10)); // NOLINT
     }
 
     [[nodiscard]] auto PORTSC::PIC() const volatile -> U8 {
@@ -604,7 +606,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IE_BIT_OFFSET);
     }
 
-    auto IMAN::clear_IP() volatile -> void { m_register = 1U << IP_BIT_OFFSET; }
+    auto IMAN::clear_IP() volatile -> void { m_register = bit_clear(m_register, IP_BIT_OFFSET); }
 
     auto IMAN::set_IE(bool v) volatile -> void {
         m_register = v ? bit_set(m_register, IE_BIT_OFFSET) : bit_clear(m_register, IE_BIT_OFFSET);

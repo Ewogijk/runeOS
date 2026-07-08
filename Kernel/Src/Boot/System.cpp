@@ -26,6 +26,7 @@
 #include <BuiltInPlugin/PCIDriverPlugin.h>
 #include <BuiltInPlugin/PITDriverPlugin.h>
 #include <BuiltInPlugin/PS2KeyboardDriverPlugin.h>
+#include <BuiltInPlugin/USBPlugin.h>
 
 #include <CPU/CPU.h>
 #include <CPU/CPUModule.h>
@@ -329,6 +330,7 @@ namespace Rune {
         load_plugin(new BuiltInPlugin::PCIDriverPlugin());
         load_plugin(new BuiltInPlugin::PS2KeyboardDriverPlugin());
         load_plugin(new BuiltInPlugin::AHCIDriverPlugin());
+        load_plugin(new BuiltInPlugin::USBPlugin());
     }
 
     void DeviceModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }

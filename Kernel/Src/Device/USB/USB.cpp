@@ -1,0 +1,137 @@
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#include <Device/USB/USB.h>
+
+namespace Rune::Device::USB {
+    // ========================================================================================== //
+    // USB Device ID
+    // ========================================================================================== //
+
+    USBDeviceID::USBDeviceID(U8 device_class, U8 subclass, U8 protocol)
+        : m_device_class(device_class),
+          m_subclass(subclass),
+          m_protocol(protocol) {}
+
+    auto USBDeviceID::get_device_ID_type() const -> DeviceIDType { return DeviceIDType::USB; }
+
+    auto USBDeviceID::equals(const DeviceID* d_ID) const -> bool {
+        if (d_ID->get_device_ID_type() != DeviceIDType::USB) return false;
+        const auto* usb_device_ID = static_cast<const USBDeviceID*>(d_ID);
+        return m_device_class == usb_device_ID->m_device_class
+               && m_subclass == usb_device_ID->m_subclass
+               && m_protocol == usb_device_ID->m_protocol;
+    }
+
+    // ========================================================================================== //
+    // EndPoint
+    // ========================================================================================== //
+
+    auto EndPoint::sync_type() const -> SyncType { return SyncType(m_synchronization); }
+
+    auto EndPoint::interrupt_usage_type() const -> InterruptUsageType {
+        return InterruptUsageType(m_usage);
+    }
+
+    auto EndPoint::isochronous_usage_type() const -> IsochronousUsageType {
+        return IsochronousUsageType(m_usage);
+    }
+
+    // ========================================================================================== //
+    // Interface
+    // ========================================================================================== //
+
+    auto Interface::active() const -> const AlternateSetting& {
+        for (const auto& setting : m_alternate_settings)
+            if (setting.m_setting_number == m_active_setting) return setting;
+        return m_alternate_settings.first();
+    }
+
+    // ========================================================================================== //
+    // USB Composite Device
+    // ========================================================================================== //
+
+    USBCompositeDevice::USBCompositeDevice(Handle        handle,
+                                          const String& name,
+                                          const String& oem,
+                                          const String& revision,
+                                          const String& serial_number,
+                                          USBDeviceID   usb_device_id)
+        : Device(handle, name, oem, revision, serial_number, DeviceType::GENERIC),
+          m_device_ID(move(usb_device_id)) {}
+
+    auto USBCompositeDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
+
+    auto USBCompositeDevice::configurations() const -> const LinkedList<Configuration>& {
+        return m_configurations;
+    }
+
+    void USBCompositeDevice::add_configuration(Configuration configuration) {
+        m_configurations.add_back(move(configuration));
+    }
+
+    auto USBCompositeDevice::active_configuration() const -> Optional<U8> {
+        return m_active_configuration;
+    }
+
+    void USBCompositeDevice::set_active_configuration(U8 configuration_value) {
+        m_active_configuration = configuration_value;
+    }
+
+    // ========================================================================================== //
+    // USB Function Device
+    // ========================================================================================== //
+
+    USBFunctionDevice::USBFunctionDevice(Handle                handle,
+                                        const String&         name,
+                                        const String&         oem,
+                                        const String&         revision,
+                                        const String&         serial_number,
+                                        DeviceType            device_type,
+                                        USBDeviceID           usb_device_id,
+                                        U8                    configuration_value,
+                                        U8                    first_interface,
+                                        LinkedList<Interface> interfaces)
+        : Device(handle, name, oem, revision, serial_number, device_type),
+          m_device_ID(move(usb_device_id)),
+          m_configuration_value(configuration_value),
+          m_first_interface(first_interface),
+          m_interfaces(move(interfaces)) {}
+
+    auto USBFunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
+
+    auto USBFunctionDevice::configuration_value() const -> U8 { return m_configuration_value; }
+
+    auto USBFunctionDevice::first_interface() const -> U8 { return m_first_interface; }
+
+    auto USBFunctionDevice::interfaces() const -> const LinkedList<Interface>& {
+        return m_interfaces;
+    }
+
+    auto USBFunctionDevice::find_interface(U8 interface_number) const -> const Interface* {
+        for (const auto& iface : m_interfaces)
+            if (iface.m_interface_number == interface_number) return &iface;
+        return nullptr;
+    }
+
+    void USBFunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
+        for (auto& iface : m_interfaces)
+            if (iface.m_interface_number == interface_number) {
+                iface.m_active_setting = setting_number;
+                return;
+            }
+    }
+
+    DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT
+} // namespace Rune::Device::USB

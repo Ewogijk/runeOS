@@ -201,18 +201,38 @@ namespace Rune::Device::USB {
     // Port Status and Control — xHCI 2.0 §5.4.8 Table 5-27/5-29
     // ========================================================================================== //
 
+#define PORT_SPEEDS(X)                                                                             \
+    X(PortSpeed, FULL_SPEED, 0x1)                                                                  \
+    X(PortSpeed, LOW_SPEED, 0x2)                                                                   \
+    X(PortSpeed, HIGH_SPEED, 0x3)                                                                  \
+    X(PortSpeed, SUPER_SPEED_GEN1_X1, 0x4)                                                         \
+    X(PortSpeed, SUPER_SPEED_PLUS_GEN2_X1, 0x5)                                                    \
+    X(PortSpeed, SUPER_SPEED_PLUS_GEN1_X2, 0x6)                                                    \
+    X(PortSpeed, SUPER_SPEED_PLUS_GEN2_X2, 0x7)
+
+    /// @brief USB Speed ID mappings.
+    ///
+    /// - FULL_SPEED: USB 2.0 12 MB/s
+    /// - LOW_SPEED:  USB 2.0 1.5 Mb/s
+    /// - HIGH_SPEED: USB 2.0 480 Mb/s
+    /// - SUPER_SPEED_GEN1_X1: USB 3.x 5Gb/s
+    /// - SUPER_SPEED_PLUS_GEN2_X1: USB 3.1 10 Gb/s
+    /// - SUPER_SPEED_PLUS_GEN1_X2: USB 3.2 5 Gb/s
+    /// - SUPER_SPEED_PLUS_GEN2_X2: USB 3.2 10 Gb/s
+    DECLARE_ENUM(PortSpeed, PORT_SPEEDS, 0x0) // NOLINT
+
     struct PORTSC {
         U32 m_register = 0;
 
         // Getters
-        [[nodiscard]] auto CCS() const volatile -> bool;      // Current Connect Status (ROS)
-        [[nodiscard]] auto PED() const volatile -> bool;      // Port Enabled/Disabled (RW1CS)
-        [[nodiscard]] auto TM() const volatile -> bool;       // Tunneled Mode (RO)
-        [[nodiscard]] auto OCA() const volatile -> bool;      // Over-current Active (RO)
-        [[nodiscard]] auto PR() const volatile -> bool;       // Port Reset (RW1S)
-        [[nodiscard]] auto PLS() const volatile -> U8;        // Port Link State [8:5] (RWS)
-        [[nodiscard]] auto PP() const volatile -> bool;       // Port Power (RWS)
-        [[nodiscard]] auto port_speed() const volatile -> U8; // Port Speed [13:10] (ROS)
+        [[nodiscard]] auto CCS() const volatile -> bool; // Current Connect Status (ROS)
+        [[nodiscard]] auto PED() const volatile -> bool; // Port Enabled/Disabled (RW1CS)
+        [[nodiscard]] auto TM() const volatile -> bool;  // Tunneled Mode (RO)
+        [[nodiscard]] auto OCA() const volatile -> bool; // Over-current Active (RO)
+        [[nodiscard]] auto PR() const volatile -> bool;  // Port Reset (RW1S)
+        [[nodiscard]] auto PLS() const volatile -> U8;   // Port Link State [8:5] (RWS)
+        [[nodiscard]] auto PP() const volatile -> bool;  // Port Power (RWS)
+        [[nodiscard]] auto port_speed() const volatile -> PortSpeed; // Port Speed [13:10] (ROS)
         [[nodiscard]] auto PIC() const volatile -> U8;   // Port Indicator Control [15:14] (RWS)
         [[nodiscard]] auto CSC() const volatile -> bool; // Connect Status Change (RW1CS)
         [[nodiscard]] auto PEC() const volatile -> bool; // Port Enabled/Disabled Change (RW1CS)

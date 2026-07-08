@@ -199,7 +199,7 @@ namespace Rune::Device::USB {
         static constexpr size_t MAX_ENDPOINTS = 31;
 
         SlotContext                           m_slot_context{};
-        Array<EndpointContext, MAX_ENDPOINTS> m_endpoint_contexts{};
+        Array<EndpointContext, MAX_ENDPOINTS> m_endpoint_contexts;
     };
     static_assert(sizeof(DeviceContext)
                   == sizeof(SlotContext)
@@ -248,17 +248,11 @@ namespace Rune::Device::USB {
     struct InputContext {
         InputControlContext                                  m_input_control_context{};
         SlotContext                                          m_slot_context{};
-        Array<EndpointContext, DeviceContext::MAX_ENDPOINTS> m_endpoint_contexts{};
+        Array<EndpointContext, DeviceContext::MAX_ENDPOINTS> m_endpoint_contexts;
     };
     static_assert(sizeof(InputContext)
                   == sizeof(InputControlContext) + sizeof(SlotContext)
                          + (DeviceContext::MAX_ENDPOINTS * sizeof(EndpointContext)));
-
-    // ========================================================================================== //
-    // Device Context Base Address Array (DCBAA) — §6.1
-    // ========================================================================================== //
-
-    using DeviceContextBaseAddressArray = PhysicalAddr*;
 
 } // namespace Rune::Device::USB
 
