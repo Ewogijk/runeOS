@@ -179,9 +179,7 @@ namespace Rune::Device::USB {
                                           xhci_mmio_base_addr + ((i + 1) * Memory::get_page_size()),
                                           flags,
                                           mm->get_physical_memory_manager());
-                if (pta.status != Memory::PageTableAccessStatus::OKAY) {
-                    System::instance().panic("Failed to map XHCI Registers!!");
-                }
+                if (pta.status != Memory::PageTableAccessStatus::OKAY) return false;
             }
         }
         LOGGER->debug("Allocating register interface: {:0=#16x}-{:0=#16x}",
@@ -387,8 +385,10 @@ namespace Rune::Device::USB {
             m_xhci->pci_header(),
             m_xhci->config_space_ID());
 
-        if (!allocate_register_interface(xhci_pci_header.register_interface_base_address()))
+        if (!allocate_register_interface(xhci_pci_header.register_interface_base_address())) {
+            LOGGER->warn("Register interface allocation failed.");
             return false;
+        }
 
         if (xhci_pci_header.m_fladj == 0x0) {
             xhci_pci_header.m_fladj = FLADJ_DEFAULT;
@@ -402,16 +402,25 @@ namespace Rune::Device::USB {
 
         perform_chip_hardware_reset();
 
-        if (!allocate_device_context_base_address_array()) return false;
+        if (!allocate_device_context_base_address_array()) {
+            LOGGER->warn("Device context base address array allocation failed.");
+            return false;
+        }
+        if (!allocate_command_ring()) {
+            LOGGER->warn("Command ring allocation failed.");
+            return false;
+        };
 
-        if (!allocate_command_ring()) return false;
-
-        if (!allocate_event_ring()) return false;
+        if (!allocate_event_ring()) {
+            LOGGER->warn("Event ring allocation failed.");
+            return false;
+        }
 
         configure_interrupts();
 
         // Turn the Host Controller on
         m_ri.m_operational->m_usbcmd.set_RS(true);
+        m_host_controller_initialized = true;
         return true;
     }
 
@@ -612,6 +621,17 @@ namespace Rune::Device::USB {
                              * (is_gen_x ? ConfigurationDescriptor::GEN_X_MAX_POWER_UNIT_mA
                                          : ConfigurationDescriptor::HS_MAX_POWER_UNIT_mA));
 
+        // A Function owns its interfaces directly, so each parsed interface must be routed to its
+        // function on the fly. An Interface Association Descriptor always precedes the interfaces
+        // it groups (USB 3.2 §9.6.4), so remember each IAD's [first, first + count) range paired
+        // with its Function. LinkedList nodes are pointer-stable, so these Function* stay valid.
+        struct IADRange {
+            U8        m_first_interface;
+            U8        m_interface_count;
+            Function* m_function;
+        };
+        LinkedList<IADRange> iad_ranges;
+
         Interface*        current_interface   = nullptr;
         AlternateSetting* current_alt_setting = nullptr;
 
@@ -623,27 +643,60 @@ namespace Rune::Device::USB {
             if (DescriptorType(descriptor_type) == DescriptorType::INTERFACE_ASSOCIATION) {
                 const auto* iad =
                     reinterpret_cast<const InterfaceAssociationDescriptor*>(config_blob + offset);
-                configuration.m_functions.add_back(
-                    Function{.m_first_interface   = iad->m_first_interface,
-                             .m_interface_count   = iad->m_interface_count,
-                             .m_function_class    = iad->m_function_class,
-                             .m_function_subclass = iad->m_function_subclass,
-                             .m_function_protocol = iad->m_function_protocol,
-                             .m_string_index      = iad->m_idx_function});
+                Function function;
+                function.m_function_class    = iad->m_function_class;
+                function.m_function_subclass = iad->m_function_subclass;
+                function.m_function_protocol = iad->m_function_protocol;
+                function.m_string_index      = iad->m_idx_function;
+                configuration.m_functions.add_back(move(function));
+                iad_ranges.add_back(IADRange{.m_first_interface = iad->m_first_interface,
+                                             .m_interface_count = iad->m_interface_count,
+                                             .m_function = &configuration.m_functions.last()});
 
             } else if (DescriptorType(descriptor_type) == DescriptorType::INTERFACE) {
                 const auto* if_face =
                     reinterpret_cast<const InterfaceDescriptor*>(config_blob + offset);
 
+                // Determine the Function that owns this interface number:
+                //   1. a Function that already holds it (a further alternate setting),
+                //   2. the Function of a covering IAD, or
+                //   3. a new single-interface Function (USB 3.2 §9.6.4).
+                Function* owner = nullptr;
+                for (auto& function : configuration.m_functions) {
+                    for (auto& iface : function.m_interfaces)
+                        if (iface.m_interface_number == if_face->m_interface_number) {
+                            owner = &function;
+                            break;
+                        }
+                    if (owner != nullptr) break;
+                }
+                if (owner == nullptr)
+                    for (auto& range : iad_ranges)
+                        if (if_face->m_interface_number >= range.m_first_interface
+                            && if_face->m_interface_number
+                                   < range.m_first_interface + range.m_interface_count) {
+                            owner = range.m_function;
+                            break;
+                        }
+                if (owner == nullptr) {
+                    Function function;
+                    function.m_function_class    = if_face->m_interface_class;
+                    function.m_function_subclass = if_face->m_interface_subclass;
+                    function.m_function_protocol = if_face->m_interface_protocol;
+                    function.m_string_index      = if_face->m_idx_interface;
+                    configuration.m_functions.add_back(move(function));
+                    owner = &configuration.m_functions.last();
+                }
+
                 current_interface = nullptr;
-                for (auto& iface : configuration.m_interfaces)
+                for (auto& iface : owner->m_interfaces)
                     if (iface.m_interface_number == if_face->m_interface_number)
                         current_interface = &iface;
                 if (current_interface == nullptr) {
                     Interface new_interface;
                     new_interface.m_interface_number = if_face->m_interface_number;
-                    configuration.m_interfaces.add_back(move(new_interface));
-                    current_interface = &configuration.m_interfaces.last();
+                    owner->m_interfaces.add_back(move(new_interface));
+                    current_interface = &owner->m_interfaces.last();
                 }
 
                 AlternateSetting new_setting;
@@ -668,63 +721,78 @@ namespace Rune::Device::USB {
                          .m_max_packet_size = ep->m_max_packet_size,
                          .m_interval        = ep->m_interval});
                 }
-            }
-            offset += descriptor_length;
-        }
-
-        // USB 3.2 §9.6.4: an interface not covered by any Interface Association Descriptor is
-        // its own single-interface function.
-        for (const auto& iface : configuration.m_interfaces) {
-            bool covered = false;
-            for (const auto& function : configuration.m_functions) {
-                if (iface.m_interface_number >= function.m_first_interface
-                    && iface.m_interface_number
-                           < function.m_first_interface + function.m_interface_count) {
-                    covered = true;
-                    break;
+            } else if (DescriptorType(descriptor_type)
+                       == DescriptorType::SUPERSPEED_USB_ENDPOINT_COMPANION) {
+                // USB 3.2 §9.6.7: the companion immediately follows the endpoint it augments.
+                if (current_alt_setting != nullptr && !current_alt_setting->m_endpoints.empty()) {
+                    const auto* companion =
+                        reinterpret_cast<const SuperSpeedEndpointCompanionDescriptor*>(config_blob
+                                                                                       + offset);
+                    EndPoint& ep   = current_alt_setting->m_endpoints.last();
+                    ep.m_max_burst = companion->m_max_burst;
+                    ep.m_mult =
+                        ep.m_transfer_type == TransferType::ISOCHRONOUS ? companion->mult() : 0;
+                    ep.m_bytes_per_interval = companion->m_bytes_per_interval;
                 }
             }
-            if (covered) continue;
-
-            const AlternateSetting& default_setting = iface.active();
-            configuration.m_functions.add_back(
-                Function{.m_first_interface   = iface.m_interface_number,
-                         .m_interface_count   = 1,
-                         .m_function_class    = default_setting.m_interface_class,
-                         .m_function_subclass = default_setting.m_interface_subclass,
-                         .m_function_protocol = default_setting.m_interface_protocol,
-                         .m_string_index      = 0});
+            offset += descriptor_length;
         }
 
         return configuration;
     }
 
     void XHCIDriver::log_configuration(const Configuration& configuration) {
+        size_t interface_count = 0;
+        for (const auto& function : configuration.m_functions)
+            interface_count += function.m_interfaces.size();
         LOGGER->debug("  Config{}: {} interface(s), {} function(s), self_powered={}, "
                       "remote_wakeup={}, max_power={}mA",
                       configuration.m_configuration_value,
-                      configuration.m_interfaces.size(),
+                      interface_count,
                       configuration.m_functions.size(),
                       configuration.m_self_powered,
                       configuration.m_remote_wakeup,
                       configuration.m_max_power_mA);
-        for (const auto& iface : configuration.m_interfaces) {
-            for (const auto& setting : iface.m_alternate_settings) {
-                auto class_code = ClassCode(setting.m_interface_class);
-                LOGGER->debug("    IF{} Alt{}: {}:{}:{}",
-                              iface.m_interface_number,
-                              setting.m_setting_number,
-                              class_code.to_string(),
-                              resolve_subclass_code(class_code, setting.m_interface_subclass),
-                              resolve_protocol_code(class_code,
-                                                    setting.m_interface_subclass,
-                                                    setting.m_interface_protocol));
-                for (const auto& ep : setting.m_endpoints) {
-                    LOGGER->debug("        EP{} {} {}: Max Packet Size={}",
-                                  ep.m_endpoint_number,
-                                  ep.m_direction.to_string(),
-                                  ep.m_transfer_type.to_string(),
-                                  ep.m_max_packet_size);
+
+        // Functions: each logical function with its class triplet and the interfaces it owns.
+        for (const auto& function : configuration.m_functions) {
+            auto function_class  = ClassCode(function.m_function_class);
+            U8   first_interface = function.m_interfaces.empty()
+                                       ? 0
+                                       : function.m_interfaces.first().m_interface_number;
+            LOGGER->debug("    Function@IF{} ({} interface(s)): {}:{}:{} "
+                          "({:0=#2x}:{:0=#2x}:{:0=#2x})",
+                          first_interface,
+                          function.m_interfaces.size(),
+                          function_class.to_string(),
+                          resolve_subclass_code(function_class, function.m_function_subclass),
+                          resolve_protocol_code(function_class,
+                                                function.m_function_subclass,
+                                                function.m_function_protocol),
+                          function.m_function_class,
+                          function.m_function_subclass,
+                          function.m_function_protocol);
+            for (const auto& iface : function.m_interfaces) {
+                for (const auto& setting : iface.m_alternate_settings) {
+                    auto class_code = ClassCode(setting.m_interface_class);
+                    LOGGER->debug("        IF{} Alt{}: {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
+                                  iface.m_interface_number,
+                                  setting.m_setting_number,
+                                  class_code.to_string(),
+                                  resolve_subclass_code(class_code, setting.m_interface_subclass),
+                                  resolve_protocol_code(class_code,
+                                                        setting.m_interface_subclass,
+                                                        setting.m_interface_protocol),
+                                  setting.m_interface_class,
+                                  setting.m_interface_subclass,
+                                  setting.m_interface_protocol);
+                    for (const auto& ep : setting.m_endpoints) {
+                        LOGGER->debug("            EP{} {} {}: Max Packet Size={}",
+                                      ep.m_endpoint_number,
+                                      ep.m_direction.to_string(),
+                                      ep.m_transfer_type.to_string(),
+                                      ep.m_max_packet_size);
+                    }
                 }
             }
         }
@@ -744,84 +812,57 @@ namespace Rune::Device::USB {
         return handle_control_transfer_request_then_poll(ctr, dc_sys_memory, cd_buffer);
     }
 
-    auto XHCIDriver::perform_device_initialization(volatile PortRegisterSet& prs,
-                                                   U8                        port,
-                                                   bool                      is_usb2) -> bool {
-        if (is_usb2) {
-            // USB 2 needs explicit port reset
-            // (USB3 does advance the state machine automatically)
-            prs.m_portsc.set_PR(true);
-            while (!prs.m_portsc.PRC()) CPU::pause();
-            prs.m_portsc.clear_PRC();
-        }
-
-        Optional<U8> slot_id_opt = enable_slot(); // 1-based
-        if (!slot_id_opt) return false;
-        U8 slot_id = slot_id_opt.value();
-
-        if (!allocate_device_context_system_memory(slot_id)) return false;
-        auto& dc_sys_memory = m_dc_system_memory[slot_id - 1];
-
-        PortSpeed     port_speed = prs.m_portsc.port_speed();
-        Optional<U16> max_packet_size_opt =
-            send_address_device_command(dc_sys_memory, port, port_speed);
-        if (!max_packet_size_opt) return false;
-
-        DeviceDescriptor       dd_partial{};
-        ControlTransferRequest ctr{.m_request_type = RequestType::DEVICE_TO_HOST,
-                                   .m_request      = StandardRequestCode::GET_DESCRIPTOR,
-                                   .m_value        = DescriptorType::DEVICE << SHIFT_8,
-                                   .m_index        = 0,
-                                   .m_length       = DeviceDescriptor::SIZE_PARTIAL};
-        if (!handle_control_transfer_request_then_poll(ctr, dc_sys_memory, &dd_partial))
-            return false;
-
-        if (!update_max_packet_size(dd_partial, max_packet_size_opt.value(), port_speed, slot_id))
-            return false;
-
-        DeviceDescriptor device_descriptor{};
-        ctr = {
+    auto XHCIDriver::build_composite_device(
+        U8                                              port,
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+        PortSpeed port_speed) -> SharedPointer<CompositeDevice> {
+        DeviceDescriptor       device_descriptor{};
+        ControlTransferRequest get_descriptor = {
             .m_request_type = RequestType::DEVICE_TO_HOST,
             .m_request      = StandardRequestCode::GET_DESCRIPTOR,
             .m_value        = DescriptorType::DEVICE << SHIFT_8,
             .m_index        = 0,
             .m_length       = DeviceDescriptor::SIZE_FULL,
         };
-        if (!handle_control_transfer_request_then_poll(ctr, dc_sys_memory, &device_descriptor))
-            return false;
+        if (!handle_control_transfer_request_then_poll(get_descriptor,
+                                                       dc_sys_memory,
+                                                       &device_descriptor))
+            return {};
 
         auto vdb_resp = vendor_db_resolve({.m_vendor_ID  = device_descriptor.m_id_vendor,
                                            .m_product_ID = device_descriptor.m_id_product});
 
-        auto class_code      = ClassCode(device_descriptor.m_device_class);
         auto usb_version_str = String::format("{}.{}",
                                               byte_get(device_descriptor.m_bcd_USB, 1),
                                               byte_get(device_descriptor.m_bcd_USB, 0));
 
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
-        SharedPointer<USBCompositeDevice> composite_device(
-            new USBCompositeDevice(dm->get_device_handle(),
-                                   vdb_resp.m_product_name,
-                                   vdb_resp.m_vendor_name,
-                                   usb_version_str,
-                                   "",
-                                   USBDeviceID(device_descriptor.m_device_class,
-                                               device_descriptor.m_device_subclass,
-                                               device_descriptor.m_device_protocol)));
-        if (!dm->register_device(m_xhci, composite_device)) return false;
-        LOGGER->debug("Port{}: {}:{} ({:0=#4x}:{:0=#4x}), {}:{}:{}, USB{}, Configurations: {}",
-                      port,
-                      vdb_resp.m_vendor_name,
-                      vdb_resp.m_product_name,
-                      device_descriptor.m_id_vendor,
-                      device_descriptor.m_id_product,
-                      class_code.to_string(),
-                      resolve_subclass_code(class_code, device_descriptor.m_device_subclass),
-                      resolve_protocol_code(class_code,
+        SharedPointer<CompositeDevice> composite_device(
+            new CompositeDevice(dm->get_device_handle(),
+                                vdb_resp.m_product_name,
+                                vdb_resp.m_vendor_name,
+                                usb_version_str,
+                                "",
+                                USBDeviceID(device_descriptor.m_device_class,
                                             device_descriptor.m_device_subclass,
                                             device_descriptor.m_device_protocol),
-                      usb_version_str,
-                      device_descriptor.m_num_configurations);
+                                device_descriptor.m_id_vendor,
+                                device_descriptor.m_id_product));
+        const auto* usb_device_ID =
+            reinterpret_cast<const USBDeviceID*>(composite_device->device_ID());
+        auto class_code = ClassCode(usb_device_ID->device_class());
+        LOGGER->debug(
+            "Port{}: {}:{} ({:0=#4x}:{:0=#4x}), {}:{}:{}, USB{}, Configurations: {}",
+            port,
+            composite_device->get_name(),
+            composite_device->oem(),
+            composite_device->vendor_ID(),
+            composite_device->product_ID(),
+            class_code.to_string(),
+            resolve_subclass_code(class_code, usb_device_ID->subclass()),
+            resolve_protocol_code(class_code, usb_device_ID->subclass(), usb_device_ID->protocol()),
+            composite_device->revision(),
+            composite_device->configurations().size());
 
         for (U8 config_index = 0; config_index < device_descriptor.m_num_configurations;
              config_index++) {
@@ -831,7 +872,7 @@ namespace Rune::Device::USB {
                                               &config_descriptor,
                                               sizeof(ConfigurationDescriptor),
                                               config_index))
-                return false;
+                return {};
 
             // Fetch the full blob using wTotalLength.
             U8* config_blob =
@@ -844,7 +885,7 @@ namespace Rune::Device::USB {
                                               config_descriptor.m_total_length,
                                               config_index)) {
                 delete[] config_blob;
-                return false;
+                return {};
             }
 
             Configuration configuration =
@@ -853,7 +894,252 @@ namespace Rune::Device::USB {
             composite_device->add_configuration(move(configuration));
             delete[] config_blob;
         }
+        return composite_device;
+    }
 
+    auto XHCIDriver::configure_device(const Configuration&                            config,
+                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                      PortSpeed port_speed) -> bool {
+        InputContext ic;
+        U8           highest_dci = 0;
+        for (const auto& function : config.m_functions) {
+            for (const auto& iface : function.m_interfaces) {
+                for (const auto& ep : iface.active().m_endpoints) {
+                    if (ep.m_transfer_type == TransferType::NONE) continue;
+
+                    U8 dci = 0;
+                    if (ep.m_transfer_type == TransferType::CONTROL) {
+                        dci = (ep.m_endpoint_number * 2) + 1;
+                    } else {
+                        // Direction Enum already encodes: OUT=0, IN=1
+                        dci = (ep.m_endpoint_number * 2) + ep.m_direction.to_value();
+                    }
+                    if (dci > highest_dci) highest_dci = dci;
+                    ic.m_input_control_context.m_add_context_flags =
+                        bit_set(ic.m_input_control_context.m_add_context_flags, dci);
+
+                    // §4.8.2 Endpoint Context Initialization
+                    // EP Type - §6.2.3 Table 6-8
+                    U8 ep_type = 0;
+                    if (ep.m_transfer_type == TransferType::CONTROL) {
+                        ep_type = 4;
+                    } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS) {
+                        ep_type = ep.m_direction == Direction::OUT ? 1 : 5;
+                    } else if (ep.m_transfer_type == TransferType::BULK) {
+                        ep_type = ep.m_direction == Direction::OUT ? 2 : 6;
+                    } else { // TransferType::INTERRUPT
+                        ep_type = ep.m_direction == Direction::OUT ? 3 : 7;
+                    }
+
+                    // Max Packet Size - §6.2.3.5
+                    U16 max_packet_size = ep.m_max_packet_size;
+                    if (ep.m_transfer_type == TransferType::ISOCHRONOUS
+                        || ep.m_transfer_type == TransferType::INTERRUPT)
+                        max_packet_size = max_packet_size & 0x7FF;
+
+                    // Max Burst Size - §6.2.3.4
+                    U8 max_burst_size = 0;
+                    if (ep.m_transfer_type == TransferType::BULK) {
+                        max_burst_size =
+                            port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1 ? ep.m_max_burst : 0;
+                    } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS
+                               || ep.m_transfer_type == TransferType::INTERRUPT) {
+                        max_burst_size = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
+                                             ? ep.m_max_burst
+                                             : (ep.m_max_packet_size & 0x1800) >> 11;
+                    } // else ep.m_transfer_type == TransferType::CONTROL -> max_burst_size = 0
+
+                    // Error Count (CErr) - §4.8.2
+                    U8 cerr = ep.m_transfer_type == TransferType::ISOCHRONOUS ? 0 : 3;
+
+                    // Average TRB Length - §4.14.1.1
+                    U16 avg_trb_length = 0;
+                    if (ep.m_transfer_type == TransferType::CONTROL) {
+                        avg_trb_length = 8;
+                    } else if (ep.m_transfer_type == TransferType::BULK
+                               || ep.m_transfer_type == TransferType::ISOCHRONOUS) {
+                        avg_trb_length = 3 * MemoryUnit::KiB;
+                    } else { // TransferType::INTERRUPT
+                        avg_trb_length = MemoryUnit::KiB;
+                    }
+
+                    // Max ESIT - §4.14.2 (§4.8.2.4 -> Only valid for Isoch or Interrupt Endpoints)
+                    U32 max_esit = 0;
+                    if (ep.m_transfer_type == TransferType::ISOCHRONOUS
+                        || ep.m_transfer_type == TransferType::INTERRUPT) {
+                        max_esit = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
+                                       ? ep.m_bytes_per_interval
+                                       : max_packet_size * (max_burst_size + 1);
+                    }
+
+                    // Interval - §6.2.3.6
+                    U8 interval = 0;
+                    if ((ep.m_transfer_type == TransferType::INTERRUPT
+                         || ep.m_transfer_type == TransferType::ISOCHRONOUS)
+                        && port_speed >= PortSpeed::HIGH_SPEED) {
+                        // bInterval 1..16, valid interval 0..15
+                        interval = ep.m_interval - 1;
+                    } else if (ep.m_transfer_type == TransferType::INTERRUPT
+                               && (port_speed == PortSpeed::LOW_SPEED
+                                   || port_speed == PortSpeed::FULL_SPEED)) {
+                        // bInterval 1..255, valid interval 3..10
+                        // bInterval in 1ms -> Convert to 125us units then round to nearest power of
+                        // two interval = floor(log2(bInterval * 8))
+                        U16 units_125us = static_cast<U16>(ep.m_interval) * 8;
+                        while ((units_125us >> 1) != 0) {
+                            units_125us >>= 1;
+                            interval++;
+                        }
+                    } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS
+                               && port_speed == PortSpeed::FULL_SPEED) {
+                        // bInterval 1..16, valid interval 3.18
+                        interval = ep.m_interval + 2;
+                    }
+
+                    // Mult - §4.3.6
+                    U8 mult = ep.m_mult;
+
+                    ic.m_endpoint_contexts[dci - 1].m_dw1.set_ep_type(ep_type);
+                    ic.m_endpoint_contexts[dci - 1].m_dw1.set_max_packet_size(max_packet_size);
+                    ic.m_endpoint_contexts[dci - 1].m_dw1.set_max_burst_size(max_burst_size);
+                    ic.m_endpoint_contexts[dci - 1].m_dw1.set_CERR(cerr);
+                    ic.m_endpoint_contexts[dci - 1].m_dw4.set_average_trb_length(avg_trb_length);
+                    ic.m_endpoint_contexts[dci - 1].m_dw0.set_max_esit_hi(byte_get(max_esit, 2));
+                    ic.m_endpoint_contexts[dci - 1].m_dw4.set_max_esit_lo(word_get(max_esit, 0));
+                    ic.m_endpoint_contexts[dci - 1].m_dw0.set_interval(interval);
+                    ic.m_endpoint_contexts[dci - 1].m_dw0.set_mult(mult);
+
+                    if (!dc_sys_memory->m_transfer_rings[dci - 1].init()) return false;
+                    PhysicalAddr tr_phys = 0;
+                    if (!Memory::virtual_to_physical_address(
+                            memory_pointer_to_addr(&dc_sys_memory->m_transfer_rings[dci - 1]),
+                            tr_phys))
+                        return false;
+                    ic.m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_ptr(tr_phys >> SHIFT_4);
+                    ic.m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_DCS(true);
+                }
+            }
+        }
+        // Select Slot Context
+        ic.m_input_control_context.m_add_context_flags =
+            bit_set(ic.m_input_control_context.m_add_context_flags, 0);
+        ic.m_slot_context.m_dw0.set_context_entries(highest_dci);
+
+        PhysicalAddr ic_phys = 0;
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(&ic), ic_phys)) return {};
+
+        ConfigureEndpointCommandTRB cec_trb;
+        cec_trb.m_input_context_ptr_lo.set_ptr(static_cast<U32>(ic_phys) >> SHIFT_4);
+        cec_trb.m_input_context_ptr_hi = static_cast<U32>(ic_phys >> SHIFT_32);
+        cec_trb.m_control.set_trb_type(ConfigureEndpointCommandTRB::TYPE);
+        cec_trb.m_control.set_cycle(m_command_ring->m_pcs);
+        cec_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
+        cec_trb.m_control.set_DC(false);
+        m_command_ring->enqueue(*reinterpret_cast<TRB*>(&cec_trb));
+        m_ri.m_doorbell[0].ring(DoorbellRegister::HC_COMMAND_TARGET);
+
+        auto event = poll_next_event();
+        if (!event) return false;
+        auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
+        if (CompletionCode(completion->m_status.completion_code()) != CompletionCode::SUCCESS)
+            return false;
+
+        // Send SET_CONFIGURATION request
+
+        ControlTransferRequest set_config_ctr;
+        set_config_ctr.m_request_type = RequestType::HOST_TO_DEVICE;
+        set_config_ctr.m_request      = StandardRequestCode::SET_CONFIGURATION;
+        set_config_ctr.m_value        = config.m_configuration_value;
+        set_config_ctr.m_index        = 0;
+        set_config_ctr.m_length       = 0;
+
+        return handle_control_transfer_request_then_poll(set_config_ctr, dc_sys_memory, nullptr);
+    }
+
+    auto XHCIDriver::perform_device_initialization(volatile PortRegisterSet& prs,
+                                                   U8                        port,
+                                                   bool                      is_usb2) -> bool {
+        if (is_usb2) {
+            // USB 2 needs explicit port reset
+            // (USB3 does advance the state machine automatically)
+            prs.m_portsc.set_PR(true);
+            while (!prs.m_portsc.PRC()) CPU::pause();
+            prs.m_portsc.clear_PRC();
+        }
+
+        Optional<U8> slot_id_opt = enable_slot(); // 1-based
+        if (!slot_id_opt) {
+            LOGGER->error("Port{}: Failed to enable slot", port);
+            return false;
+        }
+        U8 slot_id = slot_id_opt.value();
+
+        if (!allocate_device_context_system_memory(slot_id)) {
+            LOGGER->error("Port{}: Failed to allocate device context system memory", port);
+            return false;
+        }
+        auto& dc_sys_memory = m_dc_system_memory[slot_id - 1];
+
+        PortSpeed     port_speed = prs.m_portsc.port_speed();
+        Optional<U16> max_packet_size_opt =
+            send_address_device_command(dc_sys_memory, port, port_speed);
+        if (!max_packet_size_opt) {
+            LOGGER->error("Port{}: Failed to send address device command", port);
+            return false;
+        }
+
+        DeviceDescriptor       dd_partial{};
+        ControlTransferRequest get_descriptor{.m_request_type = RequestType::DEVICE_TO_HOST,
+                                              .m_request      = StandardRequestCode::GET_DESCRIPTOR,
+                                              .m_value        = DescriptorType::DEVICE << SHIFT_8,
+                                              .m_index        = 0,
+                                              .m_length       = DeviceDescriptor::SIZE_PARTIAL};
+        if (!handle_control_transfer_request_then_poll(get_descriptor,
+                                                       dc_sys_memory,
+                                                       &dd_partial)) {
+            LOGGER->error("Port{}: Failed to get device descriptor", port);
+            return false;
+        }
+
+        if (!update_max_packet_size(dd_partial, max_packet_size_opt.value(), port_speed, slot_id)) {
+            LOGGER->error("Port{}: Failed to update max packet size", port);
+            return false;
+        }
+
+        auto composite_device = build_composite_device(port, dc_sys_memory, port_speed);
+        if (!composite_device) {
+            LOGGER->error("Port{}: Failed to parse USB configurations.", port);
+            return false;
+        }
+        auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
+        m_bindable_device_IDs.add_back(composite_device->device_ID());
+        if (!dm->register_device(m_xhci, composite_device)) return false;
+
+        auto& config = composite_device->configurations().first();
+        if (!configure_device(config, dc_sys_memory, port_speed)) {
+            LOGGER->error("Port{}: Failed to configure device", port);
+            return false;
+        }
+        composite_device->set_active_configuration(config.m_configuration_value);
+
+        U16 function_idx = 0;
+        for (const auto& function : config.m_functions) {
+            SharedPointer<FunctionDevice> function_device(new FunctionDevice(
+                dm->get_device_handle(),
+                String::format("{}@FD{}", composite_device->get_name(), function_idx),
+                composite_device->oem(),
+                composite_device->revision(),
+                composite_device->serial_number(),
+                DeviceType::GENERIC,
+                USBDeviceID(function.m_function_class,
+                            function.m_function_subclass,
+                            function.m_function_protocol),
+                config.m_configuration_value,
+                function_idx));
+
+            if (!dm->register_device(composite_device, function_device)) continue;
+            function_idx++;
+        }
         return true;
     }
 
@@ -866,20 +1152,35 @@ namespace Rune::Device::USB {
         SerialBusSubClass(SerialBusSubClass::USB).to_value(),
         USBProgrammingInterface(USBProgrammingInterface::XHCI).to_value()};
 
+    XHCIDriver::XHCIDriver() : m_host_controller_initialized(false) {
+        m_bindable_device_IDs.add_back(reinterpret_cast<const DeviceID*>(&ID_XHCI));
+    }
+
     auto XHCIDriver::vendor() const -> String { return "Ewogjik"; };
 
     auto XHCIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
     auto XHCIDriver::can_bind(const DeviceID* device_ID) -> bool {
-        return ID_XHCI.equals(device_ID);
+        for (const auto& bindable_device_ID : m_bindable_device_IDs) {
+            if (bindable_device_ID->equals(device_ID)) return true;
+        }
+        return false;
     }
 
     auto XHCIDriver::bind(const SharedPointer<Device>& device) -> bool {
+        if (m_host_controller_initialized) {
+            m_bound_devices.add_back(device);
+            return true;
+        }
         m_xhci = SharedPointer<PCIDevice>(device);
+        m_bound_devices.add_back(device);
 
         vendor_db_initialize();
 
-        if (!perform_host_controller_initialization()) return false;
+        if (!perform_host_controller_initialization()) {
+            LOGGER->warn("xHC Host controller initialization failed");
+            return false;
+        }
 
         // Enumerate the USB Ports
         LOGGER->debug("xHC has {} ports. Enumerating...",

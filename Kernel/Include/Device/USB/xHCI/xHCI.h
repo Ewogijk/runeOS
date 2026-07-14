@@ -94,17 +94,22 @@ namespace Rune::Device::USB {
     /// Host Controller Configuration
     ///
     /// The xHCI Driver will perform Host Controller Initialization as defined in §4.2 of the spec,
-    /// interrupts will be configured using legacy PCI INTx interrupts but not yet enabled for the
-    /// xHC.
+    /// interrupts will be configured using legacy PCI INTx interrupts.
     ///
     /// Next, the USB bus will be enumerated, and all detected devices will be initialized as
-    /// defined in §4.3 of the spec until step 8 (inclusive). That is all configuration descriptors
-    /// of a USB device will be parsed and the CompositeDevice object will be added to the device
-    /// tree.
+    /// defined in §4.3 and configured with the first configuration the device exposes.
+    /// The xHCI Driver owns CompositeDevices and is allowed to change device configurations.
     ///
-    /// But it is a class driver's responsibility to finish the configuration of the device by
-    /// sending a USB SET_CONFIGURATION request.
+    /// Each Function exposed by a USB Device will be registered in the device tree as a
+    /// FunctionDevice, class drivers are expected to bind to FunctionDevices.
     ///
+    /// Class Drivers
+    ///
+    /// Class drivers own their respective FunctionDevice and can access interfaces and endpoints
+    /// through the FunctionDevice instance. A class driver is allowed to change the alternate
+    /// setting of interfaces by sending a SET_INTERFACE request through the xHC. However, it is the
+    /// drivers' responsibility to update the active setting of the interface, as the xHCI driver
+    /// does not keep track of FunctionDevice's.
     class XHCIDriver : public Driver {
         static constexpr U8          PORT_VERSION_MAP_SIZE          = 8;
         static constexpr VirtualAddr MMIO_BASE_ADDR                 = 0xFFFFC00000000000;
@@ -124,8 +129,11 @@ namespace Rune::Device::USB {
         // ~1 ms moderation (IMODI in 250 ns units: 4000 × 250 ns = 1 ms)
         static constexpr U16 IMODI_DEFAULT = 4000;
 
-        SharedPointer<PCIDevice> m_xhci;
-        RegisterInterface        m_ri{};
+        LinkedList<const DeviceID*>       m_bindable_device_IDs;
+        LinkedList<SharedPointer<Device>> m_bound_devices;
+        SharedPointer<PCIDevice>          m_xhci;
+        RegisterInterface                 m_ri{};
+        bool                              m_host_controller_initialized;
 
         /// @brief Map of port usb versions. True: USB3, False: USB2.
         HashMap<size_t, bool> m_port_version_map;
@@ -213,13 +221,25 @@ namespace Rune::Device::USB {
 
         static void log_configuration(const Configuration& configuration);
 
+        auto build_composite_device(U8                                              port,
+                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    PortSpeed port_speed) -> SharedPointer<CompositeDevice>;
+
+        /// @brief Send a ConfigureEndpoint command for all endpoints to the xHC and then send a
+        ///         SET_CONFIGURATION request to the USB device.
+        /// @return True: The ConfigureEndpoint Command and SET_CONFIGURATION were both successful.
+        ///         False: Otherwise.
+        auto configure_device(const Configuration&                            config,
+                              const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                              PortSpeed                                       port_speed) -> bool;
+
         auto perform_device_initialization(volatile PortRegisterSet& prs, U8 port, bool is_usb2)
             -> bool;
 
       public:
         static const PCIDeviceID ID_XHCI;
 
-        XHCIDriver() = default;
+        XHCIDriver();
 
         [[nodiscard]] auto vendor() const -> String override;
         [[nodiscard]] auto version() const -> Version override;

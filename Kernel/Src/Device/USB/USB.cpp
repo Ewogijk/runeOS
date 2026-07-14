@@ -34,6 +34,12 @@ namespace Rune::Device::USB {
                && m_protocol == usb_device_ID->m_protocol;
     }
 
+    auto USBDeviceID::device_class() const -> U8 { return m_device_class; }
+
+    auto USBDeviceID::subclass() const -> U8 { return m_subclass; }
+
+    auto USBDeviceID::protocol() const -> U8 { return m_protocol; }
+
     // ========================================================================================== //
     // EndPoint
     // ========================================================================================== //
@@ -62,30 +68,42 @@ namespace Rune::Device::USB {
     // USB Composite Device
     // ========================================================================================== //
 
-    USBCompositeDevice::USBCompositeDevice(Handle        handle,
-                                          const String& name,
-                                          const String& oem,
-                                          const String& revision,
-                                          const String& serial_number,
-                                          USBDeviceID   usb_device_id)
+    CompositeDevice::CompositeDevice(Handle        handle,
+                                     const String& name,
+                                     const String& oem,
+                                     const String& revision,
+                                     const String& serial_number,
+                                     USBDeviceID   usb_device_id,
+                                     U16           vendor_ID,
+                                     U16           product_ID)
         : Device(handle, name, oem, revision, serial_number, DeviceType::GENERIC),
-          m_device_ID(move(usb_device_id)) {}
+          m_device_ID(move(usb_device_id)),
+          m_vendor_ID(vendor_ID),
+          m_product_ID(product_ID) {}
 
-    auto USBCompositeDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
+    auto CompositeDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
-    auto USBCompositeDevice::configurations() const -> const LinkedList<Configuration>& {
+    auto CompositeDevice::product_ID() const -> U16 { return m_product_ID; }
+
+    auto CompositeDevice::vendor_ID() const -> U16 { return m_vendor_ID; }
+
+    auto CompositeDevice::configurations() const -> const LinkedList<Configuration>& {
         return m_configurations;
     }
 
-    void USBCompositeDevice::add_configuration(Configuration configuration) {
+    auto CompositeDevice::configurations() -> LinkedList<Configuration>& {
+        return m_configurations;
+    }
+
+    void CompositeDevice::add_configuration(Configuration configuration) {
         m_configurations.add_back(move(configuration));
     }
 
-    auto USBCompositeDevice::active_configuration() const -> Optional<U8> {
+    auto CompositeDevice::active_configuration() const -> Optional<U8> {
         return m_active_configuration;
     }
 
-    void USBCompositeDevice::set_active_configuration(U8 configuration_value) {
+    void CompositeDevice::set_active_configuration(U8 configuration_value) {
         m_active_configuration = configuration_value;
     }
 
@@ -93,44 +111,52 @@ namespace Rune::Device::USB {
     // USB Function Device
     // ========================================================================================== //
 
-    USBFunctionDevice::USBFunctionDevice(Handle                handle,
-                                        const String&         name,
-                                        const String&         oem,
-                                        const String&         revision,
-                                        const String&         serial_number,
-                                        DeviceType            device_type,
-                                        USBDeviceID           usb_device_id,
-                                        U8                    configuration_value,
-                                        U8                    first_interface,
-                                        LinkedList<Interface> interfaces)
+    FunctionDevice::FunctionDevice(Handle        handle,
+                                   const String& name,
+                                   const String& oem,
+                                   const String& revision,
+                                   const String& serial_number,
+                                   DeviceType    device_type,
+                                   USBDeviceID   usb_device_id,
+                                   U8            configuration_value,
+                                   U16           function_idx)
         : Device(handle, name, oem, revision, serial_number, device_type),
           m_device_ID(move(usb_device_id)),
           m_configuration_value(configuration_value),
-          m_first_interface(first_interface),
-          m_interfaces(move(interfaces)) {}
+          m_function_value(function_idx) {}
 
-    auto USBFunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
-
-    auto USBFunctionDevice::configuration_value() const -> U8 { return m_configuration_value; }
-
-    auto USBFunctionDevice::first_interface() const -> U8 { return m_first_interface; }
-
-    auto USBFunctionDevice::interfaces() const -> const LinkedList<Interface>& {
-        return m_interfaces;
+    auto FunctionDevice::owning_function() const -> const Function& {
+        const auto* composite = static_cast<const CompositeDevice*>(bus_device().get());
+        for (const auto& configuration : composite->configurations())
+            if (configuration.m_configuration_value == m_configuration_value)
+                return configuration.m_functions[m_function_value];
+        return composite->configurations().first().m_functions[m_function_value];
     }
 
-    auto USBFunctionDevice::find_interface(U8 interface_number) const -> const Interface* {
-        for (const auto& iface : m_interfaces)
+    auto FunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
+
+    auto FunctionDevice::configuration_value() const -> U8 { return m_configuration_value; }
+
+    auto FunctionDevice::interfaces() const -> const LinkedList<Interface>& {
+        return owning_function().m_interfaces;
+    }
+
+    auto FunctionDevice::find_interface(U8 interface_number) const -> const Interface* {
+        for (const auto& iface : owning_function().m_interfaces)
             if (iface.m_interface_number == interface_number) return &iface;
         return nullptr;
     }
 
-    void USBFunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
-        for (auto& iface : m_interfaces)
-            if (iface.m_interface_number == interface_number) {
-                iface.m_active_setting = setting_number;
-                return;
-            }
+    void FunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
+        auto* composite = static_cast<CompositeDevice*>(bus_device().get());
+        for (auto& configuration : composite->configurations()) {
+            if (configuration.m_configuration_value != m_configuration_value) continue;
+            for (auto& iface : configuration.m_functions[m_function_value].m_interfaces)
+                if (iface.m_interface_number == interface_number) {
+                    iface.m_active_setting = setting_number;
+                    return;
+                }
+        }
     }
 
     DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT

@@ -36,6 +36,10 @@ namespace Rune::Device::USB {
 
         [[nodiscard]] auto get_device_ID_type() const -> DeviceIDType override;
         [[nodiscard]] auto equals(const DeviceID* d_ID) const -> bool override;
+
+        [[nodiscard]] auto device_class() const -> U8;
+        [[nodiscard]] auto subclass() const -> U8;
+        [[nodiscard]] auto protocol() const -> U8;
     };
 
     // ========================================================================================== //
@@ -56,6 +60,19 @@ namespace Rune::Device::USB {
         U8  m_usage           = 0;
         U16 m_max_packet_size = 0; // wMaxPacketSize
         U8  m_interval        = 0; // bInterval, polling interval in 125 us units
+
+        /// @brief bMaxBurst from the SuperSpeed Endpoint Companion descriptor (USB 3.2 §9.6.7):
+        ///         maximum number of packets per burst minus one, 0..15. Zero for control
+        ///         endpoints and for endpoints not operating at Gen X speed (no companion).
+        U8 m_max_burst = 0;
+        /// @brief Mult from the SuperSpeed Endpoint Companion descriptor: zero-based number of
+        ///         additional packets per service interval. Only meaningful for isochronous
+        ///         endpoints; zero otherwise.
+        U8 m_mult = 0;
+        /// @brief wBytesPerInterval from the SuperSpeed Endpoint Companion descriptor: total
+        ///         bytes transferred per service interval. Only valid for periodic endpoints;
+        ///         zero for control/bulk and for endpoints without a companion.
+        U16 m_bytes_per_interval = 0;
 
         /// @brief
         /// @return m_synchronization decoded as a SyncType.
@@ -98,18 +115,18 @@ namespace Rune::Device::USB {
         [[nodiscard]] auto active() const -> const AlternateSetting&;
     };
 
-    /// @brief Groups a contiguous range of interfaces (and all their alternate settings) into
-    ///         one logical function, USB 3.2 §9.6.4 (Interface Association Descriptor).
+    /// @brief One logical function of a Configuration, USB 3.2 §9.6.4 — either an Interface
+    ///         Association Descriptor group (e.g. a CDC-ACM modem's Communications and Data
+    ///         interfaces) or a single interface not covered by an IAD.
     ///
-    /// A device must use an Interface Association Descriptor for each function that spans more
-    /// than one interface, e.g. a CDC-ACM modem's Communications and Data interfaces.
+    /// Owns every Interface (and their alternate settings/endpoints) that make up the function.
+    /// A Configuration's interfaces are partitioned disjointly among its functions.
     struct Function {
-        U8 m_first_interface   = 0; // bFirstInterface
-        U8 m_interface_count   = 1; // bInterfaceCount
-        U8 m_function_class    = 0;
-        U8 m_function_subclass = 0;
-        U8 m_function_protocol = 0;
-        U8 m_string_index      = 0; // iFunction
+        U8                    m_function_class    = 0;
+        U8                    m_function_subclass = 0;
+        U8                    m_function_protocol = 0;
+        U8                    m_string_index      = 0; // iFunction
+        LinkedList<Interface> m_interfaces;
     };
 
     /// @brief One of the device's configurations, USB 3.2 §9.6.3.
@@ -119,15 +136,15 @@ namespace Rune::Device::USB {
     /// another: the number of interfaces, their functions, and their endpoints may differ
     /// completely from one configuration to the next.
     struct Configuration {
-        U8                    m_configuration_value = 0;     // argument to SetConfiguration()
-        U8                    m_string_index        = 0;     // iConfiguration
-        bool                  m_self_powered        = false; // bmAttributes D6
-        bool                  m_remote_wakeup       = false; // bmAttributes D5
-        U16                   m_max_power_mA        = 0;     // bMaxPower, normalized to mA
-        LinkedList<Interface> m_interfaces;
+        U8   m_configuration_value = 0;     // argument to SetConfiguration()
+        U8   m_string_index        = 0;     // iConfiguration
+        bool m_self_powered        = false; // bmAttributes D6
+        bool m_remote_wakeup       = false; // bmAttributes D5
+        U16  m_max_power_mA        = 0;     // bMaxPower, normalized to mA
         /// @brief One entry per logical function of this configuration. Always populated: an
         ///         interface not covered by an Interface Association Descriptor is its own
-        ///         function with m_interface_count == 1.
+        ///         single-interface function. Every interface of the configuration lives in
+        ///         exactly one of these functions.
         LinkedList<Function> m_functions;
     };
 
@@ -140,8 +157,12 @@ namespace Rune::Device::USB {
     /// Owns the device-level identity and every configuration reported by the device. It is a
     /// Bus Device: once a configuration is selected via SetConfiguration(), one child
     /// USBFunctionDevice is registered per Function of that configuration.
-    class USBCompositeDevice : public Device {
+    class CompositeDevice : public Device {
         USBDeviceID m_device_ID; // from the Device Descriptor
+
+        U16 m_vendor_ID;
+
+        U16 m_product_ID;
 
         /// @brief All configurations reported by the device (bNumConfigurations).
         LinkedList<Configuration> m_configurations;
@@ -150,18 +171,29 @@ namespace Rune::Device::USB {
         Optional<U8> m_active_configuration;
 
       public:
-        USBCompositeDevice(Handle        handle,
-                          const String& name,
-                          const String& oem,
-                          const String& revision,
-                          const String& serial_number,
-                          USBDeviceID   usb_device_id);
+        CompositeDevice(Handle        handle,
+                        const String& name,
+                        const String& oem,
+                        const String& revision,
+                        const String& serial_number,
+                        USBDeviceID   usb_device_id,
+                        U16           vendor_ID,
+                        U16           product_ID);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
+
+        [[nodiscard]] auto vendor_ID() const -> U16;
+
+        [[nodiscard]] auto product_ID() const -> U16;
 
         /// @brief
         /// @return All configurations reported by this device.
         [[nodiscard]] auto configurations() const -> const LinkedList<Configuration>&;
+
+        /// @brief
+        /// @return All configurations reported by this device (mutable, e.g. to update an
+        ///         interface's active alternate setting).
+        [[nodiscard]] auto configurations() -> LinkedList<Configuration>&;
 
         /// @brief Add a configuration parsed from a GET_DESCRIPTOR(CONFIGURATION) response.
         void add_configuration(Configuration configuration);
@@ -182,34 +214,34 @@ namespace Rune::Device::USB {
     /// @brief One logical function of a USBCompositeDevice's active configuration, registered as
     ///         a child device of its USBCompositeDevice.
     ///
-    /// This is the unit device drivers bind to: it owns every Interface (and their alternate
-    /// settings/endpoints) that make up the function, whether declared through a single
-    /// interface or grouped by an Interface Association Descriptor.
-    class USBFunctionDevice : public Device {
+    /// This is the unit device drivers bind to: it represents every Interface (and their
+    /// alternate settings/endpoints) that make up the function, whether declared through a single
+    /// interface or grouped by an Interface Association Descriptor. The interfaces themselves are
+    /// owned by the parent CompositeDevice (reachable via bus_device()); this device only stores
+    /// which Configuration and Function they belong to.
+    class FunctionDevice : public Device {
         USBDeviceID m_device_ID; // Function's class/subclass/protocol
 
-        U8 m_configuration_value = 0; // owning Configuration::m_configuration_value
-        U8 m_first_interface     = 0; // Function::m_first_interface
+        U8  m_configuration_value = 0; // owning Configuration::m_configuration_value
+        U16 m_function_value      = 0; // index into the owning Configuration's m_functions
 
-        LinkedList<Interface> m_interfaces;
+        /// @brief Resolve the owning Function from the parent CompositeDevice (bus_device()).
+        [[nodiscard]] auto owning_function() const -> const Function&;
 
       public:
-        USBFunctionDevice(Handle                handle,
-                         const String&         name,
-                         const String&         oem,
-                         const String&         revision,
-                         const String&         serial_number,
-                         DeviceType            device_type,
-                         USBDeviceID           usb_device_id,
-                         U8                    configuration_value,
-                         U8                    first_interface,
-                         LinkedList<Interface> interfaces);
+        FunctionDevice(Handle        handle,
+                       const String& name,
+                       const String& oem,
+                       const String& revision,
+                       const String& serial_number,
+                       DeviceType    device_type,
+                       USBDeviceID   usb_device_id,
+                       U8            configuration_value,
+                       U16           function_idx);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
 
         [[nodiscard]] auto configuration_value() const -> U8;
-
-        [[nodiscard]] auto first_interface() const -> U8;
 
         [[nodiscard]] auto interfaces() const -> const LinkedList<Interface>&;
 
