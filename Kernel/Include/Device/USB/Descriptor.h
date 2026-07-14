@@ -95,7 +95,7 @@ namespace Rune::Device::USB {
         U8 m_interface_protocol; // protocol code, qualified by class + subclass
         U8 m_idx_interface;      // string descriptor index
     };
-    static_assert(sizeof(InterfaceDescriptor) == 9);
+    static_assert(sizeof(InterfaceDescriptor) == 9); // NOLINT
 
     // ========================================================================================== //
     // USB Interface Association Descriptor — USB 3.2 §9.6.4
@@ -114,7 +114,7 @@ namespace Rune::Device::USB {
         U8 m_function_protocol;
         U8 m_idx_function; // string descriptor index
     };
-    static_assert(sizeof(InterfaceAssociationDescriptor) == 8);
+    static_assert(sizeof(InterfaceAssociationDescriptor) == 8); // NOLINT
 
     // ========================================================================================== //
     // USB Endpoint Descriptor — USB 3.2 §9.6.6
@@ -206,7 +206,41 @@ namespace Rune::Device::USB {
         static constexpr U8 SYNC_TYPE_SHIFT      = 2;
         static constexpr U8 USAGE_TYPE_SHIFT     = 4;
     } PACKED;
-    static_assert(sizeof(EndpointDescriptor) == 7);
+    static_assert(sizeof(EndpointDescriptor) == 7); // NOLINT
+
+    // ========================================================================================== //
+    // SuperSpeed Endpoint Companion Descriptor — USB 3.2 §9.6.7
+    // ========================================================================================== //
+
+    /// @brief Additional endpoint characteristics returned only by Enhanced SuperSpeed devices
+    ///         operating at Gen X speed (Table 9-28). Immediately follows each endpoint
+    ///         descriptor (except the default control pipe) in the configuration blob; not
+    ///         directly accessible via GET_DESCRIPTOR.
+    struct SuperSpeedEndpointCompanionDescriptor {
+        U8 m_length;          // = 6
+        U8 m_descriptor_type; // = 0x30 (SUPERSPEED_USB_ENDPOINT_COMPANION)
+        U8 m_max_burst;       // bMaxBurst: max packets per burst minus one, 0..15; 0 for control
+        U8 m_bm_attributes;   // bulk: bits 4..0 MaxStreams; iso: bits 1..0 Mult, bit 7 SSP ISO
+                              // Companion; reserved for control/interrupt
+        U16 m_bytes_per_interval; // wBytesPerInterval: total bytes per service interval (periodic)
+
+        /// Valid only for bulk endpoints; 0 means the endpoint defines no streams.
+        [[nodiscard]] auto max_streams() const -> U8 { return m_bm_attributes & MAX_STREAMS_MASK; }
+        /// Zero-based additional packets per service interval; valid only for isochronous
+        /// endpoints and only when ssp_iso_companion() is false.
+        [[nodiscard]] auto mult() const -> U8 { return m_bm_attributes & MULT_MASK; }
+        /// When true a SuperSpeedPlus Isochronous Endpoint Companion follows and mult() must be
+        /// ignored. Valid only for isochronous endpoints.
+        [[nodiscard]] auto ssp_iso_companion() const -> bool {
+            return (m_bm_attributes & SSP_ISO_COMPANION_MASK) != 0;
+        }
+
+      private:
+        static constexpr U8 MAX_STREAMS_MASK       = 0x1F;
+        static constexpr U8 MULT_MASK              = 0x03;
+        static constexpr U8 SSP_ISO_COMPANION_MASK = 0x80;
+    } PACKED;
+    static_assert(sizeof(SuperSpeedEndpointCompanionDescriptor) == 6); // NOLINT
 } // namespace Rune::Device::USB
 
 #endif // RUNEOS_DESCRIPTOR_H
