@@ -76,18 +76,65 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     // ========================================================================================== //
-    // Helper Functions
+    // Event TRB Handling
     // ========================================================================================== //
 
-    /// @brief Set up the SetupStage, DataStage and Status Stage TRBs and enqueues them to the EP0
-    ///         transfer ring of the given slot. Does not ring the EP0 Doorbell.
-    /// @param control_transfer_request
-    /// @param dc_sys_mem
-    /// @param data_buffer
-    /// @return Physical address of the StatusStage TRB. Returns 0 if an error happens.
-    auto prepare_control_transfer(const ControlTransferRequest& control_transfer_request,
-                                  const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                  void* data_buffer) -> PhysicalAddr {
+    void XHCIDriver::clear_event_handler_busy_state(U8 interrupter, PhysicalAddr er_deq_ptr) const {
+        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
+        m_ri.interrupter(interrupter).m_erdp.set_ptr(er_deq_ptr >> SHIFT_4);
+        m_ri.interrupter(interrupter).m_erdp.clear_EHB();
+    }
+
+    void XHCIDriver::clear_interrupt_pending_state(U8 interrupter) const {
+        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
+        m_ri.m_operational->m_usbsts.clear_EINT();
+        m_ri.interrupter(interrupter).m_iman.clear_IP();
+    }
+
+    void handle_event_trb(CPU::InterruptPacket packet) {
+        auto* xhci_driver =
+            reinterpret_cast<XHCIDriver*>(integer_from_bytes<VirtualAddr>(packet.m_data.data()));
+        auto* event_trb = reinterpret_cast<EventTRB*>(packet.m_data.data() + sizeof(MemoryAddr));
+        CPU::CriticalSection _(xhci_driver->m_inflight_table_lock);
+        if (event_trb->m_control.trb_type() == TRBType::CMD_COMPLETION) {
+            auto*        ce = reinterpret_cast<CommandCompletionEventTRB*>(event_trb);
+            PhysicalAddr inflight_trb_address =
+                (static_cast<U64>(ce->m_command_trb_pointer_lo.ptr()) << SHIFT_4)
+                | (static_cast<U64>(ce->m_command_trb_pointer_hi) << SHIFT_32);
+
+            auto maybe_promise =
+                xhci_driver->m_inflight_command_trb_table.find(inflight_trb_address);
+            if (maybe_promise == xhci_driver->m_inflight_command_trb_table.end()) {
+                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
+                return;
+            }
+            maybe_promise->value->set_value(*ce);
+            xhci_driver->m_inflight_command_trb_table.remove(inflight_trb_address);
+
+        } else if (event_trb->m_control.trb_type() == TRBType::TRANSFER_EVENT) {
+            auto*        te = reinterpret_cast<TransferEventTRB*>(event_trb);
+            PhysicalAddr inflight_trb_address =
+                te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
+
+            auto maybe_promise = xhci_driver->m_inflight_trb_table.find(inflight_trb_address);
+            if (maybe_promise == xhci_driver->m_inflight_trb_table.end()) {
+                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
+                return;
+            }
+            maybe_promise->value->set_value(IORequestStatus::HANDLED);
+            xhci_driver->m_inflight_trb_table.remove(inflight_trb_address);
+        }
+    }
+
+    // ========================================================================================== //
+    // IO Requests
+    // ========================================================================================== //
+
+    auto XHCIDriver::handle_control_transfer_request(
+        const ControlTransferRequest&                   control_transfer_request,
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+        void* data_buffer) -> CPU::Future<IORequestStatus> {
+
         auto& ep0_tr = dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
         bool  is_in  = (control_transfer_request.m_request_type & RequestType::DEVICE_TO_HOST) != 0;
         bool  has_data = control_transfer_request.m_length > 0;
@@ -121,8 +168,11 @@ namespace Rune::Device::USB {
 
             PhysicalAddr data_buffer_phys = 0;
             if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(data_buffer),
-                                                     data_buffer_phys))
-                return 0;
+                                                     data_buffer_phys)) {
+                CPU::Promise<IORequestStatus> promise;
+                promise.set_value(IORequestStatus::FAILED);
+                return promise.get_future();
+            }
             data_stage_trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
             data_stage_trb.m_data_buffer_pointer_hi =
                 static_cast<U32>(data_buffer_phys >> SHIFT_32);
@@ -137,86 +187,9 @@ namespace Rune::Device::USB {
 
         ep0_tr.enqueue(*reinterpret_cast<TRB*>(&setup_stage_trb));
         if (has_data) ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
-        return ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
-    }
+        PhysicalAddr trb_phys = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
 
-    // ========================================================================================== //
-    // Event TRB Handling
-    // ========================================================================================== //
-
-    void XHCIDriver::clear_event_handler_busy_state(U8 interrupter, PhysicalAddr er_deq_ptr) const {
-        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
-        m_ri.interrupter(interrupter).m_erdp.set_ptr(er_deq_ptr >> SHIFT_4);
-        m_ri.interrupter(interrupter).m_erdp.clear_EHB();
-    }
-
-    void XHCIDriver::clear_interrupt_pending_state(U8 interrupter) const {
-        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
-        m_ri.m_operational->m_usbsts.clear_EINT();
-        m_ri.interrupter(interrupter).m_iman.clear_IP();
-    }
-
-    auto XHCIDriver::poll_next_event() const -> Expected<EventTRB, CompletionCode> {
-        auto         event = m_event_ring->poll_event();
-        PhysicalAddr p_trb = 0;
-        if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&m_event_ring->m_segments[0][m_event_ring->m_dequeue_ptr]),
-                p_trb)) {
-            return Unexpected<CompletionCode>(CompletionCode::NONE);
-        }
-        clear_event_handler_busy_state(0, p_trb);
-        clear_interrupt_pending_state(0);
-
-        if (event.m_status.completion_code() != CompletionCode::SUCCESS)
-            return Unexpected<CompletionCode>(event.m_status.completion_code());
-        return {event};
-    }
-
-    void handle_event_trb(CPU::InterruptPacket packet) {
-        auto* xhci_driver =
-            reinterpret_cast<XHCIDriver*>(integer_from_bytes<VirtualAddr>(packet.m_data.data()));
-        auto* event_trb = reinterpret_cast<EventTRB*>(packet.m_data.data() + sizeof(MemoryAddr));
-        LOGGER->debug("Handling Event TRB: {}-{}",
-                      event_trb->m_control.trb_type().to_string(),
-                      event_trb->m_status.completion_code().to_string());
-
-        PhysicalAddr inflight_trb_address = 0;
-        if (event_trb->m_control.trb_type() == TRBType::CMD_COMPLETION) {
-            auto* ce             = reinterpret_cast<CommandCompletionEventTRB*>(event_trb);
-            inflight_trb_address = (static_cast<U64>(ce->m_command_trb_pointer_lo.ptr()) << SHIFT_4)
-                                   | (static_cast<U64>(ce->m_command_trb_pointer_hi) << SHIFT_32);
-        } else if (event_trb->m_control.trb_type() == TRBType::TRANSFER_EVENT) {
-            auto* te = reinterpret_cast<TransferEventTRB*>(event_trb);
-            inflight_trb_address =
-                te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
-        }
-
-        if (inflight_trb_address > 0) {
-            auto maybe_promise = xhci_driver->m_inflight_trb_table.find(inflight_trb_address);
-            if (maybe_promise == xhci_driver->m_inflight_trb_table.end()) {
-                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
-                return;
-            }
-            maybe_promise->value->set_value(IORequestStatus::HANDLED);
-            xhci_driver->m_inflight_trb_table.remove(inflight_trb_address);
-        }
-    }
-
-    // ========================================================================================== //
-    // IO Requests
-    // ========================================================================================== //
-
-    auto XHCIDriver::handle_control_transfer_request(
-        const ControlTransferRequest&                   control_transfer_request,
-        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-        void* data_buffer) -> CPU::Future<IORequestStatus> {
-        PhysicalAddr trb_phys =
-            prepare_control_transfer(control_transfer_request, dc_sys_mem, data_buffer);
-        if (trb_phys == 0) {
-            CPU::Promise<IORequestStatus> promise;
-            promise.set_value(IORequestStatus::FAILED);
-            return promise.get_future();
-        }
+        CPU::CriticalSection _(m_inflight_table_lock);
         auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
         auto  future  = promise.get_future();
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
@@ -476,6 +449,9 @@ namespace Rune::Device::USB {
                 ->get_active_pic()
                 ->clear_mask(interrupt_line);
         }
+        // Enable interrupts
+        m_ri.m_operational->m_usbcmd.set_INTE(true);
+        m_ri.interrupter(0).m_iman.set_IE(true);
     }
 
     auto XHCIDriver::perform_host_controller_initialization() -> bool {
@@ -526,50 +502,57 @@ namespace Rune::Device::USB {
     // USB Device Initialization
     // ====================================================================================== //
 
-    auto XHCIDriver::handle_control_transfer_request_then_poll(
-        const ControlTransferRequest&                   control_transfer_request,
-        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-        void*                                           data_buffer) -> bool {
+    // auto XHCIDriver::handle_control_transfer_request_then_poll(
+    //     const ControlTransferRequest&                   control_transfer_request,
+    //     const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+    //     void*                                           data_buffer) -> bool {
+    //
+    //     PhysicalAddr trb_phys =
+    //         prepare_control_transfer(control_transfer_request, dc_sys_mem, data_buffer);
+    //     if (trb_phys == 0) return false;
+    //     m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
+    //     return poll_next_event().has_value();
+    // }
 
-        PhysicalAddr trb_phys =
-            prepare_control_transfer(control_transfer_request, dc_sys_mem, data_buffer);
-        if (trb_phys == 0) return false;
-        m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
-        return poll_next_event().has_value();
+    auto XHCIDriver::wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB {
+        PhysicalAddr                           trb_phys = m_command_ring->enqueue(*trb);
+        CPU::Future<CommandCompletionEventTRB> future =
+            [&]() -> CPU::Future<CommandCompletionEventTRB> {
+            CPU::CriticalSection _(m_inflight_table_lock);
+            auto&                p = (m_inflight_command_trb_table[trb_phys] =
+                                          CPU::Promise<CommandCompletionEventTRB>());
+            return p.get_future();
+        }();
+        m_ri.ring_command_doorbell();
+        return future.get();
     }
 
     auto XHCIDriver::enable_slot() -> Optional<U8> {
         EnableSlotCommandTRB cmd{};
         cmd.m_control.set_trb_type(EnableSlotCommandTRB::TYPE);
         cmd.m_control.set_cycle(m_command_ring->m_pcs);
-        m_command_ring->enqueue(*reinterpret_cast<TRB*>(&cmd));
-        m_ri.ring_command_doorbell();
-
-        auto event = poll_next_event();
-        if (!event) return {};
-        auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
-        return make_optional<U8>(completion->m_control.slot_id());
+        auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&cmd));
+        if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) return {};
+        return cc_TRB.m_control.slot_id();
     }
 
-    auto XHCIDriver::allocate_device_context_system_memory(U8 slot_ID) -> bool {
-        m_dc_system_memory[slot_ID - 1] =
-            SharedPointer<DeviceContextSystemMemory>(new DeviceContextSystemMemory);
+    auto XHCIDriver::allocate_device_context_system_memory(U8 slot_ID)
+        -> SharedPointer<DeviceContextSystemMemory> {
+        auto dc_sys_mem = SharedPointer<DeviceContextSystemMemory>(new DeviceContextSystemMemory);
 
-        m_dc_system_memory[slot_ID - 1]->m_slot_ID = slot_ID;
+        dc_sys_mem->m_slot_ID = slot_ID;
         // Initialize the EP0 transfer ring Link TRB
-        if (!m_dc_system_memory[slot_ID - 1]
-                 ->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1]
-                 .init())
-            return false;
+        if (!dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1].init())
+            return {};
 
         PhysicalAddr device_context_phys = 0;
         if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&m_dc_system_memory[slot_ID - 1]->m_device_context),
+                memory_pointer_to_addr(&dc_sys_mem->m_device_context),
                 device_context_phys))
-            return false;
+            return {};
 
         m_dcbaa.get()[slot_ID] = device_context_phys;
-        return true;
+        return dc_sys_mem;
     }
 
     auto XHCIDriver::send_address_device_command(
@@ -639,12 +622,8 @@ namespace Rune::Device::USB {
         adc_trb.m_control.set_cycle(m_command_ring->m_pcs);
         adc_trb.m_control.set_slot_id(dc_sys_mem->m_slot_ID);
         adc_trb.m_control.set_BSR(false);
-        m_command_ring->enqueue(*reinterpret_cast<TRB*>(&adc_trb));
-        m_ri.ring_command_doorbell();
-
-        auto event = poll_next_event();
-        if (!event) return {};
-        auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
+        auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&adc_trb));
+        if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) return {};
         return make_optional<U16>(ep0.m_dw1.max_packet_size());
     }
 
@@ -679,10 +658,8 @@ namespace Rune::Device::USB {
             ec_trb.m_control.set_trb_type(EvaluateContextCommandTRB::TYPE);
             ec_trb.m_control.set_cycle(m_command_ring->m_pcs);
             ec_trb.m_control.set_slot_id(slot_ID);
-            m_command_ring->enqueue(*reinterpret_cast<TRB*>(&ec_trb));
-            m_ri.ring_command_doorbell();
-
-            if (!poll_next_event()) return false;
+            auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&ec_trb));
+            if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) return false;
         }
         return true;
     }
@@ -892,7 +869,8 @@ namespace Rune::Device::USB {
             .m_index  = 0,
             .m_length = buf_size
         };
-        return handle_control_transfer_request_then_poll(ctr, dc_sys_memory, cd_buffer);
+        auto f = handle_control_transfer_request(ctr, dc_sys_memory, cd_buffer);
+        return f.get() == IORequestStatus::HANDLED;
     }
 
     auto XHCIDriver::build_composite_device(
@@ -908,10 +886,8 @@ namespace Rune::Device::USB {
             .m_index        = 0,
             .m_length       = DeviceDescriptor::SIZE_FULL,
         };
-        if (!handle_control_transfer_request_then_poll(get_descriptor,
-                                                       dc_sys_memory,
-                                                       &device_descriptor))
-            return {};
+        auto f = handle_control_transfer_request(get_descriptor, dc_sys_memory, &device_descriptor);
+        if (f.get() != IORequestStatus::HANDLED) return {};
 
         auto vdb_resp = vendor_db_resolve({.m_vendor_ID  = device_descriptor.m_id_vendor,
                                            .m_product_ID = device_descriptor.m_id_product});
@@ -1124,11 +1100,9 @@ namespace Rune::Device::USB {
         cec_trb.m_control.set_cycle(m_command_ring->m_pcs);
         cec_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
         cec_trb.m_control.set_DC(false);
-        m_command_ring->enqueue(*reinterpret_cast<TRB*>(&cec_trb));
-        m_ri.ring_command_doorbell();
 
-        auto event = poll_next_event();
-        if (!event) return false;
+        auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&cec_trb));
+        if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) return false;
 
         ControlTransferRequest set_config_ctr;
         set_config_ctr.m_request_type = RequestType::HOST_TO_DEVICE;
@@ -1137,7 +1111,8 @@ namespace Rune::Device::USB {
         set_config_ctr.m_index        = 0;
         set_config_ctr.m_length       = 0;
 
-        return handle_control_transfer_request_then_poll(set_config_ctr, dc_sys_memory, nullptr);
+        auto f = handle_control_transfer_request(set_config_ctr, dc_sys_memory, nullptr);
+        return f.get() == IORequestStatus::HANDLED;
     }
 
     auto XHCIDriver::perform_device_initialization(volatile PortRegisterSet& prs,
@@ -1158,11 +1133,11 @@ namespace Rune::Device::USB {
         }
         U8 slot_id = slot_id_opt.value();
 
-        if (!allocate_device_context_system_memory(slot_id)) {
+        auto dc_sys_memory = allocate_device_context_system_memory(slot_id);
+        if (!dc_sys_memory) {
             LOGGER->error("Port{}: Failed to allocate device context system memory", port);
             return false;
         }
-        auto& dc_sys_memory = m_dc_system_memory[slot_id - 1];
 
         PortSpeed     port_speed = prs.m_portsc.port_speed();
         Optional<U16> max_packet_size_opt =
@@ -1181,9 +1156,8 @@ namespace Rune::Device::USB {
             .m_index        = 0,
             .m_length       = DeviceDescriptor::SIZE_PARTIAL
         };
-        if (!handle_control_transfer_request_then_poll(get_descriptor,
-                                                       dc_sys_memory,
-                                                       &dd_partial)) {
+        auto f = handle_control_transfer_request(get_descriptor, dc_sys_memory, &dd_partial);
+        if (f.get() != IORequestStatus::HANDLED) {
             LOGGER->error("Port{}: Failed to get device descriptor", port);
             return false;
         }
@@ -1200,7 +1174,11 @@ namespace Rune::Device::USB {
         }
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
         m_bindable_device_IDs.add_back(composite_device->device_ID());
-        if (!dm->register_device(m_xhci, composite_device)) return false;
+        if (!dm->register_device(m_xhci, composite_device)) {
+            LOGGER->error("Port{}: Failed to register device", port);
+            return false;
+        }
+        m_dc_system_memory.put(composite_device->get_handle(), dc_sys_memory);
 
         auto& config = composite_device->configurations().first();
         if (!configure_device(config, dc_sys_memory, port_speed)) {
@@ -1223,7 +1201,15 @@ namespace Rune::Device::USB {
                 config.m_configuration_value,
                 function_idx));
 
-            if (!dm->register_device(composite_device, function_device)) continue;
+            // Need to add the mapping here so that the class driver is operate the device when
+            // "bind" is called.
+            m_dc_system_memory.put(function_device->get_handle(), dc_sys_memory);
+            if (!dm->register_device(composite_device, function_device)) {
+                LOGGER->error("Failed to register {}", function_device->get_name());
+                m_dc_system_memory.remove(function_device->get_handle());
+                continue;
+            }
+
             function_idx++;
         }
         return true;
@@ -1281,12 +1267,6 @@ namespace Rune::Device::USB {
                 perform_device_initialization(prs, i, is_usb2);
             }
         }
-
-        // Enable interrupts after bus enumeration
-        // -> Keep the polling-based bus enumeration for now, while implementing the interrupt
-        // logic and transition later
-        m_ri.m_operational->m_usbcmd.set_INTE(true);
-        m_ri.interrupter(0).m_iman.set_IE(true);
         return true;
     }
 
@@ -1294,10 +1274,30 @@ namespace Rune::Device::USB {
 
     auto XHCIDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> CPU::Future<IORequestStatus> {
-        SILENCE_UNUSED(device)
-        SILENCE_UNUSED(request)
-        CPU::Promise<IORequestStatus> promise;
-        promise.set_value(IORequestStatus::UNSUPPORTED);
-        return promise.get_future();
+        auto* header           = reinterpret_cast<TransferRequestHeader*>(request.m_in_data);
+        auto  maybe_dc_sys_mem = m_dc_system_memory.find(header->m_device_handle);
+        if (maybe_dc_sys_mem == m_dc_system_memory.end()) {
+            LOGGER->warn("Received request for unknown device: {}", header->m_device_handle);
+            CPU::Promise<IORequestStatus> promise;
+            promise.set_value(IORequestStatus::UNSUPPORTED);
+            return promise.get_future();
+        }
+        auto dc_sys_memory = *maybe_dc_sys_mem->value;
+        LOGGER->debug("Received Transfer Request: {}, Device: {}, Slot: {}",
+                      header->m_transfer_type.to_string(),
+                      header->m_device_handle,
+                      dc_sys_memory->m_slot_ID);
+
+        switch (header->m_transfer_type) {
+            case TransferRequestType::CONTROL: {
+                auto* ctr = reinterpret_cast<ControlTransferRequest*>(request.m_in_data);
+                return handle_control_transfer_request(*ctr, dc_sys_memory, request.m_out_data);
+            }
+            default: {
+                CPU::Promise<IORequestStatus> promise;
+                promise.set_value(IORequestStatus::UNSUPPORTED);
+                return promise.get_future();
+            }
+        }
     }
 } // namespace Rune::Device::USB

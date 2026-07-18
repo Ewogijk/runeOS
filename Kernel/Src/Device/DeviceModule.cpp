@@ -52,7 +52,7 @@ namespace Rune::Device {
 
     void DeviceModule::match_devices(LinkedList<SharedPointer<Device>>& out_devices,
                                      const SharedPointer<Device>&       current_device,
-                                     const SharedPointer<Driver>&        driver) {
+                                     const SharedPointer<Driver>&       driver) {
         if (driver->can_bind(current_device->device_ID())) out_devices.add_back(current_device);
         for (auto& child : current_device->child_devices())
             match_devices(out_devices, child, driver);
@@ -107,9 +107,9 @@ namespace Rune::Device {
         IORequest request{};
         auto      acpi_req = ACPIRequest::GET_ACPI_INFO;
         ACPIInfo  acpi_info;
-        request.m_in_buffer  = &acpi_req;
-        request.m_out_buffer = &acpi_info;
-        auto req_status      = root_device_driver->handle_request(root_device_dummy, request);
+        request.m_in_data  = &acpi_req;
+        request.m_out_data = &acpi_info;
+        auto req_status    = root_device_driver->handle_request(root_device_dummy, request);
         if (req_status.get() != IORequestStatus::HANDLED) {
             LOGGER->error("Failed to configure the root device.");
             return false;
@@ -152,12 +152,14 @@ namespace Rune::Device {
             match_devices(matching_devices, m_device_tree, driver);
 
             for (auto& dev : matching_devices) {
-                if (driver->bind(dev)) {
-                    LOGGER->debug(R"({}: Bind device to driver by {} v{})",
-                                  dev->get_unique_name(),
-                                  driver->vendor(),
-                                  driver->version().to_string());
-                    dev->driver() = driver;
+                LOGGER->debug(R"({}: Bind device to driver by {} v{})",
+                              dev->get_unique_name(),
+                              driver->vendor(),
+                              driver->version().to_string());
+                dev->driver() = driver;
+                if (!driver->bind(dev)) {
+                    LOGGER->warn("{}: Driver binding failed.", dev->get_unique_name());
+                    dev->driver() = SharedPointer<Driver>();
                 }
             }
         }
@@ -204,12 +206,14 @@ namespace Rune::Device {
         auto driver = find_device_driver(device->device_ID());
         if (!driver) return true;
 
-        if (driver->bind(device)) {
-            LOGGER->debug(R"({}: Bind device to driver by {} v{})",
-                          device->get_unique_name(),
-                          driver->vendor(),
-                          driver->version().to_string());
-            device->driver() = driver;
+        LOGGER->debug(R"({}: Bind device to driver by {} v{})",
+                      device->get_unique_name(),
+                      driver->vendor(),
+                      driver->version().to_string());
+        device->driver() = driver;
+        if (!driver->bind(device)) {
+            LOGGER->warn("{}: Driver binding failed.", device->get_unique_name());
+            device->driver() = SharedPointer<Driver>();
         }
         return true;
     }

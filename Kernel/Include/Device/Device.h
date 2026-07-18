@@ -221,12 +221,12 @@ namespace Rune::Device {
 
     /// @brief An IO request contains the driver-specific in and out buffers.
     ///
-    /// - In Buffer: Contains information about an action a driver should perform.
-    /// - Out Buffer: If the requested action was performed successfully, the out buffer contains
+    /// - In Data: Contains information about an action a driver should perform.
+    /// - Out Data: If the requested action was performed successfully, the out buffer contains
     ///                 the driver response, otherwise the buffer content is undefined.
     struct IORequest {
-        void* m_in_buffer;
-        void* m_out_buffer;
+        void* m_in_data;
+        void* m_out_data;
     };
 
 #define IO_REQUEST_STATES(X)                                                                       \

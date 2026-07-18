@@ -614,7 +614,7 @@ namespace Rune::Device::USB {
     auto IMAN::set_IE(bool v) volatile -> void {
         // Force IP=0 so it is not accidentally cleared, IE is RW -> Just set it to the requested
         // value
-        U32 temp = bit_clear(m_register, IP_BIT_OFFSET);
+        U32 temp   = bit_clear(m_register, IP_BIT_OFFSET);
         m_register = v ? bit_set(temp, IE_BIT_OFFSET) : bit_clear(temp, IE_BIT_OFFSET);
     }
 

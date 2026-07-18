@@ -24,18 +24,18 @@ namespace Rune::Device::USB {
     // ExtendedCapabilityPointerRegister::ECPR — xHCI 2.0 §7 Table 7-1
     // ========================================================================================== //
 
-    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::capability_id()
-        const volatile -> U8 {
+    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::capability_id() const volatile
+        -> U8 {
         return static_cast<U8>(m_register & CAPABILITY_ID_MASK);
     }
 
-    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::next_capability()
-        const volatile -> U8 {
+    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::next_capability() const volatile
+        -> U8 {
         return static_cast<U8>((m_register & NEXT_CAPABILITY_MASK) >> SHIFT_8);
     }
 
-    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::capability_specific()
-        const volatile -> U16 {
+    [[nodiscard]] auto ExtendedCapabilityPointerRegister::ECPR::capability_specific() const volatile
+        -> U16 {
         return static_cast<U16>((m_register & CAPABILITY_SPECIFIC_MASK) >> SHIFT_16);
     }
 
@@ -48,7 +48,8 @@ namespace Rune::Device::USB {
                      | ((static_cast<U32>(val) << SHIFT_8) & NEXT_CAPABILITY_MASK);
     }
 
-    auto ExtendedCapabilityPointerRegister::ECPR::set_capability_specific(U16 val) volatile -> void {
+    auto ExtendedCapabilityPointerRegister::ECPR::set_capability_specific(U16 val) volatile
+        -> void {
         m_register = (m_register & ~CAPABILITY_SPECIFIC_MASK)
                      | ((static_cast<U32>(val) << SHIFT_16) & CAPABILITY_SPECIFIC_MASK);
     }
@@ -57,23 +58,20 @@ namespace Rune::Device::USB {
     // SupportedProtocolCapability::ECPR — xHCI 2.0 §7.2
     // ========================================================================================== //
 
-    [[nodiscard]] auto SupportedProtocolCapability::ECPR::capability_id()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::ECPR::capability_id() const volatile -> U8 {
         return static_cast<U8>(m_register & CAPABILITY_ID_MASK);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::ECPR::next_capability_pointer()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::ECPR::next_capability_pointer() const volatile
+        -> U8 {
         return static_cast<U8>((m_register & NEXT_CAPABILITY_POINTER_MASK) >> SHIFT_8);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::ECPR::minor_revision()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::ECPR::minor_revision() const volatile -> U8 {
         return static_cast<U8>((m_register & MINOR_REVISION_MASK) >> SHIFT_16);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::ECPR::major_revision()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::ECPR::major_revision() const volatile -> U8 {
         return static_cast<U8>((m_register & MAJOR_REVISION_MASK) >> SHIFT_24);
     }
 
@@ -100,39 +98,39 @@ namespace Rune::Device::USB {
     // SupportedProtocolCapability::PortProtocolRegister — xHCI 2.0 §7.2
     // ========================================================================================== //
 
-    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::port_offset()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::port_offset() const
+        volatile -> U8 {
         return static_cast<U8>(m_register & PORT_OFFSET_MASK);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::port_count()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::port_count() const
+        volatile -> U8 {
         return static_cast<U8>((m_register & PORT_COUNT_MASK) >> SHIFT_8);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::protocol_defined()
-        const volatile -> U16 {
+    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::protocol_defined() const
+        volatile -> U16 {
         return static_cast<U16>((m_register & PROTOCOL_DEFINED_MASK) >> SHIFT_16);
     }
 
-    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::PSIC()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::PSIC() const volatile
+        -> U8 {
         return static_cast<U8>((m_register & PSIC_MASK) >> 28);
     }
 
-    auto SupportedProtocolCapability::PortProtocolRegister::set_port_offset(U8 val)
-        volatile -> void {
+    auto SupportedProtocolCapability::PortProtocolRegister::set_port_offset(U8 val) volatile
+        -> void {
         m_register = (m_register & ~PORT_OFFSET_MASK) | static_cast<U32>(val);
     }
 
-    auto SupportedProtocolCapability::PortProtocolRegister::set_port_count(U8 val)
-        volatile -> void {
+    auto SupportedProtocolCapability::PortProtocolRegister::set_port_count(U8 val) volatile
+        -> void {
         m_register = (m_register & ~PORT_COUNT_MASK)
                      | ((static_cast<U32>(val) << SHIFT_8) & PORT_COUNT_MASK);
     }
 
-    auto SupportedProtocolCapability::PortProtocolRegister::set_protocol_defined(U16 val)
-        volatile -> void {
+    auto SupportedProtocolCapability::PortProtocolRegister::set_protocol_defined(U16 val) volatile
+        -> void {
         m_register = (m_register & ~PROTOCOL_DEFINED_MASK)
                      | ((static_cast<U32>(val) << SHIFT_16) & PROTOCOL_DEFINED_MASK);
     }
@@ -145,15 +143,15 @@ namespace Rune::Device::USB {
     // SupportedProtocolCapability::ProtocolSlotType — xHCI 2.0 §7.2
     // ========================================================================================== //
 
-    [[nodiscard]] auto SupportedProtocolCapability::ProtocolSlotType::protocol_slot_type()
-        const volatile -> U8 {
+    [[nodiscard]] auto SupportedProtocolCapability::ProtocolSlotType::protocol_slot_type() const
+        volatile -> U8 {
         return static_cast<U8>(m_register & PROTOCOL_SLOT_TYPE_MASK);
     }
 
-    auto SupportedProtocolCapability::ProtocolSlotType::set_protocol_slot_type(U8 val)
-        volatile -> void {
-        m_register =
-            (m_register & ~PROTOCOL_SLOT_TYPE_MASK) | (static_cast<U32>(val) & PROTOCOL_SLOT_TYPE_MASK);
+    auto SupportedProtocolCapability::ProtocolSlotType::set_protocol_slot_type(U8 val) volatile
+        -> void {
+        m_register = (m_register & ~PROTOCOL_SLOT_TYPE_MASK)
+                     | (static_cast<U32>(val) & PROTOCOL_SLOT_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -206,8 +204,7 @@ namespace Rune::Device::USB {
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_PSIM(U16 val) volatile -> void {
-        m_register = (m_register & ~PSIM_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_16) & PSIM_MASK);
+        m_register = (m_register & ~PSIM_MASK) | ((static_cast<U32>(val) << SHIFT_16) & PSIM_MASK);
     }
 
 } // namespace Rune::Device::USB
