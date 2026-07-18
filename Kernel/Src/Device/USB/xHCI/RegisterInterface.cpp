@@ -606,10 +606,16 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IE_BIT_OFFSET);
     }
 
-    auto IMAN::clear_IP() volatile -> void { m_register = bit_clear(m_register, IP_BIT_OFFSET); }
+    auto IMAN::clear_IP() volatile -> void {
+        // IP is RW1C -> Write 1 to clear
+        m_register = bit_set(m_register, IP_BIT_OFFSET);
+    }
 
     auto IMAN::set_IE(bool v) volatile -> void {
-        m_register = v ? bit_set(m_register, IE_BIT_OFFSET) : bit_clear(m_register, IE_BIT_OFFSET);
+        // Force IP=0 so it is not accidentally cleared, IE is RW -> Just set it to the requested
+        // value
+        U32 temp = bit_clear(m_register, IP_BIT_OFFSET);
+        m_register = v ? bit_set(temp, IE_BIT_OFFSET) : bit_clear(temp, IE_BIT_OFFSET);
     }
 
     // ========================================================================================== //
@@ -690,6 +696,8 @@ namespace Rune::Device::USB {
     // Doorbell Register — xHCI 2.0 §5.6 Table 5-45
     // ========================================================================================== //
 
+    DEFINE_TYPED_ENUM(DeviceContextDoorbellTarget, U8, DEVICE_CONTEXT_DOORBELL_TARGETS, 0) // NOLINT
+
     [[nodiscard]] auto DoorbellRegister::db_target() const volatile -> U8 {
         return static_cast<U8>(m_register & DB_TARGET_MASK);
     }
@@ -698,13 +706,27 @@ namespace Rune::Device::USB {
         return static_cast<U16>((m_register & DB_STREAM_ID_MASK) >> SHIFT_16);
     }
 
-    auto DoorbellRegister::ring(U8 target, U16 stream_id) volatile -> void {
-        m_register = (static_cast<U32>(stream_id) << SHIFT_16) | target;
+    auto DoorbellRegister::ring(DeviceContextDoorbellTarget target, U16 stream_id) volatile
+        -> void {
+        m_register = (static_cast<U32>(stream_id) << SHIFT_16) | target.to_value();
     }
 
     // ========================================================================================== //
     // RegisterInterface
     // ========================================================================================== //
+
+    auto RegisterInterface::port(U8 n) const -> volatile PortRegisterSet& {
+        return *(reinterpret_cast<volatile PortRegisterSet*>(m_operational + 1) + n);
+    }
+
+    auto RegisterInterface::interrupter(U16 n) const -> volatile InterrupterRegisterSet& {
+        return *(reinterpret_cast<volatile InterrupterRegisterSet*>(m_runtime + 1) + n);
+    }
+
+    void RegisterInterface::ring_command_doorbell() const {
+        // NONE=0 decodes the Command Doorbell for the Host Controller Doorbell
+        m_doorbell[0].ring(DeviceContextDoorbellTarget::NONE);
+    }
 
     auto RegisterInterface::from_base(void* base) -> RegisterInterface {
         auto* b   = reinterpret_cast<U8*>(base);

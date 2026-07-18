@@ -62,9 +62,14 @@ namespace Rune::Device::USB {
 
         /// @brief Enqueue a TRB to the transfer ring.
         /// @param trb
-        auto enqueue(TRB trb) -> void {
+        auto enqueue(TRB trb) -> PhysicalAddr {
             m_entries[m_enqueue_ptr] = trb;
-            m_entries[m_enqueue_ptr].set_cycle_bit(m_pcs);
+            m_entries[m_enqueue_ptr].set_cycle(m_pcs);
+            PhysicalAddr tr_phys = 0;
+            if (!Memory::virtual_to_physical_address(
+                    memory_pointer_to_addr(&m_entries[m_enqueue_ptr]),
+                    tr_phys))
+                return 0;
             m_enqueue_ptr++;
             if (m_enqueue_ptr == N - 1) {
                 // Reached Link TRB
@@ -73,6 +78,7 @@ namespace Rune::Device::USB {
                 link_trb->m_control.set_cycle(m_pcs);
                 m_enqueue_ptr = 0;
             }
+            return tr_phys;
         }
     };
 
@@ -87,9 +93,14 @@ namespace Rune::Device::USB {
 
         /// @brief Enqueue a Command TRB to the command ring.
         /// @param trb
-        auto enqueue(TRB trb) -> void {
+        auto enqueue(TRB trb) -> PhysicalAddr {
             m_entries[m_enqueue_ptr] = trb;
-            m_entries[m_enqueue_ptr].set_cycle_bit(m_pcs);
+            m_entries[m_enqueue_ptr].set_cycle(m_pcs);
+            PhysicalAddr tr_phys = 0;
+            if (!Memory::virtual_to_physical_address(
+                    memory_pointer_to_addr(&m_entries[m_enqueue_ptr]),
+                    tr_phys))
+                return 0;
             m_enqueue_ptr++;
             if (m_enqueue_ptr == N - 1) {
                 // Reached Link TRB
@@ -98,6 +109,7 @@ namespace Rune::Device::USB {
                 link_trb->m_control.set_cycle(m_pcs);
                 m_enqueue_ptr = 0;
             }
+            return tr_phys;
         }
     };
 
@@ -137,29 +149,51 @@ namespace Rune::Device::USB {
                       "xHCI 2.0 §4.9.4: each segment must hold at least 16 TRBs");
         static_assert(SegmentCount >= 1 && SegmentCount <= XHCI_MAX_ERST_ENTRIES);
 
-        Array<Array<TRB, SegmentSize>, SegmentCount>    m_segments{};
-        Array<EventRingSegmentTableEntry, SegmentCount> m_erst{};
+        Array<Array<EventTRB, SegmentSize>, SegmentCount> m_segments{};
+        Array<EventRingSegmentTableEntry, SegmentCount>   m_erst{};
 
         size_t m_dequeue_ptr = 0;
         bool   m_ccs         = true;
+
+        /// @brief
+        /// @return True: The event ring contains at least one event pending.
+        ///         False: Otherwise.
+        auto has_pending() -> bool {
+            return m_segments[0][m_dequeue_ptr].m_control.cycle() == m_ccs;
+        }
+
+        /// @brief
+        /// @return If an event is pending: The next event.
+        ///         Otherwise: An empty optional.
+        auto next_event() -> Optional<EventTRB> {
+            if (!has_pending()) return {};
+            auto trb = m_segments[0][m_dequeue_ptr];
+            advance_dequeue_ptr();
+            return {trb};
+        }
 
         /// @brief Poll the event ring until an event is available.
         ///
         /// The caller must clear the interrupter EHB and update the
         /// @return
-        auto poll_event() -> TRB {
+        auto poll_event() -> EventTRB {
             auto trb = m_segments[0][m_dequeue_ptr];
             while (true) {
-                if (trb.cycle_bit() == m_ccs) break;
+                if (trb.m_control.cycle() == m_ccs) break;
                 CPU::pause();
                 trb = m_segments[0][m_dequeue_ptr];
             }
+            advance_dequeue_ptr();
+            return trb;
+        }
+
+      private:
+        void advance_dequeue_ptr() {
             m_dequeue_ptr++;
             if (m_dequeue_ptr == SegmentSize) {
                 m_dequeue_ptr = 0;
                 m_ccs         = !m_ccs;
             }
-            return trb;
         }
     };
 

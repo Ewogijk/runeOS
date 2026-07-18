@@ -151,6 +151,26 @@ namespace Rune {
         if (offset > MAX_OFFSET) return 0;
         return (value >> SHIFT_32 * offset) & MASK_DWORD;
     }
+
+    /// @brief Decompose an integral value into its bytes, least significant byte first.
+    /// @tparam T Number type.
+    /// @param value
+    /// @param out Buffer that will hold sizeof(T) bytes.
+    template <Integer T>
+    constexpr void integer_to_bytes(T value, U8* out) {
+        for (size_t i = 0; i < sizeof(T); i++) out[i] = static_cast<U8>(byte_get(value, i));
+    }
+
+    /// @brief Reconstruct an integral value from its bytes, least significant byte first.
+    /// @tparam T Number type.
+    /// @param in Buffer holding sizeof(T) bytes.
+    /// @return The integral value assembled from the bytes in in.
+    template <Integer T>
+    constexpr auto integer_from_bytes(const U8* in) -> T {
+        T value = 0;
+        for (size_t i = 0; i < sizeof(T); i++) value |= static_cast<T>(in[i]) << SHIFT_8 * i;
+        return value;
+    }
 } // namespace Rune
 
 #endif // RUNEOS_BITSANDBYTES_H

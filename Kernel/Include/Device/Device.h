@@ -82,19 +82,25 @@ namespace Rune::Device {
     using Handle = U16;
 
 #define DEVICE_TYPES(X)                                                                            \
-    X(DeviceType, MASS_STORAGE_DEVICE, 0x1)                                                        \
+    X(DeviceType, GENERIC, 0x1)                                                                    \
     X(DeviceType, KEYBOARD, 0x2)                                                                   \
-    X(DeviceType, GENERIC, 0x3)
+    X(DeviceType, MASS_STORAGE_DEVICE, 0x3)                                                        \
+    X(DeviceType, USB_COMPOSITE_DEVICE, 0x4)                                                       \
+    X(DeviceType, USB_FUNCTION_DEVICE, 0x5)
 
-    /// @brief Describes general functionality of a device and to which interface type it can be
+    /// @brief Describes the general functionality of a device and to which interface type it can be
     ///         safely cast.
     ///
-    /// - MASS_STORAGE_DEVICE: A device that stores large amounts of data, e.g., HDD, SSD, USB, etc.
-    ///     - Interface: TBD
-    /// - KEYBOARD: A computer keyboard.
-    ///     - Interface: BasicDevice
     /// - GENERIC: A generic device, the catch-all category of devices.
     ///     - Interface: Device
+    /// - KEYBOARD: A computer keyboard.
+    ///     - Interface: BasicDevice
+    /// - MASS_STORAGE_DEVICE: A device that stores large amounts of data, e.g., HDD, SSD, etc.
+    ///     - Interface: MassStorageDevice
+    /// - USB_COMPOSITE_DEVICE: A USB composite device.
+    ///     - Interface: CompositeDevice
+    /// - USB_FUNCTION_DEVICE: A USB device representing a USB function.
+    ///     - Interface: FunctionDevice
     DECLARE_ENUM(DeviceType, DEVICE_TYPES, 0x0) // NOLINT
 
     /// @brief A device connected to the system e.g., a keyboard.

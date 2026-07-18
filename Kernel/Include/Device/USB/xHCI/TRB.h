@@ -115,8 +115,14 @@ namespace Rune::Device::USB {
         U32 m_dw2 = 0;
         U32 m_dw3 = 0;
 
-        [[nodiscard]] auto cycle_bit() const -> bool;
-        auto               set_cycle_bit(bool cycle_bit) -> void;
+        [[nodiscard]] auto cycle() const -> bool;
+        [[nodiscard]] auto trb_type() const -> TRBType;
+
+        auto set_cycle(bool cycle_bit) -> void;
+        auto set_trb_type(U8 val) -> void;
+
+      private:
+        static constexpr U32 TRB_TYPE_MASK = 0x0000FC00; // [15:10]
     };
     static_assert(sizeof(TRB) == 4 * sizeof(U32));
 
@@ -156,7 +162,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto IOC() const -> bool;
             [[nodiscard]] auto IDT() const -> bool;
             [[nodiscard]] auto BEI() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto td_size_extended() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_ENT(bool v) -> void;
@@ -235,7 +241,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto cycle() const -> bool;
             [[nodiscard]] auto IOC() const -> bool;
             [[nodiscard]] auto IDT() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto TRT() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_IOC(bool v) -> void;
@@ -284,7 +290,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto chain() const -> bool;
             [[nodiscard]] auto IOC() const -> bool;
             [[nodiscard]] auto IDT() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto DIR() const -> bool;
             auto               set_cycle(bool v) -> void;
             auto               set_ENT(bool v) -> void;
@@ -332,7 +338,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto ENT() const -> bool; // Evaluate Next TRB
             [[nodiscard]] auto CH() const -> bool;  // Chain bit
             [[nodiscard]] auto IOC() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto DIR() const -> bool;
             auto               set_cycle(bool v) -> void;
             auto               set_ENT(bool v) -> void;
@@ -381,7 +387,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto toggle_cycle() const -> bool;
             [[nodiscard]] auto chain() const -> bool;
             [[nodiscard]] auto IOC() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             auto               set_cycle(bool v) -> void;
             auto               set_toggle_cycle(bool v) -> void;
             auto               set_chain(bool v) -> void;
@@ -413,7 +419,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto slot_type() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
@@ -438,7 +444,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
@@ -472,7 +478,7 @@ namespace Rune::Device::USB {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
             [[nodiscard]] auto BSR() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_BSR(bool v) -> void;
@@ -508,7 +514,7 @@ namespace Rune::Device::USB {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
             [[nodiscard]] auto DC() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_DC(bool v) -> void;
@@ -543,7 +549,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
@@ -568,7 +574,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             auto               set_cycle(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
 
@@ -583,6 +589,35 @@ namespace Rune::Device::USB {
     // Event TRBs — §6.4.2
     // ========================================================================================== //
 
+    /// @brief Generic Event TRB providing access to the fields common to every Event TRB
+    /// (xHCI 2.0 §6.4.2): the Completion Code, the Cycle bit and the TRB Type.
+    struct EventTRB {
+        U32 m_dw0 = 0;
+        U32 m_dw1 = 0;
+
+        struct StatusDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto completion_code() const -> CompletionCode;
+            auto               set_completion_code(U8 val) -> void;
+
+          private:
+            static constexpr U32 COMPLETION_CODE_MASK = 0xFF000000; // [31:24]
+        } m_status;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            auto               set_cycle(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+        } m_control;
+    };
+    static_assert(sizeof(EventTRB) == sizeof(TRB));
+
     /// @brief Transfer Event TRB (xHCI 2.0 §6.4.2.1, type = 32).
     struct TransferEventTRB {
         static constexpr U8 TYPE = TRBType::TRANSFER_EVENT;
@@ -593,7 +628,7 @@ namespace Rune::Device::USB {
         struct StatusDWord {
             U32                m_register = 0;
             [[nodiscard]] auto trb_transfer_length() const -> U32;
-            [[nodiscard]] auto completion_code() const -> U8;
+            [[nodiscard]] auto completion_code() const -> CompletionCode;
             auto               set_trb_transfer_length(U32 val) -> void;
             auto               set_completion_code(U8 val) -> void;
 
@@ -606,7 +641,7 @@ namespace Rune::Device::USB {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
             [[nodiscard]] auto ED() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto endpoint_id() const -> U8;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
@@ -643,7 +678,7 @@ namespace Rune::Device::USB {
         struct StatusDWord {
             U32                m_register = 0;
             [[nodiscard]] auto completion_parameter() const -> U32;
-            [[nodiscard]] auto completion_code() const -> U8;
+            [[nodiscard]] auto completion_code() const -> CompletionCode;
             auto               set_completion_parameter(U32 val) -> void;
             auto               set_completion_code(U8 val) -> void;
 
@@ -655,7 +690,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto vf_id() const -> U8;
             [[nodiscard]] auto slot_id() const -> U8;
             auto               set_cycle(bool v) -> void;
@@ -689,7 +724,7 @@ namespace Rune::Device::USB {
 
         struct StatusDWord {
             U32                m_register = 0;
-            [[nodiscard]] auto completion_code() const -> U8; // bits [31:24]
+            [[nodiscard]] auto completion_code() const -> CompletionCode; // bits [31:24]
             auto               set_completion_code(U8 val) -> void;
 
           private:
@@ -699,7 +734,7 @@ namespace Rune::Device::USB {
         struct ControlDWord {
             U32                m_register = 0;
             [[nodiscard]] auto cycle() const -> bool;
-            [[nodiscard]] auto trb_type() const -> U8;
+            [[nodiscard]] auto trb_type() const -> TRBType;
             auto               set_cycle(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
 

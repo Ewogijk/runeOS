@@ -234,7 +234,6 @@ namespace Rune::Device::USB {
                        const String& oem,
                        const String& revision,
                        const String& serial_number,
-                       DeviceType    device_type,
                        USBDeviceID   usb_device_id,
                        U8            configuration_value,
                        U16           function_idx);

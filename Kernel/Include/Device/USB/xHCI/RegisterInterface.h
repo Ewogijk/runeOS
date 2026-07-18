@@ -626,6 +626,48 @@ namespace Rune::Device::USB {
     // (at BAR0 + DBOFF, array of 256 × 4-byte entries)
     // ========================================================================================== //
 
+    // @brief Device Context Doorbell (Doorbell Registers 1-255) DB Target field [7:0] — xHCI 2.0
+    //          §5.6 Table 5-45. Doorbell Register 0 (the Host Controller Doorbell) decodes this
+    //          field differently, see DoorbellRegister::HC_COMMAND_TARGET.
+#define DEVICE_CONTEXT_DOORBELL_TARGETS(X)                                                         \
+    X(DeviceContextDoorbellTarget, EP0_CONTROL, 1)                                                 \
+    X(DeviceContextDoorbellTarget, EP1_OUT, 2)                                                     \
+    X(DeviceContextDoorbellTarget, EP1_IN, 3)                                                      \
+    X(DeviceContextDoorbellTarget, EP2_OUT, 4)                                                     \
+    X(DeviceContextDoorbellTarget, EP2_IN, 5)                                                      \
+    X(DeviceContextDoorbellTarget, EP3_OUT, 6)                                                     \
+    X(DeviceContextDoorbellTarget, EP3_IN, 7)                                                      \
+    X(DeviceContextDoorbellTarget, EP4_OUT, 8)                                                     \
+    X(DeviceContextDoorbellTarget, EP4_IN, 9)                                                      \
+    X(DeviceContextDoorbellTarget, EP5_OUT, 10)                                                    \
+    X(DeviceContextDoorbellTarget, EP5_IN, 11)                                                     \
+    X(DeviceContextDoorbellTarget, EP6_OUT, 12)                                                    \
+    X(DeviceContextDoorbellTarget, EP6_IN, 13)                                                     \
+    X(DeviceContextDoorbellTarget, EP7_OUT, 14)                                                    \
+    X(DeviceContextDoorbellTarget, EP7_IN, 15)                                                     \
+    X(DeviceContextDoorbellTarget, EP8_OUT, 16)                                                    \
+    X(DeviceContextDoorbellTarget, EP8_IN, 17)                                                     \
+    X(DeviceContextDoorbellTarget, EP9_OUT, 18)                                                    \
+    X(DeviceContextDoorbellTarget, EP9_IN, 19)                                                     \
+    X(DeviceContextDoorbellTarget, EP10_OUT, 20)                                                   \
+    X(DeviceContextDoorbellTarget, EP10_IN, 21)                                                    \
+    X(DeviceContextDoorbellTarget, EP11_OUT, 22)                                                   \
+    X(DeviceContextDoorbellTarget, EP11_IN, 23)                                                    \
+    X(DeviceContextDoorbellTarget, EP12_OUT, 24)                                                   \
+    X(DeviceContextDoorbellTarget, EP12_IN, 25)                                                    \
+    X(DeviceContextDoorbellTarget, EP13_OUT, 26)                                                   \
+    X(DeviceContextDoorbellTarget, EP13_IN, 27)                                                    \
+    X(DeviceContextDoorbellTarget, EP14_OUT, 28)                                                   \
+    X(DeviceContextDoorbellTarget, EP14_IN, 29)                                                    \
+    X(DeviceContextDoorbellTarget, EP15_OUT, 30)                                                   \
+    X(DeviceContextDoorbellTarget, EP15_IN, 31)
+
+    // NONE (0) is Reserved for Device Context Doorbells (xHCI 2.0 §5.6 Table 5-45).
+    DECLARE_TYPED_ENUM(DeviceContextDoorbellTarget,
+                       U8,
+                       DEVICE_CONTEXT_DOORBELL_TARGETS,
+                       0) // NOLINT
+
     struct DoorbellRegister {
         static constexpr U8 HC_COMMAND_TARGET = 0;
 
@@ -634,7 +676,7 @@ namespace Rune::Device::USB {
         [[nodiscard]] auto db_target() const volatile -> U8;     // bits [7:0]
         [[nodiscard]] auto db_stream_id() const volatile -> U16; // bits [31:16]
 
-        auto ring(U8 target, U16 stream_id = 0) volatile -> void;
+        auto ring(DeviceContextDoorbellTarget target, U16 stream_id = 0) volatile -> void;
 
       private:
         static constexpr U32 DB_TARGET_MASK    = 0x000000FF; // bits [7:0]
@@ -652,13 +694,11 @@ namespace Rune::Device::USB {
         volatile RuntimeRegisters*     m_runtime;     // BAR0 + (RTSOFF & ~0x1F)
         volatile DoorbellRegister*     m_doorbell;    // BAR0 + (DBOFF & ~0x3), array of 256
 
-        [[nodiscard]] auto port(U8 n) const -> volatile PortRegisterSet& {
-            return *(reinterpret_cast<volatile PortRegisterSet*>(m_operational + 1) + n);
-        }
+        [[nodiscard]] auto port(U8 n) const -> volatile PortRegisterSet&;
 
-        [[nodiscard]] auto interrupter(U16 n) const -> volatile InterrupterRegisterSet& {
-            return *(reinterpret_cast<volatile InterrupterRegisterSet*>(m_runtime + 1) + n);
-        }
+        [[nodiscard]] auto interrupter(U16 n) const -> volatile InterrupterRegisterSet&;
+
+        void ring_command_doorbell() const;
 
         static auto from_base(void* base) -> RegisterInterface;
     };
