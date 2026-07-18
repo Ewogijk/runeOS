@@ -76,7 +76,7 @@ namespace Rune::Device::USB {
                                      USBDeviceID   usb_device_id,
                                      U16           vendor_ID,
                                      U16           product_ID)
-        : Device(handle, name, oem, revision, serial_number, DeviceType::GENERIC),
+        : Device(handle, name, oem, revision, serial_number, DeviceType::USB_COMPOSITE_DEVICE),
           m_device_ID(move(usb_device_id)),
           m_vendor_ID(vendor_ID),
           m_product_ID(product_ID) {}
@@ -116,11 +116,10 @@ namespace Rune::Device::USB {
                                    const String& oem,
                                    const String& revision,
                                    const String& serial_number,
-                                   DeviceType    device_type,
                                    USBDeviceID   usb_device_id,
                                    U8            configuration_value,
                                    U16           function_idx)
-        : Device(handle, name, oem, revision, serial_number, device_type),
+        : Device(handle, name, oem, revision, serial_number, DeviceType::USB_FUNCTION_DEVICE),
           m_device_ID(move(usb_device_id)),
           m_configuration_value(configuration_value),
           m_function_value(function_idx) {}

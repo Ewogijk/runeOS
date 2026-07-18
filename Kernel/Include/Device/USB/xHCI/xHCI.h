@@ -16,6 +16,8 @@
 #ifndef RUNEOS_XHCI_H
 #define RUNEOS_XHCI_H
 
+#include <CPU/Interrupt/Interrupt.h>
+
 #include <Device/Device.h>
 #include <Device/PCI/Types.h>
 #include <Device/USB/ClassCode.h>
@@ -63,11 +65,11 @@ namespace Rune::Device::USB {
     struct DeviceContextSystemMemory {
         static constexpr size_t TRANSFER_RING_SIZE = 32;
 
-        DeviceContext                                                         m_device_context;
+        DeviceContext m_device_context;
+        /// @brief Slot transfer rings. Note: Can use DeviceContextDoorbellTarget::ENUM - 1
+        ///         for indexed access (Doorbell targets are 1-based).
         Array<TransferRing<TRANSFER_RING_SIZE>, DeviceContext::MAX_ENDPOINTS> m_transfer_rings;
         U8                                                                    m_slot_ID;
-
-        auto ep0_transfer_ring() -> TransferRing<TRANSFER_RING_SIZE>&;
     };
 
     // ========================================================================================== //
@@ -102,6 +104,14 @@ namespace Rune::Device::USB {
     ///
     /// Each Function exposed by a USB Device will be registered in the device tree as a
     /// FunctionDevice, class drivers are expected to bind to FunctionDevices.
+    ///
+    /// Event TRB Handling
+    ///
+    /// A single Event Ring is set up on interrupter register 0. During host controller
+    /// initialization interrupts will be disabled and events are polled from the event ring.
+    ///
+    /// After successful host controller initialization interrupts will be enabled, and the event
+    /// ring is only processed when an interrupt is received.
     ///
     /// Class Drivers
     ///
@@ -138,6 +148,8 @@ namespace Rune::Device::USB {
         /// @brief Map of port usb versions. True: USB3, False: USB2.
         HashMap<size_t, bool> m_port_version_map;
 
+        HashMap<PhysicalAddr, CPU::Promise<IORequestStatus>> m_inflight_trb_table;
+
         // ====================================================================================== //
         // System Memory
         // ====================================================================================== //
@@ -152,13 +164,41 @@ namespace Rune::Device::USB {
         HashMap<Handle, SharedPointer<DeviceContextSystemMemory>> m_dc_system_memory;
 
         // ====================================================================================== //
+        // Event TRB Handling
+        // ====================================================================================== //
+
+        /// @brief Advance ERDP to  er_deq_ptr and clear ERDP.EHB.
+        /// @param er_deq_ptr
+        void clear_event_handler_busy_state(U8 interrupter, PhysicalAddr er_deq_ptr) const;
+
+        /// @brief Clear USBSTS.EINT and interrupter IMAN.IP.
+        void clear_interrupt_pending_state(U8 interrupter) const;
+
+        /// @brief Poll the next event TRB from the event ring and return it if it completed
+        ///         successfully.
+        /// @return On event success: A copy of the event TRB
+        ///         Otherwise: The error completion code.
+        ///
+        /// The function blocks until an event is added to the event ring by the xHC.
+        [[nodiscard]] auto poll_next_event() const -> Expected<EventTRB, CompletionCode>;
+
+        /// @brief Handle an event TRB from the event ring after an interrupt by the xHC was
+        ///         received.
+        /// @param packet
+        ///
+        /// InterruptPacket format:
+        /// - m_data[0:7] = Pointer to the XHCI Driver.
+        /// - m_data[sizeof(EventTRB) + 8:8] = Event TRB.
+        friend void handle_event_trb(CPU::InterruptPacket packet);
+
+        // ====================================================================================== //
         // IO Requests
         // ====================================================================================== //
 
         auto
         handle_control_transfer_request(const ControlTransferRequest& control_transfer_request,
                                         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                        void* data_buffer) const -> bool;
+                                        void* data_buffer) -> CPU::Future<IORequestStatus>;
 
         // ====================================================================================== //
         // Host Controller Initialization
@@ -182,14 +222,12 @@ namespace Rune::Device::USB {
         // USB Device Initialization
         // ====================================================================================== //
 
-        [[nodiscard]] auto poll_next_event() const -> Optional<TRB>;
-
         auto handle_control_transfer_request_then_poll(
             const ControlTransferRequest&                   control_transfer_request,
             const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-            void*                                           data_buffer) const -> bool;
+            void*                                           data_buffer) -> bool;
 
-        [[nodiscard]] auto enable_slot() const -> Optional<U8>;
+        [[nodiscard]] auto enable_slot() -> Optional<U8>;
 
         auto allocate_device_context_system_memory(U8 slot_ID) -> bool;
 

@@ -24,6 +24,7 @@
 #include <CPU/CPU.h>
 #include <CPU/CPUModule.h>
 #include <CPU/Interrupt/IRQ.h>
+#include <CPU/Job.h>
 
 #include <Device/DeviceModule.h>
 #include <Device/PCI/ClassCode.h>
@@ -71,30 +72,25 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
-    // DeviceContext System Memory
-    // ========================================================================================== //
-
-    auto DeviceContextSystemMemory::ep0_transfer_ring() -> TransferRing<TRANSFER_RING_SIZE>& {
-        return m_transfer_rings[0];
-    }
-
-    // ========================================================================================== //
     // XHCIDriver
     // ========================================================================================== //
 
     // ========================================================================================== //
-    // IO Requests
+    // Helper Functions
     // ========================================================================================== //
 
-    auto XHCIDriver::handle_control_transfer_request(
-        const ControlTransferRequest&                   control_transfer_request,
-        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-        void*                                           data_buffer) const -> bool {
-        constexpr U8 DEFAULT_TRB_LENGTH = 8;
-        auto&        ep0_tr             = dc_sys_mem->ep0_transfer_ring();
-
-        bool is_in = (control_transfer_request.m_request_type & RequestType::DEVICE_TO_HOST) != 0;
-        bool has_data = control_transfer_request.m_length > 0;
+    /// @brief Set up the SetupStage, DataStage and Status Stage TRBs and enqueues them to the EP0
+    ///         transfer ring of the given slot. Does not ring the EP0 Doorbell.
+    /// @param control_transfer_request
+    /// @param dc_sys_mem
+    /// @param data_buffer
+    /// @return Physical address of the StatusStage TRB. Returns 0 if an error happens.
+    auto prepare_control_transfer(const ControlTransferRequest& control_transfer_request,
+                                  const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                                  void* data_buffer) -> PhysicalAddr {
+        auto& ep0_tr = dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
+        bool  is_in  = (control_transfer_request.m_request_type & RequestType::DEVICE_TO_HOST) != 0;
+        bool  has_data = control_transfer_request.m_length > 0;
 
         SetupStageTRB setup_stage_trb;
         setup_stage_trb.m_control.set_trb_type(SetupStageTRB::TYPE);
@@ -104,7 +100,7 @@ namespace Rune::Device::USB {
             setup_stage_trb.m_control.set_TRT(SetupStageTRB::TRT_IN_DATA);
         else
             setup_stage_trb.m_control.set_TRT(SetupStageTRB::TRT_OUT_DATA);
-        setup_stage_trb.m_status.set_trb_transfer_length(DEFAULT_TRB_LENGTH);
+        setup_stage_trb.m_status.set_trb_transfer_length(TRB::DEFAULT_AVERAGE_TRB_LENGTH);
         setup_stage_trb.m_control.set_IOC(false);
         setup_stage_trb.m_control.set_IDT(true);
         setup_stage_trb.m_request.set_bm_request_type(control_transfer_request.m_request_type);
@@ -113,10 +109,9 @@ namespace Rune::Device::USB {
         setup_stage_trb.m_index_length.set_w_index(control_transfer_request.m_index);
         setup_stage_trb.m_index_length.set_w_length(control_transfer_request.m_length);
         setup_stage_trb.m_control.set_cycle(ep0_tr.m_pcs);
-        ep0_tr.enqueue(*reinterpret_cast<TRB*>(&setup_stage_trb));
 
+        DataStageTRB data_stage_trb;
         if (has_data) {
-            DataStageTRB data_stage_trb;
             data_stage_trb.m_control.set_trb_type(DataStageTRB::TYPE);
             data_stage_trb.m_control.set_DIR(is_in);
             data_stage_trb.m_status.set_trb_transfer_length(control_transfer_request.m_length);
@@ -127,23 +122,105 @@ namespace Rune::Device::USB {
             PhysicalAddr data_buffer_phys = 0;
             if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(data_buffer),
                                                      data_buffer_phys))
-                return false;
+                return 0;
             data_stage_trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
             data_stage_trb.m_data_buffer_pointer_hi =
                 static_cast<U32>(data_buffer_phys >> SHIFT_32);
             data_stage_trb.m_control.set_cycle(ep0_tr.m_pcs);
-            ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
         }
-
         StatusStageTRB status_stage_trb;
         status_stage_trb.m_control.set_trb_type(StatusStageTRB::TYPE);
         status_stage_trb.m_control.set_DIR(!is_in || !has_data);
         status_stage_trb.m_control.set_CH(false);
         status_stage_trb.m_control.set_IOC(true);
         status_stage_trb.m_control.set_cycle(ep0_tr.m_pcs);
-        ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
-        m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(1);
-        return true;
+
+        ep0_tr.enqueue(*reinterpret_cast<TRB*>(&setup_stage_trb));
+        if (has_data) ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
+        return ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
+    }
+
+    // ========================================================================================== //
+    // Event TRB Handling
+    // ========================================================================================== //
+
+    void XHCIDriver::clear_event_handler_busy_state(U8 interrupter, PhysicalAddr er_deq_ptr) const {
+        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
+        m_ri.interrupter(interrupter).m_erdp.set_ptr(er_deq_ptr >> SHIFT_4);
+        m_ri.interrupter(interrupter).m_erdp.clear_EHB();
+    }
+
+    void XHCIDriver::clear_interrupt_pending_state(U8 interrupter) const {
+        if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
+        m_ri.m_operational->m_usbsts.clear_EINT();
+        m_ri.interrupter(interrupter).m_iman.clear_IP();
+    }
+
+    auto XHCIDriver::poll_next_event() const -> Expected<EventTRB, CompletionCode> {
+        auto         event = m_event_ring->poll_event();
+        PhysicalAddr p_trb = 0;
+        if (!Memory::virtual_to_physical_address(
+                memory_pointer_to_addr(&m_event_ring->m_segments[0][m_event_ring->m_dequeue_ptr]),
+                p_trb)) {
+            return Unexpected<CompletionCode>(CompletionCode::NONE);
+        }
+        clear_event_handler_busy_state(0, p_trb);
+        clear_interrupt_pending_state(0);
+
+        if (event.m_status.completion_code() != CompletionCode::SUCCESS)
+            return Unexpected<CompletionCode>(event.m_status.completion_code());
+        return {event};
+    }
+
+    void handle_event_trb(CPU::InterruptPacket packet) {
+        auto* xhci_driver =
+            reinterpret_cast<XHCIDriver*>(integer_from_bytes<VirtualAddr>(packet.m_data.data()));
+        auto* event_trb = reinterpret_cast<EventTRB*>(packet.m_data.data() + sizeof(MemoryAddr));
+        LOGGER->debug("Handling Event TRB: {}-{}",
+                      event_trb->m_control.trb_type().to_string(),
+                      event_trb->m_status.completion_code().to_string());
+
+        PhysicalAddr inflight_trb_address = 0;
+        if (event_trb->m_control.trb_type() == TRBType::CMD_COMPLETION) {
+            auto* ce             = reinterpret_cast<CommandCompletionEventTRB*>(event_trb);
+            inflight_trb_address = (static_cast<U64>(ce->m_command_trb_pointer_lo.ptr()) << SHIFT_4)
+                                   | (static_cast<U64>(ce->m_command_trb_pointer_hi) << SHIFT_32);
+        } else if (event_trb->m_control.trb_type() == TRBType::TRANSFER_EVENT) {
+            auto* te = reinterpret_cast<TransferEventTRB*>(event_trb);
+            inflight_trb_address =
+                te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
+        }
+
+        if (inflight_trb_address > 0) {
+            auto maybe_promise = xhci_driver->m_inflight_trb_table.find(inflight_trb_address);
+            if (maybe_promise == xhci_driver->m_inflight_trb_table.end()) {
+                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
+                return;
+            }
+            maybe_promise->value->set_value(IORequestStatus::HANDLED);
+            xhci_driver->m_inflight_trb_table.remove(inflight_trb_address);
+        }
+    }
+
+    // ========================================================================================== //
+    // IO Requests
+    // ========================================================================================== //
+
+    auto XHCIDriver::handle_control_transfer_request(
+        const ControlTransferRequest&                   control_transfer_request,
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+        void* data_buffer) -> CPU::Future<IORequestStatus> {
+        PhysicalAddr trb_phys =
+            prepare_control_transfer(control_transfer_request, dc_sys_mem, data_buffer);
+        if (trb_phys == 0) {
+            CPU::Promise<IORequestStatus> promise;
+            promise.set_value(IORequestStatus::FAILED);
+            return promise.get_future();
+        }
+        auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
+        auto  future  = promise.get_future();
+        m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
+        return future;
     }
 
     // ========================================================================================== //
@@ -358,21 +435,42 @@ namespace Rune::Device::USB {
                 pci_write_word(csi.m_bus, csi.m_device, csi.m_func, 0x04, cmd.AsUInt16);
             }
 
-            CPU::irq_install_handler(interrupt_line,
-                                     m_xhci->get_handle(),
-                                     "xHCI",
-                                     [this](CPU::InterruptFrame* frame) -> CPU::InterruptState {
-                                         SILENCE_UNUSED(frame)
+            CPU::irq_install_handler(
+                interrupt_line,
+                m_xhci->get_handle(),
+                "xHCI",
+                [this](CPU::InterruptFrame* frame) -> CPU::InterruptState {
+                    SILENCE_UNUSED(frame)
 
-                                         if (!m_ri.interrupter(0).m_iman.IP())
-                                             // Not our interrupt -> INTx is shared by PCI devices
-                                             return CPU::InterruptState::PENDING;
-                                         m_ri.m_operational->m_usbsts.clear_EINT();
-                                         m_ri.interrupter(0).m_iman.clear_IP();
+                    if (!m_ri.interrupter(0).m_iman.IP())
+                        // Not our interrupt -> INTx is shared by PCI devices
+                        return CPU::InterruptState::PENDING;
+                    clear_interrupt_pending_state(0);
 
-                                         // Do event ring processing
-                                         return CPU::InterruptState::HANDLED;
-                                     });
+                    while (m_event_ring->has_pending()) {
+                        auto                 event_trb = m_event_ring->next_event().value();
+                        CPU::InterruptPacket packet{};
+                        Array<U8, sizeof(MemoryAddr)> addr_buf{};
+                        integer_to_bytes(memory_pointer_to_addr(this), addr_buf.data());
+                        memcpy(packet.m_data.data(), addr_buf.data(), sizeof(MemoryAddr));
+                        memcpy(packet.m_data.data() + sizeof(MemoryAddr),
+                               &event_trb,
+                               sizeof(EventTRB));
+
+                        CPU::job_schedule_delayed_interrupt_handler(&handle_event_trb, packet);
+                    }
+
+                    // Advance the hardware Event Ring Dequeue Pointer to the current dequeue slot
+                    // and clear EHB, otherwise the interrupter stays busy and never asserts again
+                    // (and the Event Ring eventually fills up).
+                    PhysicalAddr deq_phys = 0;
+                    if (Memory::virtual_to_physical_address(
+                            memory_pointer_to_addr(
+                                &m_event_ring->m_segments[0][m_event_ring->m_dequeue_ptr]),
+                            deq_phys))
+                        clear_event_handler_busy_state(0, deq_phys);
+                    return CPU::InterruptState::HANDLED;
+                });
             System::instance()
                 .get_module<CPU::CPUModule>(ModuleSelector::CPU)
                 ->get_active_pic()
@@ -428,43 +526,28 @@ namespace Rune::Device::USB {
     // USB Device Initialization
     // ====================================================================================== //
 
-    auto XHCIDriver::poll_next_event() const -> Optional<TRB> {
-        auto         event = m_event_ring->poll_event();
-        PhysicalAddr p_trb = 0;
-        if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&m_event_ring->m_segments[0][m_event_ring->m_dequeue_ptr]),
-                p_trb)) {
-            return {};
-        }
-        m_ri.interrupter(0).m_erdp.set_ptr(p_trb >> SHIFT_4);
-        m_ri.interrupter(0).m_erdp.clear_EHB();
-        return make_optional<TRB>(event);
-    }
-
     auto XHCIDriver::handle_control_transfer_request_then_poll(
         const ControlTransferRequest&                   control_transfer_request,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-        void*                                           data_buffer) const -> bool {
-        if (!handle_control_transfer_request(control_transfer_request, dc_sys_mem, data_buffer))
-            return false;
+        void*                                           data_buffer) -> bool {
 
-        auto event = poll_next_event();
-        if (!event) return {};
-        auto* t_completion = reinterpret_cast<TransferEventTRB*>(&event.value());
-        return CompletionCode(t_completion->m_status.completion_code()) == CompletionCode::SUCCESS;
+        PhysicalAddr trb_phys =
+            prepare_control_transfer(control_transfer_request, dc_sys_mem, data_buffer);
+        if (trb_phys == 0) return false;
+        m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
+        return poll_next_event().has_value();
     }
 
-    auto XHCIDriver::enable_slot() const -> Optional<U8> {
+    auto XHCIDriver::enable_slot() -> Optional<U8> {
         EnableSlotCommandTRB cmd{};
         cmd.m_control.set_trb_type(EnableSlotCommandTRB::TYPE);
         cmd.m_control.set_cycle(m_command_ring->m_pcs);
         m_command_ring->enqueue(*reinterpret_cast<TRB*>(&cmd));
-        m_ri.m_doorbell[0].ring(DoorbellRegister::HC_COMMAND_TARGET);
+        m_ri.ring_command_doorbell();
 
         auto event = poll_next_event();
         if (!event) return {};
         auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
-        if (completion->m_status.completion_code() != CompletionCode::SUCCESS) return {};
         return make_optional<U8>(completion->m_control.slot_id());
     }
 
@@ -474,7 +557,10 @@ namespace Rune::Device::USB {
 
         m_dc_system_memory[slot_ID - 1]->m_slot_ID = slot_ID;
         // Initialize the EP0 transfer ring Link TRB
-        if (!m_dc_system_memory[slot_ID - 1]->ep0_transfer_ring().init()) return false;
+        if (!m_dc_system_memory[slot_ID - 1]
+                 ->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1]
+                 .init())
+            return false;
 
         PhysicalAddr device_context_phys = 0;
         if (!Memory::virtual_to_physical_address(
@@ -536,7 +622,8 @@ namespace Rune::Device::USB {
 
         PhysicalAddr tr_phys = 0;
         if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&dc_sys_mem->ep0_transfer_ring()),
+                memory_pointer_to_addr(
+                    &dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1]),
                 tr_phys))
             return {};
         ep0.m_tr_dequeue_ptr.set_ptr(tr_phys >> 4);
@@ -553,13 +640,11 @@ namespace Rune::Device::USB {
         adc_trb.m_control.set_slot_id(dc_sys_mem->m_slot_ID);
         adc_trb.m_control.set_BSR(false);
         m_command_ring->enqueue(*reinterpret_cast<TRB*>(&adc_trb));
-        m_ri.m_doorbell[0].ring(DoorbellRegister::HC_COMMAND_TARGET);
+        m_ri.ring_command_doorbell();
 
         auto event = poll_next_event();
         if (!event) return {};
         auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
-        if (CompletionCode(completion->m_status.completion_code()) != CompletionCode::SUCCESS)
-            return {};
         return make_optional<U16>(ep0.m_dw1.max_packet_size());
     }
 
@@ -595,13 +680,9 @@ namespace Rune::Device::USB {
             ec_trb.m_control.set_cycle(m_command_ring->m_pcs);
             ec_trb.m_control.set_slot_id(slot_ID);
             m_command_ring->enqueue(*reinterpret_cast<TRB*>(&ec_trb));
-            m_ri.m_doorbell[0].ring(DoorbellRegister::HC_COMMAND_TARGET);
+            m_ri.ring_command_doorbell();
 
-            auto event = poll_next_event();
-            if (!event) return {};
-            auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
-            if (CompletionCode(completion->m_status.completion_code()) != CompletionCode::SUCCESS)
-                return false;
+            if (!poll_next_event()) return false;
         }
         return true;
     }
@@ -804,11 +885,13 @@ namespace Rune::Device::USB {
                                              U16                                      buf_size,
                                              U8 config_index) -> bool {
         ControlTransferRequest ctr = {
+            .m_header       = {.m_transfer_type = TransferType::CONTROL, .m_device_handle = 0},
             .m_request_type = RequestType::DEVICE_TO_HOST,
             .m_request      = StandardRequestCode::GET_DESCRIPTOR,
             .m_value  = static_cast<U16>((DescriptorType::CONFIGURATION << SHIFT_8) | config_index),
             .m_index  = 0,
-            .m_length = buf_size};
+            .m_length = buf_size
+        };
         return handle_control_transfer_request_then_poll(ctr, dc_sys_memory, cd_buffer);
     }
 
@@ -818,6 +901,7 @@ namespace Rune::Device::USB {
         PortSpeed port_speed) -> SharedPointer<CompositeDevice> {
         DeviceDescriptor       device_descriptor{};
         ControlTransferRequest get_descriptor = {
+            .m_header       = {.m_transfer_type = TransferType::CONTROL, .m_device_handle = 0},
             .m_request_type = RequestType::DEVICE_TO_HOST,
             .m_request      = StandardRequestCode::GET_DESCRIPTOR,
             .m_value        = DescriptorType::DEVICE << SHIFT_8,
@@ -852,8 +936,10 @@ namespace Rune::Device::USB {
             reinterpret_cast<const USBDeviceID*>(composite_device->device_ID());
         auto class_code = ClassCode(usb_device_ID->device_class());
         LOGGER->debug(
-            "Port{}: {}:{} ({:0=#4x}:{:0=#4x}), {}:{}:{}, USB{}, Configurations: {}",
+            "Port{}-Slot{}: {}:{} ({:0=#4x}:{:0=#4x}), {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x}), "
+            "USB{}, Configurations: {}",
             port,
+            dc_sys_memory->m_slot_ID,
             composite_device->get_name(),
             composite_device->oem(),
             composite_device->vendor_ID(),
@@ -861,6 +947,9 @@ namespace Rune::Device::USB {
             class_code.to_string(),
             resolve_subclass_code(class_code, usb_device_ID->subclass()),
             resolve_protocol_code(class_code, usb_device_ID->subclass(), usb_device_ID->protocol()),
+            usb_device_ID->device_class(),
+            usb_device_ID->subclass(),
+            usb_device_ID->protocol(),
             composite_device->revision(),
             composite_device->configurations().size());
 
@@ -1036,15 +1125,10 @@ namespace Rune::Device::USB {
         cec_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
         cec_trb.m_control.set_DC(false);
         m_command_ring->enqueue(*reinterpret_cast<TRB*>(&cec_trb));
-        m_ri.m_doorbell[0].ring(DoorbellRegister::HC_COMMAND_TARGET);
+        m_ri.ring_command_doorbell();
 
         auto event = poll_next_event();
         if (!event) return false;
-        auto* completion = reinterpret_cast<CommandCompletionEventTRB*>(&event.value());
-        if (CompletionCode(completion->m_status.completion_code()) != CompletionCode::SUCCESS)
-            return false;
-
-        // Send SET_CONFIGURATION request
 
         ControlTransferRequest set_config_ctr;
         set_config_ctr.m_request_type = RequestType::HOST_TO_DEVICE;
@@ -1089,11 +1173,14 @@ namespace Rune::Device::USB {
         }
 
         DeviceDescriptor       dd_partial{};
-        ControlTransferRequest get_descriptor{.m_request_type = RequestType::DEVICE_TO_HOST,
-                                              .m_request      = StandardRequestCode::GET_DESCRIPTOR,
-                                              .m_value        = DescriptorType::DEVICE << SHIFT_8,
-                                              .m_index        = 0,
-                                              .m_length       = DeviceDescriptor::SIZE_PARTIAL};
+        ControlTransferRequest get_descriptor{
+            .m_header       = {.m_transfer_type = TransferType::CONTROL, .m_device_handle = 0},
+            .m_request_type = RequestType::DEVICE_TO_HOST,
+            .m_request      = StandardRequestCode::GET_DESCRIPTOR,
+            .m_value        = DescriptorType::DEVICE << SHIFT_8,
+            .m_index        = 0,
+            .m_length       = DeviceDescriptor::SIZE_PARTIAL
+        };
         if (!handle_control_transfer_request_then_poll(get_descriptor,
                                                        dc_sys_memory,
                                                        &dd_partial)) {
@@ -1130,7 +1217,6 @@ namespace Rune::Device::USB {
                 composite_device->oem(),
                 composite_device->revision(),
                 composite_device->serial_number(),
-                DeviceType::GENERIC,
                 USBDeviceID(function.m_function_class,
                             function.m_function_subclass,
                             function.m_function_protocol),
