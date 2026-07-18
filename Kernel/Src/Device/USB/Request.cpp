@@ -16,7 +16,7 @@
 #include <Device/USB/Request.h>
 
 namespace Rune::Device::USB {
-    DEFINE_TYPED_ENUM(StandardRequestCode,    U8, STANDARD_REQUEST_CODES,    0xFF)
-    DEFINE_TYPED_ENUM(DescriptorType,         U8, DESCRIPTOR_TYPES,          0xFF)
+    DEFINE_TYPED_ENUM(StandardRequestCode, U8, STANDARD_REQUEST_CODES, 0xFF)
+    DEFINE_TYPED_ENUM(DescriptorType, U8, DESCRIPTOR_TYPES, 0xFF)
     DEFINE_TYPED_ENUM(StandardFeatureSelector, U8, STANDARD_FEATURE_SELECTORS, 0xFF)
 } // namespace Rune::Device::USB

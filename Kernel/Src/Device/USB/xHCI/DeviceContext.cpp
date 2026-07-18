@@ -47,15 +47,18 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW0::set_speed(U8 val) -> void {
-        m_register = (m_register & ~SPEED_MASK) | ((static_cast<U32>(val) << SHIFT_20) & SPEED_MASK);
+        m_register =
+            (m_register & ~SPEED_MASK) | ((static_cast<U32>(val) << SHIFT_20) & SPEED_MASK);
     }
 
     auto SlotContext::DW0::set_MTT(bool v) -> void {
-        m_register = v ? bit_set(m_register, MTT_BIT_OFFSET) : bit_clear(m_register, MTT_BIT_OFFSET);
+        m_register =
+            v ? bit_set(m_register, MTT_BIT_OFFSET) : bit_clear(m_register, MTT_BIT_OFFSET);
     }
 
     auto SlotContext::DW0::set_hub(bool v) -> void {
-        m_register = v ? bit_set(m_register, HUB_BIT_OFFSET) : bit_clear(m_register, HUB_BIT_OFFSET);
+        m_register =
+            v ? bit_set(m_register, HUB_BIT_OFFSET) : bit_clear(m_register, HUB_BIT_OFFSET);
     }
 
     auto SlotContext::DW0::set_context_entries(U8 val) -> void {
@@ -89,8 +92,8 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW1::set_num_ports(U8 val) -> void {
-        m_register = (m_register & ~NUM_PORTS_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_24) & NUM_PORTS_MASK);
+        m_register =
+            (m_register & ~NUM_PORTS_MASK) | ((static_cast<U32>(val) << SHIFT_24) & NUM_PORTS_MASK);
     }
 
     // ========================================================================================== //
@@ -123,8 +126,7 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW2::set_TTT(U8 val) -> void {
-        m_register = (m_register & ~TTT_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_16) & TTT_MASK);
+        m_register = (m_register & ~TTT_MASK) | ((static_cast<U32>(val) << SHIFT_16) & TTT_MASK);
     }
 
     auto SlotContext::DW2::set_interrupter_target(U16 val) -> void {
@@ -149,8 +151,8 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW3::set_slot_state(U8 val) -> void {
-        m_register = (m_register & ~SLOT_STATE_MASK)
-                     | ((static_cast<U32>(val) << 27) & SLOT_STATE_MASK);
+        m_register =
+            (m_register & ~SLOT_STATE_MASK) | ((static_cast<U32>(val) << 27) & SLOT_STATE_MASK);
     }
 
     // ========================================================================================== //
@@ -186,8 +188,7 @@ namespace Rune::Device::USB {
     }
 
     auto EndpointContext::DW0::set_mult(U8 val) -> void {
-        m_register = (m_register & ~MULT_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_8) & MULT_MASK);
+        m_register = (m_register & ~MULT_MASK) | ((static_cast<U32>(val) << SHIFT_8) & MULT_MASK);
     }
 
     auto EndpointContext::DW0::set_max_p_streams(U8 val) -> void {
@@ -196,12 +197,13 @@ namespace Rune::Device::USB {
     }
 
     auto EndpointContext::DW0::set_LSA(bool v) -> void {
-        m_register = v ? bit_set(m_register, LSA_BIT_OFFSET) : bit_clear(m_register, LSA_BIT_OFFSET);
+        m_register =
+            v ? bit_set(m_register, LSA_BIT_OFFSET) : bit_clear(m_register, LSA_BIT_OFFSET);
     }
 
     auto EndpointContext::DW0::set_interval(U8 val) -> void {
-        m_register = (m_register & ~INTERVAL_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_16) & INTERVAL_MASK);
+        m_register =
+            (m_register & ~INTERVAL_MASK) | ((static_cast<U32>(val) << SHIFT_16) & INTERVAL_MASK);
     }
 
     auto EndpointContext::DW0::set_max_esit_hi(U8 val) -> void {
@@ -234,17 +236,16 @@ namespace Rune::Device::USB {
     }
 
     auto EndpointContext::DW1::set_CERR(U8 val) -> void {
-        m_register = (m_register & ~CERR_MASK)
-                     | ((static_cast<U32>(val) << 1) & CERR_MASK);
+        m_register = (m_register & ~CERR_MASK) | ((static_cast<U32>(val) << 1) & CERR_MASK);
     }
 
     auto EndpointContext::DW1::set_ep_type(U8 val) -> void {
-        m_register = (m_register & ~EP_TYPE_MASK)
-                     | ((static_cast<U32>(val) << 3) & EP_TYPE_MASK);
+        m_register = (m_register & ~EP_TYPE_MASK) | ((static_cast<U32>(val) << 3) & EP_TYPE_MASK);
     }
 
     auto EndpointContext::DW1::set_HID(bool v) -> void {
-        m_register = v ? bit_set(m_register, HID_BIT_OFFSET) : bit_clear(m_register, HID_BIT_OFFSET);
+        m_register =
+            v ? bit_set(m_register, HID_BIT_OFFSET) : bit_clear(m_register, HID_BIT_OFFSET);
     }
 
     auto EndpointContext::DW1::set_max_burst_size(U8 val) -> void {
@@ -315,22 +316,23 @@ namespace Rune::Device::USB {
     // InputControlContext::InputControlContextFieldDefs — xHCI 2.0 §6.2.5.1 Table 6-13
     // ========================================================================================== //
 
-    [[nodiscard]] auto InputControlContext::InputControlContextFieldDefs::configuration_value()
-        const -> U8 {
+    [[nodiscard]] auto
+    InputControlContext::InputControlContextFieldDefs::configuration_value() const -> U8 {
         return static_cast<U8>(m_register & CONFIGURATION_VALUE_MASK);
     }
 
-    [[nodiscard]] auto InputControlContext::InputControlContextFieldDefs::interface_number()
-        const -> U8 {
+    [[nodiscard]] auto InputControlContext::InputControlContextFieldDefs::interface_number() const
+        -> U8 {
         return static_cast<U8>((m_register & INTERFACE_NUMBER_MASK) >> SHIFT_8);
     }
 
-    [[nodiscard]] auto InputControlContext::InputControlContextFieldDefs::alternate_setting()
-        const -> U8 {
+    [[nodiscard]] auto InputControlContext::InputControlContextFieldDefs::alternate_setting() const
+        -> U8 {
         return static_cast<U8>((m_register & ALTERNATE_SETTING_MASK) >> SHIFT_16);
     }
 
-    auto InputControlContext::InputControlContextFieldDefs::set_configuration_value(U8 val) -> void {
+    auto InputControlContext::InputControlContextFieldDefs::set_configuration_value(U8 val)
+        -> void {
         m_register = (m_register & ~CONFIGURATION_VALUE_MASK) | static_cast<U32>(val);
     }
 

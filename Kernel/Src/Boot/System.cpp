@@ -234,7 +234,7 @@ namespace Rune {
     void System::shutdown() { // NOLINT
         auto*               dm    = get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::ACPIRequest a_req = Device::ACPIRequest::SHUTDOWN;
-        Device::IORequest   req{.m_in_buffer = &a_req, .m_out_buffer = nullptr};
+        Device::IORequest   req{.m_in_data = &a_req, .m_out_data = nullptr};
         dm->control_device(dm->device_tree()->get_handle(), req);
 
         panic("Power off failed. Will spin forever... (Power off manually).");
@@ -244,7 +244,7 @@ namespace Rune {
         LOGGER->info("Performing reboot. Try ACPI reset...");
         auto*               dm    = get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::ACPIRequest a_req = Device::ACPIRequest::REBOOT;
-        Device::IORequest   req{.m_in_buffer = &a_req, .m_out_buffer = nullptr};
+        Device::IORequest   req{.m_in_data = &a_req, .m_out_data = nullptr};
         dm->control_device(dm->device_tree()->get_handle(), req);
 
         LOGGER->info("Fallback to PS/2 Controller reset...");

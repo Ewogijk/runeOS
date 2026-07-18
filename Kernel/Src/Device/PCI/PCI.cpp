@@ -238,9 +238,7 @@ namespace Rune::Device {
 
     auto PCIDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }
 
-    auto PCIDriver::can_bind(const DeviceID* device_ID) -> bool {
-        return ID_PCI.equals(device_ID);
-    }
+    auto PCIDriver::can_bind(const DeviceID* device_ID) -> bool { return ID_PCI.equals(device_ID); }
 
     auto PCIDriver::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)

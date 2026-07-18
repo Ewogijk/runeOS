@@ -42,7 +42,7 @@ namespace Rune::Device {
     auto PortDriver::handle_request(const SharedPointer<Device>& device, IORequest request)
         -> CPU::Future<IORequestStatus> {
         SharedPointer<AHCIDevice> ahci_device(device);
-        auto* req = reinterpret_cast<MassStorageDeviceRequest*>(request.m_in_buffer);
+        auto* req = reinterpret_cast<MassStorageDeviceRequest*>(request.m_in_data);
         CPU::Promise<IORequestStatus> p;
         if (req->m_type == MassStorageDeviceRequestType::NONE) {
             p.set_value(IORequestStatus::BAD_ARGUMENT);
@@ -62,13 +62,13 @@ namespace Rune::Device {
             auto read_dma_FIS = RegisterHost2DeviceFIS::ReadDMAExtended(
                 dev_lba,
                 div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
-            *static_cast<size_t*>(request.m_out_buffer) =
+            *static_cast<size_t*>(request.m_out_data) =
                 port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, read_dma_FIS);
         } else {
             auto write_dma_FIS = RegisterHost2DeviceFIS::WriteDMAExtended(
                 dev_lba,
                 div_round_up(req->m_buffer_size, static_cast<size_t>(ahci_device->sector_size())));
-            *static_cast<size_t*>(request.m_out_buffer) =
+            *static_cast<size_t*>(request.m_out_data) =
                 port_engine->send_ata_command(req->m_buffer, req->m_buffer_size, write_dma_FIS);
         }
         p.set_value(IORequestStatus::HANDLED);

@@ -37,7 +37,8 @@ namespace Rune::Device::USB {
     }
 
     auto EventRingSegmentTableEntry::RingSegmentSize::set_segment_size(U16 val) -> void {
-        m_register = (m_register & ~SEGMENT_SIZE_MASK) | (static_cast<U64>(val) & SEGMENT_SIZE_MASK);
+        m_register =
+            (m_register & ~SEGMENT_SIZE_MASK) | (static_cast<U64>(val) & SEGMENT_SIZE_MASK);
     }
 
 } // namespace Rune::Device::USB

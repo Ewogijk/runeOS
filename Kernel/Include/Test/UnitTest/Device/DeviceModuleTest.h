@@ -454,7 +454,7 @@ TEST("control_device - Valid Input", "DeviceModule") {
     auto  dummy_dev    = make_dummy_dev(ds->get_device_handle());
 
     // Test Body
-    Device::IORequest req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
+    Device::IORequest req{.m_in_data = nullptr, .m_out_data = nullptr};
     REQUIRE(ds->register_device_driver(dummy_driver))
     REQUIRE(ds->register_device(root_device, dummy_dev))
     REQUIRE(ds->control_device(dummy_dev->get_handle(), req).get()
@@ -470,7 +470,7 @@ TEST("control_device - Unknown Device", "DeviceModule") {
     auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
 
     // Test Body
-    Device::IORequest       req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
+    Device::IORequest       req{.m_in_data = nullptr, .m_out_data = nullptr};
     Device::IORequestStatus req_status =
         ds->control_device(Resource<Device::Handle>::HANDLE_NONE, req).get();
     REQUIRE(req_status == Device::IORequestStatus::UNKNOWN_DEVICE)
@@ -483,7 +483,7 @@ TEST("control_device - Non-operational Device", "DeviceModule") {
     auto  dummy_dev   = make_dummy_dev(ds->get_device_handle());
 
     // Test Body
-    Device::IORequest req{.m_in_buffer = nullptr, .m_out_buffer = nullptr};
+    Device::IORequest req{.m_in_data = nullptr, .m_out_data = nullptr};
     REQUIRE(ds->register_device(root_device, dummy_dev))
     REQUIRE(ds->control_device(dummy_dev->get_handle(), req).get()
             == Device::IORequestStatus::DEVICE_NOT_OPERATIONAL)

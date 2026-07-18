@@ -40,7 +40,7 @@ namespace Rune::Device {
     auto handle_get_acpi_info_request(IORequest& request) -> IORequestStatus {
         auto* rsdp = reinterpret_cast<ACPI_TABLE_RSDP*>(
             Memory::physical_to_virtual_address(System::instance().get_boot_info().rsdp_addr));
-        auto* acpi_info       = reinterpret_cast<ACPIInfo*>(request.m_out_buffer);
+        auto* acpi_info       = reinterpret_cast<ACPIInfo*>(request.m_out_data);
         acpi_info->m_oem      = String(rsdp->OemId, ACPI_OEM_ID_SIZE);
         acpi_info->m_revision = rsdp->Revision;
         return IORequestStatus::HANDLED;
@@ -144,7 +144,7 @@ namespace Rune::Device {
             p.set_value(IORequestStatus::UNKNOWN_DEVICE);
             return p.get_future();
         }
-        auto* req = reinterpret_cast<ACPIRequest*>(request.m_in_buffer);
+        auto* req = reinterpret_cast<ACPIRequest*>(request.m_in_data);
 
         switch (*req) {
             case ACPIRequest::GET_ACPI_INFO:
