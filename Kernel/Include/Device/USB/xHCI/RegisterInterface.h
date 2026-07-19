@@ -297,13 +297,12 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     struct PortRegisterSet {
-        static constexpr U8 STRIDE = 0x14; // spec-mandated inter-port stride in bytes
+        static constexpr U8 STRIDE = 0x10; // spec-mandated inter-port stride in bytes
 
         PORTSC m_portsc;        // 0x00
         U32    m_portpmsc  = 0; // 0x04  Port PM Status and Control
         U32    m_portli    = 0; // 0x08  Port Link Info
         U32    m_porthlpmc = 0; // 0x0C  Port Hardware LPM Control
-        U32    m_portexsc  = 0; // 0x10  Port Extended Status/Control (xHCI 2.0 only)
     };
     static_assert(sizeof(PortRegisterSet) == PortRegisterSet::STRIDE);
 

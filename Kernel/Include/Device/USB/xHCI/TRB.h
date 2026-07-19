@@ -358,6 +358,50 @@ namespace Rune::Device::USB {
     };
     static_assert(sizeof(StatusStageTRB) == sizeof(TRB));
 
+    /// @brief No Op Transfer TRB (xHCI 2.0 §6.4.1.4, type = 8).
+    ///
+    /// Placed on an endpoint Transfer Ring to verify the basic Transfer Ring mechanism: it transfers
+    /// no data and generates a Transfer Event (Completion Code = Success) when IOC is set. Only the
+    /// Interrupter Target, Cycle, ENT, Chain, IOC and TRB Type fields are defined; all other bits are
+    /// RsvdZ and left at their zero default.
+    struct NoOpTransferTRB {
+        static constexpr U8 TYPE = TRBType::NO_OP;
+
+        U32 m_reserved_0 = 0;
+        U32 m_reserved_1 = 0;
+
+        struct StatusDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto interrupter_target() const -> U16;
+            auto               set_interrupter_target(U16 val) -> void;
+
+          private:
+            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
+        } m_status;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto ENT() const -> bool;   // Evaluate Next TRB
+            [[nodiscard]] auto chain() const -> bool; // Chain bit
+            [[nodiscard]] auto IOC() const -> bool;
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            auto               set_cycle(bool v) -> void;
+            auto               set_ENT(bool v) -> void;
+            auto               set_chain(bool v) -> void;
+            auto               set_IOC(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  ENT_BIT_OFFSET   = 1;
+            static constexpr U8  CHAIN_BIT_OFFSET = 4;
+            static constexpr U8  IOC_BIT_OFFSET   = 5;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+        } m_control;
+    };
+    static_assert(sizeof(NoOpTransferTRB) == sizeof(TRB));
+
     /// @brief Link TRB — links ring segments (xHCI 2.0 §6.4.4.1, type = 6).
     struct LinkTRB {
         static constexpr U8 TYPE = TRBType::LINK;
