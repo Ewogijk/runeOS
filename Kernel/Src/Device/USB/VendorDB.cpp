@@ -32,6 +32,9 @@ namespace Rune::Device::USB {
         // NOLINTBEGIN cppcoreguidelines-avoid-magic-numbers: not worth the work
         VENDOR_DATABASE.put({.m_vendor_ID = 0x46F4, .m_product_ID = 0x0001},
                             {.m_vendor_name = "QEMU", .m_product_name = "Unknown"});
+        VENDOR_DATABASE.put(
+            {.m_vendor_ID = 0x0627, .m_product_ID = 0x0001},
+            {.m_vendor_name = "Adomax Technology Co., Ltd.", .m_product_name = "QEMU Tablet"});
         // NOLINTEND
     }
 

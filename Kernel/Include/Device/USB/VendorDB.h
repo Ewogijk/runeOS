@@ -53,7 +53,7 @@ namespace Rune {
     template <>
     struct Hash<Device::USB::VendorDBRequest> {
         auto operator()(const Device::USB::VendorDBRequest& key) const -> size_t {
-            U16 arr[2] = {key.m_vendor_ID, key.m_product_ID};
+            U16 arr[2] = {key.m_vendor_ID, key.m_product_ID}; // NOLINT
             return FNV::do_hash<U16>(arr, 2);
         }
     };

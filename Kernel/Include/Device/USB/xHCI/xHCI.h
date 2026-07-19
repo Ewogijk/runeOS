@@ -202,10 +202,12 @@ namespace Rune::Device::USB {
                                         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
                                         void* data_buffer) -> CPU::Future<IORequestStatus>;
 
-        auto
-        handle_bulk_transfer_request(const DataTransferRequest& data_transfer_request,
-                                     const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                     void* data_buffer) -> CPU::Future<IORequestStatus>;
+        /// @brief Send a bulk or interrupt transfer §3.2.10 and §4.11.2.1
+        auto handle_bulk_interrupt_transfer_request(
+            const DataTransferRequest&                      data_transfer_request,
+            const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+            void* data_buffer) -> CPU::Future<IORequestStatus>;
+
 
         // ====================================================================================== //
         // Host Controller Initialization
