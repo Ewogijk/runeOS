@@ -264,20 +264,28 @@ namespace Rune::Device::USB {
     //                                                      // request
     // ========================================================================================== //
 
-#define TRANSFER_REQUEST_TYPES(X) X(TransferRequestType, CONTROL, 0x1)
+#define TRANSFER_REQUEST_TYPES(X)                                                                  \
+    X(TransferRequestType, CONTROL, 0x1)                                                           \
+    X(TransferRequestType, BULK, 0x2)                                                              \
+    X(TransferRequestType, INTERRUPT, 0x3)                                                         \
+    X(TransferRequestType, ISOCHRONOUS, 0x4)
 
     /// @brief The supported general transfer types.
     ///
-    /// - CONTROL: Control transfer.
+    /// - CONTROL:     Control transfer (default control pipe, EP0).
+    /// - BULK:        Bulk transfer on a bulk endpoint.
+    /// - INTERRUPT:   Interrupt transfer on an interrupt endpoint.
+    /// - ISOCHRONOUS: Isochronous transfer on an isochronous endpoint.
     DECLARE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT
 
-    /// @brief
+    /// @brief The header of a transfer request identifies the calling function device and the
+    ///         request type.
     struct TransferRequestHeader {
         TransferRequestType m_transfer_type = TransferRequestType::NONE;
         Handle              m_device_handle = 0;
     };
 
-    /// @brief An IO request for USB control transfers, USB 3.2 §4.4.6.
+    /// @brief An IO request for USB control transfers, USB 3.2 §4.4.5.
     struct ControlTransferRequest {
         TransferRequestHeader m_header;
         U8                    m_request_type = 0; // bmRequestType
@@ -285,6 +293,21 @@ namespace Rune::Device::USB {
         U16                   m_value        = 0; // wValue
         U16                   m_index        = 0; // wIndex
         U16                   m_length       = 0; // wLength
+    };
+
+    /// @brief An IO request for USB Bulk, Interrupt and Isochronous transfers.
+    struct DataTransferRequest {
+        TransferRequestHeader m_header;
+        U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
+        Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
+        U32                   m_length          = 0;               // bytes to transfer
+
+        // Isochronous only:
+        /// @brief SIA — schedule the TD on the next available Isoch service interval. When true,
+        ///         m_isoch_frame_id is ignored.
+        bool m_isoch_start_asap = true;
+        /// @brief Target (micro)frame for the isochronous TD when m_isoch_start_asap == false.
+        U16 m_isoch_frame_id = 0;
     };
 } // namespace Rune::Device::USB
 

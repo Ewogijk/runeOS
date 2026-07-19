@@ -364,6 +364,54 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
+    // NoOpTransferTRB — xHCI 2.0 §6.4.1.4
+    // ========================================================================================== //
+
+    [[nodiscard]] auto NoOpTransferTRB::StatusDWord::interrupter_target() const -> U16 {
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+    }
+    auto NoOpTransferTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
+        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
+                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+    }
+
+    [[nodiscard]] auto NoOpTransferTRB::ControlDWord::cycle() const -> bool {
+        return bit_check(m_register, CYCLE_BIT_OFFSET);
+    }
+    [[nodiscard]] auto NoOpTransferTRB::ControlDWord::ENT() const -> bool {
+        return bit_check(m_register, ENT_BIT_OFFSET);
+    }
+    [[nodiscard]] auto NoOpTransferTRB::ControlDWord::chain() const -> bool {
+        return bit_check(m_register, CHAIN_BIT_OFFSET);
+    }
+    [[nodiscard]] auto NoOpTransferTRB::ControlDWord::IOC() const -> bool {
+        return bit_check(m_register, IOC_BIT_OFFSET);
+    }
+    [[nodiscard]] auto NoOpTransferTRB::ControlDWord::trb_type() const -> TRBType {
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+    }
+    auto NoOpTransferTRB::ControlDWord::set_cycle(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
+    }
+    auto NoOpTransferTRB::ControlDWord::set_ENT(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, ENT_BIT_OFFSET) : bit_clear(m_register, ENT_BIT_OFFSET);
+    }
+    auto NoOpTransferTRB::ControlDWord::set_chain(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CHAIN_BIT_OFFSET) : bit_clear(m_register, CHAIN_BIT_OFFSET);
+    }
+    auto NoOpTransferTRB::ControlDWord::set_IOC(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, IOC_BIT_OFFSET) : bit_clear(m_register, IOC_BIT_OFFSET);
+    }
+    auto NoOpTransferTRB::ControlDWord::set_trb_type(U8 val) -> void {
+        m_register =
+            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+    }
+
+    // ========================================================================================== //
     // LinkTRB — xHCI 2.0 §6.4.4.1
     // ========================================================================================== //
 

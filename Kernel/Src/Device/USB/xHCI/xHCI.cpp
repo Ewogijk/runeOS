@@ -121,7 +121,10 @@ namespace Rune::Device::USB {
                 LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
                 return;
             }
-            maybe_promise->value->set_value(IORequestStatus::HANDLED);
+            IORequestStatus status = te->m_status.completion_code() == CompletionCode::SUCCESS
+                                         ? IORequestStatus::HANDLED
+                                         : IORequestStatus::FAILED;
+            maybe_promise->value->set_value(status);
             xhci_driver->m_inflight_trb_table.remove(inflight_trb_address);
         }
     }
@@ -193,6 +196,34 @@ namespace Rune::Device::USB {
         auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
         auto  future  = promise.get_future();
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
+        return future;
+    }
+
+    auto XHCIDriver::handle_bulk_transfer_request(
+        const DataTransferRequest&                      data_transfer_request,
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+        void* data_buffer) -> CPU::Future<IORequestStatus> {
+
+        LOGGER->debug("EP{} {}: Sending bulk transfer request. Size={} bytes",
+                      data_transfer_request.m_endpoint_number,
+                      data_transfer_request.m_direction.to_string(),
+                      data_transfer_request.m_length);
+        U8        dci = (data_transfer_request.m_endpoint_number * 2)
+                        + data_transfer_request.m_direction.to_value();
+        auto&     tr  = dc_sys_mem->m_transfer_rings[dci - 1];
+        NormalTRB trb;
+        trb.m_control.set_trb_type(NormalTRB::TYPE);
+        trb.m_status.set_trb_transfer_length(data_transfer_request.m_length);
+        trb.m_status.set_td_size(0);
+        trb.m_control.set_IOC(true);
+        trb.m_control.set_ISP(true);
+        trb.m_control.set_cycle(tr.m_pcs);
+        PhysicalAddr trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
+
+        CPU::CriticalSection _(m_inflight_table_lock);
+        auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
+        auto  future  = promise.get_future();
+        m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
         return future;
     }
 
@@ -587,7 +618,11 @@ namespace Rune::Device::USB {
             default: return {};
         }
 
-        InputContext ic;
+        auto* mm     = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
+        auto  ic_ptr = UniquePointer<InputContext>(
+            reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
+        InputContext& ic = *ic_ptr;
+
         // Add flags: A0 (slot) + A1 (EP0 = endpoint index 1)
         ic.m_input_control_context.m_add_context_flags = 0b11;
 
@@ -615,6 +650,20 @@ namespace Rune::Device::USB {
         PhysicalAddr ic_phys = 0;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(&ic), ic_phys)) return {};
 
+        // The Input Context Pointer only encodes bits [63:4]; a misaligned buffer would be
+        // truncated and the xHC would DMA the wrong memory.
+        if ((ic_phys & 0xF) != 0) {
+            LOGGER->error("Input Context is not 16-byte aligned: {:#x}", ic_phys);
+            return {};
+        }
+        // Verify the Root Hub Port Number actually landed in the buffer the xHC will read.
+        if (ic.m_slot_context.m_dw1.root_hub_port_num() != static_cast<U8>(port_idx + 1)) {
+            LOGGER->error("Input Context Root Hub Port Number mismatch: wrote {}, read back {}",
+                          port_idx + 1,
+                          ic.m_slot_context.m_dw1.root_hub_port_num());
+            return {};
+        }
+
         AddressDeviceCommandTRB adc_trb;
         adc_trb.m_input_context_ptr_lo.set_ptr(static_cast<U32>(ic_phys) >> SHIFT_4);
         adc_trb.m_input_context_ptr_hi = static_cast<U32>(ic_phys >> SHIFT_32);
@@ -622,8 +671,19 @@ namespace Rune::Device::USB {
         adc_trb.m_control.set_cycle(m_command_ring->m_pcs);
         adc_trb.m_control.set_slot_id(dc_sys_mem->m_slot_ID);
         adc_trb.m_control.set_BSR(false);
+        LOGGER->debug("AddressDevice: slot={} rhpn={} speed={} mps0={} ic_phys={:#x} portsc={:#x}",
+                      dc_sys_mem->m_slot_ID,
+                      port_idx + 1,
+                      port_speed.to_string(),
+                      packet_size,
+                      ic_phys,
+                      m_ri.port(port_idx).m_portsc.m_register);
         auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&adc_trb));
-        if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) return {};
+        if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) {
+            LOGGER->warn("Address Device Command failed: {}",
+                         cc_TRB.m_status.completion_code().to_string());
+            return {};
+        };
         return make_optional<U16>(ep0.m_dw1.max_packet_size());
     }
 
@@ -1292,6 +1352,10 @@ namespace Rune::Device::USB {
             case TransferRequestType::CONTROL: {
                 auto* ctr = reinterpret_cast<ControlTransferRequest*>(request.m_in_data);
                 return handle_control_transfer_request(*ctr, dc_sys_memory, request.m_out_data);
+            }
+            case TransferRequestType::BULK: {
+                auto* dtr = reinterpret_cast<DataTransferRequest*>(request.m_in_data);
+                return handle_bulk_transfer_request(*dtr, dc_sys_memory, request.m_out_data);
             }
             default: {
                 CPU::Promise<IORequestStatus> promise;
