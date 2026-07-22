@@ -117,24 +117,24 @@ namespace Rune::Device::USB {
                                    const String& revision,
                                    const String& serial_number,
                                    USBDeviceID   usb_device_id,
-                                   U8            configuration_value,
-                                   U16           function_idx)
+                                   U8            owning_configuration,
+                                   U16           owning_function)
         : Device(handle, name, oem, revision, serial_number, DeviceType::USB_FUNCTION_DEVICE),
           m_device_ID(move(usb_device_id)),
-          m_configuration_value(configuration_value),
-          m_function_value(function_idx) {}
+          m_owning_configuration(owning_configuration),
+          m_owning_function(owning_function) {}
 
     auto FunctionDevice::owning_function() const -> const Function& {
         const auto* composite = static_cast<const CompositeDevice*>(bus_device().get());
         for (const auto& configuration : composite->configurations())
-            if (configuration.m_configuration_value == m_configuration_value)
-                return configuration.m_functions[m_function_value];
-        return composite->configurations().first().m_functions[m_function_value];
+            if (configuration.m_configuration_value == m_owning_configuration)
+                return configuration.m_functions[m_owning_function];
+        return composite->configurations().first().m_functions[m_owning_function];
     }
 
     auto FunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
-    auto FunctionDevice::configuration_value() const -> U8 { return m_configuration_value; }
+    auto FunctionDevice::configuration_value() const -> U8 { return m_owning_configuration; }
 
     auto FunctionDevice::interfaces() const -> const LinkedList<Interface>& {
         return owning_function().m_interfaces;
@@ -149,8 +149,8 @@ namespace Rune::Device::USB {
     void FunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
         auto* composite = static_cast<CompositeDevice*>(bus_device().get());
         for (auto& configuration : composite->configurations()) {
-            if (configuration.m_configuration_value != m_configuration_value) continue;
-            for (auto& iface : configuration.m_functions[m_function_value].m_interfaces)
+            if (configuration.m_configuration_value != m_owning_configuration) continue;
+            for (auto& iface : configuration.m_functions[m_owning_function].m_interfaces)
                 if (iface.m_interface_number == interface_number) {
                     iface.m_active_setting = setting_number;
                     return;

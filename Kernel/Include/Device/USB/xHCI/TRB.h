@@ -190,6 +190,76 @@ namespace Rune::Device::USB {
     };
     static_assert(sizeof(NormalTRB) == sizeof(TRB));
 
+    /// @brief Isochronous Transfer TRB (xHCI 2.0 §6.4.1.3, type = 5). Always the first TRB of an
+    ///         Isoch TD; zero or more Normal TRBs may be chained after it for scatter/gather.
+    struct IsochTRB {
+        static constexpr U8 TYPE = TRBType::ISOCH;
+
+        U32 m_data_buffer_pointer_lo = 0;
+        U32 m_data_buffer_pointer_hi = 0;
+
+        struct StatusDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto trb_transfer_length() const -> U32;
+            [[nodiscard]] auto td_size() const -> U8;
+            [[nodiscard]] auto interrupter_target() const -> U16;
+            auto               set_trb_transfer_length(U32 val) -> void;
+            auto               set_td_size(U8 val) -> void;
+            auto               set_interrupter_target(U16 val) -> void;
+
+          private:
+            static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
+            static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+        } m_status;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto ENT() const -> bool;
+            [[nodiscard]] auto ISP() const -> bool;
+            [[nodiscard]] auto NS() const -> bool;
+            [[nodiscard]] auto chain() const -> bool;
+            [[nodiscard]] auto IOC() const -> bool;
+            [[nodiscard]] auto IDT() const -> bool;
+            [[nodiscard]] auto TBC() const -> U8;
+            [[nodiscard]] auto BEI() const -> bool;
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            [[nodiscard]] auto TLBPC() const -> U8;
+            [[nodiscard]] auto frame_ID() const -> U16;
+            [[nodiscard]] auto SIA() const -> bool;
+            auto               set_cycle(bool v) -> void;
+            auto               set_ENT(bool v) -> void;
+            auto               set_ISP(bool v) -> void;
+            auto               set_NS(bool v) -> void;
+            auto               set_chain(bool v) -> void;
+            auto               set_IOC(bool v) -> void;
+            auto               set_IDT(bool v) -> void;
+            auto               set_TBC(U8 val) -> void;
+            auto               set_BEI(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+            auto               set_TLBPC(U8 val) -> void;
+            auto               set_frame_ID(U16 val) -> void;
+            auto               set_SIA(bool v) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  ENT_BIT_OFFSET   = 1;
+            static constexpr U8  ISP_BIT_OFFSET   = 2;
+            static constexpr U8  NS_BIT_OFFSET    = 3;
+            static constexpr U8  CHAIN_BIT_OFFSET = 4;
+            static constexpr U8  IOC_BIT_OFFSET   = 5;
+            static constexpr U8  IDT_BIT_OFFSET   = 6;
+            static constexpr U8  BEI_BIT_OFFSET   = 9;
+            static constexpr U8  SIA_BIT_OFFSET   = 31;
+            static constexpr U32 TBC_MASK         = 0x00000180; // [8:7]
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U32 TLBPC_MASK       = 0x000F0000; // [19:16]
+            static constexpr U32 FRAME_ID_MASK    = 0x7FF00000; // [30:20]
+        } m_control;
+    };
+    static_assert(sizeof(IsochTRB) == sizeof(TRB));
+
     /// @brief Setup Stage TRB for control transfers (xHCI 2.0 §6.4.1.2.1, type = 2).
     struct SetupStageTRB {
         static constexpr U8 TYPE         = TRBType::SETUP_STAGE;

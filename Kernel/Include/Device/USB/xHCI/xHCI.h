@@ -176,14 +176,6 @@ namespace Rune::Device::USB {
         /// @brief Clear USBSTS.EINT and interrupter IMAN.IP.
         void clear_interrupt_pending_state(U8 interrupter) const;
 
-        /// @brief Poll the next event TRB from the event ring and return it if it completed
-        ///         successfully.
-        /// @return On event success: A copy of the event TRB
-        ///         Otherwise: The error completion code.
-        ///
-        /// The function blocks until an event is added to the event ring by the xHC.
-        // [[nodiscard]] auto poll_next_event() const -> Expected<EventTRB, CompletionCode>;
-
         /// @brief Handle an event TRB from the event ring after an interrupt by the xHC was
         ///         received.
         /// @param packet
@@ -194,9 +186,37 @@ namespace Rune::Device::USB {
         friend void handle_event_trb(CPU::InterruptPacket packet);
 
         // ====================================================================================== //
+        // Endpoint Configuration
+        // ====================================================================================== //
+
+        auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    const AlternateSetting&                         old_alt,
+                                    const AlternateSetting& new_alt) -> bool;
+
+        auto add_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                                   const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                   const AlternateSetting& alt_setting) -> bool;
+
+        auto send_configure_endpoint_command(const UniquePointer<InputContext>& ic, U8 slot_ID)
+            -> CompletionCode;
+
+        /// @brief Reconfigure the endpoints of one interface for a USB SET_INTERFACE request via a
+        ///         Configure Endpoint Command §4.3.6, before the request itself is forwarded to the
+        ///         device. Endpoints of the interface's current alternate setting that are not
+        ///         reused (by DCI) are dropped, endpoints of the target alternate setting are
+        ///         (re)added.
+        auto change_alternate_setting(const Configuration& config,
+                                      U8                   interface,
+                                      U8                   alternate_setting,
+                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
+            -> bool;
+
+        // ====================================================================================== //
         // IO Requests
         // ====================================================================================== //
 
+        /// @brief Send a control transfer §3.2.9 and §4.11.2.2
         auto
         handle_control_transfer_request(const ControlTransferRequest& control_transfer_request,
                                         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
@@ -208,6 +228,11 @@ namespace Rune::Device::USB {
             const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
             void* data_buffer) -> CPU::Future<IORequestStatus>;
 
+        /// @brief Send an isochronous transfer §3.2.11 and §4.11.2.3.
+        auto
+        handle_isoch_transfer_request(const IsochDataTransferRequest& isoch_transfer_request,
+                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                                      void* data_buffer) -> CPU::Future<IORequestStatus>;
 
         // ====================================================================================== //
         // Host Controller Initialization
