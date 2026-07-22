@@ -37,9 +37,8 @@ namespace Rune::Device::USB {
     struct TransferRing {
         static_assert(N >= 2, "ring needs at least one TRB slot plus one Link TRB");
         Array<TRB, N> m_entries{};
-
-        size_t m_enqueue_ptr = 0;
-        bool   m_pcs         = true;
+        size_t        m_enqueue_ptr = 0;
+        bool          m_pcs         = false;
 
         /// @brief Set up the Link TRB, set PCS=true, and set the enqueue pointer to the first
         ///         entry.
@@ -80,6 +79,12 @@ namespace Rune::Device::USB {
             }
             return tr_phys;
         }
+
+        auto clear() {
+            memset(m_entries.data(), 0, sizeof(TRB) * N);
+            m_enqueue_ptr = 0;
+            m_pcs         = false;
+        }
     };
 
     /// @brief Command Ring — N-1 command TRB slots followed by one Link TRB (xHCI 2.0 §4.9.3).
@@ -87,9 +92,8 @@ namespace Rune::Device::USB {
     struct CommandRing {
         static_assert(N >= 2, "ring needs at least one command slot plus one Link TRB");
         Array<TRB, N> m_entries{};
-
-        size_t m_enqueue_ptr = 0;
-        bool   m_pcs         = true;
+        size_t        m_enqueue_ptr = 0;
+        bool          m_pcs         = true;
 
         /// @brief Enqueue a Command TRB to the command ring.
         /// @param trb

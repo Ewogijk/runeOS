@@ -93,6 +93,15 @@ namespace Rune::CPU {
         Promise(Promise&&)                    = default;
         auto operator=(Promise&&) -> Promise& = default;
 
+        /// @brief Create a promise, set the given value immediately and return a future.
+        /// @param result Result value.
+        /// @return A future with already set result.
+        static auto make_completed_future(ResultType result) -> Future<ResultType> {
+            Promise<ResultType> promise;
+            promise.set_value(move(result));
+            return promise.get_future();
+        }
+
         /// @brief Get a reference to the future associated to this promise.
         /// @return A reference to the associated future.
         auto get_future() const -> Future<ResultType> { return Future(m_shared_state); }

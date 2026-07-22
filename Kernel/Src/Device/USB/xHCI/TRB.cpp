@@ -135,6 +135,119 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
+    // IsochTRB — xHCI 2.0 §6.4.1.3
+    // ========================================================================================== //
+
+    [[nodiscard]] auto IsochTRB::StatusDWord::trb_transfer_length() const -> U32 {
+        return m_register & TRB_TRANSFER_LENGTH_MASK;
+    }
+    [[nodiscard]] auto IsochTRB::StatusDWord::td_size() const -> U8 {
+        return static_cast<U8>((m_register & TD_SIZE_MASK) >> 17);
+    }
+    [[nodiscard]] auto IsochTRB::StatusDWord::interrupter_target() const -> U16 {
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+    }
+    auto IsochTRB::StatusDWord::set_trb_transfer_length(U32 val) -> void {
+        m_register = (m_register & ~TRB_TRANSFER_LENGTH_MASK) | (val & TRB_TRANSFER_LENGTH_MASK);
+    }
+    auto IsochTRB::StatusDWord::set_td_size(U8 val) -> void {
+        m_register = (m_register & ~TD_SIZE_MASK) | ((static_cast<U32>(val) << 17) & TD_SIZE_MASK);
+    }
+    auto IsochTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
+        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
+                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+    }
+
+    [[nodiscard]] auto IsochTRB::ControlDWord::cycle() const -> bool {
+        return bit_check(m_register, CYCLE_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::ENT() const -> bool {
+        return bit_check(m_register, ENT_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::ISP() const -> bool {
+        return bit_check(m_register, ISP_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::NS() const -> bool {
+        return bit_check(m_register, NS_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::chain() const -> bool {
+        return bit_check(m_register, CHAIN_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::IOC() const -> bool {
+        return bit_check(m_register, IOC_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::IDT() const -> bool {
+        return bit_check(m_register, IDT_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::TBC() const -> U8 {
+        return static_cast<U8>((m_register & TBC_MASK) >> 7);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::BEI() const -> bool {
+        return bit_check(m_register, BEI_BIT_OFFSET);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::trb_type() const -> TRBType {
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::TLBPC() const -> U8 {
+        return static_cast<U8>((m_register & TLBPC_MASK) >> 16);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::frame_ID() const -> U16 {
+        return static_cast<U16>((m_register & FRAME_ID_MASK) >> 20);
+    }
+    [[nodiscard]] auto IsochTRB::ControlDWord::SIA() const -> bool {
+        return bit_check(m_register, SIA_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_cycle(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_ENT(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, ENT_BIT_OFFSET) : bit_clear(m_register, ENT_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_ISP(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, ISP_BIT_OFFSET) : bit_clear(m_register, ISP_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_NS(bool v) -> void {
+        m_register = v ? bit_set(m_register, NS_BIT_OFFSET) : bit_clear(m_register, NS_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_chain(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CHAIN_BIT_OFFSET) : bit_clear(m_register, CHAIN_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_IOC(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, IOC_BIT_OFFSET) : bit_clear(m_register, IOC_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_IDT(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, IDT_BIT_OFFSET) : bit_clear(m_register, IDT_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_TBC(U8 val) -> void {
+        m_register = (m_register & ~TBC_MASK) | ((static_cast<U32>(val) << 7) & TBC_MASK);
+    }
+    auto IsochTRB::ControlDWord::set_BEI(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, BEI_BIT_OFFSET) : bit_clear(m_register, BEI_BIT_OFFSET);
+    }
+    auto IsochTRB::ControlDWord::set_trb_type(U8 val) -> void {
+        m_register =
+            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+    }
+    auto IsochTRB::ControlDWord::set_TLBPC(U8 val) -> void {
+        m_register = (m_register & ~TLBPC_MASK) | ((static_cast<U32>(val) << 16) & TLBPC_MASK);
+    }
+    auto IsochTRB::ControlDWord::set_frame_ID(U16 val) -> void {
+        m_register =
+            (m_register & ~FRAME_ID_MASK) | ((static_cast<U32>(val) << 20) & FRAME_ID_MASK);
+    }
+    auto IsochTRB::ControlDWord::set_SIA(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, SIA_BIT_OFFSET) : bit_clear(m_register, SIA_BIT_OFFSET);
+    }
+
+    // ========================================================================================== //
     // SetupStageTRB — xHCI 2.0 §6.4.1.2.1
     // ========================================================================================== //
 

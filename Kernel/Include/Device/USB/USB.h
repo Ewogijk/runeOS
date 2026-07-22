@@ -222,8 +222,8 @@ namespace Rune::Device::USB {
     class FunctionDevice : public Device {
         USBDeviceID m_device_ID; // Function's class/subclass/protocol
 
-        U8  m_configuration_value = 0; // owning Configuration::m_configuration_value
-        U16 m_function_value      = 0; // index into the owning Configuration's m_functions
+        U8  m_owning_configuration = 0; // owning Configuration::m_configuration_value
+        U16 m_owning_function      = 0; // index into the owning Configuration's m_functions
 
         /// @brief Resolve the owning Function from the parent CompositeDevice (bus_device()).
         [[nodiscard]] auto owning_function() const -> const Function&;
@@ -235,8 +235,8 @@ namespace Rune::Device::USB {
                        const String& revision,
                        const String& serial_number,
                        USBDeviceID   usb_device_id,
-                       U8            configuration_value,
-                       U16           function_idx);
+                       U8            owning_configuration,
+                       U16           owning_function);
 
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
 
@@ -288,21 +288,31 @@ namespace Rune::Device::USB {
     /// @brief An IO request for USB control transfers, USB 3.2 §4.4.5.
     struct ControlTransferRequest {
         TransferRequestHeader m_header;
-        U8                    m_request_type = 0; // bmRequestType
-        U8                    m_request      = 0; // bRequest
-        U16                   m_value        = 0; // wValue
-        U16                   m_index        = 0; // wIndex
-        U16                   m_length       = 0; // wLength
+        /// @brief The index to the function in the configuration of the FunctionDevice sending this
+        ///         request.
+        U16 m_function_index = 0;
+        U8  m_request_type   = 0; // bmRequestType
+        U8  m_request        = 0; // bRequest
+        U16 m_value          = 0; // wValue
+        U16 m_index          = 0; // wIndex
+        U16 m_length         = 0; // wLength
     };
 
-    /// @brief An IO request for USB Bulk, Interrupt and Isochronous transfers.
+    /// @brief An IO request for USB Bulk and Interrupt transfers.
     struct DataTransferRequest {
         TransferRequestHeader m_header;
         U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
         Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
         U32                   m_length          = 0;               // bytes to transfer
+    };
 
-        // Isochronous only:
+    /// @brief An IO request for USB Isochronous transfers.
+    struct IsochDataTransferRequest {
+        TransferRequestHeader m_header;
+        U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
+        Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
+        U32                   m_length          = 0;               // bytes to transfer
+
         /// @brief SIA — schedule the TD on the next available Isoch service interval. When true,
         ///         m_isoch_frame_id is ignored.
         bool m_isoch_start_asap = true;
