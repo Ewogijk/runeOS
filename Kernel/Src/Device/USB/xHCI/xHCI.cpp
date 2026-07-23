@@ -646,7 +646,6 @@ namespace Rune::Device::USB {
         volatile auto* ex_cap =
             reinterpret_cast<volatile ExtendedCapabilityPointerRegister*>(m_ri.m_capability)
             + m_ri.m_capability->m_hccparams1.XECP();
-        size_t idx = 0;
         while (true) {
             U8 cap      = ex_cap->m_extended_capability_pointer_register.capability_id();
             U8 next_cap = ex_cap->m_extended_capability_pointer_register.next_capability();
