@@ -114,12 +114,17 @@ namespace Rune::Device::USB {
         [[nodiscard]] auto SPR() const volatile -> bool;
         [[nodiscard]] auto max_scratch_lo() const volatile -> U8;
 
+        /// @brief
+        /// @return Number of scratchpad buffers to be reserved.
+        [[nodiscard]] auto max_scratch() const volatile -> U16;
+
       private:
-        static constexpr U32 IST_MASK            = 0x0000000F; // bits [3:0]
-        static constexpr U32 ERST_MAX_MASK       = 0x000000F0; // bits [7:4]
-        static constexpr U32 MAX_SCRATCH_HI_MASK = 0x03E00000; // bits [25:21]
-        static constexpr U8  SPR_BIT_OFFSET      = 26;
-        static constexpr U32 MAX_SCRATCH_LO_MASK = 0xF8000000; // bits [31:27]
+        static constexpr U32 IST_MASK              = 0x0000000F; // bits [3:0]
+        static constexpr U32 ERST_MAX_MASK         = 0x000000F0; // bits [7:4]
+        static constexpr U32 MAX_SCRATCH_HI_MASK   = 0x03E00000; // bits [25:21]
+        static constexpr U8  SPR_BIT_OFFSET        = 26;
+        static constexpr U32 MAX_SCRATCH_LO_MASK   = 0xF8000000; // bits [31:27]
+        static constexpr U8  MAX_SCRATCH_HI_OFFSET = 5;
     };
 
     // ========================================================================================== //
@@ -475,7 +480,8 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     struct OperationalRegisters {
-        static constexpr size_t PORT_REGISTER_OFFSET = 0x400;
+        static constexpr size_t PORT_REGISTER_OFFSET     = 0x400;
+        static constexpr U8     PAGE_SIZE_REGISTER_WIDTH = 16;
 
         USBCMD        m_usbcmd;       // 0x00
         USBSTS        m_usbsts;       // 0x04
@@ -688,6 +694,8 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     struct RegisterInterface {
+        static constexpr U16 DOORBELL_REGISTER_COUNT = 256;
+
         volatile CapabilityRegisters*  m_capability;  // BAR0
         volatile OperationalRegisters* m_operational; // BAR0 + CAPLENGTH
         volatile RuntimeRegisters*     m_runtime;     // BAR0 + (RTSOFF & ~0x1F)

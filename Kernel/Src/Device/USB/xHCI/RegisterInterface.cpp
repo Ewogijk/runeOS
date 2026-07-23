@@ -118,6 +118,10 @@ namespace Rune::Device::USB {
         return static_cast<U8>((m_register & MAX_SCRATCH_LO_MASK) >> 27); // NOLINT
     }
 
+    auto HCSParams2::max_scratch() const volatile -> U16 {
+        return (max_scratch_hi() << MAX_SCRATCH_HI_OFFSET | max_scratch_lo());
+    }
+
     // ========================================================================================== //
     // Structural Parameters 3 — xHCI 2.0 §5.3.5 Table 5-6 (All RO)
     // ========================================================================================== //

@@ -115,7 +115,7 @@ namespace Rune::Device::USB {
 
     [[nodiscard]] auto SupportedProtocolCapability::PortProtocolRegister::PSIC() const volatile
         -> U8 {
-        return static_cast<U8>((m_register & PSIC_MASK) >> 28);
+        return static_cast<U8>((m_register & PSIC_MASK) >> PSIC_SHIFT);
     }
 
     auto SupportedProtocolCapability::PortProtocolRegister::set_port_offset(U8 val) volatile
@@ -136,7 +136,8 @@ namespace Rune::Device::USB {
     }
 
     auto SupportedProtocolCapability::PortProtocolRegister::set_PSIC(U8 val) volatile -> void {
-        m_register = (m_register & ~PSIC_MASK) | ((static_cast<U32>(val) << 28) & PSIC_MASK);
+        m_register =
+            (m_register & ~PSIC_MASK) | ((static_cast<U32>(val) << PSIC_SHIFT) & PSIC_MASK);
     }
 
     // ========================================================================================== //
@@ -163,11 +164,11 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto SupportedProtocolCapability::ProtocolSpeed::PSIE() const volatile -> U8 {
-        return static_cast<U8>((m_register & PSIE_MASK) >> 4);
+        return static_cast<U8>((m_register & PSIE_MASK) >> PSIE_SHIFT);
     }
 
     [[nodiscard]] auto SupportedProtocolCapability::ProtocolSpeed::PLT() const volatile -> U8 {
-        return static_cast<U8>((m_register & PLT_MASK) >> 6);
+        return static_cast<U8>((m_register & PLT_MASK) >> PLT_SHIFT);
     }
 
     [[nodiscard]] auto SupportedProtocolCapability::ProtocolSpeed::PFD() const volatile -> bool {
@@ -175,7 +176,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto SupportedProtocolCapability::ProtocolSpeed::LP() const volatile -> U8 {
-        return static_cast<U8>((m_register & LP_MASK) >> 14);
+        return static_cast<U8>((m_register & LP_MASK) >> LP_SHIFT);
     }
 
     [[nodiscard]] auto SupportedProtocolCapability::ProtocolSpeed::PSIM() const volatile -> U16 {
@@ -187,11 +188,12 @@ namespace Rune::Device::USB {
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_PSIE(U8 val) volatile -> void {
-        m_register = (m_register & ~PSIE_MASK) | ((static_cast<U32>(val) << 4) & PSIE_MASK);
+        m_register =
+            (m_register & ~PSIE_MASK) | ((static_cast<U32>(val) << PSIE_SHIFT) & PSIE_MASK);
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_PLT(U8 val) volatile -> void {
-        m_register = (m_register & ~PLT_MASK) | ((static_cast<U32>(val) << 6) & PLT_MASK);
+        m_register = (m_register & ~PLT_MASK) | ((static_cast<U32>(val) << PLT_SHIFT) & PLT_MASK);
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_PFD(bool v) volatile -> void {
@@ -200,7 +202,7 @@ namespace Rune::Device::USB {
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_LP(U8 val) volatile -> void {
-        m_register = (m_register & ~LP_MASK) | ((static_cast<U32>(val) << 14) & LP_MASK);
+        m_register = (m_register & ~LP_MASK) | ((static_cast<U32>(val) << LP_SHIFT) & LP_MASK);
     }
 
     auto SupportedProtocolCapability::ProtocolSpeed::set_PSIM(U16 val) volatile -> void {

@@ -109,6 +109,7 @@ namespace Rune::Device::USB {
     /// @brief Generic TRB providing raw 4-DWORD access.
     struct TRB {
         static constexpr U16 DEFAULT_AVERAGE_TRB_LENGTH = 8;
+        static constexpr U8  PTR_ADDR_SHIFT            = 6;
 
         U32 m_dw0 = 0;
         U32 m_dw1 = 0;
@@ -122,7 +123,8 @@ namespace Rune::Device::USB {
         auto set_trb_type(U8 val) -> void;
 
       private:
-        static constexpr U32 TRB_TYPE_MASK = 0x0000FC00; // [15:10]
+        static constexpr U32 TRB_TYPE_MASK  = 0x0000FC00; // [15:10]
+        static constexpr U8  TRB_TYPE_SHIFT = 10;
     };
     static_assert(sizeof(TRB) == 4 * sizeof(U32));
 
@@ -149,7 +151,9 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
             static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U8  TD_SIZE_SHIFT            = 17;
             static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -185,6 +189,7 @@ namespace Rune::Device::USB {
             static constexpr U8  IDT_BIT_OFFSET        = 6;
             static constexpr U8  BEI_BIT_OFFSET        = 9;
             static constexpr U32 TRB_TYPE_MASK         = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT        = 10;
             static constexpr U32 TD_SIZE_EXTENDED_MASK = 0x007F0000; // [22:16]
         } m_control;
     };
@@ -210,7 +215,9 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
             static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U8  TD_SIZE_SHIFT            = 17;
             static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -253,9 +260,13 @@ namespace Rune::Device::USB {
             static constexpr U8  BEI_BIT_OFFSET   = 9;
             static constexpr U8  SIA_BIT_OFFSET   = 31;
             static constexpr U32 TBC_MASK         = 0x00000180; // [8:7]
+            static constexpr U8  TBC_SHIFT        = 7;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 TLBPC_MASK       = 0x000F0000; // [19:16]
+            static constexpr U8  TLBPC_SHIFT      = 16;
             static constexpr U32 FRAME_ID_MASK    = 0x7FF00000; // [30:20]
+            static constexpr U8  FRAME_ID_SHIFT   = 20;
         } m_control;
     };
     static_assert(sizeof(IsochTRB) == sizeof(TRB));
@@ -304,6 +315,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
             static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -324,6 +336,7 @@ namespace Rune::Device::USB {
             static constexpr U8  IOC_BIT_OFFSET   = 5;
             static constexpr U8  IDT_BIT_OFFSET   = 6;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 TRT_MASK         = 0x00030000; // [17:16]
         } m_control;
     };
@@ -348,7 +361,9 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 TRB_TRANSFER_LENGTH_MASK = 0x0001FFFF; // [16:0]
             static constexpr U32 TD_SIZE_MASK             = 0x003E0000; // [21:17]
+            static constexpr U8  TD_SIZE_SHIFT            = 17;
             static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -381,6 +396,7 @@ namespace Rune::Device::USB {
             static constexpr U8  IOC_BIT_OFFSET   = 5;
             static constexpr U8  IDT_BIT_OFFSET   = 6;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U8  DIR_BIT_OFFSET   = 16;
         } m_control;
     };
@@ -399,7 +415,8 @@ namespace Rune::Device::USB {
             auto               set_interrupter_target(U16 val) -> void;
 
           private:
-            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -423,6 +440,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CH_BIT_OFFSET    = 4;
             static constexpr U8  IOC_BIT_OFFSET   = 5;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U8  DIR_BIT_OFFSET   = 16;
         } m_control;
     };
@@ -430,10 +448,10 @@ namespace Rune::Device::USB {
 
     /// @brief No Op Transfer TRB (xHCI 2.0 §6.4.1.4, type = 8).
     ///
-    /// Placed on an endpoint Transfer Ring to verify the basic Transfer Ring mechanism: it transfers
-    /// no data and generates a Transfer Event (Completion Code = Success) when IOC is set. Only the
-    /// Interrupter Target, Cycle, ENT, Chain, IOC and TRB Type fields are defined; all other bits are
-    /// RsvdZ and left at their zero default.
+    /// Placed on an endpoint Transfer Ring to verify the basic Transfer Ring mechanism: it
+    /// transfers no data and generates a Transfer Event (Completion Code = Success) when IOC is
+    /// set. Only the Interrupter Target, Cycle, ENT, Chain, IOC and TRB Type fields are defined;
+    /// all other bits are RsvdZ and left at their zero default.
     struct NoOpTransferTRB {
         static constexpr U8 TYPE = TRBType::NO_OP;
 
@@ -446,7 +464,8 @@ namespace Rune::Device::USB {
             auto               set_interrupter_target(U16 val) -> void;
 
           private:
-            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -468,6 +487,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CHAIN_BIT_OFFSET = 4;
             static constexpr U8  IOC_BIT_OFFSET   = 5;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
         } m_control;
     };
     static_assert(sizeof(NoOpTransferTRB) == sizeof(TRB));
@@ -481,7 +501,8 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto ptr() const -> U32;       // bits [31:4], val = phys >> 4
             auto               set_ptr(U32 val) -> void; // val = phys >> 4
           private:
-            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
+            static constexpr U32 PTR_MASK  = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT = 4;
         } m_ring_segment_pointer_lo;
 
         U32 m_ring_segment_pointer_hi = 0;
@@ -492,7 +513,8 @@ namespace Rune::Device::USB {
             auto               set_interrupter_target(U16 val) -> void;
 
           private:
-            static constexpr U32 INTERRUPTER_TARGET_MASK = 0xFFC00000; // [31:22]
+            static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_status;
 
         struct ControlDWord {
@@ -514,6 +536,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CHAIN_BIT_OFFSET        = 4;
             static constexpr U8  IOC_BIT_OFFSET          = 5;
             static constexpr U32 TRB_TYPE_MASK           = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT          = 10;
         } m_control;
     };
     static_assert(sizeof(LinkTRB) == sizeof(TRB));
@@ -542,6 +565,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 SLOT_TYPE_MASK   = 0x001F0000; // [20:16]
         } m_control;
     };
@@ -567,6 +591,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
@@ -582,7 +607,8 @@ namespace Rune::Device::USB {
             auto               set_ptr(U32 val) -> void;
 
           private:
-            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
+            static constexpr U32 PTR_MASK  = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT = 4;
         } m_input_context_ptr_lo;
 
         U32 m_input_context_ptr_hi = 0;
@@ -603,6 +629,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U8  BSR_BIT_OFFSET   = 9;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
@@ -618,7 +645,8 @@ namespace Rune::Device::USB {
             auto               set_ptr(U32 val) -> void;
 
           private:
-            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
+            static constexpr U32 PTR_MASK  = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT = 4;
         } m_input_context_ptr_lo;
 
         U32 m_input_context_ptr_hi = 0;
@@ -639,6 +667,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U8  DC_BIT_OFFSET    = 9;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
@@ -654,7 +683,8 @@ namespace Rune::Device::USB {
             auto               set_ptr(U32 val) -> void;
 
           private:
-            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
+            static constexpr U32 PTR_MASK  = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT = 4;
         } m_input_context_ptr_lo;
 
         U32 m_input_context_ptr_hi = 0;
@@ -672,6 +702,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
     };
@@ -695,6 +726,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
         } m_control;
     };
     static_assert(sizeof(NoOpCommandTRB) == sizeof(TRB));
@@ -728,6 +760,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
         } m_control;
     };
     static_assert(sizeof(EventTRB) == sizeof(TRB));
@@ -768,6 +801,7 @@ namespace Rune::Device::USB {
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U8  ED_BIT_OFFSET    = 2;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 ENDPOINT_ID_MASK = 0x001F0000; // [20:16]
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
@@ -784,7 +818,8 @@ namespace Rune::Device::USB {
             auto               set_ptr(U32 val) -> void;
 
           private:
-            static constexpr U32 PTR_MASK = 0xFFFFFFF0; // [31:4]
+            static constexpr U32 PTR_MASK  = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT = 4;
         } m_command_trb_pointer_lo;
 
         U32 m_command_trb_pointer_hi = 0;
@@ -815,6 +850,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
             static constexpr U32 VF_ID_MASK       = 0x00FF0000; // [23:16]
             static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
         } m_control;
@@ -855,6 +891,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U8  CYCLE_BIT_OFFSET = 0;
             static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
         } m_control;
     };
     static_assert(sizeof(PortStatusChangeEventTRB) == sizeof(TRB));

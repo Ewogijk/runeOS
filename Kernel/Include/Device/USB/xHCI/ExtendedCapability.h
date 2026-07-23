@@ -102,6 +102,7 @@ namespace Rune::Device::USB {
             static constexpr U32 PORT_COUNT_MASK       = 0x0000FF00; // [15:8]
             static constexpr U32 PROTOCOL_DEFINED_MASK = 0x0FFF0000; // [27:16]
             static constexpr U32 PSIC_MASK             = 0xF0000000; // [31:28]
+            static constexpr U8  PSIC_SHIFT            = 28;
         } m_port_protocol_register;
 
         struct ProtocolSlotType {
@@ -134,9 +135,12 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 PSIV_MASK         = 0x0000000F; // [3:0]
             static constexpr U32 PSIE_MASK         = 0x00000030; // [5:4]
+            static constexpr U8  PSIE_SHIFT        = 4;
             static constexpr U32 PLT_MASK          = 0x000000C0; // [7:6]
+            static constexpr U8  PLT_SHIFT         = 6;
             static constexpr U8  PFD_BIT_OFFSET    = 8;
             static constexpr U32 LP_MASK           = 0x0000C000; // [15:14]
+            static constexpr U8  LP_SHIFT          = 14;
             static constexpr U32 PSIM_MASK         = 0xFFFF0000; // [31:16]
         } m_protocol_speed_register;
     };

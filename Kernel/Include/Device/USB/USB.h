@@ -100,7 +100,7 @@ namespace Rune::Device::USB {
         U8                   m_interface_class    = 0;
         U8                   m_interface_subclass = 0;
         U8                   m_interface_protocol = 0;
-        U8                   m_string_index       = 0; // iInterface
+        String               m_interface_name;
         LinkedList<EndPoint> m_endpoints;
     };
 
@@ -125,7 +125,7 @@ namespace Rune::Device::USB {
         U8                    m_function_class    = 0;
         U8                    m_function_subclass = 0;
         U8                    m_function_protocol = 0;
-        U8                    m_string_index      = 0; // iFunction
+        String                m_function_name;
         LinkedList<Interface> m_interfaces;
     };
 
@@ -136,11 +136,11 @@ namespace Rune::Device::USB {
     /// another: the number of interfaces, their functions, and their endpoints may differ
     /// completely from one configuration to the next.
     struct Configuration {
-        U8   m_configuration_value = 0;     // argument to SetConfiguration()
-        U8   m_string_index        = 0;     // iConfiguration
-        bool m_self_powered        = false; // bmAttributes D6
-        bool m_remote_wakeup       = false; // bmAttributes D5
-        U16  m_max_power_mA        = 0;     // bMaxPower, normalized to mA
+        U8     m_configuration_value = 0; // argument to SetConfiguration()
+        String m_configuration_name;
+        bool   m_self_powered  = false;   // bmAttributes D6
+        bool   m_remote_wakeup = false;   // bmAttributes D5
+        U16    m_max_power_mA  = 0;       // bMaxPower, normalized to mA
         /// @brief One entry per logical function of this configuration. Always populated: an
         ///         interface not covered by an Interface Association Descriptor is its own
         ///         single-interface function. Every interface of the configuration lives in

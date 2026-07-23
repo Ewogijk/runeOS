@@ -29,7 +29,7 @@ namespace Rune::Device::USB {
     auto TRB::cycle() const -> bool { return bit_check(m_dw3, 0); }
 
     auto TRB::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_dw3 & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_dw3 & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
 
     auto TRB::set_cycle(bool cycle_bit) -> void {
@@ -37,7 +37,8 @@ namespace Rune::Device::USB {
     }
 
     auto TRB::set_trb_type(U8 val) -> void {
-        m_dw3 = (m_dw3 & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_dw3 =
+            (m_dw3 & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -48,20 +49,22 @@ namespace Rune::Device::USB {
         return m_register & TRB_TRANSFER_LENGTH_MASK;
     }
     [[nodiscard]] auto NormalTRB::StatusDWord::td_size() const -> U8 {
-        return static_cast<U8>((m_register & TD_SIZE_MASK) >> 17);
+        return static_cast<U8>((m_register & TD_SIZE_MASK) >> TD_SIZE_SHIFT);
     }
     [[nodiscard]] auto NormalTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto NormalTRB::StatusDWord::set_trb_transfer_length(U32 val) -> void {
         m_register = (m_register & ~TRB_TRANSFER_LENGTH_MASK) | (val & TRB_TRANSFER_LENGTH_MASK);
     }
     auto NormalTRB::StatusDWord::set_td_size(U8 val) -> void {
-        m_register = (m_register & ~TD_SIZE_MASK) | ((static_cast<U32>(val) << 17) & TD_SIZE_MASK);
+        m_register = (m_register & ~TD_SIZE_MASK)
+                     | ((static_cast<U32>(val) << TD_SIZE_SHIFT) & TD_SIZE_MASK);
     }
     auto NormalTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto NormalTRB::ControlDWord::cycle() const -> bool {
@@ -89,7 +92,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, BEI_BIT_OFFSET);
     }
     [[nodiscard]] auto NormalTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto NormalTRB::ControlDWord::td_size_extended() const -> U8 {
         return static_cast<U8>((m_register & TD_SIZE_EXTENDED_MASK) >> SHIFT_16);
@@ -126,8 +129,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, BEI_BIT_OFFSET) : bit_clear(m_register, BEI_BIT_OFFSET);
     }
     auto NormalTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto NormalTRB::ControlDWord::set_td_size_extended(U8 val) -> void {
         m_register = (m_register & ~TD_SIZE_EXTENDED_MASK)
@@ -142,20 +145,22 @@ namespace Rune::Device::USB {
         return m_register & TRB_TRANSFER_LENGTH_MASK;
     }
     [[nodiscard]] auto IsochTRB::StatusDWord::td_size() const -> U8 {
-        return static_cast<U8>((m_register & TD_SIZE_MASK) >> 17);
+        return static_cast<U8>((m_register & TD_SIZE_MASK) >> TD_SIZE_SHIFT);
     }
     [[nodiscard]] auto IsochTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto IsochTRB::StatusDWord::set_trb_transfer_length(U32 val) -> void {
         m_register = (m_register & ~TRB_TRANSFER_LENGTH_MASK) | (val & TRB_TRANSFER_LENGTH_MASK);
     }
     auto IsochTRB::StatusDWord::set_td_size(U8 val) -> void {
-        m_register = (m_register & ~TD_SIZE_MASK) | ((static_cast<U32>(val) << 17) & TD_SIZE_MASK);
+        m_register = (m_register & ~TD_SIZE_MASK)
+                     | ((static_cast<U32>(val) << TD_SIZE_SHIFT) & TD_SIZE_MASK);
     }
     auto IsochTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto IsochTRB::ControlDWord::cycle() const -> bool {
@@ -180,19 +185,19 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IDT_BIT_OFFSET);
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::TBC() const -> U8 {
-        return static_cast<U8>((m_register & TBC_MASK) >> 7);
+        return static_cast<U8>((m_register & TBC_MASK) >> TBC_SHIFT);
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::BEI() const -> bool {
         return bit_check(m_register, BEI_BIT_OFFSET);
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::TLBPC() const -> U8 {
-        return static_cast<U8>((m_register & TLBPC_MASK) >> 16);
+        return static_cast<U8>((m_register & TLBPC_MASK) >> TLBPC_SHIFT);
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::frame_ID() const -> U16 {
-        return static_cast<U16>((m_register & FRAME_ID_MASK) >> 20);
+        return static_cast<U16>((m_register & FRAME_ID_MASK) >> FRAME_ID_SHIFT);
     }
     [[nodiscard]] auto IsochTRB::ControlDWord::SIA() const -> bool {
         return bit_check(m_register, SIA_BIT_OFFSET);
@@ -225,22 +230,23 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IDT_BIT_OFFSET) : bit_clear(m_register, IDT_BIT_OFFSET);
     }
     auto IsochTRB::ControlDWord::set_TBC(U8 val) -> void {
-        m_register = (m_register & ~TBC_MASK) | ((static_cast<U32>(val) << 7) & TBC_MASK);
+        m_register = (m_register & ~TBC_MASK) | ((static_cast<U32>(val) << TBC_SHIFT) & TBC_MASK);
     }
     auto IsochTRB::ControlDWord::set_BEI(bool v) -> void {
         m_register =
             v ? bit_set(m_register, BEI_BIT_OFFSET) : bit_clear(m_register, BEI_BIT_OFFSET);
     }
     auto IsochTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto IsochTRB::ControlDWord::set_TLBPC(U8 val) -> void {
-        m_register = (m_register & ~TLBPC_MASK) | ((static_cast<U32>(val) << 16) & TLBPC_MASK);
+        m_register =
+            (m_register & ~TLBPC_MASK) | ((static_cast<U32>(val) << TLBPC_SHIFT) & TLBPC_MASK);
     }
     auto IsochTRB::ControlDWord::set_frame_ID(U16 val) -> void {
-        m_register =
-            (m_register & ~FRAME_ID_MASK) | ((static_cast<U32>(val) << 20) & FRAME_ID_MASK);
+        m_register = (m_register & ~FRAME_ID_MASK)
+                     | ((static_cast<U32>(val) << FRAME_ID_SHIFT) & FRAME_ID_MASK);
     }
     auto IsochTRB::ControlDWord::set_SIA(bool v) -> void {
         m_register =
@@ -290,14 +296,15 @@ namespace Rune::Device::USB {
         return m_register & TRB_TRANSFER_LENGTH_MASK;
     }
     [[nodiscard]] auto SetupStageTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto SetupStageTRB::StatusDWord::set_trb_transfer_length(U32 val) -> void {
         m_register = (m_register & ~TRB_TRANSFER_LENGTH_MASK) | (val & TRB_TRANSFER_LENGTH_MASK);
     }
     auto SetupStageTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto SetupStageTRB::ControlDWord::cycle() const -> bool {
@@ -310,7 +317,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IDT_BIT_OFFSET);
     }
     [[nodiscard]] auto SetupStageTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto SetupStageTRB::ControlDWord::TRT() const -> U8 {
         return static_cast<U8>((m_register & TRT_MASK) >> SHIFT_16);
@@ -328,8 +335,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IDT_BIT_OFFSET) : bit_clear(m_register, IDT_BIT_OFFSET);
     }
     auto SetupStageTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto SetupStageTRB::ControlDWord::set_TRT(U8 val) -> void {
         m_register = (m_register & ~TRT_MASK) | ((static_cast<U32>(val) << SHIFT_16) & TRT_MASK);
@@ -343,20 +350,22 @@ namespace Rune::Device::USB {
         return m_register & TRB_TRANSFER_LENGTH_MASK;
     }
     [[nodiscard]] auto DataStageTRB::StatusDWord::td_size() const -> U8 {
-        return static_cast<U8>((m_register & TD_SIZE_MASK) >> 17);
+        return static_cast<U8>((m_register & TD_SIZE_MASK) >> TD_SIZE_SHIFT);
     }
     [[nodiscard]] auto DataStageTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto DataStageTRB::StatusDWord::set_trb_transfer_length(U32 val) -> void {
         m_register = (m_register & ~TRB_TRANSFER_LENGTH_MASK) | (val & TRB_TRANSFER_LENGTH_MASK);
     }
     auto DataStageTRB::StatusDWord::set_td_size(U8 val) -> void {
-        m_register = (m_register & ~TD_SIZE_MASK) | ((static_cast<U32>(val) << 17) & TD_SIZE_MASK);
+        m_register = (m_register & ~TD_SIZE_MASK)
+                     | ((static_cast<U32>(val) << TD_SIZE_SHIFT) & TD_SIZE_MASK);
     }
     auto DataStageTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto DataStageTRB::ControlDWord::cycle() const -> bool {
@@ -381,7 +390,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IDT_BIT_OFFSET);
     }
     [[nodiscard]] auto DataStageTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto DataStageTRB::ControlDWord::DIR() const -> bool {
         return bit_check(m_register, DIR_BIT_OFFSET);
@@ -414,8 +423,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IDT_BIT_OFFSET) : bit_clear(m_register, IDT_BIT_OFFSET);
     }
     auto DataStageTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto DataStageTRB::ControlDWord::set_DIR(bool v) -> void {
         m_register =
@@ -427,11 +436,12 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto StatusStageTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto StatusStageTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto StatusStageTRB::ControlDWord::cycle() const -> bool {
@@ -447,7 +457,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IOC_BIT_OFFSET);
     }
     [[nodiscard]] auto StatusStageTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto StatusStageTRB::ControlDWord::DIR() const -> bool {
         return bit_check(m_register, DIR_BIT_OFFSET);
@@ -468,8 +478,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IOC_BIT_OFFSET) : bit_clear(m_register, IOC_BIT_OFFSET);
     }
     auto StatusStageTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto StatusStageTRB::ControlDWord::set_DIR(bool v) -> void {
         m_register =
@@ -481,11 +491,12 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto NoOpTransferTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto NoOpTransferTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto NoOpTransferTRB::ControlDWord::cycle() const -> bool {
@@ -501,7 +512,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IOC_BIT_OFFSET);
     }
     [[nodiscard]] auto NoOpTransferTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     auto NoOpTransferTRB::ControlDWord::set_cycle(bool v) -> void {
         m_register =
@@ -520,8 +531,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IOC_BIT_OFFSET) : bit_clear(m_register, IOC_BIT_OFFSET);
     }
     auto NoOpTransferTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -529,18 +540,19 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto LinkTRB::RingSegmentPtrLoDWord::ptr() const -> U32 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto LinkTRB::RingSegmentPtrLoDWord::set_ptr(U32 val) -> void {
-        m_register = (val << 4) & PTR_MASK;
+        m_register = (val << PTR_SHIFT) & PTR_MASK;
     }
 
     [[nodiscard]] auto LinkTRB::StatusDWord::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
     auto LinkTRB::StatusDWord::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     [[nodiscard]] auto LinkTRB::ControlDWord::cycle() const -> bool {
@@ -556,7 +568,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, IOC_BIT_OFFSET);
     }
     [[nodiscard]] auto LinkTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     auto LinkTRB::ControlDWord::set_cycle(bool v) -> void {
         m_register =
@@ -575,8 +587,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, IOC_BIT_OFFSET) : bit_clear(m_register, IOC_BIT_OFFSET);
     }
     auto LinkTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -587,7 +599,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto EnableSlotCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto EnableSlotCommandTRB::ControlDWord::slot_type() const -> U8 {
         return static_cast<U8>((m_register & SLOT_TYPE_MASK) >> SHIFT_16);
@@ -597,8 +609,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto EnableSlotCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto EnableSlotCommandTRB::ControlDWord::set_slot_type(U8 val) -> void {
         m_register =
@@ -613,7 +625,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto DisableSlotCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto DisableSlotCommandTRB::ControlDWord::slot_id() const -> U8 {
         return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
@@ -623,8 +635,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto DisableSlotCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto DisableSlotCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
         m_register =
@@ -636,10 +648,10 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto AddressDeviceCommandTRB::InputContextPtrLoDWord::ptr() const -> U32 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto AddressDeviceCommandTRB::InputContextPtrLoDWord::set_ptr(U32 val) -> void {
-        m_register = (val << 4) & PTR_MASK;
+        m_register = (val << PTR_SHIFT) & PTR_MASK;
     }
 
     [[nodiscard]] auto AddressDeviceCommandTRB::ControlDWord::cycle() const -> bool {
@@ -649,7 +661,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, BSR_BIT_OFFSET);
     }
     [[nodiscard]] auto AddressDeviceCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto AddressDeviceCommandTRB::ControlDWord::slot_id() const -> U8 {
         return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
@@ -663,8 +675,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, BSR_BIT_OFFSET) : bit_clear(m_register, BSR_BIT_OFFSET);
     }
     auto AddressDeviceCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto AddressDeviceCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
         m_register =
@@ -676,10 +688,10 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto ConfigureEndpointCommandTRB::InputContextPtrLoDWord::ptr() const -> U32 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto ConfigureEndpointCommandTRB::InputContextPtrLoDWord::set_ptr(U32 val) -> void {
-        m_register = (val << 4) & PTR_MASK;
+        m_register = (val << PTR_SHIFT) & PTR_MASK;
     }
 
     [[nodiscard]] auto ConfigureEndpointCommandTRB::ControlDWord::cycle() const -> bool {
@@ -689,7 +701,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, DC_BIT_OFFSET);
     }
     [[nodiscard]] auto ConfigureEndpointCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto ConfigureEndpointCommandTRB::ControlDWord::slot_id() const -> U8 {
         return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
@@ -702,8 +714,8 @@ namespace Rune::Device::USB {
         m_register = v ? bit_set(m_register, DC_BIT_OFFSET) : bit_clear(m_register, DC_BIT_OFFSET);
     }
     auto ConfigureEndpointCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto ConfigureEndpointCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
         m_register =
@@ -715,17 +727,17 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto EvaluateContextCommandTRB::InputContextPtrLoDWord::ptr() const -> U32 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto EvaluateContextCommandTRB::InputContextPtrLoDWord::set_ptr(U32 val) -> void {
-        m_register = (val << 4) & PTR_MASK;
+        m_register = (val << PTR_SHIFT) & PTR_MASK;
     }
 
     [[nodiscard]] auto EvaluateContextCommandTRB::ControlDWord::cycle() const -> bool {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto EvaluateContextCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto EvaluateContextCommandTRB::ControlDWord::slot_id() const -> U8 {
         return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
@@ -735,8 +747,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto EvaluateContextCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto EvaluateContextCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
         m_register =
@@ -751,15 +763,15 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto NoOpCommandTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     auto NoOpCommandTRB::ControlDWord::set_cycle(bool v) -> void {
         m_register =
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto NoOpCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -778,15 +790,15 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto EventTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     auto EventTRB::ControlDWord::set_cycle(bool v) -> void {
         m_register =
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto EventTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
     // ========================================================================================== //
@@ -814,7 +826,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, ED_BIT_OFFSET);
     }
     [[nodiscard]] auto TransferEventTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto TransferEventTRB::ControlDWord::endpoint_id() const -> U8 {
         return static_cast<U8>((m_register & ENDPOINT_ID_MASK) >> SHIFT_16);
@@ -830,8 +842,8 @@ namespace Rune::Device::USB {
         m_register = v ? bit_set(m_register, ED_BIT_OFFSET) : bit_clear(m_register, ED_BIT_OFFSET);
     }
     auto TransferEventTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto TransferEventTRB::ControlDWord::set_endpoint_id(U8 val) -> void {
         m_register = (m_register & ~ENDPOINT_ID_MASK)
@@ -847,10 +859,10 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto CommandCompletionEventTRB::CommandTrbPtrLoDWord::ptr() const -> U32 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto CommandCompletionEventTRB::CommandTrbPtrLoDWord::set_ptr(U32 val) -> void {
-        m_register = (val << 4) & PTR_MASK;
+        m_register = (val << PTR_SHIFT) & PTR_MASK;
     }
 
     [[nodiscard]] auto CommandCompletionEventTRB::StatusDWord::completion_parameter() const -> U32 {
@@ -872,7 +884,7 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto CommandCompletionEventTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     [[nodiscard]] auto CommandCompletionEventTRB::ControlDWord::vf_id() const -> U8 {
         return static_cast<U8>((m_register & VF_ID_MASK) >> SHIFT_16);
@@ -885,8 +897,8 @@ namespace Rune::Device::USB {
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto CommandCompletionEventTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
     auto CommandCompletionEventTRB::ControlDWord::set_vf_id(U8 val) -> void {
         m_register =
@@ -922,15 +934,15 @@ namespace Rune::Device::USB {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto PortStatusChangeEventTRB::ControlDWord::trb_type() const -> TRBType {
-        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> 10));
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
     }
     auto PortStatusChangeEventTRB::ControlDWord::set_cycle(bool v) -> void {
         m_register =
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }
     auto PortStatusChangeEventTRB::ControlDWord::set_trb_type(U8 val) -> void {
-        m_register =
-            (m_register & ~TRB_TYPE_MASK) | ((static_cast<U32>(val) << 10) & TRB_TYPE_MASK);
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
     }
 
 } // namespace Rune::Device::USB

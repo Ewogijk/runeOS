@@ -35,4 +35,26 @@ namespace Rune::Device::USB {
     DEFINE_TYPED_ENUM(SyncType, U8, ENDPOINT_SYNC_TYPES, 0xFF)
     DEFINE_TYPED_ENUM(IsochronousUsageType, U8, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF)
     DEFINE_TYPED_ENUM(InterruptUsageType, U8, INTERRUPT_ENDPOINT_USAGE_TYPES, 0xFF)
+
+    // ========================================================================================== //
+    // USB String Descriptor — USB 3.2 §9.6.9
+    // ========================================================================================== //
+
+    auto StringDescriptorZero::lang_id_count() const -> U8 {
+        return static_cast<U8>((m_length - SIZE_HEADER) / sizeof(U16));
+    }
+
+    auto StringDescriptor::string_length() const -> U8 {
+        return static_cast<U8>(m_length - SIZE_HEADER);
+    }
+
+    auto StringDescriptor::string() const -> String {
+        String result;
+        U8     char_count = static_cast<U8>(string_length() / sizeof(U16));
+        for (U8 i = 0; i < char_count; i++) {
+            U16 code_unit  = m_string[i];
+            result        += code_unit < ASCII_CODE_UNIT_LIMIT ? static_cast<char>(code_unit) : '?';
+        }
+        return result;
+    }
 } // namespace Rune::Device::USB

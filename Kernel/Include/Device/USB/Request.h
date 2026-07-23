@@ -37,9 +37,22 @@ namespace Rune::Device::USB {
     X(RequestType, RECIPIENT_OTHER, 0b00000011)                                                    \
     X(RequestType, RECIPIENT_VENDOR, 0b00011111)
 
-    /// @brief TODO write doc
+    /// @brief Bit flags composing the bmRequestType field of a Setup packet — USB 3.2 Table 9-3.
     ///
-    /// - A_VALUE: A_DESCRIPTION
+    /// bmRequestType is a bitmap built by OR-ing one value from each of the three groups below:
+    /// Direction (bit 7), Type (bits 6..5), and Recipient (bits 4..0).
+    ///
+    /// - HOST_TO_DEVICE (bit 7 = 0): Data stage, if any, transfers host to device.
+    /// - DEVICE_TO_HOST (bit 7 = 1): Data stage, if any, transfers device to host.
+    /// - TYPE_STANDARD (bits 6..5 = 0): Request defined by the USB core specification.
+    /// - TYPE_CLASS (bits 6..5 = 1): Request defined by a USB device class specification.
+    /// - TYPE_VENDOR (bits 6..5 = 2): Request defined by the device vendor.
+    /// - RECIPIENT_DEVICE (bits 4..0 = 0): Request targets the device as a whole.
+    /// - RECIPIENT_INTERFACE (bits 4..0 = 1): Request targets an interface, identified in wIndex.
+    /// - RECIPIENT_ENDPOINT (bits 4..0 = 2): Request targets an endpoint, identified in wIndex.
+    /// - RECIPIENT_OTHER (bits 4..0 = 3): Request targets an element not covered by the other
+    /// recipients.
+    /// - RECIPIENT_VENDOR (bits 4..0 = 31): Vendor specific recipient.
     DECLARE_TYPED_ENUM(RequestType, U8, REQUEST_TYPES, 0x0) // NOLINT
 
     // ========================================================================================== //

@@ -113,13 +113,7 @@ namespace Rune::Device::USB {
     /// drivers' responsibility to update the active setting of the interface, as the xHCI driver
     /// does not keep track of FunctionDevice's.
     class XHCIDriver : public Driver {
-        static constexpr U8          PORT_VERSION_MAP_SIZE          = 8;
-        static constexpr VirtualAddr MMIO_BASE_ADDR                 = 0xFFFFC00000000000;
-        static constexpr U16         DOORBELL_REGISTER_COUNT        = 256;
-        static constexpr U8          MIN_EXP_SCRATCHPAD_BUFFER_SIZE = 12;
-        static constexpr U8          FLADJ_DEFAULT                  = 0x20;
-        static constexpr U8          PAGE_SIZE_REGISTER_WIDTH       = 16;
-        static constexpr U8          BASE_ADDR_SHIFT                = 6;
+        static constexpr VirtualAddr MMIO_BASE_ADDR = 0xFFFFC00000000000;
 
         // ====================================================================================== //
         // xHCI Configuration
@@ -189,14 +183,16 @@ namespace Rune::Device::USB {
         // Endpoint Configuration
         // ====================================================================================== //
 
-        auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
-                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                                    const AlternateSetting&                         old_alt,
-                                    const AlternateSetting& new_alt) -> bool;
+        static auto
+        drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                               const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                               const AlternateSetting&                         old_alt,
+                               const AlternateSetting&                         new_alt) -> bool;
 
-        auto add_endpoint_contexts(const UniquePointer<InputContext>&              ic,
-                                   const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                                   const AlternateSetting& alt_setting) -> bool;
+        static auto
+        add_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                              const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                              const AlternateSetting&                         alt_setting) -> bool;
 
         auto send_configure_endpoint_command(const UniquePointer<InputContext>& ic, U8 slot_ID)
             -> CompletionCode;
@@ -256,11 +252,6 @@ namespace Rune::Device::USB {
         // USB Device Initialization
         // ====================================================================================== //
 
-        // auto handle_control_transfer_request_then_poll(
-        //     const ControlTransferRequest&                   control_transfer_request,
-        //     const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-        //     void*                                           data_buffer) -> bool;
-
         auto wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB;
 
         [[nodiscard]] auto enable_slot() -> Optional<U8>;
@@ -284,15 +275,37 @@ namespace Rune::Device::USB {
                                           U16                                      buf_size,
                                           U8 config_index) -> bool;
 
+        /// @brief Read string descriptor zero and return the first supported LANGID.
+        ///         USB 3.2 §9.6.9.
+        /// @return The first LANGID, or 0 if the device reports none / the request fails. A zero
+        ///         LANGID disables all subsequent string resolution.
+        auto get_default_langid(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
+            -> U16;
+
+        /// @brief Resolve a string descriptor index to text, USB 3.2 §9.6.9.
+        /// @param index The iX field from a descriptor. Index 0 means "no string".
+        /// @param langid The language ID from get_default_langid().
+        /// @return The decoded string, or empty if index/langid is 0, the request fails, or the
+        ///         device has no such string. String resolution never aborts enumeration.
+        auto fetch_string_descriptor(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                     U8                                              index,
+                                     U16 langid) -> String;
+
         /// @brief Parse a GET_DESCRIPTOR(CONFIGURATION) blob into the Configuration model,
-        ///         USB 3.2 §9.6.3-§9.6.6.
+        ///         USB 3.2 §9.6.3-§9.6.6. String index fields are resolved to text inline via
+        ///         fetch_string_descriptor(), hence this issues control transfers and is not
+        ///         static.
         /// @param config_descriptor Header already read from the front of config_blob.
         /// @param config_blob The full configuration blob (config_descriptor.m_total_length
         ///                    bytes), including the header.
         /// @param port_speed Needed to normalize bMaxPower into mA.
-        static auto build_configuration(const ConfigurationDescriptor& config_descriptor,
-                                        const U8*                      config_blob,
-                                        PortSpeed                      port_speed) -> Configuration;
+        /// @param dc_sys_memory Device context used to fetch string descriptors.
+        /// @param langid Language ID from get_default_langid() for string resolution.
+        auto build_configuration(const ConfigurationDescriptor&                  config_descriptor,
+                                 const U8*                                       config_blob,
+                                 PortSpeed                                       port_speed,
+                                 const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                 U16 langid) -> Configuration;
 
         static void log_configuration(const Configuration& configuration);
 

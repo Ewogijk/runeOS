@@ -21,11 +21,11 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto EventRingSegmentTableEntry::RingSegmentBaseAddr::ptr() const -> U64 {
-        return (m_register & PTR_MASK) >> 6;
+        return (m_register & PTR_MASK) >> TRB::PTR_ADDR_SHIFT;
     }
 
     auto EventRingSegmentTableEntry::RingSegmentBaseAddr::set_ptr(U64 val) -> void {
-        m_register = val << 6;
+        m_register = val << TRB::PTR_ADDR_SHIFT;
     }
 
     // ========================================================================================== //
