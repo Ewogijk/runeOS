@@ -19,6 +19,9 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/Collections/Array.h>
+#include <KRE/String.h>
+
 namespace Rune::Device::USB {
 
     // ========================================================================================== //
@@ -241,6 +244,43 @@ namespace Rune::Device::USB {
         static constexpr U8 SSP_ISO_COMPANION_MASK = 0x80;
     } PACKED;
     static_assert(sizeof(SuperSpeedEndpointCompanionDescriptor) == 6); // NOLINT
+
+    // ========================================================================================== //
+    // USB String Descriptor — USB 3.2 §9.6.9
+    // ========================================================================================== //
+
+    /// @brief String index zero for all languages (Table 9-30): returns the array of 2-byte
+    ///         LANGID codes the device supports. Not NULL-terminated; a device may omit all
+    ///         string descriptors, in which case it shall not return an array of LANGID codes.
+    struct StringDescriptorZero {
+        static constexpr U8  SIZE_HEADER     = 2;
+        static constexpr U16 MAX_BUFFER_SIZE = 256;
+
+        U8                          m_length;          // = LangIdCount * 2 + 2
+        U8                          m_descriptor_type; // = 3 (STRING)
+        Array<U16, MAX_BUFFER_SIZE> m_lang_id{};       // LANGID codes
+
+        /// @brief Number of LANGID codes actually reported by the device.
+        [[nodiscard]] auto lang_id_count() const -> U8;
+    };
+
+    /// @brief UNICODE string descriptor (Table 9-31): a UTF16LE encoded string as defined by the
+    ///         Unicode Standard, requested for a non-zero string index using a LANGID reported by
+    ///         StringDescriptorZero. Not NULL-terminated.
+    struct StringDescriptor {
+        static constexpr U8  SIZE_HEADER           = 2;
+        static constexpr U16 MAX_BUFFER_SIZE       = 256;
+        static constexpr U16 ASCII_CODE_UNIT_LIMIT = 0x80;
+
+        U8                          m_length;          // = StringLength + 2
+        U8                          m_descriptor_type; // = 3 (STRING)
+        Array<U16, MAX_BUFFER_SIZE> m_string{};        // UTF16LE encoded string
+
+        /// @brief Length of the encoded string in bytes (not UTF16 code units).
+        [[nodiscard]] auto string_length() const -> U8;
+
+        [[nodiscard]] auto string() const -> String;
+    };
 } // namespace Rune::Device::USB
 
 #endif // RUNEOS_DESCRIPTOR_H

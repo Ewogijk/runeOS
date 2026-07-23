@@ -32,9 +32,10 @@ namespace Rune::Device::USB {
     // Transfer Ring / Command Ring — §4.9.2, §4.9.3
     // ========================================================================================== //
 
-    /// @brief Transfer Ring — N-1 transfer TRB slots followed by one Link TRB (xHCI 2.0 §4.9.2).
+    /// @brief Base class for TransferRing and CommandRing.
+    /// @tparam N
     template <size_t N>
-    struct TransferRing {
+    struct ProducerRing {
         static_assert(N >= 2, "ring needs at least one TRB slot plus one Link TRB");
         Array<TRB, N> m_entries{};
         size_t        m_enqueue_ptr = 0;
@@ -59,7 +60,7 @@ namespace Rune::Device::USB {
             return true;
         }
 
-        /// @brief Enqueue a TRB to the transfer ring.
+        /// @brief Enqueue a TRB to the ring.
         /// @param trb
         auto enqueue(TRB trb) -> PhysicalAddr {
             m_entries[m_enqueue_ptr] = trb;
@@ -71,10 +72,10 @@ namespace Rune::Device::USB {
                 return 0;
             m_enqueue_ptr++;
             if (m_enqueue_ptr == N - 1) {
-                // Reached Link TRB
                 auto* link_trb = reinterpret_cast<LinkTRB*>(&m_entries[m_enqueue_ptr]);
-                if (link_trb->m_control.toggle_cycle()) m_pcs = !m_pcs;
                 link_trb->m_control.set_cycle(m_pcs);
+                // Toggle the cycle bit for the next pass of the ring
+                if (link_trb->m_control.toggle_cycle()) m_pcs = !m_pcs;
                 m_enqueue_ptr = 0;
             }
             return tr_phys;
@@ -87,35 +88,13 @@ namespace Rune::Device::USB {
         }
     };
 
+    /// @brief Transfer Ring — N-1 transfer TRB slots followed by one Link TRB (xHCI 2.0 §4.9.2).
+    template <size_t N>
+    using TransferRing = ProducerRing<N>;
+
     /// @brief Command Ring — N-1 command TRB slots followed by one Link TRB (xHCI 2.0 §4.9.3).
     template <size_t N>
-    struct CommandRing {
-        static_assert(N >= 2, "ring needs at least one command slot plus one Link TRB");
-        Array<TRB, N> m_entries{};
-        size_t        m_enqueue_ptr = 0;
-        bool          m_pcs         = true;
-
-        /// @brief Enqueue a Command TRB to the command ring.
-        /// @param trb
-        auto enqueue(TRB trb) -> PhysicalAddr {
-            m_entries[m_enqueue_ptr] = trb;
-            m_entries[m_enqueue_ptr].set_cycle(m_pcs);
-            PhysicalAddr tr_phys = 0;
-            if (!Memory::virtual_to_physical_address(
-                    memory_pointer_to_addr(&m_entries[m_enqueue_ptr]),
-                    tr_phys))
-                return 0;
-            m_enqueue_ptr++;
-            if (m_enqueue_ptr == N - 1) {
-                // Reached Link TRB
-                auto* link_trb = reinterpret_cast<LinkTRB*>(&m_entries[m_enqueue_ptr]);
-                if (link_trb->m_control.toggle_cycle()) m_pcs = !m_pcs;
-                link_trb->m_control.set_cycle(m_pcs);
-                m_enqueue_ptr = 0;
-            }
-            return tr_phys;
-        }
-    };
+    using CommandRing = ProducerRing<N>;
 
     // ========================================================================================== //
     // Event Ring Segment Table (ERST) — §6.5

@@ -39,7 +39,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto SlotContext::DW0::context_entries() const -> U8 {
-        return static_cast<U8>((m_register & CONTEXT_ENTRIES_MASK) >> 27);
+        return static_cast<U8>((m_register & CONTEXT_ENTRIES_MASK) >> CONTEXT_ENTRIES_SHIFT);
     }
 
     auto SlotContext::DW0::set_route_string(U32 val) -> void {
@@ -63,7 +63,7 @@ namespace Rune::Device::USB {
 
     auto SlotContext::DW0::set_context_entries(U8 val) -> void {
         m_register = (m_register & ~CONTEXT_ENTRIES_MASK)
-                     | ((static_cast<U32>(val) << 27) & CONTEXT_ENTRIES_MASK);
+                     | ((static_cast<U32>(val) << CONTEXT_ENTRIES_SHIFT) & CONTEXT_ENTRIES_MASK);
     }
 
     // ========================================================================================== //
@@ -113,7 +113,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto SlotContext::DW2::interrupter_target() const -> U16 {
-        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> 22);
+        return static_cast<U16>((m_register & INTERRUPTER_TARGET_MASK) >> INTERRUPTER_TARGET_SHIFT);
     }
 
     auto SlotContext::DW2::set_parent_hub_slot_id(U8 val) -> void {
@@ -130,8 +130,9 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW2::set_interrupter_target(U16 val) -> void {
-        m_register = (m_register & ~INTERRUPTER_TARGET_MASK)
-                     | ((static_cast<U32>(val) << 22) & INTERRUPTER_TARGET_MASK);
+        m_register =
+            (m_register & ~INTERRUPTER_TARGET_MASK)
+            | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
     // ========================================================================================== //
@@ -143,7 +144,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto SlotContext::DW3::slot_state() const -> U8 {
-        return static_cast<U8>((m_register & SLOT_STATE_MASK) >> 27);
+        return static_cast<U8>((m_register & SLOT_STATE_MASK) >> SLOT_STATE_SHIFT);
     }
 
     auto SlotContext::DW3::set_usb_device_address(U8 val) -> void {
@@ -151,8 +152,8 @@ namespace Rune::Device::USB {
     }
 
     auto SlotContext::DW3::set_slot_state(U8 val) -> void {
-        m_register =
-            (m_register & ~SLOT_STATE_MASK) | ((static_cast<U32>(val) << 27) & SLOT_STATE_MASK);
+        m_register = (m_register & ~SLOT_STATE_MASK)
+                     | ((static_cast<U32>(val) << SLOT_STATE_SHIFT) & SLOT_STATE_MASK);
     }
 
     // ========================================================================================== //
@@ -168,7 +169,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto EndpointContext::DW0::max_p_streams() const -> U8 {
-        return static_cast<U8>((m_register & MAX_P_STREAMS_MASK) >> 10);
+        return static_cast<U8>((m_register & MAX_P_STREAMS_MASK) >> MAX_P_STREAMS_SHIFT);
     }
 
     [[nodiscard]] auto EndpointContext::DW0::LSA() const -> bool {
@@ -193,7 +194,7 @@ namespace Rune::Device::USB {
 
     auto EndpointContext::DW0::set_max_p_streams(U8 val) -> void {
         m_register = (m_register & ~MAX_P_STREAMS_MASK)
-                     | ((static_cast<U32>(val) << 10) & MAX_P_STREAMS_MASK);
+                     | ((static_cast<U32>(val) << MAX_P_STREAMS_SHIFT) & MAX_P_STREAMS_MASK);
     }
 
     auto EndpointContext::DW0::set_LSA(bool v) -> void {
@@ -216,11 +217,11 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto EndpointContext::DW1::CERR() const -> U8 {
-        return static_cast<U8>((m_register & CERR_MASK) >> 1);
+        return static_cast<U8>((m_register & CERR_MASK) >> CERR_SHIFT);
     }
 
     [[nodiscard]] auto EndpointContext::DW1::ep_type() const -> U8 {
-        return static_cast<U8>((m_register & EP_TYPE_MASK) >> 3);
+        return static_cast<U8>((m_register & EP_TYPE_MASK) >> EP_TYPE_SHIFT);
     }
 
     [[nodiscard]] auto EndpointContext::DW1::HID() const -> bool {
@@ -236,11 +237,13 @@ namespace Rune::Device::USB {
     }
 
     auto EndpointContext::DW1::set_CERR(U8 val) -> void {
-        m_register = (m_register & ~CERR_MASK) | ((static_cast<U32>(val) << 1) & CERR_MASK);
+        m_register =
+            (m_register & ~CERR_MASK) | ((static_cast<U32>(val) << CERR_SHIFT) & CERR_MASK);
     }
 
     auto EndpointContext::DW1::set_ep_type(U8 val) -> void {
-        m_register = (m_register & ~EP_TYPE_MASK) | ((static_cast<U32>(val) << 3) & EP_TYPE_MASK);
+        m_register = (m_register & ~EP_TYPE_MASK)
+                     | ((static_cast<U32>(val) << EP_TYPE_SHIFT) & EP_TYPE_MASK);
     }
 
     auto EndpointContext::DW1::set_HID(bool v) -> void {
@@ -267,7 +270,7 @@ namespace Rune::Device::USB {
     }
 
     [[nodiscard]] auto EndpointContext::TRDequeuePtr::ptr() const -> U64 {
-        return (m_register & PTR_MASK) >> 4;
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
 
     auto EndpointContext::TRDequeuePtr::set_DCS(bool v) -> void {
@@ -276,7 +279,7 @@ namespace Rune::Device::USB {
     }
 
     auto EndpointContext::TRDequeuePtr::set_ptr(U64 val) -> void {
-        m_register = (m_register & ~PTR_MASK) | ((val << 4) & PTR_MASK);
+        m_register = (m_register & ~PTR_MASK) | ((val << PTR_SHIFT) & PTR_MASK);
     }
 
     // ========================================================================================== //
@@ -305,11 +308,11 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     [[nodiscard]] auto InputControlContext::DropContextFlags::D() const -> U32 {
-        return (m_register & D_MASK) >> 2;
+        return (m_register & D_MASK) >> D_SHIFT;
     }
 
     auto InputControlContext::DropContextFlags::set_D(U32 val) -> void {
-        m_register = (m_register & ~D_MASK) | ((val << 2) & D_MASK);
+        m_register = (m_register & ~D_MASK) | ((val << D_SHIFT) & D_MASK);
     }
 
     // ========================================================================================== //

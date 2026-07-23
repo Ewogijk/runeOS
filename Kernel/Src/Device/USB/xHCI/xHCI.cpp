@@ -355,7 +355,7 @@ namespace Rune::Device::USB {
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto  ic = UniquePointer<InputContext>(
             reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(ic.get(), 0, sizeof(InputContext));
+        memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
 
         if (!drop_endpoint_contexts(ic, dc_sys_memory, old_alt, new_alt)) {
             LOGGER->warn("IF{} Alt{}: Failed to drop endpoint contexts",
@@ -551,7 +551,8 @@ namespace Rune::Device::USB {
 
         U16          max_intrs = m_ri.m_capability->m_hcsparams1.max_intrs();
         PhysicalAddr doorbell_end =
-            m_ri.m_capability->m_dboff + (DOORBELL_REGISTER_COUNT * sizeof(DoorbellRegister));
+            m_ri.m_capability->m_dboff
+            + (RegisterInterface::DOORBELL_REGISTER_COUNT * sizeof(DoorbellRegister));
         PhysicalAddr runtime_end          = m_ri.m_capability->m_rtsoff
                                             + RuntimeRegisters::INTERRUPTER_BASE_OFFSET
                                             + (max_intrs * sizeof(InterrupterRegisterSet));
@@ -602,7 +603,8 @@ namespace Rune::Device::USB {
             return false;
 
         // Check if xHC demands scratchpad buffers
-        constexpr U8 MAX_SCRATCH_HI_OFFSET = 5;
+        constexpr U8 MAX_SCRATCH_HI_OFFSET          = 5;
+        constexpr U8 MIN_EXP_SCRATCHPAD_BUFFER_SIZE = 12;
         U32 max_scratch = (m_ri.m_capability->m_hcsparams2.max_scratch_hi() << MAX_SCRATCH_HI_OFFSET
                            | m_ri.m_capability->m_hcsparams2.max_scratch_lo());
         if (max_scratch > 0) {
@@ -610,7 +612,7 @@ namespace Rune::Device::USB {
             // Get the buffer size
             U32    page_size_reg          = m_ri.m_operational->m_pagesize;
             size_t scratchpad_buffer_size = 0;
-            for (size_t bit = 0; bit < PAGE_SIZE_REGISTER_WIDTH; bit++) {
+            for (size_t bit = 0; bit < OperationalRegisters::PAGE_SIZE_REGISTER_WIDTH; bit++) {
                 if (bit_check(page_size_reg, bit)) {
                     scratchpad_buffer_size =
                         pow(static_cast<size_t>(2), bit + MIN_EXP_SCRATCHPAD_BUFFER_SIZE);
@@ -638,7 +640,7 @@ namespace Rune::Device::USB {
             m_dcbaa.get()[0] = scratchpad_buffer_array_phys;
         }
 
-        m_ri.m_operational->m_dcbaap.set_ptr(dcbaa_phys >> BASE_ADDR_SHIFT);
+        m_ri.m_operational->m_dcbaap.set_ptr(dcbaa_phys >> TRB::PTR_ADDR_SHIFT);
 
         // Map xHC ports to their USB versions
         volatile auto* ex_cap =
@@ -659,7 +661,7 @@ namespace Rune::Device::USB {
                         spc->m_extended_capability_pointer_register.major_revision() == 3;
                 }
             }
-            if (next_cap == 0 || idx >= PORT_VERSION_MAP_SIZE) break;
+            if (next_cap == 0) break;
             ex_cap += next_cap;
         }
 
@@ -688,7 +690,7 @@ namespace Rune::Device::USB {
         link_trb->m_control.set_toggle_cycle(true);
         link_trb->m_control.set_cycle(true);
 
-        m_ri.m_operational->m_crcr.set_ptr(cmd_ring_phys >> BASE_ADDR_SHIFT);
+        m_ri.m_operational->m_crcr.set_ptr(cmd_ring_phys >> TRB::PTR_ADDR_SHIFT);
         m_ri.m_operational->m_crcr.set_RCS(true);
         return true;
     }
@@ -713,7 +715,8 @@ namespace Rune::Device::USB {
                 ers_phys)) {
             System::instance().panic("Failed to get physical address of Event Ring Segment 0");
         }
-        m_event_ring->m_erst[0].m_ring_segment_base_address.set_ptr(ers_phys >> BASE_ADDR_SHIFT);
+        m_event_ring->m_erst[0].m_ring_segment_base_address.set_ptr(ers_phys
+                                                                    >> TRB::PTR_ADDR_SHIFT);
         m_event_ring->m_erst[0].m_ring_segment_size.set_segment_size(EVENT_RING_SEGMENT_SIZE);
 
         PhysicalAddr erst_ba_phys = 0;
@@ -724,7 +727,7 @@ namespace Rune::Device::USB {
 
         m_ri.interrupter(0).m_erstsz.set_erst_size(1);
         m_ri.interrupter(0).m_erdp.set_ptr(ers_phys >> 4);
-        m_ri.interrupter(0).m_erstba.set_ptr(erst_ba_phys >> BASE_ADDR_SHIFT);
+        m_ri.interrupter(0).m_erstba.set_ptr(erst_ba_phys >> TRB::PTR_ADDR_SHIFT);
         m_ri.interrupter(0).m_imod.set_imodi(IMODI_DEFAULT);
 
         return true;
@@ -801,8 +804,9 @@ namespace Rune::Device::USB {
         }
 
         if (xhci_pci_header.m_fladj == 0x0) {
-            xhci_pci_header.m_fladj = FLADJ_DEFAULT;
-            auto config_space_ID    = m_xhci->config_space_ID();
+            constexpr U8 FLADJ_DEFAULT = 0x20;
+            xhci_pci_header.m_fladj    = FLADJ_DEFAULT;
+            auto config_space_ID       = m_xhci->config_space_ID();
             pci_write_byte(config_space_ID.m_bus,
                            config_space_ID.m_device,
                            config_space_ID.m_func,
@@ -914,7 +918,7 @@ namespace Rune::Device::USB {
         auto* mm     = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto  ic_ptr = UniquePointer<InputContext>(
             reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(ic_ptr.get(), 0, sizeof(InputContext));
+        memset(reinterpret_cast<void*>(ic_ptr.get()), 0, sizeof(InputContext));
         InputContext& ic = *ic_ptr;
 
         // Add flags: A0 (slot) + A1 (EP0 = endpoint index 1)
@@ -997,16 +1001,20 @@ namespace Rune::Device::USB {
         return true;
     }
 
-    auto XHCIDriver::build_configuration(const ConfigurationDescriptor& config_descriptor,
-                                         const U8*                      config_blob,
-                                         PortSpeed port_speed) -> Configuration {
+    auto
+    XHCIDriver::build_configuration(const ConfigurationDescriptor& config_descriptor,
+                                    const U8*                      config_blob,
+                                    PortSpeed                      port_speed,
+                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    U16 langid) -> Configuration {
 
         Configuration configuration;
         configuration.m_configuration_value = config_descriptor.m_configuration_value;
-        configuration.m_string_index        = config_descriptor.m_idx_configuration;
-        configuration.m_self_powered        = config_descriptor.self_powered();
-        configuration.m_remote_wakeup       = config_descriptor.remote_wakeup();
-        bool is_gen_x                       = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1;
+        configuration.m_configuration_name =
+            fetch_string_descriptor(dc_sys_memory, config_descriptor.m_idx_configuration, langid);
+        configuration.m_self_powered  = config_descriptor.self_powered();
+        configuration.m_remote_wakeup = config_descriptor.remote_wakeup();
+        bool is_gen_x                 = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1;
         configuration.m_max_power_mA =
             static_cast<U16>(config_descriptor.m_max_power
                              * (is_gen_x ? ConfigurationDescriptor::GEN_X_MAX_POWER_UNIT_mA
@@ -1038,7 +1046,8 @@ namespace Rune::Device::USB {
                 function.m_function_class    = iad->m_function_class;
                 function.m_function_subclass = iad->m_function_subclass;
                 function.m_function_protocol = iad->m_function_protocol;
-                function.m_string_index      = iad->m_idx_function;
+                function.m_function_name =
+                    fetch_string_descriptor(dc_sys_memory, iad->m_idx_function, langid);
                 configuration.m_functions.add_back(move(function));
                 iad_ranges.add_back(IADRange{.m_first_interface = iad->m_first_interface,
                                              .m_interface_count = iad->m_interface_count,
@@ -1074,7 +1083,8 @@ namespace Rune::Device::USB {
                     function.m_function_class    = if_face->m_interface_class;
                     function.m_function_subclass = if_face->m_interface_subclass;
                     function.m_function_protocol = if_face->m_interface_protocol;
-                    function.m_string_index      = if_face->m_idx_interface;
+                    function.m_function_name =
+                        fetch_string_descriptor(dc_sys_memory, if_face->m_idx_interface, langid);
                     configuration.m_functions.add_back(move(function));
                     owner = &configuration.m_functions.last();
                 }
@@ -1095,7 +1105,8 @@ namespace Rune::Device::USB {
                 new_setting.m_interface_class    = if_face->m_interface_class;
                 new_setting.m_interface_subclass = if_face->m_interface_subclass;
                 new_setting.m_interface_protocol = if_face->m_interface_protocol;
-                new_setting.m_string_index       = if_face->m_idx_interface;
+                new_setting.m_interface_name =
+                    fetch_string_descriptor(dc_sys_memory, if_face->m_idx_interface, langid);
                 current_interface->m_alternate_settings.add_back(move(new_setting));
                 current_alt_setting = &current_interface->m_alternate_settings.last();
 
@@ -1136,9 +1147,10 @@ namespace Rune::Device::USB {
         size_t interface_count = 0;
         for (const auto& function : configuration.m_functions)
             interface_count += function.m_interfaces.size();
-        LOGGER->debug("  Config{}: {} interface(s), {} function(s), self_powered={}, "
+        LOGGER->debug("  Config{} \"{}\": {} interface(s), {} function(s), self_powered={}, "
                       "remote_wakeup={}, max_power={}mA",
                       configuration.m_configuration_value,
+                      configuration.m_configuration_name,
                       interface_count,
                       configuration.m_functions.size(),
                       configuration.m_self_powered,
@@ -1151,9 +1163,10 @@ namespace Rune::Device::USB {
             U8   first_interface = function.m_interfaces.empty()
                                        ? 0
                                        : function.m_interfaces.first().m_interface_number;
-            LOGGER->debug("    Function@IF{} ({} interface(s)): {}:{}:{} "
+            LOGGER->debug("    Function@IF{} \"{}\" ({} interface(s)): {}:{}:{} "
                           "({:0=#2x}:{:0=#2x}:{:0=#2x})",
                           first_interface,
+                          function.m_function_name,
                           function.m_interfaces.size(),
                           function_class.to_string(),
                           resolve_subclass_code(function_class, function.m_function_subclass),
@@ -1166,17 +1179,19 @@ namespace Rune::Device::USB {
             for (const auto& iface : function.m_interfaces) {
                 for (const auto& setting : iface.m_alternate_settings) {
                     auto class_code = ClassCode(setting.m_interface_class);
-                    LOGGER->debug("        IF{} Alt{}: {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
-                                  iface.m_interface_number,
-                                  setting.m_setting_number,
-                                  class_code.to_string(),
-                                  resolve_subclass_code(class_code, setting.m_interface_subclass),
-                                  resolve_protocol_code(class_code,
-                                                        setting.m_interface_subclass,
-                                                        setting.m_interface_protocol),
-                                  setting.m_interface_class,
-                                  setting.m_interface_subclass,
-                                  setting.m_interface_protocol);
+                    LOGGER->debug(
+                        "        IF{} Alt{} \"{}\": {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
+                        iface.m_interface_number,
+                        setting.m_setting_number,
+                        setting.m_interface_name,
+                        class_code.to_string(),
+                        resolve_subclass_code(class_code, setting.m_interface_subclass),
+                        resolve_protocol_code(class_code,
+                                              setting.m_interface_subclass,
+                                              setting.m_interface_protocol),
+                        setting.m_interface_class,
+                        setting.m_interface_subclass,
+                        setting.m_interface_protocol);
                     for (const auto& ep : setting.m_endpoints) {
                         LOGGER->debug("            EP{} {} {}: Max Packet Size={}",
                                       ep.m_endpoint_number,
@@ -1187,6 +1202,68 @@ namespace Rune::Device::USB {
                 }
             }
         }
+    }
+
+    auto
+    XHCIDriver::get_default_langid(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
+        -> U16 {
+        StringDescriptorZero   sdz{};
+        ControlTransferRequest get_header = {
+            .m_header       = {.m_transfer_type = TransferType::CONTROL, .m_device_handle = 0},
+            .m_request_type = RequestType::DEVICE_TO_HOST,
+            .m_request      = StandardRequestCode::GET_DESCRIPTOR,
+            .m_value        = static_cast<U16>(DescriptorType::STRING << SHIFT_8),
+            .m_index        = 0,
+            .m_length       = static_cast<U16>(StringDescriptorZero::SIZE_HEADER)
+        };
+        if (handle_control_transfer_request(get_header, dc_sys_memory, &sdz).get()
+            != IORequestStatus::HANDLED)
+            return 0;
+
+        if (sdz.m_length < 4) return 0;
+
+        ControlTransferRequest get_full = get_header;
+        get_full.m_length               = sdz.m_length;
+        if (handle_control_transfer_request(get_full, dc_sys_memory, &sdz).get()
+            != IORequestStatus::HANDLED)
+            return 0;
+
+        return sdz.m_lang_id[0];
+    }
+
+    auto XHCIDriver::fetch_string_descriptor(
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+        U8                                              index,
+        U16                                             langid) -> String {
+        // Index 0 in a descriptor field means "no string" (USB 3.2 §9.6.9); a device with no
+        // LANGID cannot resolve any string.
+        if (index == 0 || langid == 0) return "";
+
+        // Fetch the 2-byte header first for bLength, then re-read the whole descriptor.
+        StringDescriptor       sd{};
+        ControlTransferRequest get_header = {
+            .m_header       = {.m_transfer_type = TransferType::CONTROL, .m_device_handle = 0},
+            .m_request_type = RequestType::DEVICE_TO_HOST,
+            .m_request      = StandardRequestCode::GET_DESCRIPTOR,
+            .m_value        = static_cast<U16>((DescriptorType::STRING << SHIFT_8) | index),
+            .m_index        = langid,
+            .m_length       = static_cast<U16>(StringDescriptor::SIZE_HEADER)
+        };
+        if (handle_control_transfer_request(get_header, dc_sys_memory, &sd).get()
+            != IORequestStatus::HANDLED)
+            return "";
+
+        U8 length = sd.m_length;
+        // Header only (bLength <= 2) means an empty string.
+        if (length <= StringDescriptor::SIZE_HEADER) return "";
+
+        ControlTransferRequest get_full = get_header;
+        get_full.m_length               = length;
+        if (handle_control_transfer_request(get_full, dc_sys_memory, &sd).get()
+            != IORequestStatus::HANDLED)
+            return "";
+
+        return sd.string();
     }
 
     auto
@@ -1229,13 +1306,24 @@ namespace Rune::Device::USB {
                                               byte_get(device_descriptor.m_bcd_USB, 1),
                                               byte_get(device_descriptor.m_bcd_USB, 0));
 
+        // Resolve the device-level string descriptors once, reusing a single LANGID for the whole
+        // device. Prefer the device's own manufacturer/product strings and fall back to the vendor
+        // database when the device reports none.
+        U16    langid = get_default_langid(dc_sys_memory);
+        String manufacturer =
+            fetch_string_descriptor(dc_sys_memory, device_descriptor.m_idx_manufacturer, langid);
+        String product =
+            fetch_string_descriptor(dc_sys_memory, device_descriptor.m_idx_product, langid);
+        String serial_number =
+            fetch_string_descriptor(dc_sys_memory, device_descriptor.m_idx_serial_number, langid);
+
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
         SharedPointer<CompositeDevice> composite_device(
             new CompositeDevice(dm->get_device_handle(),
-                                vdb_resp.m_product_name,
-                                vdb_resp.m_vendor_name,
+                                product.is_empty() ? vdb_resp.m_product_name : product,
+                                manufacturer.is_empty() ? vdb_resp.m_vendor_name : manufacturer,
                                 usb_version_str,
-                                "",
+                                serial_number,
                                 USBDeviceID(device_descriptor.m_device_class,
                                             device_descriptor.m_device_subclass,
                                             device_descriptor.m_device_protocol),
@@ -1286,8 +1374,11 @@ namespace Rune::Device::USB {
                 return {};
             }
 
-            Configuration configuration =
-                build_configuration(config_descriptor, config_blob, port_speed);
+            Configuration configuration = build_configuration(config_descriptor,
+                                                              config_blob,
+                                                              port_speed,
+                                                              dc_sys_memory,
+                                                              langid);
             log_configuration(configuration);
             composite_device->add_configuration(move(configuration));
             delete[] config_blob;
@@ -1301,13 +1392,13 @@ namespace Rune::Device::USB {
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto  ic = UniquePointer<InputContext>(
             reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(ic.get(), 0, sizeof(InputContext));
+        memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
 
         U8 dci_max = 0;
         for (const auto& function : config.m_functions) {
             for (const auto& iface : function.m_interfaces) {
                 if (!add_endpoint_contexts(ic, dc_sys_memory, iface.active())) {
-                    LOGGER->warn("I{} S{}: Failed to add endpoint contexts.",
+                    LOGGER->warn("If{} Alt{}: Failed to add endpoint contexts.",
                                  iface.m_interface_number,
                                  iface.active().m_setting_number);
                     return false;

@@ -44,11 +44,12 @@ namespace Rune::Device::USB {
             auto set_hub(bool v)              -> void;
             auto set_context_entries(U8 val)  -> void;
           private:
-            static constexpr U32 ROUTE_STRING_MASK    = 0x000FFFFF; // [19:0]
-            static constexpr U32 SPEED_MASK           = 0x00F00000; // [23:20]
-            static constexpr U8  MTT_BIT_OFFSET       = 25;
-            static constexpr U8  HUB_BIT_OFFSET       = 26;
-            static constexpr U32 CONTEXT_ENTRIES_MASK = 0xF8000000; // [31:27]
+            static constexpr U32 ROUTE_STRING_MASK     = 0x000FFFFF; // [19:0]
+            static constexpr U32 SPEED_MASK            = 0x00F00000; // [23:20]
+            static constexpr U8  MTT_BIT_OFFSET        = 25;
+            static constexpr U8  HUB_BIT_OFFSET        = 26;
+            static constexpr U32 CONTEXT_ENTRIES_MASK  = 0xF8000000; // [31:27]
+            static constexpr U8  CONTEXT_ENTRIES_SHIFT = 27;
         } m_dw0;
 
         struct DW1 {
@@ -76,10 +77,11 @@ namespace Rune::Device::USB {
             auto set_TTT(U8 val)                 -> void;
             auto set_interrupter_target(U16 val) -> void;
           private:
-            static constexpr U32 PARENT_HUB_SLOT_ID_MASK = 0x000000FF; // [7:0]
+            static constexpr U32 PARENT_HUB_SLOT_ID_MASK  = 0x000000FF; // [7:0]
             static constexpr U32 PARENT_PORT_NUM_MASK     = 0x0000FF00; // [15:8]
             static constexpr U32 TTT_MASK                 = 0x00030000; // [17:16]
             static constexpr U32 INTERRUPTER_TARGET_MASK  = 0xFFC00000; // [31:22]
+            static constexpr U8  INTERRUPTER_TARGET_SHIFT = 22;
         } m_dw2;
 
         struct DW3 {
@@ -96,6 +98,7 @@ namespace Rune::Device::USB {
           private:
             static constexpr U32 USB_DEVICE_ADDRESS_MASK = 0x000000FF; // [7:0]
             static constexpr U32 SLOT_STATE_MASK         = 0xF8000000; // [31:27]
+            static constexpr U8  SLOT_STATE_SHIFT        = 27;
         } m_dw3;
 
         U32 m_reserved_0 = 0;
@@ -137,12 +140,13 @@ namespace Rune::Device::USB {
             auto set_interval(U8 val)      -> void;
             auto set_max_esit_hi(U8 val)   -> void;
           private:
-            static constexpr U32 EP_STATE_MASK      = 0x00000007; // [2:0]
-            static constexpr U32 MULT_MASK          = 0x00000300; // [9:8]
-            static constexpr U32 MAX_P_STREAMS_MASK = 0x00007C00; // [14:10]
-            static constexpr U8  LSA_BIT_OFFSET     = 15;
-            static constexpr U32 INTERVAL_MASK      = 0x00FF0000; // [23:16]
-            static constexpr U32 MAX_ESIT_HI_MASK   = 0xFF000000; // [31:24]
+            static constexpr U32 EP_STATE_MASK       = 0x00000007; // [2:0]
+            static constexpr U32 MULT_MASK           = 0x00000300; // [9:8]
+            static constexpr U32 MAX_P_STREAMS_MASK  = 0x00007C00; // [14:10]
+            static constexpr U8  MAX_P_STREAMS_SHIFT = 10;
+            static constexpr U8  LSA_BIT_OFFSET      = 15;
+            static constexpr U32 INTERVAL_MASK       = 0x00FF0000; // [23:16]
+            static constexpr U32 MAX_ESIT_HI_MASK    = 0xFF000000; // [31:24]
         } m_dw0;
 
         struct DW1 {
@@ -159,7 +163,9 @@ namespace Rune::Device::USB {
             auto set_max_packet_size(U16 val) -> void;
           private:
             static constexpr U32 CERR_MASK            = 0x00000006; // [2:1]
+            static constexpr U8  CERR_SHIFT           = 1;
             static constexpr U32 EP_TYPE_MASK         = 0x00000038; // [5:3]
+            static constexpr U8  EP_TYPE_SHIFT        = 3;
             static constexpr U8  HID_BIT_OFFSET       = 7;
             static constexpr U32 MAX_BURST_SIZE_MASK  = 0x0000FF00; // [15:8]
             static constexpr U32 MAX_PACKET_SIZE_MASK = 0xFFFF0000; // [31:16]
@@ -174,7 +180,8 @@ namespace Rune::Device::USB {
             auto set_ptr(U64 val) -> void; // val = phys >> 4
           private:
             static constexpr U8  DCS_BIT_OFFSET = 0;
-            static constexpr U64 PTR_MASK        = 0xFFFFFFFFFFFFFFF0ULL; // [63:4]
+            static constexpr U64 PTR_MASK       = 0xFFFFFFFFFFFFFFF0ULL; // [63:4]
+            static constexpr U8  PTR_SHIFT      = 4;
         } m_tr_dequeue_ptr;
 
         struct DW4 {
@@ -216,7 +223,8 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto D() const -> U32; // bits [31:2] — drop flags for endpoints 2-31
             auto set_D(U32 val) -> void;
           private:
-            static constexpr U32 D_MASK = 0xFFFFFFFC; // [31:2]
+            static constexpr U32 D_MASK  = 0xFFFFFFFC; // [31:2]
+            static constexpr U8  D_SHIFT = 2;
         } m_drop_context_flags;
 
         // A0 = update Slot Context; A1-A31 = add/update endpoint contexts 1-31.

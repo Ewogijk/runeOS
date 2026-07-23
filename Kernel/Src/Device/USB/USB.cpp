@@ -140,11 +140,13 @@ namespace Rune::Device::USB {
         return owning_function().m_interfaces;
     }
 
+    // NOLINTBEGIN readability-convert-member-functions-to-static: false positive
     auto FunctionDevice::find_interface(U8 interface_number) const -> const Interface* {
         for (const auto& iface : owning_function().m_interfaces)
             if (iface.m_interface_number == interface_number) return &iface;
         return nullptr;
     }
+    // NOLINTEND
 
     void FunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
         auto* composite = static_cast<CompositeDevice*>(bus_device().get());
