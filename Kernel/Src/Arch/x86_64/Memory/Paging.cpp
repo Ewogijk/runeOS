@@ -45,6 +45,8 @@ namespace Rune::Memory {
     constexpr U8 IS_PRESENT_BIT          = 0;
     constexpr U8 IS_WRITE_ALLOWED_BIT    = 1;
     constexpr U8 IS_USER_MODE_ACCESS_BIT = 2;
+    constexpr U8 IS_WRITE_THROUGH_BIT    = 3;
+    constexpr U8 IS_CACHE_DISABLE_BIT    = 4;
     constexpr U8 IS_ACCESSED_BIT         = 5;
     constexpr U8 IS_DIRTY_BIT            = 6;
 
@@ -109,6 +111,14 @@ namespace Rune::Memory {
 
     auto PageTableEntry::is_user_mode_access_allowed() const -> bool {
         return bit_check(native_entry, IS_USER_MODE_ACCESS_BIT);
+    }
+
+    auto PageTableEntry::is_write_through() const -> bool {
+        return bit_check(native_entry, IS_WRITE_THROUGH_BIT);
+    }
+
+    auto PageTableEntry::is_cache_disabled() const -> bool {
+        return bit_check(native_entry, IS_CACHE_DISABLE_BIT);
     }
 
     auto PageTableEntry::is_accessed() const -> bool {

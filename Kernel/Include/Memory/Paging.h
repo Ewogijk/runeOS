@@ -31,9 +31,7 @@ namespace Rune::Memory {
     //                                          Page Table Entry
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    /**
-     * @brief A native page table entry (PTE) is simply the numerical entry in a page table.
-     */
+    /// @brief A native page table entry (PTE) is simply the numerical entry in a page table.
     using NativePageTableEntry = VirtualAddr;
 
     /// @brief A page table entry (PTE) acts as an architecture independent interface to the
@@ -58,53 +56,55 @@ namespace Rune::Memory {
         NativePageTableEntry native_entry = 0x0;
         U8                   level        = BAD_LEVEL;
 
-        /**
-         *
-         * @return True if the PTE is used else false.
-         */
+        /// @brief
+        /// @return True: The PTE is used.
+        ///         False: Otherwise.
         [[nodiscard]] auto is_present() const -> bool;
 
-        /**
-         *
-         * @return True if the PTE has been accessed else false.
-         */
-        [[nodiscard]] auto is_accessed() const -> bool;
-
-        /**
-         *
-         * @return True if the PTE has been changed else false.
-         */
-        [[nodiscard]] auto is_dirty() const -> bool;
-
-        /**
-         *
-         * @return True if data can be written to the PTE else false.
-         */
+        /// @brief
+        /// @return True: Data can be written to the memory backed by the PTE.
+        ///         False: Otherwise.
         [[nodiscard]] auto is_write_allowed() const -> bool;
 
-        /**
-         *
-         * @return True if the PTE can be accessed by a userspace process else false.
-         */
+        /// @brief
+        /// @return True: The memory backed by the PTE can be accessed by userspace applications.
+        ///         False: Otherwise.
         [[nodiscard]] auto is_user_mode_access_allowed() const -> bool;
 
-        /**
-         * @brief
-         * @return True: The PTE points to a page frame, False: The PTE points to a page table.
-         */
+        /// @brief
+        /// @return True: Changes to the memory backed by the PTE are always written directly to
+        ///                 memory instead of being cached.
+        ///         False: Otherwise.
+        [[nodiscard]] auto is_write_through() const -> bool;
+
+        /// @brief
+        /// @return True: The memory backed by the PTE is always read from memory directly instead
+        ///                 of being cached.
+        ///         False: Otherwise.
+        [[nodiscard]] auto is_cache_disabled() const -> bool;
+
+        /// @brief
+        /// @return True: The memory backed by the PTE has been accessed.
+        ///         False: Otherwise.
+        [[nodiscard]] auto is_accessed() const -> bool;
+
+        /// @brief
+        /// @return True: The memory backed by the PTE was modified but not yet written to memory.
+        ///         False: Otherwise.
+        [[nodiscard]] auto is_dirty() const -> bool;
+
+        /// @brief
+        /// @return True: The PTE points to a page frame.
+        ///         False: The PTE points to a page table.
         [[nodiscard]] auto is_pointing_to_page_frame() const -> bool;
 
-        /**
-         *
-         * @return If the PTE points to a page frame, return its address else the address will point
-         * to another page table.
-         */
+        /// @brief
+        /// @return If the PTE points to a page frame, return its address else the address will
+        ///         point to another page table.
         [[nodiscard]] auto get_address() const -> PhysicalAddr;
 
-        /**
-         * @brief
-         * @return The native flags.
-         */
+        /// @brief
+        /// @return The flags in architecture specific encoding.
         [[nodiscard]] auto get_flags() const -> U16;
     };
 
