@@ -18,6 +18,7 @@ Import("build_env")
 build_env: Environment
 sources = [
     build_env.File("BitMapAllocator.cpp"),
+    build_env.File("DMA.cpp"),
     build_env.File("MemoryModule.cpp"),
     build_env.File("PhysicalMemoryManager.cpp"),
     build_env.File("SlabAllocator.cpp"),
