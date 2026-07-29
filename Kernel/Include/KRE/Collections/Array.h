@@ -80,12 +80,16 @@ namespace Rune {
       public:
         Array() = default;
 
+        constexpr Array(T value[N]) noexcept { // NOLINT
+            for (size_t i = 0; i < N; i++) _array[i] = value[i];
+        }
+
         constexpr Array(const Array<T, N>& other) noexcept { copy(other); }
 
         constexpr Array(std::initializer_list<T> init) noexcept {
             size_t idx = 0;
             for (auto ele : init) {
-                if (idx > N) break;
+                if (idx >= N) break;
                 _array[idx++] = ele; // NOLINT
             }
         }
