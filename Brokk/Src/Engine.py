@@ -152,11 +152,15 @@ def configure(brokk_config_yaml: str) -> bool:
     apps = brokk_config[BrokkConfig.APPS.to_yaml_key()]
     build_config = {
         BuildConfig.PROJECT_ROOT.to_yaml_key(): str(Path("..").resolve()),
+        BuildConfig.KERNEL_VERSION.to_yaml_key(): str(brokk_config[BrokkConfig.KERNEL_VERSION.to_yaml_key()]),
         BuildConfig.ARCH.to_yaml_key(): arch,
         BuildConfig.BUILD.to_yaml_key(): build,
-        BuildConfig.QEMU_HOST.to_yaml_key(): True
-        if brokk_config[BrokkConfig.QEMU_HOST.to_yaml_key()]
+        BuildConfig.ENABLE_QEMU_CON.to_yaml_key(): True
+        if brokk_config[BrokkConfig.ENABLE_QEMU_CON.to_yaml_key()]
         else False,
+        BuildConfig.KERNEL_LOG_LEVEL.to_yaml_key(): int(brokk_config[BrokkConfig.KERNEL_LOG_LEVEL.to_yaml_key()]),
+        BuildConfig.KERNEL_LOG_RINGBUFFER_SIZE.to_yaml_key(): int(
+            brokk_config[BrokkConfig.KERNEL_LOG_RINGBUFFER_SIZE.to_yaml_key()]),
         BuildConfig.C.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-gcc"),
         BuildConfig.CPP.to_yaml_key(): str(sysroot_x64_elf / "bin" / "x86_64-elf-g++"),
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(

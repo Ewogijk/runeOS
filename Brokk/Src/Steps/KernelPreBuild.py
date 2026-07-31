@@ -15,36 +15,28 @@
 
 import os
 import sys
-
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from typing import Any
 from pathlib import Path
 from Config import BuildConfig
 
+import json
 import Build
+
+_JSON_NAME_TAG = "name"
+_JSON_VALUE_TAG = "value"
+_JSON_COMMENT_TAG = "comment"
 
 
 class KernelPreBuildStep(Build.BuildStep):
-    def name(self) -> str:
-        """
-        :return: Name of the build step.
-        """
 
-        return "Kernel Pre-Build"
-
-    def execute(self, build_conf: dict[str, Any]) -> bool:
-        """Execute this build step.
-        :return: True: The build step was successful, False: Otherwise.
-        """
-
-        project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
-        kernel_directory = project_root / "Kernel"
+    def _generate_build_variables(self, build_conf: dict[str, Any], kernel_directory: Path) -> bool:
         build_variables = [
             BuildConfig.BUILD,
             BuildConfig.ARCH,
-            BuildConfig.QEMU_HOST,
-            BuildConfig.SYSTEM_LOADER,
+            # BuildConfig.ENABLE_QEMU_CON,
+            # BuildConfig.SYSTEM_LOADER,
             BuildConfig.C,
             BuildConfig.CPP,
             BuildConfig.CRT_BEGIN,
@@ -60,3 +52,71 @@ class KernelPreBuildStep(Build.BuildStep):
                     f'{build_var.to_scons_key()} = "{build_conf[build_var.to_yaml_key()]}"\n'
                 )
         return True
+
+    def _generate_macro_defs(self, build_conf: dict[str, Any], kernel_directory: Path) -> bool:
+        kernel_version = build_conf[BuildConfig.KERNEL_VERSION.to_yaml_key()]
+        mnp_pre = kernel_version.split("-")
+        mnp = mnp_pre[0].split(".")
+        if len(mnp) != 3:
+            print(f"Invalid kernel version: {kernel_version}")
+            return False
+        pre = "\"\"" if len(mnp_pre) == 1 else f"\"mnp_pre[1]\""
+
+        macro_defs = [
+            {_JSON_NAME_TAG: "MAJOR", _JSON_VALUE_TAG: mnp[0], _JSON_COMMENT_TAG: "Kernel major version"},
+            {_JSON_NAME_TAG: "MINOR", _JSON_VALUE_TAG: mnp[1], _JSON_COMMENT_TAG: "Kernel minor version"},
+            {_JSON_NAME_TAG: "PATCH", _JSON_VALUE_TAG: mnp[2], _JSON_COMMENT_TAG: "Kernel patch version"},
+            {_JSON_NAME_TAG: "PRERELEASE", _JSON_VALUE_TAG: pre, _JSON_COMMENT_TAG: "Kernel prerelease version"},
+            {_JSON_NAME_TAG: "ARCH", _JSON_VALUE_TAG: build_conf[BuildConfig.ARCH.to_yaml_key()],
+             _JSON_COMMENT_TAG: "Target architecture of the kernel"},
+            {_JSON_NAME_TAG: "SYSTEM_LOADER",
+             _JSON_VALUE_TAG: f"\"{build_conf[BuildConfig.SYSTEM_LOADER.to_yaml_key()]}\"",
+             _JSON_COMMENT_TAG: "Absolute path to the system loader"},
+            {_JSON_NAME_TAG: "LOG_LEVEL", _JSON_VALUE_TAG: f"{build_conf[BuildConfig.KERNEL_LOG_LEVEL.to_yaml_key()]}",
+             _JSON_COMMENT_TAG: "The kernel log level"},
+            {_JSON_NAME_TAG: "LOG_BUFFER_SIZE",
+             _JSON_VALUE_TAG: f"{build_conf[BuildConfig.KERNEL_LOG_RINGBUFFER_SIZE.to_yaml_key()]}",
+             _JSON_COMMENT_TAG: "The exponent for the kernel log ringbuffer size"},
+        ]
+
+        if "64" in build_conf[BuildConfig.ARCH.to_yaml_key()]:
+            macro_defs.append(
+                {_JSON_NAME_TAG: "BIT64", _JSON_VALUE_TAG: "", _JSON_COMMENT_TAG: "Activate 64-bit related features"})
+
+        if build_conf[BuildConfig.ENABLE_QEMU_CON.to_yaml_key()]:
+            macro_defs.append({_JSON_NAME_TAG: "ENABLE_QEMU_CON", _JSON_VALUE_TAG: "",
+                               _JSON_COMMENT_TAG: "Enable the QEMU console logger"})
+
+        build = build_conf[BuildConfig.BUILD.to_yaml_key()]
+        if build == "test" or build == "ci":
+            macro_defs.append({_JSON_NAME_TAG: "ENABLE_UNIT_TESTS", _JSON_VALUE_TAG: "",
+                               _JSON_COMMENT_TAG: "Run the kernel unit tests"})
+
+        if build == "ci":
+            macro_defs.append({_JSON_NAME_TAG: "FORCE_SHUTDOWN", _JSON_VALUE_TAG: "",
+                               _JSON_COMMENT_TAG: "Shutdown when the system loader exits instead of panicking"})
+
+        macro_defs_path = kernel_directory / "Tools" / "MacroDefs.json"
+        print(f"Generate macro definitions: {macro_defs_path}")
+        for md in macro_defs:
+            print(f'    #define {md[_JSON_NAME_TAG]} {md[_JSON_VALUE_TAG]} // {md[_JSON_COMMENT_TAG]}')
+        with open(macro_defs_path, "w") as file:
+            json.dump(macro_defs, file, indent=4)
+        return True
+
+    def name(self) -> str:
+        """
+        :return: Name of the build step.
+        """
+
+        return "Kernel Pre-Build"
+
+    def execute(self, build_conf: dict[str, Any]) -> bool:
+        """Execute this build step.
+        :return: True: The build step was successful, False: Otherwise.
+        """
+
+        project_root = Path(build_conf[BuildConfig.PROJECT_ROOT.to_yaml_key()])
+        kernel_directory = project_root / "Kernel"
+        return (self._generate_build_variables(build_conf, kernel_directory)
+                and self._generate_macro_defs(build_conf, kernel_directory))

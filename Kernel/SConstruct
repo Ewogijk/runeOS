@@ -72,20 +72,6 @@ def load_build_variables(file: str) -> Variables:
         )
     )
     variables.Add(
-        BoolVariable(
-            "qemu_build",
-            "Enables additional qemu specific debugging features in the kernel.",
-            True,
-        )
-    )
-    variables.Add(
-        (
-            "system_loader",
-            "Absolute path to the system loader executable on the bootable image.",
-            "",
-        )
-    )
-    variables.Add(
         (
             "c",
             "The absolute path to the c cross compiler e.g. x86_64-elf-gcc.",
@@ -288,38 +274,6 @@ def configure_compiler(env: Environment) -> None:
 # Code Generation
 # =================================================================================================
 
-def create_build_h_substitution_dict(target, source, env):
-    """Build the substitution dictionary used to generate ``build.h``.
-
-    :return: -
-    """
-
-    arch = env["arch"]
-    build = env["build"]
-    macro_defs = {
-        "$ARCH": f"#define ARCH {arch} // Target architecture of the kernel.",
-        "$SYSTEM_LOADER": build_env["system_loader"]
-    }
-    if "64" in arch:
-        macro_defs["$BIT"] = "#define BIT64 //Activate 64-bit related features"
-
-    if build_env["qemu_build"]:
-        macro_defs["$QEMU"] = "#define QEMU_HOST // Enable Qemu related debugging features."
-
-    if build == "test" or build == "ci":
-        macro_defs["$RUN_UNIT_TESTS"] = "#define RUN_UNIT_TESTS // Execute the kernel unit tests."
-    else:
-        macro_defs["$RUN_UNIT_TESTS"] = ""
-
-    if build == "ci":
-        macro_defs[
-            "$SHUTDOWN_ON_SYSTEM_LOADER_EXIT"] = "#define SHUTDOWN_ON_SYSTEM_LOADER_EXIT // Shutdown the system when the system loader exits unexpectedly."
-    else:
-        macro_defs["$SHUTDOWN_ON_SYSTEM_LOADER_EXIT"] = ""
-
-    with open(str(target[0]), "w") as f:
-        json.dump(macro_defs, f, indent=4)
-
 
 def define_codegen_targets(env: Environment):
     """Declare SCons targets for files that must be generated before compilation.
@@ -344,20 +298,14 @@ def define_codegen_targets(env: Environment):
         "Tools/PSF2ToCPP.py",
         f"{sys.executable} $SOURCE $TARGET Tools/Lat15-Terminus16.psf",
     )
-    # Update BuildHReplacements.json when BuildVariables.py changes
-    build_h_replacements = env.Command(
-        "Tools/BuildHReplacements.json",
-        "Tools/BuildVariables.py",
-        create_build_h_substitution_dict,
-    )
     build_h = env.Command(
         "Include/KRE/Build.h",
         "Tools/GenerateBuildHeader.py",
-        f"{sys.executable} $SOURCE $TARGET Tools/BuildHReplacements.json && clang-format $TARGET -i",
+        f"{sys.executable} $SOURCE $TARGET Tools/MacroDefs.json && clang-format $TARGET -i",
     )
     # Need to explicitly declare a dependency between Build.h and BuildHReplacements.json
-    build_h_dep = env.Depends("Include/KRE/Build.h", "Tools/BuildHReplacements.json")
-    return [isr_stubs_inc, isr_stubs_h, lat_terminus, build_h_replacements, build_h, build_h_dep]
+    build_h_dep = env.Depends("Include/KRE/Build.h", "Tools/MacroDefs.json")
+    return [isr_stubs_inc, isr_stubs_h, lat_terminus, build_h, build_h_dep]
 
 
 # =================================================================================================
