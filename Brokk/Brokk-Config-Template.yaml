@@ -1,3 +1,5 @@
+# The semantic version of the kernel.
+kernel-version: 1.2.3
 # Target architecture of the kernel. One of: [x86_64]
 arch: x86_64
 # The build type. One of: [release, debug, test, ci]
@@ -10,7 +12,18 @@ arch: x86_64
 build: debug
 # If true, the kernel will be informed that it runs inside the Qemu VM, and it will enable Qemu
 # related debugging features.
-qemu-host: yes
+enable-qemu-con: yes
+# The kernel log level:
+# Trace: 1
+# Debug: 2
+# Info:  3
+# Warn:  4
+# Error: 5
+# Fatal: 6
+kernel-log-level: 3
+# The kernel log ringbuffer size is defined as 2^n where n is the value of kernel-log-ringbuffer-size.
+# Example: n=12 means a kernel ring buffer size of 2^16=65536 -> 64KiB
+kernel-log-ringbuffer-size: 16
 # The path to the system root of the x86_64-elf GCC compiler from the runeToolchain.
 sysroot-x64-elf: <absolute-path-to-sysroot>
 # The path to the system root of the x86_64-rune GCC compiler from the runeToolchain.

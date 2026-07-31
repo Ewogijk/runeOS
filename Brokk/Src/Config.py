@@ -22,9 +22,12 @@ import yaml
 class BrokkConfig(Enum):
     """Keys of the settings in the Brokk config file."""
 
+    KERNEL_VERSION = (auto(),)
     ARCH = (auto(),)
     BUILD = (auto(),)
-    QEMU_HOST = (auto(),)
+    ENABLE_QEMU_CON = (auto(),)
+    KERNEL_LOG_LEVEL = (auto(),)
+    KERNEL_LOG_RINGBUFFER_SIZE = (auto(),)
     SYSROOT_X64_ELF = (auto(),)
     SYSROOT_X64_RUNE = (auto(),)
     IMAGE_SIZE = (auto(),)
@@ -49,9 +52,12 @@ class BuildConfig(Enum):
     """Keys of the settings in 'build-config.yaml'"""
 
     PROJECT_ROOT = (auto(),)
+    KERNEL_VERSION = (auto(),)
     ARCH = (auto(),)
     BUILD = (auto(),)
-    QEMU_HOST = (auto(),)
+    ENABLE_QEMU_CON = (auto(),)
+    KERNEL_LOG_LEVEL = (auto(),)
+    KERNEL_LOG_RINGBUFFER_SIZE = (auto(),)
     C = (auto(),)
     CPP = (auto(),)
     CRT_BEGIN = (auto(),)
@@ -107,9 +113,12 @@ def load_brokk_config(brokk_config_yaml: str) -> dict[str, Any]:
         cfg = yaml.safe_load(f)
 
     config_keys = {
+        "kernel-version": [str],
         "arch": [str],
         "build": [str],
-        "qemu-host": [bool],
+        "enable-qemu-con": [bool],
+        "kernel-log-level": [int],
+        "kernel-log-ringbuffer-size": [int],
         "sysroot-x64-elf": [str],
         "sysroot-x64-rune": [str],
         "image-size": [int],
@@ -142,7 +151,7 @@ def load_brokk_config(brokk_config_yaml: str) -> dict[str, Any]:
 
 
 def load_build_config(build_config_yaml: str) -> dict[str, Any]:
-    """Load and check that the build config contains a configuration keys and values of the expected
+    """Load and check that the build config contains all configuration keys and values of the expected
     types.
     :param build_config_yaml: Path to a build config yaml file.
     :return: A dict with the build config if it is valid otherwise an empty dict.
@@ -159,10 +168,12 @@ def load_build_config(build_config_yaml: str) -> dict[str, Any]:
         "cpp": [str],
         "crt-begin": [str],
         "crt-end": [str],
+        "enable-qemu-con": [bool],
         "files": [dict, NoneType],
         "image-size": [int],
         "project-root": [str],
-        "qemu-host": [bool],
+        "kernel-log-level": [int],
+        "kernel-log-ringbuffer-size": [int],
         "sysroot-x64-rune": [str],
         "system-loader": [str],
     }
