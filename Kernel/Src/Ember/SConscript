@@ -20,6 +20,7 @@ sources = [
     build_env.File("AppBits.cpp"),
     build_env.File("Ember.cpp"),
     build_env.File("Enum.cpp"),
+    build_env.File("MachineBits.cpp"),
     build_env.File("MemoryBits.cpp"),
     build_env.File("SystemCallID.cpp"),
     build_env.File("VFSBits.cpp"),

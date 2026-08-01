@@ -18,8 +18,9 @@ from pathlib import Path
 Import("build_env")
 build_env: Environment
 sources = [
-    build_env.File("DetailedLogLayout.cpp"),
     build_env.File(Path(build_env['arch']) / "Phase1.cpp"),
+    build_env.File("DetailedLogLayout.cpp"),
+    build_env.File("QEMUConsoleLogger.cpp"),
     build_env.File("System.cpp"),
 ]
 Boot = build_env.StaticLibrary("Boot.o", build_env.Object(sources))

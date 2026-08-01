@@ -449,7 +449,7 @@ namespace Rune::App {
         // While technically okay, this would lead to the system with only the idle thread running
         // which renders it useless.
         if (_system_loader_handle == _active_app->handle) {
-#ifdef SHUTDOWN_ON_SYSTEM_LOADER_EXIT
+#ifdef FORCE_SHUTDOWN
             System::instance().shutdown();
 #else
             System::instance().panic("The system loader shall not exit!");

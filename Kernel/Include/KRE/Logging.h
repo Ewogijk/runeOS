@@ -18,38 +18,48 @@
 #ifndef RUNEOS_LOGGING_H
 #define RUNEOS_LOGGING_H
 
+#include <Ember/Ember.h>
 #include <Ember/Enum.h>
+#include <Ember/MachineBits.h>
 
 #include <KRE/Collections/Array.h>
 #include <KRE/Collections/HashMap.h>
+#include <KRE/Collections/RingBuffer.h>
 
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/Utility.h>
 
 namespace Rune {
+
+    // ========================================================================================== //
+    // Logging API - DEPRECATED
+    // Kept for backwards compatibility until all call sides have been removed
+    // ========================================================================================== //
+
     /**
      * The severity of a log message.
      * <p>
      * Priorities: Trace < Debug < Info < Warn < Error < Critical.
      * </p>
      */
-#define LOG_LEVELS(X)                                                                              \
-    X(LogLevel, TRACE, 0x1)                                                                        \
-    X(LogLevel, DEBUG, 0x2)                                                                        \
-    X(LogLevel, INFO, 0x3)                                                                         \
-    X(LogLevel, WARN, 0x4)                                                                         \
-    X(LogLevel, ERROR, 0x5)                                                                        \
-    X(LogLevel, CRITICAL, 0x6)
+#define LOG_LEVELS_DEP(X)                                                                          \
+    X(LogLevelDep, TRACE, 0x1)                                                                     \
+    X(LogLevelDep, DEBUG, 0x2)                                                                     \
+    X(LogLevelDep, INFO, 0x3)                                                                      \
+    X(LogLevelDep, WARN, 0x4)                                                                      \
+    X(LogLevelDep, ERROR, 0x5)                                                                     \
+    X(LogLevelDep, CRITICAL, 0x6)
 
-    DECLARE_ENUM(LogLevel, LOG_LEVELS, 0x0) // NOLINT
+    DECLARE_ENUM(LogLevelDep, LOG_LEVELS_DEP, 0x0) // NOLINT
 
     /**
      * A log event tracks information about a log message.
      */
-    struct LogEvent {
-        LogLevel log_level;
-        String   formatted_log_msg; // Preformatted log message.
+    struct LogEventDep {
+        LogLevelDep log_level;
+        String      formatted_log_msg; // Preformatted log message.
     };
 
     /**
@@ -64,7 +74,7 @@ namespace Rune {
          * @param @log_event Log event.
          * @return A formatted log message.
          */
-        virtual auto layout(LogLevel      log_level,
+        virtual auto layout(LogLevelDep   log_level,
                             const String& logger_name,
                             const String& log_msg_template,
                             Argument*     arg_list,
@@ -78,7 +88,7 @@ namespace Rune {
      */
     class EarlyBootLayout : public Layout {
       public:
-        auto layout(LogLevel      log_level,
+        auto layout(LogLevelDep   log_level,
                     const String& logger_name,
                     const String& log_msg_template,
                     Argument*     arg_list,
@@ -110,7 +120,7 @@ namespace Rune {
         // HashMap<String, LinkedList<LogEvent>>      _log_event_cache;
 
         static void deliver_log_event(const SharedPointer<TextStream>& target,
-                                      LogLevel                         log_level,
+                                      LogLevelDep                      log_level,
                                       const String&                    formatted_log_msg);
 
       public:
@@ -144,7 +154,7 @@ namespace Rune {
          * @param layout_ref Layout that should format the log event.
          * @param target_refs A list of targets where the formatted log message should be delivered.
          */
-        void log(LogLevel                  log_level,
+        void log(LogLevelDep               log_level,
                  const String&             logger_name,
                  const String&             log_msg_template,
                  Argument*                 arg_list,
@@ -157,7 +167,7 @@ namespace Rune {
      * The logger configuration stores the log level, layout ref and target stream refs of a logger.
      */
     struct LoggerConfig {
-        LogLevel           log_level;
+        LogLevelDep        log_level;
         String             layout_ref;
         LinkedList<String> target_refs;
     };
@@ -186,13 +196,13 @@ namespace Rune {
          *
          * @return The log level of the logger.
          */
-        [[nodiscard]] auto get_log_level() const -> LogLevel;
+        [[nodiscard]] auto get_log_level() const -> LogLevelDep;
 
         /**
          * Change the log level of the logger.
          * @param log_level New log level.
          */
-        void set_log_level(LogLevel log_level);
+        void set_log_level(LogLevelDep log_level);
 
         /**
          * Change the layout ref of the logger.
@@ -205,7 +215,7 @@ namespace Rune {
         /// @param fmt       The message as a format string.
         /// @param arg_list  Format string arguments.
         /// @param arg_size  Number of arguments.
-        void log(LogLevel log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
+        void log(LogLevelDep log_level, const String& fmt, Argument* arg_list, size_t arg_size) {
             if ((int) log_level < (int) _config.log_level) return;
             _distributor->log(log_level,
                               _name,
@@ -225,7 +235,7 @@ namespace Rune {
         template <typename... Args>
         void trace(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::TRACE, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::TRACE, fmt, arg_array, sizeof...(Args));
         }
 
         /**
@@ -237,7 +247,7 @@ namespace Rune {
         template <typename... Args>
         void debug(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::DEBUG, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::DEBUG, fmt, arg_array, sizeof...(Args));
         }
 
         /**
@@ -249,7 +259,7 @@ namespace Rune {
         template <typename... Args>
         void info(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::INFO, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::INFO, fmt, arg_array, sizeof...(Args));
         }
 
         /**
@@ -261,7 +271,7 @@ namespace Rune {
         template <typename... Args>
         void warn(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::WARN, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::WARN, fmt, arg_array, sizeof...(Args));
         }
 
         /**
@@ -273,7 +283,7 @@ namespace Rune {
         template <typename... Args>
         void error(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::ERROR, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::ERROR, fmt, arg_array, sizeof...(Args));
         }
 
         /**
@@ -286,7 +296,7 @@ namespace Rune {
         template <typename... Args>
         void critical(const String& fmt, Args... args) {
             Argument arg_array[] = {args...}; // NOLINT
-            log(LogLevel::CRITICAL, fmt, arg_array, sizeof...(Args));
+            log(LogLevelDep::CRITICAL, fmt, arg_array, sizeof...(Args));
         }
     };
 
@@ -341,7 +351,7 @@ namespace Rune {
          */
         static auto instance() -> LogContext& {
             // TODO use compile time configuration with macros??
-            LogLevel                      log_level = LogLevel::INFO;
+            LogLevelDep                   log_level = LogLevelDep::DEBUG;
             HashMap<String, LoggerConfig> default_configs;
             default_configs[ROOT_NAMESPACE] = {
                 .log_level   = log_level,
@@ -405,7 +415,7 @@ namespace Rune {
          *          already exists.
          */
         auto get_logger(const String&             name,
-                        LogLevel                  level,
+                        LogLevelDep               level,
                         const String&             layout_ref,
                         const LinkedList<String>& target_refs) -> SharedPointer<Logger>;
 
@@ -434,7 +444,7 @@ namespace Rune {
          * @return True: The log level of at least one logger is changed. False: No logger(s) with
          *          requested name was found.
          */
-        auto set_log_level(const String& selector, LogLevel level) -> bool;
+        auto set_log_level(const String& selector, LogLevelDep level) -> bool;
 
         /**
          * Change the layout ref of a single logger or a selection of loggers.
@@ -462,5 +472,171 @@ namespace Rune {
          */
         auto register_target_stream(const String& name, SharedPointer<TextStream> target) -> bool;
     };
+
+    // ========================================================================================== //
+    // Logging API
+    // ========================================================================================== //
+
+#ifndef LOG_LEVEL
+// Fallback to INFO log level
+#define LOG_LEVEL LOG_LEVEL_INFO
+#endif
+
+#ifndef LOG_BUFFER_SIZE
+    // Fallback to 2^16=64KiB log buffer size storing up to 512 log events.
+#define LOG_BUFFER_SIZE 16
+#endif
+
+    /// @brief
+    /// @return A read cursor for the kernel log ringbuffer.
+    auto log_get_read_cursor() -> ReadCursor<Ember::LogEvent, LOG_BUFFER_SIZE>;
+
+    /// @brief Returns the handle of the calling thread.
+    using ThreadResolver = Function<Ember::Handle()>;
+
+    /// @brief Returns the handle of the running application.
+    using AppResolver = Function<Ember::Handle()>;
+
+    /// @brief Configure the thread and app resolver.
+    /// @param thread_resolver
+    /// @param app_resolver
+    void log_configure(AppResolver app_resolver, ThreadResolver thread_resolver);
+
+    /// @brief Log an event within the kernel.
+    /// @param log_level
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    /// @param arg_size
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    void log(Ember::LogLevel   log_level,
+             const char*       file,
+             U16               line_number,
+             Ember::LogMessage log_message,
+             const Argument*   args,
+             size_t            arg_size);
+
+    /// @brief Log a trace log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void trace(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::TRACE, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+    /// @brief Log a debug log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void debug(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::DEBUG, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+    /// @brief Log an info log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void info(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::INFO, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+    /// @brief Log a warn log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void warn(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::WARN, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+    /// @brief Log a error log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void error(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::ERROR, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+    /// @brief Log a fatal log message.
+    /// @tparam Args
+    /// @param file
+    /// @param line_number
+    /// @param log_message
+    /// @param args
+    ///
+    /// This is a low-level call to the logging API, use one of the macros instead.
+    template <typename... Args>
+    void fatal(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+        Argument arg_array[] = {args...}; // NOLINT
+        log(Ember::LogLevel::FATAL, file, line_number, log_message, arg_array, sizeof...(Args));
+    }
+
+#if LOG_LEVEL <= LOG_LEVEL_TRACE
+#define TRACE(log_message, ...) trace(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define TRACE(log_message, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_DEBUG
+#define DEBUG(log_message, ...) debug(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define DEBUG(log_message, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_INFO
+#define INFO(log_message, ...) info(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define INFO(log_message, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_WARN
+#define WARN(log_message, ...) warn(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define WARN(log_message, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_ERROR
+#define ERROR(log_message, ...) error(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define ERROR(log_message, ...)
+#endif
+
+#if LOG_LEVEL <= LOG_LEVEL_FATAL
+#define FATAL(log_message, ...) fatal(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
+#else
+#define FATAL(log_message, ...)
+#endif
+
 } // namespace Rune
 #endif // RUNEOS_LOGGING_H

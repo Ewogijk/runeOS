@@ -81,7 +81,7 @@ namespace Rune {
 
         /// @brief
         /// @return
-        auto read() -> Optional<T> {
+        auto next() -> Optional<T> {
             skip_to_read_window();
             if (m_read_cursor == m_ring_buffer_state->m_write_cursor)
                 // Empty buffer
@@ -128,7 +128,7 @@ namespace Rune {
         ///
         /// If the write-cursor reaches the start of the read window then it will be advanced by one
         /// position.
-        void write(T element) {
+        void append(T element) {
             using State = RingBufferState<T, SIZE>;
             m_ring_buffer_state.m_buffer[m_ring_buffer_state.m_write_cursor] = move(element);
             m_ring_buffer_state.m_write_cursor =

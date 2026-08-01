@@ -35,6 +35,7 @@
 
 #include <Memory/MemoryModule.h>
 
+#include <Device/ACPI/ACPI.h>
 #include <Device/DeviceModule.h>
 
 #include <VirtualFileSystem/FileStream.h>
@@ -46,15 +47,15 @@
 
 #include <Boot/DetailedLogLayout.h>
 
-#ifdef RUN_UNIT_TESTS
+#ifdef ENABLE_QEMU_CON
+#include <Boot/QEMUConsoleLogger.h>
+#endif
+
+#ifdef ENABLE_UNIT_TESTS
 #include <Test/UnitTest/Runner.h>
 #endif
 
-#include <Device/ACPI/ACPI.h>
-
 namespace Rune {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("System");
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Helper Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -83,17 +84,17 @@ namespace Rune {
         auto mode     = contract_violation.mode();
         auto location = contract_violation.location();
 
-        LOGGER->critical("Contract violation detected (semantic={}, mode={})",
-                         semantic_to_string[static_cast<int>(semantic) - 1],
-                         mode_to_string[static_cast<int>(mode) - 1]);
-        LOGGER->critical("{}:{}:{}: Contract of {} was violated.",
-                         location.file_name(),
-                         location.line(),
-                         location.column(),
-                         location.function_name());
-        LOGGER->critical("          {} condition: {}",
-                         kind_to_string[static_cast<int>(kind) - 1],
-                         contract_violation.comment());
+        FATAL("Contract violation detected (semantic={}, mode={})",
+              semantic_to_string[static_cast<int>(semantic) - 1],
+              mode_to_string[static_cast<int>(mode) - 1]);
+        FATAL("{}:{}:{}: Contract of {} was violated.",
+              location.file_name(),
+              location.line(),
+              location.column(),
+              location.function_name());
+        FATAL("          {} condition: {}",
+              kind_to_string[static_cast<int>(kind) - 1],
+              contract_violation.comment());
         System::instance().panic("Terminating kernel execution...");
     }
 
@@ -118,7 +119,7 @@ namespace Rune {
 
         auto& system = System::instance();
         if (system._is_booted) {
-            LOGGER->warn("Kernel boot phase 3 has already run! Aborting...");
+            WARN("Boot phase 3 has already run! Aborting...");
             return 0;
         }
 
@@ -137,7 +138,11 @@ namespace Rune {
             SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
         LogContext::instance().set_layout_ref("*", "detailed-layout");
 
-#ifdef RUN_UNIT_TESTS
+#ifdef ENABLE_QEMU_CON
+        activate_qemu_console_logging();
+#endif
+
+#ifdef ENABLE_UNIT_TESTS
         LOGGER->info("Run kernel unit tests");
         Test::run_kernel_tests();
 #endif
@@ -162,7 +167,7 @@ namespace Rune {
 
     void System::boot_phase2(BootInfo boot_info) {
         if (_is_booted) {
-            LOGGER->warn("Kernel boot phase 2 has already run! Aborting...");
+            WARN("Boot phase 2 has already run! Aborting...");
             return;
         }
 
@@ -197,11 +202,11 @@ namespace Rune {
         LogContext& ctx = LogContext::instance();
         ctx.register_layout("earlyboot", SharedPointer<Layout>(new EarlyBootLayout()));
         ctx.register_target_stream("e9", SharedPointer<TextStream>(new CPU::E9Stream()));
-        LOGGER->info("runeKernel v{}", KERNEL_VERSION.to_string());
-        LOGGER->info("Loaded by {} - v{}",
+        INFO("runeKernel v{}", KERNEL_VERSION.to_string());
+        INFO("Loaded by {} - v{}",
                      _boot_info.boot_loader_name,
                      _boot_info.boot_loader_version);
-        LOGGER->info("Load module: {:<40} OKAY", (mem_module.get_name() + " ..."));
+        INFO("Load module: {:<40} OKAY", (mem_module.get_name() + " ..."));
         mem_module.log_post_load();
 
         CPUModuleLoader().load();
@@ -241,13 +246,13 @@ namespace Rune {
     }
 
     void System::reboot() {
-        LOGGER->info("Performing reboot. Try ACPI reset...");
+        INFO("Performing reboot. Try ACPI reset...");
         auto*               dm    = get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         Device::ACPIRequest a_req = Device::ACPIRequest::REBOOT;
         Device::IORequest   req{.m_in_data = &a_req, .m_out_data = nullptr};
         dm->control_device(dm->device_tree()->get_handle(), req);
 
-        LOGGER->info("Fallback to PS/2 Controller reset...");
+        INFO("Fallback to PS/2 Controller reset...");
         constexpr U8 PS2_COMMAND_PORT  = 0x64;
         constexpr U8 PS2_RESET_COMMAND = 0xFE;
         U8           PS2_STATUS        = 0x02; // Initially assume input buffer full
@@ -255,7 +260,7 @@ namespace Rune {
         CPU::out_b(PS2_COMMAND_PORT, PS2_RESET_COMMAND);
         CPU::halt();
 
-        LOGGER->info("Fallback to reset control register...");
+        INFO("Fallback to reset control register...");
         constexpr U16 RESET_CONTROL_REGISTER = 0xCF9;
         constexpr U8  SYSTEM_RESET           = 0x02;
         constexpr U8  RESET_CPU              = 0x04;
@@ -280,10 +285,10 @@ namespace Rune {
         System::instance()._builtin_plugin_registry[plugin_index++] = plugin;
         String plugin_info = plugin->get_info().to_string() + " ...";
         if (!plugin->load()) {
-            LOGGER->critical("Load plugin: {:<40} FAILED", plugin_info);
+            FATAL("Load plugin: {:<40} FAILED", plugin_info);
             while (true) CPU::halt();
         }
-        LOGGER->info("Load plugin: {:<40} OKAY", plugin_info);
+        INFO("Load plugin: {:<40} OKAY", plugin_info);
     }
 
     void ModuleLoader::load() {
@@ -296,10 +301,10 @@ namespace Rune {
 
         String module_name = module->get_name() + " ...";
         if (!module->load(system._boot_info)) {
-            LOGGER->critical("Load module: {:<40} FAILED", module_name);
+            FATAL("Load module: {:<40} FAILED", module_name);
             while (true) CPU::halt();
         }
-        LOGGER->info("Load module: {:<40} OKAY", module_name);
+        INFO("Load module: {:<40} OKAY", module_name);
 
         on_post_load(module);
     }
