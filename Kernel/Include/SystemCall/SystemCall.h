@@ -29,9 +29,9 @@ namespace Rune::SystemCall {
      * @brief General information about an installed system call.
      */
     struct SystemCallInfo {
-        U16    handle    = 0;
-        String name      = "";
-        U64    requested = 0;
+        Ember::Handle handle    = 0;
+        String        name      = "";
+        U64           requested = 0;
     };
 
     /**

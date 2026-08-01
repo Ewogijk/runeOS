@@ -21,7 +21,7 @@ namespace Rune {
         : _cpu_module(cpu_module),
           _app_module(app_module) {}
 
-    auto DetailedLogLayout::layout(LogLevel      log_level,
+    auto DetailedLogLayout::layout(LogLevelDep      log_level,
                                    const String& logger_name,
                                    const String& log_msg_template,
                                    Argument*     arg_list,

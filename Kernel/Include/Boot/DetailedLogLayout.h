@@ -32,7 +32,7 @@ namespace Rune {
       public:
         DetailedLogLayout(CPU::CPUModule* cpu_module, App::AppModule* app_module);
 
-        auto layout(LogLevel      log_level,
+        auto layout(LogLevelDep      log_level,
                     const String& logger_name,
                     const String& log_msg_template,
                     Argument*     arg_list,

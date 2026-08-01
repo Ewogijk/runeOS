@@ -68,10 +68,10 @@ namespace Rune::SystemCall {
      * </p>
      */
     struct Definition {
-        Ember::ResourceID ID               = 0;
-        String            name             = "";
-        Handler           sys_call_handler = SYS_CALL_HANDLER_NONE;
-        void*             context          = nullptr;
+        Ember::Handle ID               = 0;
+        String        name             = "";
+        Handler       sys_call_handler = SYS_CALL_HANDLER_NONE;
+        void*         context          = nullptr;
     };
 
     /// @brief Define a system call that takes all six user application arguments.
@@ -80,7 +80,7 @@ namespace Rune::SystemCall {
     /// @param handler
     /// @param context
     /// @return
-    auto define6(Ember::ResourceID                               ID,
+    auto define6(Ember::Handle                                   ID,
                  const String&                                   name,
                  const Function<S64(void*,
                                     Ember::SystemCallArgument,
@@ -99,7 +99,7 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    auto define5(Ember::ResourceID                               ID,
+    auto define5(Ember::Handle                                   ID,
                  const String&                                   name,
                  const Function<S64(void*,
                                     Ember::SystemCallArgument,
@@ -117,7 +117,7 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    auto define4(Ember::ResourceID                               ID,
+    auto define4(Ember::Handle                                   ID,
                  const String&                                   name,
                  const Function<S64(void*,
                                     Ember::SystemCallArgument,
@@ -134,7 +134,7 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    auto define3(Ember::ResourceID                               ID,
+    auto define3(Ember::Handle                                   ID,
                  const String&                                   name,
                  const Function<S64(void*,
                                     Ember::SystemCallArgument,
@@ -151,7 +151,7 @@ namespace Rune::SystemCall {
      * @return
      */
     auto define2(
-        Ember::ResourceID                                                                 ID,
+        Ember::Handle                                                                     ID,
         const String&                                                                     name,
         const Function<S64(void*, Ember::SystemCallArgument, Ember::SystemCallArgument)>& handler,
         void* context) -> Definition;
@@ -164,7 +164,7 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    auto define1(Ember::ResourceID                                      ID,
+    auto define1(Ember::Handle                                          ID,
                  const String&                                          name,
                  const Function<S64(void*, Ember::SystemCallArgument)>& handler,
                  void*                                                  context) -> Definition;
@@ -177,7 +177,7 @@ namespace Rune::SystemCall {
      * @param context
      * @return
      */
-    auto define0(Ember::ResourceID           ID,
+    auto define0(Ember::Handle               ID,
                  const String&               name,
                  const Function<S64(void*)>& handler,
                  void*                       context) -> Definition;
