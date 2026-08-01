@@ -147,11 +147,8 @@ namespace Rune {
         };
         for (auto& module_loader : module_loaders) module_loader->load();
 
-        auto* cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        auto* app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
-
 #ifdef ENABLE_UNIT_TESTS
-        LOGGER->info("Run kernel unit tests");
+        INFO("Run unit tests");
         Test::run_kernel_tests();
 #endif
 
@@ -163,8 +160,9 @@ namespace Rune {
         if (st != VFS::IOStatus::FOUND)
             system.panic(R"("{}": System loader not found!)", system_loader.to_string());
 
-        system._is_booted  = true;
-        App::LoadStatus ls = app_module->start_system_loader(system_loader, Path::ROOT);
+        system._is_booted          = true;
+        auto*           app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
+        App::LoadStatus ls         = app_module->start_system_loader(system_loader, Path::ROOT);
         if (ls != App::LoadStatus::RUNNING) {
             system.panic(R"("{}": System loader start failure! Reason: {})",
                          system_loader.to_string(),
