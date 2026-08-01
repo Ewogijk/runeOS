@@ -16,14 +16,23 @@
 
 #include <KRE/Logging.h>
 
+#include "CPU/Threading/Scheduler.h"
+
+#include <KRE/Collections/RingBuffer.h>
+
 namespace Rune {
-    DEFINE_ENUM(LogLevel, LOG_LEVELS, 0x0)
+    DEFINE_ENUM(LogLevelDep, LOG_LEVELS_DEP, 0x0)
+
+    // ========================================================================================== //
+    // Logging API - DEPRECATED
+    // Kept for backwards compatibility until all call sides have been removed
+    // ========================================================================================== //
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      EarlyBootLayout
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto EarlyBootLayout::layout(LogLevel      log_level,
+    auto EarlyBootLayout::layout(LogLevelDep   log_level,
                                  const String& logger_name,
                                  const String& log_msg_template,
                                  Argument*     arg_list,
@@ -37,14 +46,14 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void LogEventDistributor::deliver_log_event(const SharedPointer<TextStream>& target,
-                                                LogLevel                         log_level,
+                                                LogLevelDep                      log_level,
                                                 const String& formatted_log_msg) {
         if (target->is_ansi_supported()) {
             // Only set the background color to red when a critical message is logged
             // and keep the default background color of the stream for other log levels
             // Setting the background color in all cases looks strange on other terminals
             // e.g. Clion, powershell, etc.
-            if (log_level == LogLevel::CRITICAL) target->set_background_color(BG_COLOR_CRITICAL);
+            if (log_level == LogLevelDep::CRITICAL) target->set_background_color(BG_COLOR_CRITICAL);
             target->set_foreground_color(FG_COLOR[log_level - 1]);
         }
         target->write_line(formatted_log_msg);
@@ -65,7 +74,7 @@ namespace Rune {
         ;
     }
 
-    void LogEventDistributor::log(LogLevel                  log_level,
+    void LogEventDistributor::log(LogLevelDep               log_level,
                                   const String&             logger_name,
                                   const String&             log_msg_template,
                                   Argument*                 arg_list,
@@ -93,9 +102,9 @@ namespace Rune {
 
     auto Logger::get_name() const -> String { return _name; }
 
-    auto Logger::get_log_level() const -> LogLevel { return _config.log_level; }
+    auto Logger::get_log_level() const -> LogLevelDep { return _config.log_level; }
 
-    void Logger::set_log_level(LogLevel new_log_level) { _config.log_level = new_log_level; }
+    void Logger::set_log_level(LogLevelDep new_log_level) { _config.log_level = new_log_level; }
 
     void Logger::set_layout_ref(const String& layout_ref) { _config.layout_ref = move(layout_ref); }
 
@@ -164,7 +173,7 @@ namespace Rune {
         : _default_configs(default_configs) {}
 
     auto LogContext::get_logger(const String&             name,
-                                LogLevel                  level,
+                                LogLevelDep               level,
                                 const String&             layout_ref,
                                 const LinkedList<String>& target_refs) -> SharedPointer<Logger> {
         auto register_logger = [this, &name, level, &layout_ref, &target_refs](
@@ -204,7 +213,7 @@ namespace Rune {
             .value_or(SharedPointer<Logger>());
     }
 
-    auto LogContext::set_log_level(const String& selector, LogLevel level) -> bool {
+    auto LogContext::set_log_level(const String& selector, LogLevelDep level) -> bool {
         auto change_level = [this, level](Selector sel) -> Optional<bool> {
             LinkedList<SharedPointer<Logger>> filter_list = filter_loggers(sel);
             if (filter_list.empty()) return NULL_OPT;
@@ -231,5 +240,76 @@ namespace Rune {
     auto LogContext::register_target_stream(const String& name, SharedPointer<TextStream> target)
         -> bool {
         return _distributor.register_target_stream(name, target);
+    }
+
+    // ========================================================================================== //
+    // Logging API
+    // ========================================================================================== //
+
+    // ====================================================================================== //
+    // Log Buffer
+    // ====================================================================================== //
+
+    RingBuffer<Ember::LogEvent, LOG_BUFFER_SIZE> g_kernel_log_buffer;
+
+    auto log_get_read_cursor() -> ReadCursor<Ember::LogEvent, LOG_BUFFER_SIZE> {
+        return g_kernel_log_buffer.create_read_cursor();
+    }
+
+    // ====================================================================================== //
+    // Logging
+    // ====================================================================================== //
+
+    ThreadResolver                       g_thread_resolver = []() -> U16 { return 0; };
+    AppResolver                          g_app_resolver    = []() -> U16 { return 0; };
+    Array<char, Ember::LOG_MESSAGE_SIZE> g_formatted_log_message_buf;
+
+    void log_configure(AppResolver app_resolver, ThreadResolver thread_resolver) {
+        g_thread_resolver = move(thread_resolver);
+        g_app_resolver    = move(app_resolver);
+    }
+
+    void log(Ember::LogLevel   log_level,
+             const char*       file,
+             U16               line_number,
+             Ember::LogMessage log_message,
+             const Argument*   args,
+             size_t            arg_size) {
+        // __FILE__ includes the relative path to the file: a/b/code.cpp
+        // We want to strip the path and file extension: code
+        size_t offset          = 0;
+        size_t file_name_begin = 0;
+        size_t file_name_end   = 0;
+        while (file[offset] != 0) {
+            char c = file[offset];
+            if (c == '/') file_name_begin = offset + 1;
+            if (c == '.') {
+                file_name_end = offset;
+                break;
+            }
+            offset++;
+        }
+
+        Ember::LogEvent evt{.m_log_level     = log_level,
+                            .m_file_name     = {},
+                            .m_line_number   = line_number,
+                            .m_app_handle    = g_app_resolver(),
+                            .m_thread_handle = g_thread_resolver(),
+                            .m_message       = {}};
+
+        // NOLINTBEGIN
+        memcpy(evt.m_file_name,
+               const_cast<char*>(&file[file_name_begin]),
+               file_name_end - file_name_begin);
+        // NOLINTEND
+
+        size_t i = interpolate(log_message,
+                               g_formatted_log_message_buf.data(),
+                               Ember::LOG_MESSAGE_SIZE,
+                               args,
+                               arg_size);
+        memcpy(evt.m_message, g_formatted_log_message_buf.data(), i);
+
+        g_kernel_log_buffer.append(move(evt));
     }
 } // namespace Rune

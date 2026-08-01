@@ -1088,7 +1088,7 @@ CLINK {
                 if (c == 'n') va_arg(args, int*);
             }
         }
-        LOGGER->log(LogLevel::INFO, r_fstr, f_args, arg_count);
+        LOGGER->log(LogLevelDep::INFO, r_fstr, f_args, arg_count);
     }
     // NOLINTEND
 

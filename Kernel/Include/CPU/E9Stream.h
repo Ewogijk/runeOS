@@ -20,7 +20,8 @@
 #include <KRE/Stream.h>
 
 namespace Rune::CPU {
-
+    /// @brief Stream targeting the 0xE9 port, QEMU forwards all data written to it to the host
+    ///         console.
     class E9Stream : public TextStream {
         static constexpr U8 E9 = 0xE9;
 
