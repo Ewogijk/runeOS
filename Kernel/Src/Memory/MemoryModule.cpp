@@ -48,7 +48,6 @@ void operator delete[](void* p, size_t size) noexcept {
 }
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Memory.MemoryModule");
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem
@@ -63,29 +62,52 @@ namespace Rune::Memory {
     auto MemoryModule::get_name() const -> String { return "Memory"; }
 
     auto MemoryModule::load(const BootInfo& boot_info) -> bool {
-        _p_map = boot_info.physical_memory_map;
-        _v_map = create_virtual_memory_map();
-
+        _p_map                           = boot_info.physical_memory_map;
+        _v_map                           = create_virtual_memory_map();
         KernelSpaceLayout k_space_layout = get_virtual_kernel_space_layout();
-        // Init pmm
-        if (_pmm.start(&_p_map, get_page_size(), k_space_layout.higher_half_direct_map)
-            != PMMStartFailure::NONE)
-            return false;
 
-        // Init vmm
+        DEBUG("Initialize physical memory manager")
+        auto pmm_failure =
+            _pmm.start(&_p_map, get_page_size(), k_space_layout.higher_half_direct_map);
+        if (pmm_failure != PMMStartFailure::NONE) {
+            FATAL("Physical memory manager init failed, Failure: {}", pmm_failure.to_string())
+            return false;
+        };
+        MemoryRegion managed = _pmm.get_managed_memory();
+        DEBUG("Physical memory range: {:0=#16x}-{:0=#16x}", managed.start, managed.end());
+        auto mem_idx = _pmm.get_memory_index_region();
+        DEBUG("Physical memory index range: {:0=#16x}-{:0=#16x}, {} bytes",
+              mem_idx.start,
+              mem_idx.end(),
+              mem_idx.size);
+
+        DEBUG("Initialize virtual memory manager")
         init_paging(boot_info.physical_address_width);
-        if (_vmm.start(&_p_map, &_v_map, k_space_layout, HEAP_SIZE) != VMMStartFailure::NONE)
+        auto vmm_failure = _vmm.start(&_p_map, &_v_map, k_space_layout, HEAP_SIZE);
+        if (vmm_failure != VMMStartFailure::NONE) {
+            FATAL("Virtual memory manager init failed, Failure: {}", vmm_failure.to_string());
             return false;
-
+        }
         // Adjust pmm to new virtual memory space
         _pmm.relocate_memory_index(k_space_layout.pmm_reserved);
         if (!_pmm.claim_boot_loader_reclaimable_memory()) {
             _boot_loader_mem_claim_failed = true;
+            FATAL("Failed to reclaim bootloader memory")
             return false;
         }
         _p_map.merge();
+        DEBUG("Virtual memory index base address: {:0=#16x}", _pmm.get_memory_index());
+        DEBUG("Base page table: {:0=#16x}", get_base_page_table_address());
 
-        if (_heap.start(&_v_map, &_vmm) != HeapStartFailureCode::NONE) return false;
+        DEBUG("Initialize kernel heap")
+        auto heap_failure = _heap.start(&_v_map, &_vmm);
+        if (heap_failure != HeapStartFailureCode::NONE) {
+            FATAL("Kernel heap init failed, Failure: {}", heap_failure.to_string());
+            return false;
+        }
+        DEBUG("General purpose and DMA cache memory size range: {}-{} bytes.",
+              _heap.get_min_cache_size(),
+              _heap.get_max_cache_size());
 
         MEM_MODULE = this;
         return true;
@@ -100,29 +122,4 @@ namespace Rune::Memory {
     auto MemoryModule::get_virtual_memory_manager() -> VirtualMemoryManager* { return &_vmm; }
 
     auto MemoryModule::get_heap() -> SlabAllocator* { return &_heap; }
-
-    void MemoryModule::log_post_load() const {
-        LOGGER->debug("The bootloader reclaimable memory has been claimed.");
-
-        MemoryRegion managed = _pmm.get_managed_memory();
-        LOGGER->debug("Detected physical memory range: {:0=#16x}-{:0=#16x}",
-                      managed.start,
-                      managed.end());
-        MemoryRegion memIdx = _pmm.get_memory_index_region();
-        LOGGER->debug("Physical memory index region: {:0=#16x}-{:0=#16x} (MemorySize: {} bytes)",
-                      memIdx.start,
-                      memIdx.end(),
-                      memIdx.size);
-        LOGGER->debug("Memory index can be accessed at virtual address: {:0=#16x}",
-                      _pmm.get_memory_index());
-
-        LOGGER->debug("The base page table is located at physical address: {:0=#16x}",
-                      get_base_page_table_address());
-
-        LOGGER->debug("Bootstrap caches are initialized.");
-        LOGGER->debug(
-            "General purpose and DMA caches are initialized. MemorySize range: {}-{} bytes.",
-            _heap.get_min_cache_size(),
-            _heap.get_max_cache_size());
-    }
 } // namespace Rune::Memory

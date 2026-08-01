@@ -32,6 +32,7 @@
 #include <Memory/MemoryModule.h>
 
 #include <Device/DeviceModule.h>
+#include <Ember/Ember.h>
 
 namespace Rune::App {
 
@@ -66,12 +67,12 @@ namespace Rune::App {
         Device::DeviceModule* _dev_module;
         FrameBuffer           _frame_buffer;
 
-        HashMap<U16, SharedPointer<Info>> _app_table;
-        HandleCounter<U16>                _app_handle_counter;
+        HashMap<Ember::Handle, SharedPointer<Info>> _app_table;
+        HandleCounter<Ember::Handle>                _app_handle_counter;
 
         SharedPointer<Info> _active_app;
 
-        U16 _system_loader_handle;
+        Ember::Handle _system_loader_handle;
 
         /**
          * @brief Set the ID and working directory in the entry and schedule it's main thread for
@@ -218,7 +219,7 @@ namespace Rune::App {
          * @return INT_MAX: No app with the handle was found, Else: The exit code of the
          * application.
          */
-        auto join(U16 handle) -> int;
+        auto join(Ember::Handle handle) -> int;
     };
 } // namespace Rune::App
 

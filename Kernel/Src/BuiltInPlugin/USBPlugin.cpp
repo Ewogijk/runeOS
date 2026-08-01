@@ -21,7 +21,7 @@
 
 namespace Rune::BuiltInPlugin {
     const PluginInfo PS2KEYBOARD_INFO = {
-        .name    = "PS2 Keyboard",
+        .name    = "USB",
         .vendor  = "Ewogijk",
         .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };

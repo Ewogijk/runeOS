@@ -23,14 +23,12 @@
 #include <CPU/Threading/MemoryBarrier.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Semaphore");
-
     void Semaphore::trace_state(const String& action) {
         String wq;
         for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
         int c = _units;
         memory_barrier_read();
-        LOGGER->trace(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, c, wq);
+        TRACE(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, c, wq);
     }
 
     Semaphore::Semaphore(SemaphoreHandle handle,

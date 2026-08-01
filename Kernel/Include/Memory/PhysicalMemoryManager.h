@@ -51,7 +51,6 @@ namespace Rune::Memory {
         MemoryMap*   _mem_map;   // Memory map, required for memory protection
         bool         _init;
 
-        PMMStartFailure _start_fail;
         MemorySize      _largest_free_block;
         // NOLINTEND
 
@@ -91,11 +90,6 @@ namespace Rune::Memory {
          */
         [[nodiscard]] auto start(MemoryMap* mem_map, U64 page_size, VirtualAddr memory_index_offset)
             -> PMMStartFailure;
-
-        /**
-         * Log the intermediate steps of the start routine.
-         */
-        void log_start_routine_phases() const;
 
         /**
          *

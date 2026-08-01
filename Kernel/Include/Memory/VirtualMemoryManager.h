@@ -53,9 +53,6 @@ namespace Rune::Memory {
 
         VirtualAddr _user_space_end{0};
 
-        VMMStartFailure             _start_fail;
-        KernelSpaceEntryAllocResult _ksear;
-
         // Map a coherent physical address range to a virtual address range and claim the region in
         // the virtual memory map
         auto allocate_kernel_space_entries(const Memory::PageTable& base_pt,

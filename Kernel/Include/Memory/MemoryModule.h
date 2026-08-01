@@ -83,16 +83,6 @@ namespace Rune::Memory {
          * @return
          */
         auto get_heap() -> SlabAllocator*;
-
-        /**
-         * Log the intermediate steps of the start routine.
-         *
-         * <p>
-         *  Call the function only after a successful start of the Memory Subsystem as logging is
-         * not available prior to it.
-         * </p>
-         */
-        void log_post_load() const;
     };
 } // namespace Rune::Memory
 

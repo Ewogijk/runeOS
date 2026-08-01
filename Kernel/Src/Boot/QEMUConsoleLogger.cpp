@@ -55,9 +55,11 @@ namespace Rune {
         auto*  app_module = System::instance().get_module<App::AppModule>(ModuleSelector::APP);
         String file       = evt.m_file_name;
         String app_name;
-        for (auto* app_info : app_module->get_app_table()) {
-            if (evt.m_app_handle == app_info->handle) {
-                app_name = app_info->name;
+        if (evt.m_app_handle != Ember::HANDLE_NONE) {
+            for (auto* app_info : app_module->get_app_table()) {
+                if (evt.m_app_handle == app_info->handle) {
+                    app_name = app_info->name;
+                }
             }
         }
         if (app_name.is_empty()) app_name = int_to_string(evt.m_app_handle, Radix::DECIMAL);
@@ -112,23 +114,7 @@ namespace Rune {
         return 0;
     }
 
-    void activate_qemu_console_logging() {
-        // Enable tracing of running apps and threads
-        log_configure(
-            []() -> U32 {
-                App::Info* r_app = System::instance()
-                                       .get_module<App::AppModule>(ModuleSelector::APP)
-                                       ->get_active_app();
-                return r_app->handle;
-            },
-            []() -> U32 {
-                auto r_thread = System::instance()
-                                    .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                                    ->get_scheduler()
-                                    ->get_running_thread();
-                return r_thread->get_handle();
-            });
-
+    void qemu_consoler_logger_start() {
         auto* cpu_module    = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         char* dummy_args[1] = {nullptr}; // NOLINT
         g_start_info.argc   = 0;

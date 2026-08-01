@@ -19,8 +19,6 @@
 #include <KRE/BitsAndBytes.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.PIT");
-
 #define CHANNELS(X)                                                                                \
     X(Channel, ZERO, 0x40)                                                                         \
     X(Channel, COMMAND, 0x43)
@@ -59,16 +57,15 @@ namespace Rune::CPU {
         _freq_hz           = frequency;
         _quantum           = quantum;
         _quantum_remaining = _quantum;
-        LOGGER->debug("Config: Mode={}, TargetFrequency={}Hz, Quantum={}",
-                      mode.to_string(),
-                      frequency,
-                      quantum);
+        DEBUG("Config: Mode={}, TargetFrequency={}Hz, Quantum={}",
+              mode.to_string(),
+              frequency,
+              quantum);
 
         // The PIT is limited by the QuartzFrequency
         if (_freq_hz > QUARTZ_FREQUENCY_HZ) {
-            LOGGER->debug(
-                "Target frequency > Max quartz frequency. Using max quartz frequency ({}Hz)",
-                QUARTZ_FREQUENCY_HZ);
+            DEBUG("Target frequency > Max quartz frequency. Using max quartz frequency ({}Hz)",
+                  QUARTZ_FREQUENCY_HZ);
             _freq_hz = QUARTZ_FREQUENCY_HZ;
         }
 
@@ -80,7 +77,7 @@ namespace Rune::CPU {
         // We want nanoseconds therefore we use 1000000000 instead of 1
         constexpr U32 NANO_SECOND = 1000000000;
         _time_between_irq         = NANO_SECOND / _freq_hz;
-        LOGGER->debug("Time between IRQs: ~{}ns", _time_between_irq);
+        DEBUG("Time between IRQs: ~{}ns", _time_between_irq);
 
         // Configure the frequency divider
         out_b(Channel::COMMAND, Mode::SQUARE_WAVE_GENERATOR);
@@ -94,7 +91,7 @@ namespace Rune::CPU {
             bool do_preempt = false;
             auto c_t        = _sleeping_threads.dequeue();
             while (c_t) {
-                LOGGER->trace(R"(1-{}: {} wake up)", get_name(), c_t->get_unique_name());
+                TRACE(R"(1-{}: {} wake up)", get_name(), c_t->get_unique_name());
                 c_t->timer_handle = Resource<TimerHandle>::HANDLE_NONE;
                 _scheduler->unblock(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
@@ -134,7 +131,7 @@ namespace Rune::CPU {
         U64 sleep_time_nanos = wake_time_nanos - tsb;
 
         auto& calling_thread = _scheduler->get_running_thread();
-        LOGGER->trace(R"(1-{}: {} sleep until {}ns)",
+        TRACE(R"(1-{}: {} sleep until {}ns)",
                       get_name(),
                       calling_thread->get_unique_name(),
                       sleep_time_nanos);

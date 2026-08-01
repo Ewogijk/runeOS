@@ -21,8 +21,6 @@
 #include <CPU/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.CPUModule");
-
     // NOLINTBEGIN
     Function<void(Thread*, Thread*)> ON_THREAD_STOPPED = [](Thread* term, Thread* next) {
         SILENCE_UNUSED(term)
@@ -34,9 +32,8 @@ namespace Rune::CPU {
         // Use the raw pointer to avoid referencing the shared pointer which will never be cleaned
         // up because of the context switch in "unlock", so C++ never gets to call the destructor on
         // "t"
-        auto* t = g_scheduler.get_running_thread().get();
-        LOGGER->trace(R"(Thread {} has finished. Exit Code: {})", t->get_unique_name(), exit_code);
-
+        auto* t = g_scheduler.get_running_thread().get(); // NOLINT -Wunused-variable
+        TRACE(R"({}: Finished execution, Exit Code: {})", t->get_unique_name(), exit_code)
         g_scheduler.stop();
     }
 
@@ -45,10 +42,10 @@ namespace Rune::CPU {
         // Use raw pointer -> See "thread_exit" for explanation
         auto* t = g_scheduler.get_running_thread().get();
         if (t->user_stack.stack_top == 0) {
-            LOGGER->trace("Will execute main in kernel mode.");
+            TRACE("{}: Execute in kernel mode.")
             current_core()->execute_in_kernel_mode(t, memory_pointer_to_addr(&thread_exit));
         } else {
-            LOGGER->trace("Will execute main in user mode.");
+            TRACE("{}: Execute in user mode.")
             current_core()->execute_in_user_mode(t);
         }
     }
@@ -72,7 +69,7 @@ namespace Rune::CPU {
             while (cT) {
                 auto dT = cT;
                 cT      = tgb->remove_front();
-                LOGGER->trace(R"(Terminating thread: {})", dT.value()->get_unique_name());
+                TRACE(R"({}: Clean up thread)", dT.value()->get_unique_name())
 
                 auto* next = g_scheduler.get_ready_queue()->peek();
                 if (next == nullptr) next = g_scheduler.get_idle_thread().get();
@@ -80,10 +77,9 @@ namespace Rune::CPU {
                 delete[] dT.value()->kernel_stack_bottom;
 
                 if (dT.value().get_ref_count() > 1) {
-                    LOGGER->warn(
-                        R"(>> Memory Leak << - {} has {} references but expected 1. Thread struct will not be freed.)",
-                        dT.value()->get_unique_name(),
-                        dT.value().get_ref_count());
+                    WARN(R"({}: Memory leak detected, Refcount: {})",
+                         dT.value()->get_unique_name(),
+                         dT.value().get_ref_count())
                 }
                 // dT gets deleted here after it goes out of scope
             }
@@ -132,23 +128,23 @@ namespace Rune::CPU {
                               LinkedList<EventHandlerTableEntry>());
 
         // Init Interrupts/IRQs
-        LOGGER->debug("Loading interrupt vector table...");
+        DEBUG("Load interrupt vector table")
         interrupt_load_vector_table();
         if (_pic_driver_table.empty()) {
-            LOGGER->critical("No PIC drivers are installed...");
+            FATAL("No PIC drivers are installed");
             return false;
         }
-        LOGGER->debug("Trying to detect a PIC device...");
+        DEBUG("Detecting PIC devices...");
         int pic_idx = irq_init(get_pic_driver_table());
         if (pic_idx < 0) {
-            LOGGER->critical("No PIC device could be detected...");
+            FATAL("No PIC device found...");
             return false;
         }
         _active_pic = _pic_driver_table[pic_idx].get();
-        LOGGER->debug(R"("{}" has been initialized.)", _active_pic->get_name());
+        DEBUG(R"({}: Initialized PIC)", _active_pic->get_name())
 
         // Init Scheduling
-        LOGGER->debug("Starting the Scheduler...");
+        DEBUG("Configure scheduler")
         PhysicalAddr base_pt_addr = Memory::get_base_page_table_address();
         // Set the code running since the start of the machine as the initial thread
         // No "main" is needed as the code is already running
@@ -184,7 +180,7 @@ namespace Rune::CPU {
                               le_idle_thread,
                               garbage_collector_thread,
                               &thread_enter)) {
-            LOGGER->critical("Failed to start the scheduler!");
+            FATAL("Scheduler configuration failed")
             return false;
         }
         ON_THREAD_STOPPED = [this](Thread* term, Thread* next) -> void {
@@ -205,9 +201,9 @@ namespace Rune::CPU {
                  reinterpret_cast<void*>(&tt_ctx));
 
             if (g_thread_cache.free(term->get_handle())) {
-                LOGGER->trace(R"(Removed {} from the thread cache)", term->get_unique_name());
+                TRACE("{}: Removed from thread cache", term->get_unique_name())
             } else {
-                LOGGER->warn(R"({} was not found in the thread cache)", term->get_unique_name());
+                WARN("{}: Not found in thread cache", term->get_unique_name())
             }
         };
         g_scheduler.set_on_context_switch([this](Thread* next) -> void {
@@ -215,21 +211,21 @@ namespace Rune::CPU {
         });
 
         // Init Timer
-        LOGGER->debug("Starting the timer...");
+        DEBUG("Configure system timer")
         if (!_timer) {
-            LOGGER->critical("No timer driver installed!");
+            FATAL("No timer driver installed!")
             return false;
         }
         constexpr U64 TIMER_FREQ = 1000;
         constexpr U32 QUANTUM    = 50000000; // Each thread can run for a maximum of 50ms at a time
         if (!_timer->start(&g_scheduler, TimerMode::PERIODIC, TIMER_FREQ, QUANTUM)) {
-            LOGGER->critical("Could not start the timer!");
+            FATAL("Failed to start the system driver")
             return false;
         }
 
-        LOGGER->debug("Detecting other CPU cores...");
+        DEBUG("Detecting CPU cores");
         if (!init_other_cores()) {
-            LOGGER->critical("Failed to detect other CPU cores!");
+            FATAL("Failed to detect other CPU cores")
             return false;
         }
         return true;
@@ -241,7 +237,7 @@ namespace Rune::CPU {
 
     auto CPUModule::get_active_pic() -> PICDriver* { return _active_pic; }
 
-    auto CPUModule::get_pic_driver_table() -> LinkedList<PICDriver*> {
+    auto CPUModule::get_pic_driver_table() -> LinkedList<PICDriver*> { // NOLINT
         LinkedList<PICDriver*> dt;
         for (auto& d : _pic_driver_table) dt.add_back(d.get());
         return dt;
@@ -306,7 +302,7 @@ namespace Rune::CPU {
         // Check if a thread with the handle exists
         auto thread_to_stop = g_thread_cache.find(handle);
         if (!thread_to_stop) {
-            LOGGER->debug("No thread with handle {} exists", handle);
+            DEBUG("Thread not found: {}", handle)
             return false;
         }
 
@@ -318,11 +314,10 @@ namespace Rune::CPU {
             CriticalSection<InterruptSaveLock> _(m_lock);
             // Check where the thread currently is e.g. locked by a mutex and remove it from the
             // queue
-            LOGGER->trace(R"(Terminating thread {})", thread_to_stop->get_unique_name());
+            DEBUG("{}: Stop thread", thread_to_stop->get_unique_name());
             switch (thread_to_stop->state) { // NOLINT All cases are handled
                 case ThreadState::NONE:
-                    LOGGER->error(R"({} has invalid state "None".)",
-                                  thread_to_stop->get_unique_name());
+                    ERROR(R"({}: Invalid thread state "NONE")", thread_to_stop->get_unique_name())
                     return false;
                 case ThreadState::CREATED:
                     // NOOP -> Thread has been created and is not yet scheduled, thus there is no
@@ -330,27 +325,26 @@ namespace Rune::CPU {
                     return true;
                 case ThreadState::READY:
                     if (!g_scheduler.get_ready_queue()->remove(handle)) {
-                        LOGGER->error(R"({} is missing from the ready queue.)",
-                                      thread_to_stop->get_unique_name());
+                        ERROR("{}: Thread not in ready queue", thread_to_stop->get_unique_name())
                         return false;
                     }
                     break;
                 case ThreadState::RUNNING:
                     // Do not stop the running thread because we do not want a context switch to
                     // happen
-                    LOGGER->trace(R"({} is running, will not stop.)",
-                                  thread_to_stop->get_unique_name());
+                    WARN("{}: Thread is executing, will not stop",
+                         thread_to_stop->get_unique_name())
                     return true;
                 case ThreadState::BLOCK_PENDING:
                     if (g_scheduler.get_running_thread()->get_handle()
                         == static_cast<ThreadHandle>(handle)) {
-                        LOGGER->trace(R"({} is running, will not stop.)",
-                                      thread_to_stop->get_unique_name());
+                        WARN("{}: Thread is executing, will not stop",
+                             thread_to_stop->get_unique_name())
                         return true;
                     } else {
                         if (!g_scheduler.get_ready_queue()->remove(handle)) {
-                            LOGGER->error(R"({} is missing from the ready queue.)",
-                                          thread_to_stop->get_unique_name());
+                            ERROR("{}: Thread not in ready queue",
+                                  thread_to_stop->get_unique_name())
                             return false;
                         }
                     }
@@ -358,8 +352,8 @@ namespace Rune::CPU {
                 case ThreadState::BLOCKED:
                     if (thread_to_stop->timer_handle > 0) {
                         if (!_timer->remove_sleeping_thread(handle)) {
-                            LOGGER->error(R"({} is missing from the wait queue of the timer.)",
-                                          thread_to_stop->get_unique_name());
+                            ERROR("{}: Not found in timer wait queue",
+                                  thread_to_stop->get_unique_name())
                             return false;
                         }
                     } else if (thread_to_stop->mutex_handle > 0) {
@@ -372,23 +366,20 @@ namespace Rune::CPU {
                             }
                         }
                         if (!m) {
-                            LOGGER->error("No mutex with handle {} was found.",
-                                          thread_to_stop->get_handle(),
-                                          thread_to_stop->get_name(),
-                                          thread_to_stop->mutex_handle);
+                            ERROR("{}: Mutex not found", thread_to_stop->mutex_handle)
                             return false;
                         }
 
                         if (!m->remove_thread(thread_to_stop->get_handle())) {
-                            LOGGER->error(R"({} was not the owner or in the waiting queue of {})",
-                                          thread_to_stop->get_unique_name(),
-                                          m->get_unique_name());
+                            ERROR("{}: Is not owner of or waiting for mutex {}",
+                                  thread_to_stop->get_unique_name(),
+                                  m->get_unique_name())
                             return false;
                         }
                     }
                     break;
                 case ThreadState::STOPPED:
-                    LOGGER->trace(R"({} is already stopped.)", thread_to_stop->get_unique_name());
+                    DEBUG("{}: Already stopped", thread_to_stop->get_unique_name())
                     return true;
             }
         }
@@ -406,11 +397,9 @@ namespace Rune::CPU {
             _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
             maybe_wait_list                  = _on_stop_syncing_threads.find(handle);
         }
-        LOGGER->trace("{} R{} sync on {} R{} stop",
-                      calling_thread->get_unique_name(),
-                      calling_thread.get_ref_count(),
-                      g_thread_cache.find(handle)->get_unique_name(),
-                      g_thread_cache.find(handle).get_ref_count());
+        DEBUG("{}: Sync with {}",
+              calling_thread->get_unique_name(),
+              g_thread_cache.find(handle)->get_unique_name())
         maybe_wait_list->value->add_back(calling_thread);
         calling_thread->m_sync_stop_thread_handle = handle;
         g_scheduler.mark_as_block_pending();

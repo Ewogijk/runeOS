@@ -23,9 +23,6 @@
 #include <Memory/MemoryModule.h>
 
 namespace Rune::SystemCall {
-    const SharedPointer<Logger> LOGGER =
-        LogContext::instance().get_logger("SystemCall.SystemCallSubsystem");
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          Subsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -40,19 +37,16 @@ namespace Rune::SystemCall {
 
         auto* mem_module     = system.get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
         auto  user_space_end = mem_module->get_virtual_memory_manager()->get_user_space_end();
-        LOGGER->debug("Kernel memory start: {:0=#16x}", user_space_end);
+        DEBUG("Kernel memory start: {:0=#16x}", user_space_end);
         _k_guard.set_kernel_memory_start(user_space_end);
         system_call_init(&_k_guard);
 
         LinkedList<Bundle> native_sys_calls = system_call_get_native_bundles(&_k_guard);
         for (auto& bundle : native_sys_calls) {
-            LOGGER->debug(R"(Installing the "{}" system call bundle.)", bundle.name);
+            DEBUG("Install system call bundle: {}", bundle.name);
             for (auto& def : bundle.system_call_definitions)
                 if (!system_call_install(def)) {
-                    LOGGER->error(R"(Failed to install system call "{}-{}" of bundle {})",
-                                  def.ID,
-                                  def.name,
-                                  bundle.name);
+                    FATAL("{}-{}: Installation failed", def.ID, def.name);
                     return false;
                 }
         }

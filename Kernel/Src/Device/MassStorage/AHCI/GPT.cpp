@@ -22,8 +22,6 @@
 #include <KRE/Memory.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.GPT");
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      CRC32
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -147,7 +145,7 @@ namespace Rune::Device {
         GPTScanStatus gpt_scan_status = parse_header(sector_reader, sector_size, 1, header);
         if (gpt_scan_status != GPTScanStatus::DETECTED) {
             if (gpt_scan_status != GPTScanStatus::NOT_DETECTED)
-                LOGGER->warn("Failed to parse GPT header: {} (LBA 1)", gpt_scan_status.to_string());
+                WARN("Failed to parse GPT header: {} (LBA 1)", gpt_scan_status.to_string());
             return {.status          = gpt_scan_status,
                     .header          = {},
                     .partition_table = LinkedList<GPTPartitionTableEntry>()};
@@ -165,7 +163,7 @@ namespace Rune::Device {
                                               forward<size_t>(sector_size),
                                               forward<U64>(c_lba));
             if (bytes_read != sector_size) {
-                LOGGER->warn("Failed to read partition table entry at sector {}.", c_lba);
+                WARN("Failed to read partition table entry at sector {}.", c_lba);
                 return {.status          = GPTScanStatus::STORAGE_DEV_ERROR,
                         .header          = {},
                         .partition_table = LinkedList<GPTPartitionTableEntry>()};
@@ -179,7 +177,7 @@ namespace Rune::Device {
                                                  static_cast<size_t>(header.size_of_partition_entry)
                                                      * header.number_of_partition_entries);
         if (p_t_crc_32 != header.partition_entry_array_crc_32) {
-            LOGGER->warn("Wrong partition table CRC detected.");
+            WARN("Wrong partition table CRC detected.");
             return {.status          = GPTScanStatus::CORRUPT_PARTITION_TABLE,
                     .header          = {},
                     .partition_table = LinkedList<GPTPartitionTableEntry>()};
@@ -192,7 +190,7 @@ namespace Rune::Device {
                 parse_header(sector_reader, sector_size, header.alternate_lba, back_up_header);
             if (bu_gpt_scan_status != GPTScanStatus::DETECTED) {
                 if (bu_gpt_scan_status != GPTScanStatus::NOT_DETECTED)
-                    LOGGER->warn("Failed to parse backup GPT header: {} (LBA 1)",
+                    WARN("Failed to parse backup GPT header: {} (LBA 1)",
                                  bu_gpt_scan_status.to_string());
                 return {.status          = bu_gpt_scan_status,
                         .header          = {},
