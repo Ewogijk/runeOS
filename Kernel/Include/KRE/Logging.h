@@ -511,12 +511,12 @@ namespace Rune {
     /// @param arg_size
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
-    void log(Ember::LogLevel   log_level,
-             const char*       file,
-             U16               line_number,
-             Ember::LogMessage log_message,
-             const Argument*   args,
-             size_t            arg_size);
+    void log(Ember::LogLevel log_level,
+             const char*     file,
+             U16             line_number,
+             const char*     log_message,
+             const Argument* args,
+             size_t          arg_size);
 
     /// @brief Log a trace log message.
     /// @tparam Args
@@ -527,7 +527,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void trace(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void trace(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::TRACE, file, line_number, log_message, arg_array, sizeof...(Args));
     }
@@ -541,7 +541,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void debug(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void debug(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::DEBUG, file, line_number, log_message, arg_array, sizeof...(Args));
     }
@@ -555,7 +555,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void info(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void info(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::INFO, file, line_number, log_message, arg_array, sizeof...(Args));
     }
@@ -569,7 +569,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void warn(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void warn(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::WARN, file, line_number, log_message, arg_array, sizeof...(Args));
     }
@@ -583,7 +583,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void error(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void error(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::ERROR, file, line_number, log_message, arg_array, sizeof...(Args));
     }
@@ -597,7 +597,7 @@ namespace Rune {
     ///
     /// This is a low-level call to the logging API, use one of the macros instead.
     template <typename... Args>
-    void fatal(const char* file, U16 line_number, Ember::LogMessage log_message, Args... args) {
+    void fatal(const char* file, U16 line_number, const char* log_message, Args... args) {
         Argument arg_array[] = {args...}; // NOLINT
         log(Ember::LogLevel::FATAL, file, line_number, log_message, arg_array, sizeof...(Args));
     }
