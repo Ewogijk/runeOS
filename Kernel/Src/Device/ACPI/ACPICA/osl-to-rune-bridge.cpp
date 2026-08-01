@@ -35,8 +35,6 @@ CLINK {
 
     using namespace Rune;
 
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.OSL");
-
     // Not implemented yet:
     // 1.  acpi_to_rune_get_line
     // 2.  acpi_to_rune_get_table_by_address
@@ -309,7 +307,7 @@ CLINK {
             for (U64 i = 0; i < alloc_fail; i++) {
                 if (Memory::free_page(base_pt, v_addr + (i * page_size), pmm).status
                     != Memory::PageTableAccessStatus::OKAY) {
-                    LOGGER->warn("Page free failed: {:#16x}", v_addr + (i * page_size));
+                    WARN("Page free failed: {:#16x}", v_addr + (i * page_size));
                 }
             }
             if (memory_gap_selected)
@@ -344,7 +342,7 @@ CLINK {
         for (U64 i = 0; i < page_count; i++) {
             if (Memory::free_page(base_pt, v_addr + (i * page_size), pmm).status
                 != Memory::PageTableAccessStatus::OKAY) {
-                LOGGER->warn("Page free failed: {:0=#16x}", v_addr + (i * page_size));
+                WARN("Page free failed: {:0=#16x}", v_addr + (i * page_size));
             }
         }
 
@@ -358,9 +356,9 @@ CLINK {
             && req_region_type != MemoryRegionType::NONE) {
             // Only free not reserved memory
             if (!mem_module->get_physical_memory_manager()->free(p_addr, page_count)) {
-                LOGGER->warn("Page frame free failed: {:0=#16x}-{:0=#16x}",
-                             p_addr,
-                             p_addr + (page_count * page_size));
+                WARN("Page frame free failed: {:0=#16x}-{:0=#16x}",
+                     p_addr,
+                     p_addr + (page_count * page_size));
                 return;
             }
         }
@@ -1088,7 +1086,8 @@ CLINK {
                 if (c == 'n') va_arg(args, int*);
             }
         }
-        LOGGER->log(LogLevelDep::INFO, r_fstr, f_args, arg_count);
+        auto fstr = String::format(r_fstr, static_cast<const Argument*>(f_args), arg_count);
+        INFO(fstr.to_cstr());
     }
     // NOLINTEND
 

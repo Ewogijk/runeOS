@@ -20,9 +20,7 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    static constexpr U32        INVALID_PAGE = -1;
-    const SharedPointer<Logger> LOGGER =
-        LogContext::instance().get_logger("Memory.BitMapAllocator");
+    static constexpr U32 INVALID_PAGE = -1;
 
     auto BitMapAllocator::is_free(U32 page_frame) -> bool {
         // An unmanaged page frame is defined as free
@@ -151,17 +149,11 @@ namespace Rune::Memory {
                                   .size        = r.size,
                                   .memory_type = MemoryRegionType::USABLE};
                 if (!_mem_map->claim(c, _page_size)) {
-                    LOGGER->warn("Failed to claim bootloader reclaimable memory region {:0=#16x} "
-                                 "- {:0=#16x}.",
-                                 r.start,
-                                 r.end());
+                    WARN("{:0=#16x}-{:0=#16x}: Failed to claim", r.start, r.end());
                     success = false;
                 }
                 if (!mark_memory_region(r.start, r.size, false)) {
-                    LOGGER->warn("Failed to mark bootloader reclaimable memory region as unused "
-                                 "{:0=#16x} - {:0=#16x}",
-                                 r.start,
-                                 r.end());
+                    WARN("{:0=#16x}-{:0=#16x}: Failed to mark as unused", r.start, r.end());
                     success = false;
                 }
             }
@@ -172,7 +164,7 @@ namespace Rune::Memory {
     auto BitMapAllocator::allocate(PhysicalAddr& p_addr, size_t frames) -> bool {
         PageFrameIndex base = find_free_region(frames);
         if (base == INVALID_PAGE) {
-            LOGGER->warn("Out of physical memory error.");
+            WARN("Out of physical memory")
             return false;
         }
 
@@ -185,9 +177,9 @@ namespace Rune::Memory {
         int errCode = is_reserved_or_bit_map_address(p_addr, frames);
         if (errCode < 0) {
             if (errCode == -1) {
-                LOGGER->warn("allocate book keeping structure error.");
+                WARN("{:0=#16x}: Is bitmap memory");
             } else {
-                LOGGER->warn("allocate reserved error.");
+                WARN("{:0=#16x}: Is reserved memory");
             }
             return false;
         }
@@ -195,13 +187,13 @@ namespace Rune::Memory {
         PageFrameIndex base = to_page_frame(p_addr);
         for (size_t i = base; i < (base + frames); i++) {
             if (!is_free(i)) {
-                LOGGER->warn("allocate used error.");
+                WARN("{:0=#16x}: Memory in use");
                 return false;
             }
         }
 
         if (!mark_memory_block(base, frames, true)) {
-            LOGGER->warn("allocate out of bounds error.");
+            WARN("{:0=#16x}: Memory out of bounds");
             return false;
         }
 
@@ -212,15 +204,15 @@ namespace Rune::Memory {
         int errCode = is_reserved_or_bit_map_address(p_addr, frames);
         if (errCode < 0) {
             if (errCode == -1) {
-                LOGGER->warn("free book keeping structure error.");
+                WARN("{:0=#16x}: Is bitmap memory");
             } else {
-                LOGGER->warn("free reserved error.");
+                WARN("{:0=#16x}: Is reserved memory");
             }
             return false;
         }
 
         if (!mark_memory_region(p_addr, frames * _page_size, false)) {
-            LOGGER->warn("free out of bounds error.");
+            WARN("{:0=#16x}: Memory out of bounds");
             return false;
         }
 

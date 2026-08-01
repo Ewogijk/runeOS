@@ -17,7 +17,10 @@
 #define RUNEOS_QEMUCONSOLELOGGER_H
 
 namespace Rune {
-    void activate_qemu_console_logging();
-}
+
+    /// @brief Start a background thread that polls the kernel ring buffer periodically and forwards
+    ///        formatted log events to the QEMU debug port.
+    void qemu_consoler_logger_start();
+} // namespace Rune
 
 #endif // RUNEOS_QEMUCONSOLELOGGER_H

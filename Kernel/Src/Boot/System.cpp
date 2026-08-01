@@ -45,8 +45,6 @@
 
 #include <SystemCall/SystemCallModule.h>
 
-#include <Boot/DetailedLogLayout.h>
-
 #ifdef ENABLE_QEMU_CON
 #include <Boot/QEMUConsoleLogger.h>
 #endif
@@ -98,6 +96,24 @@ namespace Rune {
         System::instance().panic("Terminating kernel execution...");
     }
 
+    /// @brief
+    /// @return The handle of the running thread.
+    auto resolve_running_thread() -> Ember::Handle {
+        auto r_thread = System::instance()
+                            .get_module<CPU::CPUModule>(ModuleSelector::CPU)
+                            ->get_scheduler()
+                            ->get_running_thread();
+        return r_thread->get_handle();
+    }
+
+    /// @brief
+    /// @return The handle of the running app.
+    auto resolve_running_app() -> Ember::Handle {
+        auto* r_app =
+            System::instance().get_module<App::AppModule>(ModuleSelector::APP)->get_active_app();
+        return r_app->handle;
+    }
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      System
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -119,7 +135,7 @@ namespace Rune {
 
         auto& system = System::instance();
         if (system._is_booted) {
-            WARN("Boot phase 3 has already run! Aborting...");
+            WARN("Boot phase 3 has finished! Aborting...");
             return 0;
         }
 
@@ -133,14 +149,6 @@ namespace Rune {
 
         auto* cpu_module = system.get_module<CPU::CPUModule>(ModuleSelector::CPU);
         auto* app_module = system.get_module<App::AppModule>(ModuleSelector::APP);
-        LogContext::instance().register_layout(
-            "detailed-layout",
-            SharedPointer<Layout>(new DetailedLogLayout(cpu_module, app_module)));
-        LogContext::instance().set_layout_ref("*", "detailed-layout");
-
-#ifdef ENABLE_QEMU_CON
-        activate_qemu_console_logging();
-#endif
 
 #ifdef ENABLE_UNIT_TESTS
         LOGGER->info("Run kernel unit tests");
@@ -167,7 +175,7 @@ namespace Rune {
 
     void System::boot_phase2(BootInfo boot_info) {
         if (_is_booted) {
-            WARN("Boot phase 2 has already run! Aborting...");
+            WARN("Boot phase 2 has finished! Aborting...");
             return;
         }
 
@@ -199,18 +207,11 @@ namespace Rune {
 
         call_global_constructors();
 
-        LogContext& ctx = LogContext::instance();
-        ctx.register_layout("earlyboot", SharedPointer<Layout>(new EarlyBootLayout()));
-        ctx.register_target_stream("e9", SharedPointer<TextStream>(new CPU::E9Stream()));
         INFO("runeKernel v{}", KERNEL_VERSION.to_string());
-        INFO("Loaded by {} - v{}",
-                     _boot_info.boot_loader_name,
-                     _boot_info.boot_loader_version);
+        INFO("Loaded by {} - v{}", _boot_info.boot_loader_name, _boot_info.boot_loader_version);
         INFO("Load module: {:<40} OKAY", (mem_module.get_name() + " ..."));
-        mem_module.log_post_load();
 
         CPUModuleLoader().load();
-
         _panic_stream = SharedPointer<TextStream>(new CPU::E9Stream);
         CPU::exception_install_panic_stream(_panic_stream);
         init_cpp_runtime_layer(&on_pure_virtual_function_callback,
@@ -321,7 +322,13 @@ namespace Rune {
         load_plugin(new BuiltInPlugin::PITDriverPlugin());
     }
 
-    void CPUModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
+    void CPUModuleLoader::on_post_load(Module* module) {
+        SILENCE_UNUSED(module);
+        log_configure_thread_resolver(&resolve_running_thread);
+#ifdef ENABLE_QEMU_CON
+        qemu_consoler_logger_start();
+#endif
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Device Module Loader
@@ -361,7 +368,10 @@ namespace Rune {
 
     void AppModuleLoader::on_pre_load(Module* module) { SILENCE_UNUSED(module) }
 
-    void AppModuleLoader::on_post_load(Module* module) { SILENCE_UNUSED(module); }
+    void AppModuleLoader::on_post_load(Module* module) {
+        SILENCE_UNUSED(module);
+        log_configure_app_resolver(&resolve_running_app);
+    }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                              SystemCall Module Loader

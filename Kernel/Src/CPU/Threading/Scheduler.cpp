@@ -23,8 +23,6 @@
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Scheduler");
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Private Functions
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -81,17 +79,16 @@ namespace Rune::CPU {
                 case ThreadState::NONE:
                 case ThreadState::CREATED:
                 case ThreadState::READY:
-                    LOGGER->warn(R"({}: Invalid thread state "{}" (perform_context_switch))",
-                                 _running_thread->get_unique_name(),
-                                 _running_thread->state.to_string());
+                    WARN("{}: Invalid thread state {}",
+                         _running_thread->get_unique_name(),
+                         _running_thread->state.to_string());
                     break;
                 case ThreadState::RUNNING:
                 case ThreadState::BLOCK_PENDING:
                     if (!_ready_queue->enqueue(_running_thread)) {
-                        LOGGER->warn(
-                            R"({}: Reschedule failed (perform_context_switch) (going to {}))",
-                            _running_thread->get_unique_name(),
-                            next_thread->get_unique_name());
+                        WARN("{}: Reschedule failed, next:{}",
+                             _running_thread->get_unique_name(),
+                             next_thread->get_unique_name());
                     } else {
                         // Only change from RUNNING -> READY state not BLOCK_PENDING -> READY
                         // Why? Use case of await_block function is following:
@@ -114,9 +111,9 @@ namespace Rune::CPU {
         }
 
         // Switch to next thread
-        LOGGER->trace(R"(Context switch: {} -> {})",
-                      _running_thread->get_unique_name(),
-                      next_thread->get_unique_name());
+        TRACE("Context switch: {} -> {}",
+              _running_thread->get_unique_name(),
+              next_thread->get_unique_name());
 
         auto* old_thread       = _running_thread.get();
         _running_thread        = move(next_thread);
@@ -190,22 +187,21 @@ namespace Rune::CPU {
             return false;
         }
         if (thread->state != ThreadState::CREATED) {
-            LOGGER->error(R"({}-{}: Invalid thread state "{}" (schedule))",
-                          thread->get_unique_name(),
-                          thread->state.to_string());
+            ERROR("{}: Invalid thread state {}",
+                  thread->get_unique_name(),
+                  thread->state.to_string());
             unlock();
             return false;
         }
         if (thread->policy == SchedulingPolicy::NONE) {
-            LOGGER->error(R"({}-{}: Invalid thread policy "NONE")", thread->get_unique_name());
+            ERROR(R"({}: Invalid thread policy "NONE")", thread->get_unique_name());
             unlock();
             return false;
         }
 
         setup_kernel_stack(thread);
         if (!_ready_queue->enqueue(thread)) {
-            LOGGER->error(R"({}-{}: Schedule failed... Freeing kernel stack)",
-                          thread->get_unique_name());
+            ERROR("{}: Schedule failed", thread->get_unique_name());
             delete[] thread->kernel_stack_bottom;
             unlock();
             return false;
@@ -238,7 +234,7 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        LOGGER->trace("{}: block thread", thread->get_unique_name());
+        TRACE("{}: Block thread", thread->get_unique_name());
         thread->state = ThreadState::BLOCKED;
         if (thread != _running_thread)
             _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule
@@ -257,9 +253,9 @@ namespace Rune::CPU {
             return;
         }
         if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::BLOCK_PENDING) {
-            LOGGER->error(R"({}: Invalid thread state "{}" (unblock))",
-                          thread->get_unique_name(),
-                          thread->state.to_string());
+            ERROR(R"({}: Invalid thread state "{}")",
+                  thread->get_unique_name(),
+                  thread->state.to_string());
             unlock();
             return;
         }
@@ -269,15 +265,14 @@ namespace Rune::CPU {
         // running thread -> running thread
         // Thus, just let the thread keep running
         if (thread == _running_thread) {
-            LOGGER->trace(R"({}: Unblock of running thread. Will ignore.)",
-                          thread->get_unique_name());
+            TRACE("{}: Is running, skip unblock", thread->get_unique_name());
             thread->state = ThreadState::RUNNING;
             unlock();
             return;
         }
 
         if (!_ready_queue->enqueue(thread)) {
-            LOGGER->error(R"({}: Scheduling failed)", thread->get_unique_name());
+            ERROR("{}: Scheduling failed", thread->get_unique_name());
             unlock();
             return;
         }

@@ -19,9 +19,6 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER =
-        LogContext::instance().get_logger("Memory.PhysicalMemoryManager");
-
     DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
     auto PhysicalMemoryManager::detect_memory_range() -> bool {
@@ -58,7 +55,6 @@ namespace Rune::Memory {
           _mem_size(0),
           _mem_map(nullptr),
           _init(false),
-          _start_fail(PMMStartFailure::NONE),
           _largest_free_block(0) {}
 
     auto PhysicalMemoryManager::start(MemoryMap*  mem_map,
@@ -67,8 +63,7 @@ namespace Rune::Memory {
         _page_size = page_size;
         _mem_map   = mem_map;
         if (!detect_memory_range()) {
-            _start_fail = PMMStartFailure::MEMORY_RANGE_DETECTION_FAILED;
-            return _start_fail;
+            return PMMStartFailure::MEMORY_RANGE_DETECTION_FAILED;
         }
 
         MemorySize pmm_b_mem_req    = compute_memory_index_size();
@@ -81,15 +76,12 @@ namespace Rune::Memory {
             _largest_free_block = max(_largest_free_block, reg.size);
         }
         if (pmm_data_start_p == static_cast<PhysicalAddr>(-1)) { // NOLINT is cast to same type...
-            _start_fail = PMMStartFailure::OUT_OF_MEMORY;
-            return _start_fail;
+            return PMMStartFailure::OUT_OF_MEMORY;
         }
 
         if (!init0(pmm_data_start_p + memory_index_offset, pmm_data_start_p)) {
-            _start_fail = PMMStartFailure::MEMORY_INDEX_INIT_FAILED;
-            return _start_fail;
+            return PMMStartFailure::MEMORY_INDEX_INIT_FAILED;
         }
-
         return PMMStartFailure::NONE;
     }
 
@@ -99,21 +91,6 @@ namespace Rune::Memory {
                                      + (_mem_size * _page_size), // will overflow because it will be
                                                                  // max value of some type e.g. U32
                             .memory_type = MemoryRegionType::RESERVED};
-    }
-
-    void PhysicalMemoryManager::log_start_routine_phases() const {
-        LOGGER->info("Detected physical memory range: {:0=#16x}-{:0=#16x}",
-                     _mem_base,
-                     _mem_base - 1 + (_mem_size * _page_size) // will overflow because it will be
-                                                              // max value of some type e.g. U32
-        );
-        MemoryRegion mem_idx = get_memory_index_region();
-        LOGGER->info("Physical memory index region: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
-                     mem_idx.start,
-                     mem_idx.end(),
-                     mem_idx.size);
-        LOGGER->info("Memory index can be accessed at virtual address: {:0=#16x}",
-                     get_memory_index());
     }
 
     auto PhysicalMemoryManager::allocate(PhysicalAddr& p_addr) -> bool {

@@ -27,8 +27,6 @@
 #include <Device/PCI/VendorDB.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PCI");
-
     // ========================================================================================== //
     // PCI Access
     // ========================================================================================== //
@@ -228,8 +226,7 @@ namespace Rune::Device {
                 pci_read_configuration_space_header_type0(header, bus, device, 0)));
             ds->register_device(bus_device, dev);
         } else {
-            LOGGER->warn("PCI Header Type{} detected but it is not supported yet!",
-                         header.get_header_layout());
+            WARN("Unsupported PCI Header type detected: {}", header.get_header_layout());
         }
         return header.is_multi_function_device();
     }

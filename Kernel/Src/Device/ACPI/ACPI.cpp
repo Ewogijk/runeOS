@@ -31,8 +31,6 @@ CLINK {
 }
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.ACPI");
-
     // ========================================================================================== //
     // ACPIDriver
     // ========================================================================================== //
@@ -49,13 +47,13 @@ namespace Rune::Device {
     auto handle_shutdown_request(IORequest& request) -> IORequestStatus {
         ACPI_STATUS status = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiEnterSleepStatePrep(S5) failed. Status={}", status);
+            ERROR("AcpiEnterSleepStatePrep(S5) failed. Status={}", status);
             return IORequestStatus::FAILED;
         }
 
         status = AcpiEnterSleepState(ACPI_STATE_S5);
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiEnterSleepState(S5) failed. Status={}", status);
+            ERROR("AcpiEnterSleepState(S5) failed. Status={}", status);
             return IORequestStatus::FAILED;
         }
 
@@ -65,7 +63,7 @@ namespace Rune::Device {
     auto handle_reboot_request(IORequest& request) -> IORequestStatus {
         ACPI_STATUS status = AcpiReset();
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiReset() failed. Status={}", status);
+            ERROR("AcpiReset() failed. Status={}", status);
             return IORequestStatus::FAILED;
         }
         return IORequestStatus::HANDLED;
@@ -84,31 +82,31 @@ namespace Rune::Device {
     auto ACPIDriver::bind(const SharedPointer<Device>& device) -> bool {
         ACPI_STATUS status = AcpiInitializeSubsystem();
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiInitializeSubsystem failed. Status={}", status);
+            ERROR("AcpiInitializeSubsystem failed. Status={}", status);
             return false;
         }
 
         status = AcpiInitializeTables(nullptr, 0, TRUE);
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiInitializeTables failed. Status={}", status);
+            ERROR("AcpiInitializeTables failed. Status={}", status);
             return false;
         }
 
         status = AcpiLoadTables();
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiLoadTables failed. Status={}", status);
+            ERROR("AcpiLoadTables failed. Status={}", status);
             return false;
         }
 
         status = AcpiEnableSubsystem(ACPI_FULL_INITIALIZATION);
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiEnableSubsystem failed. Status={}", status);
+            ERROR("AcpiEnableSubsystem failed. Status={}", status);
             return false;
         }
 
         status = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
         if (ACPI_FAILURE(status)) {
-            LOGGER->error("AcpiInitializeObjects failed. Status={}", status);
+            ERROR("AcpiInitializeObjects failed. Status={}", status);
             return false;
         }
         _acpi_initialized = true;

@@ -20,16 +20,14 @@
 #include <CPU/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("CPU.Mutex");
-
     void Mutex::trace_state(const String& action) {
         String wq;
         for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
-        LOGGER->trace(R"("{}: {}, O={}, WQ={})",
-                      get_unique_name(),
-                      action,
-                      _owner ? _owner->get_unique_name() : "",
-                      wq);
+        TRACE(R"("{}: {}, O={}, WQ={})",
+              get_unique_name(),
+              action,
+              _owner ? _owner->get_unique_name() : "",
+              wq);
     }
 
     Mutex::Mutex(MutexHandle handle, const String& name) : Resource(handle, name) {}

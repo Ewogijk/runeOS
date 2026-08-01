@@ -23,8 +23,6 @@
 #include "../CPU/X64Core.h"
 
 namespace Rune::SystemCall {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("SystemCall.SystemCall");
-
     struct SystemCallContainer {
         SystemCallInfo info             = {.handle = 0, .name = "", .requested = 0};
         Handler        sys_call_handler = SYS_CALL_HANDLER_NONE;
@@ -51,9 +49,7 @@ namespace Rune::SystemCall {
         Ember::StatusCode ret     = -1;
         auto              handler = SYSTEM_CALL_HANDLER_TABLE.find(ID);
         if (handler != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace(R"(Handling system call request: "{}-{}"!)",
-                          ID,
-                          handler->value->info.name);
+            TRACE(R"(Handling system call request: "{}-{}"!)", ID, handler->value->info.name);
             handler->value->info.requested++;
             ret = handler->value->sys_call_handler(forward<void*>(handler->value->context),
                                                    arg1,
@@ -63,7 +59,7 @@ namespace Rune::SystemCall {
                                                    arg5,
                                                    arg6);
         } else {
-            LOGGER->warn("No system call with ID {} installed!", ID);
+            WARN("No system call with ID {} installed!", ID);
         }
         return ret;
     }
@@ -112,11 +108,10 @@ namespace Rune::SystemCall {
 
     auto system_call_install(const Definition& sys_call_def) -> bool {
         if (SYSTEM_CALL_HANDLER_TABLE.find(sys_call_def.ID) != SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->warn("Cannot install system call {}. It is already installed...",
-                         sys_call_def.ID);
+            WARN("{}-{}: Is already installed", sys_call_def.ID, sys_call_def.name);
             return false;
         }
-        LOGGER->trace(R"(Installing system call "{}-{}".)", sys_call_def.ID, sys_call_def.name);
+        TRACE("{}-{}: Install system call", sys_call_def.ID, sys_call_def.name);
         SYSTEM_CALL_HANDLER_TABLE.put(
             sys_call_def.ID,
             {
@@ -129,15 +124,14 @@ namespace Rune::SystemCall {
 
     auto system_call_uninstall(U16 system_call_id) -> bool {
         if (SYSTEM_CALL_HANDLER_TABLE.find(system_call_id) == SYSTEM_CALL_HANDLER_TABLE.end()) {
-            LOGGER->trace("System call {} is not installed. No need to uninstall...",
-                          system_call_id);
+            TRACE("System call{}: Is not installed", system_call_id);
             return false;
         }
 
         auto sys_call = SYSTEM_CALL_HANDLER_TABLE.find(system_call_id);
-        LOGGER->trace(R"(Uninstalling system call "{}-{}".)",
-                      sys_call->value->info.handle,
-                      sys_call->value->info.name);
+        TRACE("{}-{}: Uninstalling system call",
+              sys_call->value->info.handle,
+              sys_call->value->info.name);
         return SYSTEM_CALL_HANDLER_TABLE.remove(system_call_id);
     }
 } // namespace Rune::SystemCall

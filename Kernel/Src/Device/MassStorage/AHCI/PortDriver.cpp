@@ -19,8 +19,6 @@
 #include <KRE/Math.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PortDriver");
-
     auto PortDriver::vendor() const -> String { return "Ewogjik"; };
 
     auto PortDriver::version() const -> Version { return {.major = 1, .minor = 0, .patch = 0}; }

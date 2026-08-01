@@ -24,8 +24,6 @@
 #include <Device/MassStorage/AHCI/GPT.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.PortEngine");
-
     // ========================================================================================== //
     // PortEngine
     // ========================================================================================== //
@@ -124,25 +122,25 @@ namespace Rune::Device {
         PhysicalAddr p_clb{0};
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->CL),
                                                  p_clb)) {
-            LOGGER->error("Failed to get physical address of command list...");
+            ERROR("Failed to get physical address of command list...");
             return false;
         }
 
         PhysicalAddr p_fb{0};
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(_system_memory->RFIS),
                                                  p_fb)) {
-            LOGGER->error("Failed to get physical address of received FIS...");
+            ERROR("Failed to get physical address of received FIS...");
             return false;
         }
 
         _port->CLB.AsUInt32 = static_cast<U32>(p_clb);
         _port->FB.AsUInt32  = static_cast<U32>(p_fb);
         if (_port->CLB.Reserved != 0) {
-            LOGGER->error("Command list base address is not 1024 byte aligned!");
+            ERROR("Command list base address is not 1024 byte aligned!");
             return false;
         }
         if (_port->FB.Reserved != 0) {
-            LOGGER->error("Received FIS base address is not 256 byte aligned!");
+            ERROR("Received FIS base address is not 256 byte aligned!");
             return false;
         }
 #ifdef IS_64_BIT

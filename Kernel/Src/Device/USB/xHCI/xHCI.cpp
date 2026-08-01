@@ -36,8 +36,6 @@
 #include <Device/USB/xHCI/TRB.h>
 
 namespace Rune::Device::USB {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.xHCI");
-
     // ========================================================================================== //
     // XHCIPCIConfigurationSpaceHeader
     // ========================================================================================== //
@@ -105,7 +103,7 @@ namespace Rune::Device::USB {
             auto maybe_promise =
                 xhci_driver->m_inflight_command_trb_table.find(inflight_trb_address);
             if (maybe_promise == xhci_driver->m_inflight_command_trb_table.end()) {
-                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
+                WARN("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
                 return;
             }
             maybe_promise->value->set_value(*ce);
@@ -118,7 +116,7 @@ namespace Rune::Device::USB {
                 || cc == CompletionCode::MISSED_SERVICE) {
                 // Isoch-only (xHCI §4.10.3.1/§4.10.3.2): A class driver missed the schedule for
                 // an Isoch transfer -> Ignore this event.
-                LOGGER->debug("Slot{} EP{}: Isoch transfer schedule missed: {}",
+                DEBUG("Slot{} EP{}: Isoch transfer schedule missed: {}",
                               te->m_control.slot_id(),
                               te->m_control.endpoint_id(),
                               cc.to_string());
@@ -129,7 +127,7 @@ namespace Rune::Device::USB {
 
             auto maybe_promise = xhci_driver->m_inflight_trb_table.find(inflight_trb_address);
             if (maybe_promise == xhci_driver->m_inflight_trb_table.end()) {
-                LOGGER->warn("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
+                WARN("Inflight TRB not found: {:0=#16x}", inflight_trb_address);
                 return;
             }
             IORequestStatus status = te->m_status.completion_code() == CompletionCode::SUCCESS
@@ -332,7 +330,7 @@ namespace Rune::Device::USB {
             if (iface != nullptr) break;
         }
         if (iface == nullptr) {
-            LOGGER->warn("Configuration{} has no interface {}",
+            WARN("Configuration{} has no interface {}",
                          config.m_configuration_value,
                          interface);
             return false;
@@ -346,7 +344,7 @@ namespace Rune::Device::USB {
             }
         }
         if (new_alt_ptr == nullptr) {
-            LOGGER->warn("IF{} has no alternate setting {}", interface, alternate_setting);
+            WARN("IF{} has no alternate setting {}", interface, alternate_setting);
             return false;
         }
         const AlternateSetting& new_alt = *new_alt_ptr;
@@ -358,20 +356,20 @@ namespace Rune::Device::USB {
         memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
 
         if (!drop_endpoint_contexts(ic, dc_sys_memory, old_alt, new_alt)) {
-            LOGGER->warn("IF{} Alt{}: Failed to drop endpoint contexts",
+            WARN("IF{} Alt{}: Failed to drop endpoint contexts",
                          interface,
                          alternate_setting);
             return false;
         }
         if (!add_endpoint_contexts(ic, dc_sys_memory, new_alt)) {
-            LOGGER->warn("IF{} Alt{}: Failed to add endpoint contexts",
+            WARN("IF{} Alt{}: Failed to add endpoint contexts",
                          interface,
                          alternate_setting);
             return false;
         }
         auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
         if (completion_code != CompletionCode::SUCCESS) {
-            LOGGER->warn("IF{} Alt{}: Failed to send configure endpoint command",
+            WARN("IF{} Alt{}: Failed to send configure endpoint command",
                          interface,
                          alternate_setting);
             return false;
@@ -454,7 +452,7 @@ namespace Rune::Device::USB {
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         void* data_buffer) -> CPU::Future<IORequestStatus> {
 
-        LOGGER->debug("EP{} {}: Sending {} transfer request. Size={} bytes",
+        DEBUG("EP{} {}: Sending {} transfer request. Size={} bytes",
                       data_transfer_request.m_endpoint_number,
                       data_transfer_request.m_direction.to_string(),
                       data_transfer_request.m_header.m_transfer_type.to_string(),
@@ -493,7 +491,7 @@ namespace Rune::Device::USB {
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         void* data_buffer) -> CPU::Future<IORequestStatus> {
 
-        LOGGER->debug("EP{} {}: Sending {} transfer request. Size={} bytes",
+        DEBUG("EP{} {}: Sending {} transfer request. Size={} bytes",
                       isoch_transfer_request.m_endpoint_number,
                       isoch_transfer_request.m_direction.to_string(),
                       isoch_transfer_request.m_header.m_transfer_type.to_string(),
@@ -569,17 +567,17 @@ namespace Rune::Device::USB {
                 if (pta.status != Memory::PageTableAccessStatus::OKAY) return false;
             }
         }
-        LOGGER->debug("Allocating register interface: {:0=#16x}-{:0=#16x}",
+        DEBUG("Allocating register interface: {:0=#16x}-{:0=#16x}",
                       MMIO_BASE_ADDR,
                       MMIO_BASE_ADDR + (Memory::get_page_size() * (additional_req_pages + 1)));
-        LOGGER->debug("Is at physical address: {:0=#16x}-{:0=#16x}",
+        DEBUG("Is at physical address: {:0=#16x}-{:0=#16x}",
                       xhci_mmio_base_addr,
                       xhci_mmio_base_addr + mmio_end);
         return true;
     }
 
     auto XHCIDriver::perform_chip_hardware_reset() const -> void {
-        LOGGER->debug("Performing chip hardware reset");
+        DEBUG("Performing chip hardware reset");
         while (m_ri.m_operational->m_usbsts.CNR()) CPU::pause();
         m_ri.m_operational->m_usbcmd.set_HCRST(true);
         while (m_ri.m_operational->m_usbcmd.HCRST()) CPU::pause();
@@ -592,7 +590,7 @@ namespace Rune::Device::USB {
         // Slot 0 is reserved for the scratchpad buffer array.
         U32 dcbaa_size = m_ri.m_capability->m_hcsparams1.max_slots() + 1;
         m_ri.m_operational->m_config.set_max_slots_en(static_cast<U8>(dcbaa_size));
-        LOGGER->debug("Allocating device context base address array with {} device slots",
+        DEBUG("Allocate device context base address array: {} slots",
                       dcbaa_size);
         m_dcbaa = SharedPointer<U64>(reinterpret_cast<U64*>(
             mm->get_heap()->allocate_dma(sizeof(PhysicalAddr*) * dcbaa_size)));
@@ -608,7 +606,7 @@ namespace Rune::Device::USB {
         U32 max_scratch = (m_ri.m_capability->m_hcsparams2.max_scratch_hi() << MAX_SCRATCH_HI_OFFSET
                            | m_ri.m_capability->m_hcsparams2.max_scratch_lo());
         if (max_scratch > 0) {
-            LOGGER->debug("Allocating {} scratchpad buffers", max_scratch);
+            DEBUG("Allocating {} scratchpad buffers", max_scratch);
             // Get the buffer size
             U32    page_size_reg          = m_ri.m_operational->m_pagesize;
             size_t scratchpad_buffer_size = 0;
@@ -668,7 +666,7 @@ namespace Rune::Device::USB {
     }
 
     auto XHCIDriver::allocate_command_ring() -> bool {
-        LOGGER->debug("Allocating command ring, size={} (single segment)", COMMAND_RING_SIZE);
+        DEBUG("Allocating command ring, size={} (single segment)", COMMAND_RING_SIZE);
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
 
         m_command_ring = SharedPointer<CommandRing<COMMAND_RING_SIZE>>(
@@ -695,7 +693,7 @@ namespace Rune::Device::USB {
     }
 
     auto XHCIDriver::allocate_event_ring() -> bool {
-        LOGGER->debug("Allocating event ring, segment_size={}, segment_count={}",
+        DEBUG("Allocating event ring, segment_size={}, segment_count={}",
                       EVENT_RING_SEGMENT_SIZE,
                       EVENT_RING_SEGMENT_COUNT);
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
@@ -738,7 +736,7 @@ namespace Rune::Device::USB {
             m_xhci->config_space_ID());
         if (xhci_pci_header.m_pci_header.interrupt_pin > 0) {
             U8 interrupt_line = xhci_pci_header.m_pci_header.interrupt_line;
-            LOGGER->debug("Installing IRQ handler at line {}", interrupt_line);
+            DEBUG("Installing IRQ handler at line {}", interrupt_line);
             auto cmd = xhci_pci_header.m_pci_header.header.command;
             if (cmd.interrupt_disable == 1) {
                 const auto& csi       = m_xhci->config_space_ID();
@@ -798,7 +796,7 @@ namespace Rune::Device::USB {
             m_xhci->config_space_ID());
 
         if (!allocate_register_interface(xhci_pci_header.register_interface_base_address())) {
-            LOGGER->warn("Register interface allocation failed.");
+            WARN("Register interface allocation failed.");
             return false;
         }
 
@@ -816,16 +814,16 @@ namespace Rune::Device::USB {
         perform_chip_hardware_reset();
 
         if (!allocate_device_context_base_address_array()) {
-            LOGGER->warn("Device context base address array allocation failed.");
+            WARN("Device context base address array allocation failed.");
             return false;
         }
         if (!allocate_command_ring()) {
-            LOGGER->warn("Command ring allocation failed.");
+            WARN("Command ring allocation failed.");
             return false;
         };
 
         if (!allocate_event_ring()) {
-            LOGGER->warn("Event ring allocation failed.");
+            WARN("Event ring allocation failed.");
             return false;
         }
 
@@ -956,7 +954,7 @@ namespace Rune::Device::USB {
         adc_trb.m_control.set_BSR(false);
         auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&adc_trb));
         if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) {
-            LOGGER->warn("Address Device Command failed: {}",
+            WARN("Address Device Command failed: {}",
                          cc_TRB.m_status.completion_code().to_string());
             return {};
         };
@@ -1146,7 +1144,7 @@ namespace Rune::Device::USB {
         size_t interface_count = 0;
         for (const auto& function : configuration.m_functions)
             interface_count += function.m_interfaces.size();
-        LOGGER->debug("  Config{} \"{}\": {} interface(s), {} function(s), self_powered={}, "
+        DEBUG("  Config{} \"{}\": {} interface(s), {} function(s), self_powered={}, "
                       "remote_wakeup={}, max_power={}mA",
                       configuration.m_configuration_value,
                       configuration.m_configuration_name,
@@ -1162,7 +1160,7 @@ namespace Rune::Device::USB {
             U8   first_interface = function.m_interfaces.empty()
                                        ? 0
                                        : function.m_interfaces.first().m_interface_number;
-            LOGGER->debug("    Function@IF{} \"{}\" ({} interface(s)): {}:{}:{} "
+            DEBUG("    Function@IF{} \"{}\" ({} interface(s)): {}:{}:{} "
                           "({:0=#2x}:{:0=#2x}:{:0=#2x})",
                           first_interface,
                           function.m_function_name,
@@ -1178,7 +1176,7 @@ namespace Rune::Device::USB {
             for (const auto& iface : function.m_interfaces) {
                 for (const auto& setting : iface.m_alternate_settings) {
                     auto class_code = ClassCode(setting.m_interface_class);
-                    LOGGER->debug(
+                    DEBUG(
                         "        IF{} Alt{} \"{}\": {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
                         iface.m_interface_number,
                         setting.m_setting_number,
@@ -1192,7 +1190,7 @@ namespace Rune::Device::USB {
                         setting.m_interface_subclass,
                         setting.m_interface_protocol);
                     for (const auto& ep : setting.m_endpoints) {
-                        LOGGER->debug("            EP{} {} {}: Max Packet Size={}",
+                        DEBUG("            EP{} {} {}: Max Packet Size={}",
                                       ep.m_endpoint_number,
                                       ep.m_direction.to_string(),
                                       ep.m_transfer_type.to_string(),
@@ -1331,7 +1329,7 @@ namespace Rune::Device::USB {
         const auto* usb_device_ID =
             reinterpret_cast<const USBDeviceID*>(composite_device->device_ID());
         auto class_code = ClassCode(usb_device_ID->device_class());
-        LOGGER->debug(
+        DEBUG(
             "Port{}-Slot{}: {}:{} ({:0=#4x}:{:0=#4x}), {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x}), "
             "USB{}, Configurations: {}",
             port,
@@ -1397,7 +1395,7 @@ namespace Rune::Device::USB {
         for (const auto& function : config.m_functions) {
             for (const auto& iface : function.m_interfaces) {
                 if (!add_endpoint_contexts(ic, dc_sys_memory, iface.active())) {
-                    LOGGER->warn("If{} Alt{}: Failed to add endpoint contexts.",
+                    WARN("If{} Alt{}: Failed to add endpoint contexts.",
                                  iface.m_interface_number,
                                  iface.active().m_setting_number);
                     return false;
@@ -1410,7 +1408,7 @@ namespace Rune::Device::USB {
 
         auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
         if (completion_code != CompletionCode::SUCCESS) {
-            LOGGER->warn("Configure endpoint command failed: {}", completion_code.to_string());
+            WARN("Configure endpoint command failed: {}", completion_code.to_string());
             return false;
         }
 
@@ -1438,14 +1436,14 @@ namespace Rune::Device::USB {
 
         Optional<U8> slot_id_opt = enable_slot(); // 1-based
         if (!slot_id_opt) {
-            LOGGER->error("Port{}: Failed to enable slot", port);
+            ERROR("Port{}: Failed to enable slot", port);
             return false;
         }
         U8 slot_id = slot_id_opt.value();
 
         auto dc_sys_memory = allocate_device_context_system_memory(slot_id);
         if (!dc_sys_memory) {
-            LOGGER->error("Port{}: Failed to allocate device context system memory", port);
+            ERROR("Port{}: Failed to allocate device context system memory", port);
             return false;
         }
 
@@ -1453,7 +1451,7 @@ namespace Rune::Device::USB {
         Optional<U16> max_packet_size_opt =
             send_address_device_command(dc_sys_memory, port, port_speed);
         if (!max_packet_size_opt) {
-            LOGGER->error("Port{}: Failed to send address device command", port);
+            ERROR("Port{}: Failed to send address device command", port);
             return false;
         }
 
@@ -1468,31 +1466,31 @@ namespace Rune::Device::USB {
         };
         auto f = handle_control_transfer_request(get_descriptor, dc_sys_memory, &dd_partial);
         if (f.get() != IORequestStatus::HANDLED) {
-            LOGGER->error("Port{}: Failed to get device descriptor", port);
+            ERROR("Port{}: Failed to get device descriptor", port);
             return false;
         }
 
         if (!update_max_packet_size(dd_partial, max_packet_size_opt.value(), port_speed, slot_id)) {
-            LOGGER->error("Port{}: Failed to update max packet size", port);
+            ERROR("Port{}: Failed to update max packet size", port);
             return false;
         }
 
         auto composite_device = build_composite_device(port, dc_sys_memory, port_speed);
         if (!composite_device) {
-            LOGGER->error("Port{}: Failed to parse USB configurations.", port);
+            ERROR("Port{}: Failed to parse USB configurations.", port);
             return false;
         }
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
         m_bindable_device_IDs.add_back(composite_device->device_ID());
         if (!dm->register_device(m_xhci, composite_device)) {
-            LOGGER->error("Port{}: Failed to register device", port);
+            ERROR("Port{}: Failed to register device", port);
             return false;
         }
         m_dc_system_memory.put(composite_device->get_handle(), dc_sys_memory);
 
         auto& config = composite_device->configurations().first();
         if (!configure_device(config, dc_sys_memory, port_speed)) {
-            LOGGER->error("Port{}: Failed to configure device", port);
+            ERROR("Port{}: Failed to configure device", port);
             return false;
         }
         composite_device->set_active_configuration(config.m_configuration_value);
@@ -1515,7 +1513,7 @@ namespace Rune::Device::USB {
             // "bind" is called.
             m_dc_system_memory.put(function_device->get_handle(), dc_sys_memory);
             if (!dm->register_device(composite_device, function_device)) {
-                LOGGER->error("Failed to register {}", function_device->get_name());
+                ERROR("Failed to register {}", function_device->get_name());
                 m_dc_system_memory.remove(function_device->get_handle());
                 continue;
             }
@@ -1560,12 +1558,12 @@ namespace Rune::Device::USB {
         vendor_db_initialize();
 
         if (!perform_host_controller_initialization()) {
-            LOGGER->warn("xHC Host controller initialization failed");
+            WARN("xHC Host controller initialization failed");
             return false;
         }
 
         // Enumerate the USB Ports
-        LOGGER->debug("xHC has {} ports. Enumerating...",
+        DEBUG("xHC has {} ports. Enumerating...",
                       m_ri.m_capability->m_hcsparams1.max_ports());
         for (U8 i = 0; i < m_ri.m_capability->m_hcsparams1.max_ports(); i++) {
             volatile PortRegisterSet& prs         = m_ri.port(i);
@@ -1590,13 +1588,13 @@ namespace Rune::Device::USB {
         // header-> m_device_handle => FunctionDevice --> Can access config
         // device                   => CompositeDevice
         if (maybe_dc_sys_mem == m_dc_system_memory.end()) {
-            LOGGER->warn("Received request for unknown device: {}", header->m_device_handle);
+            WARN("Received request for unknown device: {}", header->m_device_handle);
             CPU::Promise<IORequestStatus> promise;
             promise.set_value(IORequestStatus::UNSUPPORTED);
             return promise.get_future();
         }
         auto dc_sys_memory = *maybe_dc_sys_mem->value;
-        LOGGER->debug("Received Transfer Request: {}, Device: {}, Slot: {}",
+        DEBUG("Received Transfer Request: {}, Device: {}, Slot: {}",
                       header->m_transfer_type.to_string(),
                       header->m_device_handle,
                       dc_sys_memory->m_slot_ID);
@@ -1606,7 +1604,7 @@ namespace Rune::Device::USB {
                 auto* ctr = reinterpret_cast<ControlTransferRequest*>(request.m_in_data);
                 if (ctr->m_request == StandardRequestCode::SET_INTERFACE) {
                     if (device->device_type() != DeviceType::USB_COMPOSITE_DEVICE) {
-                        LOGGER->warn("{}: Cannot update endpoint configuration: Require composite "
+                        WARN("{}: Cannot update endpoint configuration: Require composite "
                                      "device, Is: {}",
                                      device->get_unique_name(),
                                      device->device_type().to_string());
@@ -1616,7 +1614,7 @@ namespace Rune::Device::USB {
                     SharedPointer<CompositeDevice> composite_device(device);
                     auto active_config = composite_device->active_configuration();
                     if (!active_config) {
-                        LOGGER->warn("{}: No active configuration found, cannot update "
+                        WARN("{}: No active configuration found, cannot update "
                                      "endpoint configuration for SET_INTERFACE control request.",
                                      composite_device->get_unique_name());
                         return CPU::Promise<IORequestStatus>::make_completed_future(
@@ -1629,7 +1627,7 @@ namespace Rune::Device::USB {
                             interface_number,
                             alternate_setting,
                             dc_sys_memory)) {
-                        LOGGER->warn("{}: Failed to update endpoint configuration.",
+                        WARN("{}: Failed to update endpoint configuration.",
                                      composite_device->get_unique_name());
                         return CPU::Promise<IORequestStatus>::make_completed_future(
                             IORequestStatus::FAILED);

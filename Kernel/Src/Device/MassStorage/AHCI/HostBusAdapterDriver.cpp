@@ -27,9 +27,6 @@
 #include <Device/DeviceModule.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER =
-        LogContext::instance().get_logger("Device.HostBusAdapterDriver");
-
     // ====================================================================================== //
     // Private
     // ====================================================================================== //
@@ -39,14 +36,14 @@ namespace Rune::Device {
 
         void* clb = _heap->allocate_dma(SystemMemory::COMMAND_LIST_SIZE * sizeof(CommandHeader));
         if (clb == nullptr) {
-            LOGGER->error("Failed to allocate command list.");
+            ERROR("Failed to allocate command list.");
             return nullptr;
         }
         sys_mem->CL = reinterpret_cast<CommandHeader*>(clb);
 
         void* fb = _heap->allocate_dma(sizeof(ReceivedFIS));
         if (fb == nullptr) {
-            LOGGER->error("Failed to allocate received FIS...");
+            ERROR("Failed to allocate received FIS...");
             _heap->free(clb);
             return nullptr;
         }
@@ -54,7 +51,7 @@ namespace Rune::Device {
 
         void* ct = _heap->allocate_dma(ct_count * sizeof(CommandTable));
         if (ct == nullptr) {
-            LOGGER->error("Failed to allocate command tables...");
+            ERROR("Failed to allocate command tables...");
             _heap->free(clb);
             _heap->free(fb);
             return nullptr;
@@ -67,7 +64,7 @@ namespace Rune::Device {
             if (!Memory::virtual_to_physical_address(
                     memory_pointer_to_addr(&reinterpret_cast<CommandTable*>(ct)[j]),
                     p_ctba)) {
-                LOGGER->error("Failed hook command table {} into system memory!", j);
+                ERROR("Failed hook command table {} into system memory!", j);
                 _heap->free(sys_mem->CL);
                 _heap->free(sys_mem->RFIS);
                 _heap->free(sys_mem->CT);
@@ -76,7 +73,7 @@ namespace Rune::Device {
 
             sys_mem->CL[j].CTBA.AsUInt32 = static_cast<U32>(p_ctba);
             if (sys_mem->CL[j].CTBA.Reserved != 0) {
-                LOGGER->error("Command table base address is not 128 byte aligned!");
+                ERROR("Command table base address is not 128 byte aligned!");
                 _heap->free(sys_mem->CL);
                 _heap->free(sys_mem->RFIS);
                 _heap->free(sys_mem->CT);

@@ -26,8 +26,6 @@
 #include <Device/Keyboard/PS2Keyboard.h>
 
 namespace Rune::Device {
-    const SharedPointer<Logger> LOGGER = LogContext::instance().get_logger("Device.DeviceModule");
-
     // ========================================================================================== //
     // Private Functions
     // ========================================================================================== //
@@ -61,7 +59,7 @@ namespace Rune::Device {
     void DeviceModule::remove_device_driver(const SharedPointer<Device>& current_device,
                                             const SharedPointer<Driver>& driver) {
         if (current_device->driver() == driver) {
-            LOGGER->debug(R"({}: Unbind device from driver by {} v{})",
+            DEBUG(R"({}: Unbind device from driver by {} v{})",
                           current_device->get_unique_name(),
                           driver->vendor(),
                           driver->version().to_string());
@@ -84,7 +82,7 @@ namespace Rune::Device {
 
         auto root_device_driver = find_device_driver(&ACPIDriver::ID_ACPI);
         if (!root_device_driver) {
-            LOGGER->error("The root device driver is missing.");
+            ERROR("The root device driver is missing.");
             return false;
         }
         auto root_device_handle = m_device_handle_counter.acquire();
@@ -100,7 +98,7 @@ namespace Rune::Device {
                                                                 ACPIDriver::ID_ACPI));
         m_device_tree = root_device_dummy;
         if (!root_device_driver->bind(root_device_dummy)) {
-            LOGGER->error("Failed to bind the root device");
+            ERROR("Failed to bind the root device");
             return false;
         }
 
@@ -111,7 +109,7 @@ namespace Rune::Device {
         request.m_out_data = &acpi_info;
         auto req_status    = root_device_driver->handle_request(root_device_dummy, request);
         if (req_status.get() != IORequestStatus::HANDLED) {
-            LOGGER->error("Failed to configure the root device.");
+            ERROR("Failed to configure the root device.");
             return false;
         }
         constexpr int         RADIX_DECIMAL = 10;
@@ -152,13 +150,13 @@ namespace Rune::Device {
             match_devices(matching_devices, m_device_tree, driver);
 
             for (auto& dev : matching_devices) {
-                LOGGER->debug(R"({}: Bind device to driver by {} v{})",
+                DEBUG(R"({}: Bind device to driver by {} v{})",
                               dev->get_unique_name(),
                               driver->vendor(),
                               driver->version().to_string());
                 dev->driver() = driver;
                 if (!driver->bind(dev)) {
-                    LOGGER->warn("{}: Driver binding failed.", dev->get_unique_name());
+                    WARN("{}: Driver binding failed.", dev->get_unique_name());
                     dev->driver() = SharedPointer<Driver>();
                 }
             }
@@ -197,7 +195,7 @@ namespace Rune::Device {
 
         bus_device->child_devices().add_back(device);
         device->bus_device() = bus_device;
-        LOGGER->debug("New device {}: OEM: {}, Rev: {}, SN: {}",
+        DEBUG("New device {}: OEM: {}, Rev: {}, SN: {}",
                       device->get_unique_name(),
                       device->oem(),
                       device->revision(),
@@ -206,13 +204,13 @@ namespace Rune::Device {
         auto driver = find_device_driver(device->device_ID());
         if (!driver) return true;
 
-        LOGGER->debug(R"({}: Bind device to driver by {} v{})",
+        DEBUG(R"({}: Bind device to driver by {} v{})",
                       device->get_unique_name(),
                       driver->vendor(),
                       driver->version().to_string());
         device->driver() = driver;
         if (!driver->bind(device)) {
-            LOGGER->warn("{}: Driver binding failed.", device->get_unique_name());
+            WARN("{}: Driver binding failed.", device->get_unique_name());
             device->driver() = SharedPointer<Driver>();
         }
         return true;

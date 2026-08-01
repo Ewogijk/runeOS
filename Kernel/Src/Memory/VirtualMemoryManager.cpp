@@ -22,9 +22,6 @@
 #include <Memory/VirtualMemory.h>
 
 namespace Rune::Memory {
-    const SharedPointer<Logger> LOGGER =
-        LogContext::instance().get_logger("Memory.VirtualMemoryManager");
-
     DEFINE_ENUM(VMMStartFailure, VMMStartFailures, 0x0)
 
     auto VirtualMemoryManager::allocate_kernel_space_entries(const Memory::PageTable& base_pt,
@@ -98,18 +95,15 @@ namespace Rune::Memory {
         }
 
         // Free the page frame of the page table
-        LOGGER->trace("Freeing page frame {:0=#16x}.", pte.get_address());
+        TRACE("Free page frame {:0=#16x}", pte.get_address());
         if (!_pmm->free(pte.get_address())) {
-            LOGGER->warn("Failed to free page frame {:0=#16x}", pte.get_address());
+            WARN("Failed to free page frame {:0=#16x}", pte.get_address());
             return false;
         }
         return true;
     }
 
-    VirtualMemoryManager::VirtualMemoryManager(PhysicalMemoryManager* pmm)
-        : _pmm(pmm),
-          _start_fail(VMMStartFailure::NONE),
-          _ksear() {}
+    VirtualMemoryManager::VirtualMemoryManager(PhysicalMemoryManager* pmm) : _pmm(pmm) {}
 
     auto VirtualMemoryManager::start(MemoryMap*        p_map,
                                      MemoryMap*        v_map,
@@ -118,8 +112,7 @@ namespace Rune::Memory {
         U16          p_flags = PageFlag::PRESENT | PageFlag::WRITE_ALLOWED;
         PhysicalAddr base_pt_addr{0};
         if (!_pmm->allocate(base_pt_addr)) {
-            _start_fail = VMMStartFailure::BASE_PT_ALLOC_FAIL;
-            return _start_fail;
+            return VMMStartFailure::BASE_PT_ALLOC_FAIL;
         }
 
         memset(memory_addr_to_pointer<void>(physical_to_virtual_address(base_pt_addr)),
@@ -145,9 +138,12 @@ namespace Rune::Memory {
                                           v_map,
                                           "Higher Half Direct Map");
         if (ksear.has_error) {
-            _start_fail = VMMStartFailure::HHDM_MAPPING_FAIL;
-            _ksear      = ksear;
-            return _start_fail;
+            ERROR("KSEAR - Region={}, AllocPTA={}, FreePTA={}, ClaimError={}",
+                  ksear.region,
+                  ksear.alloc_pta.status.to_string(),
+                  ksear.free_pta.status.to_string(),
+                  ksear.claim_error);
+            return VMMStartFailure::HHDM_MAPPING_FAIL;
         }
 
         // Create PMM reserved kernel space entries
@@ -160,9 +156,12 @@ namespace Rune::Memory {
                                                             v_map,
                                                             "Physical Memory Manager");
         if (ksear.has_error) {
-            _start_fail = VMMStartFailure::PMM_MAPPING_FAIL;
-            _ksear      = ksear;
-            return _start_fail;
+            ERROR("KSEAR - Region={}, AllocPTA={}, FreePTA={}, ClaimError={}",
+                  ksear.region,
+                  ksear.alloc_pta.status.to_string(),
+                  ksear.free_pta.status.to_string(),
+                  ksear.claim_error);
+            return VMMStartFailure::PMM_MAPPING_FAIL;
         }
 
         // No page frame allocation because the heap grows dynamically
@@ -170,15 +169,19 @@ namespace Rune::Memory {
                                     .size        = heap_size,
                                     .memory_type = MemoryRegionType::KERNEL_HEAP};
         if (!v_map->claim(kernel_heap, get_page_size())) {
-            _start_fail = VMMStartFailure::KERNEL_HEAP_MAPPING_FAIL;
-            _ksear      = {
+            ksear = {
                 .region      = "Kernel Heap",
                 .has_error   = true,
                 .alloc_pta   = {.status = PageTableAccessStatus::OKAY, .path = {}},
                 .free_pta    = {.status = PageTableAccessStatus::OKAY, .path = {}},
                 .claim_error = true
             };
-            return _start_fail;
+            ERROR("KSEAR - Region={}, AllocPTA={}, FreePTA={}, ClaimError={}",
+                  ksear.region,
+                  ksear.alloc_pta.status.to_string(),
+                  ksear.free_pta.status.to_string(),
+                  ksear.claim_error);
+            return VMMStartFailure::KERNEL_HEAP_MAPPING_FAIL;
         }
 
         // Create kernel code kernel space entries
@@ -190,9 +193,12 @@ namespace Rune::Memory {
                                               v_map,
                                               "Kernel Code");
         if (ksear.has_error) {
-            _start_fail = VMMStartFailure::KERNEL_CODE_MAPPING_FAIL;
-            _ksear      = ksear;
-            return _start_fail;
+            ERROR("KSEAR - Region={}, AllocPTA={}, FreePTA={}, ClaimError={}",
+                  ksear.region,
+                  ksear.alloc_pta.status.to_string(),
+                  ksear.free_pta.status.to_string(),
+                  ksear.claim_error);
+            return VMMStartFailure::KERNEL_CODE_MAPPING_FAIL;
         }
 
         for (const auto& reg : *v_map) {
@@ -211,7 +217,7 @@ namespace Rune::Memory {
     auto VirtualMemoryManager::allocate_virtual_address_space(PhysicalAddr& base_pt_addr) -> bool {
         PhysicalAddr base_addr{0};
         if (!_pmm->allocate(base_addr)) {
-            LOGGER->critical("L0 page table allocation error.");
+            FATAL("Failed to allocate L0 page table");
             return false;
         }
         PageTable new_base_pt    = interp_as_base_page_table(base_addr);
@@ -253,14 +259,14 @@ namespace Rune::Memory {
         -> bool {
         PhysicalAddr pAddr{0};
         if (!_pmm->allocate(pAddr)) {
-            LOGGER->warn("Page allocation fail: Out of physical memory for page.");
+            WARN("Page allocation fail: Out of physical memory");
             return false;
         }
         if (allocate_page(base_pt, v_addr, pAddr, flags, _pmm).status
             != PageTableAccessStatus::OKAY) {
-            LOGGER->warn("Page allocation fail: {:0=#16x}", v_addr);
+            WARN("Page allocation fail: {:0=#16x}", v_addr);
             if (!_pmm->free(pAddr)) {
-                LOGGER->warn("Page allocation fail: Failed to free page frame of page.");
+                WARN("Memory leak: Page frame free failed");
             }
             return false;
         }
@@ -276,10 +282,10 @@ namespace Rune::Memory {
         size_t     alloc_fail_page_idx = 0;
         for (size_t i = 0; i < pages; i++) {
             if (!allocate(base_pt, v_addr + (i * page_size), flags)) {
-                LOGGER->warn("Page allocation fail: Failed to allocate page {:0=#16x} ({}/{})",
-                             v_addr + (i * page_size),
-                             i + 1,
-                             pages + 1);
+                WARN("Page allocation fail: {:0=#16x} ({}/{})",
+                     v_addr + (i * page_size),
+                     i + 1,
+                     pages + 1);
                 alloc_fail_page_idx = i;
                 alloc_failed        = true;
                 break;
@@ -288,7 +294,7 @@ namespace Rune::Memory {
         if (alloc_failed) {
             for (size_t i = 0; i <= alloc_fail_page_idx; i++) {
                 if (!free(base_pt, v_addr + (i * page_size))) {
-                    LOGGER->warn("Failed to free {:0=#16x}", v_addr + (i * page_size));
+                    WARN("Page free faile {:0=#16x}", v_addr + (i * page_size));
                 }
             }
             return false;
@@ -313,7 +319,7 @@ namespace Rune::Memory {
         // Unmap virtual address
         PageTableAccess pta = free_page(base_pt, v_addr, _pmm);
         if (pta.status == PageTableAccessStatus::FREE_ERROR) {
-            LOGGER->warn("Page free fail: Failed to free {:0=#16x}", v_addr);
+            WARN("Page free fail: {:0=#16x}", v_addr);
             return false;
         }
         return _pmm->free(p_addr); // Free page frame
@@ -325,10 +331,10 @@ namespace Rune::Memory {
         bool       all_free  = true;
         for (size_t i = 0; i < pages; i++) {
             if (!free(base_pt, v_addr + (i * page_size))) {
-                LOGGER->warn("Page free fail: Failed to allocate page {:0=#16x} ({}/{})",
-                             v_addr + (i * page_size),
-                             i + 1,
-                             pages + 1);
+                WARN("Page free fail: {:0=#16x} ({}/{})",
+                     v_addr + (i * page_size),
+                     i + 1,
+                     pages + 1);
                 all_free = false;
             }
         }
