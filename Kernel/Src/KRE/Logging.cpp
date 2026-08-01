@@ -269,12 +269,12 @@ namespace Rune {
         g_app_resolver    = move(app_resolver);
     }
 
-    void log(Ember::LogLevel   log_level,
-             const char*       file,
-             U16               line_number,
-             Ember::LogMessage log_message,
-             const Argument*   args,
-             size_t            arg_size) {
+    void log(Ember::LogLevel log_level,
+             const char*     file,
+             U16             line_number,
+             const char*     log_message,
+             const Argument* args,
+             size_t          arg_size) {
         // __FILE__ includes the relative path to the file: a/b/code.cpp
         // We want to strip the path and file extension: code
         size_t offset          = 0;
