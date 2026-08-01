@@ -25,7 +25,6 @@ using namespace Rune;
 
 /// @brief RAII style
 struct TestThread {
-    const SharedPointer<Logger>   TTLOGGER        = LogContext::instance().get_logger("CPU.TTC");
     CPU::ThreadHandle             m_thread_handle = 0;
     SharedPointer<CPU::StartInfo> m_start_info;
     bool                          m_sync_thread_stop;
