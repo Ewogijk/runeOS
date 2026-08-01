@@ -132,9 +132,9 @@ namespace Rune::CPU {
 
         auto& calling_thread = _scheduler->get_running_thread();
         TRACE(R"(1-{}: {} sleep until {}ns)",
-                      get_name(),
-                      calling_thread->get_unique_name(),
-                      sleep_time_nanos);
+              get_name(),
+              calling_thread->get_unique_name(),
+              sleep_time_nanos);
         // The thread must be marked before enqueuing it, otherwise the wake up could be lost.
         // Scenario: The calling thread is in the wait queue but not blocked yet -> IRQ happens
         //              -> The calling thread is unblocked (it fails) -> Then it is blocked here

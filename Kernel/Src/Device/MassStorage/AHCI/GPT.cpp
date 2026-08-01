@@ -191,7 +191,7 @@ namespace Rune::Device {
             if (bu_gpt_scan_status != GPTScanStatus::DETECTED) {
                 if (bu_gpt_scan_status != GPTScanStatus::NOT_DETECTED)
                     WARN("Failed to parse backup GPT header: {} (LBA 1)",
-                                 bu_gpt_scan_status.to_string());
+                         bu_gpt_scan_status.to_string());
                 return {.status          = bu_gpt_scan_status,
                         .header          = {},
                         .partition_table = LinkedList<GPTPartitionTableEntry>()};

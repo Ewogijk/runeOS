@@ -117,9 +117,9 @@ namespace Rune::Device::USB {
                 // Isoch-only (xHCI §4.10.3.1/§4.10.3.2): A class driver missed the schedule for
                 // an Isoch transfer -> Ignore this event.
                 DEBUG("Slot{} EP{}: Isoch transfer schedule missed: {}",
-                              te->m_control.slot_id(),
-                              te->m_control.endpoint_id(),
-                              cc.to_string());
+                      te->m_control.slot_id(),
+                      te->m_control.endpoint_id(),
+                      cc.to_string());
                 return;
             }
             PhysicalAddr inflight_trb_address =
@@ -330,9 +330,7 @@ namespace Rune::Device::USB {
             if (iface != nullptr) break;
         }
         if (iface == nullptr) {
-            WARN("Configuration{} has no interface {}",
-                         config.m_configuration_value,
-                         interface);
+            WARN("Configuration{} has no interface {}", config.m_configuration_value, interface);
             return false;
         }
 
@@ -356,22 +354,18 @@ namespace Rune::Device::USB {
         memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
 
         if (!drop_endpoint_contexts(ic, dc_sys_memory, old_alt, new_alt)) {
-            WARN("IF{} Alt{}: Failed to drop endpoint contexts",
-                         interface,
-                         alternate_setting);
+            WARN("IF{} Alt{}: Failed to drop endpoint contexts", interface, alternate_setting);
             return false;
         }
         if (!add_endpoint_contexts(ic, dc_sys_memory, new_alt)) {
-            WARN("IF{} Alt{}: Failed to add endpoint contexts",
-                         interface,
-                         alternate_setting);
+            WARN("IF{} Alt{}: Failed to add endpoint contexts", interface, alternate_setting);
             return false;
         }
         auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
         if (completion_code != CompletionCode::SUCCESS) {
             WARN("IF{} Alt{}: Failed to send configure endpoint command",
-                         interface,
-                         alternate_setting);
+                 interface,
+                 alternate_setting);
             return false;
         }
         return true;
@@ -453,10 +447,10 @@ namespace Rune::Device::USB {
         void* data_buffer) -> CPU::Future<IORequestStatus> {
 
         DEBUG("EP{} {}: Sending {} transfer request. Size={} bytes",
-                      data_transfer_request.m_endpoint_number,
-                      data_transfer_request.m_direction.to_string(),
-                      data_transfer_request.m_header.m_transfer_type.to_string(),
-                      data_transfer_request.m_length);
+              data_transfer_request.m_endpoint_number,
+              data_transfer_request.m_direction.to_string(),
+              data_transfer_request.m_header.m_transfer_type.to_string(),
+              data_transfer_request.m_length);
         U8        dci = (data_transfer_request.m_endpoint_number * 2)
                         + data_transfer_request.m_direction.to_value();
         auto&     tr  = dc_sys_mem->m_transfer_rings[dci - 1];
@@ -492,10 +486,10 @@ namespace Rune::Device::USB {
         void* data_buffer) -> CPU::Future<IORequestStatus> {
 
         DEBUG("EP{} {}: Sending {} transfer request. Size={} bytes",
-                      isoch_transfer_request.m_endpoint_number,
-                      isoch_transfer_request.m_direction.to_string(),
-                      isoch_transfer_request.m_header.m_transfer_type.to_string(),
-                      isoch_transfer_request.m_length);
+              isoch_transfer_request.m_endpoint_number,
+              isoch_transfer_request.m_direction.to_string(),
+              isoch_transfer_request.m_header.m_transfer_type.to_string(),
+              isoch_transfer_request.m_length);
         U8       dci = (isoch_transfer_request.m_endpoint_number * 2)
                        + isoch_transfer_request.m_direction.to_value();
         auto&    tr  = dc_sys_mem->m_transfer_rings[dci - 1];
@@ -568,11 +562,11 @@ namespace Rune::Device::USB {
             }
         }
         DEBUG("Allocating register interface: {:0=#16x}-{:0=#16x}",
-                      MMIO_BASE_ADDR,
-                      MMIO_BASE_ADDR + (Memory::get_page_size() * (additional_req_pages + 1)));
+              MMIO_BASE_ADDR,
+              MMIO_BASE_ADDR + (Memory::get_page_size() * (additional_req_pages + 1)));
         DEBUG("Is at physical address: {:0=#16x}-{:0=#16x}",
-                      xhci_mmio_base_addr,
-                      xhci_mmio_base_addr + mmio_end);
+              xhci_mmio_base_addr,
+              xhci_mmio_base_addr + mmio_end);
         return true;
     }
 
@@ -590,8 +584,7 @@ namespace Rune::Device::USB {
         // Slot 0 is reserved for the scratchpad buffer array.
         U32 dcbaa_size = m_ri.m_capability->m_hcsparams1.max_slots() + 1;
         m_ri.m_operational->m_config.set_max_slots_en(static_cast<U8>(dcbaa_size));
-        DEBUG("Allocate device context base address array: {} slots",
-                      dcbaa_size);
+        DEBUG("Allocate device context base address array: {} slots", dcbaa_size);
         m_dcbaa = SharedPointer<U64>(reinterpret_cast<U64*>(
             mm->get_heap()->allocate_dma(sizeof(PhysicalAddr*) * dcbaa_size)));
         // xHCI expects zeroed memory
@@ -694,8 +687,8 @@ namespace Rune::Device::USB {
 
     auto XHCIDriver::allocate_event_ring() -> bool {
         DEBUG("Allocating event ring, segment_size={}, segment_count={}",
-                      EVENT_RING_SEGMENT_SIZE,
-                      EVENT_RING_SEGMENT_COUNT);
+              EVENT_RING_SEGMENT_SIZE,
+              EVENT_RING_SEGMENT_COUNT);
         auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
 
         m_event_ring = SharedPointer<EventRing<EVENT_RING_SEGMENT_SIZE, EVENT_RING_SEGMENT_COUNT>>(
@@ -955,7 +948,7 @@ namespace Rune::Device::USB {
         auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&adc_trb));
         if (cc_TRB.m_status.completion_code() != CompletionCode::SUCCESS) {
             WARN("Address Device Command failed: {}",
-                         cc_TRB.m_status.completion_code().to_string());
+                 cc_TRB.m_status.completion_code().to_string());
             return {};
         };
         return make_optional<U16>(ep0.m_dw1.max_packet_size());
@@ -1145,14 +1138,14 @@ namespace Rune::Device::USB {
         for (const auto& function : configuration.m_functions)
             interface_count += function.m_interfaces.size();
         DEBUG("  Config{} \"{}\": {} interface(s), {} function(s), self_powered={}, "
-                      "remote_wakeup={}, max_power={}mA",
-                      configuration.m_configuration_value,
-                      configuration.m_configuration_name,
-                      interface_count,
-                      configuration.m_functions.size(),
-                      configuration.m_self_powered,
-                      configuration.m_remote_wakeup,
-                      configuration.m_max_power_mA);
+              "remote_wakeup={}, max_power={}mA",
+              configuration.m_configuration_value,
+              configuration.m_configuration_name,
+              interface_count,
+              configuration.m_functions.size(),
+              configuration.m_self_powered,
+              configuration.m_remote_wakeup,
+              configuration.m_max_power_mA);
 
         // Functions: each logical function with its class triplet and the interfaces it owns.
         for (const auto& function : configuration.m_functions) {
@@ -1161,40 +1154,39 @@ namespace Rune::Device::USB {
                                        ? 0
                                        : function.m_interfaces.first().m_interface_number;
             DEBUG("    Function@IF{} \"{}\" ({} interface(s)): {}:{}:{} "
-                          "({:0=#2x}:{:0=#2x}:{:0=#2x})",
-                          first_interface,
-                          function.m_function_name,
-                          function.m_interfaces.size(),
-                          function_class.to_string(),
-                          resolve_subclass_code(function_class, function.m_function_subclass),
-                          resolve_protocol_code(function_class,
-                                                function.m_function_subclass,
-                                                function.m_function_protocol),
-                          function.m_function_class,
-                          function.m_function_subclass,
-                          function.m_function_protocol);
+                  "({:0=#2x}:{:0=#2x}:{:0=#2x})",
+                  first_interface,
+                  function.m_function_name,
+                  function.m_interfaces.size(),
+                  function_class.to_string(),
+                  resolve_subclass_code(function_class, function.m_function_subclass),
+                  resolve_protocol_code(function_class,
+                                        function.m_function_subclass,
+                                        function.m_function_protocol),
+                  function.m_function_class,
+                  function.m_function_subclass,
+                  function.m_function_protocol);
             for (const auto& iface : function.m_interfaces) {
                 for (const auto& setting : iface.m_alternate_settings) {
                     auto class_code = ClassCode(setting.m_interface_class);
-                    DEBUG(
-                        "        IF{} Alt{} \"{}\": {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
-                        iface.m_interface_number,
-                        setting.m_setting_number,
-                        setting.m_interface_name,
-                        class_code.to_string(),
-                        resolve_subclass_code(class_code, setting.m_interface_subclass),
-                        resolve_protocol_code(class_code,
-                                              setting.m_interface_subclass,
-                                              setting.m_interface_protocol),
-                        setting.m_interface_class,
-                        setting.m_interface_subclass,
-                        setting.m_interface_protocol);
+                    DEBUG("        IF{} Alt{} \"{}\": {}:{}:{} ({:0=#2x}:{:0=#2x}:{:0=#2x})",
+                          iface.m_interface_number,
+                          setting.m_setting_number,
+                          setting.m_interface_name,
+                          class_code.to_string(),
+                          resolve_subclass_code(class_code, setting.m_interface_subclass),
+                          resolve_protocol_code(class_code,
+                                                setting.m_interface_subclass,
+                                                setting.m_interface_protocol),
+                          setting.m_interface_class,
+                          setting.m_interface_subclass,
+                          setting.m_interface_protocol);
                     for (const auto& ep : setting.m_endpoints) {
                         DEBUG("            EP{} {} {}: Max Packet Size={}",
-                                      ep.m_endpoint_number,
-                                      ep.m_direction.to_string(),
-                                      ep.m_transfer_type.to_string(),
-                                      ep.m_max_packet_size);
+                              ep.m_endpoint_number,
+                              ep.m_direction.to_string(),
+                              ep.m_transfer_type.to_string(),
+                              ep.m_max_packet_size);
                     }
                 }
             }
@@ -1396,8 +1388,8 @@ namespace Rune::Device::USB {
             for (const auto& iface : function.m_interfaces) {
                 if (!add_endpoint_contexts(ic, dc_sys_memory, iface.active())) {
                     WARN("If{} Alt{}: Failed to add endpoint contexts.",
-                                 iface.m_interface_number,
-                                 iface.active().m_setting_number);
+                         iface.m_interface_number,
+                         iface.active().m_setting_number);
                     return false;
                 }
                 if (ic->m_slot_context.m_dw0.context_entries() > dci_max)
@@ -1563,8 +1555,7 @@ namespace Rune::Device::USB {
         }
 
         // Enumerate the USB Ports
-        DEBUG("xHC has {} ports. Enumerating...",
-                      m_ri.m_capability->m_hcsparams1.max_ports());
+        DEBUG("xHC has {} ports. Enumerating...", m_ri.m_capability->m_hcsparams1.max_ports());
         for (U8 i = 0; i < m_ri.m_capability->m_hcsparams1.max_ports(); i++) {
             volatile PortRegisterSet& prs         = m_ri.port(i);
             auto                      usb_version = m_port_version_map.find(i);
@@ -1595,9 +1586,9 @@ namespace Rune::Device::USB {
         }
         auto dc_sys_memory = *maybe_dc_sys_mem->value;
         DEBUG("Received Transfer Request: {}, Device: {}, Slot: {}",
-                      header->m_transfer_type.to_string(),
-                      header->m_device_handle,
-                      dc_sys_memory->m_slot_ID);
+              header->m_transfer_type.to_string(),
+              header->m_device_handle,
+              dc_sys_memory->m_slot_ID);
 
         switch (header->m_transfer_type) {
             case TransferRequestType::CONTROL: {
@@ -1605,9 +1596,9 @@ namespace Rune::Device::USB {
                 if (ctr->m_request == StandardRequestCode::SET_INTERFACE) {
                     if (device->device_type() != DeviceType::USB_COMPOSITE_DEVICE) {
                         WARN("{}: Cannot update endpoint configuration: Require composite "
-                                     "device, Is: {}",
-                                     device->get_unique_name(),
-                                     device->device_type().to_string());
+                             "device, Is: {}",
+                             device->get_unique_name(),
+                             device->device_type().to_string());
                         return CPU::Promise<IORequestStatus>::make_completed_future(
                             IORequestStatus::FAILED);
                     }
@@ -1615,8 +1606,8 @@ namespace Rune::Device::USB {
                     auto active_config = composite_device->active_configuration();
                     if (!active_config) {
                         WARN("{}: No active configuration found, cannot update "
-                                     "endpoint configuration for SET_INTERFACE control request.",
-                                     composite_device->get_unique_name());
+                             "endpoint configuration for SET_INTERFACE control request.",
+                             composite_device->get_unique_name());
                         return CPU::Promise<IORequestStatus>::make_completed_future(
                             IORequestStatus::DEVICE_NOT_OPERATIONAL);
                     }
@@ -1628,7 +1619,7 @@ namespace Rune::Device::USB {
                             alternate_setting,
                             dc_sys_memory)) {
                         WARN("{}: Failed to update endpoint configuration.",
-                                     composite_device->get_unique_name());
+                             composite_device->get_unique_name());
                         return CPU::Promise<IORequestStatus>::make_completed_future(
                             IORequestStatus::FAILED);
                     }
