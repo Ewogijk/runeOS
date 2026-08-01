@@ -31,8 +31,8 @@ namespace Rune::SystemCall {
         void*          context          = nullptr;
     };
 
-    HashMap<Ember::ResourceID, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE; // NOLINT
-    KernelGuardian*                                 K_GUARD;                   // NOLINT
+    HashMap<Ember::Handle, SystemCallContainer> SYSTEM_CALL_HANDLER_TABLE; // NOLINT
+    KernelGuardian*                             K_GUARD;                   // NOLINT
 
     /**
      * @brief On "syscall" the CPU will jump to this assembly stub. It loads the kernel stack and
@@ -41,7 +41,7 @@ namespace Rune::SystemCall {
      */
     CLINK void system_call_accept();
 
-    CLINK auto system_call_dispatch(Ember::ResourceID         ID,
+    CLINK auto system_call_dispatch(Ember::Handle             ID,
                                     Ember::SystemCallArgument arg1,
                                     Ember::SystemCallArgument arg2,
                                     Ember::SystemCallArgument arg3,
@@ -74,7 +74,7 @@ namespace Rune::SystemCall {
 
     auto system_call_init(KernelGuardian* k_guard) -> bool {
         K_GUARD                   = k_guard;
-        SYSTEM_CALL_HANDLER_TABLE = HashMap<U16, SystemCallContainer>();
+        SYSTEM_CALL_HANDLER_TABLE = HashMap<Ember::Handle, SystemCallContainer>();
         // Init the model specific registers for sysret/syscall, they act as caches for important
         // values CS/SS selectors
         // syscall: CS = STAR[47:32], SS = STAR[63:48] + 8, RPL bits 48:49 are 00 as syscall goes

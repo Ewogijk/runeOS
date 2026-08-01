@@ -57,7 +57,10 @@ namespace Ember {
     /**
      * @brief A context sensitive, unique identifier for a kernel object e.g. threads, files, etc.
      */
-    using ResourceID = U16;
+    using Handle = U16;
+
+    /// @brief Represents a non-existent resource.
+    constexpr Handle HANDLE_NONE = 0;
 
     /**
      * @brief System call arguments are passed is integer values to the kernel.

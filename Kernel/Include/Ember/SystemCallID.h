@@ -28,7 +28,7 @@ namespace Ember {
     X(Memory, ALLOCATE_PAGE, 101)                                                                  \
     X(Memory, FREE_PAGE, 102)
 
-    DECLARE_TYPED_ENUM(Memory, ResourceID, MEMORY_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(Memory, Handle, MEMORY_SYSCALLS, 0x0) // NOLINT
 
     /// @brief @brief The threading system call IDs.
 #define THREADING_SYSCALLS(X)                                                                      \
@@ -39,7 +39,7 @@ namespace Ember {
     X(Threading, THREAD_GET_ID, 204)                                                               \
     X(Threading, THREAD_CONTROL_BLOCK_SET, 205)
 
-    DECLARE_TYPED_ENUM(Threading, ResourceID, THREADING_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(Threading, Handle, THREADING_SYSCALLS, 0x0) // NOLINT
 
     ///@brief The VFS system call IDs.
 #define VFS_SYSCALLS(X)                                                                            \
@@ -56,7 +56,7 @@ namespace Ember {
     X(VFS, DIRECTORY_STREAM_NEXT, 310)                                                             \
     X(VFS, DIRECTORY_STREAM_CLOSE, 311)
 
-    DECLARE_TYPED_ENUM(VFS, ResourceID, VFS_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(VFS, Handle, VFS_SYSCALLS, 0x0) // NOLINT
 
     ///@brief The app system call IDs.
 #define APP_SYSCALLS(X)                                                                            \
@@ -70,7 +70,7 @@ namespace Ember {
     X(App, CURRENT_DIRECTORY, 407)                                                                 \
     X(App, CHANGE_DIRECTORY, 408)
 
-    DECLARE_TYPED_ENUM(App, ResourceID, APP_SYSCALLS, 0x0) // NOLINT
+    DECLARE_TYPED_ENUM(App, Handle, APP_SYSCALLS, 0x0) // NOLINT
 } // namespace Ember
 
 #endif // EMBER_SYSTEMCALLID_H
