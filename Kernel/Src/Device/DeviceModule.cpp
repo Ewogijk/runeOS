@@ -60,9 +60,9 @@ namespace Rune::Device {
                                             const SharedPointer<Driver>& driver) {
         if (current_device->driver() == driver) {
             DEBUG(R"({}: Unbind device from driver by {} v{})",
-                          current_device->get_unique_name(),
-                          driver->vendor(),
-                          driver->version().to_string());
+                  current_device->get_unique_name(),
+                  driver->vendor(),
+                  driver->version().to_string());
             current_device->driver()->unbind(current_device);
             current_device->driver() = SharedPointer<Driver>();
         }
@@ -151,9 +151,9 @@ namespace Rune::Device {
 
             for (auto& dev : matching_devices) {
                 DEBUG(R"({}: Bind device to driver by {} v{})",
-                              dev->get_unique_name(),
-                              driver->vendor(),
-                              driver->version().to_string());
+                      dev->get_unique_name(),
+                      driver->vendor(),
+                      driver->version().to_string());
                 dev->driver() = driver;
                 if (!driver->bind(dev)) {
                     WARN("{}: Driver binding failed.", dev->get_unique_name());
@@ -196,18 +196,18 @@ namespace Rune::Device {
         bus_device->child_devices().add_back(device);
         device->bus_device() = bus_device;
         DEBUG("New device {}: OEM: {}, Rev: {}, SN: {}",
-                      device->get_unique_name(),
-                      device->oem(),
-                      device->revision(),
-                      device->serial_number());
+              device->get_unique_name(),
+              device->oem(),
+              device->revision(),
+              device->serial_number());
 
         auto driver = find_device_driver(device->device_ID());
         if (!driver) return true;
 
         DEBUG(R"({}: Bind device to driver by {} v{})",
-                      device->get_unique_name(),
-                      driver->vendor(),
-                      driver->version().to_string());
+              device->get_unique_name(),
+              driver->vendor(),
+              driver->version().to_string());
         device->driver() = driver;
         if (!driver->bind(device)) {
             WARN("{}: Driver binding failed.", device->get_unique_name());

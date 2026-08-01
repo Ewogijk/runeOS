@@ -53,8 +53,7 @@ namespace Rune::App {
         VFS::NodeIOResult fa =
             _elf_file->seek(Ember::SeekMode::BEGIN, static_cast<int>(byte_count));
         bool good = fa.status == VFS::NodeIOStatus::OKAY;
-        if (!good)
-            WARN("Failed to seek {} bytes. Actual seeked: {}", byte_count, fa.byte_count);
+        if (!good) WARN("Failed to seek {} bytes. Actual seeked: {}", byte_count, fa.byte_count);
 
         return good && get_next_buffer();
     }
@@ -149,7 +148,7 @@ namespace Rune::App {
         }
         if (ObjectFileType(elf_64_header.type) != ObjectFileType::EXEC) {
             ERROR("Unsupported object FILE type: {}",
-                          ObjectFileType(elf_64_header.type).to_string());
+                  ObjectFileType(elf_64_header.type).to_string());
             return LoadStatus::BAD_HEADER;
         }
         if (elf_64_header.entry
@@ -160,8 +159,7 @@ namespace Rune::App {
 
         // Load the program headers
         if (!seek(elf_64_header.ph_offset)) {
-            ERROR("Failed to skip {:0=#16x} bytes to program headers.",
-                          elf_64_header.ph_offset);
+            ERROR("Failed to skip {:0=#16x} bytes to program headers.", elf_64_header.ph_offset);
             return LoadStatus::BAD_SEGMENT;
         }
 
@@ -231,15 +229,15 @@ namespace Rune::App {
                                   | Memory::PageFlag::USER_MODE_ACCESS;
 
             DEBUG("Map Segment {}: {:0=#16x}-{:0=#16x} ({} bytes)",
-                          i,
-                          v_start,
-                          v_end,
-                          (v_end - v_start) / Memory::get_page_size());
+                  i,
+                  v_start,
+                  v_end,
+                  (v_end - v_start) / Memory::get_page_size());
             if (!vmm->allocate(v_start, flags, num_pages)) {
                 ERROR("Segment {}: Failed to allocate {:0=#16x}-{:0=#16x}",
-                              i,
-                              v_start,
-                              v_start + (num_pages * Memory::get_page_size()));
+                      i,
+                      v_start,
+                      v_start + (num_pages * Memory::get_page_size()));
                 // The pages of the current program header are already freed
                 // -> Need to only free the pages of prior program headers
                 for (size_t j = 0; j < i; j++) {
@@ -253,9 +251,9 @@ namespace Rune::App {
 
                     if (!vmm->free(v_start_old, num_pages_old)) {
                         WARN("PH{}: Failed to free {:0=#16x}-{:0=#16x}",
-                                     j,
-                                     v_start_old,
-                                     v_start_old + (num_pages_old * Memory::get_page_size()));
+                             j,
+                             v_start_old,
+                             v_start_old + (num_pages_old * Memory::get_page_size()));
                     }
                 }
                 return false;
@@ -281,10 +279,10 @@ namespace Rune::App {
             auto*  ph_dest        = memory_addr_to_pointer<U8>(ph.virtual_address);
             size_t ph_dest_offset = 0;
             DEBUG("Load Segment {}: {:0=#16x}-{:0=#16x} ({} bytes)",
-                          i,
-                          ph.virtual_address,
-                          ph.virtual_address + ph.memory_size,
-                          ph.memory_size);
+                  i,
+                  ph.virtual_address,
+                  ph.virtual_address + ph.memory_size,
+                  ph.memory_size);
             while (to_copy > 0) {
                 Array<U8, BUF_SIZE> b{};
                 const size_t        mem_read = read_bytes(b.data(), BUF_SIZE);
@@ -345,8 +343,8 @@ namespace Rune::App {
                                | Memory::PageFlag::USER_MODE_ACCESS,
                            stack_and_bootstrap_area_size / Memory::get_page_size())) {
             ERROR("Stack and bootstrap area allocation failed: {:0=#16x}-{:0=#16x}",
-                          stack_and_bootstrap_area_begin,
-                          stack_and_bootstrap_area_begin + stack_and_bootstrap_area_size);
+                  stack_and_bootstrap_area_begin,
+                  stack_and_bootstrap_area_begin + stack_and_bootstrap_area_size);
             return nullptr;
         }
         const VirtualAddr bootstrap_area_begin = stack_and_bootstrap_area_begin + stack_size;
