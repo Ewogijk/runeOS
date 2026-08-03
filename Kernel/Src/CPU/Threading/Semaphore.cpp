@@ -16,11 +16,13 @@
 
 #include <CPU/Threading/Semaphore.h>
 
+#include <KRE/Logging.h>
 #include <KRE/Math.h>
+#include <KRE/Threading/CriticalSection.h>
 
-#include <CPU/Threading/Atomic.h>
-#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/MemoryBarrier.h>
+#include <CPU/Threading/Scheduler.h>
+#include <KRE/Threading/Atomic.h>
 
 namespace Rune::CPU {
     void Semaphore::trace_state(const String& action) {

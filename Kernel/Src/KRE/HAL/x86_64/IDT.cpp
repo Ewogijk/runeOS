@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-#include "IDT.h"
+#include <KRE/HAL/x86_64/IDT.h>
 
 #include <KRE/BitsAndBytes.h>
+#include <KRE/Collections/Array.h>
 #include <KRE/Memory.h>
 
-#include <KRE/Collections/Array.h>
-
-namespace Rune::CPU {
+namespace Rune {
     DEFINE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)
 
     Array<GateDescriptor, INTERRUPT_VECTOR_COUNT> GD; // NOLINT compiler error when declared const
@@ -65,4 +64,4 @@ namespace Rune::CPU {
         IDT.entry[vector].reserved_1     = 0;
     }
 
-} // namespace Rune::CPU
+} // namespace Rune

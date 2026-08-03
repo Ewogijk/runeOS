@@ -18,10 +18,9 @@
 
 #include "CPUID.h"
 
-#include "Interrupt/IDT.h"
-
 #include <KRE/BitsAndBytes.h>
 #include <KRE/Collections/Array.h>
+#include <KRE/HAL/x86_64/IDT.h>
 
 namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

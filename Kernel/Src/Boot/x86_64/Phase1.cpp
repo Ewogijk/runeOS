@@ -18,6 +18,7 @@
 
 #include "limine.h"
 
+#include <KRE/CPU.h>
 #include <KRE/Utility.h>
 
 #include <KRE/System/FrameBuffer.h>
@@ -25,7 +26,7 @@
 
 #include <Memory/Paging.h>
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 LIMINE_BASE_REVISION(1) // NOLINT
 
@@ -52,16 +53,16 @@ namespace Rune {
      */
     CLINK void boot_phase1() { // NOLINT
         if (!CPU::init_boot_core())
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         if (!LIMINE_BASE_REVISION_SUPPORTED)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         if (LIMINE_BOOTLOADER_INFO.response == nullptr)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         if (LIMINE_MEM_MAP.response == nullptr)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         // Create the physical memory map
         Array<MemoryRegion, MemoryMap::LIMIT> regions;
@@ -71,7 +72,7 @@ namespace Rune {
         // Convert limine memory map to memory regions
         for (size_t i = 0; i < LIMINE_MEM_MAP.response->entry_count; i++) {
             if (regions_end >= MemoryMap::LIMIT)
-                while (true) CPU::halt();
+                while (true) cpu_halt();
 
             auto*            l_mem_map_entry = LIMINE_MEM_MAP.response->entries[i];
             MemoryRegionType t               = MemoryRegionType::NONE;
@@ -116,7 +117,7 @@ namespace Rune {
                         // Current region is reserved, bootloader reclaimable or entry code
                         // Ensure reserved regions and the entry code region do not overlap
                         if (overlap > 0 && next.memory_type == MemoryRegionType::KERNEL_CODE)
-                            while (true) CPU::halt();
+                            while (true) cpu_halt();
 
                         if (overlap < next.size) {
                             // Give overlapping memory to reserved region
@@ -176,11 +177,11 @@ namespace Rune {
 
         // Create framebuffer
         if (LIMINE_FRAME_BUFFERS.response == nullptr)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         FrameBuffer frame_buffer;
         if (LIMINE_FRAME_BUFFERS.response->framebuffer_count == 0)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
 
         for (U64 i = 0; i < LIMINE_FRAME_BUFFERS.response->framebuffer_count; i++) {
             limine_framebuffer* fb               = LIMINE_FRAME_BUFFERS.response->framebuffers[i];
@@ -207,14 +208,14 @@ namespace Rune {
         // Get RSDP address
         PhysicalAddr rsdp_addr = 0x0;
         if (LIMINE_RSDP.response == nullptr)
-            while (true) CPU::halt();
+            while (true) cpu_halt();
         rsdp_addr = memory_pointer_to_addr(LIMINE_RSDP.response->address);
 
         if (LIMINE_RSDP.revision < 3) {
             // Need to convert virtual addr -> physical addr
 
             if (LIMINE_HHDM.response == nullptr)
-                while (true) CPU::halt();
+                while (true) cpu_halt();
             rsdp_addr -= LIMINE_HHDM.response->offset;
         }
 
@@ -224,7 +225,7 @@ namespace Rune {
             .physical_memory_map    = p_map,
             .framebuffer            = frame_buffer,
             .base_page_table_addr   = Memory::get_base_page_table_address(),
-            .stack                  = CPU::get_stack_pointer(),
+            .stack                  = cpu_get_stack_pointer(),
             .physical_address_width = CPU::get_physical_address_width(),
             .rsdp_addr              = rsdp_addr,
         });

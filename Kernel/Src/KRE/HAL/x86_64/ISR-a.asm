@@ -104,7 +104,7 @@ ISR%1:
 %endmacro
 
 
-%include "CPU/Interrupt/ISR_Stubs.inc"
+%include "ISR_Stubs.inc"
 
 
 isr_common:

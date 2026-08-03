@@ -18,17 +18,10 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/CPU.h>
 #include <KRE/System/Resource.h>
 
 namespace Rune::CPU {
-    struct StartInfo;
-
-    /// @brief Main function of a thread. It has the signature int(StartInfo*). The start
-    /// info contains argc/argv parameters as well as other information. The return value is the
-    /// thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
-    /// error.
-    using ThreadMain = int (*)(StartInfo*);
-
     /// @brief Handle type of timer.
     using TimerHandle = U16;
     /// @brief Handle type of thread.
@@ -80,64 +73,6 @@ namespace Rune::CPU {
         MemorySize  stack_size   = 0x0;     // Maximum stack size
     };
 
-    /**
-     * @brief The thread arguments, dynamic linker information and other useful information.
-     *
-     * A thread is either an application main thread or a minor thread. The type of thread
-     * determines how much information shall be passed in the start info.
-     *
-     * <p>
-     *  The information passed in the StartInfo is defined as followed:
-     *  <ul>
-     *   <li>Application Main Thread: All StartInfo information shall be provided.</li>
-     *   <li>Minor Thread: Argc, argv and main shall be provided, the state of the other fields is
-     * undefined.</li>
-     *  </ul>
-     * </p>
-     */
-    struct StartInfo {
-        /**
-         * @brief Number of arguments.
-         */
-        int argc;
-
-        /**
-         * @brief A null terminated array of string arguments.
-         */
-        char** argv;
-
-        /**
-         * @brief Low and high bytes of a random 16 byte value.
-         */
-        U64 random_low;
-        U64 random_high;
-
-        /**
-         * @brief Virtual address of an array where the ELF program headers are stored.
-         */
-        void* program_header_address;
-
-        /**
-         * @brief Size of a program header.
-         */
-        size_t program_header_size;
-
-        /**
-         * @brief Size of the program header array.
-         */
-        size_t program_header_count;
-
-        /**
-         * @brief Main function of the thread.
-         */
-        ThreadMain main;
-
-        /**
-         * @brief Address of a 16 byte random value.
-         */
-        void* random;
-    };
-
     /// @brief The thread struct contains technical and informational data about a thread object.
     ///
     /// Threads are a resource and therefore associated with a unique handle and a name for
@@ -174,7 +109,7 @@ namespace Rune::CPU {
         PhysicalAddr base_page_table_address = 0x0;
 
         /// @brief Thread arguments and more.
-        StartInfo* start_info{nullptr};
+        ThreadStartupPacket* start_info{nullptr};
 
         /// @brief The thread control block contains the thread local storage (TLS) and other data,
         ///         it is maintained by libc. We simply provide easy access to it through an arch

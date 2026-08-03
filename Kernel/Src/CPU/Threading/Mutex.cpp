@@ -16,8 +16,8 @@
 
 #include <CPU/Threading/Mutex.h>
 
-#include <CPU/Threading/Atomic.h>
-#include <CPU/Threading/CriticalSection.h>
+#include <KRE/Threading/Atomic.h>
+#include <KRE/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
     void Mutex::trace_state(const String& action) {

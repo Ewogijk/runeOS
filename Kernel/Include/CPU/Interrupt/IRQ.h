@@ -17,10 +17,9 @@
 #ifndef RUNEOS_IRQ_H
 #define RUNEOS_IRQ_H
 
-#include "Interrupt.h"
-
 #include <Ember/Enum.h>
 
+#include <CPU/Interrupt/InterruptHandler.h>
 #include <CPU/Interrupt/PIC.h>
 
 namespace Rune::CPU {

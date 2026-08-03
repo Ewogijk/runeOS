@@ -19,7 +19,7 @@
 
 #include <KRE/System/Module.h>
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 #include <SystemCall/KernelGuardian.h>
 #include <SystemCall/SystemCall.h>

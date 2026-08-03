@@ -20,7 +20,7 @@
 
 #include <Ember/Ember.h>
 
-namespace Rune::CPU {
+namespace Rune {
 
     /// @brief Atomically load the integer value with relaxed memory order.
     ///
@@ -97,7 +97,7 @@ namespace Rune::CPU {
     /// @brief Atomically read the value of the flag.
     /// @param flag
     /// @return Value of the flag.
-    CLINK auto atomic_flag_test(bool* flag) -> bool;
-} // namespace Rune::CPU
+    CLINK auto atomic_flag_test(const bool* flag) -> bool;
+} // namespace Rune
 
 #endif // RUNEOS_ATOMIC_H

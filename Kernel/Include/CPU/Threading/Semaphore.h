@@ -20,8 +20,8 @@
 
 #include <KRE/System/Resource.h>
 
-#include <CPU/CPU.h>
-#include <CPU/Threading/Spinlock.h>
+#include <KRE/Threading/Spinlock.h>
+#include <CPU/Core.h>
 
 namespace Rune::CPU {
 

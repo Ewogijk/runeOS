@@ -18,9 +18,9 @@
 #define RUNEOS_MUTEX_H
 
 #include <KRE/System/Resource.h>
+#include <KRE/Threading/Spinlock.h>
 
 #include <CPU/Threading/Scheduler.h>
-#include <CPU/Threading/Spinlock.h>
 
 namespace Rune::CPU {
     /// @brief A fair lock-free non-recursive mutex.

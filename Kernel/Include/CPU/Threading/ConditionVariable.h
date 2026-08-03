@@ -18,12 +18,12 @@
 #define RUNEOS_CONDITIONVARIABLE_H
 
 #include <KRE/Collections/LinkedList.h>
+#include <KRE/Threading/CriticalSection.h>
+#include <KRE/Threading/Spinlock.h>
 #include <KRE/Utility.h>
 
-#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
-#include <CPU/Threading/Spinlock.h>
 
 namespace Rune::CPU {
     /// @brief A condition variable is a synchronization primitive that blocks one or more threads

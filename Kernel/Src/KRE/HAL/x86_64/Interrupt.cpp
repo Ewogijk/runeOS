@@ -1,4 +1,3 @@
-
 //  Copyright 2025 Ewogijk
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_JOB_H
-#define RUNEOS_JOB_H
+#include <KRE/Interrupt.h>
 
-#include <KRE/System/Resource.h>
+#include "../../../../Include/KRE/HAL/x86_64/IDT.h"
+#include "ISR_Stubs.h"
 
-#include <CPU/Interrupt/InterruptHandler.h>
+namespace Rune {
+    constexpr U8 EXCEPTION_COUNT = 32;
 
-namespace Rune::CPU {
-    /// @brief Schedule a delayed interrupt handler to process an interrupt packet.
-    /// @param dih The delayed interrupt handler to schedule.
-    /// @param packet The interrupt packet to process.
-    auto job_schedule_delayed_interrupt_handler(DelayedInterruptHandler dih, InterruptPacket packet)
-        -> void;
-} // namespace Rune::CPU
-
-#endif // RUNEOS_JOB_H
+    void interrupt_load_vector_table() {
+        idt_load();
+        init_interrupt_service_routines();
+        // Enable CPU exceptions
+        for (U8 i = 0; i < EXCEPTION_COUNT; i++) idt_get()->entry[i].flags.p = true;
+    }
+} // namespace Rune

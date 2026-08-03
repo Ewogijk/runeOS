@@ -14,25 +14,25 @@
 ; limitations under the License.
 ;
 
-; CLINK Register get_stack_pointer();
+; CLINK Register cpu_get_stack_pointer();
 ; Args:
 ;   -
 ; Returns:
 ;   Current value of the stack pointer.
-global get_stack_pointer
-get_stack_pointer:
+global cpu_get_stack_pointer
+cpu_get_stack_pointer:
     mov rax, rsp
     add rax, 8      ; Account for the return address being popped on ret
     ret
 
 
-; CLINK void halt();
+; CLINK void cpu_halt();
 ; Args:
 ;   -
 ; Returns:
 ;   -
-global halt:
-halt:
+global cpu_halt:
+cpu_halt:
     hlt
 
 ; CLINK void pause();
@@ -40,8 +40,8 @@ halt:
 ;   -
 ; Returns:
 ;   -
-global pause
-pause:
+global cpu_pause
+cpu_pause:
     pause
 
 
@@ -53,7 +53,7 @@ pause:
 ;   rcx -> -
 ; Returns:
 ;   The content of the cr2 register.
-global get_page_fault_address
-get_page_fault_address:
+global cpu_get_page_fault_address
+cpu_get_page_fault_address:
     mov rax, cr2
     ret

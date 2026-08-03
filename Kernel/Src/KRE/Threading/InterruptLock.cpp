@@ -1,4 +1,3 @@
-
 //  Copyright 2025 Ewogijk
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +12,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RUNEOS_JOB_H
-#define RUNEOS_JOB_H
+#include <KRE/Threading/InterruptLock.h>
 
-#include <KRE/System/Resource.h>
-
-#include <CPU/Interrupt/InterruptHandler.h>
+#include <KRE/Interrupt.h>
 
 namespace Rune::CPU {
-    /// @brief Schedule a delayed interrupt handler to process an interrupt packet.
-    /// @param dih The delayed interrupt handler to schedule.
-    /// @param packet The interrupt packet to process.
-    auto job_schedule_delayed_interrupt_handler(DelayedInterruptHandler dih, InterruptPacket packet)
-        -> void;
-} // namespace Rune::CPU
+    // NOLINTBEGIN readability-convert-member-functions-to-static is intended
+    void InterruptLock::lock() { interrupt_irq_disable(); }
 
-#endif // RUNEOS_JOB_H
+    void InterruptLock::unlock() { interrupt_irq_enable(); }
+    // NOLINTEND
+
+    void InterruptSaveLock::lock() { _flags = interrupt_irq_save(); }
+
+    void InterruptSaveLock::unlock() const { interrupt_irq_restore(_flags); }
+
+} // namespace Rune::CPU

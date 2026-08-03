@@ -17,7 +17,7 @@
 #ifndef RUNEOS_DELTAQUEUE_H
 #define RUNEOS_DELTAQUEUE_H
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 namespace Rune::CPU {
 

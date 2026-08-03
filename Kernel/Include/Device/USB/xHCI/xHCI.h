@@ -16,7 +16,7 @@
 #ifndef RUNEOS_XHCI_H
 #define RUNEOS_XHCI_H
 
-#include <CPU/Interrupt/Interrupt.h>
+#include <CPU/Interrupt/InterruptHandler.h>
 
 #include <Device/Device.h>
 #include <Device/PCI/Types.h>

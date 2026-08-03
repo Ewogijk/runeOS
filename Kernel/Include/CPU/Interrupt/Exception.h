@@ -17,14 +17,12 @@
 #ifndef RUNEOS_EXCEPTION_H
 #define RUNEOS_EXCEPTION_H
 
-#include "Interrupt.h"
-
 #include <Ember/Enum.h>
-#include <KRE/Utility.h>
 
 #include <KRE/Stream.h>
+#include <KRE/Utility.h>
 
-#include <CPU/CPU.h>
+#include <CPU/Interrupt/InterruptHandler.h>
 
 namespace Rune::CPU {
     /**

@@ -1,0 +1,48 @@
+
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef RUNEOS_INTERRUPT_H
+#define RUNEOS_INTERRUPT_H
+
+#include <Ember/Ember.h>
+
+#include <KRE/CPU.h>
+
+namespace Rune {
+    /**
+     * @brief Load and initialize the interrupt vector table (IVT) and any additional infrastructure
+     * required for the IVT to work. All interrupts will be initially disabled.
+     *
+     * A generic interrupt dispatcher will be used that notifies more specific interrupt handlers
+     * about their interrupt of interest.
+     */
+    void interrupt_load_vector_table();
+
+    /// @brief Enable all external interrupts.
+    CLINK void interrupt_irq_enable();
+
+    /// @brief Disable all external interrupts.
+    CLINK void interrupt_irq_disable();
+
+    /// @brief Save the content of the Flags register and then disable external interrupts.
+    /// @return Flags register content before disabling interrupts.
+    CLINK auto interrupt_irq_save() -> Register;
+
+    /// @brief Restore the given flags value to the Flags register.
+    /// @param flags Flags register content saved previously.
+    CLINK void interrupt_irq_restore(Register flags);
+} // namespace Rune
+
+#endif // RUNEOS_INTERRUPT_H

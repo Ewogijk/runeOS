@@ -20,6 +20,7 @@
 
 #include <Ember/Enum.h>
 
+#include <KRE/CPU.h>
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 
@@ -27,8 +28,6 @@
 
 #include <KRE/System/Module.h>
 #include <KRE/System/Plugin.h>
-
-#include <CPU/CPU.h>
 
 namespace Rune {
 
@@ -150,9 +149,9 @@ namespace Rune {
         /// Note: This function will be scheduled in a new thread at then end of boot phase 2 and
         /// will be disabled at the end of boot phase 3.
         ///
-        /// @param start_info Thread start info.
+        /// @param startup_packet
         /// @return Undefined. The function runs until system shutdown.
-        friend auto boot_phase3(CPU::StartInfo* start_info) -> int;
+        friend auto boot_phase3(ThreadStartupPacket* startup_packet) -> int;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  General Functions
@@ -197,7 +196,7 @@ namespace Rune {
             _panic_stream->set_foreground_color(Pixie::VSCODE_WHITE);
             _panic_stream->write_formatted("Kernel panic: {}",
                                            String::format(panic_msg_fmt, arg_array, arg_size));
-            while (true) CPU::halt();
+            while (true) cpu_halt();
         }
 
         /// @brief

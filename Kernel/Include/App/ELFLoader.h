@@ -22,8 +22,8 @@
 
 #include <Memory/MemoryModule.h>
 
-#include <CPU/CPU.h>
-#include <CPU/Interrupt/InterruptLock.h>
+#include <KRE/Threading/InterruptLock.h>
+#include <CPU/Core.h>
 
 #include <VirtualFileSystem/VFSModule.h>
 
@@ -73,7 +73,7 @@ namespace Rune::App {
 
         auto setup_bootstrap_area(const ELF64File& elf_file,
                                   char*            args[], // NOLINT argv is part of the kernel ABI
-                                  size_t           stack_size) -> CPU::StartInfo*;
+                                  size_t           stack_size) -> ThreadStartupPacket*;
 
       public:
         ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys);

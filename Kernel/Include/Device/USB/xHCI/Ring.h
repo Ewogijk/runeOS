@@ -22,7 +22,7 @@
 
 #include <Memory/Paging.h>
 
-#include <CPU/CPU.h>
+#include <KRE/CPU.h>
 
 #include <Device/USB/xHCI/TRB.h>
 
@@ -163,7 +163,7 @@ namespace Rune::Device::USB {
             auto trb = m_segments[0][m_dequeue_ptr];
             while (true) {
                 if (trb.m_control.cycle() == m_ccs) break;
-                CPU::pause();
+                cpu_pause();
                 trb = m_segments[0][m_dequeue_ptr];
             }
             advance_dequeue_ptr();

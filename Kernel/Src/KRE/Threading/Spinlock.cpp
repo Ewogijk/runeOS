@@ -14,16 +14,19 @@
  *  limitations under the License.
  */
 
-#include "CPU/Interrupt/Interrupt.h"
-
-#include <CPU/Threading/Spinlock.h>
+#include <KRE/Threading/Spinlock.h>
 
 #include <KRE/Logging.h>
 
-#include <CPU/CPU.h>
-#include <CPU/Threading/Atomic.h>
+#include <KRE/Threading/Atomic.h>
 
-namespace Rune::CPU {
+#include <KRE/Interrupt.h>
+
+namespace Rune {
+
+    // ========================================================================================== //
+    // Spinlock
+    // ========================================================================================== //
 
     Spinlock::Spinlock() = default;
 
@@ -35,9 +38,9 @@ namespace Rune::CPU {
             // The spinlock is already claimed -> Wait until it is free
             //  1. Only read the _lock to prevent cache line bouncing introduced by
             //      read-modify-write instructions
-            //  2. Use CPU::pause() which runs an architecture-specific wait instruction optimized
+            //  2. Use cpu_pause() which runs an architecture-specific wait instruction optimized
             //      for efficient waiting
-            while (atomic_flag_test(&_lock)) CPU::pause();
+            while (atomic_flag_test(&_lock)) cpu_pause();
             // The spinlock has been unlocked -> Try to claim it again
         }
     }
@@ -55,4 +58,28 @@ namespace Rune::CPU {
         interrupt_irq_restore(restore_flags);
     }
 
-} // namespace Rune::CPU
+    // ========================================================================================== //
+    // IRQSafeSpinlock
+    // ========================================================================================== //
+
+    SpinlockIRQSafe::SpinlockIRQSafe() = default;
+
+    void SpinlockIRQSafe::lock() {
+        Register flags = interrupt_irq_save();
+        while (true) {
+            if (!atomic_flag_test_and_set(&m_lock)) {
+                m_flags = flags;
+                return;
+            }
+            while (atomic_flag_test(&m_lock)) cpu_pause();
+        }
+    }
+
+    void SpinlockIRQSafe::unlock() {
+        contract_assert(atomic_flag_test(&m_lock));
+        auto flags = m_flags;
+        atomic_flag_clear(&m_lock);
+        interrupt_irq_restore(flags);
+    }
+
+} // namespace Rune

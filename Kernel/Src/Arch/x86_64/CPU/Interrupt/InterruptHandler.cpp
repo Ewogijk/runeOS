@@ -15,14 +15,14 @@
  */
 
 #include "../X64Core.h"
-#include "IDT.h"
-#include "ISR_Stubs.h"
 
 #include <KRE/Collections/Array.h>
+#include <KRE/HAL/x86_64/IDT.h>
+#include <KRE/Interrupt.h>
 
 #include <CPU/Interrupt/Exception.h>
 #include <CPU/Interrupt/IRQ.h>
-#include <CPU/Interrupt/Interrupt.h>
+#include <CPU/Interrupt/InterruptHandler.h>
 
 namespace Rune::CPU {
     constexpr U8 EXCEPTION_COUNT = 32;
@@ -198,7 +198,7 @@ namespace Rune::CPU {
     }
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Interrupt API
+    //                                          Exception API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     auto exception_get_table() -> LinkedList<ExceptionTableEntry> {
@@ -212,17 +212,6 @@ namespace Rune::CPU {
         // NOLINTEND
         return table;
     }
-
-    void interrupt_load_vector_table() {
-        idt_load();
-        init_interrupt_service_routines();
-        // Enable CPU exceptions
-        for (U8 i = 0; i < EXCEPTION_COUNT; i++) idt_get()->entry[i].flags.p = true;
-    }
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Exception API
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
     void exception_install_panic_stream(SharedPointer<TextStream> panic_stream) {
         PANIC_STREAM = move(panic_stream);
