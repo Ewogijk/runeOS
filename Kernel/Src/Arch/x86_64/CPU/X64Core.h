@@ -17,7 +17,7 @@
 #ifndef RUNEOS_X64CORE_H
 #define RUNEOS_X64CORE_H
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 #include "GDT.h"
 

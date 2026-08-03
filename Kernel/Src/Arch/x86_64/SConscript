@@ -17,17 +17,11 @@ from SCons.Environment import *
 Import("build_env")
 build_env: Environment
 sources = [
-    build_env.File("CPU/Interrupt/IDT.cpp"),
-    build_env.File("CPU/Interrupt/IDT-a.asm"),
-    build_env.File("CPU/Interrupt/Interrupt.cpp"),
-    build_env.File("CPU/Interrupt/Interrupt-a.asm"),
-    build_env.File("CPU/Interrupt/ISR-a.asm"),
-    build_env.File("CPU/Threading/Atomic-a.asm"),
+    build_env.File("CPU/Interrupt/InterruptHandler.cpp"),
     build_env.File("CPU/Threading/MemoryBarrier-a.asm"),
     build_env.File("CPU/Threading/MemoryBarrier.cpp"),
     build_env.File("CPU/Threading/Stack.cpp"),
-    build_env.File("CPU/CPU.cpp"),
-    build_env.File("CPU/CPU-a.asm"),
+    build_env.File("CPU/Core.cpp"),
     build_env.File("CPU/CPUID.cpp"),
     build_env.File("CPU/CPUID-a.asm"),
     build_env.File("CPU/GDT.cpp"),
@@ -43,8 +37,3 @@ sources = [
 ]
 Arch = build_env.StaticLibrary("Arch.o", build_env.Object(sources))
 Export("Arch")
-
-crti = build_env.Object(build_env.File("crti.asm"))
-crtn = build_env.Object(build_env.File("crtn.asm"))
-Export("crti")
-Export("crtn")

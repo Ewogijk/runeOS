@@ -28,8 +28,8 @@
 #include <BuiltInPlugin/PS2KeyboardDriverPlugin.h>
 #include <BuiltInPlugin/USBPlugin.h>
 
-#include <CPU/CPU.h>
 #include <CPU/CPUModule.h>
+#include <CPU/Core.h>
 #include <CPU/E9Stream.h>
 #include <CPU/Interrupt/Exception.h>
 
@@ -130,7 +130,7 @@ namespace Rune {
         return instance;
     }
 
-    auto boot_phase3(CPU::StartInfo* start_info) -> int {
+    auto boot_phase3(ThreadStartupPacket* start_info) -> int {
         SILENCE_UNUSED(start_info);
 
         auto& system = System::instance();
@@ -200,7 +200,7 @@ namespace Rune {
         // will not be called again when global constructors are called
         static Memory::MemoryModule mem_module;
         if (!mem_module.load(boot_info))
-            while (true) CPU::halt();
+            while (true) cpu_halt();
         _module_registry[0] = &mem_module;
 
         call_global_constructors();
@@ -208,6 +208,24 @@ namespace Rune {
         INFO("runeKernel v{}", KERNEL_VERSION.to_string());
         INFO("Loaded by {} - v{}", _boot_info.boot_loader_name, _boot_info.boot_loader_version);
         INFO("Load module: {:<40} OKAY", (mem_module.get_name() + " ..."));
+
+        DEBUG("Phyical memory map")
+        for (const auto& mem_reg : mem_module.get_physical_memory_map()) {
+            DEBUG("{:>16}: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
+                  mem_reg.memory_type.to_string(),
+                  mem_reg.start,
+                  mem_reg.end(),
+                  mem_reg.size);
+        }
+        DEBUG("")
+        DEBUG("Virtual memory map")
+        for (const auto& mem_reg : mem_module.get_virtual_memory_map()) {
+            DEBUG("{:>16}: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
+                  mem_reg.memory_type.to_string(),
+                  mem_reg.start,
+                  mem_reg.end(),
+                  mem_reg.size);
+        }
 
         CPUModuleLoader().load();
         _panic_stream = SharedPointer<TextStream>(new CPU::E9Stream);
@@ -217,9 +235,9 @@ namespace Rune {
                                &on_std_terminate,
                                &on_handle_contract_violation);
 
-        auto*          cpu_module    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        char*          dummy_args[1] = {nullptr}; // NOLINT
-        CPU::StartInfo start_info{};
+        auto*               cpu_module    = get_module<CPU::CPUModule>(ModuleSelector::CPU);
+        char*               dummy_args[1] = {nullptr}; // NOLINT
+        ThreadStartupPacket start_info{};
         start_info.argc = 0;
         start_info.argv = dummy_args;
         start_info.main = &boot_phase3;
@@ -257,7 +275,7 @@ namespace Rune {
         U8           PS2_STATUS        = 0x02; // Initially assume input buffer full
         while (bit_check(PS2_STATUS, 1)) PS2_STATUS = CPU::in_b(PS2_COMMAND_PORT);
         CPU::out_b(PS2_COMMAND_PORT, PS2_RESET_COMMAND);
-        CPU::halt();
+        cpu_halt();
 
         INFO("Fallback to reset control register...");
         constexpr U16 RESET_CONTROL_REGISTER = 0xCF9;
@@ -285,7 +303,7 @@ namespace Rune {
         String plugin_info = plugin->get_info().to_string() + " ...";
         if (!plugin->load()) {
             FATAL("Load plugin: {:<40} FAILED", plugin_info);
-            while (true) CPU::halt();
+            while (true) cpu_halt();
         }
         INFO("Load plugin: {:<40} OKAY", plugin_info);
     }
@@ -301,7 +319,7 @@ namespace Rune {
         String module_name = module->get_name() + " ...";
         if (!module->load(system._boot_info)) {
             FATAL("Load module: {:<40} FAILED", module_name);
-            while (true) CPU::halt();
+            while (true) cpu_halt();
         }
         INFO("Load module: {:<40} OKAY", module_name);
 

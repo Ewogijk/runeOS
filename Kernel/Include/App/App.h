@@ -25,7 +25,7 @@
 
 #include <KRE/Collections/LinkedList.h>
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 #include <VirtualFileSystem/Path.h>
 #include <VirtualFileSystem/VFSModule.h>

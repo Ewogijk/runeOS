@@ -18,7 +18,7 @@
 #ifndef RUNEOS_INTERRUPTLOCK_H
 #define RUNEOS_INTERRUPTLOCK_H
 
-#include <CPU/CPU.h>
+#include <KRE/CPU.h>
 
 namespace Rune::CPU {
     /// @brief A lock that enables/disables external interrupts intended to be used with a

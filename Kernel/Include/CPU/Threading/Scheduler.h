@@ -23,7 +23,7 @@
 #include <KRE/Logging.h>
 #include <KRE/Memory.h>
 
-#include <CPU/Interrupt/InterruptLock.h>
+#include <KRE/Threading/InterruptLock.h>
 #include <CPU/Threading/MultiLevelQueue.h>
 
 namespace Rune::CPU {

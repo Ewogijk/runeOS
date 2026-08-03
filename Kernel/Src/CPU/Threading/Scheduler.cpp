@@ -18,8 +18,8 @@
 
 #include <KRE/Logging.h>
 
-#include <CPU/CPU.h>
-#include <CPU/Interrupt/Interrupt.h>
+#include <CPU/Core.h>
+#include <CPU/Interrupt/InterruptHandler.h>
 #include <CPU/Threading/Stack.h>
 
 namespace Rune::CPU {

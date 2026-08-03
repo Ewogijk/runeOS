@@ -21,8 +21,8 @@
 #include <Memory/MemoryModule.h>
 #include <Memory/Paging.h>
 
-#include <CPU/CPU.h>
 #include <CPU/CPUModule.h>
+#include <CPU/Core.h>
 #include <CPU/Interrupt/IRQ.h>
 #include <CPU/Job.h>
 
@@ -93,7 +93,7 @@ namespace Rune::Device::USB {
         auto* xhci_driver =
             reinterpret_cast<XHCIDriver*>(integer_from_bytes<VirtualAddr>(packet.m_data.data()));
         auto* event_trb = reinterpret_cast<EventTRB*>(packet.m_data.data() + sizeof(MemoryAddr));
-        CPU::CriticalSection _(xhci_driver->m_inflight_table_lock);
+        CriticalSection _(xhci_driver->m_inflight_table_lock);
         if (event_trb->m_control.trb_type() == TRBType::CMD_COMPLETION) {
             auto*        ce = reinterpret_cast<CommandCompletionEventTRB*>(event_trb);
             PhysicalAddr inflight_trb_address =
@@ -434,7 +434,7 @@ namespace Rune::Device::USB {
         if (has_data) ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
         PhysicalAddr trb_phys = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
 
-        CPU::CriticalSection _(m_inflight_table_lock);
+        CriticalSection _(m_inflight_table_lock);
         auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
         auto  future  = promise.get_future();
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
@@ -472,8 +472,8 @@ namespace Rune::Device::USB {
         trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
         trb.m_data_buffer_pointer_hi = static_cast<U32>(data_buffer_phys >> SHIFT_32);
 
-        PhysicalAddr         trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
-        CPU::CriticalSection _(m_inflight_table_lock);
+        PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
+        CriticalSection _(m_inflight_table_lock);
         auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
         auto  future  = promise.get_future();
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
@@ -516,8 +516,8 @@ namespace Rune::Device::USB {
         trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
         trb.m_data_buffer_pointer_hi = static_cast<U32>(data_buffer_phys >> SHIFT_32);
 
-        PhysicalAddr         trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
-        CPU::CriticalSection _(m_inflight_table_lock);
+        PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
+        CriticalSection _(m_inflight_table_lock);
         auto& promise = (m_inflight_trb_table[trb_phys] = CPU::Promise<IORequestStatus>());
         auto  future  = promise.get_future();
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
@@ -572,10 +572,10 @@ namespace Rune::Device::USB {
 
     auto XHCIDriver::perform_chip_hardware_reset() const -> void {
         DEBUG("Performing chip hardware reset");
-        while (m_ri.m_operational->m_usbsts.CNR()) CPU::pause();
+        while (m_ri.m_operational->m_usbsts.CNR()) cpu_pause();
         m_ri.m_operational->m_usbcmd.set_HCRST(true);
-        while (m_ri.m_operational->m_usbcmd.HCRST()) CPU::pause();
-        while (m_ri.m_operational->m_usbsts.CNR()) CPU::pause();
+        while (m_ri.m_operational->m_usbcmd.HCRST()) cpu_pause();
+        while (m_ri.m_operational->m_usbsts.CNR()) cpu_pause();
     }
 
     auto XHCIDriver::allocate_device_context_base_address_array() -> bool {
@@ -836,9 +836,9 @@ namespace Rune::Device::USB {
         PhysicalAddr                           trb_phys = m_command_ring->enqueue(*trb);
         CPU::Future<CommandCompletionEventTRB> future =
             [&]() -> CPU::Future<CommandCompletionEventTRB> {
-            CPU::CriticalSection _(m_inflight_table_lock);
-            auto&                p = (m_inflight_command_trb_table[trb_phys] =
-                                          CPU::Promise<CommandCompletionEventTRB>());
+            CriticalSection _(m_inflight_table_lock);
+            auto&           p = (m_inflight_command_trb_table[trb_phys] =
+                                     CPU::Promise<CommandCompletionEventTRB>());
             return p.get_future();
         }();
         m_ri.ring_command_doorbell();
@@ -1422,7 +1422,7 @@ namespace Rune::Device::USB {
             // USB 2 needs explicit port reset
             // (USB3 does advance the state machine automatically)
             prs.m_portsc.set_PR(true);
-            while (!prs.m_portsc.PRC()) CPU::pause();
+            while (!prs.m_portsc.PRC()) cpu_pause();
             prs.m_portsc.clear_PRC();
         }
 

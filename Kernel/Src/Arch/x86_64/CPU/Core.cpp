@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 #include "CPUID.h"
 #include "X64Core.h"

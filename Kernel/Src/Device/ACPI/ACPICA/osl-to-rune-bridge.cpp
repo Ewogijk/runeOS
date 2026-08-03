@@ -17,6 +17,7 @@
 #include <Ember/Ember.h>
 
 #include <KRE/BitsAndBytes.h>
+#include <KRE/CPU.h>
 #include <KRE/Collections/LinkedList.h>
 #include <KRE/Logging.h>
 #include <KRE/Math.h>
@@ -51,10 +52,10 @@ CLINK {
 
     /// @brief Stores the callback function, function context and thread start info.
     struct ACPIThreadContext {
-        String         m_func_addr;
-        String         m_ctx_addr;
-        char*          m_argv[3]{};
-        CPU::StartInfo m_start_info{};
+        String              m_func_addr;
+        String              m_ctx_addr;
+        char*               m_argv[3]{};
+        ThreadStartupPacket m_start_info{};
     };
 
     /// @brief Stores ACPICA and runeOS interrupt handler information.
@@ -114,7 +115,7 @@ CLINK {
         LinkedList<ACPIInterruptHandlerContext> m_interrupt_handlers;
         U16                                     m_interrupt_handler_counter = 0;
 
-        LinkedList<UniquePointer<CPU::Spinlock>> m_spinlocks;
+        LinkedList<UniquePointer<Spinlock>> m_spinlocks;
     };
     OSLConfig g_osl_config;
 
@@ -471,7 +472,7 @@ CLINK {
         t_ctx.m_argv[2]         = nullptr;
         t_ctx.m_start_info.argc = 2;
         t_ctx.m_start_info.argv = t_ctx.m_argv;
-        t_ctx.m_start_info.main = [](CPU::StartInfo* start_info) -> int {
+        t_ctx.m_start_info.main = [](ThreadStartupPacket* start_info) -> int {
             // Parse the hex string addresses of func and ctx and cast to their respective types
             uintptr_t ptr = 0;
             if (!parse_int<uintptr_t>(start_info->argv[0], RADIX_HEX, ptr)) return -1;
@@ -666,7 +667,7 @@ CLINK {
     auto acpi_to_rune_spinlock_create(ACPI_SPINLOCK * out_handle) -> ACPI_STATUS {
         if (out_handle == nullptr) return AE_BAD_PARAMETER;
 
-        auto sp = make_unique<CPU::Spinlock>();
+        auto sp = make_unique<Spinlock>();
         if (!sp) return AE_NO_MEMORY;
         *out_handle = sp.get();
         g_osl_config.m_spinlocks.add_back(move(sp));
@@ -675,7 +676,7 @@ CLINK {
 
     void acpi_to_rune_spinlock_delete(ACPI_SPINLOCK lock) {
         for (auto& spinlock : g_osl_config.m_spinlocks) {
-            if (spinlock.get() == reinterpret_cast<CPU::Spinlock*>(lock)) {
+            if (spinlock.get() == reinterpret_cast<Spinlock*>(lock)) {
                 g_osl_config.m_spinlocks.remove(spinlock);
                 return;
             }
@@ -683,11 +684,11 @@ CLINK {
     }
 
     auto acpi_to_rune_spinlock_acquire(ACPI_SPINLOCK lock) -> ACPI_CPU_FLAGS {
-        return reinterpret_cast<CPU::Spinlock*>(lock)->lock_safe();
+        return reinterpret_cast<Spinlock*>(lock)->lock_safe();
     }
 
     void acpi_to_rune_spinlock_release(ACPI_SPINLOCK lock, ACPI_CPU_FLAGS flags) {
-        reinterpret_cast<CPU::Spinlock*>(lock)->unlock_safe(flags);
+        reinterpret_cast<Spinlock*>(lock)->unlock_safe(flags);
     }
 
     // ========================================================================================== //
@@ -1087,7 +1088,7 @@ CLINK {
             }
         }
         auto fstr = String::format(r_fstr, static_cast<const Argument*>(f_args), arg_count);
-        INFO(fstr.to_cstr());
+        TRACE(fstr.to_cstr());
     }
     // NOLINTEND
 

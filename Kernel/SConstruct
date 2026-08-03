@@ -247,7 +247,7 @@ def configure_compiler(env: Environment) -> None:
     SourceFileScanner.add_scanner('.asm', nasm_scanner)
 
     # Include directories
-    nasm_include_dir = str(Path.cwd() / "Src" / "Arch" / build_env["arch"])
+    nasm_include_dir = str(Path.cwd() / "Src" / "KRE" / "HAL" / build_env["arch"])
     build_env.Append(NASMPATH=[nasm_include_dir])
     # Flags
     env["ASFLAGS"] = [
@@ -284,12 +284,12 @@ def define_codegen_targets(env: Environment):
 
     arch = env["arch"]
     isr_stubs_inc = env.Command(
-        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.inc",
+        f"Src/KRE/HAL/{arch}/ISR_Stubs.inc",
         "Tools/GenerateISRStubsAssembly.py",
         f"{sys.executable} $SOURCE $TARGET",
     )
     isr_stubs_h = env.Command(
-        f"Src/Arch/{arch}/CPU/Interrupt/ISR_Stubs.h",
+        f"Src/KRE/HAL/{arch}/ISR_Stubs.h",
         "Tools/GenerateISRStubsCPP.py",
         f"{sys.executable} $SOURCE $TARGET",
     )

@@ -1,21 +1,20 @@
-/*
- *  Copyright 2025 Ewogijk
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 
-#ifndef RUNEOS_CPU_H
-#define RUNEOS_CPU_H
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+#ifndef RUNEOS_CORE_H
+#define RUNEOS_CORE_H
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
@@ -23,18 +22,12 @@
 #include <KRE/Memory.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
+#include <KRE/CPU.h>
 #include <KRE/System/Resource.h>
 
 #include <CPU/Threading/Thread.h>
 
 namespace Rune::CPU {
-    // Size of a register
-#ifdef BIT64
-    using Register = U64;
-#else
-    using Register = U32;
-#endif
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Core API
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -201,33 +194,6 @@ namespace Rune::CPU {
      * @return The size of a physical address in bits.
      */
     auto get_physical_address_width() -> U8;
+}
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          Assembly Stuff
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    /**
-     * @return The current value of the stack pointer.
-     */
-    CLINK auto get_stack_pointer() -> Register;
-
-    /// @brief Pause the CPU in an optimized way in terms of performance/power usage. This function
-    ///         is intended to be used when waiting in a loop, e.g. in a spinlock.
-    CLINK void pause();
-
-    /**
-     * halt the CPU until an interrupt occurs.
-     */
-    CLINK void halt();
-
-    /**
-     * @brief Get the virtual address that was responsible for a page fault.
-     *
-     * Important: The returned virtual address is only valid during handling of a page fault
-     * otherwise the virtual address is undefined.
-     */
-    CLINK auto get_page_fault_address() -> Register;
-
-} // namespace Rune::CPU
-
-#endif // RUNEOS_CPU_H
+#endif // RUNEOS_CORE_H

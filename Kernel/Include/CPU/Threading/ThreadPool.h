@@ -32,7 +32,7 @@ namespace Rune::CPU {
     using Task = Function<void()>;
 
     struct WorkerThread {
-        StartInfo    m_start_info;
+        ThreadStartupPacket    m_start_info;
         ThreadHandle m_handle;
 
         friend auto operator==(const WorkerThread& a, const WorkerThread& b) -> bool {
@@ -64,7 +64,7 @@ namespace Rune::CPU {
         /// @brief Thread pool name for debugging purposes.
         String m_name;
 
-        static auto exec_worker_thread(StartInfo* start_info) -> int {
+        static auto exec_worker_thread(ThreadStartupPacket* start_info) -> int {
             if (start_info->argc == 0) return -1;
             VirtualAddr tp_addr = 0;
             if (!parse_int(start_info->argv[0], Radix::HEX, tp_addr)) return -1;

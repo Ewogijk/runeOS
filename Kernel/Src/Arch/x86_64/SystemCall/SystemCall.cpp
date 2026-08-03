@@ -77,7 +77,7 @@ namespace Rune::SystemCall {
         //          to CPL=0
         // sysret:  CS = STAR[63:48] + 16, SS = STAR[63:48] + 8, RPL bits 48:49 are 11 as sysret
         //          goes to CPL=3
-        constexpr CPU::Register STAR = 0x0013000800000000;
+        constexpr Register STAR = 0x0013000800000000;
         CPU::write_msr(CPU::ModelSpecificRegister::STAR, STAR);
 
         // Contains the address of the system call handler
@@ -90,11 +90,11 @@ namespace Rune::SystemCall {
         // If a bit here is set to zero, the rflags bit is set
         // This mask will clear all rflags bits except bit 1 which is reserved and always 1
         // Importantly it deactivates interrupts during a syscall!
-        constexpr CPU::Register FMASK_NO_INTERRUPTS = 0xFFFFFFFFFFFFFFFD;
+        constexpr Register FMASK_NO_INTERRUPTS = 0xFFFFFFFFFFFFFFFD;
         CPU::write_msr(CPU::ModelSpecificRegister::FMASK, FMASK_NO_INTERRUPTS);
 
         // Enable the syscall and sysret instructions
-        CPU::Register efer = CPU::read_msr(CPU::ModelSpecificRegister::EFER);
+        Register efer = CPU::read_msr(CPU::ModelSpecificRegister::EFER);
         CPU::write_msr(CPU::ModelSpecificRegister::EFER, bit_set(efer, 0));
         return true;
     }

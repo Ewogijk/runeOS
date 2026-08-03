@@ -18,7 +18,8 @@
 
 #include <Memory/Paging.h>
 
-#include <CPU/Threading/CriticalSection.h>
+#include <KRE/Interrupt.h>
+#include <KRE/Threading/CriticalSection.h>
 
 namespace Rune::CPU {
     // NOLINTBEGIN
@@ -50,17 +51,17 @@ namespace Rune::CPU {
         }
     }
 
-    auto idle_thread(StartInfo* start_info) -> int {
+    auto idle_thread(ThreadStartupPacket* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_irq_enable();
-            halt();
+            cpu_halt();
             interrupt_irq_disable();
         }
         return 0;
     }
 
-    auto thread_garbage_collector(StartInfo* start_info) -> int {
+    auto thread_garbage_collector(ThreadStartupPacket* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_irq_disable();
@@ -96,15 +97,15 @@ namespace Rune::CPU {
 
     DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
-    char*     CPUModule::DUMMY_ARGS[]; // NOLINT Array disallowed! Is part of Kernel ABI
-    StartInfo CPUModule::GCT_START_INFO;
-    StartInfo CPUModule::IDLE_THREAD_START_INFO;
+    char*               CPUModule::DUMMY_ARGS[]; // NOLINT Array disallowed! Is part of Kernel ABI
+    ThreadStartupPacket CPUModule::GCT_START_INFO;
+    ThreadStartupPacket CPUModule::IDLE_THREAD_START_INFO;
 
-    auto create_thread(const String&    thread_name,
-                       StartInfo*       start_info,
-                       PhysicalAddr     base_pt_addr,
-                       SchedulingPolicy policy,
-                       Stack            user_stack) -> SharedPointer<Thread> {
+    auto create_thread(const String&        thread_name,
+                       ThreadStartupPacket* start_info,
+                       PhysicalAddr         base_pt_addr,
+                       SchedulingPolicy     policy,
+                       Stack                user_stack) -> SharedPointer<Thread> {
         SharedPointer<Thread> new_thread    = g_thread_cache.allocate(thread_name);
         new_thread->start_info              = start_info;
         new_thread->base_page_table_address = base_pt_addr;
@@ -282,11 +283,11 @@ namespace Rune::CPU {
     }
     // NOLINTEND
 
-    auto CPUModule::schedule_new_thread(const String&    thread_name,
-                                        StartInfo*       start_info,
-                                        PhysicalAddr     base_pt_addr,
-                                        SchedulingPolicy policy,
-                                        Stack            user_stack) -> ThreadHandle {
+    auto CPUModule::schedule_new_thread(const String&        thread_name,
+                                        ThreadStartupPacket* start_info,
+                                        PhysicalAddr         base_pt_addr,
+                                        SchedulingPolicy     policy,
+                                        Stack                user_stack) -> ThreadHandle {
         SharedPointer<Thread> new_thread =
             create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());

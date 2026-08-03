@@ -31,7 +31,7 @@ namespace Rune::App {
 
     auto AppModule::schedule_for_start(const SharedPointer<Info>& app,
                                        const CPU::Stack&          user_stack,
-                                       CPU::StartInfo*            start_info,
+                                       ThreadStartupPacket*       start_info,
                                        const Path&                working_directory) -> int {
         app->working_directory = move(working_directory);
         INFO(R"({}-{}: Start in {} (v{} by {}))",
@@ -361,7 +361,7 @@ namespace Rune::App {
         _system_loader_handle =
             schedule_for_start(app,
                                user_stack,
-                               memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
+                               memory_addr_to_pointer<ThreadStartupPacket>(start_info_addr),
                                move(working_directory));
         return LoadStatus::RUNNING;
     }
@@ -413,10 +413,11 @@ namespace Rune::App {
         app->std_in  = move(std_in);
         app->std_out = move(std_out);
         app->std_err = move(std_err);
-        int app_id   = schedule_for_start(app,
-                                          user_stack,
-                                          memory_addr_to_pointer<CPU::StartInfo>(start_info_addr),
-                                          move(working_directory));
+        int app_id =
+            schedule_for_start(app,
+                               user_stack,
+                               memory_addr_to_pointer<ThreadStartupPacket>(start_info_addr),
+                               move(working_directory));
         return {.load_result = LoadStatus::RUNNING, .handle = app_id};
     }
 

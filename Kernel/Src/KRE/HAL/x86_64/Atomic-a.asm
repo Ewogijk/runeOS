@@ -78,8 +78,8 @@ atomic_store_release:
 ;   The value at the memory address before it was set.
 global atomic_test_and_set
 atomic_test_and_set:
-    mov rax, rsi
-    lock xchg [rdi], rax
+    mov eax, esi
+    xchg [rdi], eax
     ret
 
 
@@ -120,8 +120,9 @@ atomic_compare_exchange_acquire:
 ;   Value of flag before it was set to true.
 global atomic_flag_test_and_set
 atomic_flag_test_and_set:
-    mov rax, 1
-    lock xchg [rdi], rax
+    mov al, 1
+    xchg [rdi], al
+    movzx rax, al
     ret
 
 ; CLINK void atomic_flag_clear(bool* flag);
@@ -134,19 +135,14 @@ atomic_flag_clear:
     lock and byte [rdi], 0
     ret
 
-; CLINK auto atomic_flag_test(bool* flag) -> bool;
+; CLINK auto atomic_flag_test(const bool* flag) -> bool;
 ; Args:
 ;   rdi -> flag
 ; Returns:
 ;   The value of the flag
 global atomic_flag_test
 atomic_flag_test:
-    lock and byte [rdi], 1
-    jz .flag_not_set
-    mov rax, 1
-    ret
-.flag_not_set:
-    mov rax, 0
+    movzx rax, byte [rdi]
     ret
     
     

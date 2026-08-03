@@ -46,7 +46,7 @@ namespace Rune {
     const char* THREAD_NAME = "QEMUCon";
 
     /// @brief Start info of the background thread.
-    CPU::StartInfo g_start_info;
+    ThreadStartupPacket g_start_info;
 
     ///@brief E9 target stream.
     CPU::E9Stream g_qemu_console_stream;
@@ -55,7 +55,7 @@ namespace Rune {
         auto*  app_module = System::instance().get_module<App::AppModule>(ModuleSelector::APP);
         String file       = evt.m_file_name;
         String app_name;
-        if (evt.m_app_handle != Ember::HANDLE_NONE) {
+        if (evt.m_app_handle > Ember::HANDLE_NONE) {
             for (auto* app_info : app_module->get_app_table()) {
                 if (evt.m_app_handle == app_info->handle) {
                     app_name = app_info->name;
@@ -65,10 +65,11 @@ namespace Rune {
         if (app_name.is_empty()) app_name = int_to_string(evt.m_app_handle, Radix::DECIMAL);
 
         String thread_name;
-        auto   thread = CPU::g_thread_cache.find(evt.m_thread_handle);
-        if (thread)
-            thread_name = thread->get_name();
-        else
+        if (evt.m_thread_handle > Ember::HANDLE_NONE) {
+            auto thread = CPU::g_thread_cache.find(evt.m_thread_handle);
+            if (thread) thread_name = thread->get_name();
+        }
+        if (thread_name.is_empty())
             thread_name += int_to_string(evt.m_thread_handle, Radix::DECIMAL);
 
         auto formatted_log_msg = String::format("{} | {}:{} | {}:{} | {}",
@@ -96,7 +97,7 @@ namespace Rune {
         g_qemu_console_stream.flush();
     }
 
-    auto redirect_logs_to_e9(CPU::StartInfo* si) -> int {
+    auto redirect_logs_to_e9(ThreadStartupPacket* si) -> int {
         auto  read_cursor = log_get_read_cursor();
         auto* timer =
             System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();

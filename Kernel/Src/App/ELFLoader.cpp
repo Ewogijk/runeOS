@@ -19,8 +19,8 @@
 #include <KRE/Math.h>
 #include <KRE/Utility.h>
 
-#include <CPU/Threading/CriticalSection.h>
 #include <CPU/Threading/Stack.h>
+#include <KRE/Threading/CriticalSection.h>
 
 namespace Rune::App {
     auto ELFLoader::get_next_buffer() -> bool {
@@ -314,9 +314,9 @@ namespace Rune::App {
 
     auto ELFLoader::setup_bootstrap_area(const ELF64File& elf_file,
                                          char* args[], // NOLINT syscall arg, must use raw ptr
-                                         const size_t stack_size) -> CPU::StartInfo* {
+                                         const size_t stack_size) -> ThreadStartupPacket* {
         // Calculate the size of the bootstrap area
-        constexpr size_t start_info_size = sizeof(CPU::StartInfo);
+        constexpr size_t start_info_size = sizeof(ThreadStartupPacket);
         constexpr size_t elf64_ph_size   = sizeof(ELF64ProgramHeader);
         const size_t     ph_area_size    = elf_file.program_headers.size() * elf64_ph_size;
         char**           tmp_args        = args;
@@ -372,7 +372,7 @@ namespace Rune::App {
         }
 
         // Setup start info area
-        auto* const start_info  = reinterpret_cast<CPU::StartInfo*>(bootstrap_area_begin);
+        auto* const start_info  = reinterpret_cast<ThreadStartupPacket*>(bootstrap_area_begin);
         start_info->argc        = argc;
         start_info->argv        = argv_area;
         start_info->random_low  = 1; // TODO implement a pseudo random number generator
@@ -380,8 +380,8 @@ namespace Rune::App {
         start_info->program_header_address = ph_area;
         start_info->program_header_size    = elf64_ph_size;
         start_info->program_header_count   = elf_file.program_headers.size();
-        start_info->main   = reinterpret_cast<CPU::ThreadMain>(elf_file.header.entry);
-        start_info->random = &start_info->random_low;
+        start_info->main                   = reinterpret_cast<ThreadMain>(elf_file.header.entry);
+        start_info->random                 = &start_info->random_low;
 
         return start_info;
     }
@@ -401,7 +401,7 @@ namespace Rune::App {
         // Interrupts must be disabled during ELF loading because the VAS of the new app is
         // temporarily loaded, thus any allocations/frees during interrupt handling will be made in
         // the wrong VAS which leads to undefined behavior
-        CPU::CriticalSection<CPU::InterruptLock> _(_load_lock);
+        CriticalSection<CPU::InterruptLock> _(_load_lock);
         if (const VFS::IOStatus io_status =
                 _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {

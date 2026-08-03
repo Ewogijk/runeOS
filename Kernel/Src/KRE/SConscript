@@ -14,21 +14,33 @@
 
 from SCons.Environment import *
 
+from pathlib import Path
+
 Import("build_env")
 build_env: Environment
 arch = build_env["arch"]
 sources = [
-    build_env.File(f"CRL/CRL.cpp"),
-    build_env.File(f"HAL/{arch}/CRL/GlobalConstructor-a.asm"),
+    build_env.File("CRL/CRL.cpp"),
+    build_env.File("Threading/InterruptLock.cpp"),
+    build_env.File("Threading/Spinlock.cpp"),
+    build_env.File("System/EventHook.cpp"),
+    build_env.File("System/FrameBuffer.cpp"),
+    build_env.File("System/Module.cpp"),
+    build_env.File("System/Plugin.cpp"),
     build_env.File("Logging.cpp"),
     build_env.File("Memory.cpp"),
     build_env.File("Stream.cpp"),
     build_env.File("String.cpp"),
     build_env.File("Utility.cpp"),
-    build_env.File("Module/EventHook.cpp"),
-    build_env.File("Module/FrameBuffer.cpp"),
-    build_env.File("Module/Module.cpp"),
-    build_env.File("Module/Plugin.cpp"),
+
 ]
+
+build_env.SConscript(
+    str(Path("HAL") / arch / "SConscript"),
+    duplicate=0,
+)
+Import("HAL_SOURCES_KRE")
+sources += HAL_SOURCES_KRE
+
 KRE = build_env.StaticLibrary("KRE.o", build_env.Object(sources))
 Export("KRE")

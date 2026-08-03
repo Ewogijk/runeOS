@@ -20,7 +20,7 @@
 #include <KRE/Collections/LinkedList.h>
 #include <KRE/Memory.h>
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 namespace Rune::CPU {
     /**

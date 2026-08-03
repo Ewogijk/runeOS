@@ -18,21 +18,21 @@
 #define RUNEOS_APPSUBSYSTEM_H
 
 #include <Ember/AppBits.h>
+#include <Ember/Ember.h>
 
-#include <VirtualFileSystem/Path.h>
-
+#include <KRE/CPU.h>
 #include <KRE/System/Module.h>
-
-#include <App/App.h>
-
-#include <CPU/CPUModule.h>
-
-#include <VirtualFileSystem/VFSModule.h>
 
 #include <Memory/MemoryModule.h>
 
+#include <CPU/CPUModule.h>
+
 #include <Device/DeviceModule.h>
-#include <Ember/Ember.h>
+
+#include <VirtualFileSystem/Path.h>
+#include <VirtualFileSystem/VFSModule.h>
+
+#include <App/App.h>
 
 namespace Rune::App {
 
@@ -81,7 +81,7 @@ namespace Rune::App {
          */
         auto schedule_for_start(const SharedPointer<Info>& app,
                                 const CPU::Stack&          user_stack,
-                                CPU::StartInfo*            start_info,
+                                ThreadStartupPacket*                 start_info,
                                 const Path&                working_directory) -> int;
 
         auto setup_file_stream(const SharedPointer<Info>& app,

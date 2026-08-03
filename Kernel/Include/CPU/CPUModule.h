@@ -21,10 +21,9 @@
 
 #include <KRE/System/Module.h>
 
-#include <CPU/CPU.h>
+#include <KRE/Threading/InterruptLock.h>
+#include <CPU/Core.h>
 #include <CPU/Interrupt/IRQ.h>
-#include <CPU/Interrupt/Interrupt.h>
-#include <CPU/Interrupt/InterruptLock.h>
 
 #include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
@@ -64,8 +63,8 @@ namespace Rune::CPU {
         static constexpr char const* GARBAGE_COLLECTOR_THREAD_NAME = "Garbage Collector Thread";
         static constexpr char const* IDLE_THREAD_NAME              = "Idle Thread";
         static char*     DUMMY_ARGS[1]; // NOLINT Array disallowed! Is part of Kernel ABI
-        static StartInfo GCT_START_INFO;
-        static StartInfo IDLE_THREAD_START_INFO;
+        static ThreadStartupPacket GCT_START_INFO;
+        static ThreadStartupPacket IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Interrupt Properties
@@ -207,7 +206,7 @@ namespace Rune::CPU {
          * scheduled.
          */
         auto schedule_new_thread(const String&    thread_name,
-                                 StartInfo*       start_info,
+                                 ThreadStartupPacket*       start_info,
                                  PhysicalAddr     base_pt_addr,
                                  SchedulingPolicy policy,
                                  Stack            user_stack) -> U16;

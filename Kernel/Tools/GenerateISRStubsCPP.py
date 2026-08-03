@@ -51,13 +51,13 @@ def generate_isr_cpp_stubs(out_file: str) -> None:
         file.write("#ifndef RUNEOS_ISR_STUBS_H\n")
         file.write("#define RUNEOS_ISR_STUBS_H\n\n")
 
-        file.write('#include "IDT.h"\n\n')
+        file.write("#include <KRE/HAL/x86_64/IDT.h>\n\n")
 
         for i in range(0, 256):
             file.write(f"CLINK void ISR{i}();\n")
         file.write("\n")
 
-        file.write("namespace Rune::CPU {\n")
+        file.write("namespace Rune {\n")
 
         file.write("    void init_interrupt_service_routines() {\n")
         file.write("        constexpr U8 GDT_OFFSET = 0x08;\n")

@@ -32,7 +32,7 @@ namespace Rune::App {
     //                                          Cursor Renderer
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto render_cursor(CPU::StartInfo* start_info) -> int {
+    auto render_cursor(ThreadStartupPacket* start_info) -> int {
         if (start_info->argc != 1) return -1;
         uintptr_t           ptr       = 0;
         constexpr uintptr_t HEX_RADIX = 16;

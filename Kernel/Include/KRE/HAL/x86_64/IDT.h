@@ -1,18 +1,16 @@
-/*
- *  Copyright 2025 Ewogijk
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+//  Copyright 2025 Ewogijk
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
 #ifndef RUNEOS_IDT_H
 #define RUNEOS_IDT_H
@@ -20,7 +18,7 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
-namespace Rune::CPU {
+namespace Rune {
 
     /**
      * @brief Gate types define how the interrupt flag (IF) is handled whe an interrupt happens.
@@ -46,9 +44,7 @@ namespace Rune::CPU {
         };
     } PACKED;
 
-    /**
-     * @brief Gate descriptor flags.
-     */
+    /// @brief Gate descriptor flags.
     union GateDescriptorFlags {
         U8 AsUInt8 = 0;
         struct {
@@ -59,10 +55,8 @@ namespace Rune::CPU {
         };
     } PACKED;
 
-    /**
-     * @brief 64-bit IDT gate descriptor defined in
-     *          "AMD64 Architecture Programmer's Manual Volume 2, Page 102, Figure 4-24"
-     */
+    /// @brief 64-bit IDT gate descriptor defined in
+    ///         "AMD64 Architecture Programmer's Manual Volume 2, Page 102, Figure 4-24"
     struct GateDescriptor {
         U16                 offset_low{};
         U16                 segment_selector{};
@@ -76,24 +70,18 @@ namespace Rune::CPU {
     /// @brief The number of interrupt vectors and therefore gate descriptors.
     constexpr U16 INTERRUPT_VECTOR_COUNT = 256;
 
-    /**
-     * @brief Interrupt descriptor table as defined in
-     *          "AMD64 Architecture Programmer's Manual Volume 2, Page 88, Chapter 4.6.6"
-     */
+    /// @brief Interrupt descriptor table as defined in
+    ///         "AMD64 Architecture Programmer's Manual Volume 2, Page 88, Chapter 4.6.6"
     struct InterruptDescriptorTable {
         U16             limit = 0;
         GateDescriptor* entry = nullptr;
     } PACKED;
 
-    /**
-     * @brief Get the globally defined IDT for all CPU cores.
-     * @return Interrupt descriptor table.
-     */
+    /// @brief Get the globally defined IDT for all CPU cores.
+    /// @return @return Interrupt descriptor table.
     auto idt_get() -> InterruptDescriptorTable*;
 
-    /**
-     * @brief Load the IDT into the IDT register.
-     */
+    /// @brief Load the IDT into the IDT register.
     void idt_load();
 
     /**
@@ -113,6 +101,6 @@ namespace Rune::CPU {
                  GateType gt,
                  U8       dpl,
                  bool     present);
-} // namespace Rune::CPU
+} // namespace Rune
 
 #endif // RUNEOS_IDT_H

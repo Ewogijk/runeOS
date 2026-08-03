@@ -18,7 +18,7 @@
 #ifndef RUNEOS_CPUID_H
 #define RUNEOS_CPUID_H
 
-#include <CPU/CPU.h>
+#include <CPU/Core.h>
 
 #include <Ember/Ember.h>
 
