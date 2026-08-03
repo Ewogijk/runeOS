@@ -18,6 +18,7 @@
 #define RUNEOS_SLABALLOCATOR_H
 
 #include <KRE/Collections/Array.h>
+#include <KRE/Threading/Spinlock.h>
 
 #include <Memory/Paging.h>
 #include <Memory/VirtualMemoryManager.h>
@@ -320,6 +321,8 @@ namespace Rune::Memory {
         static constexpr size_t     MIN_OBJ_SIZE          = 16;
         static constexpr MemorySize CACHE_SIZE            = 2 * MemoryUnit::MiB;
         static constexpr U8         BOOTSTRAP_CACHE_COUNT = 6;
+
+        SpinlockIRQSafe m_lock;
 
         ObjectCache _object_cache_cache;
         ObjectCache _slab_cache;
