@@ -36,7 +36,7 @@ constexpr U8      RESULT           = 42;
 constexpr U8      WAIT_TIME_MILLIS = 50;
 CPU::Promise<U8>* PROMISE;
 
-auto set_value_async(CPU::StartInfo* start_info) -> int {
+auto set_value_async(ThreadStartupPacket* start_info) -> int {
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     cpu_module->get_system_timer()->sleep_milli(WAIT_TIME_MILLIS);
     PROMISE->set_value(RESULT);

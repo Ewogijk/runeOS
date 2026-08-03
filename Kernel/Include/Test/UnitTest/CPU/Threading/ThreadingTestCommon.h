@@ -26,13 +26,13 @@ using namespace Rune;
 /// @brief RAII style
 struct TestThread {
     CPU::ThreadHandle             m_thread_handle = 0;
-    SharedPointer<CPU::StartInfo> m_start_info;
+    SharedPointer<ThreadStartupPacket> m_start_info;
     bool                          m_sync_thread_stop;
 
-    TestThread(const String& name, CPU::ThreadMain thread_main, bool sync_thread_stop)
+    TestThread(const String& name, ThreadMain thread_main, bool sync_thread_stop)
         : m_sync_thread_stop(sync_thread_stop) {
         auto* cpu_module    = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        m_start_info        = make_shared<CPU::StartInfo>();
+        m_start_info        = make_shared<ThreadStartupPacket>();
         char* dummy_args[1] = {nullptr}; // NOLINT
         m_start_info->argc  = 0;
         m_start_info->argv  = dummy_args;

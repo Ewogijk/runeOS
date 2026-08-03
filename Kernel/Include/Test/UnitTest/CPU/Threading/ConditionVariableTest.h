@@ -25,7 +25,7 @@ SharedPointer<CPU::ConditionVariable> CONDITION_VARIABLE;
 SharedPointer<CPU::Mutex>             MUTEX;
 bool                                  IS_STILL_LOCKED = false;
 
-auto make_thread_wait(CPU::StartInfo* start_info) -> int {
+auto make_thread_wait(ThreadStartupPacket* start_info) -> int {
     MUTEX->lock();
     CONDITION_VARIABLE->wait(*MUTEX);
     IS_STILL_LOCKED = MUTEX->get_owner() != nullptr;
