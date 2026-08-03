@@ -16,6 +16,8 @@
 
 #include <Memory/SlabAllocator.h>
 
+#include "KRE/Threading/CriticalSection.h"
+
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
@@ -727,7 +729,11 @@ namespace Rune::Memory {
         size_t lower_po_2 = 0;
         size_t upper_po_2 = 0;
         power_of_two_boundaries(lower_po_2, upper_po_2, size);
-        return _general_purpose_cache[Log2Shit(upper_po_2) - MIN_SIZE_POWER]->allocate();
+
+        CriticalSection<SpinlockIRQSafe> _(m_lock);
+        void* ptr = _general_purpose_cache[Log2Shit(upper_po_2) - MIN_SIZE_POWER]->allocate();
+        if (ptr == nullptr) WARN("Out of heap memory")
+        return ptr;
     }
 
     auto SlabAllocator::allocate_dma(size_t size) -> void* {
@@ -738,7 +744,11 @@ namespace Rune::Memory {
         size_t lower_po_2 = 0;
         size_t upper_po_2 = 0;
         power_of_two_boundaries(lower_po_2, upper_po_2, size);
-        return _dma_cache[Log2Shit(upper_po_2) - MIN_SIZE_POWER]->allocate();
+
+        CriticalSection<SpinlockIRQSafe> _(m_lock);
+        void* ptr = _dma_cache[Log2Shit(upper_po_2) - MIN_SIZE_POWER]->allocate();
+        if (ptr == nullptr) WARN("Out of DMA heap memory")
+        return ptr;
     }
 
     void SlabAllocator::free(void* obj) {
@@ -748,6 +758,8 @@ namespace Rune::Memory {
         auto* c = reinterpret_cast<ObjectCache*>(
             _object_cache_cache.object_at(cache_idx - BOOTSTRAP_CACHE_COUNT));
         if ((c == nullptr) || c->get_type() == CacheType::NONE) return;
+
+        CriticalSection<SpinlockIRQSafe> _(m_lock);
         c->free(obj);
     }
 
