@@ -24,7 +24,7 @@ namespace Rune::Test {
     /// @brief Configure the E9 reporter and execute the kernel tests.
     void run_kernel_tests() {
         Heimdall::OptionList options;
-#ifdef SHUTDOWN_ON_SYSTEM_LOADER_EXIT
+#ifdef FORCE_SHUTDOWN
         // This flag comes from Build.h and is only defined when the kernel is build for CI
         // -> Use the JUnitReporter to create a JUnit test report to be displayed by some GitHub
         //      action
