@@ -2,10 +2,10 @@
 
 :tada: Welcome and thanks for taking the time to contribute to runeOS! :tada:
 
-This document is a set of guidelines for contributing to runeOS, please take a moment to review it.
-These guidelines are not rules, so feel free to propose changes in a pull request.
+This document is a set of guidelines for contributing to runeOS. Please take a moment to review it. These guidelines are
+not rules, so feel free to propose changes in a pull request.
 
-### Table of Contents
+## Table of Contents
 
 - [Found a Bug?](#found-a-bug)
 - [Missing a Feature?](#missing-a-feature)
@@ -13,30 +13,29 @@ These guidelines are not rules, so feel free to propose changes in a pull reques
 - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Building the Project](#building-the-project)
     - [Getting the Dependencies](#getting-the-dependencies)
-    - [Building the Kernel](#building-with-Brokk)
-- [Styleguide](#styleguide)
+    - [Building the Kernel](#building-the-kernel)
+- [Style Guide](#style-guide)
     - [Commit Message Style](#commit-message-style)
     - [C/C++ Code Style](#cc-code-style)
     - [Python Code Style](#python-code-style)
 
 ## Found a Bug?
 
-When you find a bug in the source code, you can help by [submitting an issue](#submitting-issues) or
-submit a [Pull Request](#submitting-a-pull-request) with the fix.
+When you find a bug in the source code, you can help by [submitting an issue](#submitting-issues) or submitting
+a [Pull Request](#submitting-a-pull-request) with the fix.
 
 ## Missing a Feature?
 
-You can request a new feature or an enhancement of an existing feature by
-[submitting an issue](#submitting-issues).
+You can request a new feature or an enhancement of an existing feature by [submitting an issue](#submitting-issues).
 
-If you want to implement a feature yourself, please first consider the size of your feature to
-determine your next steps:
+If you want to implement a feature yourself, please first consider the size of your feature to determine your next
+steps:
 
 - **Minor Features** can be directly submitted as [pull requests](#submitting-a-pull-request).
-- **Major Features** require an issue to be created first so that they can go through a short design
-  phase first. You outline your proposal so that it can be discussed.
+- **Major Features** require an issue to be created first so that they can go through a short design phase. You outline
+  your proposal so that it can be discussed.
 
-When is a feature major? Your feature is major when it adds to, removes from or modifies...
+When is a feature major? Your feature is major when it adds to, removes from, or modifies...
 
 - the Kernel ABI.
 - the Public API between Kernel Modules.
@@ -44,36 +43,33 @@ When is a feature major? Your feature is major when it adds to, removes from or 
 
 ## Submitting Issues
 
-Before submitting an issue please check
-the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues) to make sure that
-your issue has not been reported yet. If your issue has already been reported, comment on the
-existing issue rather than creating a new one.
+Before submitting an issue, please check the [Issue Tracker](https://github.com/Ewogijk/runeOS/issues) to make sure that
+your issue has not been reported yet. If your issue has already been reported, comment on the existing issue rather than
+creating a new one.
 
-You can submit a new issue by choosing one of
-the [Issue Templates](https://github.com/Ewogijk/runeOS/issues/new/choose)
+You can submit a new issue by choosing one of the [Issue Templates](https://github.com/Ewogijk/runeOS/issues/new/choose)
 and filling out the template.
 
 ## Submitting a Pull Request
 
-Before you submit your pull request (PR), please take a look at the guidelines, they help to ensure
-high code quality and speed up the review:
+Before you submit your pull request (PR), please take a look at the guidelines. They help to ensure high code quality
+and speed up the review:
 
-- Search for an open [PR](https://github.com/Ewogijk/runeOS/pulls) that might relate to your
-  submission, so you don't
-  work on an issue that someone already fixed.
-- Follow the [Commit message style](#commit-message-style)
+- Search for an open [PR](https://github.com/Ewogijk/runeOS/pulls) that might relate to your submission, so you don't
+  work on an issue that someone already
+  fixed.
+- Follow the [Commit Message Style](#commit-message-style).
 - Document your changes.
 - Follow the [Code Style](#cc-code-style).
 - Send the Pull Request to `runeOS/main`.
 
-Your first time contributing? Check out
-[First Contributions](https://github.com/firstcontributions/first-contributions), it is great repo
-that guides you
+Your first time contributing? Check
+out [First Contributions](https://github.com/firstcontributions/first-contributions). It is a great repo that guides you
 through your first contribution.
 
-After you submit the PR, it will be reviewed, and you will receive feedback. Your reviewer may ask
-you to make changes to your submission before it can be merged. After you made the required changes
-to your code, push them to your fork and your PR will be updated automatically.
+After you submit the PR, it will be reviewed, and you will receive feedback. Your reviewer may ask you to make changes
+to your submission before it can be merged. After you have made the required changes to your code, push them to your
+fork and your PR will be updated automatically.
 
 Once your PR gets accepted, it will be merged. That's it!
 
@@ -81,20 +77,22 @@ Once your PR gets accepted, it will be merged. That's it!
 
 ### Getting the Dependencies
 
-First of you will have to get the necessary tools to build the project. Begin with installing the
-required system packages.
+First of all, you will have to get the necessary tools to build the project. Begin with installing the required system
+packages.
 
 On Ubuntu:
+
 ```shell
 sudo apt install nasm ninja-build qemu-system-x86 dosfstools gdb
 ```
 
-On Arch linux:
+On Arch Linux:
+
 ```shell
 sudo pacman -S nasm ninja qemu-system-x86 qemu-ui-gtk dosfstools gdb gptfdisk
 ```
 
-Then install the python dependencies:
+Then install the Python dependencies:
 
 ```shell
 pip install scons click meson pyyaml
@@ -104,10 +102,9 @@ Lastly, get the latest release of the [runeToolchain](https://github.com/Ewogijk
 
 ### Building the Kernel
 
-Brokk automates the project build and creates a bootable OS image alongside the resources required
-to run it with Qemu. It is not a build system in the classical meaning like SCons or Meson, but
-rather a tool that executes those two build systems and other build scripts that know how to build
-the project.
+Brokk automates the project build and creates a bootable OS image alongside the resources required to run it with QEMU.
+It is not a build system in the classical meaning like SCons or Meson, but rather a tool that executes those two build
+systems and other build scripts that know how to build the project.
 
 For general information about Brokk run:
 
@@ -121,47 +118,44 @@ To get help with a specific command run:
 ./Brokk.py COMMAND -h
 ```
 
-#### Create the Brokk configuration
+#### Create the Brokk Configuration
 
-Brokk is configured with a yaml configuration file, take a look at
-`Brokk/Brokk-Config-Template.yaml`. The configuration tells Brokk how to compile the project
-sources and which files it should copy to the OS image. The template contains a description of
-each option.
+Brokk is configured with a YAML configuration file. Take a look at `Brokk/Brokk-Config-Template.yaml`. The configuration
+tells Brokk how to compile the project sources and which files it should copy to the OS image. The template contains a
+description of each option.
 
-To get started you only need replace a couple of placeholders with your local paths:
+To get started, you only need to replace a couple of placeholders with your local paths:
 
-1. `sysroot-x64-elf`: Add the absolute path to the system root of the x86_64-elf target
-   cross-compiler from your runeToolchain installation.
+1. `sysroot-x64-elf`: Add the absolute path to the system root of the x86_64-elf target cross-compiler from your
+   runeToolchain installation.
 2. `sysroot-x64-rune`: Similarly, add the absolute path to the x86_64-rune target cross-compiler.
-3. `files`: Replace the <project-root> placeholder with the absolute path to your local runeOS
-   project directory.
+3. `files`: Replace the `<project-root>` placeholder with the absolute path to your local runeOS project directory.
 
 You can ignore the other options for now as they default to reasonable values.
 
 #### Configure Brokk
 
-Now it is time to configure Brokk, from the `Brokk/` directory run:
+Now it is time to configure Brokk. From the `Brokk/` directory run:
 
 ```shell
 ./Brokk.py configure BROKK_CONFIG
 ```
 
-If everything went fine the `Build/x86_64-debug` directory was created, and it should contain
-the `build-config.yaml` and `x86_64-rune.txt`. The first file contains mostly your Brokk
-configuration content with a couple more options required for project compilation. The latter is
-the cross-file required by Meson to
-do [cross compilation](https://mesonbuild.com/Cross-compilation.html).
+If everything went fine, the `Build/x86_64-debug` directory was created, and it should contain the `build-config.yaml`
+and `x86_64-rune.txt`. The first file contains mostly your Brokk configuration content with a couple more options
+required for project compilation. The latter is the cross-file required by Meson to
+do [cross-compilation](https://mesonbuild.com/Cross-compilation.html).
 
-#### Build the project
+#### Build the Project
 
-Lastly build the project:
+Lastly, build the project:
 
 ```shell
 ./Brokk.py build x86_64 debug
 ```
 
-Now the `Build/x86_64-debug` directory should contain all the files you may already know from the
-release build, as well as the `Debug.py` and additional binaries in the `bin` directory.
+Now the `Build/x86_64-debug` directory should contain all the files you may already know from the release build, as well
+as the `Debug.py` and additional binaries in the `bin` directory.
 
 Execute `Start.py` to test your OS build:
 
@@ -169,25 +163,25 @@ Execute `Start.py` to test your OS build:
 cd Build/x86_64-debug && ./Start.py
 ```
 
-## Styleguide
+## Style Guide
 
 ### Commit Message Style
 
 Follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) style:
 
 - Use imperative, present tense
-- Limit the first line to 50 characters or less
+- Limit the first line to 50 characters or fewer
 - Start your commit message with a [gitmoji](https://gitmoji.dev/) when you are...
     - :bug: `:bug:` - fixing a bug.
-    - :sparkles:: `:sparkles:` - implementing a new feature or enhancement.
-    - :memo:: `:memo:` - writing or updating documentation.
-    - :fire:: `:fire:` - removing code or files.
-    - :recycle:: `:recycle:` - refactoring code.
+    - :sparkles: `:sparkles:` - implementing a new feature or enhancement.
+    - :memo: `:memo:` - writing or updating documentation.
+    - :fire: `:fire:` - removing code or files.
+    - :recycle: `:recycle:` - refactoring code.
 
 An example commit message could look like this:
 
 ```
-:sparkles:: Add a feature
+:sparkles: Add a feature
 
 This feature solves this problem by doing this and that...
 
@@ -201,41 +195,42 @@ The C/C++ code formatter is `clang-format-19`. Use it with the following command
 clang-format-19 -i SRC_FILES
 ```
 
-Naming conventions are not covered by clang-format, please adhere to the following guidelines:
+Naming conventions are not covered by clang-format. Please adhere to the following guidelines:
 
 - Classes/Structs/Enums/Namespaces: PascalCase
-- Public member variables/parameters/local variables: snake_case
-- Private member variables: _snake_case - Note the leading underscore e.g. _my_private_variable
+- Function names: snake_case
+- Member variables: m_snake_case, e.g. m_my_variable
+- Global variables: g_snake_case, e.g. g_my_global_variable
+- Parameters/Local variables: snake_case
 - Global constants/macros: SCREAMING_SNAKE_CASE
 
-A linter catches common code errors, the project uses `clang-tidy` for this purpose. Check the
-kernel code with following command:
+A linter catches common code errors, and the project uses `clang-tidy` for this purpose. Check the kernel code with the
+following command:
 
 ```shell
 run-clang-tidy '.*\.cpp$' -p Kernel/Build/<arch>-<build>/ -j 8 -header-filter='^(?!.*limine\.h).*\.h' -quiet
 ```
 
-The command will lint all kernel sources and headers except the limine.h header which is a library
-header.
+The command will lint all kernel sources and headers except `limine.h`, which is a library header.
 
-To lint the source code use this command:
+To lint the source code, use this command:
 
 ```shell
-run-clang-tidy '^(?!.*\/subprojects\/).*\.cpp$' -p App/APP/Build -j 8 -header-filter='^(?!.*\/subprojects\/).*\.h$' -quiet \;
+run-clang-tidy '^(?!.*\/subprojects\/).*\.cpp$' -p App/APP/Build -j 8 -header-filter='^(?!.*\/subprojects\/).*\.h$' -quiet
 ```
 
-Replace APP with the name of the application you want to lint. The command will then lint the source
-and header files of this app ignoring anything in `subprojects` directories.
+Replace APP with the name of the application you want to lint. The command will then lint the source and header files of
+this app, ignoring anything in `subprojects` directories.
 
-`.clang-format` and `.clang-tidy` files can be found in the project root, both tools will pick them
-up automatically if you run the commands from any project directory.
+`.clang-format` and `.clang-tidy` files can be found in the project root. Both tools will pick them up automatically if
+you run the commands from any project directory.
 
 ### Python Code Style
 
-Similar to the C/C++ tools, `ruff` is used to format and lint the python code. The config file is
-`ruff.toml` in the project root directory.
+Similar to the C/C++ tools, `ruff` is used to format and lint the Python code. The config file is `ruff.toml` in the
+project root directory.
 
-To format your python code run:
+To format your Python code, run:
 
 ```shell
 ruff format SRC_FILES
