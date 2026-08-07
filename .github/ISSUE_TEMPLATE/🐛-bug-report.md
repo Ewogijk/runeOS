@@ -1,7 +1,7 @@
 ---
-name: "\U0001F41B Bug Report"
-about: Report a bug in the Kernel or OS. Please check the issue tracker first, it
-  is possible someone else already reported your issue.
+name: "🐛 Bug Report"
+about: Report a bug in the Kernel or OS. Please check the issue tracker first, it is possible someone else already
+  reported your issue.
 title: ''
 labels: bug
 assignees: ''
@@ -36,7 +36,3 @@ assignees: ''
 
 - Kernel Version:
 - Crucible Version:
-
-**Additional Context**
-
-[//]: # (Provide any other information about the problem.)
