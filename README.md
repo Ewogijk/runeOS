@@ -22,8 +22,6 @@ hardware with an easy-to-use and modern graphical user interface.
 
 ## Features
 
----
-
 - 64-bit kernel
 - Preemptive multithreading
 - C/C++ Standard Library support
@@ -35,8 +33,6 @@ hardware with an easy-to-use and modern graphical user interface.
 - AHCI
 
 ## Installation
-
----
 
 1. Install the system dependencies:
 
@@ -58,7 +54,5 @@ hardware with an easy-to-use and modern graphical user interface.
    ```
 
 ## 3rd Party Libraries
-
----
 
 See [3RDPARTY.md](3RDPARTY.md)
