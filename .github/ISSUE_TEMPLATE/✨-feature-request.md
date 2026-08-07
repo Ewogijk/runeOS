@@ -1,17 +1,17 @@
 ---
-name: "✨ Feature request"
-about: Propose a new feature or an enhancement for an existing feature. Please check the issue tracker first, to see if
-  someone already requested a similar feature.
+name: "✨ Feature Request"
+about: Propose a new feature or an enhancement for an existing feature. Please check the issue tracker first to see if
+  someone has already requested a similar feature.
 title: ''
 labels: feature-request
 assignees: ''
 
 ---
 
-**What problem are you trying to solve?**
+## Problem
 
-[//]: # (A clear and concise description of what the problem is.)
+<!-- A clear and concise description of the problem you are trying to solve. -->
 
-**What is your solution to the problem?**
+## Proposed Solution
 
-[//]: # (A clear and concise description of what you want to happen.)
+<!-- A clear and concise description of what you want to happen. -->
