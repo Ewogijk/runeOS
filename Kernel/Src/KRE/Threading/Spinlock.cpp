@@ -16,8 +16,6 @@
 
 #include <KRE/Threading/Spinlock.h>
 
-#include <KRE/Logging.h>
-
 #include <KRE/Threading/Atomic.h>
 
 #include <KRE/Interrupt.h>

@@ -20,10 +20,9 @@
 
 #include <Ember/Ember.h>
 
+#include <KRE/Resource.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
-
-#include <KRE/System/Resource.h>
 
 namespace Rune {
 

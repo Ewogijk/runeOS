@@ -19,7 +19,7 @@
 #include <Ember/Ember.h>
 
 #include <KRE/CPU.h>
-#include <KRE/System/Resource.h>
+#include <KRE/Resource.h>
 
 namespace Rune::CPU {
     /// @brief Handle type of timer.
@@ -45,7 +45,7 @@ namespace Rune::CPU {
     X(ThreadState, CREATED, 0x1)                                                                   \
     X(ThreadState, READY, 0x2)                                                                     \
     X(ThreadState, RUNNING, 0x3)                                                                   \
-    X(ThreadState, BLOCK_PENDING, 0x4)                                                               \
+    X(ThreadState, BLOCK_PENDING, 0x4)                                                             \
     X(ThreadState, BLOCKED, 0x5)                                                                   \
     X(ThreadState, STOPPED, 0x6)
 
@@ -142,6 +142,6 @@ namespace Rune::CPU {
 
     ///@brief Kernel-wide thread cache.
     extern ResourceCache<Thread, 4> g_thread_cache;
-}
+} // namespace Rune::CPU
 
 #endif // RUNEOS_THREAD_H

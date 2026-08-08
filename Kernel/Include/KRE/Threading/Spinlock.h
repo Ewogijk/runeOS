@@ -23,7 +23,7 @@
 namespace Rune {
 
     /// @brief A spinlock is a synchronization primitive that keeps a thread busy waiting when the
-    ///         lock is not available.
+    ///         lock is not available. This implementation is non-reentrant.
     class Spinlock {
         bool _lock = false;
 
@@ -67,8 +67,14 @@ namespace Rune {
         void unlock_safe(Register restore_flags);
     };
 
+    /// @brief A specialized version of the spinlock that additionally disables external interrupts
+    ///         when locked and enables external interrupts when unlocked. This implementation is
+    ///         non-reentrant.
+    ///
+    /// The lock will save the content of the FLAGS register before locking and restores the content
+    /// when unlocked.
     class SpinlockIRQSafe {
-        bool          m_lock  = false;
+        bool     m_lock  = false;
         Register m_flags = 0;
 
       public:

@@ -18,10 +18,10 @@
 #ifndef RUNEOS_SEMAPHORE_H
 #define RUNEOS_SEMAPHORE_H
 
-#include <KRE/System/Resource.h>
-
-#include <KRE/Threading/Spinlock.h>
 #include <CPU/Core.h>
+
+#include <KRE/Resource.h>
+#include <KRE/Threading/Spinlock.h>
 
 namespace Rune::CPU {
 
