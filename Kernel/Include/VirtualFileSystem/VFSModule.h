@@ -18,10 +18,10 @@
 #define RUNEOS_VFSMODULE_H
 
 #include <KRE/Collections/HashMap.h>
+#include <KRE/Resource.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
 #include <KRE/System/Module.h>
-#include <KRE/System/Resource.h>
 
 #include <Device/Device.h>
 

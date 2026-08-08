@@ -16,7 +16,7 @@
 #ifndef RUNEOS_JOB_H
 #define RUNEOS_JOB_H
 
-#include <KRE/System/Resource.h>
+#include <KRE/Resource.h>
 
 #include <CPU/Interrupt/InterruptHandler.h>
 

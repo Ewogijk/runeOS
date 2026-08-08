@@ -17,7 +17,7 @@
 #ifndef RUNEOS_MUTEX_H
 #define RUNEOS_MUTEX_H
 
-#include <KRE/System/Resource.h>
+#include <KRE/Resource.h>
 #include <KRE/Threading/Spinlock.h>
 
 #include <CPU/Threading/Scheduler.h>

@@ -19,11 +19,11 @@
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
+#include <KRE/CPU.h>
 #include <KRE/Memory.h>
+#include <KRE/Resource.h>
 #include <KRE/Stream.h>
 #include <KRE/String.h>
-#include <KRE/CPU.h>
-#include <KRE/System/Resource.h>
 
 #include <CPU/Threading/Thread.h>
 
@@ -194,6 +194,6 @@ namespace Rune::CPU {
      * @return The size of a physical address in bits.
      */
     auto get_physical_address_width() -> U8;
-}
+} // namespace Rune::CPU
 
 #endif // RUNEOS_CORE_H

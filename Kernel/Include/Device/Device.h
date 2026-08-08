@@ -19,9 +19,9 @@
 #define RUNEOS_DEVICE_H
 
 #include <KRE/Memory.h>
+#include <KRE/Resource.h>
 #include <KRE/String.h>
 #include <KRE/System/Module.h>
-#include <KRE/System/Resource.h>
 
 #include <CPU/Threading/Future.h>
 

@@ -24,9 +24,9 @@
 
 #include <KRE/Collections/HashMap.h>
 
+#include <KRE/Resource.h>
 #include <KRE/System/EventHook.h>
 #include <KRE/System/FrameBuffer.h>
-#include <KRE/System/Resource.h>
 
 namespace Rune {
     /**
