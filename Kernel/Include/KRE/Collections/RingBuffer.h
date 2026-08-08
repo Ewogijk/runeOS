@@ -17,24 +17,82 @@
 #define RUNEOS_RINGBUFFER_H
 
 #include <KRE/Collections/Array.h>
+
+#include <KRE/Threading/CriticalSection.h>
+#include <KRE/Threading/Spinlock.h>
+
+#include <KRE/Math.h>
+#include <KRE/Memory.h>
+#include <KRE/Resource.h>
 #include <KRE/Utility.h>
 
 namespace Rune {
-
-    /// @brief
-    /// @tparam T
-    /// @tparam SIZE Buffer capacity is 2^SIZE elements.
     template <class T, size_t SIZE>
-    struct RingBufferState {
+    class ReadCursor;
+
+    /// @brief A threadsafe multi-producer, multi-consumer ring buffer.
+    /// @tparam T Type of the elements stored in the ring buffer.
+    /// @tparam SIZE Buffer capacity is 2^SIZE elements.
+    ///
+    /// The ring buffer maintains a write-cursor and a read window defining the position where
+    /// consumers can start reading at any point.
+    ///
+    /// When the ring buffer is full, it will start dropping the oldest element, thus shifting the
+    /// read window.
+    template <class T, size_t SIZE>
+    class RingBuffer {
         static constexpr size_t CAPACITY = static_cast<size_t>(1) << SIZE;
         static constexpr size_t MASK     = CAPACITY - 1;
 
         Array<T, CAPACITY> m_buffer;
         U64                m_read_window_start{0};
-        size_t             m_write_cursor{0};
+        U64                m_write_cursor{0};
+
+        ///@brief The lock is non-reentrant!
+        mutable SpinlockIRQSafe m_lock;
+
+        friend class ReadCursor<T, SIZE>;
+
+      public:
+        RingBuffer() : m_buffer() {}
+
+        /// @brief
+        /// @return The index marking the start of the read window.
+        [[nodiscard]] auto read_window_start() const -> U64 {
+            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            return m_read_window_start;
+        }
+
+        /// @brief
+        /// @return The position of the write-cursor.
+        [[nodiscard]] auto write_cursor() const -> U64 {
+            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            return m_write_cursor;
+        }
+
+        /// @brief Place the element at the position of the write-cursor.
+        /// @param element
+        ///
+        /// If the write-cursor reaches the start of the read window then it will be advanced by one
+        /// position.
+        void append(T element) {
+            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            m_buffer[m_write_cursor & MASK] = move(element);
+            m_write_cursor++; //           = (m_write_cursor + 1) & MASK;
+            if (m_write_cursor - m_read_window_start == CAPACITY) m_read_window_start++;
+        }
+
+        /// @brief
+        /// @param idx
+        /// @return The element at index.
+        auto operator[](size_t idx) const -> T pre(idx < CAPACITY) {
+            contract_assert(idx < CAPACITY);
+            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            return m_buffer[idx];
+        }
     };
 
-    /// @brief A privately maintained read-cursor by a consumer of a ring buffer.
+    /// @brief A privately maintained threadsafe read-cursor by a consumer of a ring buffer.
     /// @tparam T Type of the elements stored in the ring buffer.
     /// @tparam SIZE Buffer capacity is 2^SIZE elements.
     ///
@@ -46,104 +104,55 @@ namespace Rune {
     /// slower than the producer, it will not be able to read the oldest elements that have already
     /// been dropped.
     template <class T, size_t SIZE>
-    class ReadCursor {
-        const RingBufferState<T, SIZE>* m_ring_buffer_state;
-        U64                             m_read_cursor;
+    class ReadCursor : public Resource<Ember::Handle> {
+        const RingBuffer<T, SIZE>* m_ring_buffer;
+        U64                        m_read_cursor;
 
         void skip_to_read_window() {
-            if (m_read_cursor < m_ring_buffer_state->m_read_window_start)
-                // The read-cursor has fallen out of the read window
-                m_read_cursor =
-                    m_ring_buffer_state->m_read_window_start & RingBufferState<T, SIZE>::MASK;
+            // Adjust read-cursor if it has fallen behind the read window
+            m_read_cursor = max(m_read_cursor, m_ring_buffer->m_read_window_start);
         }
 
       public:
-        ReadCursor(const RingBufferState<T, SIZE>* ring_buffer_state)
-            : m_ring_buffer_state(ring_buffer_state),
-              m_read_cursor(ring_buffer_state->m_read_window_start
-                            & RingBufferState<T, SIZE>::MASK) {}
+        ReadCursor(Ember::Handle handle, const String& name, const RingBuffer<T, SIZE>* ring_buffer)
+            : Resource(handle, name),
+              m_ring_buffer(ring_buffer),
+              m_read_cursor(ring_buffer->read_window_start()) {}
+
+        [[nodiscard]] auto read_cursor() -> size_t {
+            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
+            skip_to_read_window();
+            return m_read_cursor;
+        }
 
         /// @brief
         /// @return
         [[nodiscard]] auto size() -> size_t {
+            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
             skip_to_read_window();
-            return (m_ring_buffer_state->m_write_cursor - m_read_cursor
-                    + RingBufferState<T, SIZE>::CAPACITY)
-                   & RingBufferState<T, SIZE>::MASK;
+            return m_ring_buffer->m_write_cursor - m_read_cursor;
         }
 
         /// @brief
         /// @return
         [[nodiscard]] auto empty() -> bool {
+            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
             skip_to_read_window();
-            return m_read_cursor == m_ring_buffer_state->m_write_cursor;
+            return m_read_cursor == m_ring_buffer->m_write_cursor;
         }
 
         /// @brief
         /// @return
         auto next() -> Optional<T> {
+            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
             skip_to_read_window();
-            if (m_read_cursor == m_ring_buffer_state->m_write_cursor)
+            if (m_read_cursor == m_ring_buffer->m_write_cursor)
                 // Empty buffer
                 return {};
 
-            auto element  = m_ring_buffer_state->m_buffer[m_read_cursor];
-            m_read_cursor = (m_read_cursor + 1) & RingBufferState<T, SIZE>::MASK;
-            return {element};
-        }
-    };
-
-    /// @brief A one-producer, multi-consumer ring buffer.
-    /// @tparam T Type of the elements stored in the ring buffer.
-    /// @tparam SIZE Buffer capacity is 2^SIZE elements.
-    ///
-    /// The ring buffer maintains a write-cursor and a read window defining the position where
-    /// consumers can start reading at any point.
-    ///
-    /// The oldest element in the ring buffer will be dropped whenever the write-cursor reaches the
-    /// read window start by advancing the start position by one.
-    template <class T, size_t SIZE>
-    class RingBuffer {
-        RingBufferState<T, SIZE> m_ring_buffer_state;
-
-        friend ReadCursor<T, SIZE>;
-
-      public:
-        RingBuffer() : m_ring_buffer_state() {}
-
-        /// @brief
-        /// @return The index marking the start of the read window.
-        [[nodiscard]] auto read_window_start() const -> U64 {
-            return m_ring_buffer_state.m_read_window_start;
-        }
-
-        /// @brief
-        /// @return Create a read cursor at the current start position of the read window.
-        [[nodiscard]] auto create_read_cursor() const -> ReadCursor<T, SIZE> {
-            return ReadCursor<T, SIZE>(&m_ring_buffer_state);
-        }
-
-        /// @brief Place the element at the position of the write-cursor.
-        /// @param element
-        ///
-        /// If the write-cursor reaches the start of the read window then it will be advanced by one
-        /// position.
-        void append(T element) {
-            using State = RingBufferState<T, SIZE>;
-            m_ring_buffer_state.m_buffer[m_ring_buffer_state.m_write_cursor] = move(element);
-            m_ring_buffer_state.m_write_cursor =
-                (m_ring_buffer_state.m_write_cursor + 1) & State::MASK;
-            if (m_ring_buffer_state.m_write_cursor
-                == (m_ring_buffer_state.m_read_window_start & State::MASK))
-                m_ring_buffer_state.m_read_window_start++;
-        }
-
-        /// @brief
-        /// @param idx
-        /// @return The element at index.
-        auto operator[](size_t idx) const -> T pre(idx < RingBufferState<T, SIZE>::CAPACITY) {
-            contract_assert(idx < RingBufferState<T, SIZE>::CAPACITY);
-            return m_ring_buffer_state.m_buffer[idx];
+            auto element = m_ring_buffer->m_buffer[m_read_cursor & RingBuffer<T, SIZE>::MASK];
+            m_read_cursor++;
+            return {move(element)};
         }
     };
 } // namespace Rune

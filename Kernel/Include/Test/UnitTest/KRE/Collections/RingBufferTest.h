@@ -16,7 +16,7 @@
 #ifndef RUNEOS_RINGBUFFERTEST_H
 #define RUNEOS_RINGBUFFERTEST_H
 
-#include "KRE/Collections/RingBuffer.h"
+#include <KRE/Collections/RingBuffer.h>
 
 #include <Test/Heimdall/Heimdall.h>
 
@@ -54,13 +54,13 @@ TEST("append - After wraparound", "RingBuffer") {
 
 TEST("size - Ring buffer is empty", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     REQUIRE(read_cursor.size() == 0U);
 }
 
 TEST("size - Ring buffer is partially full", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     ring_buffer.append(2);
     REQUIRE(read_cursor.size() == 2U);
@@ -68,7 +68,7 @@ TEST("size - Ring buffer is partially full", "RingBuffer") {
 
 TEST("size - After Overflow", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     ring_buffer.append(2);
     ring_buffer.append(3);
@@ -79,20 +79,20 @@ TEST("size - After Overflow", "RingBuffer") {
 
 TEST("empty - Ring buffer is empty", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     REQUIRE(read_cursor.empty())
 }
 
 TEST("empty - Ring buffer is partially full", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     REQUIRE(!read_cursor.empty())
 }
 
 TEST("empty - Ring buffer is full", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     //[1, 2, 3, 4]
     // RW
     ring_buffer.append(1);
@@ -104,14 +104,14 @@ TEST("empty - Ring buffer is full", "RingBuffer") {
 
 TEST("next - Partially Full", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     REQUIRE(read_cursor.next().value_or(0) == 1);
 }
 
 TEST("next - Full", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     ring_buffer.append(2);
     REQUIRE(read_cursor.next().value_or(0) == 1);
@@ -120,7 +120,7 @@ TEST("next - Full", "RingBuffer") {
 
 TEST("next - After Overflow", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     ring_buffer.append(2);
     ring_buffer.append(3);
@@ -130,7 +130,7 @@ TEST("next - After Overflow", "RingBuffer") {
 
 TEST("next - Read cursor has reached write cursor", "RingBuffer") {
     RingBuffer<int, RING_BUFFER_SIZE> ring_buffer;
-    auto                              read_cursor = ring_buffer.create_read_cursor();
+    ReadCursor<int, RING_BUFFER_SIZE> read_cursor(&ring_buffer);
     ring_buffer.append(1);
     REQUIRE(read_cursor.next().value_or(0) == 1);
     REQUIRE(!read_cursor.next().has_value());

@@ -28,7 +28,7 @@ namespace Rune {
     RingBuffer<Ember::LogEvent, LOG_BUFFER_SIZE> g_kernel_log_buffer;
 
     auto log_get_read_cursor() -> ReadCursor<Ember::LogEvent, LOG_BUFFER_SIZE> {
-        return g_kernel_log_buffer.create_read_cursor();
+        return {0, "", &g_kernel_log_buffer};
     }
 
     // ====================================================================================== //
