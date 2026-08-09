@@ -74,6 +74,10 @@ namespace Rune::Device::USB {
         ///         zero for control/bulk and for endpoints without a companion.
         U16 m_bytes_per_interval = 0;
 
+        /// @brief Class- and vendor-specific descriptors following this endpoint's Endpoint
+        ///         descriptor.
+        DescriptorWindow m_class_descriptors;
+
         /// @brief
         /// @return m_synchronization decoded as a SyncType.
         ///         Valid only when m_transfer_type == TransferType::ISOCHRONOUS.
@@ -102,6 +106,10 @@ namespace Rune::Device::USB {
         U8                   m_interface_protocol = 0;
         String               m_interface_name;
         LinkedList<EndPoint> m_endpoints;
+
+        /// @brief Class- and vendor-specific descriptors following this alternate setting's
+        ///         Interface descriptor.
+        DescriptorWindow m_class_descriptors;
     };
 
     /// @brief One interface slot within a Configuration, owning all of its alternate settings.
@@ -127,6 +135,11 @@ namespace Rune::Device::USB {
         U8                    m_function_protocol = 0;
         String                m_function_name;
         LinkedList<Interface> m_interfaces;
+
+        /// @brief Class- and vendor-specific descriptors following this function's Interface
+        ///         Association descriptor. Always empty for a function that was not declared by an
+        ///         IAD, its descriptors belong to the interface instead.
+        DescriptorWindow m_class_descriptors;
     };
 
     /// @brief One of the device's configurations, USB 3.2 §9.6.3.
@@ -138,14 +151,24 @@ namespace Rune::Device::USB {
     struct Configuration {
         U8     m_configuration_value = 0; // argument to SetConfiguration()
         String m_configuration_name;
-        bool   m_self_powered  = false;   // bmAttributes D6
-        bool   m_remote_wakeup = false;   // bmAttributes D5
-        U16    m_max_power_mA  = 0;       // bMaxPower, normalized to mA
+        bool   m_self_powered  = false; // bmAttributes D6
+        bool   m_remote_wakeup = false; // bmAttributes D5
+        U16    m_max_power_mA  = 0;     // bMaxPower, normalized to mA
         /// @brief One entry per logical function of this configuration. Always populated: an
         ///         interface not covered by an Interface Association Descriptor is its own
         ///         single-interface function. Every interface of the configuration lives in
         ///         exactly one of these functions.
         LinkedList<Function> m_functions;
+
+        /// @brief Verbatim copy of the GET_DESCRIPTOR(CONFIGURATION) response this configuration
+        ///         was built from, wTotalLength bytes. Kept so class drivers can read the class
+        ///         and vendor-specific descriptors, the USB stack does not decode; every
+        ///         DescriptorWindow of this configuration indexes into it.
+        DescriptorBlob m_descriptor_blob;
+
+        /// @brief Class- and vendor-specific descriptors appearing before the first interface of
+        ///         the configuration.
+        DescriptorWindow m_class_descriptors;
     };
 
     // ========================================================================================== //
@@ -242,7 +265,19 @@ namespace Rune::Device::USB {
 
         [[nodiscard]] auto configuration_value() const -> U8;
 
+        /// @brief The Configuration this function belongs to.
+        [[nodiscard]] auto configuration() const -> const Configuration&;
+
+        /// @brief
+        /// @return All interfaces belonging to this function.
         [[nodiscard]] auto interfaces() const -> const LinkedList<Interface>&;
+
+        /// @brief Class- and vendor-specific descriptors declared by the active alternate setting
+        ///         of one of this function's interfaces.
+        /// @param interface_number bInterfaceNumber of the interface.
+        /// @return The descriptors, an empty range if interface_number is not part of this
+        ///          function or its active alternate setting declared none.
+        [[nodiscard]] auto class_descriptors(U8 interface_number) const -> DescriptorRange;
 
         /// @brief
         /// @return The interface with the given number, nullptr if it is not part of this

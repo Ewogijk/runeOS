@@ -57,4 +57,62 @@ namespace Rune::Device::USB {
         }
         return result;
     }
+
+    // ========================================================================================== //
+    // Class And Vendor Specific Descriptors
+    // ========================================================================================== //
+
+    DescriptorBlob::DescriptorBlob(const U8* bytes, U16 size) {
+        if (bytes == nullptr || size == 0) return;
+        m_bytes = new U8[size];
+        m_size  = size;
+        memcpy(m_bytes, bytes, size);
+    }
+
+    DescriptorBlob::~DescriptorBlob() { delete[] m_bytes; }
+
+    DescriptorBlob::DescriptorBlob(const DescriptorBlob& other)
+        : DescriptorBlob(other.m_bytes, other.m_size) {}
+
+    auto DescriptorBlob::operator=(const DescriptorBlob& other) -> DescriptorBlob& {
+        if (this == &other) return *this;
+        delete[] m_bytes;
+        m_bytes = nullptr;
+        m_size  = 0;
+        if (other.m_bytes != nullptr && other.m_size > 0) {
+            m_bytes = new U8[other.m_size];
+            m_size  = other.m_size;
+            memcpy(m_bytes, other.m_bytes, other.m_size);
+        }
+        return *this;
+    }
+
+    DescriptorBlob::DescriptorBlob(DescriptorBlob&& other) noexcept
+        : m_bytes(other.m_bytes),
+          m_size(other.m_size) {
+        other.m_bytes = nullptr;
+        other.m_size  = 0;
+    }
+
+    auto DescriptorBlob::operator=(DescriptorBlob&& other) noexcept -> DescriptorBlob& {
+        if (this == &other) return *this;
+        delete[] m_bytes;
+        m_bytes       = other.m_bytes;
+        m_size        = other.m_size;
+        other.m_bytes = nullptr;
+        other.m_size  = 0;
+        return *this;
+    }
+
+    auto DescriptorBlob::size() const -> U16 { return m_size; }
+
+    auto DescriptorBlob::empty() const -> bool { return m_size == 0; }
+
+    auto DescriptorBlob::bytes() const -> const U8* { return m_bytes; }
+
+    auto DescriptorBlob::descriptors(DescriptorWindow window) const -> DescriptorRange {
+        if (m_bytes == nullptr || window.empty()) return {};
+        if (window.m_offset + window.m_length > m_size) return {};
+        return {m_bytes + window.m_offset, window.m_length};
+    }
 } // namespace Rune::Device::USB

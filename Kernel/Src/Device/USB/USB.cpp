@@ -125,16 +125,19 @@ namespace Rune::Device::USB {
           m_owning_function(owning_function) {}
 
     auto FunctionDevice::owning_function() const -> const Function& {
-        const auto* composite = static_cast<const CompositeDevice*>(bus_device().get());
-        for (const auto& configuration : composite->configurations())
-            if (configuration.m_configuration_value == m_owning_configuration)
-                return configuration.m_functions[m_owning_function];
-        return composite->configurations().first().m_functions[m_owning_function];
+        return configuration().m_functions[m_owning_function];
     }
 
     auto FunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
     auto FunctionDevice::configuration_value() const -> U8 { return m_owning_configuration; }
+
+    auto FunctionDevice::configuration() const -> const Configuration& {
+        const auto* composite = static_cast<const CompositeDevice*>(bus_device().get());
+        for (const auto& config : composite->configurations())
+            if (config.m_configuration_value == m_owning_configuration) return config;
+        return composite->configurations().first();
+    }
 
     auto FunctionDevice::interfaces() const -> const LinkedList<Interface>& {
         return owning_function().m_interfaces;
@@ -147,6 +150,12 @@ namespace Rune::Device::USB {
         return nullptr;
     }
     // NOLINTEND
+
+    auto FunctionDevice::class_descriptors(U8 interface_number) const -> DescriptorRange {
+        const Interface* iface = find_interface(interface_number);
+        if (iface == nullptr || iface->m_alternate_settings.empty()) return {};
+        return configuration().m_descriptor_blob.descriptors(iface->active().m_class_descriptors);
+    }
 
     void FunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
         auto* composite = static_cast<CompositeDevice*>(bus_device().get());
