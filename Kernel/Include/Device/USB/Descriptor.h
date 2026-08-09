@@ -48,6 +48,7 @@ namespace Rune::Device::USB {
         U8  m_idx_serial_number;
         U8  m_num_configurations;
     };
+
     // ========================================================================================== //
     // USB Configuration Descriptor — USB 3.2 §9.6.3
     // ========================================================================================== //
@@ -280,6 +281,156 @@ namespace Rune::Device::USB {
         [[nodiscard]] auto string_length() const -> U8;
 
         [[nodiscard]] auto string() const -> String;
+    };
+
+    // ========================================================================================== //
+    // Class And Vendor Specific Descriptors
+    // ========================================================================================== //
+
+    /// @brief Every USB descriptor starts with bLength and bDescriptorType (USB 3.2 §9.5).
+    static constexpr U8 DESCRIPTOR_HEADER_SIZE = 2;
+
+    /// @brief One descriptor of a DescriptorBlob that the USB stack does not decode itself:
+    ///         its two byte header plus typed access to its body.
+    class DescriptorRef {
+        const U8* m_descriptor;
+
+      public:
+        explicit DescriptorRef(const U8* descriptor) : m_descriptor(descriptor) {}
+
+        /// @brief bLength, including the two header bytes.
+        [[nodiscard]] auto length() const -> U8 { return m_descriptor[0]; }
+
+        /// @brief bDescriptorType. Class specific types are only meaningful together with the
+        ///         interface class that declared them, e.g. 0x21 is HID for interface class 3.
+        [[nodiscard]] auto type() const -> U8 { return m_descriptor[1]; }
+
+        [[nodiscard]] auto bytes() const -> const U8* { return m_descriptor; }
+
+        /// @brief Reinterpret the descriptor as a class-specific descriptor struct.
+        /// @return nullptr if the device reported a bLength shorter than T, meaning T's trailing
+        ///          fields would read bytes the descriptor does not have.
+        template <typename T>
+        [[nodiscard]] auto as() const -> const T* {
+            if (length() < sizeof(T)) return nullptr;
+            return reinterpret_cast<const T*>(m_descriptor);
+        }
+    };
+
+    /// @brief A byte range within a DescriptorBlob, covering the class and vendor-specific
+    ///         descriptors declared by one scope of a configuration - the configuration itself, a
+    ///         function, an alternate setting, or an endpoint. Empty when the scope declared none.
+    struct DescriptorWindow {
+        U16 m_offset = 0;
+        U16 m_length = 0;
+
+        [[nodiscard]] auto empty() const -> bool { return m_length == 0; }
+    };
+
+    /// @brief Iterates the descriptors of a DescriptorWindow.
+    ///
+    /// Advances by bLength, so descriptor types the USB stack does not know are walked over
+    /// instead of being skipped. A window may span standard descriptors that sit between the
+    /// class specific ones; filter by DescriptorRef::type().
+    class DescriptorRange {
+        const U8* m_base = nullptr; // first byte of the window
+        U16       m_size = 0;       // window length in bytes
+
+        /// @brief A descriptor is only walkable when its header is readable, it declares at least
+        ///         a header, and its body fits in the window. Anything else means the device
+        ///         reported a malformed blob, so iteration ends there instead of spinning on a
+        ///         zero bLength or reading past the window.
+        static auto walkable(const U8* base, U16 size, U16 offset) -> bool {
+            if (base == nullptr || offset + DESCRIPTOR_HEADER_SIZE > size) return false;
+            U8 length = base[offset];
+            return length >= DESCRIPTOR_HEADER_SIZE && offset + length <= size;
+        }
+
+      public:
+        class Iterator {
+            const U8* m_base;
+            U16       m_size;
+            U16       m_offset;
+
+          public:
+            Iterator(const U8* base, U16 size, U16 offset)
+                : m_base(base),
+                  m_size(size),
+                  m_offset(walkable(base, size, offset) ? offset : size) {}
+
+            auto operator*() const -> DescriptorRef { return DescriptorRef(m_base + m_offset); }
+
+            // pre-increment
+            auto operator++() -> Iterator& {
+                auto next = static_cast<U16>(m_offset + m_base[m_offset]);
+                m_offset  = walkable(m_base, m_size, next) ? next : m_size;
+                return *this;
+            }
+
+            // post-increment
+            auto operator++(int) -> Iterator {
+                Iterator tmp = *this;
+                ++(*this);
+                return tmp;
+            }
+
+            auto operator==(const Iterator& other) const -> bool {
+                return m_offset == other.m_offset;
+            }
+
+            auto operator!=(const Iterator& other) const -> bool {
+                return m_offset != other.m_offset;
+            }
+        };
+
+        DescriptorRange() = default;
+
+        DescriptorRange(const U8* base, U16 size) : m_base(base), m_size(size) {}
+
+        [[nodiscard]] auto begin() const -> Iterator { return {m_base, m_size, 0}; }
+
+        [[nodiscard]] auto end() const -> Iterator { return {m_base, m_size, m_size}; }
+
+        [[nodiscard]] auto empty() const -> bool { return begin() == end(); }
+    };
+
+    /// @brief Owns a verbatim copy of a GET_DESCRIPTOR(CONFIGURATION) response so class drivers
+    ///         can read the class- and vendor-specific descriptors the USB stack does not decode,
+    ///         e.g. the HID descriptor of a keyboard interface, without fetching and parsing the
+    ///         configuration a second time.
+    ///
+    /// One allocation of wTotalLength bytes per configuration. Copies deeply: DescriptorWindows
+    /// into a blob are byte offsets, so they survive copying and moving the owning Configuration.
+    class DescriptorBlob {
+        U8* m_bytes = nullptr;
+        U16 m_size  = 0;
+
+      public:
+        DescriptorBlob() = default;
+
+        /// @brief Copy size bytes of a GET_DESCRIPTOR response into a new blob.
+        DescriptorBlob(const U8* bytes, U16 size);
+
+        ~DescriptorBlob();
+
+        DescriptorBlob(const DescriptorBlob& other);
+
+        auto operator=(const DescriptorBlob& other) -> DescriptorBlob&;
+
+        DescriptorBlob(DescriptorBlob&& other) noexcept;
+
+        auto operator=(DescriptorBlob&& other) noexcept -> DescriptorBlob&;
+
+        [[nodiscard]] auto size() const -> U16;
+
+        [[nodiscard]] auto empty() const -> bool;
+
+        [[nodiscard]] auto bytes() const -> const U8*;
+
+        /// @brief Resolve a window against this blob.
+        /// @return The descriptors in the window, an empty range if the window is empty or does
+        ///          not lie fully within the blob.
+        [[nodiscard]] auto descriptors(DescriptorWindow window) const -> DescriptorRange;
     };
 } // namespace Rune::Device::USB
 

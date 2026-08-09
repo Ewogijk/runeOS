@@ -1024,11 +1024,28 @@ namespace Rune::Device::USB {
         Interface*        current_interface   = nullptr;
         AlternateSetting* current_alt_setting = nullptr;
 
+        // Class- and vendor-specific descriptors follow the standard descriptor they augment (USB
+        // 3.2 §9.5), so they are collected into the DescriptorWindow of the scope parsed last.
+        // Before the first interface that is the configuration itself.
+        configuration.m_descriptor_blob =
+            DescriptorBlob(config_blob, config_descriptor.m_total_length);
+        DescriptorWindow* current_window = &configuration.m_class_descriptors;
+
         U16 offset = config_descriptor.m_length;
         while (offset < config_descriptor.m_total_length) {
             U8 descriptor_length = config_blob[offset];
             U8 descriptor_type   = config_blob[offset + 1];
-
+            // A descriptor that is shorter than its own header or that runs past wTotalLength
+            // means the device reported a malformed blob. Stop, otherwise a zero bLength spins
+            // this loop forever and an overrunning one reads past the DMA buffer.
+            if (descriptor_length < DESCRIPTOR_HEADER_SIZE
+                || offset + descriptor_length > config_descriptor.m_total_length) {
+                WARN("Malformed configuration blob at offset {}: len={}, type={}",
+                     offset,
+                     descriptor_length,
+                     descriptor_type);
+                break;
+            }
             if (DescriptorType(descriptor_type) == DescriptorType::INTERFACE_ASSOCIATION) {
                 const auto* iad =
                     reinterpret_cast<const InterfaceAssociationDescriptor*>(config_blob + offset);
@@ -1042,6 +1059,7 @@ namespace Rune::Device::USB {
                 iad_ranges.add_back(IADRange{.m_first_interface = iad->m_first_interface,
                                              .m_interface_count = iad->m_interface_count,
                                              .m_function = &configuration.m_functions.last()});
+                current_window = &configuration.m_functions.last().m_class_descriptors;
 
             } else if (DescriptorType(descriptor_type) == DescriptorType::INTERFACE) {
                 const auto* if_face =
@@ -1099,6 +1117,7 @@ namespace Rune::Device::USB {
                     fetch_string_descriptor(dc_sys_memory, if_face->m_idx_interface, langid);
                 current_interface->m_alternate_settings.add_back(move(new_setting));
                 current_alt_setting = &current_interface->m_alternate_settings.last();
+                current_window      = &current_alt_setting->m_class_descriptors;
 
             } else if (DescriptorType(descriptor_type) == DescriptorType::ENDPOINT) {
                 if (current_alt_setting != nullptr) {
@@ -1111,7 +1130,10 @@ namespace Rune::Device::USB {
                          .m_synchronization = ep->sync_type().to_value(),
                          .m_usage           = ep->interrupt_usage_type().to_value(),
                          .m_max_packet_size = ep->m_max_packet_size,
-                         .m_interval        = ep->m_interval});
+                         .m_interval        = ep->m_interval,
+                         // Filled in by the class/vendor specific descriptor arm below.
+                         .m_class_descriptors = {}});
+                    current_window = &current_alt_setting->m_endpoints.last().m_class_descriptors;
                 }
             } else if (DescriptorType(descriptor_type)
                        == DescriptorType::SUPERSPEED_USB_ENDPOINT_COMPANION) {
@@ -1126,6 +1148,11 @@ namespace Rune::Device::USB {
                         ep.m_transfer_type == TransferType::ISOCHRONOUS ? companion->mult() : 0;
                     ep.m_bytes_per_interval = companion->m_bytes_per_interval;
                 }
+            } else {
+                // Hand the raw bytes to the class driver by extending the current scope's window.
+                if (current_window->empty()) current_window->m_offset = offset;
+                current_window->m_length =
+                    static_cast<U16>(offset + descriptor_length - current_window->m_offset);
             }
             offset += descriptor_length;
         }
@@ -1146,6 +1173,9 @@ namespace Rune::Device::USB {
               configuration.m_self_powered,
               configuration.m_remote_wakeup,
               configuration.m_max_power_mA);
+        for (auto descriptor :
+             configuration.m_descriptor_blob.descriptors(configuration.m_class_descriptors))
+            DEBUG("    Class Descriptor {:0=#2x}: len={}", descriptor.type(), descriptor.length());
 
         // Functions: each logical function with its class triplet and the interfaces it owns.
         for (const auto& function : configuration.m_functions) {
@@ -1166,6 +1196,11 @@ namespace Rune::Device::USB {
                   function.m_function_class,
                   function.m_function_subclass,
                   function.m_function_protocol);
+            for (auto descriptor :
+                 configuration.m_descriptor_blob.descriptors(function.m_class_descriptors))
+                DEBUG("        Class Descriptor {:0=#2x}: len={}",
+                      descriptor.type(),
+                      descriptor.length());
             for (const auto& iface : function.m_interfaces) {
                 for (const auto& setting : iface.m_alternate_settings) {
                     auto class_code = ClassCode(setting.m_interface_class);
@@ -1181,12 +1216,22 @@ namespace Rune::Device::USB {
                           setting.m_interface_class,
                           setting.m_interface_subclass,
                           setting.m_interface_protocol);
+                    for (auto descriptor :
+                         configuration.m_descriptor_blob.descriptors(setting.m_class_descriptors))
+                        DEBUG("            Class Descriptor {:0=#2x}: len={}",
+                              descriptor.type(),
+                              descriptor.length());
                     for (const auto& ep : setting.m_endpoints) {
                         DEBUG("            EP{} {} {}: Max Packet Size={}",
                               ep.m_endpoint_number,
                               ep.m_direction.to_string(),
                               ep.m_transfer_type.to_string(),
                               ep.m_max_packet_size);
+                        for (auto descriptor :
+                             configuration.m_descriptor_blob.descriptors(ep.m_class_descriptors))
+                            DEBUG("                Class Descriptor {:0=#2x}: len={}",
+                                  descriptor.type(),
+                                  descriptor.length());
                     }
                 }
             }
