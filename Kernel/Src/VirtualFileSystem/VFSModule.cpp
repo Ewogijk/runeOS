@@ -564,10 +564,11 @@ namespace Rune::VFS {
         if (delete_now) {
             IOStatus st = (*driver)->delete_node(mpi.m_mass_storage_device_handle,
                                                  path.relative_to(mpi.m_mount_point));
-            if (st == IOStatus::DELETED)
+            if (st == IOStatus::DELETED) {
                 TRACE("{}: Is deleted", path.to_string());
-            else
+            } else {
                 WARN("{}: Failed to delete, IOStatus={}", path.to_string(), st.to_string());
+            }
             return st;
         }
         TRACE("{}: Marked for deletion", path.to_string());

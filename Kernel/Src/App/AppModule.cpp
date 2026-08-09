@@ -18,6 +18,8 @@
 
 #include <KRE/System/Lat15-Terminus16.h>
 #include <KRE/System/System.h>
+#include <KRE/Threading/CriticalSection.h>
+#include <KRE/Threading/InterruptLock.h>
 
 #include <App/App.h>
 #include <App/ELFLoader.h>
@@ -132,6 +134,12 @@ namespace Rune::App {
         _vfs_module    = system.get_module<VFS::VFSModule>(ModuleSelector::VFS);
         _dev_module    = system.get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         _frame_buffer  = boot_info.framebuffer;
+
+        // If background threads are running, the event handlers will crash once this thread is
+        // preempted since the app module is only partially initialized, so we need to disable
+        // external interrupts during initialization
+        InterruptSaveLock                  lock;
+        CriticalSection<InterruptSaveLock> _(lock);
 
         // Register event hooks
         _cpu_module->install_event_handler(
