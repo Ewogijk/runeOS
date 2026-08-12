@@ -380,7 +380,7 @@ namespace Rune::Device::USB {
     [[nodiscard]] auto DataStageTRB::ControlDWord::NS() const -> bool {
         return bit_check(m_register, NS_BIT_OFFSET);
     }
-    [[nodiscard]] auto DataStageTRB::ControlDWord::chain() const -> bool {
+    [[nodiscard]] auto DataStageTRB::ControlDWord::CH() const -> bool {
         return bit_check(m_register, CHAIN_BIT_OFFSET);
     }
     [[nodiscard]] auto DataStageTRB::ControlDWord::IOC() const -> bool {
@@ -410,7 +410,7 @@ namespace Rune::Device::USB {
     auto DataStageTRB::ControlDWord::set_NS(bool v) -> void {
         m_register = v ? bit_set(m_register, NS_BIT_OFFSET) : bit_clear(m_register, NS_BIT_OFFSET);
     }
-    auto DataStageTRB::ControlDWord::set_chain(bool v) -> void {
+    auto DataStageTRB::ControlDWord::set_CH(bool v) -> void {
         m_register =
             v ? bit_set(m_register, CHAIN_BIT_OFFSET) : bit_clear(m_register, CHAIN_BIT_OFFSET);
     }
@@ -444,7 +444,7 @@ namespace Rune::Device::USB {
             | ((static_cast<U32>(val) << INTERRUPTER_TARGET_SHIFT) & INTERRUPTER_TARGET_MASK);
     }
 
-    [[nodiscard]] auto StatusStageTRB::ControlDWord::cycle() const -> bool {
+    [[nodiscard]] auto StatusStageTRB::ControlDWord::C() const -> bool {
         return bit_check(m_register, CYCLE_BIT_OFFSET);
     }
     [[nodiscard]] auto StatusStageTRB::ControlDWord::ENT() const -> bool {
@@ -462,7 +462,7 @@ namespace Rune::Device::USB {
     [[nodiscard]] auto StatusStageTRB::ControlDWord::DIR() const -> bool {
         return bit_check(m_register, DIR_BIT_OFFSET);
     }
-    auto StatusStageTRB::ControlDWord::set_cycle(bool v) -> void {
+    auto StatusStageTRB::ControlDWord::set_C(bool v) -> void {
         m_register =
             v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
     }

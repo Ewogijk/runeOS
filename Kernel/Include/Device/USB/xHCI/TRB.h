@@ -372,7 +372,7 @@ namespace Rune::Device::USB {
             [[nodiscard]] auto ENT() const -> bool;
             [[nodiscard]] auto ISP() const -> bool;
             [[nodiscard]] auto NS() const -> bool;
-            [[nodiscard]] auto chain() const -> bool;
+            [[nodiscard]] auto CH() const -> bool;
             [[nodiscard]] auto IOC() const -> bool;
             [[nodiscard]] auto IDT() const -> bool;
             [[nodiscard]] auto trb_type() const -> TRBType;
@@ -381,7 +381,7 @@ namespace Rune::Device::USB {
             auto               set_ENT(bool v) -> void;
             auto               set_ISP(bool v) -> void;
             auto               set_NS(bool v) -> void;
-            auto               set_chain(bool v) -> void;
+            auto               set_CH(bool v) -> void;
             auto               set_IOC(bool v) -> void;
             auto               set_IDT(bool v) -> void;
             auto               set_trb_type(U8 val) -> void;
@@ -421,13 +421,13 @@ namespace Rune::Device::USB {
 
         struct ControlDWord {
             U32                m_register = 0;
-            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto C() const -> bool;
             [[nodiscard]] auto ENT() const -> bool; // Evaluate Next TRB
             [[nodiscard]] auto CH() const -> bool;  // Chain bit
             [[nodiscard]] auto IOC() const -> bool;
             [[nodiscard]] auto trb_type() const -> TRBType;
             [[nodiscard]] auto DIR() const -> bool;
-            auto               set_cycle(bool v) -> void;
+            auto               set_C(bool v) -> void;
             auto               set_ENT(bool v) -> void;
             auto               set_CH(bool v) -> void;
             auto               set_IOC(bool v) -> void;
