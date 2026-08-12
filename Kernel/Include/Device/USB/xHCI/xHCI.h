@@ -58,7 +58,7 @@ namespace Rune::Device::USB {
     };
 
     // ========================================================================================== //
-    // DeviceContext System Memory
+    // XHCIDriver
     // ========================================================================================== //
 
     /// @brief Mapping of the device context and transfer rings to a slot.
@@ -72,10 +72,20 @@ namespace Rune::Device::USB {
         U8                                                                    m_slot_ID;
     };
 
-    // ========================================================================================== //
-    // XHCIDriver
-    // ========================================================================================== //
+    /// @brief An inflight transfer descriptor (TD) is a collection of TRBs that have been sent to
+    ///         the xHC but not yet handled.
+    ///
+    /// Event TRBs will hold a reference to the physical address that they respond to, so inflight
+    /// TRBs are tracked by their physical address.
+    struct InflightTD {
+        static constexpr U8 MAX_TRB_COUNT = 3;
 
+        CPU::Promise<IORequestStatus>      m_promise;
+        Array<PhysicalAddr, MAX_TRB_COUNT> m_inflight_trb_list{};
+        U8                                 m_count          = 0;
+        U8                                 m_pending_events = 0;
+        TransferResponse*                  m_response       = nullptr;
+    };
     /// @brief Implementation of the eXtensible Host Controller Interface rev 2.0 specification.
     ///
     /// Device Hierarchy
@@ -136,15 +146,16 @@ namespace Rune::Device::USB {
 
         /// @brief Inflight control, bulk, interrupt or isochronous transfers from xHCI and class
         ///         driver requests
-        HashMap<PhysicalAddr, CPU::Promise<IORequestStatus>> m_inflight_trb_table;
+        HashMap<PhysicalAddr, SharedPointer<InflightTD>> m_inflight_trb_tracker;
 
         /// @brief Inflight command TRBs from xHCI driver requests
-        HashMap<PhysicalAddr, CPU::Promise<CommandCompletionEventTRB>> m_inflight_command_trb_table;
+        HashMap<PhysicalAddr, CPU::Promise<CommandCompletionEventTRB>>
+            m_inflight_command_trb_tracker;
 
         /// @brief Guards m_inflight_trb_table and m_inflight_command_trb_table. Request-submitting
         ///         threads insert entries, while the delayed event-TRB handler (running on a worker
         ///         thread) looks them up and removes them. Never held across a Future::get().
-        CPU::Mutex m_inflight_table_lock{0, "xHCIInflightTableLock"};
+        CPU::Mutex m_inflight_tracker_lock{Ember::HANDLE_NONE, "xHCIInflightTrackerLock"};
 
         // ====================================================================================== //
         // System Memory
@@ -162,6 +173,17 @@ namespace Rune::Device::USB {
         // ====================================================================================== //
         // Event TRB Handling
         // ====================================================================================== //
+
+        /// @brief Track the inflight TRBs part of a single transfer descriptor (TD).
+        /// @param trb_list An array of TRBs.
+        /// @param count Number of TRBs in the TD.
+        ///
+        /// The function will access m_inflight_trb_tracker and assumes m_inflight_tracker_lock to
+        /// be locked.
+        auto track_inflight_TD(const PhysicalAddr* trb_list,
+                               U8                  count,
+                               U8                  expected_events,
+                               TransferResponse*   response) -> CPU::Future<IORequestStatus>;
 
         /// @brief Advance ERDP to  er_deq_ptr and clear ERDP.EHB.
         /// @param er_deq_ptr
@@ -216,19 +238,19 @@ namespace Rune::Device::USB {
         auto
         handle_control_transfer_request(const ControlTransferRequest& control_transfer_request,
                                         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                        void* data_buffer) -> CPU::Future<IORequestStatus>;
+                                        TransferResponse* response) -> CPU::Future<IORequestStatus>;
 
         /// @brief Send a bulk or interrupt transfer §3.2.10 and §4.11.2.1
         auto handle_bulk_interrupt_transfer_request(
             const DataTransferRequest&                      data_transfer_request,
             const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-            void* data_buffer) -> CPU::Future<IORequestStatus>;
+            TransferResponse* response) -> CPU::Future<IORequestStatus>;
 
         /// @brief Send an isochronous transfer §3.2.11 and §4.11.2.3.
         auto
         handle_isoch_transfer_request(const IsochDataTransferRequest& isoch_transfer_request,
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                      void* data_buffer) -> CPU::Future<IORequestStatus>;
+                                      TransferResponse* response) -> CPU::Future<IORequestStatus>;
 
         // ====================================================================================== //
         // Host Controller Initialization
@@ -334,7 +356,23 @@ namespace Rune::Device::USB {
         auto               can_bind(const DeviceID* device_ID) -> bool override;
         auto               bind(const SharedPointer<Device>& device) -> bool override;
         void               unbind(const SharedPointer<Device>& device) override;
-        auto               handle_request(const SharedPointer<Device>& device, IORequest request)
+
+        /// @brief Send a transfer request to the xHC or a USB device.
+        /// @param device  A pointer to the composite device the calling function device.
+        /// @param request Transfer request.
+        /// @return A future with an IO request status.
+        ///
+        /// Important:
+        ///
+        /// The device handle in the transfer request header shall always be the
+        /// handle of the calling function device or the function device that will be affected by
+        /// the transfer request.
+        ///
+        /// The device pointer shall always point to the composite device of the function device.
+        ///
+        /// This allows the xHCI driver to find both the in system memory allocated xHC buffers and
+        /// the configuration of the USB device.
+        auto handle_request(const SharedPointer<Device>& device, IORequest request)
             -> CPU::Future<IORequestStatus> override;
     };
 } // namespace Rune::Device::USB

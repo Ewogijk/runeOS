@@ -245,7 +245,7 @@ namespace Rune::Device::USB {
     /// @param subclass_code Subclass code.
     /// @return Name of the subclass code or "NONE" if subclass_code does not encode a valid
     ///         subclass.
-    auto resolve_subclass_code(ClassCode class_code, U8 subclass_code) -> String;
+    auto subclass_code_resolve(ClassCode class_code, U8 subclass_code) -> String;
 
     /// @brief Try to resolve the protocol_code to the protocol matching with the given class_code
     ///         and subclass_code combination.
@@ -254,7 +254,7 @@ namespace Rune::Device::USB {
     /// @param protocol_code Protocol code.
     /// @return Name of the protocol code or "NONE" if protocol_code does not encode a valid
     ///         protocol.
-    auto resolve_protocol_code(ClassCode class_code, U8 subclass_code, U8 protocol_code)
+    auto protocol_code_resolve(ClassCode class_code, U8 subclass_code, U8 protocol_code)
         -> String;
 
 } // namespace Rune::Device::USB

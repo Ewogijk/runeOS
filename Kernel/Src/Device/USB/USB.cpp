@@ -14,6 +14,8 @@
 
 #include <Device/USB/USB.h>
 
+#include <KRE/BitsAndBytes.h>
+
 namespace Rune::Device::USB {
     // ========================================================================================== //
     // USB Device ID
@@ -121,21 +123,25 @@ namespace Rune::Device::USB {
                                    U16           owning_function)
         : Device(handle, name, oem, revision, serial_number, DeviceType::USB_FUNCTION_DEVICE),
           m_device_ID(move(usb_device_id)),
-          m_owning_configuration(owning_configuration),
-          m_owning_function(owning_function) {}
+          m_owning_configuration_value(owning_configuration),
+          m_owning_function_idx(owning_function) {}
 
     auto FunctionDevice::owning_function() const -> const Function& {
-        return configuration().m_functions[m_owning_function];
+        return configuration().m_functions[m_owning_function_idx];
     }
 
     auto FunctionDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
-    auto FunctionDevice::configuration_value() const -> U8 { return m_owning_configuration; }
+    auto FunctionDevice::owning_configuration_value() const -> U8 {
+        return m_owning_configuration_value;
+    }
+
+    auto FunctionDevice::owning_function_idx() const -> U16 { return m_owning_function_idx; }
 
     auto FunctionDevice::configuration() const -> const Configuration& {
         const auto* composite = static_cast<const CompositeDevice*>(bus_device().get());
         for (const auto& config : composite->configurations())
-            if (config.m_configuration_value == m_owning_configuration) return config;
+            if (config.m_configuration_value == m_owning_configuration_value) return config;
         return composite->configurations().first();
     }
 
@@ -160,8 +166,8 @@ namespace Rune::Device::USB {
     void FunctionDevice::set_active_setting(U8 interface_number, U8 setting_number) {
         auto* composite = static_cast<CompositeDevice*>(bus_device().get());
         for (auto& configuration : composite->configurations()) {
-            if (configuration.m_configuration_value != m_owning_configuration) continue;
-            for (auto& iface : configuration.m_functions[m_owning_function].m_interfaces)
+            if (configuration.m_configuration_value != m_owning_configuration_value) continue;
+            for (auto& iface : configuration.m_functions[m_owning_function_idx].m_interfaces)
                 if (iface.m_interface_number == interface_number) {
                     iface.m_active_setting = setting_number;
                     return;
@@ -169,5 +175,30 @@ namespace Rune::Device::USB {
         }
     }
 
-    DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT
+    // ========================================================================================== //
+    // Host Controller IO Requests
+    // ========================================================================================== //
+
+    DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0)
+
+    auto ControlTransferRequest::of(Ember::Handle       handle,
+                                    U16                 function_index,
+                                    U8                  bm_request_type,
+                                    StandardRequestCode b_request,
+                                    U16                 w_value,
+                                    U16                 w_index,
+                                    U16                 w_length,
+                                    void*               data_buffer) -> ControlTransferRequest {
+        TransferRequestHeader header = {.m_transfer_type = USB::TransferRequestType::CONTROL,
+                                        .m_device_handle = handle};
+        return {.m_header         = header,
+                .m_function_index = function_index,
+                .m_request_type   = bm_request_type,
+                .m_request        = b_request.to_value(),
+                .m_value          = w_value,
+                .m_index          = w_index,
+                .m_length         = w_length,
+                .m_data_buffer    = data_buffer};
+    }
+
 } // namespace Rune::Device::USB

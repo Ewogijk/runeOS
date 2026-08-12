@@ -245,8 +245,8 @@ namespace Rune::Device::USB {
     class FunctionDevice : public Device {
         USBDeviceID m_device_ID; // Function's class/subclass/protocol
 
-        U8  m_owning_configuration = 0; // owning Configuration::m_configuration_value
-        U16 m_owning_function      = 0; // index into the owning Configuration's m_functions
+        U8  m_owning_configuration_value = 0; // owning Configuration::m_configuration_value
+        U16 m_owning_function_idx        = 0; // index into the owning Configuration's m_functions
 
         /// @brief Resolve the owning Function from the parent CompositeDevice (bus_device()).
         [[nodiscard]] auto owning_function() const -> const Function&;
@@ -261,9 +261,21 @@ namespace Rune::Device::USB {
                        U8            owning_configuration,
                        U16           owning_function);
 
+        /// @brief
+        /// @return This device's USB device ID.
         [[nodiscard]] auto device_ID() const -> const DeviceID* override;
 
-        [[nodiscard]] auto configuration_value() const -> U8;
+        /// @brief
+        /// @return Configuration::m_configuration_value of the configuration that owns the function
+        ///         represented by this FunctionDevice.
+        [[nodiscard]] auto owning_configuration_value() const -> U8;
+
+        /// @brief
+        /// @return Index of the function represented by this device.
+        ///
+        /// The actual function object can be retrieved as follows:
+        /// configuration().m_functions[owning_function_idx()];
+        [[nodiscard]] auto owning_function_idx() const -> U16;
 
         /// @brief The Configuration this function belongs to.
         [[nodiscard]] auto configuration() const -> const Configuration&;
@@ -294,9 +306,12 @@ namespace Rune::Device::USB {
     // Host Controller IO Requests
     //
     // The IORequest struct shall be set up as followed:
-    //      io_request.m_in_buffer  = &my_transfer_request; // e.g. ControlTransferRequest
-    //      io_request.m_out_buffer = &my_data_buffer;      // An buffer depending on the transfer
-    //                                                      // request
+    //      io_request.m_in_data  = &my_transfer_request;  // e.g. ControlTransferRequest
+    //      io_request.m_out_data = &my_transfer_response;
+    //
+    // The caller must guarantee that transfer requests and response outlive the transfer.
+    // Concretely, they must be valid until Future<IORequestStatus>::is_finished() returns true or
+    // Future<IORequestStatus>::get() returns. Otherwise, undefined behavior may occur.
     // ========================================================================================== //
 
 #define TRANSFER_REQUEST_TYPES(X)                                                                  \
@@ -325,12 +340,33 @@ namespace Rune::Device::USB {
         TransferRequestHeader m_header;
         /// @brief The index to the function in the configuration of the FunctionDevice sending this
         ///         request.
-        U16 m_function_index = 0;
-        U8  m_request_type   = 0; // bmRequestType
-        U8  m_request        = 0; // bRequest
-        U16 m_value          = 0; // wValue
-        U16 m_index          = 0; // wIndex
-        U16 m_length         = 0; // wLength
+        U16   m_function_index = 0;
+        U8    m_request_type   = 0; // bmRequestType
+        U8    m_request        = 0; // bRequest
+        U16   m_value          = 0; // wValue
+        U16   m_index          = 0; // wIndex
+        U16   m_length         = 0; // wLength
+        void* m_data_buffer    = nullptr;
+
+        /// @brief Construct a new control transfer request.
+        /// @param handle Handle of a FunctionDevice.
+        /// @param function_index The owning_function_idx() value of the FunctionDevice this request
+        ///                         belongs to.
+        /// @param bm_request_type bmRequestType.
+        /// @param b_request bRequest.
+        /// @param w_value wValue.
+        /// @param w_index wIndex.
+        /// @param w_length wLength.
+        /// @param data_buffer Data buffer used for byte transfer.
+        /// @return
+        static auto of(Ember::Handle       handle,
+                       U16                 function_index,
+                       U8                  bm_request_type,
+                       StandardRequestCode b_request,
+                       U16                 w_value,
+                       U16                 w_index,
+                       U16                 w_length,
+                       void*               data_buffer) -> ControlTransferRequest;
     };
 
     /// @brief An IO request for USB Bulk and Interrupt transfers.
@@ -339,6 +375,7 @@ namespace Rune::Device::USB {
         U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
         Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
         U32                   m_length          = 0;               // bytes to transfer
+        void*                 m_data_buffer     = nullptr;
     };
 
     /// @brief An IO request for USB Isochronous transfers.
@@ -347,12 +384,20 @@ namespace Rune::Device::USB {
         U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
         Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
         U32                   m_length          = 0;               // bytes to transfer
+        void*                 m_data_buffer     = nullptr;
 
         /// @brief SIA — schedule the TD on the next available Isoch service interval. When true,
         ///         m_isoch_frame_id is ignored.
         bool m_isoch_start_asap = true;
         /// @brief Target (micro)frame for the isochronous TD when m_isoch_start_asap == false.
         U16 m_isoch_frame_id = 0;
+    };
+
+    /// @brief Contains information about a completed transfer.
+    struct TransferResponse {
+        /// @brief Number of bytes that could not be transferred by the host controller. Always 0 if
+        ///         all bytes have been transferred.
+        size_t m_residual_bytes = 0;
     };
 } // namespace Rune::Device::USB
 

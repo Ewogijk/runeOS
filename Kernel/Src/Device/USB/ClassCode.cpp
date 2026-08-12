@@ -27,7 +27,7 @@ namespace Rune::Device::USB {
     DEFINE_TYPED_ENUM(WirelessRFProtocol, U8, WIRELESS_RF_PROTOCOL_CODES, 0x00)
     DEFINE_TYPED_ENUM(AppSpecificSubClass, U8, APPLICATION_SPECIFIC_SUBCLASS_CODES, 0x00)
 
-    auto resolve_subclass_code(ClassCode class_code, U8 subclass_code) -> String {
+    auto subclass_code_resolve(ClassCode class_code, U8 subclass_code) -> String {
         switch (class_code) {
             case ClassCode::CDC_CONTROL:         return CDCSubClass(subclass_code).to_string();
             case ClassCode::HID:                 return HIDSubClass(subclass_code).to_string();
@@ -39,7 +39,7 @@ namespace Rune::Device::USB {
         }
     }
 
-    auto resolve_protocol_code(ClassCode class_code, U8 subclass_code, U8 protocol_code) -> String {
+    auto protocol_code_resolve(ClassCode class_code, U8 subclass_code, U8 protocol_code) -> String {
         switch (class_code) {
             case ClassCode::HID:
                 switch (subclass_code) {
