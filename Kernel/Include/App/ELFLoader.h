@@ -50,7 +50,7 @@ namespace Rune::App {
         // Open ELF file
         SharedPointer<VFS::Node> _elf_file;
 
-        CPU::InterruptLock _load_lock;
+        InterruptLock _load_lock;
 
         // Read the next bytes in the buffer.
         auto get_next_buffer() -> bool;

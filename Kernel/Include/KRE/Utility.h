@@ -327,20 +327,16 @@ namespace Rune {
         }
     }; // namespace FNV
 
-    /**
-     * @brief Provides hash support for a type.
-     *
-     * A hash implementation must satisfy the following requirements:
-     * <ol>
-     * <li><a
-     * href="https://en.cppreference.com/w/cpp/named_req/DefaultConstructible">DefaultConstructible</a></li>
-     * <li><a
-     * href="https://en.cppreference.com/w/cpp/named_req/CopyAssignable>CopyAssignable</a></li>
-     * <li>Implement the "size_t operator()(const int& key) const" function making the hash
-     * calculation.</li>
-     * </ol>
-     * @tparam K Hash type.
-     */
+    /// @brief Provides hash support for a type.
+    /// @tparam K Hash type.
+    ///
+    /// A hash implementation must satisfy the following requirements:
+    /// - <a
+    ///     href="https://en.cppreference.com/w/cpp/named_req/DefaultConstructible">DefaultConstructible</a>
+    /// - <a
+    ///     href="https://en.cppreference.com/w/cpp/named_req/CopyAssignable>CopyAssignable</a>
+    /// - Implement the "size_t operator()(const int& key) const" function making the hash
+    ///     calculation.
     template <class K>
     struct Hash;
 
@@ -615,7 +611,7 @@ namespace Rune {
         }
 
         template <typename U = RemoveCV<T>::type>
-        requires(!is_same<typename RemoveRef<U>::type, Optional<T>>::value)
+            requires(!is_same<typename RemoveRef<U>::type, Optional<T>>::value)
         Optional(U&& obj) : _has_value(true) {
             new (&_data) T(forward<T>(obj));
         }
