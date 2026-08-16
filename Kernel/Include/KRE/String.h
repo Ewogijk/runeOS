@@ -24,9 +24,9 @@
 #include <KRE/Collections/LinkedList.h>
 
 namespace Rune {
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                      String Formatting
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ========================================================================================== //
+    // String Formatting
+    // ========================================================================================== //
 
     class String;
 
@@ -169,9 +169,17 @@ namespace Rune {
     interpolate(const char* fmt, char* buf, size_t buf_size, const Argument* args, size_t arg_size)
         -> size_t;
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-    //                                          String class
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    // ========================================================================================== //
+    // String
+    // ========================================================================================== //
+
+    /// @brief A converter for objects of a type to a human-readable string representation.
+    /// @tparam T Type.
+    ///
+    /// Classes that want to provide a string representation provide a string representation struct
+    /// that implements the "auto operator()(const T& obj) const -> String" function.
+    template <class T>
+    struct StringRepresentation;
 
     class String {
         static constexpr U16 FMT_BUF_SIZE = 4096;
@@ -246,6 +254,23 @@ namespace Rune {
             const Argument arg_array[] = {args...}; // NOLINT unknown size, cannot size Array
             const size_t   arg_size    = sizeof...(Args);
             return format(fmt_str, arg_array, arg_size);
+        }
+
+        /// @brief Join the string representations of objects in the array with the given delimiter.
+        /// @tparam T Object type.
+        /// @param delim Delimiter to place between string representations of T.
+        /// @param array Array of T objects.
+        /// @param len Number of objects that will be joined.
+        /// @return A string of objects joined by delim.
+        template <typename T>
+        static auto join(const String& delim, T* array, size_t len) -> String {
+            StringRepresentation<T> str_repr;
+            String                  join_str;
+            for (size_t i = 0; i < len; i++) {
+                join_str += str_repr(array[i]);
+                if (i < len - 1) join_str += delim;
+            }
+            return join_str;
         }
 
         /**
@@ -380,7 +405,7 @@ namespace Rune {
     };
 
     // ========================================================================================== //
-    // String Conversions
+    // Number String Conversions
     // ========================================================================================== //
 
 #define RADIXES(X)                                                                                 \
@@ -460,6 +485,92 @@ namespace Rune {
         out *= sign;
         return true;
     }
+
+    // ========================================================================================== //
+    // String Representations of primitive types and String
+    // ========================================================================================== //
+
+    template <>
+    struct StringRepresentation<signed char> {
+        auto operator()(const signed char& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<char> {
+        auto operator()(const char& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<short> {
+        auto operator()(const short& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<int> {
+        auto operator()(const int& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<long> {
+        auto operator()(const long& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<long long> {
+        auto operator()(const long long& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<unsigned char> {
+        auto operator()(const unsigned char& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<unsigned short> {
+        auto operator()(const unsigned short& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<unsigned int> {
+        auto operator()(const unsigned int& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<unsigned long> {
+        auto operator()(const unsigned long& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<unsigned long long> {
+        auto operator()(const unsigned long long& obj) const -> String {
+            return String::format("{}", obj);
+        }
+    };
+
+    template <>
+    struct StringRepresentation<bool> {
+        auto operator()(const bool& obj) const -> String { return String::format("{}", obj); }
+    };
+
+    template <>
+    struct StringRepresentation<const char*> {
+        auto operator()(const char*& obj) const -> String { return {obj}; }
+    };
+
+    template <>
+    struct StringRepresentation<String> {
+        auto operator()(const String& obj) const -> String { return obj; }
+    };
 } // namespace Rune
 
 #endif // RUNEOS_STRING_H

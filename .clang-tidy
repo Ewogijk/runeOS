@@ -28,7 +28,8 @@ Checks: 'clang-diagnostic-*,
                   -readability-braces-around-statements,
                   -readability-use-anyofallof,
                   -readability-identifier-length,
-                  -readability-suspicious-call-argument'
+                  -readability-suspicious-call-argument,
+                  -readability-convert-member-functions-to-static'
 WarningsAsErrors: '*'
 UseColor: true
 CheckOptions:

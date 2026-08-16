@@ -185,7 +185,7 @@ namespace Rune {
         }
 
       public:
-        explicit LinkedList() : m_first(nullptr), m_last(nullptr) {}
+        LinkedList() : m_first(nullptr), m_last(nullptr) {}
 
         LinkedList(std::initializer_list<T> values) : m_first(nullptr), m_last(nullptr) {
             for (const auto& value : values) add_back(value);
@@ -311,30 +311,22 @@ namespace Rune {
         /// @brief Get the index of the element in the list.
         /// @param element
         /// @return The index of the element, or -1 if not found.
-        auto index_of(const T& element) const -> int {
-            return index_of0(element);
-        }
+        auto index_of(const T& element) const -> int { return index_of0(element); }
 
         /// @brief Get the index of the element in the list.
         /// @param element
         /// @return The index of the element, or -1 if not found.
-        auto index_of(const T& element) -> int {
-            return index_of0(element);
-        }
+        auto index_of(const T& element) -> int { return index_of0(element); }
 
         /// @brief Get the index of the element in the list.
         /// @param element
         /// @return The index of the element, or -1 if not found.
-        auto index_of(T&& element) const -> int {
-            return index_of0(move(element));
-        }
+        auto index_of(T&& element) const -> int { return index_of0(move(element)); }
 
         /// @brief Get the index of the element in the list.
         /// @param element
         /// @return The index of the element, or -1 if not found.
-        auto index_of(T&& element) -> int {
-            return index_of0(move(element));
-        }
+        auto index_of(T&& element) -> int { return index_of0(move(element)); }
 
         /// @brief
         /// @param element
@@ -375,6 +367,15 @@ namespace Rune {
                 c_idx++;
             }
             return curr->m_element;
+        }
+
+        /// @brief Transfer a copy of the list into the array.
+        /// @param array
+        void as_array(T* array) const {
+            size_t idx = 0;
+            for (auto& node : *this) {
+                array[idx++] = node;
+            }
         }
 
         [[nodiscard]] auto begin() const -> LinkedListIterator<T> {
