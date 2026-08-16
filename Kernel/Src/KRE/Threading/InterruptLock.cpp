@@ -16,7 +16,7 @@
 
 #include <KRE/Interrupt.h>
 
-namespace Rune::CPU {
+namespace Rune {
     // NOLINTBEGIN readability-convert-member-functions-to-static is intended
     void InterruptLock::lock() { interrupt_irq_disable(); }
 

@@ -401,7 +401,7 @@ namespace Rune::App {
         // Interrupts must be disabled during ELF loading because the VAS of the new app is
         // temporarily loaded, thus any allocations/frees during interrupt handling will be made in
         // the wrong VAS which leads to undefined behavior
-        CriticalSection<CPU::InterruptLock> _(_load_lock);
+        CriticalSection<InterruptLock> _(_load_lock);
         if (const VFS::IOStatus io_status =
                 _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {

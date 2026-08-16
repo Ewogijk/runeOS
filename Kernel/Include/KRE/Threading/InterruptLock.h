@@ -20,7 +20,7 @@
 
 #include <KRE/CPU.h>
 
-namespace Rune::CPU {
+namespace Rune {
     /// @brief A lock that enables/disables external interrupts intended to be used with a
     ///         critical section.
     class InterruptLock {
@@ -44,6 +44,6 @@ namespace Rune::CPU {
         /// @brief Restore the previously saved Flags register content and enable interrupts.
         void unlock() const;
     };
-} // namespace Rune::CPU
+} // namespace Rune
 
 #endif // RUNEOS_INTERRUPTLOCK_H
