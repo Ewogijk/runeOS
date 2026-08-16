@@ -16,9 +16,8 @@
 
 #include <KRE/Logging.h>
 
-#include "CPU/Threading/Scheduler.h"
-
 #include <KRE/Collections/RingBuffer.h>
+#include <KRE/Math.h>
 
 namespace Rune {
     // ====================================================================================== //
@@ -37,9 +36,8 @@ namespace Rune {
 
     auto resolve_to_none_handle() -> Ember::Handle { return Ember::HANDLE_NONE; }
 
-    ThreadResolver                       g_thread_resolver = &resolve_to_none_handle;
-    AppResolver                          g_app_resolver    = &resolve_to_none_handle;
-    Array<char, Ember::LOG_MESSAGE_SIZE> g_formatted_log_message_buf;
+    ThreadResolver g_thread_resolver = &resolve_to_none_handle;
+    AppResolver    g_app_resolver    = &resolve_to_none_handle;
 
     void log_configure_thread_resolver(ThreadResolver thread_resolver) {
         g_thread_resolver = move(thread_resolver);
@@ -63,12 +61,11 @@ namespace Rune {
         while (file[offset] != 0) {
             char c = file[offset];
             if (c == '/') file_name_begin = offset + 1;
-            if (c == '.') {
-                file_name_end = offset;
-                break;
-            }
+            if (c == '.') file_name_end = offset;
             offset++;
         }
+        // The last dot belongs to the path and not the file name -> the file has no extension.
+        if (file_name_end <= file_name_begin) file_name_end = offset;
 
         Ember::LogEvent evt{.m_log_level     = log_level,
                             .m_file_name     = {},
@@ -77,18 +74,16 @@ namespace Rune {
                             .m_thread_handle = g_thread_resolver(),
                             .m_message       = {}};
 
+        // Truncate file names to the ABI-defined size
+        size_t file_name_size = min(file_name_end - file_name_begin, Ember::LOG_FILE_NAME_SIZE - 1);
         // NOLINTBEGIN
-        memcpy(evt.m_file_name,
-               const_cast<char*>(&file[file_name_begin]),
-               file_name_end - file_name_begin);
+        memcpy(evt.m_file_name, const_cast<char*>(&file[file_name_begin]), file_name_size);
         // NOLINTEND
+        evt.m_file_name[file_name_size] = '\0';
 
-        size_t i = interpolate(log_message,
-                               g_formatted_log_message_buf.data(),
-                               Ember::LOG_MESSAGE_SIZE,
-                               args,
-                               arg_size);
-        memcpy(evt.m_message, g_formatted_log_message_buf.data(), i);
+        size_t i =
+            interpolate(log_message, evt.m_message, Ember::LOG_MESSAGE_SIZE - 1, args, arg_size);
+        evt.m_message[i] = '\0';
 
         g_kernel_log_buffer.append(move(evt));
     }

@@ -23,13 +23,7 @@
 #include <Ember/MachineBits.h>
 
 #include <KRE/Collections/Array.h>
-#include <KRE/Collections/HashMap.h>
 #include <KRE/Collections/RingBuffer.h>
-
-#include <KRE/Memory.h>
-#include <KRE/Stream.h>
-#include <KRE/String.h>
-#include <KRE/Utility.h>
 
 namespace Rune {
     // ====================================================================================== //
@@ -45,6 +39,13 @@ namespace Rune {
     // Fallback to 2^16=64KiB log buffer size storing up to 512 log events.
 #define LOG_BUFFER_SIZE 16
 #endif
+
+#define LOG_TRACE_ENABLED LOG_LEVEL <= LOG_LEVEL_TRACE
+#define LOG_DEBUG_ENABLED LOG_LEVEL <= LOG_LEVEL_DEBUG
+#define LOG_INFO_ENABLED  LOG_LEVEL <= LOG_LEVEL_INFO
+#define LOG_WARN_ENABLED  LOG_LEVEL <= LOG_LEVEL_WARN
+#define LOG_ERROR_ENABLED LOG_LEVEL <= LOG_LEVEL_ERROR
+#define LOG_FATAL_ENABLED LOG_LEVEL <= LOG_LEVEL_FATAL
 
     /// @brief
     /// @return A read cursor for the kernel log ringbuffer.
@@ -172,37 +173,37 @@ namespace Rune {
     // Macros
     // ====================================================================================== //
 
-#if LOG_LEVEL <= LOG_LEVEL_TRACE
+#if LOG_TRACE_ENABLED
 #define TRACE(log_message, ...) trace(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define TRACE(log_message, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_DEBUG
+#if LOG_DEBUG_ENABLED
 #define DEBUG(log_message, ...) debug(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define DEBUG(log_message, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_INFO
+#if LOG_INFO_ENABLED
 #define INFO(log_message, ...) info(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define INFO(log_message, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_WARN
+#if LOG_WARN_ENABLED
 #define WARN(log_message, ...) warn(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define WARN(log_message, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_ERROR
+#if LOG_ERROR_ENABLED
 #define ERROR(log_message, ...) error(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define ERROR(log_message, ...)
 #endif
 
-#if LOG_LEVEL <= LOG_LEVEL_FATAL
+#if LOG_FATAL_ENABLED
 #define FATAL(log_message, ...) fatal(__FILE__, __LINE__, log_message __VA_OPT__(, ) __VA_ARGS__);
 #else
 #define FATAL(log_message, ...)
