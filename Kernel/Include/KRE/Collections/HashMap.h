@@ -17,7 +17,7 @@ namespace Rune {
      */
     template <typename K, typename V>
     struct HashNode {
-        HashNode<K, V>* next;
+        HashNode<K, V>* next = nullptr;
         K               key;
         V               value;
 
@@ -233,7 +233,7 @@ namespace Rune {
             auto** old_bucket = _bucket;
             _bucket_count     = new_bucket_count;
             _bucket           = new_bucket;
-            delete old_bucket;
+            delete[] old_bucket;
         }
 
         auto put0(HashNode<K, V>* node) -> HashMapIterator<K, V> {
@@ -284,6 +284,8 @@ namespace Rune {
         }
 
         void free_nodes() {
+            if (_bucket == nullptr) return;
+
             for (size_t i = 0; i < _bucket_count; i++) {
                 HashNode<K, V>* node = _bucket[i];
                 while (node) {
@@ -293,7 +295,9 @@ namespace Rune {
                 }
                 _bucket[i] = nullptr;
             }
-            delete _bucket;
+            delete[] _bucket;
+            _bucket = nullptr;
+            _size   = 0;
         }
 
         void copy(const HashMap<K, V>& other) {
@@ -335,7 +339,9 @@ namespace Rune {
         void perform_lazy_init() {
             if (_bucket == nullptr) {
                 _bucket = new HashNode<K, V>*[_bucket_count];
-                memset(reinterpret_cast<void*>(_bucket), 0, sizeof(_bucket) * _bucket_count);
+                memset(reinterpret_cast<void*>(_bucket),
+                       0,
+                       sizeof(HashNode<K, V>*) * _bucket_count);
             }
         }
 
@@ -345,7 +351,7 @@ namespace Rune {
          *
          * @param hashFunc
          */
-        explicit HashMap()
+        HashMap()
             : _load_factor(DEFAULT_LOAD_FACTOR),
               _bucket_count(DEFAULT_BUCKET_COUNT),
               _bucket(nullptr),
@@ -381,39 +387,16 @@ namespace Rune {
         HashMap(const HashMap<K, V>& other) noexcept
             : _load_factor(other._load_factor),
               _bucket_count(other._bucket_count),
-              _bucket(new HashNode<K, V>*[_bucket_count]),
+              _bucket(nullptr),
               _size(other._size),
-              _hash(move(other._hash)) {
-
-            for (size_t i = 0; i < _bucket_count; i++) _bucket[i] = nullptr;
-
-            if (other._bucket == nullptr) {
-                // Other hash map has not run "perform_lazy_init" yet
-                return;
-            }
-
-            for (size_t i = 0; i < _bucket_count; i++) {
-                HashNode<K, V>* o_curr = other._bucket[i];
-                HashNode<K, V>* t_prev = nullptr;
-                while (o_curr) {
-                    auto* t_curr = new HashNode<K, V>(o_curr->key, o_curr->value);
-                    if (t_prev != nullptr) {
-                        t_prev->next = t_curr;
-                    }
-                    if (o_curr == other._bucket[i]) {
-                        _bucket[i] = t_curr;
-                    }
-                    t_prev = t_curr;
-                    o_curr = o_curr->next;
-                }
-            }
+              _hash(other._hash) {
             copy(other);
         }
+
         auto operator=(const HashMap<K, V>& other) noexcept -> HashMap& {
             if (this == &other) return *this;
-            HashMap<K, V> tmp(move(other));
-            free_nodes();
-            swap(tmp, other);
+            HashMap<K, V> tmp(other);
+            swap(*this, tmp);
             return *this;
         }
 
@@ -423,8 +406,8 @@ namespace Rune {
               _bucket(other._bucket),
               _size(other._size),
               _hash(other._hash) {
-            other._load_factor  = 0.0;
-            other._bucket_count = 0;
+            other._load_factor  = DEFAULT_LOAD_FACTOR;
+            other._bucket_count = DEFAULT_BUCKET_COUNT;
             other._bucket       = nullptr;
             other._size         = 0;
         }
@@ -432,7 +415,7 @@ namespace Rune {
         auto operator=(HashMap<K, V>&& other) noexcept -> HashMap& {
             if (this == &other) return *this;
             HashMap<K, V> tmp(move(other));
-            swap(tmp, other);
+            swap(*this, tmp);
             other._load_factor  = 0.0;
             other._bucket_count = 0;
             other._bucket       = nullptr;
