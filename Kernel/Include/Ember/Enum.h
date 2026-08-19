@@ -45,6 +45,9 @@ auto e_memcmp(const void* lhs, const void* rhs, size_t count) -> int;
 #define ENUM_CONSTRUCT_FROM_VALUE(ClassName, Name, Value)                                          \
     if (value == Value) _value = ClassName::Name; // NOLINT
 
+/// @brief String representation of the Enum NONE value.
+constexpr char const* g_ENUM_NONE = "NONE";
+
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 //                                          Typed Enum
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
@@ -130,7 +133,9 @@ auto e_memcmp(const void* lhs, const void* rhs, size_t count) -> int;
         EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                        \
     }                                                                                              \
                                                                                                    \
-    auto ClassName::to_string() const -> const char* { EnumDefs(ENUM_TO_STRING) return "NONE"; }   \
+    auto ClassName::to_string() const -> const char* {                                             \
+        EnumDefs(ENUM_TO_STRING) return g_ENUM_NONE;                                                 \
+    }                                                                                              \
                                                                                                    \
     auto ClassName::to_value() const -> EnumType { return (EnumType) _value; }                     \
                                                                                                    \
@@ -226,7 +231,9 @@ auto e_memcmp(const void* lhs, const void* rhs, size_t count) -> int;
         EnumDefs(ENUM_CONSTRUCT_FROM_VALUE)                                                        \
     }                                                                                              \
                                                                                                    \
-    auto ClassName::to_string() const -> const char* { EnumDefs(ENUM_TO_STRING) return "NONE"; }   \
+    auto ClassName::to_string() const -> const char* {                                             \
+        EnumDefs(ENUM_TO_STRING) return g_ENUM_NONE;                                                 \
+    }                                                                                              \
                                                                                                    \
     auto ClassName::to_value() const -> size_t { return (size_t) _value; }                         \
                                                                                                    \
