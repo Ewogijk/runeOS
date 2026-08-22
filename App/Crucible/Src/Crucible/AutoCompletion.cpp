@@ -27,7 +27,7 @@ namespace Crucible {
 
     auto AutoCompletion::list_directory(const std::string&            directory,
                                         std::vector<Ember::NodeInfo>& out) -> bool {
-        const Ember::ResourceID dir_stream_ID = Forge::vfs_directory_stream_open(directory.c_str());
+        const Ember::StatusCode dir_stream_ID = Forge::vfs_directory_stream_open(directory.c_str());
         if (dir_stream_ID < Ember::Status::OKAY) return false;
 
         Ember::NodeInfo   node_info;

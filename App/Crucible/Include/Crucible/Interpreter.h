@@ -17,12 +17,15 @@
 #ifndef CRUCIBLE_INTERPRETER_H
 #define CRUCIBLE_INTERPRETER_H
 
+#include <Ember/AppBits.h>
 #include <Ember/Ember.h>
 
 #include <Crucible/AST.h>
+#include <Crucible/Environment.h>
 #include <Crucible/Parser.h>
 
 #include <string>
+#include <unordered_map>
 
 namespace Crucible {
 
@@ -32,77 +35,27 @@ namespace Crucible {
         U8 blue;
     };
 
-    /**
-     * @brief State of the usual keyboard modifiers ctrl, etc.
-     */
-    struct KeyboardModifierState {
-        bool ctrl_pressed   = false;
-        bool shift_pressed  = false;
-        bool alt_pressed    = false;
-        bool alt_gr_pressed = false;
-        bool angry_mode_on  = false; // Caps lock
-    };
+    /// @brief Maps a virtual key to the ASCII char it produces on a german QWERTZ keyboard.
+    using KeyCodeDecoder = std::unordered_map<Ember::VirtualKey, char>;
 
     class Interpreter {
         static constexpr Pixel  GRAPE             = {.red = 0x6E, .green = 0x17, .blue = 0xB5};
-        static constexpr size_t MAX_ROWS          = 8;
-        static constexpr size_t MAX_COLS          = 32;
         static constexpr size_t INPUT_BUFFER_SIZE = 128;
 
-        // Maps a virtual keycode to an ascii char
-        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder = {
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '^',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',
-            '0',  '\0', '\0', '\b', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 'q',  'w',  'e',  'r',  't',
-            'z',  'u',  'i',  'o',  'p',  '\0', '+',  '\n', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 'a',
-            's',  'd',  'f',  'g',  'h',  'j',  'k',  'l',  '\0', '\0', '#',  '\n', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '<',  'y',  'x',  'c',  'v',  'b',  'n',  'm',  ',',  '.',  '-',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', ' ',  ' ',  ' ',  ' ',
-            ' ',  ' ',  '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+        // Decoding tables for the unmodified keys, the shift/caps lock layer and the alt gr layer.
+        static const KeyCodeDecoder DECODER;
+        static const KeyCodeDecoder DECODER_UPPER;
+        static const KeyCodeDecoder DECODER_ALT_GR;
 
-        // Maps a virtual keycode to an ascii char
-        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder_upper = {
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '!',  '"',  '\0', '$',  '%',  '&',  '/',  '(',  ')',
-            '=',  '?',  '`',  '\b', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 'Q',  'W',  'E',  'R',  'T',
-            'Z',  'U',  'I',  'O',  'P',  '\0', '*',  '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', 'A',
-            'S',  'D',  'F',  'G',  'H',  'J',  'K',  'L',  '\0', '\0', '\'', '\n', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '>',  'Y',  'X',  'C',  'V',  'B',  'N',  'M',  ';',  ':',  '_',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', ' ',  ' ',  ' ',  ' ',
-            ' ',  ' ',  '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+        /// @brief Decode a key event to the ASCII char produced by the pressed key and active
+        ///         modifiers.
+        /// @param key_event A key event.
+        /// @return The ASCII char of the key or '\0' if the key produces no ASCII char.
+        [[nodiscard]] auto decode(const Ember::KeyEvent& key_event) const -> char;
 
-        // Maps a virtual keycode to an ascii char
-        std::array<char, MAX_ROWS * MAX_COLS> _key_code_decoder_alt_gr = {
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '{',  '[',  ']',
-            '}',  '\\', '\0', '\b', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '@',  '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '~',  '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\n', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '|',  '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', ' ',  ' ',  ' ',  ' ',
-            ' ',  ' ',  '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-            '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
-
-        KeyboardModifierState _keyboard_modifier;
-        Environment           _env;
-        Parser                _parser;
+        bool        m_is_caps_on = false;
+        Environment _env;
+        Parser      _parser;
 
         void print_pretty_line_start() const;
 

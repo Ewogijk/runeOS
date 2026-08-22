@@ -30,7 +30,7 @@
 template <>
 struct std::hash<Ember::VirtualKey> {
     auto operator()(const Ember::VirtualKey& s) const noexcept -> std::size_t {
-        return std::hash<U16>{}(s.get_key_code());
+        return std::hash<U16>{}(s.to_value());
     }
 };
 

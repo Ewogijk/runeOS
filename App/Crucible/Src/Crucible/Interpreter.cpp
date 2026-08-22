@@ -26,6 +26,154 @@
 #include <vector>
 
 namespace Crucible {
+    const KeyCodeDecoder Interpreter::DECODER = {
+        {               Ember::VirtualKey::A,  'a'},
+        {               Ember::VirtualKey::B,  'b'},
+        {               Ember::VirtualKey::C,  'c'},
+        {               Ember::VirtualKey::D,  'd'},
+        {               Ember::VirtualKey::E,  'e'},
+        {               Ember::VirtualKey::F,  'f'},
+        {               Ember::VirtualKey::G,  'g'},
+        {               Ember::VirtualKey::H,  'h'},
+        {               Ember::VirtualKey::I,  'i'},
+        {               Ember::VirtualKey::J,  'j'},
+        {               Ember::VirtualKey::K,  'k'},
+        {               Ember::VirtualKey::L,  'l'},
+        {               Ember::VirtualKey::M,  'm'},
+        {               Ember::VirtualKey::N,  'n'},
+        {               Ember::VirtualKey::O,  'o'},
+        {               Ember::VirtualKey::P,  'p'},
+        {               Ember::VirtualKey::Q,  'q'},
+        {               Ember::VirtualKey::R,  'r'},
+        {               Ember::VirtualKey::S,  's'},
+        {               Ember::VirtualKey::T,  't'},
+        {               Ember::VirtualKey::U,  'u'},
+        {               Ember::VirtualKey::V,  'v'},
+        {               Ember::VirtualKey::W,  'w'},
+        {               Ember::VirtualKey::X,  'x'},
+        {               Ember::VirtualKey::Y,  'z'},
+        {               Ember::VirtualKey::Z,  'y'},
+        {             Ember::VirtualKey::ONE,  '1'},
+        {             Ember::VirtualKey::TWO,  '2'},
+        {           Ember::VirtualKey::THREE,  '3'},
+        {            Ember::VirtualKey::FOUR,  '4'},
+        {            Ember::VirtualKey::FIVE,  '5'},
+        {             Ember::VirtualKey::SIX,  '6'},
+        {           Ember::VirtualKey::SEVEN,  '7'},
+        {           Ember::VirtualKey::EIGHT,  '8'},
+        {            Ember::VirtualKey::NINE,  '9'},
+        {            Ember::VirtualKey::ZERO,  '0'},
+        {           Ember::VirtualKey::ENTER, '\n'},
+        {       Ember::VirtualKey::BACKSPACE, '\b'},
+        {           Ember::VirtualKey::SPACE,  ' '},
+        {           Ember::VirtualKey::EQUAL,  '`'}, // "´" on a german keyboard
+        {   Ember::VirtualKey::RIGHT_BRACKET,  '+'},
+        {       Ember::VirtualKey::BACKSLASH,  '#'},
+        {     Ember::VirtualKey::NON_US_HASH,  '#'},
+        {           Ember::VirtualKey::GRAVE,  '^'},
+        {           Ember::VirtualKey::COMMA,  ','},
+        {          Ember::VirtualKey::PERIOD,  '.'},
+        {           Ember::VirtualKey::SLASH,  '-'},
+        {Ember::VirtualKey::NON_US_BACKSLASH,  '<'},
+        {       Ember::VirtualKey::KP_DIVIDE,  '/'},
+        {     Ember::VirtualKey::KP_MULTIPLY,  '*'},
+        {        Ember::VirtualKey::KP_MINUS,  '-'},
+        {         Ember::VirtualKey::KP_PLUS,  '+'},
+        {        Ember::VirtualKey::KP_ENTER, '\n'},
+        {          Ember::VirtualKey::KP_ONE,  '1'},
+        {          Ember::VirtualKey::KP_TWO,  '2'},
+        {        Ember::VirtualKey::KP_THREE,  '3'},
+        {         Ember::VirtualKey::KP_FOUR,  '4'},
+        {         Ember::VirtualKey::KP_FIVE,  '5'},
+        {          Ember::VirtualKey::KP_SIX,  '6'},
+        {        Ember::VirtualKey::KP_SEVEN,  '7'},
+        {        Ember::VirtualKey::KP_EIGHT,  '8'},
+        {         Ember::VirtualKey::KP_NINE,  '9'},
+        {         Ember::VirtualKey::KP_ZERO,  '0'},
+        {       Ember::VirtualKey::KP_PERIOD,  '.'},
+    };
+
+    const KeyCodeDecoder Interpreter::DECODER_UPPER = {
+        {               Ember::VirtualKey::A,  'A'},
+        {               Ember::VirtualKey::B,  'B'},
+        {               Ember::VirtualKey::C,  'C'},
+        {               Ember::VirtualKey::D,  'D'},
+        {               Ember::VirtualKey::E,  'E'},
+        {               Ember::VirtualKey::F,  'F'},
+        {               Ember::VirtualKey::G,  'G'},
+        {               Ember::VirtualKey::H,  'H'},
+        {               Ember::VirtualKey::I,  'I'},
+        {               Ember::VirtualKey::J,  'J'},
+        {               Ember::VirtualKey::K,  'K'},
+        {               Ember::VirtualKey::L,  'L'},
+        {               Ember::VirtualKey::M,  'M'},
+        {               Ember::VirtualKey::N,  'N'},
+        {               Ember::VirtualKey::O,  'O'},
+        {               Ember::VirtualKey::P,  'P'},
+        {               Ember::VirtualKey::Q,  'Q'},
+        {               Ember::VirtualKey::R,  'R'},
+        {               Ember::VirtualKey::S,  'S'},
+        {               Ember::VirtualKey::T,  'T'},
+        {               Ember::VirtualKey::U,  'U'},
+        {               Ember::VirtualKey::V,  'V'},
+        {               Ember::VirtualKey::W,  'W'},
+        {               Ember::VirtualKey::X,  'X'},
+        {               Ember::VirtualKey::Y,  'Z'},
+        {               Ember::VirtualKey::Z,  'Y'},
+        {             Ember::VirtualKey::ONE,  '!'},
+        {             Ember::VirtualKey::TWO,  '"'},
+        // THREE is "§" on a german keyboard -> no ASCII char
+        {            Ember::VirtualKey::FOUR,  '$'},
+        {            Ember::VirtualKey::FIVE,  '%'},
+        {             Ember::VirtualKey::SIX,  '&'},
+        {           Ember::VirtualKey::SEVEN,  '/'},
+        {           Ember::VirtualKey::EIGHT,  '('},
+        {            Ember::VirtualKey::NINE,  ')'},
+        {            Ember::VirtualKey::ZERO,  '='},
+        {           Ember::VirtualKey::MINUS,  '?'}, // "ß" on a german keyboard
+        {           Ember::VirtualKey::ENTER, '\n'},
+        {       Ember::VirtualKey::BACKSPACE, '\b'},
+        {           Ember::VirtualKey::SPACE,  ' '},
+        {   Ember::VirtualKey::RIGHT_BRACKET,  '*'},
+        {       Ember::VirtualKey::BACKSLASH, '\''},
+        {     Ember::VirtualKey::NON_US_HASH, '\''},
+        {           Ember::VirtualKey::COMMA,  ';'},
+        {          Ember::VirtualKey::PERIOD,  ':'},
+        {           Ember::VirtualKey::SLASH,  '_'},
+        {Ember::VirtualKey::NON_US_BACKSLASH,  '>'},
+        {       Ember::VirtualKey::KP_DIVIDE,  '/'},
+        {     Ember::VirtualKey::KP_MULTIPLY,  '*'},
+        {        Ember::VirtualKey::KP_MINUS,  '-'},
+        {         Ember::VirtualKey::KP_PLUS,  '+'},
+        {        Ember::VirtualKey::KP_ENTER, '\n'},
+    };
+
+    const KeyCodeDecoder Interpreter::DECODER_ALT_GR = {
+        {               Ember::VirtualKey::Q,  '@'},
+        {           Ember::VirtualKey::SEVEN,  '{'},
+        {           Ember::VirtualKey::EIGHT,  '['},
+        {            Ember::VirtualKey::NINE,  ']'},
+        {            Ember::VirtualKey::ZERO,  '}'},
+        {           Ember::VirtualKey::MINUS, '\\'}, // "ß" on a german keyboard
+        {   Ember::VirtualKey::RIGHT_BRACKET,  '~'},
+        {Ember::VirtualKey::NON_US_BACKSLASH,  '|'},
+        {           Ember::VirtualKey::ENTER, '\n'},
+        {        Ember::VirtualKey::KP_ENTER, '\n'},
+        {       Ember::VirtualKey::BACKSPACE, '\b'},
+        {           Ember::VirtualKey::SPACE,  ' '},
+    };
+
+    auto Interpreter::decode(const Ember::KeyEvent& key_event) const -> char {
+        const KeyCodeDecoder* decoder = &DECODER;
+        if (key_event.is_lshift_down() || key_event.is_rshift_down() || m_is_caps_on) {
+            decoder = &DECODER_UPPER;
+        } else if (key_event.is_lalt_down() || key_event.is_ralt_down()) {
+            decoder = &DECODER_ALT_GR;
+        }
+        const auto ch = decoder->find(key_event.virtual_key());
+        return ch != decoder->end() ? ch->second : '\0';
+    }
+
     void Interpreter::print_pretty_line_start() const {
         std::cout << "\033[38;2;" << static_cast<int>(GRAPE.red) << ";"
                   << static_cast<int>(GRAPE.green) << ";" << static_cast<int>(GRAPE.blue) << "m"
@@ -53,7 +201,7 @@ namespace Crucible {
         }
     }
 
-    Interpreter::Interpreter() : _keyboard_modifier(), _env() {}
+    Interpreter::Interpreter() : _env() {}
 
     auto Interpreter::setup_environment(const char* wd) -> bool {
         _env.working_directory     = Path(wd);
@@ -71,44 +219,16 @@ namespace Crucible {
     auto Interpreter::run() -> void { // NOLINT
         print_pretty_line_start();
         while (true) {
-            if (Ember::VirtualKey key = Forge::app_read_stdin(); !key.is_none()) {
-                // NOLINTBEGIN Update modifiers
-                if ((key.get_row() == 4 && key.get_col() == 0)
-                    || (key.get_row() == 4 && key.get_col() == 12)) {
-                    _keyboard_modifier.shift_pressed = key.is_pressed();
+            if (Ember::KeyEvent key_event = Forge::app_read_stdin();
+                key_event != Ember::KeyEvent::NONE) {
+                if (key_event.virtual_key() == Ember::VirtualKey::CAPS_LOCK) {
+                    if (key_event.is_key_down()) m_is_caps_on = !m_is_caps_on;
                     continue;
                 }
-                if (key.get_row() == 5 && key.get_col() == 0) {
-                    _keyboard_modifier.ctrl_pressed = key.is_pressed();
-                    continue;
-                }
-                if (key.get_row() == 5 && key.get_col() == 2) {
-                    _keyboard_modifier.alt_pressed = key.is_pressed();
-                    continue;
-                }
-                if (key.get_row() == 5 && key.get_col() == 10) {
-                    _keyboard_modifier.alt_gr_pressed = key.is_pressed();
-                    continue;
-                }
-                if (key.get_row() == 3 && key.get_col() == 0) {
-                    if (key.is_pressed())
-                        _keyboard_modifier.angry_mode_on = !_keyboard_modifier.angry_mode_on;
-                    continue;
-                }
-                // NOLINTEND
 
-                if (key.is_pressed()) {
-                    // Convert keycode to ascii
-                    char         ch = '\0';
-                    const size_t kd_off =
-                        (key.get_row() * Ember::VirtualKey::MAX_COLS) + key.get_col();
-                    if (_keyboard_modifier.shift_pressed || _keyboard_modifier.angry_mode_on) {
-                        ch = _key_code_decoder_upper[kd_off];
-                    } else if (_keyboard_modifier.alt_gr_pressed) {
-                        ch = _key_code_decoder_alt_gr[kd_off];
-                    } else {
-                        ch = _key_code_decoder[kd_off];
-                    }
+                if (key_event.is_key_down()) {
+                    // Convert the virtual key to ascii
+                    const char ch = decode(key_event);
 
                     // Print if the pressed key is human-readable
                     if (ch != '\0') {
@@ -131,7 +251,7 @@ namespace Crucible {
                             default: _env.input_append(ch);
                         }
                     } else {
-                        if (auto action = _env.action_table.find(key);
+                        if (auto action = _env.action_table.find(key_event.virtual_key());
                             action != _env.action_table.end())
                             (action->second)(_env);
                     }
