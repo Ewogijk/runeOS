@@ -21,12 +21,14 @@
 #include <KRE/Threading/CriticalSection.h>
 #include <KRE/Threading/InterruptLock.h>
 
+#include <VirtualFileSystem/FileStream.h>
+
+#include <Device/KeyEventBuffer.h>
+
 #include <App/App.h>
 #include <App/ELFLoader.h>
 #include <App/TerminalStream.h>
 #include <App/VoidStream.h>
-
-#include <VirtualFileSystem/FileStream.h>
 
 namespace Rune::App {
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
@@ -364,7 +366,7 @@ namespace Rune::App {
         // Set the error stream also to the terminal stream, just print text in red
         app->std_err = app->std_out;
         // Hook up the stdin to the keyboard
-        app->std_in = SharedPointer<TextStream>(_dev_module->get_keyboard());
+        app->std_in = SharedPointer<TextStream>(new Device::KeyEventStream());
 
         _system_loader_handle =
             schedule_for_start(app,

@@ -24,17 +24,19 @@ namespace Rune::SystemCall {
         const auto* app_syscall_ctx = static_cast<AppSystemCallContext*>(sys_call_ctx);
         auto*       timer           = app_syscall_ctx->cpu_module->get_system_timer();
 
-        Ember::VirtualKey key(app_syscall_ctx->app_module->get_active_app()->std_in->read());
-        while (key.is_none()) {
+        Ember::KeyEvent key(
+            static_cast<U32>(app_syscall_ctx->app_module->get_active_app()->std_in->read()));
+        while (key == Ember::KeyEvent::NONE) {
             timer->sleep_milli(2); // 1ms is too fast, dunno why but nothing happens
-            key = Ember::VirtualKey(app_syscall_ctx->app_module->get_active_app()->std_in->read());
+            key = Ember::KeyEvent(
+                static_cast<U32>(app_syscall_ctx->app_module->get_active_app()->std_in->read()));
         }
-        U16   key_code        = key.get_key_code();
+        U32 key_code = key.event_code();
         auto* key_code_buffer = reinterpret_cast<U16*>(key_code_out);
         return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user(
                    reinterpret_cast<void*>(&key_code),
                    reinterpret_cast<void*>(key_code_buffer),
-                   2)
+                   4)
                    ? 0
                    : Ember::Status::BAD_ARG;
     }
