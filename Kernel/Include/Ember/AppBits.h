@@ -48,103 +48,255 @@ namespace Ember {
         char        argument[STRING_SIZE_LIMIT] = {}; // NOLINT
     };
 
-    /**
-     * @brief A virtual key on the virtual keyboard which defines the keyboard as a 2D matrix of
-     * keys. Each key is defined by its keycode which is an 16-bit unsigned integer defined as
-     * followed:
-     *
-     * <p>
-     *        15      14      13       9 8   4 2   0 <br>
-     *    | None | Released | Reserved | Col | Row |
-     * </p>
-     *
-     * <p>
-     *  Row     : Row of the key.<br>
-     *  Col     : Column of the key.<br>
-     *  Released: 1 - Key is released, 0 - Key is pressed<br>
-     *  None    : 1 - This key represents a "null" key, 0 - This key represents an actual key press.
-     * </p>
-     */
-    class VirtualKey {
-        U16 _key_code;
+    // ========================================================================================== //
+    // VirtualKey
+    // ========================================================================================== //
+
+#define VIRTUAL_KEYS(VK)                                                                           \
+    VK(VirtualKey, A, 0x04)                                                                        \
+    VK(VirtualKey, B, 0x05)                                                                        \
+    VK(VirtualKey, C, 0x06)                                                                        \
+    VK(VirtualKey, D, 0x07)                                                                        \
+    VK(VirtualKey, E, 0x08)                                                                        \
+    VK(VirtualKey, F, 0x09)                                                                        \
+    VK(VirtualKey, G, 0x0A)                                                                        \
+    VK(VirtualKey, H, 0x0B)                                                                        \
+    VK(VirtualKey, I, 0x0C)                                                                        \
+    VK(VirtualKey, J, 0x0D)                                                                        \
+    VK(VirtualKey, K, 0x0E)                                                                        \
+    VK(VirtualKey, L, 0x0F)                                                                        \
+    VK(VirtualKey, M, 0x10)                                                                        \
+    VK(VirtualKey, N, 0x11)                                                                        \
+    VK(VirtualKey, O, 0x12)                                                                        \
+    VK(VirtualKey, P, 0x13)                                                                        \
+    VK(VirtualKey, Q, 0x14)                                                                        \
+    VK(VirtualKey, R, 0x15)                                                                        \
+    VK(VirtualKey, S, 0x16)                                                                        \
+    VK(VirtualKey, T, 0x17)                                                                        \
+    VK(VirtualKey, U, 0x18)                                                                        \
+    VK(VirtualKey, V, 0x19)                                                                        \
+    VK(VirtualKey, W, 0x1A)                                                                        \
+    VK(VirtualKey, X, 0x1B)                                                                        \
+    VK(VirtualKey, Y, 0x1C)                                                                        \
+    VK(VirtualKey, Z, 0x1D)                                                                        \
+    VK(VirtualKey, ONE, 0x1E)                                                                      \
+    VK(VirtualKey, TWO, 0x1F)                                                                      \
+    VK(VirtualKey, THREE, 0x20)                                                                    \
+    VK(VirtualKey, FOUR, 0x21)                                                                     \
+    VK(VirtualKey, FIVE, 0x22)                                                                     \
+    VK(VirtualKey, SIX, 0x23)                                                                      \
+    VK(VirtualKey, SEVEN, 0x24)                                                                    \
+    VK(VirtualKey, EIGHT, 0x25)                                                                    \
+    VK(VirtualKey, NINE, 0x26)                                                                     \
+    VK(VirtualKey, ZERO, 0x27)                                                                     \
+    VK(VirtualKey, ENTER, 0x28)                                                                    \
+    VK(VirtualKey, ESCAPE, 0x29)                                                                   \
+    VK(VirtualKey, BACKSPACE, 0x2A)                                                                \
+    VK(VirtualKey, TAB, 0x2B)                                                                      \
+    VK(VirtualKey, SPACE, 0x2C)                                                                    \
+    VK(VirtualKey, MINUS, 0x2D)                                                                    \
+    VK(VirtualKey, EQUAL, 0x2E)                                                                    \
+    VK(VirtualKey, LEFT_BRACKET, 0x2F)                                                             \
+    VK(VirtualKey, RIGHT_BRACKET, 0x30)                                                            \
+    VK(VirtualKey, BACKSLASH, 0x31)                                                                \
+    VK(VirtualKey, NON_US_HASH, 0x32)                                                              \
+    VK(VirtualKey, SEMICOLON, 0x33)                                                                \
+    VK(VirtualKey, APOSTROPHE, 0x34)                                                               \
+    VK(VirtualKey, GRAVE, 0x35)                                                                    \
+    VK(VirtualKey, COMMA, 0x36)                                                                    \
+    VK(VirtualKey, PERIOD, 0x37)                                                                   \
+    VK(VirtualKey, SLASH, 0x38)                                                                    \
+    VK(VirtualKey, CAPS_LOCK, 0x39)                                                                \
+    VK(VirtualKey, F1, 0x3A)                                                                       \
+    VK(VirtualKey, F2, 0x3B)                                                                       \
+    VK(VirtualKey, F3, 0x3C)                                                                       \
+    VK(VirtualKey, F4, 0x3D)                                                                       \
+    VK(VirtualKey, F5, 0x3E)                                                                       \
+    VK(VirtualKey, F6, 0x3F)                                                                       \
+    VK(VirtualKey, F7, 0x40)                                                                       \
+    VK(VirtualKey, F8, 0x41)                                                                       \
+    VK(VirtualKey, F9, 0x42)                                                                       \
+    VK(VirtualKey, F10, 0x43)                                                                      \
+    VK(VirtualKey, F11, 0x44)                                                                      \
+    VK(VirtualKey, F12, 0x45)                                                                      \
+    VK(VirtualKey, PRINT_SCREEN, 0x46)                                                             \
+    VK(VirtualKey, SCROLL_LOCK, 0x47)                                                              \
+    VK(VirtualKey, PAUSE, 0x48)                                                                    \
+    VK(VirtualKey, INSERT, 0x49)                                                                   \
+    VK(VirtualKey, HOME, 0x4A)                                                                     \
+    VK(VirtualKey, PAGE_UP, 0x4B)                                                                  \
+    VK(VirtualKey, DELETE, 0x4C)                                                                   \
+    VK(VirtualKey, END, 0x4D)                                                                      \
+    VK(VirtualKey, PAGE_DOWN, 0x4E)                                                                \
+    VK(VirtualKey, ARROW_RIGHT, 0x4F)                                                              \
+    VK(VirtualKey, ARROW_LEFT, 0x50)                                                               \
+    VK(VirtualKey, ARROW_DOWN, 0x51)                                                               \
+    VK(VirtualKey, ARROW_UP, 0x52)                                                                 \
+    VK(VirtualKey, NUM_LOCK, 0x53)                                                                 \
+    VK(VirtualKey, KP_DIVIDE, 0x54)                                                                \
+    VK(VirtualKey, KP_MULTIPLY, 0x55)                                                              \
+    VK(VirtualKey, KP_MINUS, 0x56)                                                                 \
+    VK(VirtualKey, KP_PLUS, 0x57)                                                                  \
+    VK(VirtualKey, KP_ENTER, 0x58)                                                                 \
+    VK(VirtualKey, KP_ONE, 0x59)                                                                   \
+    VK(VirtualKey, KP_TWO, 0x5A)                                                                   \
+    VK(VirtualKey, KP_THREE, 0x5B)                                                                 \
+    VK(VirtualKey, KP_FOUR, 0x5C)                                                                  \
+    VK(VirtualKey, KP_FIVE, 0x5D)                                                                  \
+    VK(VirtualKey, KP_SIX, 0x5E)                                                                   \
+    VK(VirtualKey, KP_SEVEN, 0x5F)                                                                 \
+    VK(VirtualKey, KP_EIGHT, 0x60)                                                                 \
+    VK(VirtualKey, KP_NINE, 0x61)                                                                  \
+    VK(VirtualKey, KP_ZERO, 0x62)                                                                  \
+    VK(VirtualKey, KP_PERIOD, 0x63)                                                                \
+    VK(VirtualKey, NON_US_BACKSLASH, 0x64)                                                         \
+    VK(VirtualKey, APPLICATION, 0x65)
+
+    /// @brief 1-to-1 mapping of HID keyboard usages to virtual key codes.
+    DECLARE_TYPED_ENUM(VirtualKey, U8, VIRTUAL_KEYS, 0x0) // NOLINT
+
+    /// @brief A key event represents a pressed/released key and the active modifiers at the time
+    ///         of the key press.
+    ///
+    /// A key event is encoded by 32-bit unsigned integers as follows:
+    ///
+    ///   31     17     16     15      8  7        0<br>
+    /// | Reserved | KeyDown | Modifiers | VirtualKey |
+    ///
+    /// - VirtualKey: Virtual key code.
+    /// - Modifiers: Bitmap of pressed modifiers.
+    /// - KeyDown: 1 - The key was pressed, 0 - The key was released.
+    ///
+    /// The Modifiers bitmap is defined as:
+    ///
+    ///     15    14      13       12     11     10      9        8<br>
+    /// | RGUI | RALT | RSHIFT | RCTRL | LGUI | LALT | LSHIFT | LCTRL |
+    class KeyEvent {
+        union {
+            U32 m_as_u32;
+            struct {
+                U32 m_virtual_key : 8;
+                U32 m_lctrl       : 1;
+                U32 m_lshift      : 1;
+                U32 m_lalt        : 1;
+                U32 m_lgui        : 1; // e.g. Windows key, command key
+                U32 m_rctrl       : 1;
+                U32 m_rshift      : 1;
+                U32 m_ralt        : 1;
+                U32 m_rgui        : 1;
+                U32 m_key_down    : 1;
+                U32 m_reserved    : 15;
+            };
+        } m_event_code;
 
       public:
-        static constexpr U16    NONE_KEY_CODE = 0x8000;
-        static const VirtualKey NONE;
-        static constexpr U8     MAX_ROWS = 8;
-        static constexpr U8     MAX_COLS = 32;
+        static constexpr U32  EVENT_CODE_NONE = 0x0;
+        static const KeyEvent NONE;
 
-        /**
-         * Create virtual key code in the given row and col that has been released or pressed.
-         *
-         * @param row       Row.
-         * @param col       Column.
-         * @param released  True if the key has been released, false if pressed.
-         * @return A virtual key code.
-         */
-        static auto build(U8 row, U8 col, bool released) -> VirtualKey;
+        KeyEvent();
 
-        /**
-         * Create virtual key code in the given row and col that has been pressed.
-         *
-         * @param row       Row.
-         * @param col       Column.
-         * @return A virtual key code.
-         */
-        static auto build_pressed(U8 row, U8 col) -> VirtualKey;
+        explicit KeyEvent(U32 event_code);
 
-        /**
-         * Create virtual key code in the given row and col that has been released.
-         *
-         * @param row       Row.
-         * @param col       Column.
-         * @return A virtual key code.
-         */
-        static auto build_released(U8 row, U8 col) -> VirtualKey;
+        /// @brief
+        /// @return The virtual keycode
+        [[nodiscard]] auto event_code() const -> U32;
 
-        VirtualKey();
+        /// @brief
+        /// @return The virtual key code of the key.
+        [[nodiscard]] auto virtual_key() const -> VirtualKey;
 
-        explicit VirtualKey(U16 key_code);
+        /// @brief
+        /// @return True: The key was pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_key_down() const -> bool;
 
-        /**
-         *
-         * @return The integer representation of the key code.
-         */
-        [[nodiscard]] auto get_key_code() const -> U16;
+        /// @brief
+        /// @return True: Left Ctrl is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_lctrl_down() const -> bool;
 
-        /**
-         *
-         * @return Row position of the pressed key.
-         */
-        [[nodiscard]] auto get_row() const -> U8;
+        /// @brief
+        /// @return True: Left Shift is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_lshift_down() const -> bool;
 
-        /**
-         *
-         * @return Column position of the pressed key.
-         */
-        [[nodiscard]] auto get_col() const -> U8;
+        /// @brief
+        /// @return True: Left Alt is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_lalt_down() const -> bool;
 
-        /**
-         *
-         * @return True if the key is currently pressed.
-         */
-        [[nodiscard]] auto is_pressed() const -> bool;
+        /// @brief
+        /// @return True: Left GUI is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_lgui_down() const -> bool;
 
-        /**
-         *
-         * @return True if the key has been released.
-         */
-        [[nodiscard]] auto is_released() const -> bool;
+        /// @brief
+        /// @return True: Right Ctrl is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_rctrl_down() const -> bool;
 
-        /**
-         *
-         * @return True if this virtual key code represents a "null" key.
-         */
-        [[nodiscard]] auto is_none() const -> bool;
+        /// @brief
+        /// @return True: Right Shift is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_rshift_down() const -> bool;
 
-        friend auto operator==(const VirtualKey& one, const VirtualKey& two) -> bool;
+        /// @brief
+        /// @return True: Right Alt is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_ralt_down() const -> bool;
 
-        friend auto operator!=(const VirtualKey& one, const VirtualKey& two) -> bool;
+        /// @brief
+        /// @return True: Right GUI is pressed
+        ///         False: Otherwise
+        [[nodiscard]] auto is_rgui_down() const -> bool;
+
+        friend auto operator==(const KeyEvent& one, const KeyEvent& two) -> bool;
+
+        friend auto operator!=(const KeyEvent& one, const KeyEvent& two) -> bool;
+    };
+
+    // ========================================================================================== //
+    // Key Event Builder
+    // ========================================================================================== //
+
+    /// @brief Incrementally assembles the event code of a KeyEvent.
+    class KeyEventBuilder {
+        U32 m_event_code = 0x0;
+
+      public:
+        /// @brief Set the key that triggered the event.
+        auto with_virtual_key(Ember::VirtualKey vk) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the left Ctrl modifier.
+        auto with_lctrl(bool lctrl) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the left Shift modifier.
+        auto with_lshift(bool lshift) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the left Alt modifier.
+        auto with_lalt(bool lalt) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the left GUI modifier.
+        auto with_lgui(bool lgui) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the right Ctrl modifier.
+        auto with_rctrl(bool rctrl) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the right Shift modifier.
+        auto with_rshift(bool rshift) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the right Alt modifier.
+        auto with_ralt(bool ralt) -> KeyEventBuilder&;
+
+        /// @brief Set or clear the right GUI modifier.
+        auto with_rgui(bool rgui) -> KeyEventBuilder&;
+
+        /// @brief Mark the key as pressed (true) or released (false).
+        auto with_key_down(bool pressed) -> KeyEventBuilder&;
+
+        /// @brief
+        /// @return A key event with the configured key, modifiers and press state.
+        [[nodiscard]] auto build() const -> KeyEvent;
     };
 } // namespace Ember
 

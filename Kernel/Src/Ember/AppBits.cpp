@@ -16,63 +16,121 @@
 #include <Ember/AppBits.h>
 
 namespace Ember {
-    constexpr U8 ROW_MASK = 0x7;
-    constexpr U8 COL_MASK = 0x1F;
-
-    constexpr U8 COl_SHIFT      = 3;
-    constexpr U8 RELEASED_SHIFT = 14;
-    constexpr U8 NONE_SHIFT     = 15;
-
     DEFINE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0)
 
-    const VirtualKey VirtualKey::NONE = VirtualKey();
+    // ========================================================================================== //
+    // KeyEvent
+    // ========================================================================================== //
 
-    auto VirtualKey::build(const U8 row, const U8 col, bool released) -> VirtualKey {
-        U16 key_code  = (row & ROW_MASK);
-        key_code     |= (col & COL_MASK) << COl_SHIFT;
-        key_code     |= (static_cast<int>(released) << RELEASED_SHIFT);
-        return VirtualKey(key_code);
+    DEFINE_TYPED_ENUM(VirtualKey, U8, VIRTUAL_KEYS, 0x0)
+
+    const KeyEvent KeyEvent::NONE = KeyEvent();
+
+    KeyEvent::KeyEvent() : m_event_code(EVENT_CODE_NONE) {}
+
+    KeyEvent::KeyEvent(const U32 event_code) : m_event_code(event_code) {}
+
+    auto KeyEvent::event_code() const -> U32 { return m_event_code.m_as_u32; }
+
+    auto KeyEvent::virtual_key() const -> VirtualKey {
+        return VirtualKey(static_cast<U8>(m_event_code.m_virtual_key));
     }
 
-    auto VirtualKey::build_pressed(const U8 row, const U8 col) -> VirtualKey {
-        return build(row, col, false);
+    auto KeyEvent::is_key_down() const -> bool { return m_event_code.m_key_down > 0; }
+
+    auto KeyEvent::is_lctrl_down() const -> bool { return m_event_code.m_lctrl > 0; }
+
+    auto KeyEvent::is_lshift_down() const -> bool { return m_event_code.m_lshift > 0; }
+
+    auto KeyEvent::is_lalt_down() const -> bool { return m_event_code.m_lalt > 0; }
+
+    auto KeyEvent::is_lgui_down() const -> bool { return m_event_code.m_lgui > 0; }
+
+    auto KeyEvent::is_rctrl_down() const -> bool { return m_event_code.m_rctrl > 0; }
+
+    auto KeyEvent::is_rshift_down() const -> bool { return m_event_code.m_rshift > 0; }
+
+    auto KeyEvent::is_ralt_down() const -> bool { return m_event_code.m_ralt > 0; }
+
+    auto KeyEvent::is_rgui_down() const -> bool { return m_event_code.m_rgui > 0; }
+
+    auto operator==(const KeyEvent& one, const KeyEvent& two) -> bool {
+        return one.m_event_code.m_as_u32 == two.m_event_code.m_as_u32;
     }
 
-    auto VirtualKey::build_released(const U8 row, const U8 col) -> VirtualKey {
-        return build(row, col, true);
+    auto operator!=(const KeyEvent& one, const KeyEvent& two) -> bool {
+        return one.m_event_code.m_as_u32 != two.m_event_code.m_as_u32;
     }
 
-    VirtualKey::VirtualKey() : _key_code(NONE_KEY_CODE) {}
+    // ========================================================================================== //
+    // Key Event Builder
+    // ========================================================================================== //
 
-    VirtualKey::VirtualKey(const U16 key_code) : _key_code(key_code) {}
+    constexpr U32 VIRTUAL_KEY_MASK = 0xFF;
 
-    auto VirtualKey::get_key_code() const -> U16 { return _key_code; }
+    constexpr U8 LCTRL_OFFSET    = 8;
+    constexpr U8 LSHIFT_OFFSET   = 9;
+    constexpr U8 LALT_OFFSET     = 10;
+    constexpr U8 LGUI_OFFSET     = 11;
+    constexpr U8 RCTRL_OFFSET    = 12;
+    constexpr U8 RSHIFT_OFFSET   = 13;
+    constexpr U8 RALT_OFFSET     = 14;
+    constexpr U8 RGUI_OFFSET     = 15;
+    constexpr U8 KEY_DOWN_OFFSET = 16;
 
-    auto VirtualKey::get_row() const -> U8 {
-        return _key_code & ROW_MASK; // key_code & 00000000000000111
+    auto bit_modify(U32 num, U8 bit_offset, bool bit_value) -> U32 {
+        return bit_value ? num | (1 << bit_offset) : num & ~(1 << bit_offset);
     }
 
-    auto VirtualKey::get_col() const -> U8 {
-        return (_key_code >> COl_SHIFT) & COL_MASK; // key_code & 00000000001111000
+    auto KeyEventBuilder::with_virtual_key(const VirtualKey vk) -> KeyEventBuilder& {
+        m_event_code = (m_event_code & ~VIRTUAL_KEY_MASK) | vk.to_value();
+        return *this;
     }
 
-    auto VirtualKey::is_pressed() const -> bool {
-        return ((_key_code >> RELEASED_SHIFT) & 0x1) == 0;
+    auto KeyEventBuilder::with_lctrl(const bool lctrl) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, LCTRL_OFFSET, lctrl);
+        return *this;
     }
 
-    auto VirtualKey::is_released() const -> bool {
-        return ((_key_code >> RELEASED_SHIFT) & 0x1) == 1; // key_code & 010000000000000000
+    auto KeyEventBuilder::with_lshift(const bool lshift) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, LSHIFT_OFFSET, lshift);
+        return *this;
     }
 
-    auto VirtualKey::is_none() const -> bool {
-        return ((_key_code >> NONE_SHIFT) & 0x1) != 0; // key_code & 100000000000000000
+    auto KeyEventBuilder::with_lalt(const bool lalt) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, LALT_OFFSET, lalt);
+        return *this;
     }
 
-    auto operator==(const VirtualKey& one, const VirtualKey& two) -> bool {
-        return one.get_row() == two.get_row() && one.get_col() == two.get_col();
+    auto KeyEventBuilder::with_lgui(const bool lgui) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, LGUI_OFFSET, lgui);
+        return *this;
     }
 
-    auto operator!=(const VirtualKey& one, const VirtualKey& two) -> bool {
-        return one.get_row() != two.get_row() || one.get_col() != two.get_col();
+    auto KeyEventBuilder::with_rctrl(const bool rctrl) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, RCTRL_OFFSET, rctrl);
+        return *this;
     }
+
+    auto KeyEventBuilder::with_rshift(const bool rshift) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, RSHIFT_OFFSET, rshift);
+        return *this;
+    }
+
+    auto KeyEventBuilder::with_ralt(const bool ralt) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, RALT_OFFSET, ralt);
+        return *this;
+    }
+
+    auto KeyEventBuilder::with_rgui(const bool rgui) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, RGUI_OFFSET, rgui);
+        return *this;
+    }
+
+    auto KeyEventBuilder::with_key_down(const bool pressed) -> KeyEventBuilder& {
+        m_event_code = bit_modify(m_event_code, KEY_DOWN_OFFSET, pressed);
+        return *this;
+    }
+
+    auto KeyEventBuilder::build() const -> KeyEvent { return KeyEvent(m_event_code); }
 } // namespace Ember
