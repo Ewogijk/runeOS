@@ -66,7 +66,7 @@ namespace Crucible {
      * @return
      */
     auto find_target_app(const Path& dir, const Path& target_file) -> Path {
-        if (const Ember::ResourceID dir_stream_ID =
+        if (const Ember::StatusCode dir_stream_ID =
                 Forge::vfs_directory_stream_open(dir.to_string().c_str());
             dir_stream_ID > Ember::Status::OKAY) {
             // Search for the app
@@ -177,7 +177,7 @@ namespace Crucible {
                        redirect_file_str.c_str(),
                        redirect_file_str.size());
             }
-            const Ember::ResourceID app_ID =
+            const Ember::StatusCode app_ID =
                 Forge::app_start(target_app.to_string().c_str(),
                                  const_cast<const char**>(argv),
                                  wd.to_string().c_str(),

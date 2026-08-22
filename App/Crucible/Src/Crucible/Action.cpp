@@ -115,19 +115,11 @@ namespace Crucible {
     }
 
     void register_hotkey_actions(Environment& shell_env) {
-        // NOLINTBEGIN Arrow up
-        shell_env.action_table[Ember::VirtualKey::build(4, 15, false)] = &command_history_scroll_up;
-        // Arrow down
-        shell_env.action_table[Ember::VirtualKey::build(5, 15, false)] =
-            &command_history_scroll_down;
-        // Arrow left
-        shell_env.action_table[Ember::VirtualKey::build(5, 14, false)] = &cursor_move_left;
-        // Arrow right
-        shell_env.action_table[Ember::VirtualKey::build(5, 16, false)] = &cursor_move_right;
-        // Entf
-        shell_env.action_table[Ember::VirtualKey::build(3, 14, false)] = &delete_forward;
-        // Tab
-        shell_env.action_table[Ember::VirtualKey::build(2, 0, false)] = &perform_auto_completion;
-        // NOLINTEND
+        shell_env.action_table[Ember::VirtualKey::ARROW_UP]    = &command_history_scroll_up;
+        shell_env.action_table[Ember::VirtualKey::ARROW_DOWN]  = &command_history_scroll_down;
+        shell_env.action_table[Ember::VirtualKey::ARROW_LEFT]  = &cursor_move_left;
+        shell_env.action_table[Ember::VirtualKey::ARROW_RIGHT] = &cursor_move_right;
+        shell_env.action_table[Ember::VirtualKey::DELETE]      = &delete_forward;
+        shell_env.action_table[Ember::VirtualKey::TAB]         = &perform_auto_completion;
     }
 } // namespace Crucible
