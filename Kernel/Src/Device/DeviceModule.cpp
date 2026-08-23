@@ -175,11 +175,6 @@ namespace Rune::Device {
     // Device API
     // ========================================================================================== //
 
-    auto DeviceModule::get_keyboard() -> VirtualKeyboard* {
-        return static_cast<VirtualKeyboard*>(
-            find_device_driver(&PS2Keyboard::ID_PS2_KEYBOARD).get());
-    }
-
     auto DeviceModule::get_device_handle() -> Handle { return m_device_handle_counter.acquire(); }
 
     auto DeviceModule::device_tree() const -> const SharedPointer<Device>& { return m_device_tree; }

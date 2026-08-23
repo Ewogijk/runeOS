@@ -20,6 +20,10 @@
 
 #include <CPU/IO.h>
 
+#include <KRE/BitsAndBytes.h>
+
+#include <Device/KeyEventBuffer.h>
+
 namespace Rune::Device {
 #define PORTS(X)                                                                                   \
     X(Port, DATA, 0x60)                                                                            \
@@ -51,89 +55,197 @@ namespace Rune::Device {
     //                                          PS2 Scan Code Set 1
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    // The scan code set defines 6 rows and 21 columns of keys
-    constexpr U8 SCAN_SET_ONE_ROWS = 6;
-    constexpr U8 SCAN_SET_ONE_COLS = 21;
-    // NOLINTBEGIN Note that a single key may span multiple rows or columns e.g. the space bar
-    U8 SCAN_CODES[SCAN_SET_ONE_ROWS * SCAN_SET_ONE_COLS] = {
-        0x01, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x43, 0x44,
-        0x57, 0x58, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Row 0 end
-        0x29, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
-        0x0C, 0x0D, 0x0E, 0x00, 0x46, 0x00, 0x45, 0x00, 0x37, 0x4A, // Row 1 end
-        0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
-        0x1A, 0x1B, 0x1C, 0x00, 0x00, 0x00, 0x47, 0x48, 0x49, 0x4E, // Row 2 end
-        0x3A, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-        0x28, 0x2B, 0x1C, 0x00, 0x00, 0x00, 0x4B, 0x4C, 0x4D, 0x4E, // Row 3 end
-        0x2A, 0x56, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34,
-        0x35, 0x36, 0x00, 0x00, 0x00, 0x00, 0x4F, 0x50, 0x51, 0x00, // Row 4 end
-        0x1D, 0x00, 0x38, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x52, 0x52, 0x53, 0x00 // Row 5 end
+    /// @brief Scan code set 1 defines make codes in the 0x00-0x7F range, the break code of a key is
+    ///         it's make code with the break code flag set.
+    constexpr U8 MAKE_CODE_COUNT = 0x80;
+    constexpr U8 BREAK_CODE_FLAG = 0x80;
+
+    using Key = Ember::VirtualKey;
+
+    /// @brief Maps a scan code set 1 make code to it's virtual key.
+    ///
+    /// Make codes that are not listed are implicitly Key::NONE, that is the key is either unknown
+    /// or a modifier key, which is decoded by "decode_modifier_bit" instead.
+    // clang-format off
+    constexpr Key::_E SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
+        /* 0x00 */ Key::NONE,          Key::ESCAPE,        Key::ONE,           Key::TWO,
+        /* 0x04 */ Key::THREE,         Key::FOUR,          Key::FIVE,          Key::SIX,
+        /* 0x08 */ Key::SEVEN,         Key::EIGHT,         Key::NINE,          Key::ZERO,
+        /* 0x0C */ Key::MINUS,         Key::EQUAL,         Key::BACKSPACE,     Key::TAB,
+        /* 0x10 */ Key::Q,             Key::W,             Key::E,             Key::R,
+        /* 0x14 */ Key::T,             Key::Y,             Key::U,             Key::I,
+        /* 0x18 */ Key::O,             Key::P,             Key::LEFT_BRACKET,  Key::RIGHT_BRACKET,
+        /* 0x1C */ Key::ENTER,         Key::NONE,          Key::A,             Key::S,
+        /* 0x20 */ Key::D,             Key::F,             Key::G,             Key::H,
+        /* 0x24 */ Key::J,             Key::K,             Key::L,             Key::SEMICOLON,
+        /* 0x28 */ Key::APOSTROPHE,    Key::GRAVE,         Key::NONE,          Key::BACKSLASH,
+        /* 0x2C */ Key::Z,             Key::X,             Key::C,             Key::V,
+        /* 0x30 */ Key::B,             Key::N,             Key::M,             Key::COMMA,
+        /* 0x34 */ Key::PERIOD,        Key::SLASH,         Key::NONE,          Key::KP_MULTIPLY,
+        /* 0x38 */ Key::NONE,          Key::SPACE,         Key::CAPS_LOCK,     Key::F1,
+        /* 0x3C */ Key::F2,            Key::F3,            Key::F4,            Key::F5,
+        /* 0x40 */ Key::F6,            Key::F7,            Key::F8,            Key::F9,
+        /* 0x44 */ Key::F10,           Key::NUM_LOCK,      Key::SCROLL_LOCK,   Key::KP_SEVEN,
+        /* 0x48 */ Key::KP_EIGHT,      Key::KP_NINE,       Key::KP_MINUS,      Key::KP_FOUR,
+        /* 0x4C */ Key::KP_FIVE,       Key::KP_SIX,        Key::KP_PLUS,       Key::KP_ONE,
+        /* 0x50 */ Key::KP_TWO,        Key::KP_THREE,      Key::KP_ZERO,       Key::KP_PERIOD,
+        /* 0x54 */ Key::NONE,          Key::NONE,          Key::NON_US_BACKSLASH, Key::F11,
+        /* 0x58 */ Key::F12,
     };
 
-    // E0 scan codes
-    U8 E0_SCAN_CODES[SCAN_SET_ONE_ROWS * SCAN_SET_ONE_COLS] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x5F, 0x63, 0x5E, 0x00, 0x00, 0x00, 0x00, 0x00, // Row 0 end
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x35, 0x00, 0x00, // Row 1 end
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x52, 0x47, 0x49, 0x00, 0x00, 0x00, 0x00, // Row 2 end
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x53, 0x4F, 0x51, 0x00, 0x00, 0x00, 0x00, // Row 3 end
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x1C, // Row 4 end
-        0x00, 0x5B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x38,
-        0x5C, 0x5D, 0x1D, 0x4B, 0x50, 0x4D, 0x00, 0x00, 0x00, 0x1C // Row 5 end
+    /// @brief Maps a scan code set 1 make code that is prefixed with the extended byte to it's
+    ///         virtual key.
+    constexpr Key::_E E_0_SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
+        /* 0x00 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x04 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x08 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x0C */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x10 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x14 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x18 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x1C */ Key::KP_ENTER,      Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x20 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x24 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x28 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x2C */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x30 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x34 */ Key::NONE,          Key::KP_DIVIDE,     Key::NONE,          Key::PRINT_SCREEN,
+        /* 0x38 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x3C */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x40 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x44 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::HOME,
+        /* 0x48 */ Key::ARROW_UP,      Key::PAGE_UP,       Key::NONE,          Key::ARROW_LEFT,
+        /* 0x4C */ Key::NONE,          Key::ARROW_RIGHT,   Key::NONE,          Key::END,
+        /* 0x50 */ Key::ARROW_DOWN,    Key::PAGE_DOWN,     Key::INSERT,        Key::DELETE,
+        /* 0x54 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x58 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
+        /* 0x5C */ Key::NONE,          Key::APPLICATION,
     };
+    // clang-format on
 
-    // Keycode decoder maps a scan code to it's virtual keycode
-    constexpr U8                                SCANCODE_MAX_SIZE = 255;
-    Array<Ember::VirtualKey, SCANCODE_MAX_SIZE> SCAN_CODE_DECODER;
-    Array<Ember::VirtualKey, SCANCODE_MAX_SIZE> E_0_SCAN_CODE_DECODER;
-    // NOLINTEND
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
+    //                                          Key Events
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    void insert_key_code(Array<Ember::VirtualKey, SCANCODE_MAX_SIZE>& decoder,
-                         U8                                           scan_code,
-                         U8                                           row,
-                         U8                                           col) {
-        constexpr U8 KEY_RELEASED_PREFIX         = 0x80;
-        decoder[scan_code]                       = Ember::VirtualKey::build_pressed(row, col);
-        decoder[scan_code | KEY_RELEASED_PREFIX] = Ember::VirtualKey::build_released(row, col);
-    }
+    // Bit positions of the modifier keys, matches the HID keyboard modifier byte layout
+    constexpr U8 LCTRL_BIT  = 0;
+    constexpr U8 LSHIFT_BIT = 1;
+    constexpr U8 LALT_BIT   = 2;
+    constexpr U8 LGUI_BIT   = 3;
+    constexpr U8 RCTRL_BIT  = 4;
+    constexpr U8 RSHIFT_BIT = 5;
+    constexpr U8 RALT_BIT   = 6;
+    constexpr U8 RGUI_BIT   = 7;
 
-    void init_scan_set_one() {
-        for (U8 i = 0; i < SCAN_SET_ONE_ROWS; i++) {
-            for (U8 j = 0; j < SCAN_SET_ONE_COLS; j++) {
-                U8 pos = (i * SCAN_SET_ONE_COLS) + j;
-                // NOLINTBEGIN
-                U8 scan_code = SCAN_CODES[pos];
-                if (scan_code > 0) insert_key_code(SCAN_CODE_DECODER, scan_code, i, j);
-                U8 e_0_scan_code = E0_SCAN_CODES[pos];
-                if (e_0_scan_code > 0) insert_key_code(E_0_SCAN_CODE_DECODER, e_0_scan_code, i, j);
-                // NOLINTEND
+    /// @brief Returned by "decode_modifier_bit" when a make code is not a modifier key.
+    constexpr U8 NO_MODIFIER_BIT = 0xFF;
+
+    // Make codes of the modifier keys, the extended ones are prefixed with the extended byte
+    constexpr U8 MAKE_CODE_CTRL     = 0x1D;
+    constexpr U8 MAKE_CODE_LSHIFT   = 0x2A;
+    constexpr U8 MAKE_CODE_RSHIFT   = 0x36;
+    constexpr U8 MAKE_CODE_ALT      = 0x38;
+    constexpr U8 MAKE_CODE_E_0_LGUI = 0x5B;
+    constexpr U8 MAKE_CODE_E_0_RGUI = 0x5C;
+
+    /// @brief Decode the modifier key that is identified by a make code.
+    /// @param make_code A scan code set 1 make code.
+    /// @param extended True: The make code was prefixed with the extended byte.
+    /// @return The bit position of the modifier key in the modifier bitmap or NO_MODIFIER_BIT if
+    ///         the make code does not belong to a modifier key.
+    auto decode_modifier_bit(U8 make_code, bool extended) -> U8 {
+        if (extended) {
+            switch (make_code) {
+                case MAKE_CODE_CTRL:     return RCTRL_BIT;
+                case MAKE_CODE_ALT:      return RALT_BIT;
+                case MAKE_CODE_E_0_LGUI: return LGUI_BIT;
+                case MAKE_CODE_E_0_RGUI: return RGUI_BIT;
+                default:                 return NO_MODIFIER_BIT;
             }
         }
+        switch (make_code) {
+            case MAKE_CODE_CTRL:   return LCTRL_BIT;
+            case MAKE_CODE_LSHIFT: return LSHIFT_BIT;
+            case MAKE_CODE_RSHIFT: return RSHIFT_BIT;
+            case MAKE_CODE_ALT:    return LALT_BIT;
+            default:               return NO_MODIFIER_BIT;
+        }
+    }
+
+    /// @brief Build the key event for a pressed/released key.
+    /// @param vk        Virtual key of the pressed/released key.
+    /// @param modifiers Modifier bitmap of the currently pressed modifier keys.
+    /// @param key_down  True: The key was pressed, False: The key was released.
+    /// @return The key event.
+    auto build_ps2_key_event(Ember::VirtualKey vk, U8 modifiers, bool key_down) -> Ember::KeyEvent {
+        return Ember::KeyEventBuilder()
+            .with_virtual_key(vk)
+            .with_lctrl(bit_check(modifiers, LCTRL_BIT))
+            .with_lshift(bit_check(modifiers, LSHIFT_BIT))
+            .with_lalt(bit_check(modifiers, LALT_BIT))
+            .with_lgui(bit_check(modifiers, LGUI_BIT))
+            .with_rctrl(bit_check(modifiers, RCTRL_BIT))
+            .with_rshift(bit_check(modifiers, RSHIFT_BIT))
+            .with_ralt(bit_check(modifiers, RALT_BIT))
+            .with_rgui(bit_check(modifiers, RGUI_BIT))
+            .with_key_down(key_down)
+            .build();
     }
 
     const BasicDeviceID PS2Keyboard::ID_PS2_KEYBOARD("PS2 Keyboard");
 
     PS2Keyboard::PS2Keyboard()
-        : _key_code_cache(),
-          _irq_handler([](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+        : _irq_handler([](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
               SILENCE_UNUSED(i_frame);
               return CPU::InterruptState::PENDING;
           }) {}
 
-    auto PS2Keyboard::read() -> int {
-        if (_start == _end) return Ember::VirtualKey::NONE_KEY_CODE;
-        int key_code = _key_code_cache[_start];
-        _start       = (_start + 1) % RING_BUFFER_SIZE;
-        return key_code;
-    }
+    void PS2Keyboard::handle_scan_code(U8 scan_code) {
+        if (_pause_bytes_left > 0) {
+            // The pause key sends "E1 1D 45" when it is pressed and "E1 9D C5" when it is
+            // released, only the break code flag of the first byte after the pause byte tells
+            // both sequences apart.
+            if (_pause_bytes_left == PAUSE_SEQUENCE_LENGTH)
+                _pause_key_down = (scan_code & BREAK_CODE_FLAG) == 0;
+            _pause_bytes_left--;
+            if (_pause_bytes_left == 0)
+                g_key_event_buffer.append(
+                    build_ps2_key_event(Ember::VirtualKey::PAUSE, _modifiers, _pause_key_down));
+            return;
+        }
 
-    void PS2Keyboard::flush() {
-        _start = 0;
-        _end   = 0;
+        if (scan_code == PAUSE_BYTE) {
+            _pause_bytes_left = PAUSE_SEQUENCE_LENGTH;
+            return;
+        }
+
+        if (scan_code == EXTENDED_BYTE) {
+            _wait_key_e0 = true;
+            return;
+        }
+
+        // Clear the flag for unknown extended scan codes too, e.g. the fake shifts that are sent
+        // with the print screen key, else the next key would be decoded with the E0 table.
+        const bool extended = _wait_key_e0;
+        _wait_key_e0        = false;
+
+        const bool key_down  = (scan_code & BREAK_CODE_FLAG) == 0;
+        const U8   make_code = scan_code & ~BREAK_CODE_FLAG;
+
+        const U8 modifier_bit = decode_modifier_bit(make_code, extended);
+        if (modifier_bit != NO_MODIFIER_BIT) {
+            // Modifier keys have no virtual key, they are only reported as part of the key events
+            // of the other keys.
+            _modifiers =
+                key_down ? bit_set(_modifiers, modifier_bit) : bit_clear(_modifiers, modifier_bit);
+            return;
+        }
+
+        Ember::VirtualKey key =
+            extended ? E_0_SCAN_CODE_DECODER[make_code] : SCAN_CODE_DECODER[make_code];
+        if (key == Ember::VirtualKey::NONE) return;
+
+        g_key_event_buffer.append(build_ps2_key_event(key, _modifiers, key_down));
     }
 
     auto PS2Keyboard::vendor() const -> String { return "Ewogjik"; };
@@ -146,24 +258,9 @@ namespace Rune::Device {
 
     auto PS2Keyboard::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)
-        init_scan_set_one();
-
         _irq_handler = [this](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
             SILENCE_UNUSED(i_frame);
-            U8 scan_code = CPU::in_b(DATA_REGISTER);
-            if (scan_code == EXTENDED_BYTE) {
-                _wait_key_e0 = true;
-                return CPU::InterruptState::HANDLED;
-            }
-
-            Ember::VirtualKey key =
-                _wait_key_e0 ? E_0_SCAN_CODE_DECODER[scan_code] : SCAN_CODE_DECODER[scan_code];
-            if (!key.is_none()) {
-                _key_code_cache[_end] = key.get_key_code();
-                _end                  = (_end + 1) % RING_BUFFER_SIZE;
-
-                if (_wait_key_e0) _wait_key_e0 = false;
-            }
+            handle_scan_code(CPU::in_b(DATA_REGISTER));
             return CPU::InterruptState::HANDLED;
         };
         return CPU::irq_install_handler(1, 0, "PS2 Keyboard", _irq_handler);
