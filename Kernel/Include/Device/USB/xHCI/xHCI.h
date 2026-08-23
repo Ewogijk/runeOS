@@ -85,6 +85,8 @@ namespace Rune::Device::USB {
         U8                                 m_count          = 0;
         U8                                 m_pending_events = 0;
         TransferResponse*                  m_response       = nullptr;
+        U8                                 m_slot_ID        = 0;
+        U8                                 m_DCI            = 0;
     };
     /// @brief Implementation of the eXtensible Host Controller Interface rev 2.0 specification.
     ///
@@ -109,8 +111,11 @@ namespace Rune::Device::USB {
     /// interrupts will be configured using legacy PCI INTx interrupts.
     ///
     /// Next, the USB bus will be enumerated, and all detected devices will be initialized as
-    /// defined in §4.3 and configured with the first configuration the device exposes.
-    /// The xHCI Driver owns CompositeDevices and is allowed to change device configurations.
+    /// defined in §4.3. The first configuration and first alternate setting of each interface is
+    /// chosen as the initial configuration.
+    ///
+    /// The xHCI driver will automatically bind on all composite devices. It owns both the top-level
+    /// USB configuration and also the configuration of alternate settings.
     ///
     /// Each Function exposed by a USB Device will be registered in the device tree as a
     /// FunctionDevice, class drivers are expected to bind to FunctionDevices.
@@ -118,10 +123,11 @@ namespace Rune::Device::USB {
     /// Class Drivers
     ///
     /// Class drivers own their respective FunctionDevice and can access interfaces and endpoints
-    /// through the FunctionDevice instance. A class driver is allowed to change the alternate
-    /// setting of interfaces by sending a SET_INTERFACE request through the xHC. However, it is the
-    /// drivers' responsibility to update the active setting of the interface, as the xHCI driver
-    /// does not keep track of FunctionDevice's.
+    /// through the FunctionDevice instance.
+    ///
+    /// It is the responsibility of class drivers to configure the USB device as needed, the xHCI
+    /// driver will only perform the initial configuration during enumeration and then handoff the
+    /// device to its class driver.
     class XHCIDriver : public Driver {
         static constexpr VirtualAddr MMIO_BASE_ADDR = 0xFFFFC00000000000;
 
@@ -183,7 +189,13 @@ namespace Rune::Device::USB {
         auto track_inflight_TD(const PhysicalAddr* trb_list,
                                U8                  count,
                                U8                  expected_events,
-                               TransferResponse*   response) -> CPU::Future<IORequestStatus>;
+                               TransferResponse*   response,
+                               U8                  slot_ID,
+                               U8                  dci) -> CPU::Future<IORequestStatus>;
+
+        /// @brief Abort all inflight TDs for the given slot and DCI. All promises will be resolved
+        ///         with status.
+        void abort_inflight_TDs(U8 slot_id, U8 dci, IORequestStatus status);
 
         /// @brief Advance ERDP to  er_deq_ptr and clear ERDP.EHB.
         /// @param er_deq_ptr
@@ -205,28 +217,53 @@ namespace Rune::Device::USB {
         // Endpoint Configuration
         // ====================================================================================== //
 
-        static auto
-        drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
-                               const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                               const AlternateSetting&                         old_alt,
-                               const AlternateSetting&                         new_alt) -> bool;
+        /// @brief Set the drop bit for all endpoints of alt in ic. If an endpoint is running it
+        ///         will be stopped.
+        /// @return True: All running endpoints are stopped.
+        ///         False: Otherwise.
+        auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    const AlternateSetting& alt_setting) -> bool;
 
+        /// @brief Configure all endpoints of alt_setting and set the add bit in ic.
+        /// @return True: All endpoints are configured.
+        ///         False: Otherwise.
         static auto
         add_endpoint_contexts(const UniquePointer<InputContext>&              ic,
                               const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                               const AlternateSetting&                         alt_setting) -> bool;
+
+        /// @brief
+        /// @return The index of the last valid endpoint context.
+        static auto
+        compute_context_entries(const UniquePointer<InputContext>&              ic,
+                                const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
+            -> U8;
+
+        /// @brief  Clear the transfer ring of all endpoints where the drop bit is set and init the
+        ///         transfer rings of all endpoints where the add bit is set.
+        /// @return True: All transfer rings have been initialized/cleared.
+        ///         False: Otherwise.
+        auto update_endpoint_transfer_ring_states(
+            const UniquePointer<InputContext>&              ic,
+            const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> bool;
 
         auto send_configure_endpoint_command(const UniquePointer<InputContext>& ic, U8 slot_ID)
             -> CompletionCode;
 
         /// @brief Reconfigure the endpoints of one interface for a USB SET_INTERFACE request via a
         ///         Configure Endpoint Command §4.3.6, before the request itself is forwarded to the
-        ///         device. Endpoints of the interface's current alternate setting that are not
-        ///         reused (by DCI) are dropped, endpoints of the target alternate setting are
-        ///         (re)added.
-        auto change_alternate_setting(const Configuration& config,
-                                      U8                   interface,
-                                      U8                   alternate_setting,
+        ///         device.
+        /// @param function_device
+        /// @param interface
+        /// @param from_setting The current setting of the xHC.
+        /// @param to_setting The new setting of the xHC.
+        /// @param dc_sys_memory
+        /// @return True: All endpoints of the new interface have been configured.
+        auto change_alternate_setting(const SharedPointer<FunctionDevice>& function_device,
+                                      U8                                   interface,
+                                      U8                                   from_setting,
+                                      U8                                   to_setting,
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
             -> bool;
 
@@ -362,16 +399,12 @@ namespace Rune::Device::USB {
         /// @param request Transfer request.
         /// @return A future with an IO request status.
         ///
-        /// Important:
+        /// The xHCI driver maps the device context to the handle of the function device which is
+        /// required to send the transfer request to the USB device. Additionally, it may need to
+        /// access the function device through its composite device.
         ///
-        /// The device handle in the transfer request header shall always be the
-        /// handle of the calling function device or the function device that will be affected by
-        /// the transfer request.
-        ///
-        /// The device pointer shall always point to the composite device of the function device.
-        ///
-        /// This allows the xHCI driver to find both the in system memory allocated xHC buffers and
-        /// the configuration of the USB device.
+        /// Therefore, the device handle shall be provided in the transfer request header and the
+        /// device parameter shall be set to the composite device owning the function device.
         auto handle_request(const SharedPointer<Device>& device, IORequest request)
             -> CPU::Future<IORequestStatus> override;
     };

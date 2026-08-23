@@ -708,6 +708,41 @@ namespace Rune::Device::USB {
     };
     static_assert(sizeof(EvaluateContextCommandTRB) == sizeof(TRB));
 
+    /// @brief Stop Endpoint Command TRB (xHCI 2.0 §6.4.3.8, type = 15).
+    ///
+    /// Stops the xHC execution of the TDs on a Transfer Ring and temporarily hands ownership of the
+    /// TDs previously passed to the xHC back to software.
+    struct StopEndpointCommandTRB {
+        static constexpr U8 TYPE = TRBType::STOP_ENDPOINT;
+
+        U32 m_reserved_0 = 0;
+        U32 m_reserved_1 = 0;
+        U32 m_reserved_2 = 0;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            [[nodiscard]] auto endpoint_id() const -> U8;
+            [[nodiscard]] auto SP() const -> bool; // Suspend
+            [[nodiscard]] auto slot_id() const -> U8;
+            auto               set_cycle(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+            auto               set_endpoint_id(U8 val) -> void;
+            auto               set_SP(bool v) -> void;
+            auto               set_slot_id(U8 val) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
+            static constexpr U32 ENDPOINT_ID_MASK = 0x001F0000; // [20:16]
+            static constexpr U8  SP_BIT_OFFSET    = 23;
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
+        } m_control;
+    };
+    static_assert(sizeof(StopEndpointCommandTRB) == sizeof(TRB));
+
     /// @brief No-Op Command TRB (xHCI 2.0 §6.4.3.1, type = 23).
     struct NoOpCommandTRB {
         static constexpr U8 TYPE = TRBType::NO_OP_COMMAND;

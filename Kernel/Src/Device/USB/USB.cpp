@@ -181,20 +181,18 @@ namespace Rune::Device::USB {
 
     DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0)
 
-    auto ControlTransferRequest::of(Ember::Handle       handle,
-                                    U16                 function_index,
-                                    U8                  bm_request_type,
-                                    StandardRequestCode b_request,
-                                    U16                 w_value,
-                                    U16                 w_index,
-                                    U16                 w_length,
-                                    void*               data_buffer) -> ControlTransferRequest {
+    auto ControlTransferRequest::of(Ember::Handle handle,
+                                    U8            bm_request_type,
+                                    U8            b_request,
+                                    U16           w_value,
+                                    U16           w_index,
+                                    U16           w_length,
+                                    void*         data_buffer) -> ControlTransferRequest {
         TransferRequestHeader header = {.m_transfer_type = USB::TransferRequestType::CONTROL,
                                         .m_device_handle = handle};
         return {.m_header         = header,
-                .m_function_index = function_index,
                 .m_request_type   = bm_request_type,
-                .m_request        = b_request.to_value(),
+                .m_request        = b_request,
                 .m_value          = w_value,
                 .m_index          = w_index,
                 .m_length         = w_length,

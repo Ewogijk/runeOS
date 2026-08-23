@@ -756,6 +756,45 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
+    // StopEndpointCommandTRB — xHCI 2.0 §6.4.3.8
+    // ========================================================================================== //
+
+    [[nodiscard]] auto StopEndpointCommandTRB::ControlDWord::cycle() const -> bool {
+        return bit_check(m_register, CYCLE_BIT_OFFSET);
+    }
+    [[nodiscard]] auto StopEndpointCommandTRB::ControlDWord::trb_type() const -> TRBType {
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
+    }
+    [[nodiscard]] auto StopEndpointCommandTRB::ControlDWord::endpoint_id() const -> U8 {
+        return static_cast<U8>((m_register & ENDPOINT_ID_MASK) >> SHIFT_16);
+    }
+    [[nodiscard]] auto StopEndpointCommandTRB::ControlDWord::SP() const -> bool {
+        return bit_check(m_register, SP_BIT_OFFSET);
+    }
+    [[nodiscard]] auto StopEndpointCommandTRB::ControlDWord::slot_id() const -> U8 {
+        return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
+    }
+    auto StopEndpointCommandTRB::ControlDWord::set_cycle(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
+    }
+    auto StopEndpointCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
+    }
+    auto StopEndpointCommandTRB::ControlDWord::set_endpoint_id(U8 val) -> void {
+        m_register = (m_register & ~ENDPOINT_ID_MASK)
+                     | ((static_cast<U32>(val) << SHIFT_16) & ENDPOINT_ID_MASK);
+    }
+    auto StopEndpointCommandTRB::ControlDWord::set_SP(bool v) -> void {
+        m_register = v ? bit_set(m_register, SP_BIT_OFFSET) : bit_clear(m_register, SP_BIT_OFFSET);
+    }
+    auto StopEndpointCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
+        m_register =
+            (m_register & ~SLOT_ID_MASK) | ((static_cast<U32>(val) << SHIFT_24) & SLOT_ID_MASK);
+    }
+
+    // ========================================================================================== //
     // NoOpCommandTRB — xHCI 2.0 §6.4.3.1
     // ========================================================================================== //
 

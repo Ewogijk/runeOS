@@ -304,18 +304,6 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
-    // InputControlContext::DropContextFlags — xHCI 2.0 §6.2.5.1 Table 6-13
-    // ========================================================================================== //
-
-    [[nodiscard]] auto InputControlContext::DropContextFlags::D() const -> U32 {
-        return (m_register & D_MASK) >> D_SHIFT;
-    }
-
-    auto InputControlContext::DropContextFlags::set_D(U32 val) -> void {
-        m_register = (m_register & ~D_MASK) | ((val << D_SHIFT) & D_MASK);
-    }
-
-    // ========================================================================================== //
     // InputControlContext::InputControlContextFieldDefs — xHCI 2.0 §6.2.5.1 Table 6-13
     // ========================================================================================== //
 

@@ -55,6 +55,13 @@ namespace Rune::Device::USB {
     /// - RECIPIENT_VENDOR (bits 4..0 = 31): Vendor specific recipient.
     DECLARE_TYPED_ENUM(RequestType, U8, REQUEST_TYPES, 0x0) // NOLINT
 
+    /// @brief Bit mask to get the direction from bmRequestType.
+    constexpr U8 REQUEST_TYPE_DIRECTION_MASK = 0b10000000;
+    /// @brief Bit mask to get the type from bmRequestType.
+    constexpr U8 REQUEST_TYPE_TYPE_MASK = 0b01100000;
+    /// @brief Bit mask to get the recipient from bmRequestType.
+    constexpr U8 REQUEST_TYPE_RECIPIENT_MASK = 0b00011111;
+
     // ========================================================================================== //
     // Standard Request Codes (bRequest) — USB 3.2 §9.4, Table 9-5
     // ========================================================================================== //
