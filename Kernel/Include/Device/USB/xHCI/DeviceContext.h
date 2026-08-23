@@ -32,17 +32,18 @@ namespace Rune::Device::USB {
     /// @brief Slot Context — describes the overall device (xHCI 2.0 §6.2.2 Table 6-7).
     struct SlotContext {
         struct DW0 {
-            U32 m_register = 0;
-            [[nodiscard]] auto route_string()    const -> U32;
-            [[nodiscard]] auto speed()           const -> U8;
-            [[nodiscard]] auto MTT()             const -> bool;
-            [[nodiscard]] auto hub()             const -> bool;
+            U32                m_register = 0;
+            [[nodiscard]] auto route_string() const -> U32;
+            [[nodiscard]] auto speed() const -> U8;
+            [[nodiscard]] auto MTT() const -> bool;
+            [[nodiscard]] auto hub() const -> bool;
             [[nodiscard]] auto context_entries() const -> U8;
-            auto set_route_string(U32 val)    -> void;
-            auto set_speed(U8 val)            -> void;
-            auto set_MTT(bool v)              -> void;
-            auto set_hub(bool v)              -> void;
-            auto set_context_entries(U8 val)  -> void;
+            auto               set_route_string(U32 val) -> void;
+            auto               set_speed(U8 val) -> void;
+            auto               set_MTT(bool v) -> void;
+            auto               set_hub(bool v) -> void;
+            auto               set_context_entries(U8 val) -> void;
+
           private:
             static constexpr U32 ROUTE_STRING_MASK     = 0x000FFFFF; // [19:0]
             static constexpr U32 SPEED_MASK            = 0x00F00000; // [23:20]
@@ -53,13 +54,14 @@ namespace Rune::Device::USB {
         } m_dw0;
 
         struct DW1 {
-            U32 m_register = 0;
-            [[nodiscard]] auto max_exit_latency()  const -> U16;
+            U32                m_register = 0;
+            [[nodiscard]] auto max_exit_latency() const -> U16;
             [[nodiscard]] auto root_hub_port_num() const -> U8;
-            [[nodiscard]] auto num_ports()         const -> U8;
-            auto set_max_exit_latency(U16 val)  -> void;
-            auto set_root_hub_port_num(U8 val)  -> void;
-            auto set_num_ports(U8 val)          -> void;
+            [[nodiscard]] auto num_ports() const -> U8;
+            auto               set_max_exit_latency(U16 val) -> void;
+            auto               set_root_hub_port_num(U8 val) -> void;
+            auto               set_num_ports(U8 val) -> void;
+
           private:
             static constexpr U32 MAX_EXIT_LATENCY_MASK  = 0x0000FFFF; // [15:0]
             static constexpr U32 ROOT_HUB_PORT_NUM_MASK = 0x00FF0000; // [23:16]
@@ -67,15 +69,16 @@ namespace Rune::Device::USB {
         } m_dw1;
 
         struct DW2 {
-            U32 m_register = 0;
+            U32                m_register = 0;
             [[nodiscard]] auto parent_hub_slot_id() const -> U8;
-            [[nodiscard]] auto parent_port_num()    const -> U8;
-            [[nodiscard]] auto TTT()                const -> U8;
+            [[nodiscard]] auto parent_port_num() const -> U8;
+            [[nodiscard]] auto TTT() const -> U8;
             [[nodiscard]] auto interrupter_target() const -> U16;
-            auto set_parent_hub_slot_id(U8 val)  -> void;
-            auto set_parent_port_num(U8 val)     -> void;
-            auto set_TTT(U8 val)                 -> void;
-            auto set_interrupter_target(U16 val) -> void;
+            auto               set_parent_hub_slot_id(U8 val) -> void;
+            auto               set_parent_port_num(U8 val) -> void;
+            auto               set_TTT(U8 val) -> void;
+            auto               set_interrupter_target(U16 val) -> void;
+
           private:
             static constexpr U32 PARENT_HUB_SLOT_ID_MASK  = 0x000000FF; // [7:0]
             static constexpr U32 PARENT_PORT_NUM_MASK     = 0x0000FF00; // [15:8]
@@ -90,11 +93,12 @@ namespace Rune::Device::USB {
             static constexpr U8 SLOT_STATE_ADDRESSED        = 2;
             static constexpr U8 SLOT_STATE_CONFIGURED       = 3;
 
-            U32 m_register = 0;
+            U32                m_register = 0;
             [[nodiscard]] auto usb_device_address() const -> U8;
-            [[nodiscard]] auto slot_state()         const -> U8;
-            auto set_usb_device_address(U8 val) -> void;
-            auto set_slot_state(U8 val)         -> void;
+            [[nodiscard]] auto slot_state() const -> U8;
+            auto               set_usb_device_address(U8 val) -> void;
+            auto               set_slot_state(U8 val) -> void;
+
           private:
             static constexpr U32 USB_DEVICE_ADDRESS_MASK = 0x000000FF; // [7:0]
             static constexpr U32 SLOT_STATE_MASK         = 0xF8000000; // [31:27]
@@ -126,19 +130,20 @@ namespace Rune::Device::USB {
         static constexpr U8 EP_STATE_ERROR    = 4;
 
         struct DW0 {
-            U32 m_register = 0;
-            [[nodiscard]] auto ep_state()      const -> U8;
-            [[nodiscard]] auto mult()          const -> U8;
+            U32                m_register = 0;
+            [[nodiscard]] auto ep_state() const -> U8;
+            [[nodiscard]] auto mult() const -> U8;
             [[nodiscard]] auto max_p_streams() const -> U8;
-            [[nodiscard]] auto LSA()           const -> bool;
-            [[nodiscard]] auto interval()      const -> U8;
-            [[nodiscard]] auto max_esit_hi()   const -> U8;
-            auto set_ep_state(U8 val)      -> void;
-            auto set_mult(U8 val)          -> void;
-            auto set_max_p_streams(U8 val) -> void;
-            auto set_LSA(bool v)           -> void;
-            auto set_interval(U8 val)      -> void;
-            auto set_max_esit_hi(U8 val)   -> void;
+            [[nodiscard]] auto LSA() const -> bool;
+            [[nodiscard]] auto interval() const -> U8;
+            [[nodiscard]] auto max_esit_hi() const -> U8;
+            auto               set_ep_state(U8 val) -> void;
+            auto               set_mult(U8 val) -> void;
+            auto               set_max_p_streams(U8 val) -> void;
+            auto               set_LSA(bool v) -> void;
+            auto               set_interval(U8 val) -> void;
+            auto               set_max_esit_hi(U8 val) -> void;
+
           private:
             static constexpr U32 EP_STATE_MASK       = 0x00000007; // [2:0]
             static constexpr U32 MULT_MASK           = 0x00000300; // [9:8]
@@ -150,17 +155,18 @@ namespace Rune::Device::USB {
         } m_dw0;
 
         struct DW1 {
-            U32 m_register = 0;
-            [[nodiscard]] auto CERR()            const -> U8;
-            [[nodiscard]] auto ep_type()         const -> U8;
-            [[nodiscard]] auto HID()             const -> bool;
-            [[nodiscard]] auto max_burst_size()  const -> U8;
+            U32                m_register = 0;
+            [[nodiscard]] auto CERR() const -> U8;
+            [[nodiscard]] auto ep_type() const -> U8;
+            [[nodiscard]] auto HID() const -> bool;
+            [[nodiscard]] auto max_burst_size() const -> U8;
             [[nodiscard]] auto max_packet_size() const -> U16;
-            auto set_CERR(U8 val)            -> void;
-            auto set_ep_type(U8 val)         -> void;
-            auto set_HID(bool v)             -> void;
-            auto set_max_burst_size(U8 val)  -> void;
-            auto set_max_packet_size(U16 val) -> void;
+            auto               set_CERR(U8 val) -> void;
+            auto               set_ep_type(U8 val) -> void;
+            auto               set_HID(bool v) -> void;
+            auto               set_max_burst_size(U8 val) -> void;
+            auto               set_max_packet_size(U16 val) -> void;
+
           private:
             static constexpr U32 CERR_MASK            = 0x00000006; // [2:1]
             static constexpr U8  CERR_SHIFT           = 1;
@@ -173,11 +179,11 @@ namespace Rune::Device::USB {
 
         // DW2-DW3: TR Dequeue Pointer — 16-byte aligned, bit 0 = DCS.
         struct TRDequeuePtr {
-            U64 m_register = 0;
+            U64                m_register = 0;
             [[nodiscard]] auto DCS() const -> bool; // bit 0 — Dequeue Cycle State
             [[nodiscard]] auto ptr() const -> U64;  // bits [63:4], val = phys >> 4
-            auto set_DCS(bool v)  -> void;
-            auto set_ptr(U64 val) -> void; // val = phys >> 4
+            auto               set_DCS(bool v) -> void;
+            auto               set_ptr(U64 val) -> void; // val = phys >> 4
           private:
             static constexpr U8  DCS_BIT_OFFSET = 0;
             static constexpr U64 PTR_MASK       = 0xFFFFFFFFFFFFFFF0ULL; // [63:4]
@@ -185,11 +191,12 @@ namespace Rune::Device::USB {
         } m_tr_dequeue_ptr;
 
         struct DW4 {
-            U32 m_register = 0;
+            U32                m_register = 0;
             [[nodiscard]] auto average_trb_length() const -> U16;
-            [[nodiscard]] auto max_esit_lo()        const -> U16;
-            auto set_average_trb_length(U16 val) -> void;
-            auto set_max_esit_lo(U16 val)        -> void;
+            [[nodiscard]] auto max_esit_lo() const -> U16;
+            auto               set_average_trb_length(U16 val) -> void;
+            auto               set_max_esit_lo(U16 val) -> void;
+
           private:
             static constexpr U32 AVERAGE_TRB_LENGTH_MASK = 0x0000FFFF; // [15:0]
             static constexpr U32 MAX_ESIT_LO_MASK        = 0xFFFF0000; // [31:16]
@@ -218,14 +225,8 @@ namespace Rune::Device::USB {
 
     /// @brief Input Control Context (xHCI 2.0 §6.2.5.1 Table 6-13).
     struct InputControlContext {
-        struct DropContextFlags {
-            U32 m_register = 0;
-            [[nodiscard]] auto D() const -> U32; // bits [31:2] — drop flags for endpoints 2-31
-            auto set_D(U32 val) -> void;
-          private:
-            static constexpr U32 D_MASK  = 0xFFFFFFFC; // [31:2]
-            static constexpr U8  D_SHIFT = 2;
-        } m_drop_context_flags;
+        // bits [31:2] — drop flags for endpoints 2-31
+        U32 m_drop_context_flags = 0;
 
         // A0 = update Slot Context; A1-A31 = add/update endpoint contexts 1-31.
         U32 m_add_context_flags = 0;
@@ -237,13 +238,14 @@ namespace Rune::Device::USB {
         U32 m_reserved_4 = 0;
 
         struct InputControlContextFieldDefs {
-            U32 m_register = 0;
+            U32                m_register = 0;
             [[nodiscard]] auto configuration_value() const -> U8;
-            [[nodiscard]] auto interface_number()    const -> U8;
-            [[nodiscard]] auto alternate_setting()   const -> U8;
-            auto set_configuration_value(U8 val) -> void;
-            auto set_interface_number(U8 val)    -> void;
-            auto set_alternate_setting(U8 val)   -> void;
+            [[nodiscard]] auto interface_number() const -> U8;
+            [[nodiscard]] auto alternate_setting() const -> U8;
+            auto               set_configuration_value(U8 val) -> void;
+            auto               set_interface_number(U8 val) -> void;
+            auto               set_alternate_setting(U8 val) -> void;
+
           private:
             static constexpr U32 CONFIGURATION_VALUE_MASK = 0x000000FF; // [7:0]
             static constexpr U32 INTERFACE_NUMBER_MASK    = 0x0000FF00; // [15:8]

@@ -115,7 +115,7 @@ namespace Rune::Device::USB {
     /// @brief One interface slot within a Configuration, owning all of its alternate settings.
     struct Interface {
         U8                           m_interface_number = 0; // bInterfaceNumber
-        U8                           m_active_setting = 0; // currently selected via SetInterface()
+        U8                           m_active_setting   = 0; // Selected via SetInterface()
         LinkedList<AlternateSetting> m_alternate_settings;
 
         /// @brief
@@ -214,8 +214,7 @@ namespace Rune::Device::USB {
         [[nodiscard]] auto configurations() const -> const LinkedList<Configuration>&;
 
         /// @brief
-        /// @return All configurations reported by this device (mutable, e.g. to update an
-        ///         interface's active alternate setting).
+        /// @return All configurations reported by this device.
         [[nodiscard]] auto configurations() -> LinkedList<Configuration>&;
 
         /// @brief Add a configuration parsed from a GET_DESCRIPTOR(CONFIGURATION) response.
@@ -338,20 +337,15 @@ namespace Rune::Device::USB {
     /// @brief An IO request for USB control transfers, USB 3.2 §4.4.5.
     struct ControlTransferRequest {
         TransferRequestHeader m_header;
-        /// @brief The index to the function in the configuration of the FunctionDevice sending this
-        ///         request.
-        U16   m_function_index = 0;
-        U8    m_request_type   = 0; // bmRequestType
-        U8    m_request        = 0; // bRequest
-        U16   m_value          = 0; // wValue
-        U16   m_index          = 0; // wIndex
-        U16   m_length         = 0; // wLength
-        void* m_data_buffer    = nullptr;
+        U8                    m_request_type = 0; // bmRequestType
+        U8                    m_request      = 0; // bRequest
+        U16                   m_value        = 0; // wValue
+        U16                   m_index        = 0; // wIndex
+        U16                   m_length       = 0; // wLength
+        void*                 m_data_buffer  = nullptr;
 
         /// @brief Construct a new control transfer request.
         /// @param handle Handle of a FunctionDevice.
-        /// @param function_index The owning_function_idx() value of the FunctionDevice this request
-        ///                         belongs to.
         /// @param bm_request_type bmRequestType.
         /// @param b_request bRequest.
         /// @param w_value wValue.
@@ -359,14 +353,13 @@ namespace Rune::Device::USB {
         /// @param w_length wLength.
         /// @param data_buffer Data buffer used for byte transfer.
         /// @return
-        static auto of(Ember::Handle       handle,
-                       U16                 function_index,
-                       U8                  bm_request_type,
-                       StandardRequestCode b_request,
-                       U16                 w_value,
-                       U16                 w_index,
-                       U16                 w_length,
-                       void*               data_buffer) -> ControlTransferRequest;
+        static auto of(Ember::Handle handle,
+                       U8            bm_request_type,
+                       U8            b_request,
+                       U16           w_value,
+                       U16           w_index,
+                       U16           w_length,
+                       void*         data_buffer) -> ControlTransferRequest;
     };
 
     /// @brief An IO request for USB Bulk and Interrupt transfers.

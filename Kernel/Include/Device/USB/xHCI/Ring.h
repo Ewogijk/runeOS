@@ -81,7 +81,7 @@ namespace Rune::Device::USB {
             return tr_phys;
         }
 
-        auto clear() {
+        void clear() {
             memset(m_entries.data(), 0, sizeof(TRB) * N);
             m_enqueue_ptr = 0;
             m_pcs         = false;

@@ -234,9 +234,9 @@ namespace Rune::Device {
     X(IORequestStatus, UNKNOWN_DEVICE, 0x2)                                                        \
     X(IORequestStatus, DEVICE_NOT_OPERATIONAL, 0x3)                                                \
     X(IORequestStatus, UNKNOWN_DRIVER, 0x4)                                                        \
-    X(IORequestStatus, BAD_ARGUMENT, 0x4)                                                          \
-    X(IORequestStatus, FAILED, 0x5)                                                                \
-    X(IORequestStatus, HANDLED, 0x6)
+    X(IORequestStatus, BAD_ARGUMENT, 0x5)                                                          \
+    X(IORequestStatus, FAILED, 0x6)                                                                \
+    X(IORequestStatus, HANDLED, 0x7)
 
     /// @brief An IO Request status encodes the status of a request after the action was performed
     ///         by a driver.
@@ -245,6 +245,8 @@ namespace Rune::Device {
     /// - UNKNOWN_DEVICE: The requested device does not exist.
     /// - DEVICE_NOT_OPERATIONAL: The IO request could not be handled because the device is not
     ///                             operated by a driver.
+    /// - UNKNOWN_DRIVER: The IO request could not be handled because the device's driver was not
+    ///                     found.
     /// - BAD_ARGUMENT: The IO request In buffer contains invalid arguments.
     /// - FAILED: An error occurred handling the IO request.
     /// - HANDLED: The IO request was handled, and the response contains valid data.
