@@ -33,12 +33,46 @@ namespace Rune::Device::USB {
     DEFINE_TYPED_ENUM(HIDPhysicalDesignator, U8, HID_PHYSICAL_DESIGNATORS, 0x00)
 
     // ========================================================================================== //
-    // Requests — HID 1.11 §7
+    // Class-Specific Requests — HID 1.11 §7.2
     // ========================================================================================== //
 
     DEFINE_TYPED_ENUM(HIDClassRequest, U8, HID_CLASS_REQUESTS, 0x00)
     DEFINE_TYPED_ENUM(HIDReportType, U8, HID_REPORT_TYPES, 0x00)
     DEFINE_TYPED_ENUM(HIDProtocolMode, U8, HID_PROTOCOL_MODES, 0xFF)
+
+    auto hid_build_set_protocol_request(const SharedPointer<FunctionDevice>& hid_device,
+                                        U16                                  interface_number,
+                                        HIDProtocolMode protocol_mode) -> ControlTransferRequest {
+        return USB::ControlTransferRequest::of(
+            hid_device->get_handle(),
+            USB::RequestType::DIRECTION_HOST_TO_DEVICE | USB::RequestType::TYPE_CLASS
+                | USB::RequestType::RECIPIENT_INTERFACE,
+            USB::HIDClassRequest::SET_PROTOCOL,
+            protocol_mode,
+            interface_number,
+            0,
+            nullptr);
+    }
+
+    auto hid_build_set_idle_request(const SharedPointer<FunctionDevice>& hid_device,
+                                    U16                                  interface_number,
+                                    U8                                   report_ID,
+                                    U16 duration_ms) -> ControlTransferRequest {
+        constexpr U8  HID_IDLE_DURATION_UNIT_MS = 4;
+        constexpr U16 HID_IDLE_DURATION_MAX_MS  = 1020;
+        U16           clamped =
+            duration_ms > HID_IDLE_DURATION_MAX_MS ? HID_IDLE_DURATION_MAX_MS : duration_ms;
+        auto                        duration = static_cast<U8>(clamped / HID_IDLE_DURATION_UNIT_MS);
+        return USB::ControlTransferRequest::of(
+            hid_device->get_handle(),
+            USB::RequestType::DIRECTION_HOST_TO_DEVICE | USB::RequestType::TYPE_CLASS
+                | USB::RequestType::RECIPIENT_INTERFACE,
+            USB::HIDClassRequest::SET_IDLE,
+            static_cast<U16>(static_cast<U16>(duration) << SHIFT_8 | report_ID),
+            interface_number,
+            0,
+            nullptr);
+    }
 
     // ========================================================================================== //
     // HID Item Model

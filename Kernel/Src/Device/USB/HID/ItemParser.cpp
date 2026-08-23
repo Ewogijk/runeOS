@@ -395,6 +395,45 @@ namespace Rune::Device::USB {
         return main_items;
     }
 
+    auto HIDItemParser::log_reports(const HIDReports& reports) {
+        DEBUG("HID Reports - Uses Report IDs={}", reports.m_uses_report_IDs)
+        for (const auto& kv : reports.m_reports) {
+            auto*                                       report = kv.value;
+            StringRepresentation<USB::HIDExtendedUsage> ext_usage_str_repr;
+            DEBUG("    REPORT({}, {}) - {}, S{}",
+                  report->m_tag.m_report_ID,
+                  report->m_tag.m_type.to_string(),
+                  ext_usage_str_repr(report->m_usage),
+                  report->m_bit_size)
+
+            for (auto& data : report->m_data) {
+                USB::HIDCollectionPathEntry c_entries[data.m_collection_path.size()];
+                data.m_collection_path.as_array(c_entries);
+                USB::HIDExtendedUsageRange ranges[data.m_usage_ranges.size()];
+                data.m_usage_ranges.as_array(ranges);
+
+                String unit = data.unit_as_string();
+                if (unit != USB::HIDData::UNIT_NONE && data.m_unit_exponent != 0) {
+                    unit = String::format("{}E*{}", data.m_unit_exponent, unit);
+                }
+                DEBUG("        DATA({}, {}) - L{}-{} P{}-{} D{}x{} O{} V?{}",
+                      data.m_flags.decode_flags(),
+                      unit,
+                      data.m_logical_minimum,
+                      data.m_logical_maximum,
+                      data.m_physical_minimum,
+                      data.m_physical_maximum,
+                      data.m_report_count,
+                      data.m_report_size,
+                      data.m_bit_offset,
+                      data.m_is_vendor_defined_data)
+                DEBUG("            C: {} ",
+                      String::join(", ", c_entries, data.m_collection_path.size()))
+                DEBUG("            U: {} ", String::join(", ", ranges, data.m_usage_ranges.size()))
+            }
+        }
+    }
+
     auto HIDItemParser::parse_hid_reports() -> HIDReports {
         LinkedList<MainItem> main_items = parse_main_items();
 
@@ -467,6 +506,10 @@ namespace Rune::Device::USB {
             }
         }
 
-        return {.m_uses_report_IDs = uses_report_IDs, .m_reports = move(reports)};
+        HIDReports r = {.m_uses_report_IDs = uses_report_IDs, .m_reports = move(reports)};
+#if LOG_DEBUG_ENABLED
+        log_reports(r);
+#endif
+        return r;
     }
 } // namespace Rune::Device::USB

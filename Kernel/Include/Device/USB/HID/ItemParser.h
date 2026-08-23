@@ -155,6 +155,8 @@ namespace Rune::Device::USB {
 
         auto parse_main_items() -> LinkedList<MainItem>;
 
+        auto log_reports(const HIDReports& reports);
+
       public:
         HIDItemParser(const U8* descriptor, size_t length);
 
