@@ -17,37 +17,46 @@
 #ifndef RUNEOS_PS2KEYBOARD_H
 #define RUNEOS_PS2KEYBOARD_H
 
-#include <Device/Keyboard/Keyboard.h>
-
-#include <KRE/Collections/Array.h>
-
 #include <CPU/Interrupt/IRQ.h>
+
+#include <Device/Device.h>
 
 namespace Rune::Device {
     /**
-     * A PS2 keyboard driver converting the scancode set 2 to virtual keys.
+     * A PS2 keyboard driver converting the scancode set 1 to key events.
+     *
+     * Decoded key events are published to the kernel wide key event buffer.
      */
-    class PS2Keyboard : public VirtualKeyboard {
-        static constexpr size_t RING_BUFFER_SIZE = 256;
-        static constexpr U8     EXTENDED_BYTE    = 0xE0;
-        static constexpr U8     DATA_REGISTER    = 0x60;
+    class PS2Keyboard : public Driver {
+        static constexpr U8 EXTENDED_BYTE = 0xE0;
+        static constexpr U8 PAUSE_BYTE    = 0xE1;
+        static constexpr U8 DATA_REGISTER = 0x60;
 
-        Array<U16, RING_BUFFER_SIZE> _key_code_cache;
-        U8                           _start{0};
-        U8                           _end{0};
+        /// @brief Number of scan codes that follow the pause byte in a pause key sequence.
+        static constexpr U8 PAUSE_SEQUENCE_LENGTH = 2;
 
+        /// @brief True: The next scan code must be decoded with the E0 scan code table.
         bool _wait_key_e0{false};
 
+        /// @brief Number of scan codes of the pause key sequence that are left to be consumed.
+        U8 _pause_bytes_left{0};
+
+        /// @brief True: The currently decoded pause key sequence is a key press.
+        bool _pause_key_down{false};
+
+        /// @brief Currently pressed modifier keys, uses the HID keyboard modifier bit layout.
+        U8 _modifiers{0};
+
         CPU::FastInterruptHandler _irq_handler;
+
+        /// @brief Decode a scan code and publish a key event to the key event buffer.
+        /// @param scan_code A scan code set 1 byte as read from the data register.
+        void handle_scan_code(U8 scan_code);
 
       public:
         static const BasicDeviceID ID_PS2_KEYBOARD;
 
         PS2Keyboard();
-
-        auto read() -> int override;
-
-        void flush() override;
 
         [[nodiscard]] auto vendor() const -> String override;
         [[nodiscard]] auto version() const -> Version override;

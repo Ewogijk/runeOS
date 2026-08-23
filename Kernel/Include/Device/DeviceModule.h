@@ -25,8 +25,6 @@
 
 #include <Device/Device.h>
 
-#include <Device/Keyboard/Keyboard.h>
-
 namespace Rune::Device {
 
     /// @brief The device module handles device tree configuration and access to devices and device
@@ -148,8 +146,6 @@ namespace Rune::Device {
         // ====================================================================================== //
         // Device API
         // ====================================================================================== //
-
-        auto get_keyboard() -> VirtualKeyboard*;
 
         /// @brief
         /// @return A pointer to the device tree.
