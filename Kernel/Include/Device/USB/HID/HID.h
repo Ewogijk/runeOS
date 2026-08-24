@@ -306,33 +306,55 @@ namespace Rune::Device::USB {
     static_assert(sizeof(HIDItemPrefix) == 1); // NOLINT
 
 #define HID_DATA_FLAGS(X)                                                                          \
-    X(HIDDataFlag, CONSTANT, 0x0001)                                                               \
-    X(HIDDataFlag, VARIABLE, 0x0002)                                                               \
-    X(HIDDataFlag, RELATIVE, 0x0004)                                                               \
-    X(HIDDataFlag, WRAP, 0x0008)                                                                   \
-    X(HIDDataFlag, NON_LINEAR, 0x0010)                                                             \
-    X(HIDDataFlag, NO_PREFERRED, 0x0020)                                                           \
-    X(HIDDataFlag, NULL_STATE, 0x0040)                                                             \
-    X(HIDDataFlag, VOLATILE, 0x0080)                                                               \
-    X(HIDDataFlag, BUFFERED_BYTES, 0x0100)
+    X(HIDDataFlag, DATA, 0)                                                                        \
+    X(HIDDataFlag, CONSTANT, 1)                                                                    \
+    X(HIDDataFlag, ARRAY, 2)                                                                       \
+    X(HIDDataFlag, VARIABLE, 3)                                                                    \
+    X(HIDDataFlag, ABSOLUTE, 4)                                                                    \
+    X(HIDDataFlag, RELATIVE, 5)                                                                    \
+    X(HIDDataFlag, NO_WRAP, 6)                                                                     \
+    X(HIDDataFlag, WRAP, 7)                                                                        \
+    X(HIDDataFlag, LINEAR, 8)                                                                      \
+    X(HIDDataFlag, NON_LINEAR, 9)                                                                  \
+    X(HIDDataFlag, PREFERRED, 10)                                                                  \
+    X(HIDDataFlag, NO_PREFERRED, 11)                                                               \
+    X(HIDDataFlag, NO_NULL_POSITION, 12)                                                           \
+    X(HIDDataFlag, NULL_STATE, 13)                                                                 \
+    X(HIDDataFlag, NON_VOLATILE, 14)                                                               \
+    X(HIDDataFlag, VOLATILE, 15)                                                                   \
+    X(HIDDataFlag, BIT_FIELD, 16)                                                                  \
+    X(HIDDataFlag, BUFFERED_BYTES, 17)
 
-    /// @brief The data of an Input, Output or Feature Main item, a bitmap — HID 1.11 §6.2.2.5.
+    /// @brief Both alternatives of every bit in the data of an Input, Output or Feature Main item
+    ///         — HID 1.11 §6.2.2.5.
     ///
-    /// - CONSTANT (bit 0): Static read-only field the host cannot modify, e.g. report padding.
-    /// - VARIABLE (bit 1): One field per control. Cleared means an array, where each field holds
-    ///   the index of an asserted control (keyboard scan code style) and Report Count bounds how
-    ///   many controls can be reported at once.
-    /// - RELATIVE (bit 2): Value is a change since the last report rather than an absolute one.
-    /// - WRAP (bit 3): Value rolls over at the logical extents.
-    /// - NON_LINEAR (bit 4): Raw data has been processed, e.g. an acceleration curve.
-    /// - NO_PREFERRED (bit 5): Control does not return to a rest state on its own.
-    /// - NULL_STATE (bit 6): Control has a state where it reports a value outside the logical
-    ///   extents to mean "no meaningful data".
-    /// - VOLATILE (bit 7): Output/Feature only; the value can change without host interaction.
-    ///   Reserved and zero for Input items.
-    /// - BUFFERED_BYTES (bit 8): Field is a fixed-size byte stream, not a numeric value, and must
-    ///   be aligned on a byte boundary.
-    DECLARE_TYPED_ENUM(HIDDataFlag, U32, HID_DATA_FLAGS, 0x0) // NOLINT
+    /// Each bit of the item data is an either/or choice, not an optional attribute, so both sides
+    /// of every pair are named here rather than only the side that sets the bit. The values are
+    /// therefore not masks: a value encodes its bit and which side of the pair it names as
+    /// (2 * bit) + state, so the even member of a pair is the cleared state, the odd member the
+    /// set state, and value / 2 recovers the bit index. NONE (0xFF) lies outside that encoding.
+    ///
+    /// An item with no bits set is not "no flags declared" — it is DATA, ARRAY, ABSOLUTE, NO_WRAP,
+    /// LINEAR, PREFERRED, NO_NULL_POSITION, i.e. every default. The keycode array of a boot
+    /// keyboard is exactly that item (HID 1.11 §E.6 spells it "Input (Data, Array), 81 00").
+    ///
+    /// - bit 0, DATA | CONSTANT: Modifiable device data, or a static read-only field the host
+    ///   cannot write, e.g. report padding.
+    /// - bit 1, ARRAY | VARIABLE: An array field holds the index of an asserted control (keyboard
+    ///   scan code style) and Report Count bounds how many can be reported at once; a variable
+    ///   item has one field per control instead.
+    /// - bit 2, ABSOLUTE | RELATIVE: Value against a fixed origin, or the change since the last
+    ///   report.
+    /// - bit 3, NO_WRAP | WRAP: Value rolls over at the logical extents.
+    /// - bit 4, LINEAR | NON_LINEAR: Raw data has been processed, e.g. an acceleration curve.
+    /// - bit 5, PREFERRED | NO_PREFERRED: Control returns to a rest state on its own.
+    /// - bit 6, NO_NULL_POSITION | NULL_STATE: Control has a state where it reports a value
+    ///   outside the logical extents to mean "no meaningful data".
+    /// - bit 7, NON_VOLATILE | VOLATILE: Output/Feature only; the value can change without host
+    ///   interaction. Reserved and zero for Input items.
+    /// - bit 8, BIT_FIELD | BUFFERED_BYTES: Field is a fixed-size byte stream, not a numeric
+    ///   value, and must be aligned on a byte boundary.
+    DECLARE_TYPED_ENUM(HIDDataFlag, U8, HID_DATA_FLAGS, 0xFF) // NOLINT
 
     /// @brief The data bytes of an Input, Output or Feature Main item as the bitmap they are —
     ///         HID 1.11 §6.2.2.5.
@@ -340,13 +362,15 @@ namespace Rune::Device::USB {
         /// @brief The raw data of the Main item.
         U32 m_flags = 0;
 
-        /// @brief
-        /// @param flag The flag to test for.
-        /// @return True: The bit of the flag is set, the item is in the state the flag names.
-        ///         False: The bit is cleared, the item is in the complementary state.
+        /// @brief Test which side of its bit pair the item declares.
+        /// @param flag Either side of a pair, e.g. ARRAY or VARIABLE for bit 1.
+        /// @return True: The item is in the state the flag names.
+        ///         False: The item is in the complementary state, the other member of that pair.
         [[nodiscard]] auto has(HIDDataFlag flag) const -> bool;
 
-        /// @brief The set flags as a "|" separated list of their names, e.g. "VARIABLE|RELATIVE".
+        /// @brief The DATA|CONSTANT and ARRAY|VARIABLE alternatives the item declares, as a "|"
+        ///         separated pair, e.g. "DATA|ARRAY" for a keycode array. The remaining bits are
+        ///         left out of the string; test them with has().
         [[nodiscard]] auto decode_flags() const -> String;
     };
 

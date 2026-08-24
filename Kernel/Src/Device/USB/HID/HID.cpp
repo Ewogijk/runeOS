@@ -26,7 +26,7 @@ namespace Rune::Device::USB {
     DEFINE_TYPED_ENUM(HIDCountryCode, U8, HID_COUNTRY_CODES, 0xFF)
     DEFINE_TYPED_ENUM(HIDItemType, U8, HID_ITEM_TYPES, 0xFF)
     DEFINE_TYPED_ENUM(HIDItemTag, U8, HID_ITEM_TAGS, 0x00)
-    DEFINE_TYPED_ENUM(HIDDataFlag, U32, HID_DATA_FLAGS, 0x0)
+    DEFINE_TYPED_ENUM(HIDDataFlag, U8, HID_DATA_FLAGS, 0x0)
     DEFINE_TYPED_ENUM(HIDCollectionType, U8, HID_COLLECTION_TYPES, 0xFF)
     DEFINE_TYPED_ENUM(HIDPhysicalBias, U8, HID_PHYSICAL_BIASES, 0)
     DEFINE_TYPED_ENUM(HIDPhysicalQualifier, U8, HID_PHYSICAL_QUALIFIERS, 0)
@@ -43,15 +43,15 @@ namespace Rune::Device::USB {
     auto hid_build_set_protocol_request(const SharedPointer<FunctionDevice>& hid_device,
                                         U16                                  interface_number,
                                         HIDProtocolMode protocol_mode) -> ControlTransferRequest {
-        return USB::ControlTransferRequest::of(
-            hid_device->get_handle(),
-            USB::RequestType::DIRECTION_HOST_TO_DEVICE | USB::RequestType::TYPE_CLASS
-                | USB::RequestType::RECIPIENT_INTERFACE,
-            USB::HIDClassRequest::SET_PROTOCOL,
-            protocol_mode,
-            interface_number,
-            0,
-            nullptr);
+        return USB::ControlTransferRequest::of(hid_device->get_handle(),
+                                               USB::RequestType::DIRECTION_HOST_TO_DEVICE
+                                                   | USB::RequestType::TYPE_CLASS
+                                                   | USB::RequestType::RECIPIENT_INTERFACE,
+                                               USB::HIDClassRequest::SET_PROTOCOL,
+                                               protocol_mode,
+                                               interface_number,
+                                               0,
+                                               nullptr);
     }
 
     auto hid_build_set_idle_request(const SharedPointer<FunctionDevice>& hid_device,
@@ -62,7 +62,7 @@ namespace Rune::Device::USB {
         constexpr U16 HID_IDLE_DURATION_MAX_MS  = 1020;
         U16           clamped =
             duration_ms > HID_IDLE_DURATION_MAX_MS ? HID_IDLE_DURATION_MAX_MS : duration_ms;
-        auto                        duration = static_cast<U8>(clamped / HID_IDLE_DURATION_UNIT_MS);
+        auto duration = static_cast<U8>(clamped / HID_IDLE_DURATION_UNIT_MS);
         return USB::ControlTransferRequest::of(
             hid_device->get_handle(),
             USB::RequestType::DIRECTION_HOST_TO_DEVICE | USB::RequestType::TYPE_CLASS
@@ -83,20 +83,16 @@ namespace Rune::Device::USB {
     // ====================================================================================== //
 
     auto HIDDataFlags::has(HIDDataFlag flag) const -> bool {
-        return (m_flags & flag.to_value()) != 0;
+        // A value encodes its bit and the side of the pair it names as (2 * bit) + state, so the
+        // bit is value / 2 and the state it asks about is the low bit of the value.
+        U8 value = flag.to_value();
+        return bit_check(m_flags, value >> 1) == static_cast<bool>(value & 1);
     }
 
     auto HIDDataFlags::decode_flags() const -> String {
-        constexpr U8 DATA_FLAG_COUNT = 9;
-        String       flags;
-        for (size_t i = 0; i < DATA_FLAG_COUNT; i++) {
-            if (bit_check(m_flags, i)) {
-                if (!flags.is_empty() && i != 0) flags += "|";
-                U16 bla  = bit_set(0, i);
-                flags   += HIDDataFlag(bla).to_string();
-            }
-        }
-        return flags;
+        return String::format("{}|{}",
+                              HIDDataFlag(static_cast<U8>(bit_check(m_flags, 0))).to_string(),
+                              HIDDataFlag(static_cast<U8>(bit_check(m_flags, 1)) + 2).to_string());
     }
 
     // ====================================================================================== //
