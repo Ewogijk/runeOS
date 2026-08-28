@@ -19,7 +19,7 @@ jobs:
           echo \> Verifying clang-format installation:
           clang-format --version
           echo \> Installing ruff
-          pip install ruff
+          pip install ruff==0.16.2
           echo \> Verifying Ruff installation:
           echo ruff --version
       - name: Check C/C++ Code Formatting
@@ -59,7 +59,7 @@ jobs:
           echo \> Verifying clang-format installation:
           clang-format --version
           echo \> Installing python dependencies
-          pip install scons click meson pyyaml
+          pip install scons==4.11.1 click==8.5.0 meson==1.12.0 pyyaml==6.0.3
       - name: Download runeToolchain
         id: rune_toolchain_download
         uses: robinraju/release-downloader@v1
@@ -156,8 +156,8 @@ jobs:
           path: ${{ github.workspace }}
       - name: Install Dependencies
         run: |
-          echo \> Installing clang-tidy, scons and clang-format
-          sudo apt install clang-tidy scons
+          echo \> Installing clang-tidy and clang-format
+          sudo apt install clang-tidy
           echo >\ Verifying clang-tidy installation:
           echo clang-tidy --version
           echo \> Installing clang-format-22
@@ -170,8 +170,8 @@ jobs:
           clang-format --version
           echo >\ Verifying scons installation:
           echo scons --version
-          echo \> Installing ruff
-          pip install ruff
+          echo \> Installing ruff and scons
+          pip install ruff==0.16.2 scons==4.11.1
           echo \> Verifying ruff installation:
           echo ruff --version
       - name: Download runeToolchain
