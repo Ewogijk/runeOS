@@ -458,6 +458,7 @@ namespace Rune {
                 return false;
         }
 
+        out = 0;
         for (int i = (int) str.size() - 1; i >= limit; i--) {
             char ch  = str[i];
             TNum val = 0;
