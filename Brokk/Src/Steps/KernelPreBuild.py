@@ -60,7 +60,7 @@ class KernelPreBuildStep(Build.BuildStep):
         if len(mnp) != 3:
             print(f"Invalid kernel version: {kernel_version}")
             return False
-        pre = '""' if len(mnp_pre) == 1 else f'"mnp_pre[1]"'
+        pre = '""' if len(mnp_pre) == 1 else f'"{mnp_pre[1]}"'
 
         macro_defs = [
             {
