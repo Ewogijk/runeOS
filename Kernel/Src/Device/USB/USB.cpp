@@ -190,13 +190,13 @@ namespace Rune::Device::USB {
                                     void*         data_buffer) -> ControlTransferRequest {
         TransferRequestHeader header = {.m_transfer_type = USB::TransferRequestType::CONTROL,
                                         .m_device_handle = handle};
-        return {.m_header         = header,
-                .m_request_type   = bm_request_type,
-                .m_request        = b_request,
-                .m_value          = w_value,
-                .m_index          = w_index,
-                .m_length         = w_length,
-                .m_data_buffer    = data_buffer};
+        return {.m_header       = header,
+                .m_request_type = bm_request_type,
+                .m_request      = b_request,
+                .m_value        = w_value,
+                .m_index        = w_index,
+                .m_length       = w_length,
+                .m_data_buffer  = data_buffer};
     }
 
 } // namespace Rune::Device::USB
