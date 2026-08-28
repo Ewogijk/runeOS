@@ -128,10 +128,12 @@ namespace Rune::SystemCall {
             return false;
         }
 
+#if LOG_TRACE_ENABLED
         auto sys_call = SYSTEM_CALL_HANDLER_TABLE.find(system_call_id);
         TRACE("{}-{}: Uninstalling system call",
               sys_call->value->info.handle,
               sys_call->value->info.name);
+#endif
         return SYSTEM_CALL_HANDLER_TABLE.remove(system_call_id);
     }
 } // namespace Rune::SystemCall

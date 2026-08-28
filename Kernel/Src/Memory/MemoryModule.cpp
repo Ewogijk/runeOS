@@ -73,13 +73,15 @@ namespace Rune::Memory {
             FATAL("Physical memory manager init failed, Failure: {}", pmm_failure.to_string())
             return false;
         };
+#if LOG_DEBUG_ENABLED
         MemoryRegion managed = _pmm.get_managed_memory();
+        auto         mem_idx = _pmm.get_memory_index_region();
         DEBUG("Physical memory range: {:0=#16x}-{:0=#16x}", managed.start, managed.end());
-        auto mem_idx = _pmm.get_memory_index_region();
         DEBUG("Physical memory index range: {:0=#16x}-{:0=#16x}, {} bytes",
               mem_idx.start,
               mem_idx.end(),
               mem_idx.size);
+#endif
 
         DEBUG("Initialize virtual memory manager")
         init_paging(boot_info.physical_address_width);

@@ -33,8 +33,10 @@ namespace Rune::CPU {
         // Use the raw pointer to avoid referencing the shared pointer which will never be cleaned
         // up because of the context switch in "unlock", so C++ never gets to call the destructor on
         // "t"
+#if LOG_TRACE_ENABLED
         auto* t = g_scheduler.get_running_thread().get(); // NOLINT -Wunused-variable
         TRACE(R"({}: Finished execution, Exit Code: {})", t->get_unique_name(), exit_code)
+#endif
         g_scheduler.stop();
     }
 

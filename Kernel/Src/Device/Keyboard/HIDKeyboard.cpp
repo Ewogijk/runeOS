@@ -425,7 +425,11 @@ namespace Rune::Device {
             .m_led_output_report               = led_output_report,
             .m_this_addr           = int_to_string(reinterpret_cast<uintptr_t>(this), Radix::HEX),
             .m_device_handle       = int_to_string(keyboard->get_handle(), Radix::DECIMAL),
+            .m_argv                = {},
+            .m_tsp                 = {},
             .m_run_polling_thread  = true,
+            .m_lock                = SpinlockIRQSafe(),
+            .m_thread_handle       = Ember::HANDLE_NONE,
             .m_last_keyboard_frame = HIDKeyboardFrame{},
             .m_last_pressed        = Ember::VirtualKey::NONE});
 
