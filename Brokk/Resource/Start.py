@@ -47,9 +47,7 @@ class QemuOption:
 @click.option("--log", default="", help="Path to a file for the qemu logs.")
 @click.option("--no-reboot", is_flag=True, help="Do not reboot when a triple fault occurs.")
 @click.option("--no-graphics", is_flag=True, help="Do not display a graphics window.")
-@click.option(
-    "--debug", is_flag=True, help="Make qemu wait for a GDB connection on localhost:1234."
-)
+@click.option("--debug", is_flag=True, help="Make qemu wait for a GDB connection on localhost:1234.")
 def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
     """
     Start qemu with an ich9-ahci controller and two drives: Boot drive as drive0 and a FAT32
@@ -63,9 +61,7 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
     """
     qemu_options = []
     # UEFI binaries
-    qemu_options.append(
-        QemuOption(["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"])
-    )
+    qemu_options.append(QemuOption(["-drive", f"if=pflash,format=raw,unit=0,file={OVMF_CODE},readonly=on"]))
     qemu_options.append(QemuOption(["-drive", f"if=pflash,format=raw,unit=1,file={OVMF_VARS}"]))
     qemu_options.append(QemuOption(["-net", "none"]))
 

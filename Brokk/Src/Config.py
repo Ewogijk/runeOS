@@ -138,10 +138,7 @@ def load_brokk_config(brokk_config_yaml: str) -> dict[str, Any]:
                 has_expected_type = True
                 break
         if not has_expected_type:
-            print(
-                f"Key '{key}' has wrong type: expected {expected_types.__name__}, "
-                f"got {type(value).__name__}"
-            )
+            print(f"Key '{key}' has wrong type: expected {expected_types.__name__}, got {type(value).__name__}")
             return {}
 
         if not verify_config(key, value):
@@ -189,9 +186,7 @@ def load_build_config(build_config_yaml: str) -> dict[str, Any]:
                 has_expected_type = True
                 break
         if not has_expected_type:
-            print(
-                f"Key '{key}' has wrong type: expected {expected_types}, got {type(value).__name__}"
-            )
+            print(f"Key '{key}' has wrong type: expected {expected_types}, got {type(value).__name__}")
             return {}
 
     return cfg

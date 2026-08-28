@@ -41,9 +41,7 @@ def with_meson(source_dir: Path, cross_file: Path, build_dir: Path):
     return exec_shell_cmd(["meson", "compile"], str(build_dir))
 
 
-def post_process_compilation_database(
-    compilation_database: Path, sys_root: Path, need_system_headers: bool
-) -> bool:
+def post_process_compilation_database(compilation_database: Path, sys_root: Path, need_system_headers: bool) -> bool:
     """
     Remove GCC only compilation flags from given compile_commands.json, so that clang-tidy does not
     report errors.
@@ -136,10 +134,7 @@ def post_process_compilation_database(
     with open(compilation_database, "w") as f:
         json.dump(compile_database, f, indent=2)
 
-    print(
-        f"> {len(compile_database)} command{'s have' if len(compile_database) > 1 else ' has'}"
-        f" been modified."
-    )
+    print(f"> {len(compile_database)} command{'s have' if len(compile_database) > 1 else ' has'} been modified.")
     return True
 
 

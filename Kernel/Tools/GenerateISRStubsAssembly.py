@@ -49,9 +49,7 @@ def generate_isr_assembly_stubs(out_file: str) -> None:
         file.write("; This file is auto generated.\n")
         file.write(";\n\n")
         for i in range(0, 256):
-            file.write(
-                f"ISR_ERRORCODE {i}\n" if i in stubs_with_error_code else f"ISR_NOERRORCODE {i}\n"
-            )
+            file.write(f"ISR_ERRORCODE {i}\n" if i in stubs_with_error_code else f"ISR_NOERRORCODE {i}\n")
 
 
 if __name__ == "__main__":
