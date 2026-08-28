@@ -21,7 +21,7 @@ sources = [
     build_env.File("ACPI/ACPICA/CLibFunctions.cpp"),
     build_env.File("ACPI/ACPICA/osl.c"),
     build_env.File("ACPI/ACPICA/osl-to-rune-bridge.cpp"),
-    build_env.File("Keyboard/Keyboard.cpp"),
+    build_env.File("Keyboard/HIDKeyboard.cpp"),
     build_env.File("Keyboard/PS2Keyboard.cpp"),
     build_env.File("MassStorage/AHCI/FIS.cpp"),
     build_env.File("MassStorage/AHCI/GPT.cpp"),
@@ -39,6 +39,9 @@ sources = [
     build_env.File("USB/Request.cpp"),
     build_env.File("USB/USB.cpp"),
     build_env.File("USB/VendorDB.cpp"),
+    build_env.File("USB/HID/HID.cpp"),
+    build_env.File("USB/HID/ItemParser.cpp"),
+    build_env.File("USB/HID/UsageTables.cpp"),
     build_env.File("USB/xHCI/DeviceContext.cpp"),
     build_env.File("USB/xHCI/ExtendedCapability.cpp"),
     build_env.File("USB/xHCI/RegisterInterface.cpp"),
@@ -47,6 +50,7 @@ sources = [
     build_env.File("USB/xHCI/xHCI.cpp"),
     build_env.File("Device.cpp"),
     build_env.File("DeviceModule.cpp"),
+    build_env.File("KeyEventBuffer.cpp"),
 ]
 acpi_sources = (Glob("ACPI/ACPICA/dispatcher/*.c")
                 + Glob("ACPI/ACPICA/events/*.c")

@@ -17,6 +17,7 @@
 #include <KRE/System/System.h>
 
 #include <Device/DeviceModule.h>
+#include <Device/Keyboard/HIDKeyboard.h>
 #include <Device/USB/xHCI/xHCI.h>
 
 namespace Rune::BuiltInPlugin {
@@ -31,6 +32,8 @@ namespace Rune::BuiltInPlugin {
     auto USBPlugin::load() -> bool {
         auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         return ds->register_device_driver(
-            SharedPointer<Device::Driver>(new Device::USB::XHCIDriver()));
+                   SharedPointer<Device::Driver>(new Device::USB::XHCIDriver()))
+               && ds->register_device_driver(
+                   SharedPointer<Device::Driver>(new Device::HIDKeyboardDriver()));
     }
 } // namespace Rune::BuiltInPlugin

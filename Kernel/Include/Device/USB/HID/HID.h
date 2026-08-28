@@ -746,6 +746,22 @@ namespace Rune::Device::USB {
 
         /// @brief The unit decoded as a string of unit symbols e.g. m*s^-1.
         [[nodiscard]] auto unit_as_string() const -> String;
+
+        /// @brief Whether the data fields carry 2's complement values.
+        /// @return True: The fields are signed.
+        ///         False: Otherwise.
+        [[nodiscard]] auto is_signed() const -> bool;
+
+        /// @brief Bits the item occupies in its report.
+        [[nodiscard]] auto bit_size() const -> U32;
+
+        /// @brief
+        /// @param report HID report without the report ID.
+        /// @param report_size Number of bytes in the report.
+        /// @param field_index Index of a field.
+        /// @return
+        [[nodiscard]] auto read_value(const U8* report, size_t report_size, U32 field_index) const
+            -> Optional<S32>;
     };
 
     /// @brief A HID report defines the layout and usage of data sent to or received from a HID

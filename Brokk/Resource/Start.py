@@ -75,7 +75,12 @@ def run_qemu(log: str, no_reboot: bool, no_graphics: bool, debug: bool) -> None:
     qemu_options.append(QemuOption(["-drive", f"file={RUNE_OS_IMAGE},id=boot,if=none"]))
     qemu_options.append(QemuOption(["-device", "ide-hd,drive=boot,bus=ahci.0"]))
 
-    # RAM -> 128 MiBi
+    # xHCI
+    qemu_options.append(QemuOption(["-device", "qemu-xhci,id=xhci"]))
+    # HID Keyboard
+    qemu_options.append(QemuOption(["-device", "usb-kbd,bus=xhci.0"]))
+
+    # RAM -> 256 MiB
     qemu_options.append(QemuOption(["-m", "256M"]))
 
     if len(log) > 0:

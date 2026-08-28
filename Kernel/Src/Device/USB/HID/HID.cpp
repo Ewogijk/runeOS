@@ -12,10 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <../../../Include/Device/USB/HID/HID.h>
+#include <Device/USB/HID/HID.h>
 
 #include <KRE/BitsAndBytes.h>
 #include <KRE/Logging.h>
+#include <KRE/Math.h>
 
 namespace Rune::Device::USB {
     // ========================================================================================== //
@@ -212,5 +213,33 @@ namespace Rune::Device::USB {
             }
         }
         return unit_str;
+    }
+
+    auto HIDData::is_signed() const -> bool { return m_logical_minimum < 0; }
+
+    auto HIDData::bit_size() const -> U32 { return m_report_size * m_report_count; }
+
+    auto HIDData::read_value(const U8* report, size_t report_size, U32 field_index) const
+        -> Optional<S32> {
+        if (report == nullptr || field_index >= m_report_count) return {};
+
+        // Fields can span at most 4 bytes (§8.4)
+        if (m_report_size == 0 || m_report_size > BIT_COUNT_DWORD) return {};
+
+        U32 first_bit = m_bit_offset + (field_index * m_report_size);
+        U32 last_bit  = first_bit + m_report_size;
+        if (last_bit > report_size * BIT_COUNT_BYTE) return {};
+
+        U64    value      = 0;
+        size_t first_byte = first_bit / BIT_COUNT_BYTE;
+        size_t last_byte  = (last_bit - 1) / BIT_COUNT_BYTE;
+        for (size_t i = first_byte; i <= last_byte; i++) {
+            value |= static_cast<U64>(report[i]) << (i - first_byte) * BIT_COUNT_BYTE;
+        }
+        value    >>= first_bit % BIT_COUNT_BYTE;
+        U64 mask   = (1ULL << m_report_size) - 1;
+        value      = value & mask;
+        if (is_signed() && bit_check(value, m_report_size - 1))value |= ~mask; // sign extend
+        return {static_cast<S32>(value)};
     }
 } // namespace Rune::Device::USB
