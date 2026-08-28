@@ -1323,6 +1323,7 @@ namespace Rune::Device::USB {
     }
 
     void XHCIDriver::log_configuration(const Configuration& configuration) {
+#if LOG_DEBUG_ENABLED
         size_t interface_count = 0;
         for (const auto& function : configuration.m_functions)
             interface_count += function.m_interfaces.size();
@@ -1398,6 +1399,7 @@ namespace Rune::Device::USB {
                 }
             }
         }
+#endif
     }
 
     auto

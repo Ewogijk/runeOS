@@ -209,6 +209,7 @@ namespace Rune {
         INFO("Loaded by {} - v{}", _boot_info.boot_loader_name, _boot_info.boot_loader_version);
         INFO("Load module: {:<40} OKAY", (mem_module.get_name() + " ..."));
 
+#if LOG_DEBUG_ENABLED
         DEBUG("Phyical memory map")
         for (const auto& mem_reg : mem_module.get_physical_memory_map()) {
             DEBUG("{:>16}: {:0=#16x}-{:0=#16x} (Size: {} bytes)",
@@ -226,6 +227,7 @@ namespace Rune {
                   mem_reg.end(),
                   mem_reg.size);
         }
+#endif
 
         CPUModuleLoader().load();
         _panic_stream = SharedPointer<TextStream>(new CPU::E9Stream);

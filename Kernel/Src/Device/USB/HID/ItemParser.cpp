@@ -398,13 +398,15 @@ namespace Rune::Device::USB {
     auto HIDItemParser::log_reports(const HIDReports& reports) {
         DEBUG("HID Reports - Uses Report IDs={}", reports.m_uses_report_IDs)
         for (const auto& kv : reports.m_reports) {
-            auto*                                       report = kv.value;
+            auto* report = kv.value;
+#if LOG_DEBUG_ENABLED
             StringRepresentation<USB::HIDExtendedUsage> ext_usage_str_repr;
             DEBUG("    REPORT({}, {}) - {}, S{}",
                   report->m_tag.m_report_ID,
                   report->m_tag.m_type.to_string(),
                   ext_usage_str_repr(report->m_usage),
                   report->m_bit_size)
+#endif
 
             for (auto& data : report->m_data) {
                 USB::HIDCollectionPathEntry c_entries[data.m_collection_path.size()];

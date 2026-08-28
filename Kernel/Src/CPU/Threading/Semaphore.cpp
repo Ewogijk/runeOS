@@ -26,11 +26,13 @@
 
 namespace Rune::CPU {
     void Semaphore::trace_state(const String& action) {
+#if LOG_TRACE_ENABLED
         String wq;
         for (auto& thread : _wait_queue) wq += String::format("{}, ", thread->get_unique_name());
         int c = _units;
         memory_barrier_read();
         TRACE(R"("{}: {}, C={}, WQ={})", get_unique_name(), action, c, wq);
+#endif
     }
 
     Semaphore::Semaphore(SemaphoreHandle handle,
