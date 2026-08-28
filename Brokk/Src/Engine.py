@@ -152,17 +152,13 @@ def configure(brokk_config_yaml: str) -> bool:
     apps = brokk_config[BrokkConfig.APPS.to_yaml_key()]
     build_config = {
         BuildConfig.PROJECT_ROOT.to_yaml_key(): str(Path("..").resolve()),
-        BuildConfig.KERNEL_VERSION.to_yaml_key(): str(
-            brokk_config[BrokkConfig.KERNEL_VERSION.to_yaml_key()]
-        ),
+        BuildConfig.KERNEL_VERSION.to_yaml_key(): str(brokk_config[BrokkConfig.KERNEL_VERSION.to_yaml_key()]),
         BuildConfig.ARCH.to_yaml_key(): arch,
         BuildConfig.BUILD.to_yaml_key(): build,
         BuildConfig.ENABLE_QEMU_CON.to_yaml_key(): True
         if brokk_config[BrokkConfig.ENABLE_QEMU_CON.to_yaml_key()]
         else False,
-        BuildConfig.KERNEL_LOG_LEVEL.to_yaml_key(): int(
-            brokk_config[BrokkConfig.KERNEL_LOG_LEVEL.to_yaml_key()]
-        ),
+        BuildConfig.KERNEL_LOG_LEVEL.to_yaml_key(): int(brokk_config[BrokkConfig.KERNEL_LOG_LEVEL.to_yaml_key()]),
         BuildConfig.KERNEL_LOG_RINGBUFFER_SIZE.to_yaml_key(): int(
             brokk_config[BrokkConfig.KERNEL_LOG_RINGBUFFER_SIZE.to_yaml_key()]
         ),
@@ -171,13 +167,9 @@ def configure(brokk_config_yaml: str) -> bool:
         BuildConfig.CRT_BEGIN.to_yaml_key(): str(
             sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "16.1.0" / "crtbegin.o"
         ),
-        BuildConfig.CRT_END.to_yaml_key(): str(
-            sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "16.1.0" / "crtend.o"
-        ),
+        BuildConfig.CRT_END.to_yaml_key(): str(sysroot_x64_elf / "lib" / "gcc" / "x86_64-elf" / "16.1.0" / "crtend.o"),
         BuildConfig.IMAGE_SIZE.to_yaml_key(): brokk_config[BrokkConfig.IMAGE_SIZE.to_yaml_key()],
-        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[
-            BrokkConfig.SYSTEM_LOADER.to_yaml_key()
-        ],
+        BuildConfig.SYSTEM_LOADER.to_yaml_key(): brokk_config[BrokkConfig.SYSTEM_LOADER.to_yaml_key()],
         BuildConfig.FILES.to_yaml_key(): brokk_config[BrokkConfig.FILES.to_yaml_key()],
         BuildConfig.APPS.to_yaml_key(): apps if apps else [],
         BuildConfig.SYSROOT_X64_RUNE.to_yaml_key(): str(sysroot_x64_rune),
