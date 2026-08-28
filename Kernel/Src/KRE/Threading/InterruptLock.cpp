@@ -27,4 +27,4 @@ namespace Rune {
 
     void InterruptSaveLock::unlock() const { interrupt_irq_restore(_flags); }
 
-} // namespace Rune::CPU
+} // namespace Rune

@@ -31,7 +31,7 @@ namespace Rune::SystemCall {
             key = Ember::KeyEvent(
                 static_cast<U32>(app_syscall_ctx->app_module->get_active_app()->std_in->read()));
         }
-        U32 key_code = key.event_code();
+        U32   key_code        = key.event_code();
         auto* key_code_buffer = reinterpret_cast<U16*>(key_code_out);
         return app_syscall_ctx->k_guard->copy_byte_buffer_kernel_to_user(
                    reinterpret_cast<void*>(&key_code),

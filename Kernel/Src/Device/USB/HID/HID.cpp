@@ -239,7 +239,7 @@ namespace Rune::Device::USB {
         value    >>= first_bit % BIT_COUNT_BYTE;
         U64 mask   = (1ULL << m_report_size) - 1;
         value      = value & mask;
-        if (is_signed() && bit_check(value, m_report_size - 1))value |= ~mask; // sign extend
+        if (is_signed() && bit_check(value, m_report_size - 1)) value |= ~mask; // sign extend
         return {static_cast<S32>(value)};
     }
 } // namespace Rune::Device::USB
