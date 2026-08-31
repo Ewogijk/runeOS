@@ -750,9 +750,12 @@ namespace Rune::Memory {
     }
 
     void SlabAllocator::free(void* obj) {
+        if (obj == nullptr) return;
+        auto addr = memory_pointer_to_addr(obj);
+        if (addr < _heap_memory.start || _heap_memory.end() <= addr) return;
+
         size_t cache_idx =
-            (memory_align(memory_pointer_to_addr(obj), CACHE_SIZE, false) - _heap_memory.start)
-            / CACHE_SIZE;
+            (memory_align(addr, CACHE_SIZE, false) - _heap_memory.start) / CACHE_SIZE;
         auto* c = reinterpret_cast<ObjectCache*>(
             _object_cache_cache.object_at(cache_idx - BOOTSTRAP_CACHE_COUNT));
         if ((c == nullptr) || c->get_type() == CacheType::NONE) return;

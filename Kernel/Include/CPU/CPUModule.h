@@ -19,9 +19,9 @@
 
 #include <KRE/System/Module.h>
 
-#include <KRE/Threading/InterruptLock.h>
 #include <CPU/Core.h>
 #include <CPU/Interrupt/IRQ.h>
+#include <KRE/Threading/InterruptLock.h>
 
 #include <CPU/Threading/Mutex.h>
 #include <CPU/Threading/Scheduler.h>
@@ -60,9 +60,6 @@ namespace Rune::CPU {
         static constexpr char const* BOOTSTRAP_THREAD_NAME         = "Bootstrap";
         static constexpr char const* GARBAGE_COLLECTOR_THREAD_NAME = "Garbage Collector Thread";
         static constexpr char const* IDLE_THREAD_NAME              = "Idle Thread";
-        static char*     DUMMY_ARGS[1]; // NOLINT Array disallowed! Is part of Kernel ABI
-        static ThreadStartupPacket GCT_START_INFO;
-        static ThreadStartupPacket IDLE_THREAD_START_INFO;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Interrupt Properties
@@ -75,7 +72,7 @@ namespace Rune::CPU {
         //                                      Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        HashMap<ThreadHandle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
+        HashMap<Ember::Handle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Time Properties
@@ -178,36 +175,29 @@ namespace Rune::CPU {
          */
         auto find_thread(Handle handle) -> SharedPointer<Thread>;
 
-        /**
-         * @brief Allocate memory for a new thread structure, put it in the thread table and enqueue
-         * it to be scheduled in the future.
-         *
-         * Each thread will be assigned a unique ID, the kernel stack is allocated and setup for the
-         * first context switch. As part of the setup a null frame is pushed onto the stack to
-         * enable stack tracing.
-         *
-         * <p>
-         *  Note: The user stack must already be setup! The scheduler cannot do so, because the user
-         * stack may be in another VAS and therefore inaccessible.
-         * </p>
-         *
-         * @param thread_name    Name of the thread.
-         * @param start_info     The thread start info contains the thread arguments, thread main
-         * and more info.
-         *
-         * @param base_pt_addr   Address of the base page table defining the virtual address space
-         * of the thread.
-         * @param policy         Scheduling policy to use for the thread.
-         * @param user_stack     The user mode stack.
-         *
-         * @return The ID if the scheduled thread, 0 if the thread could not be created or
-         * scheduled.
-         */
-        auto schedule_new_thread(const String&    thread_name,
-                                 ThreadStartupPacket*       start_info,
-                                 PhysicalAddr     base_pt_addr,
-                                 SchedulingPolicy policy,
-                                 Stack            user_stack) -> U16;
+        /// @brief Allocate memory for a new thread structure, put it in the thread table, and
+        ///         enqueue it to be scheduled in the future.
+        /// @param thread_name Name of the thread.
+        /// @param tlp The thread launch packet contains the thread arguments, thread main, and more
+        ///             info.
+        /// @param base_pt_addr Address of the base page table defining the virtual address space of
+        ///                     the thread.
+        /// @param policy Scheduling policy to use for the thread.
+        /// @param user_stack The user mode stack.
+        /// @return The ID if the scheduled thread, 0 if the thread could not be created or
+        ///         scheduled.
+        ///
+        /// Each thread will be assigned a unique ID, the kernel stack is allocated and set up for
+        /// the first context switch. As part of the setup a null frame is pushed onto the stack to
+        /// enable stack tracing.
+        ///
+        /// Note: The user stack must already be setup! The scheduler cannot do so, because the user
+        /// stack may be in another VAS and therefore inaccessible.
+        auto schedule_new_thread(const String&                     thread_name,
+                                 UniquePointer<Ember::ThreadLaunchPacket> tlp,
+                                 PhysicalAddr                      base_pt_addr,
+                                 SchedulingPolicy                  policy,
+                                 Stack                             user_stack) -> Ember::Handle;
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the
@@ -241,7 +231,7 @@ namespace Rune::CPU {
         ///
         /// After the calling thread is unblocked it is not guaranteed that the thread object of the
         /// joined thread is still available in the thread table.
-        auto sync_with_thread_stop(ThreadHandle handle) -> bool;
+        auto sync_with_thread_stop(Ember::Handle handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Mutex API
@@ -300,7 +290,7 @@ namespace Rune::CPU {
         /// @brief Try to find the semaphore with the given handle.
         /// @param handle Handle of a semaphore.
         /// @return A pointer to a semaphore, null if not found.
-        auto find_semaphore(SemaphoreHandle handle) -> SharedPointer<Semaphore>;
+        auto find_semaphore(Ember::Handle handle) -> SharedPointer<Semaphore>;
 
         /// @brief Dump the semaphore table to the stream.
         /// @param stream
@@ -317,7 +307,7 @@ namespace Rune::CPU {
         /// @brief Free the memory of the semaphore with the given handle.
         /// @param handle Handle of a semaphore
         /// @return True: The semaphore was freed, False: No semaphore with the handle was found.
-        auto free_semaphore(SemaphoreHandle handle) -> bool;
+        auto free_semaphore(Ember::Handle handle) -> bool;
 
         // ====================================================================================== //
         // Time API

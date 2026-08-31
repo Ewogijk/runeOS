@@ -29,19 +29,6 @@ namespace Rune::CPU {
     /// @brief A task to be executed in a thread pool.
     using Task = Function<void()>;
 
-    struct WorkerThread {
-        ThreadStartupPacket    m_start_info;
-        ThreadHandle m_handle;
-
-        friend auto operator==(const WorkerThread& a, const WorkerThread& b) -> bool {
-            return a.m_handle == b.m_handle;
-        }
-
-        friend auto operator!=(const WorkerThread& a, const WorkerThread& b) -> bool {
-            return a.m_handle != b.m_handle;
-        }
-    };
-
     /// @brief A RAII-style implementation of a thread pool for executing tasks concurrently.
     /// @tparam N Number of worker threads in the pool.
     ///
@@ -49,10 +36,8 @@ namespace Rune::CPU {
     /// variable but worker threads are stopped in the destructor.
     template <size_t N>
     class ThreadPool {
-        ConditionVariable      m_cv;
-        Array<WorkerThread, N> m_threads;
-        String                 m_this_addr;
-        char* m_worker_thread_argv[2]; // NOLINT cppcoreguidelines-avoid-c-arrays: Is Kernel ABI
+        ConditionVariable       m_cv;
+        Array<Ember::Handle, N> m_threads;
 
         Mutex                        m_task_queue_mutex;
         LinkedList<Function<void()>> m_task_queue;
@@ -62,10 +47,10 @@ namespace Rune::CPU {
         /// @brief Thread pool name for debugging purposes.
         String m_name;
 
-        static auto exec_worker_thread(ThreadStartupPacket* start_info) -> int {
-            if (start_info->argc == 0) return -1;
+        static auto exec_worker_thread(Ember::ThreadLaunchPacket* start_info) -> int {
+            if (start_info->m_argc == 0) return -1;
             VirtualAddr tp_addr = 0;
-            if (!parse_int(start_info->argv[0], Radix::HEX, tp_addr)) return -1;
+            if (!parse_int(start_info->argv(0), Radix::HEX, tp_addr)) return -1;
 
             auto* thread_pool = memory_addr_to_pointer<ThreadPool>(tp_addr);
             while (true) {
@@ -87,17 +72,8 @@ namespace Rune::CPU {
 
       public:
         explicit ThreadPool(const String& thread_pool_name)
-            : m_this_addr(int_to_string(memory_pointer_to_addr(this), Radix::HEX)),
-              m_worker_thread_argv(),
-              m_task_queue_mutex(Resource<MutexHandle>::HANDLE_NONE,
-                                 String::format("{} Mutex", thread_pool_name)),
-              m_name(thread_pool_name) {
-
-            // NOLINTBEGIN
-            // cppcoreguidelines-pro-type-const-cast: Needed for assignment
-            m_worker_thread_argv[0] = const_cast<char*>(m_this_addr.to_cstr());
-            // NOLINTEND
-        }
+            : m_task_queue_mutex(Ember::HANDLE_NONE, String::format("{} Mutex", thread_pool_name)),
+              m_name(thread_pool_name) {}
 
         ~ThreadPool() {
             {
@@ -109,7 +85,7 @@ namespace Rune::CPU {
             auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
 
             for (const auto& worker_thread : m_threads)
-                cpu_module->sync_with_thread_stop(worker_thread.m_handle);
+                cpu_module->sync_with_thread_stop(worker_thread);
         }
 
         /// @brief
@@ -122,31 +98,29 @@ namespace Rune::CPU {
 
         /// @brief
         /// @return A list of handles of the worker threads.
-        [[nodiscard]] auto worker_threads() const -> LinkedList<ThreadHandle> {
-            LinkedList<ThreadHandle> out_list;
-            for (const auto& worker_thread : m_threads) {
-                out_list.add_back(worker_thread.m_handle);
-            }
-            return out_list;
+        [[nodiscard]] auto worker_threads() const -> LinkedList<Ember::Handle> {
+            LinkedList<Ember::Handle> handles;
+            for (auto handle : m_threads) handles.add_back(handle);
+            return handles;
         }
 
         /// @brief Start all worker threads.
         void start() {
             m_running        = true;
             auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
+            auto  this_addr  = int_to_string(memory_pointer_to_addr(this), Radix::HEX);
             for (size_t i = 0; i < N; i++) {
-                m_threads[i].m_start_info.argc = 1;
-                m_threads[i].m_start_info.argv = m_worker_thread_argv;
-                m_threads[i].m_start_info.main = &exec_worker_thread;
-
-                ThreadHandle handle = cpu_module->schedule_new_thread(
+                auto handle = cpu_module->schedule_new_thread(
                     String::format("{}#{}", m_name, i),
-                    &m_threads[i].m_start_info,
+                    ThreadLaunchPacketBuilder()
+                        .add_argument(this_addr)
+                        .main(&exec_worker_thread)
+                        .build(),
                     Memory::get_base_page_table_address(),
                     SchedulingPolicy::LOW_LATENCY,
                     {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
 
-                if (handle != Resource<ThreadHandle>::HANDLE_NONE) m_threads[i].m_handle = handle;
+                if (handle != Ember::HANDLE_NONE) m_threads[i] = handle;
             }
         }
 

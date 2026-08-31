@@ -15,12 +15,26 @@
 #include <CPU/Threading/Thread.h>
 
 namespace Rune::CPU {
+    DEFINE_ENUM(ThreadState, THREAD_STATES, 0x0)
+
+    DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
+
+    Thread::Thread(Ember::Handle handle, const String& name) : Resource(handle, name) {}
+
+    auto operator==(const Thread& one, const Thread& two) -> bool {
+        return one.get_handle() == two.get_handle();
+    }
+
+    auto operator!=(const Thread& one, const Thread& two) -> bool {
+        return one.get_handle() != two.get_handle();
+    }
+
     ResourceCache<Thread, 4>
         g_thread_cache({"ID-Name", "State", "Policy", "App"},
                        [](const SharedPointer<Thread>& thread) -> Array<String, 4> {
                            return {thread->get_unique_name(),
-                                   thread->state.to_string(),
-                                   thread->policy.to_string(),
-                                   String::format("{}", thread->app_handle)};
+                                   thread->m_state.to_string(),
+                                   thread->m_policy.to_string(),
+                                   String::format("{}", thread->m_app_handle)};
                        });
 } // namespace Rune::CPU

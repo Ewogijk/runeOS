@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Ember/SystemCallID.h>
+#include <Ember/SystemCallHandle.h>
 
 namespace Ember {
     DEFINE_TYPED_ENUM(Memory, Ember::Handle, MEMORY_SYSCALLS, 0x0)

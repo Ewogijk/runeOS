@@ -149,7 +149,7 @@ namespace Rune {
         ///
         /// @param startup_packet
         /// @return Undefined. The function runs until system shutdown.
-        friend auto boot_phase3(ThreadStartupPacket* startup_packet) -> int;
+        friend auto boot_phase3( Ember::ThreadLaunchPacket* startup_packet) -> int;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  General Functions

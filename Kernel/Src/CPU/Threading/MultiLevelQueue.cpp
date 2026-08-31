@@ -47,7 +47,7 @@ namespace Rune::CPU {
     auto MultiLevelQueue::enqueue(SharedPointer<Thread> t) -> bool {
         auto* c_thread_q = this;
         while (c_thread_q != nullptr) {
-            if (c_thread_q->get_policy() == t->policy) {
+            if (c_thread_q->get_policy() == t->m_policy) {
                 if (!c_thread_q->_threads.contains(t)) c_thread_q->_threads.add_back(t);
                 return true;
             }

@@ -27,7 +27,7 @@ namespace Rune::CPU {
     ///
     /// The semaphore keeps track of a maximum value for the counter, it cannot be incremented
     /// beyond this value.
-    class Semaphore : public Resource<SemaphoreHandle> {
+    class Semaphore : public Resource<Ember::Handle> {
         int _units    = 0;
         int _unit_max = 0;
 
@@ -39,7 +39,7 @@ namespace Rune::CPU {
         void trace_state(const String& action);
 
       public:
-        Semaphore(SemaphoreHandle handle, const String& name, int counter_start, int counter_max);
+        Semaphore(Ember::Handle handle, const String& name, int counter_start, int counter_max);
 
         Semaphore(const Semaphore&)                    = delete;
         Semaphore(Semaphore&&)                         = delete;

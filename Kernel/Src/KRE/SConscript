@@ -27,6 +27,7 @@ sources = [
     build_env.File("System/FrameBuffer.cpp"),
     build_env.File("System/Module.cpp"),
     build_env.File("System/Plugin.cpp"),
+    build_env.File("CPU.cpp"),
     build_env.File("Logging.cpp"),
     build_env.File("Memory.cpp"),
     build_env.File("Stream.cpp"),

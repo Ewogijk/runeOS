@@ -90,7 +90,7 @@ namespace Rune::CPU {
             auto c_t        = _sleeping_threads.dequeue();
             while (c_t) {
                 TRACE(R"(1-{}: {} wake up)", get_name(), c_t->get_unique_name());
-                c_t->timer_handle = Resource<TimerHandle>::HANDLE_NONE;
+                c_t->m_timer_handle = Ember::HANDLE_NONE;
                 _scheduler->unblock(c_t);
                 if (_scheduler->get_ready_queue()->peek() == c_t.get())
                     do_preempt = true; // Execute the thread immediately if it is first in the
@@ -139,8 +139,8 @@ namespace Rune::CPU {
         //              -> The wake up is lost and the thread is deadlocked
         _scheduler->mark_as_block_pending();
         _sleeping_threads.enqueue(calling_thread, sleep_time_nanos);
-        calling_thread->timer_handle = 1;
-        _quantum_remaining           = _quantum; // Reset the quantum remaining for the next thread
+        calling_thread->m_timer_handle = 1;
+        _quantum_remaining = _quantum; // Reset the quantum remaining for the next thread
         _scheduler->block();
     }
 } // namespace Rune::CPU

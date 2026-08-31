@@ -30,11 +30,11 @@ namespace Rune::App {
     //                                          Cursor Renderer
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    auto render_cursor(ThreadStartupPacket* start_info) -> int {
-        if (start_info->argc != 1) return -1;
+    auto render_cursor(Ember::ThreadLaunchPacket* start_info) -> int {
+        if (start_info->m_argc != 1) return -1;
         uintptr_t           ptr       = 0;
         constexpr uintptr_t HEX_RADIX = 16;
-        if (!parse_int<uintptr_t>(start_info->argv[0], HEX_RADIX, ptr)) return -1;
+        if (!parse_int<uintptr_t>(start_info->argv(0), HEX_RADIX, ptr)) return -1;
         auto*  state     = reinterpret_cast<TerminalState*>(ptr);
         double thickness = 1.0;
         while (state->keep_rendering_cursor) { // NOLINT function exits if ptr cannot be parsed
@@ -708,8 +708,6 @@ namespace Rune::App {
                                    Pixel           def_fg_color)
         : _cpu_module(cpu_module),
           _state(),
-          _render_thread_arg(""),
-          _render_thread_argv(),
           _interpreter_state(ANSIInterpreterState::CHARACTER),
           _csi_argv(),
           _digit_buf() {
@@ -727,16 +725,6 @@ namespace Rune::App {
         _state.timer = cpu_module->get_system_timer();
         _state.mutex = cpu_module->create_mutex("Terminal");
 
-        // The arguments to the cursor render thread have to be maintained until the thread actually
-        // is running else they are stack allocated and gone after the constructor is finished and
-        // then boom
-        _render_thread_arg = int_to_string(reinterpret_cast<uintptr_t>(&_state), HEX_RADIX);
-        _render_thread_argv[0] =
-            const_cast<char*>(_render_thread_arg.to_cstr()); // NOLINT required for argv
-        _render_thread_argv[1]         = nullptr;
-        _render_thread_start_info.argc = 1;
-        _render_thread_start_info.argv = _render_thread_argv;
-        _render_thread_start_info.main = &render_cursor;
         if (_state.mutex) _initialized = true;
     }
 
@@ -749,14 +737,19 @@ namespace Rune::App {
     auto TerminalStream::write(U8 value) -> bool {
         if (!_initialized) return false;
 
-        if (_render_thread_ID == 0) {
-            _render_thread_ID = _cpu_module->schedule_new_thread(
+        if (_render_thread_handle == 0) {
+            auto tlp =
+                ThreadLaunchPacketBuilder()
+                    .add_argument(int_to_string(reinterpret_cast<uintptr_t>(&_state), HEX_RADIX))
+                    .main(&render_cursor)
+                    .build();
+            _render_thread_handle = _cpu_module->schedule_new_thread(
                 "Terminal-Cursor Render Thread",
-                &_render_thread_start_info,
+                move(tlp),
                 Memory::get_base_page_table_address(),
                 CPU::SchedulingPolicy::LOW_LATENCY,
                 {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-            if (_render_thread_ID == 0) _initialized = false;
+            if (_render_thread_handle == 0) _initialized = false;
         }
 
         char ch = static_cast<char>(value);

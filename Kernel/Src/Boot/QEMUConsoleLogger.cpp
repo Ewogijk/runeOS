@@ -14,7 +14,7 @@
 
 #include <Boot/QEMUConsoleLogger.h>
 
-#include <Ember/MachineBits.h>
+#include <Ember/SystemBits.h>
 
 #include <KRE/Logging.h>
 #include <KRE/System/System.h>
@@ -44,9 +44,6 @@ namespace Rune {
 
     /// @brief Background thread name.
     const char* THREAD_NAME = "QEMUCon";
-
-    /// @brief Start info of the background thread.
-    ThreadStartupPacket g_start_info;
 
     ///@brief E9 target stream.
     CPU::E9Stream g_qemu_console_stream;
@@ -97,7 +94,7 @@ namespace Rune {
         g_qemu_console_stream.flush();
     }
 
-    auto redirect_logs_to_e9(ThreadStartupPacket* si) -> int {
+    auto redirect_logs_to_e9(Ember::ThreadLaunchPacket* si) -> int {
         auto  read_cursor = log_get_read_cursor();
         auto* timer =
             System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();
@@ -116,14 +113,10 @@ namespace Rune {
     }
 
     void qemu_consoler_logger_start() {
-        auto* cpu_module    = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
-        char* dummy_args[1] = {nullptr}; // NOLINT
-        g_start_info.argc   = 0;
-        g_start_info.argv   = dummy_args;
-        g_start_info.main   = &redirect_logs_to_e9;
+        auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         cpu_module->schedule_new_thread(
             THREAD_NAME,
-            &g_start_info,
+            ThreadLaunchPacketBuilder().main(&redirect_logs_to_e9).build(),
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});

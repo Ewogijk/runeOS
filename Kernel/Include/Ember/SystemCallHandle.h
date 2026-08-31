@@ -12,15 +12,15 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef EMBER_SYSTEMCALLID_H
-#define EMBER_SYSTEMCALLID_H
+#ifndef EMBER_SYSTEMCALLHANDLE_H
+#define EMBER_SYSTEMCALLHANDLE_H
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
 
 namespace Ember {
 
-    ///@brief The memory system call IDs.
+    ///@brief The memory system call handles.
 #define MEMORY_SYSCALLS(X)                                                                         \
     X(Memory, GET_PAGE_SIZE, 100)                                                                  \
     X(Memory, ALLOCATE_PAGE, 101)                                                                  \
@@ -28,7 +28,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(Memory, Handle, MEMORY_SYSCALLS, 0x0) // NOLINT
 
-    /// @brief @brief The threading system call IDs.
+    /// @brief @brief The threading system call handles.
 #define THREADING_SYSCALLS(X)                                                                      \
     X(Threading, MUTEX_CREATE, 200)                                                                \
     X(Threading, MUTEX_LOCK, 201)                                                                  \
@@ -39,7 +39,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(Threading, Handle, THREADING_SYSCALLS, 0x0) // NOLINT
 
-    ///@brief The VFS system call IDs.
+    ///@brief The VFS system call handles.
 #define VFS_SYSCALLS(X)                                                                            \
     X(VFS, GET_NODE_INFO, 300)                                                                     \
     X(VFS, GET_NODE_INFO_BY_ID, 301)                                                               \
@@ -56,7 +56,7 @@ namespace Ember {
 
     DECLARE_TYPED_ENUM(VFS, Handle, VFS_SYSCALLS, 0x0) // NOLINT
 
-    ///@brief The app system call IDs.
+    ///@brief The app system call handles.
 #define APP_SYSCALLS(X)                                                                            \
     X(App, READ_STDIN, 400)                                                                        \
     X(App, WRITE_STDOUT, 401)                                                                      \
@@ -71,4 +71,4 @@ namespace Ember {
     DECLARE_TYPED_ENUM(App, Handle, APP_SYSCALLS, 0x0) // NOLINT
 } // namespace Ember
 
-#endif // EMBER_SYSTEMCALLID_H
+#endif // EMBER_SYSTEMCALLHANDLE_H

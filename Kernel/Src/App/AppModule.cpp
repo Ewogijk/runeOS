@@ -31,10 +31,10 @@
 namespace Rune::App {
     DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
 
-    auto AppModule::schedule_for_start(const SharedPointer<Info>& app,
-                                       const CPU::Stack&          user_stack,
-                                       ThreadStartupPacket*       start_info,
-                                       const Path&                working_directory) -> int {
+    auto AppModule::schedule_for_start(const SharedPointer<Info>&               app,
+                                       const CPU::Stack&                        user_stack,
+                                       UniquePointer<Ember::ThreadLaunchPacket> tlp,
+                                       const Path& working_directory) -> Ember::Handle {
         app->working_directory = move(working_directory);
         INFO(R"({}-{}: Start in {} (v{} by {}))",
              app->handle,
@@ -42,15 +42,15 @@ namespace Rune::App {
              app->working_directory.to_string(),
              app->version.to_string(),
              app->vendor);
-        int t_id    = _cpu_module->schedule_new_thread("main",
-                                                       start_info,
-                                                       app->base_page_table_address,
-                                                       CPU::SchedulingPolicy::NORMAL,
-                                                       user_stack);
-        app->handle = _app_handle_counter.acquire();
+        auto t_handle = _cpu_module->schedule_new_thread("main",
+                                                         move(tlp),
+                                                         app->base_page_table_address,
+                                                         CPU::SchedulingPolicy::NORMAL,
+                                                         user_stack);
+        app->handle   = _app_handle_counter.acquire();
         _app_table.put(app->handle, app);
-        _cpu_module->find_thread(t_id)->app_handle = app->handle;
-        app->thread_table.add_back(t_id);
+        _cpu_module->find_thread(t_handle)->m_app_handle = app->handle;
+        app->thread_table.add_back(t_handle);
         return app->handle;
     }
 
@@ -146,8 +146,8 @@ namespace Rune::App {
             CPU::EventHook(CPU::EventHook::THREAD_CREATED).to_string(),
             "App Thread Table Manager - ThreadCreated",
             [this](void* evt_ctx) -> void {
-                auto* t       = reinterpret_cast<CPU::Thread*>(evt_ctx);
-                t->app_handle = _active_app->handle;
+                auto* t         = reinterpret_cast<CPU::Thread*>(evt_ctx);
+                t->m_app_handle = _active_app->handle;
             });
         _cpu_module->install_event_handler(
             CPU::EventHook(CPU::EventHook::THREAD_STOPPED).to_string(),
@@ -158,7 +158,7 @@ namespace Rune::App {
                 SharedPointer<Info> finished_app(nullptr);
                 for (const auto& app_entry : _app_table) {
                     auto& app = *app_entry.value;
-                    if (app->handle == tt_ctx->stopped->app_handle) {
+                    if (app->handle == tt_ctx->stopped->m_app_handle) {
                         app->thread_table.remove(tt_ctx->stopped->get_handle());
                         if (app->thread_table.empty()) finished_app = app;
                         break;
@@ -189,11 +189,11 @@ namespace Rune::App {
                 // Switch the active app if the next thread does belong to another app
                 // LOGGER->warn("Active App: {}", _active_app.get() != nullptr);
                 // LOGGER->warn("Next Scheduled: {}", tt_ctx->next_scheduled != nullptr);
-                if (_active_app->handle != tt_ctx->next_scheduled->app_handle) {
+                if (_active_app->handle != tt_ctx->next_scheduled->m_app_handle) {
                     SharedPointer<Info> next_active(nullptr);
                     for (const auto& app_entry : _app_table) {
                         auto& app = *app_entry.value;
-                        if (app->handle == tt_ctx->next_scheduled->app_handle) next_active = app;
+                        if (app->handle == tt_ctx->next_scheduled->m_app_handle) next_active = app;
                     }
                     TRACE("Switch running app: {}-{} -> {}-{}",
                           _active_app->handle,
@@ -209,10 +209,10 @@ namespace Rune::App {
             [this](void* evt_ctx) -> void {
                 auto* next = reinterpret_cast<CPU::Thread*>(evt_ctx);
                 // Switch the active app if the next thead belongs to another app
-                if (next->app_handle != _active_app->handle) {
+                if (next->m_app_handle != _active_app->handle) {
                     for (const auto& app_entry : _app_table) {
                         auto& app = *app_entry.value;
-                        if (app->handle == next->app_handle) {
+                        if (app->handle == next->m_app_handle) {
                             TRACE("Switch running app: {}-{} -> {}-{}",
                                   _active_app->handle,
                                   _active_app->name,
@@ -287,7 +287,7 @@ namespace Rune::App {
 
         for (auto& t : _cpu_module->get_thread_table()) {
             kernel_app->thread_table.add_back(t->get_handle());
-            t->app_handle = kernel_app->handle;
+            t->m_app_handle = kernel_app->handle;
         }
 
         for (auto& f_e : _vfs_module->get_node_table())
@@ -338,39 +338,31 @@ namespace Rune::App {
     auto AppModule::start_system_loader(const Path& system_loader_executable,
                                         const Path& working_directory) -> LoadStatus {
         if (!_app_handle_counter.has_more()) return LoadStatus::LOAD_ERROR;
-        ELFLoader   loader(_memory_module, _vfs_module);
-        auto        app = SharedPointer<Info>(new Info());
-        CPU::Stack  user_stack;
-        VirtualAddr start_info_addr = 0;
+        ELFLoader loader(_memory_module, _vfs_module);
         INFO("Start system loader: {}", system_loader_executable.to_string());
-        char*      dummy_args[1] = {nullptr}; // NOLINT syscall arg, must use ptr
-        LoadStatus load_status   = loader.load(system_loader_executable,
-                                               dummy_args,
-                                               app,
-                                               user_stack,
-                                               start_info_addr,
-                                               true);
-        if (load_status != LoadStatus::LOADED) {
-            WARN("System loader start failed. Status: {}", load_status.to_string());
-            return load_status;
+        char*         dummy_args[1] = {nullptr}; // NOLINT syscall arg, must use ptr
+        ElFLoadResult load_result   = loader.load(system_loader_executable, dummy_args, true);
+        if (load_result.m_status != LoadStatus::LOADED) {
+            WARN("System loader start failed. Status: {}", load_result.m_status.to_string());
+            return load_result.m_status;
         }
 
         // Hook up the system loader stdin/stderr to the terminal stream that renders on the display
-        app->std_out = SharedPointer<TextStream>(new TerminalStream(_cpu_module,
-                                                                    &_frame_buffer,
-                                                                    &LAT15TERMINUS16,
-                                                                    Pixie::BLACK,
-                                                                    Pixie::VSCODE_WHITE));
+        load_result.m_app->std_out =
+            SharedPointer<TextStream>(new TerminalStream(_cpu_module,
+                                                         &_frame_buffer,
+                                                         &LAT15TERMINUS16,
+                                                         Pixie::BLACK,
+                                                         Pixie::VSCODE_WHITE));
         // Set the error stream also to the terminal stream, just print text in red
-        app->std_err = app->std_out;
+        load_result.m_app->std_err = load_result.m_app->std_out;
         // Hook up the stdin to the keyboard
-        app->std_in = SharedPointer<TextStream>(new Device::KeyEventStream());
+        load_result.m_app->std_in = SharedPointer<TextStream>(new Device::KeyEventStream());
 
-        _system_loader_handle =
-            schedule_for_start(app,
-                               user_stack,
-                               memory_addr_to_pointer<ThreadStartupPacket>(start_info_addr),
-                               move(working_directory));
+        _system_loader_handle = schedule_for_start(load_result.m_app,
+                                                   move(load_result.m_user_stack),
+                                                   move(load_result.m_tlp),
+                                                   move(working_directory));
         return LoadStatus::RUNNING;
     }
 
@@ -381,29 +373,25 @@ namespace Rune::App {
                                   const Ember::StdIOConfig& stdout_config,
                                   const Ember::StdIOConfig& stderr_config) -> StartStatus {
         if (!_app_handle_counter.has_more())
-            return {.load_result = LoadStatus::LOAD_ERROR, .handle = -1};
-        ELFLoader   loader(_memory_module, _vfs_module);
-        auto        app = SharedPointer<Info>(new Info());
-        CPU::Stack  user_stack;
-        VirtualAddr start_info_addr = 0;
+            return {.m_load_result = LoadStatus::LOAD_ERROR, .m_handle = Ember::HANDLE_NONE};
+        ELFLoader loader(_memory_module, _vfs_module);
         INFO("Load executable: {}", executable.to_string());
-        LoadStatus load_status =
-            loader.load(executable, argv, app, user_stack, start_info_addr, false);
-        if (load_status != LoadStatus::LOADED) {
-            WARN("Failed to load executable. Status: {}", load_status.to_string());
-            return {.load_result = load_status, .handle = -1};
+        ElFLoadResult load_result = loader.load(executable, argv, false);
+        if (load_result.m_status != LoadStatus::LOADED) {
+            WARN("Failed to load executable. Status: {}", load_result.m_status.to_string());
+            return {.m_load_result = load_result.m_status, .m_handle = Ember::HANDLE_NONE};
         }
 
-        auto std_in = setup_std_stream(app, StdStream::IN, stdin_config);
+        auto std_in = setup_std_stream(load_result.m_app, StdStream::IN, stdin_config);
         if (!std_in) {
             WARN("Could not open \"{}\" stdin stream.", stdin_config.target.to_string());
-            return {.load_result = LoadStatus::BAD_STDIO, .handle = -1};
+            return {.m_load_result = LoadStatus::BAD_STDIO, .m_handle = Ember::HANDLE_NONE};
         }
 
-        auto std_out = setup_std_stream(app, StdStream::OUT, stdout_config);
+        auto std_out = setup_std_stream(load_result.m_app, StdStream::OUT, stdout_config);
         if (!std_out) {
             WARN("Could not open \"{}\" stdout stream.", stdout_config.target.to_string());
-            return {.load_result = LoadStatus::BAD_STDIO, .handle = -1};
+            return {.m_load_result = LoadStatus::BAD_STDIO, .m_handle = Ember::HANDLE_NONE};
         }
 
         SharedPointer<TextStream> std_err;
@@ -412,21 +400,20 @@ namespace Rune::App {
             std_err = std_out;
         } else {
             // Open new stream for stderr
-            std_err = setup_std_stream(app, StdStream::ERR, stderr_config);
+            std_err = setup_std_stream(load_result.m_app, StdStream::ERR, stderr_config);
             if (!std_err) {
                 WARN("Could not open \"{}\" stderr stream.", stderr_config.target.to_string());
-                return {.load_result = LoadStatus::BAD_STDIO, .handle = -1};
+                return {.m_load_result = LoadStatus::BAD_STDIO, .m_handle = Ember::HANDLE_NONE};
             }
         }
-        app->std_in  = move(std_in);
-        app->std_out = move(std_out);
-        app->std_err = move(std_err);
-        int app_id =
-            schedule_for_start(app,
-                               user_stack,
-                               memory_addr_to_pointer<ThreadStartupPacket>(start_info_addr),
-                               move(working_directory));
-        return {.load_result = LoadStatus::RUNNING, .handle = app_id};
+        load_result.m_app->std_in  = move(std_in);
+        load_result.m_app->std_out = move(std_out);
+        load_result.m_app->std_err = move(std_err);
+        auto app_handle            = schedule_for_start(load_result.m_app,
+                                                        move(load_result.m_user_stack),
+                                                        move(load_result.m_tlp),
+                                                        move(working_directory));
+        return {.m_load_result = LoadStatus::RUNNING, .m_handle = app_handle};
     }
 
     void AppModule::exit_running_app(int exit_code) {
@@ -478,7 +465,7 @@ namespace Rune::App {
         auto* scheduler = _cpu_module->get_scheduler();
         DEBUG("Schedule syncing threads");
         for (auto& j_t : _active_app->joining_thread_table) {
-            j_t->join_app_id = 0;
+            j_t->m_join_app_handle = 0;
             scheduler->unblock(j_t);
         }
         _active_app->joining_thread_table.clear();
@@ -504,8 +491,8 @@ namespace Rune::App {
         auto* scheduler = _cpu_module->get_scheduler();
         auto  r_t       = scheduler->get_running_thread();
         DEBUG("{}: Join with app {}-{}", r_t->get_unique_name(), app->handle, app->name);
-        r_t->join_app_id = app->handle;
-        r_t->state       = CPU::ThreadState::BLOCKED;
+        r_t->m_join_app_handle = app->handle;
+        r_t->m_state           = CPU::ThreadState::BLOCKED;
         app->joining_thread_table.add_back(r_t);
         // The "block" call will trigger a context switch to whatever next thread will be run and
         // this thread will wait until it is scheduled again in the "exit_running_app" function.

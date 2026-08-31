@@ -28,7 +28,7 @@ namespace Rune::CPU {
               wq);
     }
 
-    Mutex::Mutex(MutexHandle handle, const String& name) : Resource(handle, name) {}
+    Mutex::Mutex(Ember::Handle handle, const String& name) : Resource(handle, name) {}
 
     auto Mutex::get_owner() const -> Thread* { return _owner ? _owner.get() : nullptr; }
 
@@ -98,7 +98,7 @@ namespace Rune::CPU {
         g_scheduler.unblock(thread_to_wake);
     }
 
-    auto Mutex::remove_thread(MutexHandle handle) -> bool {
+    auto Mutex::remove_thread(Ember::Handle handle) -> bool {
         if (atomic_load_acquire(&_lock) == 0) return false;
 
         if (_owner->get_handle() == handle) {

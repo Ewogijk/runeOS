@@ -170,15 +170,15 @@ namespace Rune::Device {
         return {frame};
     }
 
-    auto poll_keyboard(ThreadStartupPacket* tsp) -> int {
-        if (tsp->argc != 2) {
+    auto poll_keyboard(Ember::ThreadLaunchPacket* tsp) -> int {
+        if (tsp->m_argc != 2) {
             ERROR("HIDKeyboard driver address is missing.")
             return -1;
         }
         uintptr_t ptr = 0;
-        if (!parse_int<uintptr_t>(tsp->argv[0], Radix::HEX, ptr)) return -1;
+        if (!parse_int<uintptr_t>(tsp->argv(0), Radix::HEX, ptr)) return -1;
         Ember::Handle device_handle = 0;
-        if (!parse_int<Ember::Handle>(tsp->argv[1], Radix::DECIMAL, device_handle)) return -1;
+        if (!parse_int<Ember::Handle>(tsp->argv(1), Radix::DECIMAL, device_handle)) return -1;
         auto* driver = reinterpret_cast<HIDKeyboardDriver*>(ptr);
 
         SharedPointer<HIDKeyboardContext> kb_ctx;
@@ -423,24 +423,17 @@ namespace Rune::Device {
             .m_ep_in_interrupt                 = ep_in_interrupt,
             .m_ep_in_interrupt_max_packet_size = ep_in_interrupt_max_packet_size,
             .m_led_output_report               = led_output_report,
-            .m_this_addr           = int_to_string(reinterpret_cast<uintptr_t>(this), Radix::HEX),
-            .m_device_handle       = int_to_string(keyboard->get_handle(), Radix::DECIMAL),
-            .m_argv                = {},
-            .m_tsp                 = {},
-            .m_run_polling_thread  = true,
-            .m_lock                = SpinlockIRQSafe(),
-            .m_thread_handle       = Ember::HANDLE_NONE,
-            .m_last_keyboard_frame = HIDKeyboardFrame{},
-            .m_last_pressed        = Ember::VirtualKey::NONE});
+            .m_run_polling_thread              = true,
+            .m_lock                            = SpinlockIRQSafe(),
+            .m_thread_handle                   = Ember::HANDLE_NONE,
+            .m_last_keyboard_frame             = HIDKeyboardFrame{},
+            .m_last_pressed                    = Ember::VirtualKey::NONE});
 
-        // NOLINTBEGIN
-        kb_ctx->m_argv[0] = const_cast<char*>(kb_ctx->m_this_addr.to_cstr());
-        kb_ctx->m_argv[1] = const_cast<char*>(kb_ctx->m_device_handle.to_cstr());
-        // NOLINTEND
-        kb_ctx->m_argv[2]  = nullptr;
-        kb_ctx->m_tsp.argc = 2;
-        kb_ctx->m_tsp.argv = kb_ctx->m_argv;
-        kb_ctx->m_tsp.main = &poll_keyboard;
+        auto tlp = ThreadLaunchPacketBuilder()
+                       .add_argument(int_to_string(reinterpret_cast<uintptr_t>(this), Radix::HEX))
+                       .add_argument(int_to_string(keyboard->get_handle(), Radix::DECIMAL))
+                       .main(&poll_keyboard)
+                       .build();
 
         {
             CriticalSection<SpinlockIRQSafe> _(m_lock);
@@ -449,7 +442,7 @@ namespace Rune::Device {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         kb_ctx->m_thread_handle = cpu_module->schedule_new_thread(
             String::format("HID-KB#{}", device->get_handle()),
-            &kb_ctx->m_tsp,
+            move(tlp),
             Memory::get_base_page_table_address(),
             CPU::SchedulingPolicy::LOW_LATENCY,
             CPU::Stack{.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});

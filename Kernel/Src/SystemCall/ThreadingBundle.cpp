@@ -74,7 +74,7 @@ namespace Rune::SystemCall {
         auto*       tcb_ptr = memory_addr_to_pointer<void>(tcb);
         if (!t_ctx->k_guard->verify_user_buffer(tcb_ptr, sizeof(void*)))
             return Ember::Status::BAD_ARG;
-        t_ctx->cpu_module->get_scheduler()->get_running_thread()->thread_control_block = tcb_ptr;
+        t_ctx->cpu_module->get_scheduler()->get_running_thread()->m_thread_control_block = tcb_ptr;
         CPU::current_core()->update_thread_local_storage(tcb_ptr);
         return Ember::Status::OKAY;
     }

@@ -33,10 +33,10 @@ namespace Rune::CPU {
 #endif
     }
 
-    Semaphore::Semaphore(SemaphoreHandle handle,
-                         const String&   name,
-                         int             counter_start,
-                         int             counter_max)
+    Semaphore::Semaphore(Ember::Handle handle,
+                         const String& name,
+                         int           counter_start,
+                         int           counter_max)
         : Resource(handle, name),
           _units(counter_start),
           _unit_max(counter_max) {}
@@ -65,7 +65,7 @@ namespace Rune::CPU {
             _lock.lock();
         }
         --_units;
-        g_scheduler.get_running_thread()->semaphore_handle = get_handle();
+        g_scheduler.get_running_thread()->m_semaphore_handle = get_handle();
         trace_state("lock-good");
         _lock.unlock();
     }
@@ -89,7 +89,7 @@ namespace Rune::CPU {
         if (!_wait_queue.empty()) {
             thread_to_wake = _wait_queue.remove_front().value();
         }
-        g_scheduler.get_running_thread()->semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
+        g_scheduler.get_running_thread()->m_semaphore_handle = Ember::HANDLE_NONE;
         g_scheduler.unblock(thread_to_wake);
         memory_barrier_write();
         trace_state("unlock");
