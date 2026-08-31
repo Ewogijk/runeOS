@@ -43,13 +43,9 @@ namespace Rune::Device {
         U16                                m_ep_in_interrupt_max_packet_size = 0;
         USB::HIDReport                     m_led_output_report{};
 
-        String              m_this_addr;
-        String              m_device_handle;
-        char*               m_argv[3]; // NOLINT argv is part of the kernel ABI
-        ThreadStartupPacket m_tsp;
-        bool                m_run_polling_thread = false;
-        SpinlockIRQSafe     m_lock;
-        Ember::Handle       m_thread_handle;
+        bool            m_run_polling_thread = false;
+        SpinlockIRQSafe m_lock;
+        Ember::Handle   m_thread_handle;
 
         HIDKeyboardFrame  m_last_keyboard_frame{};
         Ember::VirtualKey m_last_pressed = Ember::VirtualKey::NONE;
@@ -65,7 +61,7 @@ namespace Rune::Device {
         /// @brief Synchronizes bind/unbind calls to prevent interleaving calls.
         CPU::Mutex m_bind_mutex;
 
-        friend auto poll_keyboard(ThreadStartupPacket* tsp) -> int;
+        friend auto poll_keyboard(Ember::ThreadLaunchPacket* tsp) -> int;
 
       public:
         static const USB::USBDeviceID ID_HID_KEYBOARD_BOOT;

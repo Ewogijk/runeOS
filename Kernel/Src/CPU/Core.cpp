@@ -19,19 +19,6 @@
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 namespace Rune::CPU {
-    DEFINE_ENUM(ThreadState, THREAD_STATES, 0x0)
-
-    DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
-
-    Thread::Thread(MutexHandle handle, const String& name) : Resource(handle, name) {}
-
-    auto operator==(const Thread& one, const Thread& two) -> bool {
-        return one.get_handle() == two.get_handle();
-    }
-
-    auto operator!=(const Thread& one, const Thread& two) -> bool {
-        return one.get_handle() != two.get_handle();
-    }
 
     DEFINE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0)
 } // namespace Rune::CPU

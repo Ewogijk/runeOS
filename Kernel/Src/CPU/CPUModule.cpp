@@ -16,6 +16,8 @@
 
 #include <Memory/Paging.h>
 
+#include <CPU/Job.h>
+
 #include <KRE/Interrupt.h>
 #include <KRE/Threading/CriticalSection.h>
 
@@ -42,7 +44,7 @@ namespace Rune::CPU {
         g_scheduler.on_thread_enter();
         // Use raw pointer -> See "thread_exit" for explanation
         auto* t = g_scheduler.get_running_thread().get();
-        if (t->user_stack.stack_top == 0) {
+        if (t->m_user_stack.stack_top == 0) {
             TRACE("{}: Execute in kernel mode.")
             current_core()->execute_in_kernel_mode(t, memory_pointer_to_addr(&thread_exit));
         } else {
@@ -51,7 +53,7 @@ namespace Rune::CPU {
         }
     }
 
-    auto idle_thread(ThreadStartupPacket* start_info) -> int {
+    auto idle_thread(Ember::ThreadLaunchPacket* start_info) -> int {
         SILENCE_UNUSED(start_info)
         for (;;) {
             interrupt_irq_enable();
@@ -61,8 +63,8 @@ namespace Rune::CPU {
         return 0;
     }
 
-    auto thread_garbage_collector(ThreadStartupPacket* start_info) -> int {
-        SILENCE_UNUSED(start_info)
+    auto thread_garbage_collector(Ember::ThreadLaunchPacket* tlp) -> int {
+        SILENCE_UNUSED(tlp)
         for (;;) {
             interrupt_irq_disable();
             auto*                           tgb = g_scheduler.get_thread_garbage_bin();
@@ -75,7 +77,7 @@ namespace Rune::CPU {
                 auto* next = g_scheduler.get_ready_queue()->peek();
                 if (next == nullptr) next = g_scheduler.get_idle_thread().get();
                 ON_THREAD_STOPPED(forward<Thread*>(dT.value().get()), forward<Thread*>(next));
-                delete[] dT.value()->kernel_stack_bottom;
+                delete[] dT.value()->m_kernel_stack_bottom;
 
                 if (dT.value().get_ref_count() > 1) {
                     WARN(R"({}: Memory leak detected, Refcount: {})",
@@ -97,20 +99,16 @@ namespace Rune::CPU {
 
     DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
 
-    char*               CPUModule::DUMMY_ARGS[]; // NOLINT Array disallowed! Is part of Kernel ABI
-    ThreadStartupPacket CPUModule::GCT_START_INFO;
-    ThreadStartupPacket CPUModule::IDLE_THREAD_START_INFO;
-
-    auto create_thread(const String&        thread_name,
-                       ThreadStartupPacket* start_info,
-                       PhysicalAddr         base_pt_addr,
-                       SchedulingPolicy     policy,
-                       Stack                user_stack) -> SharedPointer<Thread> {
-        SharedPointer<Thread> new_thread    = g_thread_cache.allocate(thread_name);
-        new_thread->start_info              = start_info;
-        new_thread->base_page_table_address = base_pt_addr;
-        new_thread->policy                  = policy;
-        new_thread->user_stack              = move(user_stack);
+    auto create_thread(const String&                            thread_name,
+                       UniquePointer<Ember::ThreadLaunchPacket> tlp,
+                       PhysicalAddr                             base_pt_addr,
+                       SchedulingPolicy                         policy,
+                       Stack user_stack) -> SharedPointer<Thread> {
+        SharedPointer<Thread> new_thread      = g_thread_cache.allocate(thread_name);
+        new_thread->m_tlp                     = move(tlp);
+        new_thread->m_base_page_table_address = base_pt_addr;
+        new_thread->m_policy                  = policy;
+        new_thread->m_user_stack              = move(user_stack);
         return new_thread;
     }
 
@@ -154,26 +152,19 @@ namespace Rune::CPU {
         // thus it will be reused sooner than later and the initial thread will crash at this point
         auto bootstrap_thread = g_thread_cache.allocate(BOOTSTRAP_THREAD_NAME);
 
-        bootstrap_thread->base_page_table_address = base_pt_addr;
-        bootstrap_thread->kernel_stack_top        = boot_info.stack;
-        bootstrap_thread->policy                  = SchedulingPolicy::LOW_LATENCY;
+        bootstrap_thread->m_base_page_table_address = base_pt_addr;
+        bootstrap_thread->m_kernel_stack_top        = boot_info.stack;
+        bootstrap_thread->m_policy                  = SchedulingPolicy::LOW_LATENCY;
 
-        DUMMY_ARGS[0]       = nullptr;
-        GCT_START_INFO.argc = 0;
-        GCT_START_INFO.argv = DUMMY_ARGS;
-        GCT_START_INFO.main = &thread_garbage_collector;
         auto garbage_collector_thread =
             create_thread(GARBAGE_COLLECTOR_THREAD_NAME,
-                          &GCT_START_INFO,
+                          ThreadLaunchPacketBuilder().main(&thread_garbage_collector).build(),
                           base_pt_addr,
                           SchedulingPolicy::NONE,
                           {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
-        IDLE_THREAD_START_INFO.argc = 0;
-        IDLE_THREAD_START_INFO.argv = DUMMY_ARGS;
-        IDLE_THREAD_START_INFO.main = &idle_thread;
         auto le_idle_thread =
             create_thread(IDLE_THREAD_NAME,
-                          &IDLE_THREAD_START_INFO,
+                          ThreadLaunchPacketBuilder().main(&idle_thread).build(),
                           base_pt_addr,
                           SchedulingPolicy::NONE,
                           {.stack_bottom = nullptr, .stack_top = 0x0, .stack_size = 0x0});
@@ -191,7 +182,7 @@ namespace Rune::CPU {
             auto maybe_wait_list = _on_stop_syncing_threads.find(term->get_handle());
             if (maybe_wait_list != _on_stop_syncing_threads.end()) {
                 for (SharedPointer<Thread>& t : *maybe_wait_list->value) {
-                    t->m_sync_stop_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
+                    t->m_sync_stop_thread_handle = Ember::HANDLE_NONE;
                     g_scheduler.unblock(t);
                 }
                 maybe_wait_list->value->clear();
@@ -283,17 +274,17 @@ namespace Rune::CPU {
     }
     // NOLINTEND
 
-    auto CPUModule::schedule_new_thread(const String&        thread_name,
-                                        ThreadStartupPacket* start_info,
-                                        PhysicalAddr         base_pt_addr,
-                                        SchedulingPolicy     policy,
-                                        Stack                user_stack) -> ThreadHandle {
+    auto CPUModule::schedule_new_thread(const String&                            thread_name,
+                                        UniquePointer<Ember::ThreadLaunchPacket> tlp,
+                                        PhysicalAddr                             base_pt_addr,
+                                        SchedulingPolicy                         policy,
+                                        Stack user_stack) -> Ember::Handle {
         SharedPointer<Thread> new_thread =
-            create_thread(thread_name, move(start_info), base_pt_addr, policy, move(user_stack));
+            create_thread(thread_name, move(tlp), base_pt_addr, policy, move(user_stack));
         fire(EventHook(EventHook::THREAD_CREATED).to_string(), new_thread.get());
         if (!g_scheduler.schedule(new_thread)) {
             g_thread_cache.free(new_thread->get_handle());
-            return Resource<ThreadHandle>::HANDLE_NONE;
+            return Ember::HANDLE_NONE;
         }
 
         return new_thread->get_handle();
@@ -316,7 +307,7 @@ namespace Rune::CPU {
             // Check where the thread currently is e.g. locked by a mutex and remove it from the
             // queue
             DEBUG("{}: Stop thread", thread_to_stop->get_unique_name());
-            switch (thread_to_stop->state) { // NOLINT All cases are handled
+            switch (thread_to_stop->m_state) { // NOLINT All cases are handled
                 case ThreadState::NONE:
                     ERROR(R"({}: Invalid thread state "NONE")", thread_to_stop->get_unique_name())
                     return false;
@@ -338,7 +329,7 @@ namespace Rune::CPU {
                     return true;
                 case ThreadState::BLOCK_PENDING:
                     if (g_scheduler.get_running_thread()->get_handle()
-                        == static_cast<ThreadHandle>(handle)) {
+                        == static_cast<Ember::Handle>(handle)) {
                         WARN("{}: Thread is executing, will not stop",
                              thread_to_stop->get_unique_name())
                         return true;
@@ -351,23 +342,23 @@ namespace Rune::CPU {
                     }
                     break;
                 case ThreadState::BLOCKED:
-                    if (thread_to_stop->timer_handle > 0) {
+                    if (thread_to_stop->m_timer_handle > 0) {
                         if (!_timer->remove_sleeping_thread(handle)) {
                             ERROR("{}: Not found in timer wait queue",
                                   thread_to_stop->get_unique_name())
                             return false;
                         }
-                    } else if (thread_to_stop->mutex_handle > 0) {
+                    } else if (thread_to_stop->m_mutex_handle > 0) {
                         SharedPointer<Mutex> m(nullptr);
                         for (const auto& mm : g_mutex_cache.get_resources()) {
                             if (mm->get_handle() // NOLINT Only end() is null
-                                == thread_to_stop->mutex_handle) {
+                                == thread_to_stop->m_mutex_handle) {
                                 m = mm;
                                 break;
                             }
                         }
                         if (!m) {
-                            ERROR("{}: Mutex not found", thread_to_stop->mutex_handle)
+                            ERROR("{}: Mutex not found", thread_to_stop->m_mutex_handle)
                             return false;
                         }
 
@@ -389,7 +380,7 @@ namespace Rune::CPU {
         return true;
     }
 
-    auto CPUModule::sync_with_thread_stop(ThreadHandle handle) -> bool {
+    auto CPUModule::sync_with_thread_stop(Ember::Handle handle) -> bool {
         CriticalSection<InterruptSaveLock> _(m_lock);
         if (!g_thread_cache.find(handle)) return false;
         auto calling_thread  = g_scheduler.get_running_thread();
@@ -443,7 +434,7 @@ namespace Rune::CPU {
         return g_semaphore_cache.get_resources();
     }
 
-    auto CPUModule::find_semaphore(SemaphoreHandle handle) -> SharedPointer<Semaphore> {
+    auto CPUModule::find_semaphore(Ember::Handle handle) -> SharedPointer<Semaphore> {
         return g_semaphore_cache.find(handle);
     }
 
@@ -456,7 +447,7 @@ namespace Rune::CPU {
         return g_semaphore_cache.allocate(name, counter_start, counter_max);
     }
 
-    auto CPUModule::free_semaphore(SemaphoreHandle handle) -> bool {
+    auto CPUModule::free_semaphore(Ember::Handle handle) -> bool {
         return g_semaphore_cache.free(handle);
     }
     // NOLINTEND

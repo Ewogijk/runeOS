@@ -131,7 +131,7 @@ namespace Rune::CPU {
         // Kernel code is only ever run after an exception, IRQ or syscall and after this is handled
         // the kernel stack will be emptied, that is we set the stack pointer (nearly) to the bottom
         // on top of the null frame
-        const auto kernel_sp_bottom = reinterpret_cast<uintptr_t>(n_thread->kernel_stack_bottom)
+        const auto kernel_sp_bottom = reinterpret_cast<uintptr_t>(n_thread->m_kernel_stack_bottom)
                                       + Thread::KERNEL_STACK_SIZE - 8;
 
         // The user stack top in the thread struct will be out of date since it is not updated when
@@ -140,38 +140,38 @@ namespace Rune::CPU {
         // -> Update the thread struct user stack top to prevent it from being corrupted when we
         // switch back to the
         //      current stack at some point
-        c_thread->user_stack.stack_top = _gs_base;
+        c_thread->m_user_stack.stack_top = _gs_base;
 
         TSS.rsp_0 = kernel_sp_bottom;
         _kgs_base = kernel_sp_bottom;
-        _gs_base  = n_thread->user_stack.stack_top;
+        _gs_base  = n_thread->m_user_stack.stack_top;
         write_msr(ModelSpecificRegister::FS_Base,
-                  reinterpret_cast<uintptr_t>(n_thread->thread_control_block));
+                  reinterpret_cast<uintptr_t>(n_thread->m_thread_control_block));
 
         context_switch_ass(
-            &c_thread->kernel_stack_top,
+            &c_thread->m_kernel_stack_top,
             // Passed as pointer so the assembly can update the value in the thread struct
-            c_thread->base_page_table_address,
-            n_thread->kernel_stack_top,
-            n_thread->base_page_table_address);
+            c_thread->m_base_page_table_address,
+            n_thread->m_kernel_stack_top,
+            n_thread->m_base_page_table_address);
     }
 
     void X64Core::execute_in_kernel_mode(Thread* t, const Register thread_exit) {
         // threadExit will be pushed onto the stack so t->Main returns to it
         // -> adjust the kernel stack in the thread struct manually
-        t->kernel_stack_top -= 8; // NOLINT
-        exec_kernel_mode(reinterpret_cast<Register>(t->start_info),
-                         reinterpret_cast<Register>(t->start_info->main),
+        t->m_kernel_stack_top -= 8; // NOLINT
+        exec_kernel_mode(reinterpret_cast<Register>(t->m_tlp.get()),
+                         reinterpret_cast<Register>(t->m_tlp->m_main),
                          thread_exit);
     }
 
     void X64Core::execute_in_user_mode(Thread* t) {
         // Update cached stack pointers
-        TSS.rsp_0 = t->kernel_stack_top;
-        _kgs_base = t->kernel_stack_top;
-        _gs_base  = t->user_stack.stack_top;
-        exec_user_mode(reinterpret_cast<Register>(t->start_info),
-                       reinterpret_cast<Register>(t->start_info->main));
+        TSS.rsp_0 = t->m_kernel_stack_top;
+        _kgs_base = t->m_kernel_stack_top;
+        _gs_base  = t->m_user_stack.stack_top;
+        exec_user_mode(reinterpret_cast<Register>(t->m_tlp.get()),
+                       reinterpret_cast<Register>(t->m_tlp->m_main));
     }
 
     void X64Core::update_thread_local_storage(void* tls_ptr) {

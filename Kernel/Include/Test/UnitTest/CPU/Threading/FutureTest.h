@@ -34,7 +34,7 @@ constexpr U8      RESULT           = 42;
 constexpr U8      WAIT_TIME_MILLIS = 50;
 CPU::Promise<U8>* PROMISE;
 
-auto set_value_async(ThreadStartupPacket* start_info) -> int {
+auto set_value_async( Ember::ThreadLaunchPacket* start_info) -> int {
     auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
     cpu_module->get_system_timer()->sleep_milli(WAIT_TIME_MILLIS);
     PROMISE->set_value(RESULT);
@@ -50,7 +50,7 @@ TEST("is_finished - Is unfinished", "Future") {
     // Test Body
     {
         TestThread tt("FutureTest", set_value_async, true);
-        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+        if (tt.m_thread_handle == Resource<Ember::Handle>::HANDLE_NONE) {
             REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
             return;
         }
@@ -71,7 +71,7 @@ TEST("is_finished - Is finished", "Future") {
     // Test Body
     {
         TestThread tt("FutureTest", set_value_async, true);
-        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+        if (tt.m_thread_handle == Resource<Ember::Handle>::HANDLE_NONE) {
             REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
             return;
         }
@@ -92,7 +92,7 @@ TEST("get - Is unfinished", "Future") {
     // Test Body
     {
         TestThread tt("FutureTest", set_value_async, true);
-        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+        if (tt.m_thread_handle == Resource<Ember::Handle>::HANDLE_NONE) {
             REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
             return;
         }
@@ -113,7 +113,7 @@ TEST("get - Is finished", "Future") {
     // Test Body
     {
         TestThread tt("FutureTest", set_value_async, true);
-        if (tt.m_thread_handle == Resource<CPU::ThreadHandle>::HANDLE_NONE) {
+        if (tt.m_thread_handle == Resource<Ember::Handle>::HANDLE_NONE) {
             REQUIRE(1 == 0) // Job wasn't run -> FAIL the TC
             return;
         }

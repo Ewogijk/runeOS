@@ -20,12 +20,26 @@
 
 #include <Memory/MemoryModule.h>
 
-#include <KRE/Threading/InterruptLock.h>
 #include <CPU/Core.h>
+#include <KRE/Threading/InterruptLock.h>
 
 #include <VirtualFileSystem/VFSModule.h>
 
 namespace Rune::App {
+
+    /// @brief The result of loading an ELF executable.
+    ///
+    /// When m_status == LoadStatus::LOADED, then m_info, m_stack, and m_tlp will contain defined
+    /// values otherwise not.
+    struct ElFLoadResult {
+        LoadStatus                        m_status = LoadStatus::NONE;
+        SharedPointer<Info>               m_app;
+        CPU::Stack                        m_user_stack = {};
+        UniquePointer<Ember::ThreadLaunchPacket> m_tlp;
+
+        static auto build_error_result(LoadStatus status) -> ElFLoadResult;
+    };
+
     /**
      * The ELF loader loads an ELF64 executable into memory.
      */
@@ -69,56 +83,42 @@ namespace Rune::App {
 
         auto load_segments(const ELF64File& elf_file) -> bool;
 
-        auto setup_bootstrap_area(const ELF64File& elf_file,
-                                  char*            args[], // NOLINT argv is part of the kernel ABI
-                                  size_t           stack_size) -> ThreadStartupPacket*;
+        auto setup_bootstrap_region_and_stack(const ELF64File& elf_file,
+                                              char* args[], // NOLINT argv is part of the kernel ABI
+                                              size_t stack_size) -> BootstrapRegion*;
 
       public:
         ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys);
 
-        /**
-         * Try to parse and verify the given executable file, load it's segments into memory and
-         * fill the app table entry with information from the executable.
-         *
-         * <p>
-         *  The loading steps are:
-         *  <ol>
-         *   <li>Header verification: Check the ELF magic, that "class==ELF64", "Type==Exec" and the
-         * executable entry is in user space.</li> <li>Program header (PH) verification: At least
-         * one PH has "type==Load" and all segments regions [VirtualAddress,
-         * VirtualAddress+MemorySize] are in user space. PhysicalAddresses are not supported. Search
-         * a Note PH (presence is optional)</li> <li>Virtual Address Space Allocation: Remember the
-         * virtual address space (VAS) of the currently running app, then create a new VAS for the
-         * new app and load it.</li> <li>Load PH's in memory: Allocate writable pages for each PH,
-         * copy PH content to memory and lastly modify page flags based on SegmentPermissions</li>
-         *   <li>Parse vendor information (if available): Get the Vendor from the name part of the
-         * Note PH and the app version from the desc part.</li> <li>Fill App table entry: Put the
-         * executable path, app name (filename without extension), vendor, major, minor patch
-         * versions, base page table address, virtual address where the app arguments should be
-         * placed and entry aka virtual address of the main function into the app table entry.</li>
-         *   <li>Copy CLI Args: Copy the CLI arguments for the app from kernel memory to user
-         * memory.</li> <li>Reload VAS: Load the VAS of the currently running app again.</li>
-         *  </ol>
-         * </p>
-         *
-         * @param executable          Path to the ELF executable.
-         * @param args                Command line arguments for the app.
-         * @param entry_out           App table entry that will be filled with ELF information.
-         * @param user_stack_out      User stack of the main thread, will be setup by the ELF
-         * loader.
-         * @param start_info_addr_out Virtual address of the start info struct.
-         * @param keep_vas            True: Do not allocate a new VAS for the executable but load it
-         * into the current VAS, this essentially deactivates steps 3 and 7.<br> False: Allocate a
-         * new VAS for the executable.
-         *
-         * @return The final status of the ELF loading.
-         */
-        auto load(const Path&                executable,
-                  char*                      args[], // NOLINT argv is part of the kernel ABI
-                  const SharedPointer<Info>& entry_out,
-                  CPU::Stack&                user_stack_out,
-                  VirtualAddr&               start_info_addr_out,
-                  bool                       keep_vas) -> LoadStatus;
+        /// @brief Try to parse and verify the given executable file, load it's segments into memory
+        /// and fill the app table entry with information from the executable.
+        /// @param executable Path to the ELF executable.
+        /// @param args Command line arguments for the app.
+        /// @param keep_vas True: Do not allocate a new VAS for the executable but load it into the
+        ///                       current VAS, this essentially deactivates steps 3 and 7.
+        ///                 False: Allocate a new VAS for the executable.
+        /// @return The final status of the ELF loading.
+        ///
+        /// The loading steps are:
+        /// - Header verification: Check the ELF magic, that "class==ELF64", "Type==Exec" and the
+        ///     executable entry is in user space.
+        /// - Program header (PH) verification: At least one PH has "type==Load" and all segments
+        ///     regions [VirtualAddress, VirtualAddress+MemorySize] are in user space.
+        ///     PhysicalAddresses are not supported. Search a Note PH (presence is optional)
+        /// - Virtual Address Space Allocation: Remember the virtual address space (VAS) of the
+        ///     currently running app, then create a new VAS for the new app and load it.
+        /// - Load PH's in memory: Allocate writable pages for each PH, copy PH content to memory
+        ///     and lastly modify page flags based on SegmentPermissions
+        /// - Parse vendor information (if available): Get the Vendor from the name part of the Note
+        ///     PH  and the app version from the desc part.</li> <li>Fill App table entry: Put the
+        ///     executable path, app name (filename without extension), vendor, major, minor patch
+        ///     versions, base page table address, virtual address where the app arguments should be
+        ///     placed and entry aka virtual address of the main function into the app table entry.
+        /// - Copy CLI Args: Copy the CLI arguments for the app from kernel memory to user memory.
+        /// - Reload VAS: Load the VAS of the currently running app again.
+        auto load(const Path& executable,
+                  char*       args[], // NOLINT argv is part of the kernel ABI
+                  bool        keep_vas) -> ElFLoadResult;
     };
 } // namespace Rune::App
 

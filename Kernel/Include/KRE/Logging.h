@@ -18,7 +18,7 @@
 
 #include <Ember/Ember.h>
 #include <Ember/Enum.h>
-#include <Ember/MachineBits.h>
+#include <Ember/SystemBits.h>
 
 #include <KRE/Collections/Array.h>
 #include <KRE/Collections/RingBuffer.h>

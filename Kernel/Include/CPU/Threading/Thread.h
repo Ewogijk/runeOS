@@ -22,15 +22,6 @@
 #include <KRE/Resource.h>
 
 namespace Rune::CPU {
-    /// @brief Handle type of timer.
-    using TimerHandle = U16;
-    /// @brief Handle type of thread.
-    using ThreadHandle = U16;
-    /// @brief Handle type of mutex.
-    using MutexHandle = U16;
-    /// @brief Handle type of semaphore.
-    using SemaphoreHandle = U16;
-
     /// @brief Describes what a thread is currently doing.
     /// @param X
     ///
@@ -86,54 +77,57 @@ namespace Rune::CPU {
     /// the maintaining resource is kept in the thread struct and only one reference must be set at
     /// once at all times. If the thread is maintained by the scheduler, no resource references must
     /// be set.
-    struct Thread : public Resource<MutexHandle> {
+    struct Thread : public Resource<Ember::Handle> {
         static constexpr MemorySize KERNEL_STACK_SIZE = 32 * MemoryUnit::KiB;
 
-        Thread(MutexHandle handle, const String& name);
+        Thread(Ember::Handle handle, const String& name);
 
         // Handle of the app the thread belongs to
-        U16              app_handle = 0;
-        ThreadState      state      = ThreadState::CREATED;
-        SchedulingPolicy policy     = SchedulingPolicy::NONE;
+        Ember::Handle    m_app_handle = 0;
+        ThreadState      m_state      = ThreadState::CREATED;
+        SchedulingPolicy m_policy     = SchedulingPolicy::NONE;
 
         /// @brief The kernel stack is used whenever kernel code is run e.g. because of an interrupt
         ///         or syscall It is dynamically allocated on the kernel heap and has a
         ///         preconfigured fixed size
-        U8*         kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
-        VirtualAddr kernel_stack_top    = 0x0;
+        U8*         m_kernel_stack_bottom = nullptr; // Pointer to the heap allocated memory
+        VirtualAddr m_kernel_stack_top    = 0x0;
 
         /// @brief The user mode stack contains application data, it is managed by an application.
-        Stack user_stack;
+        Stack m_user_stack;
 
         /// @brief Address of the base page table defining the threads virtual address space.
-        PhysicalAddr base_page_table_address = 0x0;
+        PhysicalAddr m_base_page_table_address = 0x0;
 
-        /// @brief Thread arguments and more.
-        ThreadStartupPacket* start_info{nullptr};
+        /// @brief A pointer to the ThreadLaunchPacket (TLP) of this thread.
+        ///
+        /// A TLP must be allocated in kernelspace for kernel threads and in userspace for user
+        /// threads.
+        UniquePointer<Ember::ThreadLaunchPacket> m_tlp;
 
         /// @brief The thread control block contains the thread local storage (TLS) and other data,
         ///         it is maintained by libc. We simply provide easy access to it through an arch
         ///         specific TLS register.
-        void* thread_control_block = nullptr;
+        void* m_thread_control_block = nullptr;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                  Resource Refs
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
         /// @brief Handle of the timer that maintains the thread.
-        TimerHandle timer_handle = Resource<TimerHandle>::HANDLE_NONE;
+        Ember::Handle m_timer_handle = Ember::HANDLE_NONE;
 
         /// @brief Handle of the mutex that maintains the thread.
-        MutexHandle mutex_handle = Resource<MutexHandle>::HANDLE_NONE;
+        Ember::Handle m_mutex_handle = Ember::HANDLE_NONE;
 
         /// @brief Handle of the semaphore that maintains the thread.
-        SemaphoreHandle semaphore_handle = Resource<SemaphoreHandle>::HANDLE_NONE;
+        Ember::Handle m_semaphore_handle = Ember::HANDLE_NONE;
 
         /// @brief Handle of the thread that this thread is waiting for to exit.
-        ThreadHandle m_sync_stop_thread_handle = Resource<ThreadHandle>::HANDLE_NONE;
+        Ember::Handle m_sync_stop_thread_handle = Ember::HANDLE_NONE;
 
         /// @brief ID of the application this thread is waiting for to exit.
-        int join_app_id = -1;
+        Ember::Handle m_join_app_handle = -1;
 
         friend auto operator==(const Thread& one, const Thread& two) -> bool;
 

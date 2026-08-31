@@ -25,7 +25,7 @@ namespace Rune::CPU {
     ///
     /// Fairness is guaranteed when the mutex is unlocked, this means the next thread in the wait
     /// queue of the mutex will always acquire the mutex when it is unlocked.
-    class Mutex : public Resource<MutexHandle> {
+    class Mutex : public Resource<Ember::Handle> {
         int _lock = 0;
 
         SharedPointer<Thread>             _owner;
@@ -37,7 +37,7 @@ namespace Rune::CPU {
         void trace_state(const String& action);
 
       public:
-        Mutex(MutexHandle handle, const String& name);
+        Mutex(Ember::Handle handle, const String& name);
 
         Mutex(const Mutex&)                    = delete;
         Mutex(Mutex&&)                         = delete;
@@ -81,7 +81,7 @@ namespace Rune::CPU {
         ///
         /// Note: Use this function with care, because undefined behavior could occur as a result,
         ///         especially when removing the owner thread.
-        auto remove_thread(MutexHandle handle) -> bool;
+        auto remove_thread(Ember::Handle handle) -> bool;
     };
 
     /// @brief Kernel-wide cache for mutexes.

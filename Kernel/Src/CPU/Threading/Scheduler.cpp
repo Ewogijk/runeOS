@@ -34,8 +34,8 @@ namespace Rune::CPU {
                                                                + Thread::KERNEL_STACK_SIZE,
                                                            memory_pointer_to_addr(_thread_enter));
 
-        thread->kernel_stack_top    = stack_top;
-        thread->kernel_stack_bottom = stack_bottom;
+        thread->m_kernel_stack_top    = stack_top;
+        thread->m_kernel_stack_bottom = stack_bottom;
     }
 
     auto Scheduler::next_scheduled_thread() -> SharedPointer<Thread> {
@@ -56,7 +56,7 @@ namespace Rune::CPU {
         if (next_thread == _idle_thread) {
             if (_running_thread == _idle_thread) return; // Just keep the idle thread running
 
-            if (_running_thread->state == ThreadState::RUNNING)
+            if (_running_thread->m_state == ThreadState::RUNNING)
                 return; // Let the last non-idle thread keep running
         }
 
@@ -68,18 +68,18 @@ namespace Rune::CPU {
 
         if (_running_thread == _idle_thread) {
             // Do not reschedule the Idle Thread
-            _idle_thread->state = ThreadState::BLOCKED;
+            _idle_thread->m_state = ThreadState::BLOCKED;
         } else if (_running_thread == _garbage_collector_thread) {
             // And do not reschedule the Thread Garbage Collector
-            _garbage_collector_thread->state = ThreadState::BLOCKED;
+            _garbage_collector_thread->m_state = ThreadState::BLOCKED;
         } else {
-            switch (_running_thread->state) {
+            switch (_running_thread->m_state) {
                 case ThreadState::NONE:
                 case ThreadState::CREATED:
                 case ThreadState::READY:
                     WARN("{}: Invalid thread state {}",
                          _running_thread->get_unique_name(),
-                         _running_thread->state.to_string());
+                         _running_thread->m_state.to_string());
                     break;
                 case ThreadState::RUNNING:
                 case ThreadState::BLOCK_PENDING:
@@ -98,8 +98,8 @@ namespace Rune::CPU {
                         // A thread that is in the BLOCK_PENDING state could be preempted anytime
                         // before it is blocked, therefore, the state must be preserved across
                         // context switches, otherwise the block() call will fail
-                        if (_running_thread->state == ThreadState::RUNNING)
-                            _running_thread->state = ThreadState::READY;
+                        if (_running_thread->m_state == ThreadState::RUNNING)
+                            _running_thread->m_state = ThreadState::READY;
                     }
                     break;
                 default: // ThreadState::BLOCKED or ThreadState::STOPPED
@@ -113,11 +113,11 @@ namespace Rune::CPU {
               _running_thread->get_unique_name(),
               next_thread->get_unique_name());
 
-        auto* old_thread       = _running_thread.get();
-        _running_thread        = move(next_thread);
-        _running_thread->state = _running_thread->state == ThreadState::BLOCK_PENDING
-                                     ? ThreadState::BLOCK_PENDING
-                                     : ThreadState::RUNNING;
+        auto* old_thread         = _running_thread.get();
+        _running_thread          = move(next_thread);
+        _running_thread->m_state = _running_thread->m_state == ThreadState::BLOCK_PENDING
+                                       ? ThreadState::BLOCK_PENDING
+                                       : ThreadState::RUNNING;
         _on_context_switch(forward<Thread*>(_running_thread.get()));
         current_core()->switch_to_thread(old_thread, _running_thread.get());
     }
@@ -169,12 +169,12 @@ namespace Rune::CPU {
         _running_thread      = bootstrap_thread;
 
         setup_kernel_stack(thread_terminator);
-        _garbage_collector_thread        = thread_terminator;
-        _garbage_collector_thread->state = ThreadState::BLOCKED;
+        _garbage_collector_thread          = thread_terminator;
+        _garbage_collector_thread->m_state = ThreadState::BLOCKED;
 
         setup_kernel_stack(idle_thread);
-        _idle_thread        = idle_thread;
-        _idle_thread->state = ThreadState::BLOCKED;
+        _idle_thread          = idle_thread;
+        _idle_thread->m_state = ThreadState::BLOCKED;
         return true;
     }
 
@@ -184,14 +184,14 @@ namespace Rune::CPU {
             unlock();
             return false;
         }
-        if (thread->state != ThreadState::CREATED) {
+        if (thread->m_state != ThreadState::CREATED) {
             ERROR("{}: Invalid thread state {}",
                   thread->get_unique_name(),
-                  thread->state.to_string());
+                  thread->m_state.to_string());
             unlock();
             return false;
         }
-        if (thread->policy == SchedulingPolicy::NONE) {
+        if (thread->m_policy == SchedulingPolicy::NONE) {
             ERROR(R"({}: Invalid thread policy "NONE")", thread->get_unique_name());
             unlock();
             return false;
@@ -200,7 +200,7 @@ namespace Rune::CPU {
         setup_kernel_stack(thread);
         if (!_ready_queue->enqueue(thread)) {
             ERROR("{}: Schedule failed", thread->get_unique_name());
-            delete[] thread->kernel_stack_bottom;
+            delete[] thread->m_kernel_stack_bottom;
             unlock();
             return false;
         }
@@ -218,7 +218,7 @@ namespace Rune::CPU {
 
     void Scheduler::mark_as_block_pending() {
         lock();
-        _running_thread->state = ThreadState::BLOCK_PENDING;
+        _running_thread->m_state = ThreadState::BLOCK_PENDING;
         unlock();
     }
 
@@ -228,12 +228,12 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        if (thread->state != ThreadState::BLOCK_PENDING) {
+        if (thread->m_state != ThreadState::BLOCK_PENDING) {
             unlock();
             return;
         }
         TRACE("{}: Block thread", thread->get_unique_name());
-        thread->state = ThreadState::BLOCKED;
+        thread->m_state = ThreadState::BLOCKED;
         if (thread != _running_thread)
             _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule
         else
@@ -250,10 +250,11 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        if (thread->state != ThreadState::BLOCKED && thread->state != ThreadState::BLOCK_PENDING) {
+        if (thread->m_state != ThreadState::BLOCKED
+            && thread->m_state != ThreadState::BLOCK_PENDING) {
             ERROR(R"({}: Invalid thread state "{}")",
                   thread->get_unique_name(),
-                  thread->state.to_string());
+                  thread->m_state.to_string());
             unlock();
             return;
         }
@@ -264,7 +265,7 @@ namespace Rune::CPU {
         // Thus, just let the thread keep running
         if (thread == _running_thread) {
             TRACE("{}: Is running, skip unblock", thread->get_unique_name());
-            thread->state = ThreadState::RUNNING;
+            thread->m_state = ThreadState::RUNNING;
             unlock();
             return;
         }
@@ -274,7 +275,7 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        thread->state = ThreadState::READY;
+        thread->m_state = ThreadState::READY;
         unlock();
     }
 
@@ -284,7 +285,7 @@ namespace Rune::CPU {
             unlock();
             return;
         }
-        thread->state = ThreadState::STOPPED;
+        thread->m_state = ThreadState::STOPPED;
         _thread_garbage_bin.add_back(thread);
         if (thread != _running_thread)
             _ready_queue->remove(thread->get_handle()); // Remove the thread from the schedule

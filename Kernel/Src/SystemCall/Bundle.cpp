@@ -14,7 +14,7 @@
 
 #include <SystemCall/Bundle.h>
 
-#include <Ember/SystemCallID.h>
+#include <Ember/SystemCallHandle.h>
 
 #include <KRE/System/System.h>
 

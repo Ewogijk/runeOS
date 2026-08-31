@@ -21,6 +21,22 @@
 #include <KRE/Threading/CriticalSection.h>
 
 namespace Rune::App {
+
+    // ========================================================================================== //
+    // ElfLoadResult
+    // ========================================================================================== //
+
+    auto ElFLoadResult::build_error_result(LoadStatus status) -> ElFLoadResult {
+        return {.m_status     = status,
+                .m_app        = SharedPointer<Info>(),
+                .m_user_stack = {},
+                .m_tlp        = {}};
+    }
+
+    // ========================================================================================== //
+    // ELFLoader
+    // ========================================================================================== //
+
     auto ELFLoader::get_next_buffer() -> bool {
         VFS::NodeIOResult io_res = _elf_file->read(_file_buf.data(), BUF_SIZE);
         bool              good = io_res.status == VFS::NodeIOStatus::OKAY && io_res.byte_count > 0;
@@ -310,78 +326,43 @@ namespace Rune::App {
         return true;
     }
 
-    auto ELFLoader::setup_bootstrap_area(const ELF64File& elf_file,
-                                         char* args[], // NOLINT syscall arg, must use raw ptr
-                                         const size_t stack_size) -> ThreadStartupPacket* {
-        // Calculate the size of the bootstrap area
-        constexpr size_t start_info_size = sizeof(ThreadStartupPacket);
-        constexpr size_t elf64_ph_size   = sizeof(ELF64ProgramHeader);
-        const size_t     ph_area_size    = elf_file.program_headers.size() * elf64_ph_size;
-        char**           tmp_args        = args;
-        int              argc            = 0;
-        size_t           cla_area_size   = 0;
-        while (*tmp_args != nullptr) {
-            cla_area_size += String(*tmp_args).size() + 1; // include null terminator in size
-            argc++;
-            tmp_args++;
-        }
-        const size_t argv_size = (argc + 1) * sizeof(char*); // include null terminator
-        const size_t bootstrap_area_size =
-            memory_align(start_info_size + argv_size + cla_area_size + ph_area_size,
-                         Memory::get_page_size(),
-                         true);
-
-        // Allocate the memory for the stack and bootstrap area
-        auto*             vmm = _memory_subsys->get_virtual_memory_manager();
-        const size_t      stack_and_bootstrap_area_size = stack_size + bootstrap_area_size;
-        const VirtualAddr stack_and_bootstrap_area_begin =
-            Memory::to_canonical_form(vmm->get_user_space_end() - stack_and_bootstrap_area_size);
-        if (!vmm->allocate(stack_and_bootstrap_area_begin,
+    auto ELFLoader::setup_bootstrap_region_and_stack(
+        const ELF64File& elf_file,
+        char*            args[], // NOLINT syscall arg, must use raw ptr
+        const size_t     stack_size) -> BootstrapRegion* {
+        auto* vmm = _memory_subsys->get_virtual_memory_manager();
+        if (!vmm->allocate(BootstrapRegion::BOOTSTRAP_REGION_START - stack_size,
                            Memory::PageFlag::PRESENT | Memory::PageFlag::WRITE_ALLOWED
                                | Memory::PageFlag::USER_MODE_ACCESS,
-                           stack_and_bootstrap_area_size / Memory::get_page_size())) {
-            ERROR("Stack and bootstrap area allocation failed: {:0=#16x}-{:0=#16x}",
-                  stack_and_bootstrap_area_begin,
-                  stack_and_bootstrap_area_begin + stack_and_bootstrap_area_size);
+                           (BootstrapRegion::BOOTSTRAP_REGION_SIZE - stack_size)
+                               / Memory::get_page_size())) {
+            ERROR("Bootstrap region and stack allocation failed: {:0=#16x}-{:0=#16x}",
+                  BootstrapRegion::BOOTSTRAP_REGION_START - stack_size,
+                  Memory::to_canonical_form(BootstrapRegion::BOOTSTRAP_REGION_START
+                                            + BootstrapRegion::BOOTSTRAP_REGION_SIZE))
             return nullptr;
         }
-        const VirtualAddr bootstrap_area_begin = stack_and_bootstrap_area_begin + stack_size;
 
-        // Setup argv and cla area
-        auto** argv_area = reinterpret_cast<char**>(bootstrap_area_begin + start_info_size);
-        auto*  cla_area =
-            reinterpret_cast<char*>(bootstrap_area_begin + start_info_size + argv_size);
-        size_t argv_strings_offset = 0;
-        for (int i = 0; i < argc; i++) {
-            String s(args[i]);
-            memcpy(&cla_area[argv_strings_offset], s.to_cstr(), s.size() + 1);
-            argv_area[i]         = &cla_area[argv_strings_offset];
-            argv_strings_offset += s.size() + 1;
-        }
-        argv_area[argc] = nullptr;
+        auto* bootstrap_region =
+            reinterpret_cast<BootstrapRegion*>(BootstrapRegion::BOOTSTRAP_REGION_START);
+        // Set up TLP
+        ThreadLaunchPacketBuilder tlp_builder;
+        size_t                    idx = 0;
+        while (args[idx] != nullptr) tlp_builder.add_argument(args[idx++]);
+        auto tmp_tlp = tlp_builder.main(reinterpret_cast<Ember::ThreadMain>(elf_file.header.entry))
+                           .random(1, 0)
+                           .program_headers(bootstrap_region->m_program_headers.data(),
+                                            elf_file.program_headers.size(),
+                                            elf_file.program_headers.size())
+                           .build();
+        bootstrap_region->m_tlp = *move(tmp_tlp).get();
 
-        // Setup ph area
-        auto*  ph_area = reinterpret_cast<U8*>(bootstrap_area_begin + start_info_size + argv_size
-                                               + cla_area_size);
-        size_t ph_area_offset = 0;
-        for (auto& ph : elf_file.program_headers) {
-            memcpy(&ph_area[ph_area_offset], &ph, elf64_ph_size);
-            ph_area_offset += elf64_ph_size;
-        }
-
-        // Setup start info area
-        auto* const start_info  = reinterpret_cast<ThreadStartupPacket*>(bootstrap_area_begin);
-        start_info->argc        = argc;
-        start_info->argv        = argv_area;
-        start_info->random_low  = 1; // TODO implement a pseudo random number generator
-        start_info->random_high = 0;
-        start_info->program_header_address = ph_area;
-        start_info->program_header_size    = elf64_ph_size;
-        start_info->program_header_count   = elf_file.program_headers.size();
-        start_info->main                   = reinterpret_cast<ThreadMain>(elf_file.header.entry);
-        start_info->random                 = &start_info->random_low;
-
-        return start_info;
+        // Set up program headers
+        for (size_t i = 0; i < min(static_cast<U8>(elf_file.program_headers.size()),
+                                   BootstrapRegion::PROGRAM_HEADER_COUNT);
+             i++)
+            bootstrap_region->m_program_headers[i] = elf_file.program_headers[i];
+        return bootstrap_region;
     }
 
     ELFLoader::ELFLoader(Memory::MemoryModule* memory_module, VFS::VFSModule* vfs_subsys)
@@ -390,12 +371,9 @@ namespace Rune::App {
           _vfs_subsys(vfs_subsys),
           _load_lock() {}
 
-    auto ELFLoader::load(const Path&                executable,
-                         char*                      args[], // NOLINT syscall arg, must use raw ptr
-                         const SharedPointer<Info>& entry_out,
-                         CPU::Stack&                user_stack_out,
-                         VirtualAddr&               start_info_addr_out,
-                         bool                       keep_vas) -> LoadStatus {
+    auto ELFLoader::load(const Path& executable,
+                         char*       args[], // NOLINT syscall arg, must use raw ptr
+                         bool        keep_vas) -> ElFLoadResult {
         // Interrupts must be disabled during ELF loading because the VAS of the new app is
         // temporarily loaded, thus any allocations/frees during interrupt handling will be made in
         // the wrong VAS which leads to undefined behavior
@@ -404,12 +382,12 @@ namespace Rune::App {
                 _vfs_subsys->open(executable, Ember::IOMode::READ, _elf_file);
             io_status != VFS::IOStatus::OPENED) {
             ERROR("Failed to open {}.", executable.to_string());
-            return LoadStatus::IO_ERROR;
+            return ElFLoadResult::build_error_result(LoadStatus::IO_ERROR);
         }
 
         ELF64File elf64_file;
         if (const LoadStatus status = load_elf_file(elf64_file); status != LoadStatus::LOADED)
-            return status;
+            return ElFLoadResult::build_error_result(status);
 
         // Create virtual address space
         // To load the new app we will temporarily load it's new address space and allocate the
@@ -423,7 +401,7 @@ namespace Rune::App {
         } else {
             if (!vmm->allocate_virtual_address_space(base_pt_addr)) {
                 ERROR("Failed to allocate virtual address space.");
-                return LoadStatus::MEMORY_ERROR;
+                return ElFLoadResult::build_error_result(LoadStatus::MEMORY_ERROR);
             }
             DEBUG("Load new VAS at: {:0=#16x}", base_pt_addr);
             vmm->load_virtual_address_space(base_pt_addr);
@@ -432,41 +410,46 @@ namespace Rune::App {
         VirtualAddr heap_start = 0x0;
         if (!allocate_segments(elf64_file, heap_start)) {
             ERROR("Segment memory allocation failed.");
-            return LoadStatus::MEMORY_ERROR;
+            return ElFLoadResult::build_error_result(LoadStatus::MEMORY_ERROR);
         }
 
         if (!load_segments(elf64_file)) {
             ERROR("Failed to load segments.");
-            return LoadStatus::LOAD_ERROR;
+            return ElFLoadResult::build_error_result(LoadStatus::LOAD_ERROR);
         }
 
         constexpr MemorySize stack_size = 16 * MemoryUnit::KiB;
-        auto*                start_info = setup_bootstrap_area(elf64_file, args, stack_size);
-        if (start_info == nullptr) {
+        auto* bootstrap_region = setup_bootstrap_region_and_stack(elf64_file, args, stack_size);
+        if (bootstrap_region == nullptr) {
             ERROR("Bootstrap area setup failed.");
-            return LoadStatus::MEMORY_ERROR;
+            return ElFLoadResult::build_error_result(LoadStatus::MEMORY_ERROR);
         }
-        // The stack begins just above the bootstrap area
-        start_info_addr_out = memory_pointer_to_addr(start_info);
 
-        // Fill in app entry information
-        entry_out->location = executable;
-        entry_out->name     = executable.get_file_name_without_extension();
-        entry_out->vendor   = elf64_file.vendor;
-        entry_out->version  = {.major       = elf64_file.major,
-                               .minor       = elf64_file.minor,
-                               .patch       = elf64_file.patch,
-                               .pre_release = ""};
+        ElFLoadResult res;
+        res.m_status = LoadStatus::LOADED;
+        res.m_tlp    = UniquePointer<Ember::ThreadLaunchPacket>(&bootstrap_region->m_tlp);
 
-        entry_out->base_page_table_address = base_pt_addr;
-        entry_out->entry                   = elf64_file.header.entry;
-        entry_out->heap_start              = heap_start; // The heap starts after the ELF segments
-        entry_out->heap_limit              = heap_start;
+        // Set up user stack
+        VirtualAddr bootstrap_region_addr = memory_pointer_to_addr(bootstrap_region);
+        res.m_user_stack = {.stack_bottom =
+                                memory_addr_to_pointer<void>(bootstrap_region_addr - stack_size),
+                            .stack_top  = CPU::setup_empty_stack(bootstrap_region_addr),
+                            .stack_size = stack_size};
 
-        user_stack_out.stack_bottom =
-            memory_addr_to_pointer<void>(start_info_addr_out - stack_size);
-        user_stack_out.stack_top  = CPU::setup_empty_stack(start_info_addr_out);
-        user_stack_out.stack_size = stack_size;
+        // Set app information
+        res.m_app                          = SharedPointer<Info>(new Info);
+        res.m_app->location                = executable;
+        res.m_app->name                    = executable.get_file_name_without_extension();
+        res.m_app->vendor                  = elf64_file.vendor;
+        res.m_app->version                 = {.major       = elf64_file.major,
+                                              .minor       = elf64_file.minor,
+                                              .patch       = elf64_file.patch,
+                                              .pre_release = ""};
+        res.m_app->base_page_table_address = base_pt_addr;
+        res.m_app->entry                   = elf64_file.header.entry;
+        res.m_app->m_bootstrap_region      = bootstrap_region;
+        res.m_app->heap_start              = heap_start; // The heap starts after the ELF segments
+        res.m_app->heap_limit              = heap_start;
 
         _elf_file->close();
 
@@ -474,6 +457,6 @@ namespace Rune::App {
             Memory::load_base_page_table(
                 curr_app_vas); // Restore the VAS of the current app, else humungous crash
 
-        return LoadStatus::LOADED;
+        return res;
     }
 } // namespace Rune::App

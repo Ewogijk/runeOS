@@ -17,7 +17,7 @@ from SCons.Environment import *
 Import("build_env")
 build_env: Environment
 sources = [
-    build_env.File("CPU.cpp"),
+    build_env.File("Core.cpp"),
     build_env.File("CPUModule.cpp"),
     build_env.File("E9Stream.cpp"),
     build_env.File("Job.cpp"),

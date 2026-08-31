@@ -48,14 +48,6 @@ CLINK {
     // OSL Configuration
     // ========================================================================================== //
 
-    /// @brief Stores the callback function, function context and thread start info.
-    struct ACPIThreadContext {
-        String              m_func_addr;
-        String              m_ctx_addr;
-        char*               m_argv[3]{};
-        ThreadStartupPacket m_start_info{};
-    };
-
     /// @brief Stores ACPICA and runeOS interrupt handler information.
     struct ACPIInterruptHandlerContext {
         U16              dev_handle;
@@ -93,7 +85,7 @@ CLINK {
         /// @brief List of all handles to threads that have been started by the ACPI subsystem but
         ///         not yet joined with. Associated threads may be running but may as well have
         ///         finished execution already.
-        HashMap<CPU::ThreadHandle, ACPIThreadContext> m_acpi_threads;
+        LinkedList<Ember::Handle> m_acpi_threads;
 
         /// @brief Increasing counter for threads names, e.g. ACPI-Mutex-0, ACPI-Mutex-1, ...
         U64 m_mutex_name_counter = 0;
@@ -444,11 +436,11 @@ CLINK {
     // ========================================================================================== //
 
     auto acpi_to_rune_get_thread_id() -> ACPI_THREAD_ID {
-        CPU::ThreadHandle h = System::instance()
-                                  .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                                  ->get_scheduler()
-                                  ->get_running_thread()
-                                  ->get_handle();
+        auto h = System::instance()
+                     .get_module<CPU::CPUModule>(ModuleSelector::CPU)
+                     ->get_scheduler()
+                     ->get_running_thread()
+                     ->get_handle();
         return static_cast<ACPI_THREAD_ID>(h);
     }
 
@@ -457,45 +449,39 @@ CLINK {
         if (func == nullptr) return AE_BAD_PARAMETER;
 
         static constexpr uintptr_t RADIX_HEX = 16;
-        ACPIThreadContext          t_ctx;
         // Provide the addresses to func and ctx as hex strings to thread main
-        t_ctx.m_func_addr = int_to_string(memory_pointer_to_addr(func), RADIX_HEX);
-        t_ctx.m_ctx_addr  = int_to_string(memory_pointer_to_addr(ctx), RADIX_HEX);
 
-        // NOLINTBEGIN cppcoreguidelines-pro-type-const-cast -> Required, to_cstr() is const char*
-        //              but m_argv must be char*
-        t_ctx.m_argv[0] = const_cast<char*>(t_ctx.m_func_addr.to_cstr());
-        t_ctx.m_argv[1] = const_cast<char*>(t_ctx.m_ctx_addr.to_cstr());
-        // NOLINTEND
-        t_ctx.m_argv[2]         = nullptr;
-        t_ctx.m_start_info.argc = 2;
-        t_ctx.m_start_info.argv = t_ctx.m_argv;
-        t_ctx.m_start_info.main = [](ThreadStartupPacket* start_info) -> int {
-            // Parse the hex string addresses of func and ctx and cast to their respective types
-            uintptr_t ptr = 0;
-            if (!parse_int<uintptr_t>(start_info->argv[0], RADIX_HEX, ptr)) return -1;
-            auto func = reinterpret_cast<ACPI_OSD_EXEC_CALLBACK>(ptr);
+        auto tlp = ThreadLaunchPacketBuilder()
+                       .add_argument(int_to_string(memory_pointer_to_addr(func), RADIX_HEX))
+                       .add_argument(int_to_string(memory_pointer_to_addr(ctx), RADIX_HEX))
+                       .main([](Ember::ThreadLaunchPacket* start_info) -> int {
+                           // Parse the hex string addresses of func and ctx and cast to their
+                           // respective types
+                           uintptr_t ptr = 0;
+                           if (!parse_int<uintptr_t>(start_info->argv(0), RADIX_HEX, ptr))
+                               return -1;
+                           auto func = reinterpret_cast<ACPI_OSD_EXEC_CALLBACK>(ptr);
 
-            if (!parse_int<uintptr_t>(start_info->argv[1], RADIX_HEX, ptr)) return -1;
-            auto* ctx = reinterpret_cast<void*>(ptr);
+                           if (!parse_int<uintptr_t>(start_info->argv(1), RADIX_HEX, ptr))
+                               return -1;
+                           auto* ctx = reinterpret_cast<void*>(ptr);
 
-            if (func == nullptr) return -1;
-            func(ctx);
-            return 0;
-        };
+                           if (func == nullptr) return -1;
+                           func(ctx);
+                           return 0;
+                       })
+                       .build();
+        auto h   = System::instance()
+                       .get_module<CPU::CPUModule>(ModuleSelector::CPU)
+                       ->schedule_new_thread(
+                           String::format("ACPI-Thread-{}", g_osl_config.m_thread_name_counter++),
+                           move(tlp),
+                           Memory::get_base_page_table_address(),
+                           CPU::SchedulingPolicy::LOW_LATENCY,
+                           {});
+        if (h == Ember::HANDLE_NONE) return AE_BAD_PARAMETER;
 
-        CPU::ThreadHandle h =
-            System::instance()
-                .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                ->schedule_new_thread(
-                    String::format("ACPI-Thread-{}", g_osl_config.m_thread_name_counter++),
-                    &t_ctx.m_start_info,
-                    Memory::get_base_page_table_address(),
-                    CPU::SchedulingPolicy::LOW_LATENCY,
-                    {});
-        if (h == Resource<CPU::ThreadHandle>::HANDLE_NONE) return AE_BAD_PARAMETER;
-
-        g_osl_config.m_acpi_threads.put(h, t_ctx);
+        g_osl_config.m_acpi_threads.add_back(h);
         return AE_OK;
     }
 
@@ -517,7 +503,7 @@ CLINK {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         for (const auto& started_threads : g_osl_config.m_acpi_threads)
             // NOLINTBEGIN clang-analyzer-core.NullDereference -> iterator is null checked
-            cpu_module->sync_with_thread_stop(*started_threads.key);
+            cpu_module->sync_with_thread_stop(started_threads);
         // NOLINTEND
 
         // At this point all threads have finished execution or had already finished

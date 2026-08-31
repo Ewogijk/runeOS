@@ -17,8 +17,12 @@
 #define RUNEOS_CPU_H
 
 #include <Ember/Ember.h>
+#include <Ember/ThreadingBits.h>
 
 #include <KRE/Build.h>
+#include <KRE/Collections/Array.h>
+#include <KRE/Memory.h>
+#include <KRE/String.h>
 
 namespace Rune {
     // Size of a CPU register
@@ -44,48 +48,51 @@ namespace Rune {
     /// otherwise the virtual address is undefined.
     CLINK auto cpu_get_page_fault_address() -> Register;
 
-    struct ThreadStartupPacket;
+    /// @brief Builder class for thread launch packets.
+    class ThreadLaunchPacketBuilder {
+        Array<char, Ember::ThreadLaunchPacket::ARGS_LIMIT> m_args{};
+        Array<U16, Ember::ThreadLaunchPacket::ARGV_LIMIT>  m_args_offsets{};
+        size_t                                             m_args_offset = 0;
+        int                                                m_argc        = 0;
 
-    /// @brief Main function of a thread. It has the signature int(StartInfo*). The start
-    /// info contains argc/argv parameters as well as other information. The return value is the
-    /// thread status after it finished. status >= 0 -> everything fine, status < 0 -> exit with
-    /// error.
-    using ThreadMain = int (*)(ThreadStartupPacket*);
+        Ember::ThreadMain m_main = nullptr;
 
-    /// @brief The thread arguments, dynamic linker information and other useful information.
-    ///
-    /// A thread is either an application main thread or a minor thread. The type of thread
-    /// determines how much information shall be passed in the start info.
-    ///
-    /// The information passed in the StartInfo is defined as followed:
-    ///  - Application Main Thread: All StartInfo information shall be provided.
-    ///  - Minor Thread: Argc, argv and main shall be provided, the state of the other fields is
-    ///     undefined.
-    struct ThreadStartupPacket {
-        /// @brief Number of arguments.
-        int argc{0};
+        U64 m_random_low  = 0;
+        U64 m_random_high = 0;
 
-        /// @brief A null terminated array of string arguments.
-        char** argv{nullptr};
+        void*  m_program_header_address = nullptr;
+        size_t m_program_header_size    = 0;
+        size_t m_program_header_count   = 0;
 
-        /// @brief Low and high bytes of a random 16 byte value.
-        U64 random_low{0};
-        U64 random_high{0};
+      public:
+        ThreadLaunchPacketBuilder();
 
-        /// @brief Virtual address of an array where the ELF program headers are stored.
-        void* program_header_address{nullptr};
+        /// @brief Add the argument to argv.
+        /// @param arg
+        /// @return
+        auto add_argument(const String& arg) -> ThreadLaunchPacketBuilder&;
 
-        /// @brief Size of a program header.
-        size_t program_header_size{0};
+        /// @brief Define the thread main function.
+        /// @param main
+        /// @return
+        auto main(Ember::ThreadMain main) -> ThreadLaunchPacketBuilder&;
 
-        /// @brief Size of the program header array.
-        size_t program_header_count{0};
+        /// @brief The seed for a pseudo random number generator.
+        /// @param random
+        /// @return
+        auto random(U64 random_low, U64 random_high) -> ThreadLaunchPacketBuilder&;
 
-        /// @brief Main function of the thread.
-        ThreadMain main{};
+        /// @brief Define program header information for a dynamic linker.
+        /// @param program_headers
+        /// @param size
+        /// @param count
+        /// @return
+        auto program_headers(void* program_headers, size_t size, size_t count)
+            -> ThreadLaunchPacketBuilder&;
 
-        /// @brief Address of a 16-byte random value.
-        void* random{nullptr};
+        /// @brief Create the thread launch packet with the provided information.
+        /// @return
+        auto build() -> UniquePointer<Ember::ThreadLaunchPacket>;
     };
 
 } // namespace Rune

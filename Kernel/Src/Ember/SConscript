@@ -20,9 +20,10 @@ sources = [
     build_env.File("AppBits.cpp"),
     build_env.File("Ember.cpp"),
     build_env.File("Enum.cpp"),
-    build_env.File("MachineBits.cpp"),
     build_env.File("MemoryBits.cpp"),
-    build_env.File("SystemCallID.cpp"),
+    build_env.File("SystemBits.cpp"),
+    build_env.File("SystemCallHandle.cpp"),
+    build_env.File("ThreadingBits.cpp"),
     build_env.File("VFSBits.cpp"),
 ]
 Ember = build_env.StaticLibrary("Ember.o", build_env.Object(sources))

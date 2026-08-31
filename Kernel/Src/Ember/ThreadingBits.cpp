@@ -12,13 +12,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include <Ember/MachineBits.h>
+#include <Ember/ThreadingBits.h>
 
 namespace Ember {
-    // ====================================================================================== //
-    // Log Level
-    // ====================================================================================== //
+    auto ThreadLaunchPacket::argv(size_t arg_idx) -> char* {
+        return &m_args[m_args_offsets[arg_idx]];
+    }
 
-    DEFINE_TYPED_ENUM(LogLevel, U8, LOG_LEVELS, 0x0)
-
+    auto ThreadLaunchPacket::random() -> void* { return &m_random_low; }
 } // namespace Ember

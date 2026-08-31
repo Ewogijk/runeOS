@@ -31,7 +31,7 @@ constexpr size_t NUM_THREADS = 2;
 
 TEST("Destruction", "ThreadPool") {
     // Setup
-    LinkedList<CPU::ThreadHandle> worker_threads;
+    LinkedList<Ember::Handle> worker_threads;
 
     // Test body
     {
