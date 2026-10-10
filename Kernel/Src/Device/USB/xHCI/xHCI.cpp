@@ -18,6 +18,7 @@
 #include <KRE/Math.h>
 #include <KRE/System/System.h>
 
+#include <Memory/DMA.h>
 #include <Memory/MemoryModule.h>
 #include <Memory/Paging.h>
 
@@ -100,19 +101,17 @@ namespace Rune::Device::USB {
 
     void XHCIDriver::abort_inflight_TDs(U8 slot_id, U8 dci, IORequestStatus status) {
         LinkedList<SharedPointer<InflightTD>> aborted;
-        {
-            CriticalSection _(m_inflight_tracker_lock);
-            for (const auto& pair : m_inflight_trb_tracker) {
-                auto inflight_td = *pair.value;
-                if (inflight_td->m_slot_ID == slot_id && inflight_td->m_DCI == dci
-                    && !aborted.contains(inflight_td))
-                    aborted.add_back(inflight_td);
-            }
-
-            for (auto& td : aborted)
-                for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++)
-                    m_inflight_trb_tracker.remove(td->m_inflight_trb_list[i]);
+        for (const auto& pair : m_inflight_trb_tracker) {
+            auto inflight_td = *pair.value;
+            if (inflight_td->m_slot_ID == slot_id && inflight_td->m_DCI == dci
+                && !aborted.contains(inflight_td))
+                aborted.add_back(inflight_td);
         }
+
+        for (auto& td : aborted)
+            for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++)
+                m_inflight_trb_tracker.remove(td->m_inflight_trb_list[i]);
+
         for (auto& td : aborted) td->m_promise.set_value(status);
     }
 
@@ -126,6 +125,20 @@ namespace Rune::Device::USB {
         if (m_ri.m_capability->m_hcsparams1.max_intrs() <= interrupter) return;
         m_ri.m_operational->m_usbsts.clear_EINT();
         m_ri.interrupter(interrupter).m_iman.clear_IP();
+    }
+
+    auto XHCIDriver::wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB {
+        CPU::Future<CommandCompletionEventTRB> future =
+            [&]() -> CPU::Future<CommandCompletionEventTRB> {
+            CriticalSection _(m_inflight_tracker_lock);
+            PhysicalAddr    trb_phys = m_command_ring->enqueue(*trb);
+            TRACE("Track inflight command TRB: {:0=#16x}", trb_phys);
+            auto& p = (m_inflight_command_trb_tracker[trb_phys] =
+                           CPU::Promise<CommandCompletionEventTRB>());
+            m_ri.ring_command_doorbell();
+            return p.get_future();
+        }();
+        return future.get();
     }
 
     void handle_event_trb(CPU::InterruptPacket packet) {
@@ -154,8 +167,20 @@ namespace Rune::Device::USB {
             xhci_driver->m_inflight_command_trb_tracker.remove(inflight_trb_address);
 
         } else if (event_trb->m_control.trb_type() == TRBType::TRANSFER_EVENT) {
-            auto* te = reinterpret_cast<TransferEventTRB*>(event_trb);
-            auto  cc = te->m_status.completion_code();
+            auto*        te        = reinterpret_cast<TransferEventTRB*>(event_trb);
+            auto         cc        = te->m_status.completion_code();
+            bool         abort_tds = false;
+            PhysicalAddr inflight_trb_address =
+                te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
+            TRACE("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
+                  te->m_control.slot_id(),
+                  te->m_control.endpoint_id(),
+                  inflight_trb_address,
+                  te->m_control.trb_type().to_string(),
+                  cc.to_string())
+
+            // Error handling
+            EndpointState target_state = EndpointState::NONE;
             if (cc == CompletionCode::RING_UNDERRUN || cc == CompletionCode::RING_OVERRUN
                 || cc == CompletionCode::MISSED_SERVICE) {
                 // Isoch-only (xHCI §4.10.3.1/§4.10.3.2): A class driver missed the schedule for
@@ -168,36 +193,74 @@ namespace Rune::Device::USB {
                 // Overrun/Underrun do not) -> Let the error fall through so the inflight TRB gets
                 // removed
                 if (cc != CompletionCode::MISSED_SERVICE) return;
-            }
-            PhysicalAddr inflight_trb_address =
-                te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
-            TRACE("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
-                  te->m_control.slot_id(),
-                  te->m_control.endpoint_id(),
-                  inflight_trb_address,
-                  te->m_control.trb_type().to_string(),
-                  cc.to_string())
-
-            auto maybe_td = xhci_driver->m_inflight_trb_tracker.find(inflight_trb_address);
-            if (maybe_td == xhci_driver->m_inflight_trb_tracker.end()) {
-                WARN("Inflight transfer event TRB not found: {:0=#16x}", inflight_trb_address);
-                return;
+            } else if (cc == CompletionCode::STALL_ERROR || cc == CompletionCode::INVALID_STREAM_ID
+                       || cc == CompletionCode::BABBLE_ERROR || cc == CompletionCode::EVENT_LOST
+                       || cc == CompletionCode::USB_TRANSACTION_ERROR
+                       || cc == CompletionCode::INVALID_STREAM_TYPE_ERROR
+                       || cc == CompletionCode::SPLIT_TRANSACTION) {
+                target_state = EndpointState::HALTED;
+            } else if (cc == CompletionCode::TRB_ERROR) {
+                target_state = EndpointState::ERROR;
             }
 
-            auto td = *maybe_td->value;
-            if (td->m_pending_events > 0) td->m_pending_events--;
-            if (cc == CompletionCode::SHORT_PACKET && td->m_response != nullptr)
-                td->m_response->m_residual_bytes = te->m_status.trb_transfer_length();
-            IORequestStatus status =
-                cc == CompletionCode::SUCCESS || cc == CompletionCode::SHORT_PACKET
-                    ? IORequestStatus::HANDLED
-                    : IORequestStatus::FAILED;
-            if (status == IORequestStatus::FAILED || td->m_pending_events == 0) {
-                for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++) {
-                    TRACE("Remove inflight TRB: {:0=#16x}", td->m_inflight_trb_list[i])
-                    xhci_driver->m_inflight_trb_tracker.remove(td->m_inflight_trb_list[i]);
+            constexpr U8 MAX_ENDPOINTS = 32;
+            if (target_state != EndpointState::NONE) {
+                DEBUG("S{}EP{}: Error detected: {}",
+                      te->m_control.slot_id(),
+                      te->m_control.endpoint_id(),
+                      cc.to_string());
+                auto maybe_dc_sys_mem =
+                    xhci_driver->m_dc_system_memory_by_slot.find(te->m_control.slot_id());
+                if (maybe_dc_sys_mem == xhci_driver->m_dc_system_memory_by_slot.end()) {
+                    WARN("Transfer Event TRB for unused slot received: {}",
+                         te->m_control.slot_id());
+                } else if (te->m_control.endpoint_id() < 1
+                           || MAX_ENDPOINTS < te->m_control.endpoint_id()) {
+                    WARN("Transfer Event TRB has invalid endpoint: {}",
+                         te->m_control.endpoint_id());
+                } else {
+                    (*maybe_dc_sys_mem->value)->m_ep_states[te->m_control.endpoint_id() - 1] =
+                        target_state;
+                    abort_tds = true;
                 }
-                td->m_promise.set_value(status);
+            }
+
+            // Inlight TD handling
+            auto maybe_td = xhci_driver->m_inflight_trb_tracker.find(inflight_trb_address);
+            if (maybe_td != xhci_driver->m_inflight_trb_tracker.end()) {
+                auto td = *maybe_td->value;
+                if (td->m_pending_events > 0) td->m_pending_events--;
+                if (td->m_response != nullptr) {
+                    if (cc == CompletionCode::STALL_ERROR || cc == CompletionCode::SHORT_PACKET)
+                        td->m_response->m_residual_bytes = te->m_status.trb_transfer_length();
+                }
+
+                IORequestStatus status = IORequestStatus::HANDLED;
+                if (cc == CompletionCode::STALL_ERROR) {
+                    status = IORequestStatus::ABORTED;
+                } else if (cc != CompletionCode::SUCCESS && cc != CompletionCode::SHORT_PACKET) {
+                    status = IORequestStatus::FAILED;
+                }
+
+                // ABORTED: Assume a control transfer request with data stalls in the data stage.
+                // m_pending_events drops to 1, but the status stage event will never be sent
+                // because the transfer ring halts, thus the Promise of the inflight TD will never
+                // resolve
+                if (status == IORequestStatus::FAILED || status == IORequestStatus::ABORTED
+                    || td->m_pending_events == 0) {
+                    for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++) {
+                        TRACE("Remove inflight TRB: {:0=#16x}", td->m_inflight_trb_list[i])
+                        xhci_driver->m_inflight_trb_tracker.remove(td->m_inflight_trb_list[i]);
+                    }
+                    td->m_promise.set_value(status);
+                }
+            }
+
+            // Abort all TDs when a halt/error happened
+            if (abort_tds) {
+                xhci_driver->abort_inflight_TDs(te->m_control.slot_id(),
+                                                te->m_control.endpoint_id(),
+                                                IORequestStatus::FAILED);
             }
         }
     }
@@ -206,40 +269,177 @@ namespace Rune::Device::USB {
     // Endpoint Configuration
     // ========================================================================================== //
 
+    auto
+    XHCIDriver::drop_endpoint_context(const UniquePointer<InputContext>&              ic,
+                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                      const Endpoint& endpoint) -> bool {
+        if (endpoint.m_transfer_type == TransferType::NONE) return true;
+
+        U8 dci = endpoint.m_transfer_type == TransferType::CONTROL
+                     ? static_cast<U8>((endpoint.m_endpoint_number * 2) + 1)
+                     : static_cast<U8>((endpoint.m_endpoint_number * 2)
+                                       + endpoint.m_direction.to_value());
+
+        // Do not touch DCI 0 (slot context) and DCI 1 (Control endpoint)
+        if (dci < 2) return true;
+
+        ic->m_input_control_context.m_drop_context_flags =
+            bit_set(ic->m_input_control_context.m_drop_context_flags, dci);
+
+        if (dc_sys_memory->m_ep_states[dci - 1] == EndpointState::RUNNING) {
+            StopEndpointCommandTRB stop_endpoint_trb;
+            stop_endpoint_trb.m_control.set_trb_type(StopEndpointCommandTRB::TYPE);
+            stop_endpoint_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
+            stop_endpoint_trb.m_control.set_endpoint_id(dci);
+            stop_endpoint_trb.m_control.set_SP(false);
+            if (wait_for_command_trb_completed(reinterpret_cast<TRB*>(&stop_endpoint_trb))
+                    .m_status.completion_code()
+                != CompletionCode::SUCCESS) {
+                WARN("EP{}: Stop endpoint command failed, DCI={}", endpoint.m_endpoint_number, dci);
+                return false;
+            }
+            {
+                CriticalSection<CPU::Mutex> _(m_inflight_tracker_lock);
+                dc_sys_memory->m_ep_states[dci - 1] = EndpointState::STOPPED;
+            }
+        }
+        CriticalSection<CPU::Mutex> _(m_inflight_tracker_lock);
+        abort_inflight_TDs(dc_sys_memory->m_slot_ID, dci, IORequestStatus::FAILED);
+        return true;
+    }
+
     auto XHCIDriver::drop_endpoint_contexts(
         const UniquePointer<InputContext>&              ic,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
         const AlternateSetting&                         alt_setting) -> bool {
-
         for (const auto& ep : alt_setting.m_endpoints) {
-            if (ep.m_transfer_type == TransferType::NONE) continue;
-
-            U8 dci = ep.m_transfer_type == TransferType::CONTROL
-                         ? static_cast<U8>((ep.m_endpoint_number * 2) + 1)
-                         : static_cast<U8>((ep.m_endpoint_number * 2) + ep.m_direction.to_value());
-
-            // Do not touch DCI 0 (slot context) and DCI 1 (Control endpoint)
-            if (dci < 2) continue;
-
-            ic->m_input_control_context.m_drop_context_flags =
-                bit_set(ic->m_input_control_context.m_drop_context_flags, dci);
-
-            if (dc_sys_memory->m_device_context.m_endpoint_contexts[dci - 1].m_dw0.ep_state()
-                == EndpointContext::EP_STATE_RUNNING) {
-                StopEndpointCommandTRB stop_endpoint_trb;
-                stop_endpoint_trb.m_control.set_trb_type(StopEndpointCommandTRB::TYPE);
-                stop_endpoint_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
-                stop_endpoint_trb.m_control.set_endpoint_id(dci);
-                stop_endpoint_trb.m_control.set_SP(false);
-                if (wait_for_command_trb_completed(reinterpret_cast<TRB*>(&stop_endpoint_trb))
-                        .m_status.completion_code()
-                    != CompletionCode::SUCCESS) {
-                    WARN("EP{}: Stop endpoint command failed, DCI={}", ep.m_endpoint_number, dci);
-                    return false;
-                }
-            }
-            abort_inflight_TDs(dc_sys_memory->m_slot_ID, dci, IORequestStatus::FAILED);
+            if (!drop_endpoint_context(ic, dc_sys_memory, ep)) return false;
         }
+        return true;
+    }
+
+    auto
+    XHCIDriver::add_endpoint_context(const UniquePointer<InputContext>&              ic,
+                                     const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                     const Endpoint& endpoint) -> bool {
+        auto port_speed = PortSpeed(dc_sys_memory->m_device_context.m_slot_context.m_dw0.speed());
+        if (endpoint.m_transfer_type == TransferType::NONE) return true;
+
+        U8 dci = endpoint.m_transfer_type == TransferType::CONTROL
+                     ? (endpoint.m_endpoint_number * 2) + 1
+                     : (endpoint.m_endpoint_number * 2) + endpoint.m_direction.to_value();
+        // The slot context and control endpoint have been configured with the
+        // "Address Device Command" TRB -> Skip them
+        if (dci < 2) return true;
+        ic->m_input_control_context.m_add_context_flags =
+            bit_set(ic->m_input_control_context.m_add_context_flags, dci);
+
+        // §4.8.2 Endpoint Context Initialization
+        // EP Type - §6.2.3 Table 6-8
+        U8 ep_type = EndpointContext::EP_TYPE_NOT_VALID;
+        if (endpoint.m_transfer_type == TransferType::CONTROL) {
+            ep_type = EndpointContext::EP_TYPE_CONTROL;
+        } else if (endpoint.m_transfer_type == TransferType::ISOCHRONOUS) {
+            ep_type = endpoint.m_direction == Direction::OUT ? EndpointContext::EP_TYPE_ISOCH_OUT
+                                                             : EndpointContext::EP_TYPE_ISOCH_IN;
+        } else if (endpoint.m_transfer_type == TransferType::BULK) {
+            ep_type = endpoint.m_direction == Direction::OUT ? EndpointContext::EP_TYPE_BULK_OUT
+                                                             : EndpointContext::EP_TYPE_BULK_IN;
+        } else { // TransferType::INTERRUPT
+            ep_type = endpoint.m_direction == Direction::OUT
+                          ? EndpointContext::EP_TYPE_INTERRUPT_OUT
+                          : EndpointContext::EP_TYPE_INTERRUPT_IN;
+        }
+
+        // Max Packet Size - §6.2.3.5
+        constexpr U16 MAX_PACKET_SIZE_MASK = 0x7FF;
+        U16           max_packet_size      = endpoint.m_max_packet_size;
+        if (endpoint.m_transfer_type == TransferType::ISOCHRONOUS
+            || endpoint.m_transfer_type == TransferType::INTERRUPT)
+            max_packet_size = max_packet_size & MAX_PACKET_SIZE_MASK;
+
+        // Max Burst Size - §6.2.3.4
+        U8 max_burst_size = 0;
+        if (endpoint.m_transfer_type == TransferType::BULK) {
+            max_burst_size =
+                port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1 ? endpoint.m_max_burst : 0;
+        } else if (endpoint.m_transfer_type == TransferType::ISOCHRONOUS
+                   || endpoint.m_transfer_type == TransferType::INTERRUPT) {
+            constexpr U16 ADDITIONAL_TRANSACTION_OPPORTUNITIES_MASK   = 0x1800;
+            constexpr U16 ADDITIONAL_TRANSACTION_OPPORTUNITIES_OFFSET = 11;
+            max_burst_size =
+                port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
+                    ? endpoint.m_max_burst
+                    : (endpoint.m_max_packet_size & ADDITIONAL_TRANSACTION_OPPORTUNITIES_MASK)
+                          >> ADDITIONAL_TRANSACTION_OPPORTUNITIES_OFFSET;
+        } // else endpoint.m_transfer_type == TransferType::CONTROL -> max_burst_size = 0
+
+        // Error Count (CErr) - §4.8.2
+        U8 cerr = endpoint.m_transfer_type == TransferType::ISOCHRONOUS ? 0 : 3;
+
+        // Average TRB Length - §4.14.1.1
+        U16 avg_trb_length = 0;
+        if (endpoint.m_transfer_type == TransferType::CONTROL) {
+            avg_trb_length = 8; // NOLINT Spec recommended start value for control endpoints
+        } else if (endpoint.m_transfer_type == TransferType::BULK
+                   || endpoint.m_transfer_type == TransferType::ISOCHRONOUS) {
+            avg_trb_length = 3 * MemoryUnit::KiB;
+        } else { // TransferType::INTERRUPT
+            avg_trb_length = MemoryUnit::KiB;
+        }
+
+        // Max ESIT - §4.14.2 (§4.8.2.4 -> Only valid for Isoch or Interrupt Endpoints)
+        U32 max_esit = 0;
+        if (endpoint.m_transfer_type == TransferType::ISOCHRONOUS
+            || endpoint.m_transfer_type == TransferType::INTERRUPT) {
+            max_esit = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
+                           ? endpoint.m_bytes_per_interval
+                           : max_packet_size * (max_burst_size + 1);
+        }
+
+        // Interval - §6.2.3.6
+        U8 interval = 0;
+        if ((endpoint.m_transfer_type == TransferType::INTERRUPT
+             || endpoint.m_transfer_type == TransferType::ISOCHRONOUS)
+            && port_speed >= PortSpeed::HIGH_SPEED) {
+            // bInterval 1..16, valid interval 0..15
+            interval = endpoint.m_interval - 1;
+        } else if (endpoint.m_transfer_type == TransferType::INTERRUPT
+                   && (port_speed == PortSpeed::LOW_SPEED || port_speed == PortSpeed::FULL_SPEED)) {
+            // bInterval 1..255, valid interval 3..10
+            // bInterval in 1ms -> Convert to 125us units then round to nearest power of
+            // two interval = floor(log2(bInterval * 8))
+            U16 units_125us = static_cast<U16>(endpoint.m_interval) * 8; // NOLINT
+            while ((units_125us >> 1) != 0) {
+                units_125us >>= 1;
+                interval++;
+            }
+        } else if (endpoint.m_transfer_type == TransferType::ISOCHRONOUS
+                   && port_speed == PortSpeed::FULL_SPEED) {
+            // bInterval 1..16, valid interval 3.18
+            interval = endpoint.m_interval + 2;
+        }
+
+        // Mult - §4.3.6
+        U8 mult = endpoint.m_mult;
+
+        ic->m_endpoint_contexts[dci - 1].m_dw1.set_ep_type(ep_type);
+        ic->m_endpoint_contexts[dci - 1].m_dw1.set_max_packet_size(max_packet_size);
+        ic->m_endpoint_contexts[dci - 1].m_dw1.set_max_burst_size(max_burst_size);
+        ic->m_endpoint_contexts[dci - 1].m_dw1.set_CERR(cerr);
+        ic->m_endpoint_contexts[dci - 1].m_dw4.set_average_trb_length(avg_trb_length);
+        ic->m_endpoint_contexts[dci - 1].m_dw0.set_max_esit_hi(byte_get(max_esit, 2));
+        ic->m_endpoint_contexts[dci - 1].m_dw4.set_max_esit_lo(word_get(max_esit, 0));
+        ic->m_endpoint_contexts[dci - 1].m_dw0.set_interval(interval);
+        ic->m_endpoint_contexts[dci - 1].m_dw0.set_mult(mult);
+
+        PhysicalAddr tr_phys = 0;
+        if (!Memory::virtual_to_physical_address(
+                memory_pointer_to_addr(&dc_sys_memory->m_transfer_rings[dci - 1]),
+                tr_phys))
+            return false;
+        ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_ptr(tr_phys >> SHIFT_4);
+        ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_DCS(true);
         return true;
     }
 
@@ -247,123 +447,10 @@ namespace Rune::Device::USB {
     XHCIDriver::add_endpoint_contexts(const UniquePointer<InputContext>&              ic,
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                                       const AlternateSetting& alt_setting) -> bool {
-        auto port_speed  = PortSpeed(dc_sys_memory->m_device_context.m_slot_context.m_dw0.speed());
-        U8   highest_dci = 0;
         for (const auto& ep : alt_setting.m_endpoints) {
-            if (ep.m_transfer_type == TransferType::NONE) continue;
-
-            U8 dci = ep.m_transfer_type == TransferType::CONTROL
-                         ? (ep.m_endpoint_number * 2) + 1
-                         : (ep.m_endpoint_number * 2) + ep.m_direction.to_value();
-            // The slot context and control endpoint have been configured with the
-            // "Address Device Command" TRB -> Skip them
-            if (dci < 2) continue;
-            if (dci > highest_dci) highest_dci = dci;
-            ic->m_input_control_context.m_add_context_flags =
-                bit_set(ic->m_input_control_context.m_add_context_flags, dci);
-
-            // §4.8.2 Endpoint Context Initialization
-            // EP Type - §6.2.3 Table 6-8
-            U8 ep_type = EndpointContext::EP_TYPE_NOT_VALID;
-            if (ep.m_transfer_type == TransferType::CONTROL) {
-                ep_type = EndpointContext::EP_TYPE_CONTROL;
-            } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS) {
-                ep_type = ep.m_direction == Direction::OUT ? EndpointContext::EP_TYPE_ISOCH_OUT
-                                                           : EndpointContext::EP_TYPE_ISOCH_IN;
-            } else if (ep.m_transfer_type == TransferType::BULK) {
-                ep_type = ep.m_direction == Direction::OUT ? EndpointContext::EP_TYPE_BULK_OUT
-                                                           : EndpointContext::EP_TYPE_BULK_IN;
-            } else { // TransferType::INTERRUPT
-                ep_type = ep.m_direction == Direction::OUT ? EndpointContext::EP_TYPE_INTERRUPT_OUT
-                                                           : EndpointContext::EP_TYPE_INTERRUPT_IN;
-            }
-
-            // Max Packet Size - §6.2.3.5
-            U16 max_packet_size = ep.m_max_packet_size;
-            if (ep.m_transfer_type == TransferType::ISOCHRONOUS
-                || ep.m_transfer_type == TransferType::INTERRUPT)
-                max_packet_size = max_packet_size & 0x7FF;
-
-            // Max Burst Size - §6.2.3.4
-            U8 max_burst_size = 0;
-            if (ep.m_transfer_type == TransferType::BULK) {
-                max_burst_size = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1 ? ep.m_max_burst : 0;
-            } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS
-                       || ep.m_transfer_type == TransferType::INTERRUPT) {
-                max_burst_size = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
-                                     ? ep.m_max_burst
-                                     : (ep.m_max_packet_size & 0x1800) >> 11;
-            } // else ep.m_transfer_type == TransferType::CONTROL -> max_burst_size = 0
-
-            // Error Count (CErr) - §4.8.2
-            U8 cerr = ep.m_transfer_type == TransferType::ISOCHRONOUS ? 0 : 3;
-
-            // Average TRB Length - §4.14.1.1
-            U16 avg_trb_length = 0;
-            if (ep.m_transfer_type == TransferType::CONTROL) {
-                avg_trb_length = 8;
-            } else if (ep.m_transfer_type == TransferType::BULK
-                       || ep.m_transfer_type == TransferType::ISOCHRONOUS) {
-                avg_trb_length = 3 * MemoryUnit::KiB;
-            } else { // TransferType::INTERRUPT
-                avg_trb_length = MemoryUnit::KiB;
-            }
-
-            // Max ESIT - §4.14.2 (§4.8.2.4 -> Only valid for Isoch or Interrupt Endpoints)
-            U32 max_esit = 0;
-            if (ep.m_transfer_type == TransferType::ISOCHRONOUS
-                || ep.m_transfer_type == TransferType::INTERRUPT) {
-                max_esit = port_speed >= PortSpeed::SUPER_SPEED_GEN1_X1
-                               ? ep.m_bytes_per_interval
-                               : max_packet_size * (max_burst_size + 1);
-            }
-
-            // Interval - §6.2.3.6
-            U8 interval = 0;
-            if ((ep.m_transfer_type == TransferType::INTERRUPT
-                 || ep.m_transfer_type == TransferType::ISOCHRONOUS)
-                && port_speed >= PortSpeed::HIGH_SPEED) {
-                // bInterval 1..16, valid interval 0..15
-                interval = ep.m_interval - 1;
-            } else if (ep.m_transfer_type == TransferType::INTERRUPT
-                       && (port_speed == PortSpeed::LOW_SPEED
-                           || port_speed == PortSpeed::FULL_SPEED)) {
-                // bInterval 1..255, valid interval 3..10
-                // bInterval in 1ms -> Convert to 125us units then round to nearest power of
-                // two interval = floor(log2(bInterval * 8))
-                U16 units_125us = static_cast<U16>(ep.m_interval) * 8;
-                while ((units_125us >> 1) != 0) {
-                    units_125us >>= 1;
-                    interval++;
-                }
-            } else if (ep.m_transfer_type == TransferType::ISOCHRONOUS
-                       && port_speed == PortSpeed::FULL_SPEED) {
-                // bInterval 1..16, valid interval 3.18
-                interval = ep.m_interval + 2;
-            }
-
-            // Mult - §4.3.6
-            U8 mult = ep.m_mult;
-
-            ic->m_endpoint_contexts[dci - 1].m_dw1.set_ep_type(ep_type);
-            ic->m_endpoint_contexts[dci - 1].m_dw1.set_max_packet_size(max_packet_size);
-            ic->m_endpoint_contexts[dci - 1].m_dw1.set_max_burst_size(max_burst_size);
-            ic->m_endpoint_contexts[dci - 1].m_dw1.set_CERR(cerr);
-            ic->m_endpoint_contexts[dci - 1].m_dw4.set_average_trb_length(avg_trb_length);
-            ic->m_endpoint_contexts[dci - 1].m_dw0.set_max_esit_hi(byte_get(max_esit, 2));
-            ic->m_endpoint_contexts[dci - 1].m_dw4.set_max_esit_lo(word_get(max_esit, 0));
-            ic->m_endpoint_contexts[dci - 1].m_dw0.set_interval(interval);
-            ic->m_endpoint_contexts[dci - 1].m_dw0.set_mult(mult);
-
-            PhysicalAddr tr_phys = 0;
-            if (!Memory::virtual_to_physical_address(
-                    memory_pointer_to_addr(&dc_sys_memory->m_transfer_rings[dci - 1]),
-                    tr_phys))
-                return false;
-            ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_ptr(tr_phys >> SHIFT_4);
-            ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_DCS(true);
+            if (!add_endpoint_context(ic, dc_sys_memory, ep)) return false;
         }
-        ic->m_slot_context.m_dw0.set_context_entries(highest_dci);
+        ic->m_slot_context.m_dw0.set_context_entries(compute_context_entries(ic, dc_sys_memory));
         return true;
     }
 
@@ -375,9 +462,7 @@ namespace Rune::Device::USB {
         for (U8 dci = DeviceContext::MAX_ENDPOINTS; dci >= 2; dci--) {
             if (bit_check(add, dci)) return dci;
             if (bit_check(drop, dci)) continue;
-            if (dc_sys_memory->m_device_context.m_endpoint_contexts[dci - 1].m_dw0.ep_state()
-                != EndpointContext::EP_STATE_DISABLED)
-                return dci;
+            if (dc_sys_memory->m_ep_states[dci - 1] != EndpointState::DISABLED) return dci;
         }
         return 1;
     }
@@ -389,7 +474,7 @@ namespace Rune::Device::USB {
         constexpr U8 MAX_DCI = 32;
         for (U8 i = 2; i < MAX_DCI; i++) {
             if (bit_check(ic->m_input_control_context.m_drop_context_flags, i))
-                dc_sys_memory->m_transfer_rings[i - 1].clear();
+                dc_sys_memory->m_transfer_rings[i - 1].reset();
 
             if (bit_check(ic->m_input_control_context.m_add_context_flags, i)) {
                 if (!dc_sys_memory->m_transfer_rings[i - 1].init()) return false;
@@ -398,8 +483,9 @@ namespace Rune::Device::USB {
         return true;
     }
 
-    auto XHCIDriver::send_configure_endpoint_command(const UniquePointer<InputContext>& ic,
-                                                     U8 slot_ID) -> CompletionCode {
+    auto XHCIDriver::send_configure_endpoint_command(
+        const UniquePointer<InputContext>&              ic,
+        const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> CompletionCode {
         PhysicalAddr ic_phys = 0;
         if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(ic.get()), ic_phys))
             return CompletionCode::INVALID;
@@ -409,10 +495,22 @@ namespace Rune::Device::USB {
         cec_trb.m_input_context_ptr_hi = static_cast<U32>(ic_phys >> SHIFT_32);
         cec_trb.m_control.set_trb_type(ConfigureEndpointCommandTRB::TYPE);
         cec_trb.m_control.set_cycle(m_command_ring->m_pcs);
-        cec_trb.m_control.set_slot_id(slot_ID);
+        cec_trb.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
         cec_trb.m_control.set_DC(false);
 
         auto cc_TRB = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&cec_trb));
+        if (cc_TRB.m_status.completion_code() == CompletionCode::SUCCESS) {
+            constexpr U8                MAX_DCI = 32;
+            CriticalSection<CPU::Mutex> _(m_inflight_tracker_lock);
+            for (U8 i = 2; i < MAX_DCI; i++) {
+                if (bit_check(ic->m_input_control_context.m_drop_context_flags, i))
+                    dc_sys_memory->m_ep_states[i - 1] = EndpointState::DISABLED;
+
+                if (bit_check(ic->m_input_control_context.m_add_context_flags, i))
+                    dc_sys_memory->m_ep_states[i - 1] = EndpointState::RUNNING;
+            }
+        }
+
         return cc_TRB.m_status.completion_code();
     }
 
@@ -422,7 +520,8 @@ namespace Rune::Device::USB {
         U8                                              from_setting,
         U8                                              to_setting,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> bool {
-        const Interface* iface = function_device->find_interface(interface);
+        CriticalSection<CPU::Mutex> _(m_recovery_lock);
+        const Interface*            iface = function_device->find_interface(interface);
         if (iface == nullptr) {
             WARN("Configuration{} has no interface {}",
                  function_device->owning_configuration_value(),
@@ -447,10 +546,9 @@ namespace Rune::Device::USB {
         }
         const AlternateSetting& from_alt = *from_alt_ptr;
         const AlternateSetting& to_alt   = *to_alt_ptr;
-        auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto  ic = UniquePointer<InputContext>(
-            reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
+        auto                    ic       = UniquePointer<InputContext>(
+            reinterpret_cast<InputContext*>(Memory::DMA::allocate_zeroed(sizeof(InputContext))));
+
         // Copy the current slot context as a safeguard against accidental reconfiguration
         memcpy(&ic->m_slot_context,
                &dc_sys_memory->m_device_context.m_slot_context,
@@ -473,7 +571,7 @@ namespace Rune::Device::USB {
 
         if (!update_endpoint_transfer_ring_states(ic, dc_sys_memory)) return false;
 
-        auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
+        auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory);
         if (completion_code != CompletionCode::SUCCESS) {
             WARN("IF{} Alt{}: Failed to send configure endpoint command", interface, to_setting);
 
@@ -512,7 +610,7 @@ namespace Rune::Device::USB {
                 return false;
             }
 
-            completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
+            completion_code = send_configure_endpoint_command(ic, dc_sys_memory);
             if (completion_code != CompletionCode::SUCCESS) {
                 ERROR(
                     "IF{} Alt{}: Alternate setting restoration failed - Configure endpoint command",
@@ -520,6 +618,132 @@ namespace Rune::Device::USB {
                     from_setting);
             }
             return false;
+        }
+
+        return true;
+    }
+
+    auto XHCIDriver::reset_endpoint(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    U8                                              endpoint_number,
+                                    Direction                                       direction,
+                                    TransferType transfer_type) -> bool {
+        U8 dci = transfer_type == TransferType::CONTROL
+                     ? static_cast<U8>((endpoint_number * 2) + 1)
+                     : static_cast<U8>((endpoint_number * 2) + direction.to_value());
+        if (dc_sys_memory->m_ep_states[dci - 1] == EndpointState::HALTED) {
+            DEBUG("EP{} {}-{}: Is halted, will reset...",
+                  endpoint_number,
+                  transfer_type.to_string(),
+                  direction.to_string())
+            ResetEndpointCommandTRB rec_cmd;
+            rec_cmd.m_control.set_trb_type(ResetEndpointCommandTRB::TYPE);
+            rec_cmd.m_control.set_endpoint_id(dci);
+            rec_cmd.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
+            rec_cmd.m_control.set_TSP(false);
+
+            auto cc = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&rec_cmd));
+            if (cc.m_status.completion_code() != CompletionCode::SUCCESS) {
+                WARN("EP{} {}-{}: Failed to reset endpoint",
+                     endpoint_number,
+                     transfer_type.to_string(),
+                     direction.to_string())
+                return false;
+            }
+            {
+                CriticalSection<CPU::Mutex> _(m_inflight_tracker_lock);
+                dc_sys_memory->m_ep_states[dci - 1] = EndpointState::STOPPED;
+            }
+        }
+        if (dc_sys_memory->m_ep_states[dci - 1] == EndpointState::STOPPED
+            || dc_sys_memory->m_ep_states[dci - 1] == EndpointState::ERROR) {
+            DEBUG(
+                "EP{} {}-{}: Is stopped or has error, will update transfer ring dequeue pointer...",
+                endpoint_number,
+                transfer_type.to_string(),
+                direction.to_string())
+            auto&                         tr = dc_sys_memory->m_transfer_rings[dci - 1];
+            SetTRDequeuePointerCommandTRB set_tr_cmd;
+            set_tr_cmd.m_control.set_trb_type(SetTRDequeuePointerCommandTRB::TYPE);
+            set_tr_cmd.m_control.set_endpoint_id(dci);
+            set_tr_cmd.m_control.set_slot_id(dc_sys_memory->m_slot_ID);
+            set_tr_cmd.m_dequeue_ptr_lo.set_DCS(tr.m_pcs);
+
+            PhysicalAddr p_addr = 0;
+            if (!Memory::virtual_to_physical_address(
+                    memory_pointer_to_addr(&tr.m_entries[tr.m_enqueue_ptr]),
+                    p_addr)) {
+                WARN("EP{} {}-{}: Failed to get physical address of transfer ring enqueue pointer",
+                     endpoint_number,
+                     transfer_type.to_string(),
+                     direction.to_string())
+                return false;
+            }
+            set_tr_cmd.m_dequeue_ptr_lo.set_ptr(dword_get(p_addr, 0) >> SHIFT_4);
+            set_tr_cmd.m_dequeue_ptr_hi = dword_get(p_addr, 1);
+
+            auto cc = wait_for_command_trb_completed(reinterpret_cast<TRB*>(&set_tr_cmd));
+            if (cc.m_status.completion_code() != CompletionCode::SUCCESS) {
+                WARN("EP{} {}-{}: Failed to set transfer ring dequeue pointer",
+                     endpoint_number,
+                     transfer_type.to_string(),
+                     direction.to_string())
+                return false;
+            }
+            {
+                CriticalSection<CPU::Mutex> _(m_inflight_tracker_lock);
+                dc_sys_memory->m_ep_states[dci - 1] = EndpointState::STOPPED;
+            }
+        }
+        return true;
+    }
+
+    auto
+    XHCIDriver::reset_data_toggle(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                  const SharedPointer<FunctionDevice>&            function_device,
+                                  U8                                              endpoint_number,
+                                  Direction direction) -> bool {
+        for (auto& iface : function_device->interfaces()) {
+            for (auto& endpoint : iface.active().m_endpoints) {
+                if (endpoint.m_endpoint_number == endpoint_number
+                    && endpoint.m_direction == direction) {
+                    auto ic = UniquePointer<InputContext>(reinterpret_cast<InputContext*>(
+                        Memory::DMA::allocate_zeroed(sizeof(InputContext))));
+                    memcpy(&ic->m_slot_context,
+                           &dc_sys_memory->m_device_context.m_slot_context,
+                           sizeof(SlotContext));
+                    ic->m_slot_context.m_dw3.set_usb_device_address(0);
+                    ic->m_slot_context.m_dw3.set_slot_state(0);
+
+                    ic->m_input_control_context.m_add_context_flags =
+                        bit_set(ic->m_input_control_context.m_add_context_flags, 0);
+
+                    if (!add_endpoint_context(ic, dc_sys_memory, endpoint)
+                        || !drop_endpoint_context(ic, dc_sys_memory, endpoint)) {
+                        WARN("EP{} {}: Failed to reset data toggle.",
+                             endpoint_number,
+                             direction.to_string())
+                        return false;
+                    }
+                    ic->m_slot_context.m_dw0.set_context_entries(
+                        compute_context_entries(ic, dc_sys_memory));
+
+                    if (!update_endpoint_transfer_ring_states(ic, dc_sys_memory)) {
+                        WARN("EP{} {}: Failed to reset data toggle.",
+                             endpoint_number,
+                             direction.to_string())
+                        return false;
+                    }
+
+                    if (send_configure_endpoint_command(ic, dc_sys_memory)
+                        != CompletionCode::SUCCESS) {
+                        WARN("EP{} {}: Failed to reset data toggle.",
+                             endpoint_number,
+                             direction.to_string())
+                        return false;
+                    }
+                    return true;
+                }
+            }
         }
         return true;
     }
@@ -532,6 +756,13 @@ namespace Rune::Device::USB {
         const ControlTransferRequest&                   control_transfer_request,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         TransferResponse*                               response) -> CPU::Future<IORequestStatus> {
+
+        {
+            CriticalSection<CPU::Mutex> _(m_recovery_lock);
+            if (!reset_endpoint(dc_sys_mem, 0, Direction::OUT, TransferType::CONTROL))
+                return CPU::Promise<IORequestStatus>::make_completed_future(
+                    IORequestStatus::FAILED);
+        }
 
         auto& ep0_tr = dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
         bool  is_in =
@@ -570,9 +801,8 @@ namespace Rune::Device::USB {
             if (!Memory::virtual_to_physical_address(
                     memory_pointer_to_addr(control_transfer_request.m_data_buffer),
                     data_buffer_phys)) {
-                CPU::Promise<IORequestStatus> promise;
-                promise.set_value(IORequestStatus::FAILED);
-                return promise.get_future();
+                return CPU::Promise<IORequestStatus>::make_completed_future(
+                    IORequestStatus::FAILED);
             }
             data_stage_trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
             data_stage_trb.m_data_buffer_pointer_hi =
@@ -599,6 +829,9 @@ namespace Rune::Device::USB {
                                               dc_sys_mem->m_slot_ID,
                                               1);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
+        U8 ep0_dci = DeviceContextDoorbellTarget::EP0_CONTROL;
+        if (dc_sys_mem->m_ep_states[ep0_dci - 1] == EndpointState::STOPPED)
+            dc_sys_mem->m_ep_states[ep0_dci - 1] = EndpointState::RUNNING;
         return future;
     }
 
@@ -606,6 +839,18 @@ namespace Rune::Device::USB {
         const DataTransferRequest&                      data_transfer_request,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         TransferResponse*                               response) -> CPU::Future<IORequestStatus> {
+
+        {
+            CriticalSection<CPU::Mutex> _(m_recovery_lock);
+            // Cannot differ between Bulk or Interrupt requests, it does not matter for
+            // functionality but logging will be wrong. Should I fix this?
+            if (!reset_endpoint(dc_sys_mem,
+                                data_transfer_request.m_endpoint_number,
+                                data_transfer_request.m_direction,
+                                TransferType::BULK))
+                return CPU::Promise<IORequestStatus>::make_completed_future(
+                    IORequestStatus::FAILED);
+        }
 
         TRACE("EP{} {}: Sending {} transfer request. Size={} bytes",
               data_transfer_request.m_endpoint_number,
@@ -638,6 +883,8 @@ namespace Rune::Device::USB {
         PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
         auto future = track_inflight_TD(&trb_phys, 1, 1, response, dc_sys_mem->m_slot_ID, dci);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
+        if (dc_sys_mem->m_ep_states[dci - 1] == EndpointState::STOPPED)
+            dc_sys_mem->m_ep_states[dci - 1] = EndpointState::RUNNING;
         return future;
     }
 
@@ -645,6 +892,16 @@ namespace Rune::Device::USB {
         const IsochDataTransferRequest&                 isoch_transfer_request,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         TransferResponse*                               response) -> CPU::Future<IORequestStatus> {
+
+        {
+            CriticalSection<CPU::Mutex> _(m_recovery_lock);
+            if (!reset_endpoint(dc_sys_mem,
+                                isoch_transfer_request.m_endpoint_number,
+                                isoch_transfer_request.m_direction,
+                                TransferType::ISOCHRONOUS))
+                return CPU::Promise<IORequestStatus>::make_completed_future(
+                    IORequestStatus::FAILED);
+        }
 
         TRACE("EP{} {}: Sending {} transfer request. Size={} bytes",
               isoch_transfer_request.m_endpoint_number,
@@ -682,6 +939,8 @@ namespace Rune::Device::USB {
         PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
         auto future = track_inflight_TD(&trb_phys, 1, 1, response, dc_sys_mem->m_slot_ID, dci);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
+        if (dc_sys_mem->m_ep_states[dci - 1] == EndpointState::STOPPED)
+            dc_sys_mem->m_ep_states[dci - 1] = EndpointState::RUNNING;
         return future;
     }
 
@@ -834,7 +1093,8 @@ namespace Rune::Device::USB {
                                                  cmd_ring_phys))
             return false;
 
-        auto* link_trb = reinterpret_cast<LinkTRB*>(&m_command_ring->m_entries[1]);
+        auto* link_trb =
+            reinterpret_cast<LinkTRB*>(&m_command_ring->m_entries[COMMAND_RING_SIZE - 1]);
         link_trb->m_ring_segment_pointer_lo.set_ptr(static_cast<U32>(cmd_ring_phys) >> 4);
         link_trb->m_ring_segment_pointer_hi = static_cast<U32>(cmd_ring_phys >> SHIFT_32);
         link_trb->m_control.set_trb_type(LinkTRB::TYPE);
@@ -993,20 +1253,6 @@ namespace Rune::Device::USB {
     // USB Device Initialization
     // ====================================================================================== //
 
-    auto XHCIDriver::wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB {
-        PhysicalAddr                           trb_phys = m_command_ring->enqueue(*trb);
-        CPU::Future<CommandCompletionEventTRB> future =
-            [&]() -> CPU::Future<CommandCompletionEventTRB> {
-            CriticalSection _(m_inflight_tracker_lock);
-            TRACE("Track inflight command TRB: {:0=#16x}", trb_phys);
-            auto& p = (m_inflight_command_trb_tracker[trb_phys] =
-                           CPU::Promise<CommandCompletionEventTRB>());
-            return p.get_future();
-        }();
-        m_ri.ring_command_doorbell();
-        return future.get();
-    }
-
     auto XHCIDriver::enable_slot() -> Optional<U8> {
         EnableSlotCommandTRB cmd{};
         cmd.m_control.set_trb_type(EnableSlotCommandTRB::TYPE);
@@ -1020,6 +1266,9 @@ namespace Rune::Device::USB {
         -> SharedPointer<DeviceContextSystemMemory> {
         auto dc_sys_mem = SharedPointer<DeviceContextSystemMemory>(new DeviceContextSystemMemory);
 
+        for (U8 i = 0; i < DeviceContext::MAX_ENDPOINTS; i++)
+            dc_sys_mem->m_ep_states[i] = EndpointState::DISABLED;
+
         dc_sys_mem->m_slot_ID = slot_ID;
         // Initialize the EP0 transfer ring Link TRB
         if (!dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1].init())
@@ -1032,6 +1281,7 @@ namespace Rune::Device::USB {
             return {};
 
         m_dcbaa.get()[slot_ID] = device_context_phys;
+        m_dc_system_memory_by_slot.put(slot_ID, dc_sys_mem);
         return dc_sys_mem;
     }
 
@@ -1067,10 +1317,8 @@ namespace Rune::Device::USB {
             default: return {};
         }
 
-        auto* mm     = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto  ic_ptr = UniquePointer<InputContext>(
-            reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(reinterpret_cast<void*>(ic_ptr.get()), 0, sizeof(InputContext));
+        auto ic_ptr = UniquePointer<InputContext>(
+            reinterpret_cast<InputContext*>(Memory::DMA::allocate_zeroed(sizeof(InputContext))));
         InputContext& ic = *ic_ptr;
 
         // Add flags: A0 (slot) + A1 (EP0 = endpoint index 1)
@@ -1113,6 +1361,8 @@ namespace Rune::Device::USB {
                  cc_TRB.m_status.completion_code().to_string());
             return {};
         };
+        dc_sys_mem->m_ep_states[DeviceContextDoorbellTarget::EP0_CONTROL - 1] =
+            EndpointState::RUNNING;
         return make_optional<U16>(ep0.m_dw1.max_packet_size());
     }
 
@@ -1304,7 +1554,7 @@ namespace Rune::Device::USB {
                     const auto* companion =
                         reinterpret_cast<const SuperSpeedEndpointCompanionDescriptor*>(config_blob
                                                                                        + offset);
-                    EndPoint& ep   = current_alt_setting->m_endpoints.last();
+                    Endpoint& ep   = current_alt_setting->m_endpoints.last();
                     ep.m_max_burst = companion->m_max_burst;
                     ep.m_mult =
                         ep.m_transfer_type == TransferType::ISOCHRONOUS ? companion->mult() : 0;
@@ -1591,10 +1841,8 @@ namespace Rune::Device::USB {
     auto XHCIDriver::configure_device(const Configuration&                            config,
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                                       PortSpeed port_speed) -> bool {
-        auto* mm = System::instance().get_module<Memory::MemoryModule>(ModuleSelector::MEMORY);
-        auto  ic = UniquePointer<InputContext>(
-            reinterpret_cast<InputContext*>(mm->get_heap()->allocate_dma(sizeof(InputContext))));
-        memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
+        auto ic = UniquePointer<InputContext>(
+            reinterpret_cast<InputContext*>(Memory::DMA::allocate_zeroed(sizeof(InputContext))));
 
         for (const auto& function : config.m_functions) {
             for (const auto& iface : function.m_interfaces) {
@@ -1612,7 +1860,7 @@ namespace Rune::Device::USB {
 
         if (!update_endpoint_transfer_ring_states(ic, dc_sys_memory)) return false;
 
-        auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory->m_slot_ID);
+        auto completion_code = send_configure_endpoint_command(ic, dc_sys_memory);
         if (completion_code != CompletionCode::SUCCESS) {
             WARN("Configure endpoint command failed: {}", completion_code.to_string());
             return false;
@@ -1650,6 +1898,7 @@ namespace Rune::Device::USB {
         auto dc_sys_memory = allocate_device_context_system_memory(slot_id);
         if (!dc_sys_memory) {
             ERROR("Port{}: Failed to allocate device context system memory", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
 
@@ -1658,6 +1907,7 @@ namespace Rune::Device::USB {
             send_address_device_command(dc_sys_memory, port, port_speed);
         if (!max_packet_size_opt) {
             ERROR("Port{}: Failed to send address device command", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
 
@@ -1674,23 +1924,27 @@ namespace Rune::Device::USB {
         auto f = handle_control_transfer_request(get_descriptor, dc_sys_memory, nullptr);
         if (f.get() != IORequestStatus::HANDLED) {
             ERROR("Port{}: Failed to get device descriptor", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
 
         if (!update_max_packet_size(dd_partial, max_packet_size_opt.value(), port_speed, slot_id)) {
             ERROR("Port{}: Failed to update max packet size", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
 
         auto composite_device = build_composite_device(port, dc_sys_memory, port_speed);
         if (!composite_device) {
             ERROR("Port{}: Failed to parse USB configurations.", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
         m_bindable_device_IDs.add_back(composite_device->device_ID());
         if (!dm->register_device(m_xhci, composite_device)) {
             ERROR("Port{}: Failed to register device", port);
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
         m_dc_system_memory.put(composite_device->get_handle(), dc_sys_memory);
@@ -1698,6 +1952,8 @@ namespace Rune::Device::USB {
         auto& config = composite_device->configurations().first();
         if (!configure_device(config, dc_sys_memory, port_speed)) {
             ERROR("Port{}: Failed to configure device", port);
+            m_dc_system_memory.remove(composite_device->get_handle());
+            m_dc_system_memory_by_slot.remove(slot_id);
             return false;
         }
         composite_device->set_active_configuration(config.m_configuration_value);
@@ -1723,6 +1979,7 @@ namespace Rune::Device::USB {
             if (!dm->register_device(composite_device, function_device)) {
                 ERROR("Failed to register {}", function_device->get_name());
                 m_dc_system_memory.remove(function_device->get_handle());
+                m_dc_system_memory_by_slot.remove(slot_id);
                 continue;
             }
         }
@@ -1857,7 +2114,7 @@ namespace Rune::Device::USB {
                     }
 
                     auto f = handle_control_transfer_request(*ctr, dc_sys_memory, tr);
-                    if (f.get() == IORequestStatus::FAILED) {
+                    if (f.get() != IORequestStatus::HANDLED) {
                         WARN("{}: Failed to update USB device endpoint configuration",
                              composite_device->get_unique_name())
                         // The xHC is now reconfigured with the new alternate setting, but the
@@ -1878,6 +2135,59 @@ namespace Rune::Device::USB {
                     }
 
                     return f;
+                }
+                if ((ctr->m_request_type & REQUEST_TYPE_TYPE_MASK) == RequestType::TYPE_STANDARD
+                    && (ctr->m_request_type & REQUEST_TYPE_RECIPIENT_MASK)
+                           == RequestType::RECIPIENT_ENDPOINT
+                    && ctr->m_request == StandardRequestCode::CLEAR_FEATURE
+                    && ctr->m_value == StandardFeatureSelector::ENDPOINT_HALT) {
+                    U8   endpoint_number = nibble_get(ctr->m_index, 0);
+                    auto direction       = Direction(static_cast<U8>(bit_check(ctr->m_index, 7)));
+
+                    if (endpoint_number > 0) {
+                        Optional<Endpoint> endpoint;
+                        for (auto& interface : function_device->interfaces()) {
+                            for (auto ep : interface.active().m_endpoints) {
+                                if (endpoint_number == ep.m_endpoint_number
+                                    && direction == ep.m_direction) {
+                                    endpoint = make_optional(move(ep));
+                                    break;
+                                }
+                            }
+                        }
+                        if (!endpoint) {
+                            WARN("{}: Does not declare EP{} {}",
+                                 function_device->get_unique_name(),
+                                 endpoint_number,
+                                 direction.to_string())
+                            return CPU::Promise<IORequestStatus>::make_completed_future(
+                                IORequestStatus::FAILED);
+                        }
+
+                        U8 dci =
+                            endpoint.value().m_transfer_type == TransferType::CONTROL
+                                ? static_cast<U8>((endpoint_number * 2) + 1)
+                                : static_cast<U8>((endpoint_number * 2) + direction.to_value());
+                        bool                        success = false;
+                        CriticalSection<CPU::Mutex> _(m_recovery_lock);
+                        if (dc_sys_memory->m_ep_states[dci - 1] == EndpointState::HALTED) {
+                            success = reset_endpoint(dc_sys_memory,
+                                                     endpoint_number,
+                                                     direction,
+                                                     endpoint.value().m_transfer_type);
+                        } else {
+                            success = reset_data_toggle(dc_sys_memory,
+                                                        function_device,
+                                                        endpoint_number,
+                                                        direction);
+                        }
+                        if (!success) {
+                            ERROR("{}: Failed to reset endpoint.",
+                                  composite_device->get_unique_name());
+                            return CPU::Promise<IORequestStatus>::make_completed_future(
+                                IORequestStatus::FAILED);
+                        }
+                    }
                 }
                 return handle_control_transfer_request(*ctr, dc_sys_memory, tr);
             }

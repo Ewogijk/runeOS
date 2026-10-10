@@ -46,13 +46,13 @@ namespace Rune::Device::USB {
     // EndPoint
     // ========================================================================================== //
 
-    auto EndPoint::sync_type() const -> SyncType { return SyncType(m_synchronization); }
+    auto Endpoint::sync_type() const -> SyncType { return SyncType(m_synchronization); }
 
-    auto EndPoint::interrupt_usage_type() const -> InterruptUsageType {
+    auto Endpoint::interrupt_usage_type() const -> InterruptUsageType {
         return InterruptUsageType(m_usage);
     }
 
-    auto EndPoint::isochronous_usage_type() const -> IsochronousUsageType {
+    auto Endpoint::isochronous_usage_type() const -> IsochronousUsageType {
         return IsochronousUsageType(m_usage);
     }
 
@@ -197,6 +197,24 @@ namespace Rune::Device::USB {
                 .m_index        = w_index,
                 .m_length       = w_length,
                 .m_data_buffer  = data_buffer};
+    }
+
+    auto ControlTransferRequest::clear_endpoint_halt(Ember::Handle handle, const Endpoint& endpoint)
+        -> ControlTransferRequest {
+        // NOLINTBEGIN USB 3.2 §9.3.4
+        U16 w_index =
+            endpoint.m_endpoint_number | (endpoint.m_direction == Direction::IN ? 0x80 : 0);
+        // NOLINTEND
+        TransferRequestHeader header = {.m_transfer_type = USB::TransferRequestType::CONTROL,
+                                        .m_device_handle = handle};
+        return {.m_header       = header,
+                .m_request_type = RequestType::DIRECTION_HOST_TO_DEVICE | RequestType::TYPE_STANDARD
+                                  | RequestType::RECIPIENT_ENDPOINT,
+                .m_request      = StandardRequestCode::CLEAR_FEATURE,
+                .m_value        = StandardFeatureSelector::ENDPOINT_HALT,
+                .m_index        = w_index,
+                .m_length       = 0,
+                .m_data_buffer  = nullptr};
     }
 
 } // namespace Rune::Device::USB

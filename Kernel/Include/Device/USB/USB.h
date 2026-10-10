@@ -48,7 +48,7 @@ namespace Rune::Device::USB {
 
     /// @brief One endpoint of an alternate setting, decoded from an EndpointDescriptor
     ///         (USB 3.2 §9.6.6, Table 9-26).
-    struct EndPoint {
+    struct Endpoint {
         U8           m_endpoint_number = 0;                  // bEndpointAddress bits 3..0
         Direction    m_direction       = Direction::NONE;    // bEndpointAddress bit 7
         TransferType m_transfer_type   = TransferType::NONE; // bmAttributes bits 1..0
@@ -105,7 +105,7 @@ namespace Rune::Device::USB {
         U8                   m_interface_subclass = 0;
         U8                   m_interface_protocol = 0;
         String               m_interface_name;
-        LinkedList<EndPoint> m_endpoints;
+        LinkedList<Endpoint> m_endpoints;
 
         /// @brief Class- and vendor-specific descriptors following this alternate setting's
         ///         Interface descriptor.
@@ -344,7 +344,7 @@ namespace Rune::Device::USB {
         U16                   m_length       = 0; // wLength
         void*                 m_data_buffer  = nullptr;
 
-        /// @brief Construct a new control transfer request.
+        /// @brief Create a control transfer request.
         /// @param handle Handle of a FunctionDevice.
         /// @param bm_request_type bmRequestType.
         /// @param b_request bRequest.
@@ -360,6 +360,13 @@ namespace Rune::Device::USB {
                        U16           w_index,
                        U16           w_length,
                        void*         data_buffer) -> ControlTransferRequest;
+
+        /// @brief Create a CLEAR_FEATURE(ENDPOINT_HALT) request.
+        /// @param handle Handle of the target USB device.
+        /// @param endpoint
+        /// @return
+        static auto clear_endpoint_halt(Ember::Handle handle, const Endpoint& endpoint)
+            -> ControlTransferRequest;
     };
 
     /// @brief An IO request for USB Bulk and Interrupt transfers.

@@ -69,7 +69,9 @@ namespace Rune::Device::USB {
         /// @brief Slot transfer rings. Note: Can use DeviceContextDoorbellTarget::ENUM - 1
         ///         for indexed access (Doorbell targets are 1-based).
         Array<TransferRing<TRANSFER_RING_SIZE>, DeviceContext::MAX_ENDPOINTS> m_transfer_rings;
-        U8                                                                    m_slot_ID;
+        /// @brief Driver maintained state machine of the endpoints - $4.8.3
+        Array<EndpointState, DeviceContext::MAX_ENDPOINTS> m_ep_states{EndpointState::DISABLED};
+        U8                                                 m_slot_ID;
     };
 
     /// @brief An inflight transfer descriptor (TD) is a collection of TRBs that have been sent to
@@ -88,6 +90,7 @@ namespace Rune::Device::USB {
         U8                                 m_slot_ID        = 0;
         U8                                 m_DCI            = 0;
     };
+
     /// @brief Implementation of the eXtensible Host Controller Interface rev 2.0 specification.
     ///
     /// Device Hierarchy
@@ -128,6 +131,19 @@ namespace Rune::Device::USB {
     /// It is the responsibility of class drivers to configure the USB device as needed, the xHCI
     /// driver will only perform the initial configuration during enumeration and then handoff the
     /// device to its class driver.
+    ///
+    /// Stall Conditions
+    ///
+    /// When a stall condition occurs the host controller and USB device side of the endpoint must
+    /// be reset. The xHCI driver will automatically reset the host controller, because class
+    /// drivers should not worry about xHC internals.
+    ///
+    /// This means:
+    /// - Inflight transfers are aborted with IORequestStatus::FAILED.
+    /// - EP0 is automatically reset when the xHCI driver receives a new request.
+    /// - Other endpoints will stay in HALT until a class driver sends CLEAR_FEATURE(ENDPOINT_HALT)
+    ///   Each CLEAR_FEATURE(ENDPOINT_HALT) request will be intercepted and the xHC endpoint side is
+    ///   reset. Then the request is forwarded to the USB device.
     class XHCIDriver : public Driver {
         static constexpr VirtualAddr MMIO_BASE_ADDR = 0xFFFFC00000000000;
 
@@ -135,7 +151,7 @@ namespace Rune::Device::USB {
         // xHCI Configuration
         // ====================================================================================== //
 
-        static constexpr U8 COMMAND_RING_SIZE        = 2;
+        static constexpr U8 COMMAND_RING_SIZE        = 16;
         static constexpr U8 EVENT_RING_SEGMENT_SIZE  = XHCI_MIN_EVENT_SEGMENT_TRBS;
         static constexpr U8 EVENT_RING_SEGMENT_COUNT = 1;
         // ~1 ms moderation (IMODI in 250 ns units: 4000 × 250 ns = 1 ms)
@@ -158,10 +174,15 @@ namespace Rune::Device::USB {
         HashMap<PhysicalAddr, CPU::Promise<CommandCompletionEventTRB>>
             m_inflight_command_trb_tracker;
 
-        /// @brief Guards m_inflight_trb_table and m_inflight_command_trb_table. Request-submitting
-        ///         threads insert entries, while the delayed event-TRB handler (running on a worker
-        ///         thread) looks them up and removes them. Never held across a Future::get().
+        /// @brief Guards m_inflight_trb_table, m_inflight_command_trb_table and
+        ///         DeviceContextSystemMemory::m_ep_states. Request-submitting threads insert
+        ///         entries, while the delayed event-TRB handler (running on a worker thread) looks
+        ///         them up and removes them. Never held across a Future::get().
         CPU::Mutex m_inflight_tracker_lock{Ember::HANDLE_NONE, "xHCIInflightTrackerLock"};
+
+        /// @brief Synchronizes endpoint recovery. Lock order: m_recovery_lock ->
+        ///         m_inflight_tracker_lock
+        CPU::Mutex m_recovery_lock{Ember::HANDLE_NONE, "xHCIRecoveryLock"};
 
         // ====================================================================================== //
         // System Memory
@@ -175,6 +196,10 @@ namespace Rune::Device::USB {
 
         /// @brief Maps a USB device to its DeviceContext System Memory structure.
         HashMap<Handle, SharedPointer<DeviceContextSystemMemory>> m_dc_system_memory;
+
+        /// @brief Event TRB handling requires device contexts, but they must be keyed by slot ID
+        ///         since the xHC has no knowledge of device handles.
+        HashMap<U8, SharedPointer<DeviceContextSystemMemory>> m_dc_system_memory_by_slot;
 
         // ====================================================================================== //
         // Event TRB Handling
@@ -194,7 +219,7 @@ namespace Rune::Device::USB {
                                U8                  dci) -> CPU::Future<IORequestStatus>;
 
         /// @brief Abort all inflight TDs for the given slot and DCI. All promises will be resolved
-        ///         with status.
+        ///         with status. Expects the m_inflight_tracker_lock to be held.
         void abort_inflight_TDs(U8 slot_id, U8 dci, IORequestStatus status);
 
         /// @brief Advance ERDP to  er_deq_ptr and clear ERDP.EHB.
@@ -203,6 +228,10 @@ namespace Rune::Device::USB {
 
         /// @brief Clear USBSTS.EINT and interrupter IMAN.IP.
         void clear_interrupt_pending_state(U8 interrupter) const;
+
+        /// @brief Send a command TRB to the xHC and wait for it to be completed.
+        /// @return
+        auto wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB;
 
         /// @brief Handle an event TRB from the event ring after an interrupt by the xHC was
         ///         received.
@@ -217,6 +246,10 @@ namespace Rune::Device::USB {
         // Endpoint Configuration
         // ====================================================================================== //
 
+        auto drop_endpoint_context(const UniquePointer<InputContext>&              ic,
+                                   const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                   const Endpoint& endpoint) -> bool;
+
         /// @brief Set the drop bit for all endpoints of alt in ic. If an endpoint is running it
         ///         will be stopped.
         /// @return True: All running endpoints are stopped.
@@ -224,6 +257,11 @@ namespace Rune::Device::USB {
         auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
                                     const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                                     const AlternateSetting& alt_setting) -> bool;
+
+        static auto
+        add_endpoint_context(const UniquePointer<InputContext>&              ic,
+                             const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                             const Endpoint&                                 endpoint) -> bool;
 
         /// @brief Configure all endpoints of alt_setting and set the add bit in ic.
         /// @return True: All endpoints are configured.
@@ -248,8 +286,14 @@ namespace Rune::Device::USB {
             const UniquePointer<InputContext>&              ic,
             const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> bool;
 
-        auto send_configure_endpoint_command(const UniquePointer<InputContext>& ic, U8 slot_ID)
-            -> CompletionCode;
+        /// @brief Send a configure endpoint command to the xHC and update the endpoint states when
+        /// the command succeeded.
+        /// @param ic
+        /// @param dc_sys_memory
+        /// @return
+        auto send_configure_endpoint_command(
+            const UniquePointer<InputContext>&              ic,
+            const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> CompletionCode;
 
         /// @brief Reconfigure the endpoints of one interface for a USB SET_INTERFACE request via a
         ///         Configure Endpoint Command §4.3.6, before the request itself is forwarded to the
@@ -266,6 +310,20 @@ namespace Rune::Device::USB {
                                       U8                                   to_setting,
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
             -> bool;
+
+        /// @brief Transition an endpoint context from HALTED or ERROR states to the STOPPED state.
+        ///        Expects m_recovery_lock to be held.
+        auto reset_endpoint(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                            U8                                              endpoint_number,
+                            Direction                                       direction,
+                            TransferType                                    transfer_type) -> bool;
+
+        /// @brief Reset the endpoint context transfer ring and transition to the RUNNING state.
+        ///        Expects m_recovery_lock to be held.
+        auto reset_data_toggle(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                               const SharedPointer<FunctionDevice>&            function_device,
+                               U8                                              endpoint_number,
+                               Direction                                       direction) -> bool;
 
         // ====================================================================================== //
         // IO Requests
@@ -310,8 +368,6 @@ namespace Rune::Device::USB {
         // ====================================================================================== //
         // USB Device Initialization
         // ====================================================================================== //
-
-        auto wait_for_command_trb_completed(TRB* trb) -> CommandCompletionEventTRB;
 
         [[nodiscard]] auto enable_slot() -> Optional<U8>;
 
@@ -397,7 +453,9 @@ namespace Rune::Device::USB {
         /// @brief Send a transfer request to the xHC or a USB device.
         /// @param device  A pointer to the composite device the calling function device.
         /// @param request Transfer request.
-        /// @return A future with an IO request status.
+        /// @return HANDLED: The IO request was successfully handled by the xHC and USB device.
+        ///         FAILED: The IO request failed due to an error in the xHC or USB device.
+        ///         ABORTED: The xHC has detected a stall condition.
         ///
         /// The xHCI driver maps the device context to the handle of the function device which is
         /// required to send the transfer request to the USB device. Additionally, it may need to
