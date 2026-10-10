@@ -756,6 +756,46 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
+    // ResetEndpointCommandTRB — xHCI 2.0 §6.4.3.7
+    // ========================================================================================== //
+
+    [[nodiscard]] auto ResetEndpointCommandTRB::ControlDWord::cycle() const -> bool {
+        return bit_check(m_register, CYCLE_BIT_OFFSET);
+    }
+    [[nodiscard]] auto ResetEndpointCommandTRB::ControlDWord::TSP() const -> bool {
+        return bit_check(m_register, TSP_BIT_OFFSET);
+    }
+    [[nodiscard]] auto ResetEndpointCommandTRB::ControlDWord::trb_type() const -> TRBType {
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
+    }
+    [[nodiscard]] auto ResetEndpointCommandTRB::ControlDWord::endpoint_id() const -> U8 {
+        return static_cast<U8>((m_register & ENDPOINT_ID_MASK) >> SHIFT_16);
+    }
+    [[nodiscard]] auto ResetEndpointCommandTRB::ControlDWord::slot_id() const -> U8 {
+        return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
+    }
+    auto ResetEndpointCommandTRB::ControlDWord::set_cycle(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
+    }
+    auto ResetEndpointCommandTRB::ControlDWord::set_TSP(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, TSP_BIT_OFFSET) : bit_clear(m_register, TSP_BIT_OFFSET);
+    }
+    auto ResetEndpointCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
+    }
+    auto ResetEndpointCommandTRB::ControlDWord::set_endpoint_id(U8 val) -> void {
+        m_register = (m_register & ~ENDPOINT_ID_MASK)
+                     | ((static_cast<U32>(val) << SHIFT_16) & ENDPOINT_ID_MASK);
+    }
+    auto ResetEndpointCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
+        m_register =
+            (m_register & ~SLOT_ID_MASK) | ((static_cast<U32>(val) << SHIFT_24) & SLOT_ID_MASK);
+    }
+
+    // ========================================================================================== //
     // StopEndpointCommandTRB — xHCI 2.0 §6.4.3.8
     // ========================================================================================== //
 
@@ -790,6 +830,68 @@ namespace Rune::Device::USB {
         m_register = v ? bit_set(m_register, SP_BIT_OFFSET) : bit_clear(m_register, SP_BIT_OFFSET);
     }
     auto StopEndpointCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
+        m_register =
+            (m_register & ~SLOT_ID_MASK) | ((static_cast<U32>(val) << SHIFT_24) & SLOT_ID_MASK);
+    }
+
+    // ========================================================================================== //
+    // SetTRDequeuePointerCommandTRB — xHCI 2.0 §6.4.3.9
+    // ========================================================================================== //
+
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::DCS() const -> bool {
+        return bit_check(m_register, DCS_BIT_OFFSET);
+    }
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::SCT() const -> U8 {
+        return static_cast<U8>((m_register & SCT_MASK) >> SCT_SHIFT);
+    }
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::ptr() const -> U32 {
+        return (m_register & PTR_MASK) >> PTR_SHIFT;
+    }
+    auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_DCS(bool v) -> void {
+        m_register = v ? bit_set(m_register, DCS_BIT_OFFSET) : bit_clear(m_register, DCS_BIT_OFFSET);
+    }
+    auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_SCT(U8 val) -> void {
+        m_register =
+            (m_register & ~SCT_MASK) | ((static_cast<U32>(val) << SCT_SHIFT) & SCT_MASK);
+    }
+    auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_ptr(U32 val) -> void {
+        // DCS and SCT share this DWord -> Preserve them
+        m_register = (m_register & ~PTR_MASK) | ((val << PTR_SHIFT) & PTR_MASK);
+    }
+
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::StreamIDDWord::stream_id() const -> U16 {
+        return static_cast<U16>((m_register & STREAM_ID_MASK) >> SHIFT_16);
+    }
+    auto SetTRDequeuePointerCommandTRB::StreamIDDWord::set_stream_id(U16 val) -> void {
+        m_register = (m_register & ~STREAM_ID_MASK)
+                     | ((static_cast<U32>(val) << SHIFT_16) & STREAM_ID_MASK);
+    }
+
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::ControlDWord::cycle() const -> bool {
+        return bit_check(m_register, CYCLE_BIT_OFFSET);
+    }
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::ControlDWord::trb_type() const -> TRBType {
+        return TRBType(static_cast<U8>((m_register & TRB_TYPE_MASK) >> TRB_TYPE_SHIFT));
+    }
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::ControlDWord::endpoint_id() const -> U8 {
+        return static_cast<U8>((m_register & ENDPOINT_ID_MASK) >> SHIFT_16);
+    }
+    [[nodiscard]] auto SetTRDequeuePointerCommandTRB::ControlDWord::slot_id() const -> U8 {
+        return static_cast<U8>((m_register & SLOT_ID_MASK) >> SHIFT_24);
+    }
+    auto SetTRDequeuePointerCommandTRB::ControlDWord::set_cycle(bool v) -> void {
+        m_register =
+            v ? bit_set(m_register, CYCLE_BIT_OFFSET) : bit_clear(m_register, CYCLE_BIT_OFFSET);
+    }
+    auto SetTRDequeuePointerCommandTRB::ControlDWord::set_trb_type(U8 val) -> void {
+        m_register = (m_register & ~TRB_TYPE_MASK)
+                     | ((static_cast<U32>(val) << TRB_TYPE_SHIFT) & TRB_TYPE_MASK);
+    }
+    auto SetTRDequeuePointerCommandTRB::ControlDWord::set_endpoint_id(U8 val) -> void {
+        m_register = (m_register & ~ENDPOINT_ID_MASK)
+                     | ((static_cast<U32>(val) << SHIFT_16) & ENDPOINT_ID_MASK);
+    }
+    auto SetTRDequeuePointerCommandTRB::ControlDWord::set_slot_id(U8 val) -> void {
         m_register =
             (m_register & ~SLOT_ID_MASK) | ((static_cast<U32>(val) << SHIFT_24) & SLOT_ID_MASK);
     }

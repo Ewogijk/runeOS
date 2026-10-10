@@ -112,6 +112,16 @@ namespace Rune::Device::USB {
     };
     static_assert(sizeof(SlotContext) == XHCI_CONTEXT_DWORDS * sizeof(U32));
 
+#define EP_STATES(X)                                                                               \
+    X(EndpointState, DISABLED, 0x0)                                                                \
+    X(EndpointState, RUNNING, 0x1)                                                                 \
+    X(EndpointState, HALTED, 0x2)                                                                  \
+    X(EndpointState, STOPPED, 0x3)                                                                 \
+    X(EndpointState, ERROR, 0x4)
+
+    /// @brief Endpoint states - $4.8.3
+    DECLARE_TYPED_ENUM(EndpointState, U8, EP_STATES, 0xFF) // NOLINT
+
     /// @brief Endpoint Context — describes one endpoint (xHCI 2.0 §6.2.3 Table 6-9).
     struct EndpointContext {
         static constexpr U8 EP_TYPE_NOT_VALID     = 0;
@@ -123,21 +133,15 @@ namespace Rune::Device::USB {
         static constexpr U8 EP_TYPE_BULK_IN       = 6;
         static constexpr U8 EP_TYPE_INTERRUPT_IN  = 7;
 
-        static constexpr U8 EP_STATE_DISABLED = 0;
-        static constexpr U8 EP_STATE_RUNNING  = 1;
-        static constexpr U8 EP_STATE_HALTED   = 2;
-        static constexpr U8 EP_STATE_STOPPED  = 3;
-        static constexpr U8 EP_STATE_ERROR    = 4;
-
         struct DW0 {
             U32                m_register = 0;
-            [[nodiscard]] auto ep_state() const -> U8;
+            [[nodiscard]] auto ep_state() const -> EndpointState;
             [[nodiscard]] auto mult() const -> U8;
             [[nodiscard]] auto max_p_streams() const -> U8;
             [[nodiscard]] auto LSA() const -> bool;
             [[nodiscard]] auto interval() const -> U8;
             [[nodiscard]] auto max_esit_hi() const -> U8;
-            auto               set_ep_state(U8 val) -> void;
+            auto               set_ep_state(EndpointState val) -> void;
             auto               set_mult(U8 val) -> void;
             auto               set_max_p_streams(U8 val) -> void;
             auto               set_LSA(bool v) -> void;

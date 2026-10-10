@@ -75,6 +75,7 @@ namespace Rune::Device::USB {
     X(CompletionCode, RESOURCE_ERROR, 7)                                                           \
     X(CompletionCode, BANDWIDTH_ERROR, 8)                                                          \
     X(CompletionCode, NO_SLOTS_AVAILABLE, 9)                                                       \
+    X(CompletionCode, INVALID_STREAM_TYPE_ERROR, 10)                                               \
     X(CompletionCode, SHORT_PACKET, 13)                                                            \
     X(CompletionCode, RING_UNDERRUN, 14)                                                           \
     X(CompletionCode, RING_OVERRUN, 15)                                                            \
@@ -109,7 +110,7 @@ namespace Rune::Device::USB {
     /// @brief Generic TRB providing raw 4-DWORD access.
     struct TRB {
         static constexpr U16 DEFAULT_AVERAGE_TRB_LENGTH = 8;
-        static constexpr U8  PTR_ADDR_SHIFT            = 6;
+        static constexpr U8  PTR_ADDR_SHIFT             = 6;
 
         U32 m_dw0 = 0;
         U32 m_dw1 = 0;
@@ -708,6 +709,41 @@ namespace Rune::Device::USB {
     };
     static_assert(sizeof(EvaluateContextCommandTRB) == sizeof(TRB));
 
+    /// @brief Reset Endpoint Command TRB (xHCI 2.0 §6.4.3.7, type = 14).
+    ///
+    /// Recovers an endpoint from the Halted state, it transitions to the Stopped state. Refer to
+    /// §4.6.8.
+    struct ResetEndpointCommandTRB {
+        static constexpr U8 TYPE = TRBType::RESET_ENDPOINT;
+
+        U32 m_reserved_0 = 0;
+        U32 m_reserved_1 = 0;
+        U32 m_reserved_2 = 0;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto TSP() const -> bool; // Transfer State Preserve
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            [[nodiscard]] auto endpoint_id() const -> U8;
+            [[nodiscard]] auto slot_id() const -> U8;
+            auto               set_cycle(bool v) -> void;
+            auto               set_TSP(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+            auto               set_endpoint_id(U8 val) -> void;
+            auto               set_slot_id(U8 val) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U8  TSP_BIT_OFFSET   = 9;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
+            static constexpr U32 ENDPOINT_ID_MASK = 0x001F0000; // [20:16]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
+        } m_control;
+    };
+    static_assert(sizeof(ResetEndpointCommandTRB) == sizeof(TRB));
+
     /// @brief Stop Endpoint Command TRB (xHCI 2.0 §6.4.3.8, type = 15).
     ///
     /// Stops the xHC execution of the TDs on a Transfer Ring and temporarily hands ownership of the
@@ -742,6 +778,62 @@ namespace Rune::Device::USB {
         } m_control;
     };
     static_assert(sizeof(StopEndpointCommandTRB) == sizeof(TRB));
+
+    /// @brief Set TR Dequeue Pointer Command TRB (xHCI 2.0 §6.4.3.9, type = 16).
+    ///
+    /// Modifies the TR Dequeue Pointer and DCS fields of an Endpoint or Stream Context. The
+    /// endpoint must be in the Stopped or Error state. Refer to §4.6.10.
+    struct SetTRDequeuePointerCommandTRB {
+        static constexpr U8 TYPE = TRBType::SET_TR_DEQUEUE_PTR;
+
+        struct DequeuePtrLoDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto DCS() const -> bool; // Dequeue Cycle State
+            [[nodiscard]] auto SCT() const -> U8;   // Stream Context Type
+            [[nodiscard]] auto ptr() const -> U32;  // bits [31:4], val = phys >> 4
+            auto               set_DCS(bool v) -> void;
+            auto               set_SCT(U8 val) -> void;
+            auto               set_ptr(U32 val) -> void;
+
+          private:
+            static constexpr U8  DCS_BIT_OFFSET = 0;
+            static constexpr U32 SCT_MASK       = 0x0000000E; // [3:1]
+            static constexpr U8  SCT_SHIFT      = 1;
+            static constexpr U32 PTR_MASK       = 0xFFFFFFF0; // [31:4]
+            static constexpr U8  PTR_SHIFT      = 4;
+        } m_dequeue_ptr_lo;
+
+        U32 m_dequeue_ptr_hi = 0;
+
+        struct StreamIDDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto stream_id() const -> U16;
+            auto               set_stream_id(U16 val) -> void;
+
+          private:
+            static constexpr U32 STREAM_ID_MASK = 0xFFFF0000; // [31:16]
+        } m_stream_id;
+
+        struct ControlDWord {
+            U32                m_register = 0;
+            [[nodiscard]] auto cycle() const -> bool;
+            [[nodiscard]] auto trb_type() const -> TRBType;
+            [[nodiscard]] auto endpoint_id() const -> U8;
+            [[nodiscard]] auto slot_id() const -> U8;
+            auto               set_cycle(bool v) -> void;
+            auto               set_trb_type(U8 val) -> void;
+            auto               set_endpoint_id(U8 val) -> void;
+            auto               set_slot_id(U8 val) -> void;
+
+          private:
+            static constexpr U8  CYCLE_BIT_OFFSET = 0;
+            static constexpr U32 TRB_TYPE_MASK    = 0x0000FC00; // [15:10]
+            static constexpr U8  TRB_TYPE_SHIFT   = 10;
+            static constexpr U32 ENDPOINT_ID_MASK = 0x001F0000; // [20:16]
+            static constexpr U32 SLOT_ID_MASK     = 0xFF000000; // [31:24]
+        } m_control;
+    };
+    static_assert(sizeof(SetTRDequeuePointerCommandTRB) == sizeof(TRB));
 
     /// @brief No-Op Command TRB (xHCI 2.0 §6.4.3.1, type = 23).
     struct NoOpCommandTRB {
