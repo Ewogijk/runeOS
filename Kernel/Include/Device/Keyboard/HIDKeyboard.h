@@ -36,11 +36,13 @@ namespace Rune::Device {
     };
 
     struct HIDKeyboardContext {
+        static constexpr U8 MAX_RECOVERY_ATTEMPTS = 3;
+        static constexpr U8 RECOVERY_ATTEMPT_TIMEOUT = 25;
+
         SharedPointer<USB::FunctionDevice> m_keyboard;
         bool                               m_uses_report_ID = false;
         USB::HIDReport                     m_key_code_input_report{};
-        U8                                 m_ep_in_interrupt                 = 0;
-        U16                                m_ep_in_interrupt_max_packet_size = 0;
+        USB::Endpoint                      m_interrupt_in_endpoint{};
         USB::HIDReport                     m_led_output_report{};
 
         bool            m_run_polling_thread = false;

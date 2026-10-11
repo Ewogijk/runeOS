@@ -179,14 +179,14 @@ namespace Rune::CPU {
             ThreadPreemptionContext tt_ctx = {.stopped = move(term), .next_scheduled = move(next)};
 
             // Wake up joining threads
-            auto maybe_wait_list = _on_stop_syncing_threads.find(term->get_handle());
-            if (maybe_wait_list != _on_stop_syncing_threads.end()) {
+            auto maybe_wait_list = _joining_threads.find(term->get_handle());
+            if (maybe_wait_list != _joining_threads.end()) {
                 for (SharedPointer<Thread>& t : *maybe_wait_list->value) {
                     t->m_sync_stop_thread_handle = Ember::HANDLE_NONE;
                     g_scheduler.unblock(t);
                 }
                 maybe_wait_list->value->clear();
-                _on_stop_syncing_threads.remove(term->get_handle());
+                _joining_threads.remove(term->get_handle());
             }
 
             fire(EventHook(EventHook::THREAD_STOPPED).to_string(),
@@ -380,14 +380,14 @@ namespace Rune::CPU {
         return true;
     }
 
-    auto CPUModule::sync_with_thread_stop(Ember::Handle handle) -> bool {
+    auto CPUModule::join_thread(Ember::Handle handle) -> bool {
         CriticalSection<InterruptSaveLock> _(m_lock);
         if (!g_thread_cache.find(handle)) return false;
         auto calling_thread  = g_scheduler.get_running_thread();
-        auto maybe_wait_list = _on_stop_syncing_threads.find(handle);
-        if (maybe_wait_list == _on_stop_syncing_threads.end()) {
-            _on_stop_syncing_threads[handle] = LinkedList<SharedPointer<Thread>>();
-            maybe_wait_list                  = _on_stop_syncing_threads.find(handle);
+        auto maybe_wait_list = _joining_threads.find(handle);
+        if (maybe_wait_list == _joining_threads.end()) {
+            _joining_threads[handle] = LinkedList<SharedPointer<Thread>>();
+            maybe_wait_list                  = _joining_threads.find(handle);
         }
         DEBUG("{}: Sync with {}",
               calling_thread->get_unique_name(),

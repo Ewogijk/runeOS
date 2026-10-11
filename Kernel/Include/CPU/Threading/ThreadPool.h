@@ -85,7 +85,7 @@ namespace Rune::CPU {
             auto* cpu_module = System::instance().get_module<CPUModule>(ModuleSelector::CPU);
 
             for (const auto& worker_thread : m_threads)
-                cpu_module->sync_with_thread_stop(worker_thread);
+                cpu_module->join_thread(worker_thread);
         }
 
         /// @brief

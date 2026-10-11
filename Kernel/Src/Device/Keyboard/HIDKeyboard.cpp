@@ -177,9 +177,10 @@ namespace Rune::Device {
         }
         uintptr_t ptr = 0;
         if (!parse_int<uintptr_t>(tsp->argv(0), Radix::HEX, ptr)) return -1;
+        auto* driver = reinterpret_cast<HIDKeyboardDriver*>(ptr);
+
         Ember::Handle device_handle = 0;
         if (!parse_int<Ember::Handle>(tsp->argv(1), Radix::DECIMAL, device_handle)) return -1;
-        auto* driver = reinterpret_cast<HIDKeyboardDriver*>(ptr);
 
         SharedPointer<HIDKeyboardContext> kb_ctx;
         {
@@ -188,37 +189,66 @@ namespace Rune::Device {
             if (kb_ctx_it == driver->m_keyboard_contexts.end()) return -1;
             kb_ctx = *kb_ctx_it->value;
         }
-        auto*             dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
-        UniquePointer<U8> keyboard_report(reinterpret_cast<U8*>(
-            Memory::DMA::allocate_zeroed(kb_ctx->m_ep_in_interrupt_max_packet_size)));
+        auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
+        auto* timer =
+            System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU)->get_system_timer();
+        auto&             int_in_ep = kb_ctx->m_interrupt_in_endpoint;
+        UniquePointer<U8> keyboard_report(
+            reinterpret_cast<U8*>(Memory::DMA::allocate_zeroed(int_in_ep.m_max_packet_size)));
+        U8 recovery_attempts = 0;
         while (true) {
             USB::DataTransferRequest dtr{
                 .m_header          = {.m_transfer_type = USB::TransferRequestType::INTERRUPT,
                                       .m_device_handle = kb_ctx->m_keyboard->get_handle()},
-                .m_endpoint_number = kb_ctx->m_ep_in_interrupt,
+                .m_endpoint_number = int_in_ep.m_endpoint_number,
                 .m_direction       = USB::Direction::IN,
-                .m_length          = kb_ctx->m_ep_in_interrupt_max_packet_size,
+                .m_length          = int_in_ep.m_max_packet_size,
                 .m_data_buffer     = keyboard_report.get()
             };
             USB::TransferResponse tr;
             IORequest             io_req = {.m_in_data = &dtr, .m_out_data = &tr};
             auto                  st =
                 dm->control_device(kb_ctx->m_keyboard->bus_device()->get_handle(), io_req).get();
-            if (st != IORequestStatus::HANDLED || tr.m_residual_bytes != 0) {
-                // A host controller error occurred, or a short packet was detected -> Skip the
-                // frame
-                WARN("Data request failed: {}", st.to_string())
+
+            if (st == IORequestStatus::HANDLED) {
+                if (tr.m_residual_bytes != 0) {
+                    // Skip short packets
+                    CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
+                    if (!kb_ctx->m_run_polling_thread) break;
+                    continue;
+                }
+            } else if (st == IORequestStatus::ABORTED || st == IORequestStatus::FAILED) {
+                if (recovery_attempts >= HIDKeyboardContext::MAX_RECOVERY_ATTEMPTS) {
+                    ERROR("EP{} IN: {} recovery attempts failed, giving up...",
+                          kb_ctx->m_interrupt_in_endpoint.m_endpoint_number,
+                          recovery_attempts)
+                    break;
+                }
+                ++recovery_attempts;
+                timer->sleep_milli(HIDKeyboardContext::RECOVERY_ATTEMPT_TIMEOUT);
+                auto clear_endpoint_halt = USB::ControlTransferRequest::clear_endpoint_halt(
+                    device_handle,
+                    kb_ctx->m_interrupt_in_endpoint);
+                IORequest recovery_req = {.m_in_data = &clear_endpoint_halt, .m_out_data = nullptr};
+                auto      recovery_st =
+                    dm->control_device(kb_ctx->m_keyboard->bus_device()->get_handle(), recovery_req)
+                        .get();
+
                 CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
                 if (!kb_ctx->m_run_polling_thread) break;
                 continue;
+            } else {
+                ERROR("EP{} IN: Data request failed - {}",
+                      kb_ctx->m_interrupt_in_endpoint.m_endpoint_number,
+                      st.to_string())
+                break;
             }
-            DEBUG("{}",
-                  String::join(", ",
-                               keyboard_report.get(),
-                               kb_ctx->m_ep_in_interrupt_max_packet_size))
+            recovery_attempts = 0;
+
+            DEBUG("{}", String::join(", ", keyboard_report.get(), int_in_ep.m_max_packet_size))
             make_hid_keyboard_frame(kb_ctx->m_key_code_input_report,
                                     keyboard_report.get(),
-                                    kb_ctx->m_ep_in_interrupt_max_packet_size,
+                                    int_in_ep.m_max_packet_size,
                                     kb_ctx->m_uses_report_ID)
                 .and_then<int>([&kb_ctx](const HIDKeyboardFrame& frame) -> auto {
                     kb_ctx->publish_key_events(frame);
@@ -268,10 +298,9 @@ namespace Rune::Device {
         }
 
         USB::HIDReports reports{};
-        U8              interface_number                = 0;
-        bool            interface_found                 = false;
-        U8              ep_in_interrupt                 = 0;
-        U16             ep_in_interrupt_max_packet_size = 0;
+        U8              interface_number = 0;
+        bool            interface_found  = false;
+        Optional<USB::Endpoint> interrupt_in_ep;
         for (auto& iface : keyboard->interfaces()) {
             for (auto& alt : iface.m_alternate_settings) {
                 USB::USBDeviceID ifID(alt.m_interface_class,
@@ -281,19 +310,19 @@ namespace Rune::Device {
                     continue;
 
                 // Find the Interrupt IN endpoint
-                for (auto& ep : alt.m_endpoints) {
+                for (auto ep : alt.m_endpoints) {
                     if (ep.m_direction == USB::Direction::IN
                         && ep.m_transfer_type == USB::TransferType::INTERRUPT) {
-                        ep_in_interrupt                 = ep.m_endpoint_number;
-                        ep_in_interrupt_max_packet_size = ep.m_max_packet_size;
+                        interrupt_in_ep = make_optional(move(ep));
                     }
                 }
-                if (ep_in_interrupt == 0) {
-                    WARN("{}: Device declares no IN INTERRUPT endpoint", device->get_unique_name())
+                if (!interrupt_in_ep) {
+                    WARN("{}: Device declares no INTERRUPT IN endpoint", device->get_unique_name())
                     return false;
                 }
-                if (ep_in_interrupt_max_packet_size == 0) {
-                    WARN("{}: IN INTERRUPT endpoint declares", device->get_unique_name())
+                if (interrupt_in_ep.value().m_max_packet_size == 0) {
+                    WARN("{}: INTERRUPT IN only supports zero length packets",
+                         device->get_unique_name())
                     return false;
                 }
 
@@ -375,7 +404,9 @@ namespace Rune::Device {
                                                 USB::HIDProtocolMode::REPORT);
         IORequest io_req = {.m_in_data = &set_protocol, .m_out_data = nullptr};
         auto      st     = dm->control_device(device->bus_device()->get_handle(), io_req).get();
-        if (st != IORequestStatus::HANDLED) {
+        if (st == IORequestStatus::ABORTED) {
+            DEBUG("{}: SET_PROTOCOL(REPORT) is not supported", device->get_unique_name());
+        } else if (st != IORequestStatus::HANDLED) {
             WARN("{}: SET_PROTOCOL(REPORT) failed - {}", device->get_unique_name(), st.to_string());
             return false;
         }
@@ -409,25 +440,28 @@ namespace Rune::Device {
                                             0);
         io_req = {.m_in_data = &set_idle, .m_out_data = nullptr};
         st     = dm->control_device(device->bus_device()->get_handle(), io_req).get();
-        if (st != IORequestStatus::HANDLED) {
+        if (st == IORequestStatus::ABORTED) {
+            DEBUG("{}: SET_IDLE({}) is not supported",
+                  device->get_unique_name(),
+                  key_code_input_report.m_tag.m_report_ID);
+        } else if (st != IORequestStatus::HANDLED) {
             WARN("{}: SET_IDLE({}) failed - {}",
                  device->get_unique_name(),
                  key_code_input_report.m_tag.m_report_ID,
                  st.to_string());
             return false;
         }
-        SharedPointer<HIDKeyboardContext> kb_ctx(new HIDKeyboardContext{
-            .m_keyboard                        = keyboard,
-            .m_uses_report_ID                  = reports.m_uses_report_IDs,
-            .m_key_code_input_report           = key_code_input_report,
-            .m_ep_in_interrupt                 = ep_in_interrupt,
-            .m_ep_in_interrupt_max_packet_size = ep_in_interrupt_max_packet_size,
-            .m_led_output_report               = led_output_report,
-            .m_run_polling_thread              = true,
-            .m_lock                            = SpinlockIRQSafe(),
-            .m_thread_handle                   = Ember::HANDLE_NONE,
-            .m_last_keyboard_frame             = HIDKeyboardFrame{},
-            .m_last_pressed                    = Ember::VirtualKey::NONE});
+        SharedPointer<HIDKeyboardContext> kb_ctx(
+            new HIDKeyboardContext{.m_keyboard              = keyboard,
+                                   .m_uses_report_ID        = reports.m_uses_report_IDs,
+                                   .m_key_code_input_report = key_code_input_report,
+                                   .m_interrupt_in_endpoint = interrupt_in_ep.value(),
+                                   .m_led_output_report     = led_output_report,
+                                   .m_run_polling_thread    = true,
+                                   .m_lock                  = SpinlockIRQSafe(),
+                                   .m_thread_handle         = Ember::HANDLE_NONE,
+                                   .m_last_keyboard_frame   = HIDKeyboardFrame{},
+                                   .m_last_pressed          = Ember::VirtualKey::NONE});
 
         auto tlp = ThreadLaunchPacketBuilder()
                        .add_argument(int_to_string(reinterpret_cast<uintptr_t>(this), Radix::HEX))
@@ -474,7 +508,7 @@ namespace Rune::Device {
             CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
             kb_ctx->m_run_polling_thread = false;
         }
-        cpu_module->sync_with_thread_stop(kb_ctx->m_thread_handle);
+        cpu_module->join_thread(kb_ctx->m_thread_handle);
         CriticalSection<SpinlockIRQSafe> _(m_lock);
         m_keyboard_contexts.remove(device->get_handle());
     }
