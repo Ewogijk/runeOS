@@ -72,7 +72,7 @@ namespace Rune::CPU {
         //                                      Threading Properties
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-        HashMap<Ember::Handle, LinkedList<SharedPointer<Thread>>> _on_stop_syncing_threads;
+        HashMap<Ember::Handle, LinkedList<SharedPointer<Thread>>> _joining_threads;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Time Properties
@@ -231,7 +231,7 @@ namespace Rune::CPU {
         ///
         /// After the calling thread is unblocked it is not guaranteed that the thread object of the
         /// joined thread is still available in the thread table.
-        auto sync_with_thread_stop(Ember::Handle handle) -> bool;
+        auto join_thread(Ember::Handle handle) -> bool;
 
         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
         //                                      Mutex API

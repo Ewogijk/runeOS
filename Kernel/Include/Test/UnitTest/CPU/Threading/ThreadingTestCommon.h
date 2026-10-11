@@ -45,7 +45,7 @@ struct TestThread {
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         if (m_thread_handle != Resource<Ember::Handle>::HANDLE_NONE) {
             cpu_module->stop_thread(m_thread_handle);
-            if (m_sync_thread_stop) cpu_module->sync_with_thread_stop(m_thread_handle);
+            if (m_sync_thread_stop) cpu_module->join_thread(m_thread_handle);
         }
     }
 };
