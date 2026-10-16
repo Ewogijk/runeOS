@@ -63,7 +63,7 @@ namespace Rune::Device::USB {
 
     /// @brief Mapping of the device context and transfer rings to a slot.
     struct DeviceContextSystemMemory {
-        static constexpr size_t TRANSFER_RING_SIZE = 32;
+        static constexpr size_t TRANSFER_RING_SIZE = 64;
 
         DeviceContext m_device_context;
         /// @brief Slot transfer rings. Note: Can use DeviceContextDoorbellTarget::ENUM - 1
@@ -80,15 +80,16 @@ namespace Rune::Device::USB {
     /// Event TRBs will hold a reference to the physical address that they respond to, so inflight
     /// TRBs are tracked by their physical address.
     struct InflightTD {
-        static constexpr U8 MAX_TRB_COUNT = 3;
+        static constexpr U8 MAX_TRB_COUNT = 32;
 
         CPU::Promise<IORequestStatus>      m_promise;
         Array<PhysicalAddr, MAX_TRB_COUNT> m_inflight_trb_list{};
-        U8                                 m_count          = 0;
-        U8                                 m_pending_events = 0;
-        TransferResponse*                  m_response       = nullptr;
-        U8                                 m_slot_ID        = 0;
-        U8                                 m_DCI            = 0;
+        Array<U32, MAX_TRB_COUNT>          m_inflight_trb_lengths{};
+        U8                                 m_count        = 0;
+        bool                               m_residual_set = false;
+        TransferResponse*                  m_response     = nullptr;
+        U8                                 m_slot_ID      = 0;
+        U8                                 m_DCI          = 0;
     };
 
     /// @brief Implementation of the eXtensible Host Controller Interface rev 2.0 specification.
@@ -212,8 +213,8 @@ namespace Rune::Device::USB {
         /// The function will access m_inflight_trb_tracker and assumes m_inflight_tracker_lock to
         /// be locked.
         auto track_inflight_TD(const PhysicalAddr* trb_list,
+                               const U32*          trb_lengths,
                                U8                  count,
-                               U8                  expected_events,
                                TransferResponse*   response,
                                U8                  slot_ID,
                                U8                  dci) -> CPU::Future<IORequestStatus>;

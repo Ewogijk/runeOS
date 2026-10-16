@@ -297,9 +297,9 @@ namespace Rune::Device {
             }
         }
 
-        USB::HIDReports reports{};
-        U8              interface_number = 0;
-        bool            interface_found  = false;
+        USB::HIDReports         reports{};
+        U8                      interface_number = 0;
+        bool                    interface_found  = false;
         Optional<USB::Endpoint> interrupt_in_ep;
         for (auto& iface : keyboard->interfaces()) {
             for (auto& alt : iface.m_alternate_settings) {
