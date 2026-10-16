@@ -79,22 +79,22 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
     auto XHCIDriver::track_inflight_TD(const PhysicalAddr* trb_list,
+                                       const U32*          trb_lengths,
                                        U8                  count,
-                                       U8                  expected_events,
                                        TransferResponse*   response,
                                        U8                  slot_ID,
                                        U8                  dci) -> CPU::Future<IORequestStatus> {
         auto td = make_shared<InflightTD>();
         for (U8 i = 0; i < count && i < InflightTD::MAX_TRB_COUNT; i++) {
-            td->m_inflight_trb_list[i] = trb_list[i];
+            td->m_inflight_trb_list[i]    = trb_list[i];
+            td->m_inflight_trb_lengths[i] = trb_lengths[i];
             TRACE("Track inflight transfer event TRB: {:0=#16x}", trb_list[i]);
         }
-        td->m_count          = count;
-        td->m_pending_events = expected_events;
-        td->m_response       = response;
-        td->m_slot_ID        = slot_ID;
-        td->m_DCI            = dci;
-        auto future          = td->m_promise.get_future();
+        td->m_count    = count;
+        td->m_response = response;
+        td->m_slot_ID  = slot_ID;
+        td->m_DCI      = dci;
+        auto future    = td->m_promise.get_future();
         for (U8 i = 0; i < count; i++) m_inflight_trb_tracker[trb_list[i]] = td;
         return future;
     }
@@ -172,7 +172,7 @@ namespace Rune::Device::USB {
             bool         abort_tds = false;
             PhysicalAddr inflight_trb_address =
                 te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
-            TRACE("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
+            DEBUG("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
                   te->m_control.slot_id(),
                   te->m_control.endpoint_id(),
                   inflight_trb_address,
@@ -228,11 +228,30 @@ namespace Rune::Device::USB {
             // Inlight TD handling
             auto maybe_td = xhci_driver->m_inflight_trb_tracker.find(inflight_trb_address);
             if (maybe_td != xhci_driver->m_inflight_trb_tracker.end()) {
-                auto td = *maybe_td->value;
-                if (td->m_pending_events > 0) td->m_pending_events--;
+                auto         td = *maybe_td->value;
+                Optional<U8> td_index;
+                for (U8 i = 0; i < td->m_count; i++) {
+                    if (td->m_inflight_trb_list[i] == inflight_trb_address) {
+                        td_index = make_optional(move(i));
+                        break;
+                    }
+                }
+
                 if (td->m_response != nullptr) {
-                    if (cc == CompletionCode::STALL_ERROR || cc == CompletionCode::SHORT_PACKET)
-                        td->m_response->m_residual_bytes = te->m_status.trb_transfer_length();
+                    if (cc == CompletionCode::STALL_ERROR || cc == CompletionCode::SHORT_PACKET) {
+                        td_index.and_then<U8>([&te, &td](const U8 index) -> Optional<U8> {
+                            if (!td->m_residual_set) {
+                                td->m_response->m_residual_bytes =
+                                    te->m_status.trb_transfer_length();
+                                for (U8 i = index + 1; i < td->m_count; i++)
+                                    td->m_response->m_residual_bytes +=
+                                        td->m_inflight_trb_lengths[i];
+                                td->m_residual_set = true;
+                                DEBUG("Residual={}", td->m_response->m_residual_bytes);
+                            }
+                            return make_optional<U8>(0);
+                        });
+                    }
                 }
 
                 IORequestStatus status = IORequestStatus::HANDLED;
@@ -242,12 +261,19 @@ namespace Rune::Device::USB {
                     status = IORequestStatus::FAILED;
                 }
 
+                // §4.10.1.1.2 A TD is resolved when an error occurs or the event TRB pointer points
+                //             to the last TRB in the TD
+                //             Note: Some hardware and QEMU do NOT report the second event on the
+                //             last TRB, so the TD must be resolved on the short packet for
+                //             bulk/interrupt transfers
                 // ABORTED: Assume a control transfer request with data stalls in the data stage.
                 // m_pending_events drops to 1, but the status stage event will never be sent
                 // because the transfer ring halts, thus the Promise of the inflight TD will never
                 // resolve
+
                 if (status == IORequestStatus::FAILED || status == IORequestStatus::ABORTED
-                    || td->m_pending_events == 0) {
+                    || cc == CompletionCode::SHORT_PACKET && td->m_DCI != 1
+                    || (td_index && td_index.value() == td->m_count - 1)) {
                     for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++) {
                         TRACE("Remove inflight TRB: {:0=#16x}", td->m_inflight_trb_list[i])
                         xhci_driver->m_inflight_trb_tracker.remove(td->m_inflight_trb_list[i]);
@@ -817,17 +843,23 @@ namespace Rune::Device::USB {
         status_stage_trb.m_control.set_C(ep0_tr.m_pcs);
 
         Array<PhysicalAddr, InflightTD::MAX_TRB_COUNT> trb_list{};
+        Array<U32, InflightTD::MAX_TRB_COUNT>          trb_lengths{};
         U8                                             count = 0;
         CriticalSection                                _(m_inflight_tracker_lock);
-        trb_list[count++] = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&setup_stage_trb));
-        if (has_data) trb_list[count++] = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
-        trb_list[count++] = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
-        auto future       = track_inflight_TD(trb_list.data(),
-                                              count,
-                                              has_data ? 2 : 1,
-                                              response,
-                                              dc_sys_mem->m_slot_ID,
-                                              1);
+        trb_list[count]      = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&setup_stage_trb));
+        trb_lengths[count++] = setup_stage_trb.m_status.trb_transfer_length();
+        if (has_data) {
+            trb_list[count]      = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&data_stage_trb));
+            trb_lengths[count++] = data_stage_trb.m_status.trb_transfer_length();
+        }
+        trb_list[count]      = ep0_tr.enqueue(*reinterpret_cast<TRB*>(&status_stage_trb));
+        trb_lengths[count++] = 0;
+        auto future          = track_inflight_TD(trb_list.data(),
+                                                 trb_lengths.data(),
+                                                 count,
+                                                 response,
+                                                 dc_sys_mem->m_slot_ID,
+                                                 1);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget::EP0_CONTROL);
         U8 ep0_dci = DeviceContextDoorbellTarget::EP0_CONTROL;
         if (dc_sys_mem->m_ep_states[ep0_dci - 1] == EndpointState::STOPPED)
@@ -839,6 +871,13 @@ namespace Rune::Device::USB {
         const DataTransferRequest&                      data_transfer_request,
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         TransferResponse*                               response) -> CPU::Future<IORequestStatus> {
+
+        // Reject zero length or transfers > 124KiB
+        if (data_transfer_request.m_length == 0
+            || data_transfer_request.m_length
+                   > (InflightTD::MAX_TRB_COUNT - 1) * Memory::get_page_size())
+            return CPU::Promise<IORequestStatus>::make_completed_future(
+                IORequestStatus::BAD_ARGUMENT);
 
         {
             CriticalSection<CPU::Mutex> _(m_recovery_lock);
@@ -857,31 +896,77 @@ namespace Rune::Device::USB {
               data_transfer_request.m_direction.to_string(),
               data_transfer_request.m_header.m_transfer_type.to_string(),
               data_transfer_request.m_length);
-        U8        dci = (data_transfer_request.m_endpoint_number * 2)
-                        + data_transfer_request.m_direction.to_value();
-        auto&     tr  = dc_sys_mem->m_transfer_rings[dci - 1];
-        NormalTRB trb;
-        trb.m_control.set_trb_type(NormalTRB::TYPE);
-        trb.m_status.set_trb_transfer_length(data_transfer_request.m_length);
-        trb.m_status.set_td_size(0);
-        trb.m_control.set_IOC(true);
-        trb.m_control.set_ISP(true);
-        trb.m_control.set_cycle(tr.m_pcs);
+        U8    dci = (data_transfer_request.m_endpoint_number * 2)
+                    + data_transfer_request.m_direction.to_value();
+        auto& tr  = dc_sys_mem->m_transfer_rings[dci - 1];
+        U16 mps = dc_sys_mem->m_device_context.m_endpoint_contexts[dci - 1].m_dw1.max_packet_size();
+        if (mps == 0)
+            // Broken endpoint
+            return CPU::Promise<IORequestStatus>::make_completed_future(
+                IORequestStatus::BAD_ARGUMENT);
 
-        PhysicalAddr data_buffer_phys = 0;
-        if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(data_transfer_request.m_data_buffer),
-                data_buffer_phys)) {
-            CPU::Promise<IORequestStatus> promise;
-            promise.set_value(IORequestStatus::FAILED);
-            return promise.get_future();
+        // §6.4.1 Data buffers must fall into 64 KiB blocks -> Split large transfers in 4KiB blocks
+        //        because they always fulfill that requirement
+        MemoryAddr                                  page_size = Memory::get_page_size();
+        Array<NormalTRB, InflightTD::MAX_TRB_COUNT> trb_list; // NOLINT
+        VirtualAddr  buf_addr        = memory_pointer_to_addr(data_transfer_request.m_data_buffer);
+        U32          bytes_remaining = data_transfer_request.m_length;
+        U32          buf_offset      = 0;
+        U8           trb_count       = 0;
+        constexpr U8 TD_SIZE_MAX     = 31;
+        while (bytes_remaining > 0) {
+            NormalTRB trb;
+            trb.m_control.set_trb_type(NormalTRB::TYPE);
+
+            // Assume the data buffer starts at address BS and ends at address BE
+            // BS will likely not be page aligned, there TRB0 will transfer the number of bytes
+            // until the next page boundary. TRB 1 - n-1 are page sized and TRB n will transfer
+            // all leftover bytes
+            //                      | TRB 0 | TRB 1 | ... | TRB n-1 | TRB n |
+            // Memory boundaries:   BS      4KiB    4KiB  4KiB      4KiB    BE
+            U32 chunk = min(bytes_remaining,
+                            static_cast<U32>(page_size - ((buf_addr + buf_offset) % page_size)));
+            trb.m_status.set_trb_transfer_length(chunk);
+
+            bool is_last = bytes_remaining == chunk;
+            trb.m_status.set_td_size(
+                is_last
+                    ? 0
+                    : static_cast<U8>(
+                          min<U32>(TD_SIZE_MAX, div_round_up<U32>(bytes_remaining - chunk, mps))));
+
+            trb.m_control.set_chain(!is_last);
+            trb.m_control.set_IOC(is_last);
+            trb.m_control.set_ISP(true);
+            trb.m_control.set_cycle(tr.m_pcs);
+
+            PhysicalAddr data_buffer_phys = 0;
+            if (!Memory::virtual_to_physical_address(buf_addr + buf_offset, data_buffer_phys)) {
+                return CPU::Promise<IORequestStatus>::make_completed_future(
+                    IORequestStatus::FAILED);
+            }
+            trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
+            trb.m_data_buffer_pointer_hi = static_cast<U32>(data_buffer_phys >> SHIFT_32);
+            trb_list[trb_count]          = trb;
+
+            buf_offset      += chunk;
+            bytes_remaining -= chunk;
+            trb_count++;
         }
-        trb.m_data_buffer_pointer_lo = static_cast<U32>(data_buffer_phys);
-        trb.m_data_buffer_pointer_hi = static_cast<U32>(data_buffer_phys >> SHIFT_32);
 
-        CriticalSection _(m_inflight_tracker_lock);
-        PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
-        auto future = track_inflight_TD(&trb_phys, 1, 1, response, dc_sys_mem->m_slot_ID, dci);
+        Array<PhysicalAddr, InflightTD::MAX_TRB_COUNT> trb_phys_list; // NOLINT
+        Array<U32, InflightTD::MAX_TRB_COUNT>          trb_lengths;   // NOLINT
+        CriticalSection                                _(m_inflight_tracker_lock);
+        for (U32 i = 0; i < trb_count; i++) {
+            trb_phys_list[i] = tr.enqueue(*reinterpret_cast<TRB*>(&trb_list[i]));
+            trb_lengths[i]   = trb_list[i].m_status.trb_transfer_length();
+        }
+        auto future = track_inflight_TD(trb_phys_list.data(),
+                                        trb_lengths.data(),
+                                        trb_count,
+                                        response,
+                                        dc_sys_mem->m_slot_ID,
+                                        dci);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
         if (dc_sys_mem->m_ep_states[dci - 1] == EndpointState::STOPPED)
             dc_sys_mem->m_ep_states[dci - 1] = EndpointState::RUNNING;
@@ -936,8 +1021,10 @@ namespace Rune::Device::USB {
         trb.m_data_buffer_pointer_hi = static_cast<U32>(data_buffer_phys >> SHIFT_32);
 
         CriticalSection _(m_inflight_tracker_lock);
-        PhysicalAddr    trb_phys = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
-        auto future = track_inflight_TD(&trb_phys, 1, 1, response, dc_sys_mem->m_slot_ID, dci);
+        PhysicalAddr    trb_phys   = tr.enqueue(*reinterpret_cast<TRB*>(&trb));
+        U32             trb_length = trb.m_status.trb_transfer_length();
+        auto            future =
+            track_inflight_TD(&trb_phys, &trb_length, 1, response, dc_sys_mem->m_slot_ID, dci);
         m_ri.m_doorbell[dc_sys_mem->m_slot_ID].ring(DeviceContextDoorbellTarget(dci));
         if (dc_sys_mem->m_ep_states[dci - 1] == EndpointState::STOPPED)
             dc_sys_mem->m_ep_states[dci - 1] = EndpointState::RUNNING;

@@ -111,6 +111,7 @@ namespace Rune::Device::USB {
     struct TRB {
         static constexpr U16 DEFAULT_AVERAGE_TRB_LENGTH = 8;
         static constexpr U8  PTR_ADDR_SHIFT             = 6;
+        static constexpr U8  CHAIN_BIT                  = 4;
 
         U32 m_dw0 = 0;
         U32 m_dw1 = 0;

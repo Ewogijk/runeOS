@@ -63,7 +63,7 @@ namespace Rune::Device::USB {
         /// @brief Enqueue a TRB to the ring.
         /// @param trb
         auto enqueue(TRB trb) -> PhysicalAddr {
-            m_entries[m_enqueue_ptr] = trb;
+            m_entries[m_enqueue_ptr] = move(trb);
             m_entries[m_enqueue_ptr].set_cycle(m_pcs);
             PhysicalAddr tr_phys = 0;
             if (!Memory::virtual_to_physical_address(
@@ -73,6 +73,8 @@ namespace Rune::Device::USB {
             m_enqueue_ptr++;
             if (m_enqueue_ptr == N - 1) {
                 auto* link_trb = reinterpret_cast<LinkTRB*>(&m_entries[m_enqueue_ptr]);
+                link_trb->m_control.set_chain(
+                    bit_check(m_entries[m_enqueue_ptr - 1].m_dw3, TRB::CHAIN_BIT));
                 link_trb->m_control.set_cycle(m_pcs);
                 // Toggle the cycle bit for the next pass of the ring
                 if (link_trb->m_control.toggle_cycle()) m_pcs = !m_pcs;
