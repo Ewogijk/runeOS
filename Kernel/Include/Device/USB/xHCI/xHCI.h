@@ -80,7 +80,7 @@ namespace Rune::Device::USB {
     /// Event TRBs will hold a reference to the physical address that they respond to, so inflight
     /// TRBs are tracked by their physical address.
     struct InflightTD {
-        static constexpr U8 MAX_TRB_COUNT = 32;
+        static constexpr U8 MAX_TRB_COUNT = 17;
 
         CPU::Promise<IORequestStatus>      m_promise;
         Array<PhysicalAddr, MAX_TRB_COUNT> m_inflight_trb_list{};
@@ -462,8 +462,9 @@ namespace Rune::Device::USB {
         /// required to send the transfer request to the USB device. Additionally, it may need to
         /// access the function device through its composite device.
         ///
-        /// Therefore, the device handle shall be provided in the transfer request header and the
-        /// device parameter shall be set to the composite device owning the function device.
+        /// Therefore, the function device handle shall be provided in the transfer request header
+        /// and the device parameter shall be set to the composite device owning the function
+        /// device.
         auto handle_request(const SharedPointer<Device>& device, IORequest request)
             -> CPU::Future<IORequestStatus> override;
     };

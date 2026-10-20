@@ -172,7 +172,7 @@ namespace Rune::Device::USB {
             bool         abort_tds = false;
             PhysicalAddr inflight_trb_address =
                 te->m_trb_pointer_lo | (static_cast<U64>(te->m_trb_pointer_hi) << SHIFT_32);
-            DEBUG("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
+            TRACE("Transfer Event TRB received: S{}EP{}-{:0=#16x}-{}-{}",
                   te->m_control.slot_id(),
                   te->m_control.endpoint_id(),
                   inflight_trb_address,
@@ -239,7 +239,7 @@ namespace Rune::Device::USB {
 
                 if (td->m_response != nullptr) {
                     if (cc == CompletionCode::STALL_ERROR || cc == CompletionCode::SHORT_PACKET) {
-                        td_index.and_then<U8>([&te, &td](const U8 index) -> Optional<U8> {
+                        td_index.map<U8>([&te, &td](const U8 index) -> Optional<U8> {
                             if (!td->m_residual_set) {
                                 td->m_response->m_residual_bytes =
                                     te->m_status.trb_transfer_length();
@@ -247,7 +247,6 @@ namespace Rune::Device::USB {
                                     td->m_response->m_residual_bytes +=
                                         td->m_inflight_trb_lengths[i];
                                 td->m_residual_set = true;
-                                DEBUG("Residual={}", td->m_response->m_residual_bytes);
                             }
                             return make_optional<U8>(0);
                         });
@@ -272,7 +271,7 @@ namespace Rune::Device::USB {
                 // resolve
 
                 if (status == IORequestStatus::FAILED || status == IORequestStatus::ABORTED
-                    || cc == CompletionCode::SHORT_PACKET && td->m_DCI != 1
+                    || (cc == CompletionCode::SHORT_PACKET && td->m_DCI != 1)
                     || (td_index && td_index.value() == td->m_count - 1)) {
                     for (U8 i = 0; i < td->m_count && i < InflightTD::MAX_TRB_COUNT; i++) {
                         TRACE("Remove inflight TRB: {:0=#16x}", td->m_inflight_trb_list[i])
@@ -872,7 +871,7 @@ namespace Rune::Device::USB {
         const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
         TransferResponse*                               response) -> CPU::Future<IORequestStatus> {
 
-        // Reject zero length or transfers > 124KiB
+        // Reject zero length or transfers > DataTransferRequest::MAX_DATA_BUFFER_SIZE
         if (data_transfer_request.m_length == 0
             || data_transfer_request.m_length
                    > (InflightTD::MAX_TRB_COUNT - 1) * Memory::get_page_size())
