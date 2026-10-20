@@ -371,11 +371,28 @@ namespace Rune::Device::USB {
 
     /// @brief An IO request for USB Bulk and Interrupt transfers.
     struct DataTransferRequest {
+        static constexpr MemorySize MAX_DATA_BUFFER_SIZE = 64 * MemoryUnit::KiB;
+
         TransferRequestHeader m_header;
         U8                    m_endpoint_number = 0;               // bEndpointAddress bits 3..0
         Direction             m_direction       = Direction::NONE; // bEndpointAddress bit 7
-        U32                   m_length          = 0;               // bytes to transfer
         void*                 m_data_buffer     = nullptr;
+        U32                   m_length          = 0; // bytes to transfer
+
+        /// @brief Create a Bulk or Interrupt data transfer request (DTR).
+        /// @param handle Handle of a FunctionDevice.
+        /// @param is_bulk_transfer True: Create a Bulk DTR, False: Create a Interrupt DTR.
+        /// @param endpoint_number Endpoint number from an Endpoint object.
+        /// @param direction Direction from an Endpoint object.
+        /// @param data_buffer Pointer to the data to be transferred.
+        /// @param length Size of the data buffer.
+        /// @return A DTR.
+        static auto of(Ember::Handle handle,
+                       bool          is_bulk_transfer,
+                       U8            endpoint_number,
+                       Direction     direction,
+                       void*         data_buffer,
+                       U32           length) -> DataTransferRequest;
     };
 
     /// @brief An IO request for USB Isochronous transfers.

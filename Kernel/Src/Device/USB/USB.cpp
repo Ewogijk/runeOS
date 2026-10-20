@@ -205,7 +205,7 @@ namespace Rune::Device::USB {
         U16 w_index =
             endpoint.m_endpoint_number | (endpoint.m_direction == Direction::IN ? 0x80 : 0);
         // NOLINTEND
-        TransferRequestHeader header = {.m_transfer_type = USB::TransferRequestType::CONTROL,
+        TransferRequestHeader header = {.m_transfer_type = TransferRequestType::CONTROL,
                                         .m_device_handle = handle};
         return {.m_header       = header,
                 .m_request_type = RequestType::DIRECTION_HOST_TO_DEVICE | RequestType::TYPE_STANDARD
@@ -215,6 +215,23 @@ namespace Rune::Device::USB {
                 .m_index        = w_index,
                 .m_length       = 0,
                 .m_data_buffer  = nullptr};
+    }
+
+    auto DataTransferRequest::of(Ember::Handle handle,
+                                 bool          is_bulk_transfer,
+                                 U8            endpoint_number,
+                                 Direction     direction,
+                                 void*         data_buffer,
+                                 U32           length) -> DataTransferRequest {
+        TransferRequestHeader header = {.m_transfer_type = is_bulk_transfer
+                                                               ? TransferRequestType::BULK
+                                                               : TransferRequestType::INTERRUPT,
+                                        .m_device_handle = handle};
+        return {.m_header          = header,
+                .m_endpoint_number = endpoint_number,
+                .m_direction       = direction,
+                .m_data_buffer     = data_buffer,
+                .m_length          = length};
     }
 
 } // namespace Rune::Device::USB
