@@ -320,7 +320,7 @@ namespace Rune::Memory {
         static constexpr MemorySize CACHE_SIZE            = 2 * MemoryUnit::MiB;
         static constexpr U8         BOOTSTRAP_CACHE_COUNT = 6;
 
-        SpinlockIRQSafe m_lock;
+        IRQSpinlock m_lock;
 
         ObjectCache _object_cache_cache;
         ObjectCache _slab_cache;

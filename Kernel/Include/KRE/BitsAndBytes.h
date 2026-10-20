@@ -72,6 +72,15 @@ namespace Rune {
     /// @brief Number of bits in a quad word.
     constexpr U8 BIT_COUNT_QWORD = 64;
 
+    /// @brief Maximum value of a byte.
+    constexpr U8 BYTE_MAX = 0xFF;
+    /// @brief Maximum value of a word.
+    constexpr U16 WORD_MAX = 0xFFFF;
+    /// @brief Maximum value of a double word.
+    constexpr U32 DWORD_MAX = 0xFFFFFFFF;
+    /// @brief Maximum value of a quad word.
+    constexpr U64 QWORD_MAX = 0xFFFFFFFFFFFFFFFF;
+
     /// @brief Check if a bit in a number is set.
     /// @tparam T Number type.
     /// @param num

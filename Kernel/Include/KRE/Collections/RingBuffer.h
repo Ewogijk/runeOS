@@ -49,7 +49,7 @@ namespace Rune {
         U64                m_write_cursor{0};
 
         ///@brief The lock is non-reentrant!
-        mutable SpinlockIRQSafe m_lock;
+        mutable IRQSpinlock m_lock;
 
         friend class ReadCursor<T, SIZE>;
 
@@ -59,14 +59,14 @@ namespace Rune {
         /// @brief
         /// @return The index marking the start of the read window.
         [[nodiscard]] auto read_window_start() const -> U64 {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             return m_read_window_start;
         }
 
         /// @brief
         /// @return The position of the write-cursor.
         [[nodiscard]] auto write_cursor() const -> U64 {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             return m_write_cursor;
         }
 
@@ -76,7 +76,7 @@ namespace Rune {
         /// If the write-cursor reaches the start of the read window then it will be advanced by one
         /// position.
         void append(T element) {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             m_buffer[m_write_cursor & MASK] = move(element);
             m_write_cursor++; //           = (m_write_cursor + 1) & MASK;
             if (m_write_cursor - m_read_window_start == CAPACITY) m_read_window_start++;
@@ -87,7 +87,7 @@ namespace Rune {
         /// @return The element at index.
         auto operator[](size_t idx) const -> T pre(idx < CAPACITY) {
             contract_assert(idx < CAPACITY);
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             return m_buffer[idx];
         }
     };
@@ -120,7 +120,7 @@ namespace Rune {
               m_read_cursor(ring_buffer->read_window_start()) {}
 
         [[nodiscard]] auto read_cursor() -> size_t {
-            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
+            CriticalSection<IRQSpinlock> _(m_ring_buffer->m_lock);
             skip_to_read_window();
             return m_read_cursor;
         }
@@ -128,7 +128,7 @@ namespace Rune {
         /// @brief
         /// @return
         [[nodiscard]] auto size() -> size_t {
-            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
+            CriticalSection<IRQSpinlock> _(m_ring_buffer->m_lock);
             skip_to_read_window();
             return m_ring_buffer->m_write_cursor - m_read_cursor;
         }
@@ -136,7 +136,7 @@ namespace Rune {
         /// @brief
         /// @return
         [[nodiscard]] auto empty() -> bool {
-            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
+            CriticalSection<IRQSpinlock> _(m_ring_buffer->m_lock);
             skip_to_read_window();
             return m_read_cursor == m_ring_buffer->m_write_cursor;
         }
@@ -144,7 +144,7 @@ namespace Rune {
         /// @brief
         /// @return
         auto next() -> Optional<T> {
-            CriticalSection<SpinlockIRQSafe> _(m_ring_buffer->m_lock);
+            CriticalSection<IRQSpinlock> _(m_ring_buffer->m_lock);
             skip_to_read_window();
             if (m_read_cursor == m_ring_buffer->m_write_cursor)
                 // Empty buffer

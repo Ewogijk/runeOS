@@ -71,17 +71,17 @@ namespace Rune {
     ///
     /// The lock will save the content of the FLAGS register before locking and restores the content
     /// when unlocked.
-    class SpinlockIRQSafe {
+    class IRQSpinlock {
         bool     m_lock  = false;
         Register m_flags = 0;
 
       public:
-        SpinlockIRQSafe();
+        IRQSpinlock();
 
-        SpinlockIRQSafe(const SpinlockIRQSafe& other)                    = delete;
-        SpinlockIRQSafe(SpinlockIRQSafe&& other)                         = delete;
-        auto operator=(const SpinlockIRQSafe& other) -> SpinlockIRQSafe& = delete;
-        auto operator=(SpinlockIRQSafe&& other) -> SpinlockIRQSafe&      = delete;
+        IRQSpinlock(const IRQSpinlock& other)                    = delete;
+        IRQSpinlock(IRQSpinlock&& other)                         = delete;
+        auto operator=(const IRQSpinlock& other) -> IRQSpinlock& = delete;
+        auto operator=(IRQSpinlock&& other) -> IRQSpinlock&      = delete;
 
         /// @brief Disable IRQs then try to lock this spinlock.
         ///

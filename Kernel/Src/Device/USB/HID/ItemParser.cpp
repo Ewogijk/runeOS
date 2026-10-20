@@ -103,7 +103,7 @@ namespace Rune::Device::USB {
         if (prefix->item_tag() == HIDItemTag::POP) {
             bool is_pop_successful =
                 m_global_item_state_table_stack.remove_back()
-                    .transform<bool>([this](LinkedList<ShortItem> table) -> bool {
+                    .map<bool>([this](LinkedList<ShortItem> table) -> bool {
                         m_global_item_state_table.clear();
                         m_global_item_state_table = move(table);
                         return true;
