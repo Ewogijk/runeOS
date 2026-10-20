@@ -53,6 +53,8 @@ namespace Rune {
             : m_ptr(ptr),
               m_deleter([](void* p) -> void { delete static_cast<T*>(p); }) {}
 
+        UniquePointer(T* ptr, void (*deleter)(void*)) : m_ptr(ptr), m_deleter(deleter) {}
+
         ~UniquePointer() {
             if (m_ptr) m_deleter(m_ptr);
         }
@@ -88,6 +90,15 @@ namespace Rune {
         auto operator!=(const UniquePointer<T>& other) const -> bool {
             return m_ptr != other.m_ptr;
         }
+
+        /// @brief Construct an object of T and wrap it in a unique pointer.
+        /// @tparam Args Type of the variadic constructor arguments.
+        /// @param args Variadic arguments passed to the constructor of T.
+        /// @return A unique pointer wrapping a T instance.
+        template <typename... Args>
+        static auto of(Args... args) -> UniquePointer<T> {
+            return UniquePointer<T>(new T(forward<Args>(args)...));
+        }
     };
 
     /**
@@ -119,12 +130,12 @@ namespace Rune {
         T*               m_ptr;
         RefControlBlock* m_refs;
 
-        void init(T* ptr) {
+        void init(T* ptr, void (*deleter)(void*)) {
             m_ptr = ptr;
             if (ptr == nullptr) return;
             m_refs            = new RefControlBlock;
             m_refs->m_raw_ptr = ptr;
-            m_refs->m_deleter = [](void* p) -> void { delete static_cast<T*>(p); };
+            m_refs->m_deleter = deleter;
             ++m_refs->m_strong_ref_count;
         }
 
@@ -151,7 +162,13 @@ namespace Rune {
       public:
         SharedPointer() : m_ptr(nullptr), m_refs(nullptr) {}
 
-        explicit SharedPointer(T* ptr) : m_ptr(nullptr), m_refs(nullptr) { init(ptr); }
+        explicit SharedPointer(T* ptr) : m_ptr(nullptr), m_refs(nullptr) {
+            init(ptr, [](void* p) -> void { delete static_cast<T*>(p); });
+        }
+
+        SharedPointer(T* ptr, void (*deleter)(void*)) : m_ptr(nullptr), m_refs(nullptr) {
+            init(ptr, deleter);
+        }
 
         ~SharedPointer() {
             if (m_refs == nullptr) return;
@@ -223,6 +240,15 @@ namespace Rune {
 
         auto operator!=(const SharedPointer<T>& other) const -> bool {
             return m_ptr != other.m_ptr;
+        }
+
+        /// @brief Construct an object of T and wrap it in a shared pointer.
+        /// @tparam Args Type of the variadic constructor arguments.
+        /// @param args Variadic arguments passed to the constructor of T.
+        /// @return A shared pointer wrapping a T instance.
+        template <typename... Args>
+        static auto of(Args... args) -> SharedPointer<T> {
+            return SharedPointer<T>(new T(forward<Args>(args)...));
         }
     };
 

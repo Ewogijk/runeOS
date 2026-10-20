@@ -32,7 +32,7 @@ namespace Rune::Device {
 
     auto KeyEventStream::read() -> int {
         return g_key_event_read_cursor.next()
-            .transform<int>([](const Ember::KeyEvent& evt) -> int {
+            .map<int>([](const Ember::KeyEvent& evt) -> int {
                 return static_cast<int>(evt.event_code());
             })
             .value_or(-1);

@@ -46,9 +46,46 @@ namespace Rune::Memory::DMA {
         return obj;
     }
 
+    /// @brief Allocate sizeof(T) bytes of DMA memory and initialize the memory by calling the
+    ///         constructor of T with args.
+    /// @tparam T Type of object to allocate.
+    /// @tparam Args
+    /// @param args Constructor arguments.
+    /// @return A pointer to the initialized object.
+    ///         If out of memory: nullptr.
+    template <class T, class... Args>
+    auto allocate_object(Args&&... args) -> T* {
+        auto obj = reinterpret_cast<T*>(allocate(sizeof(T)));
+        if (obj != nullptr) new (obj) T(forward<Args>(args)...);
+        return obj;
+    }
+
     /// @brief Free the DMA memory.
     /// @param memory Pointer to DMA memory.
     void free(void* memory);
-} // namespace Rune::Memory::DMA
 
+    /// @brief Allocate an instance of T with DMA memory and wrap it in a unique pointer with a
+    ///         custom deleter calling DMA::free.
+    /// @tparam T Type of object to allocate.
+    /// @tparam Args
+    /// @param args Arguments passed to the constructor of T.
+    /// @return A unique pointer wrapping a T instance.
+    template <class T, class... Args>
+    auto unique_pointer_of(Args... args) -> UniquePointer<T> {
+        return UniquePointer<T>(allocate_object<T>(forward<Args>(args)...),
+                                [](void* ptr) -> void { DMA::free(ptr); });
+    }
+
+    /// @brief Allocate an instance of T with DMA memory and wrap it in a shared pointer with a
+    ///         custom deleter calling DMA::free.
+    /// @tparam T Type of object to allocate.
+    /// @tparam Args
+    /// @param args Arguments passed to the constructor of T.
+    /// @return A unique pointer wrapping a T instance.
+    template <class T, class... Args>
+    auto shared_pointer_of(Args... args) -> SharedPointer<T> {
+        return SharedPointer<T>(allocate_object<T>(forward<Args>(args)...),
+                                [](void* ptr) -> void { DMA::free(ptr); });
+    }
+} // namespace Rune::Memory::DMA
 #endif // RUNEOS_DMA_H

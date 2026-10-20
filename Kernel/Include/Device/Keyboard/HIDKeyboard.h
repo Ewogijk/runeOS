@@ -46,7 +46,7 @@ namespace Rune::Device {
         USB::HIDReport                     m_led_output_report{};
 
         bool            m_run_polling_thread = false;
-        SpinlockIRQSafe m_lock;
+        IRQSpinlock m_lock;
         Ember::Handle   m_thread_handle;
 
         HIDKeyboardFrame  m_last_keyboard_frame{};
@@ -59,7 +59,7 @@ namespace Rune::Device {
     class HIDKeyboardDriver : public Driver {
         HashMap<Ember::Handle, SharedPointer<HIDKeyboardContext>> m_keyboard_contexts;
         /// @brief Guards m_keyboard_contexts access.
-        SpinlockIRQSafe m_lock;
+        IRQSpinlock m_lock;
         /// @brief Synchronizes bind/unbind calls to prevent interleaving calls.
         CPU::Mutex m_bind_mutex;
 

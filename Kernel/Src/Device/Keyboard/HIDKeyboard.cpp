@@ -184,7 +184,7 @@ namespace Rune::Device {
 
         SharedPointer<HIDKeyboardContext> kb_ctx;
         {
-            CriticalSection<SpinlockIRQSafe> _(driver->m_lock);
+            CriticalSection<IRQSpinlock> _(driver->m_lock);
             auto kb_ctx_it = driver->m_keyboard_contexts.find(device_handle);
             if (kb_ctx_it == driver->m_keyboard_contexts.end()) return -1;
             kb_ctx = *kb_ctx_it->value;
@@ -197,14 +197,12 @@ namespace Rune::Device {
             reinterpret_cast<U8*>(Memory::DMA::allocate_zeroed(int_in_ep.m_max_packet_size)));
         U8 recovery_attempts = 0;
         while (true) {
-            USB::DataTransferRequest dtr{
-                .m_header          = {.m_transfer_type = USB::TransferRequestType::INTERRUPT,
-                                      .m_device_handle = kb_ctx->m_keyboard->get_handle()},
-                .m_endpoint_number = int_in_ep.m_endpoint_number,
-                .m_direction       = USB::Direction::IN,
-                .m_length          = int_in_ep.m_max_packet_size,
-                .m_data_buffer     = keyboard_report.get()
-            };
+            auto dtr = USB::DataTransferRequest::of(kb_ctx->m_keyboard->get_handle(),
+                                                    false,
+                                                    int_in_ep.m_endpoint_number,
+                                                    USB::Direction::IN,
+                                                    keyboard_report.get(),
+                                                    int_in_ep.m_max_packet_size);
             USB::TransferResponse tr;
             IORequest             io_req = {.m_in_data = &dtr, .m_out_data = &tr};
             auto                  st =
@@ -213,7 +211,7 @@ namespace Rune::Device {
             if (st == IORequestStatus::HANDLED) {
                 if (tr.m_residual_bytes != 0) {
                     // Skip short packets
-                    CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
+                    CriticalSection<IRQSpinlock> _(kb_ctx->m_lock);
                     if (!kb_ctx->m_run_polling_thread) break;
                     continue;
                 }
@@ -234,7 +232,7 @@ namespace Rune::Device {
                     dm->control_device(kb_ctx->m_keyboard->bus_device()->get_handle(), recovery_req)
                         .get();
 
-                CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
+                CriticalSection<IRQSpinlock> _(kb_ctx->m_lock);
                 if (!kb_ctx->m_run_polling_thread) break;
                 continue;
             } else {
@@ -250,12 +248,12 @@ namespace Rune::Device {
                                     keyboard_report.get(),
                                     int_in_ep.m_max_packet_size,
                                     kb_ctx->m_uses_report_ID)
-                .and_then<int>([&kb_ctx](const HIDKeyboardFrame& frame) -> auto {
+                .map<int>([&kb_ctx](const HIDKeyboardFrame& frame) -> auto {
                     kb_ctx->publish_key_events(frame);
                     return 0;
                 });
 
-            CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
+            CriticalSection<IRQSpinlock> _(kb_ctx->m_lock);
             if (!kb_ctx->m_run_polling_thread) break;
         };
         return 0;
@@ -290,7 +288,7 @@ namespace Rune::Device {
         auto* dm = System::instance().get_module<DeviceModule>(ModuleSelector::DEVICE);
 
         {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             if (m_keyboard_contexts.find(device->get_handle()) != m_keyboard_contexts.end()) {
                 WARN("{}: HID Keyboard is already bound", device->get_unique_name())
                 return false;
@@ -458,7 +456,7 @@ namespace Rune::Device {
                                    .m_interrupt_in_endpoint = interrupt_in_ep.value(),
                                    .m_led_output_report     = led_output_report,
                                    .m_run_polling_thread    = true,
-                                   .m_lock                  = SpinlockIRQSafe(),
+                                   .m_lock                  = IRQSpinlock(),
                                    .m_thread_handle         = Ember::HANDLE_NONE,
                                    .m_last_keyboard_frame   = HIDKeyboardFrame{},
                                    .m_last_pressed          = Ember::VirtualKey::NONE});
@@ -470,7 +468,7 @@ namespace Rune::Device {
                        .build();
 
         {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             m_keyboard_contexts.put(kb_ctx->m_keyboard->get_handle(), kb_ctx);
         }
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
@@ -483,7 +481,7 @@ namespace Rune::Device {
 
         if (kb_ctx->m_thread_handle == Ember::HANDLE_NONE) {
             WARN("{}: Failed to schedule polling thread", device->get_unique_name())
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
+            CriticalSection<IRQSpinlock> _(m_lock);
             m_keyboard_contexts.remove(device->get_handle());
             return false;
         }
@@ -495,8 +493,8 @@ namespace Rune::Device {
         CriticalSection<CPU::Mutex>       _(m_bind_mutex);
         SharedPointer<HIDKeyboardContext> kb_ctx;
         {
-            CriticalSection<SpinlockIRQSafe> _(m_lock);
-            auto kb_ctx_it = m_keyboard_contexts.find(device->get_handle());
+            CriticalSection<IRQSpinlock> _(m_lock);
+            auto                         kb_ctx_it = m_keyboard_contexts.find(device->get_handle());
             if (kb_ctx_it == m_keyboard_contexts.end()) {
                 WARN("{}: Unknown device, cannot unbind", device->get_unique_name())
                 return;
@@ -505,11 +503,11 @@ namespace Rune::Device {
         }
         auto* cpu_module = System::instance().get_module<CPU::CPUModule>(ModuleSelector::CPU);
         {
-            CriticalSection<SpinlockIRQSafe> _(kb_ctx->m_lock);
+            CriticalSection<IRQSpinlock> _(kb_ctx->m_lock);
             kb_ctx->m_run_polling_thread = false;
         }
         cpu_module->join_thread(kb_ctx->m_thread_handle);
-        CriticalSection<SpinlockIRQSafe> _(m_lock);
+        CriticalSection<IRQSpinlock> _(m_lock);
         m_keyboard_contexts.remove(device->get_handle());
     }
 

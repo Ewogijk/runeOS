@@ -662,52 +662,36 @@ namespace Rune {
          */
         auto value() -> T& { return _data; }
 
-        /**
-         *
-         * @param default_value A default value to be returned if the optional is empty.
-         * @return A reference to the contained value or the default value.
-         */
-        auto value_or(T&& default_value) -> T& { return has_value() ? _data : default_value; }
-
-        /**
-         * Apply the value of this optional to the function. If the optional is empty, an empty
-         * optional is returned.
-         *
-         * @tparam U Return type of the function.
-         * @tparam F A callable returning Optional<U>.
-         * @param func
-         * @return If empty: An empty optional, else: The result of calling func.
-         */
-        template <class U, class F>
-        auto and_then(F&& func) -> Optional<U> {
-            return has_value() ? func(forward<T>(_data)) : Optional<U>();
+        /// @brief
+        /// @param default_value A default value to be returned if the optional is empty.
+        /// @return A reference to the contained value or the default value.
+        template <class U = RemoveCV<T>::type>
+        auto value_or(U&& default_value) const& -> T {
+            return has_value() ? _data : default_value;
         }
 
-        /**
-         * If the optional is empty, return the result of calling func. Otherwise, return this
-         * optional.
-         *
-         * @tparam F A callable returning Optional<T>.
-         * @param func
-         * @return If empty: The result of calling func, else: An empty optional.
-         */
+        /// @brief
+        /// @param default_value A default value to be returned if the optional is empty.
+        /// @return A reference to the contained value or the default value.
+        template <class U = RemoveCV<T>::type>
+        auto value_or(U&& default_value) && -> T { return has_value() ? _data : default_value; }
+
+        /// @brief Apply the value to the function. If the optional is empty, this function call
+        ///         will be a NOP.
+        /// @tparam F A callable function: void<T>
+        /// @param func
         template <class F>
-        auto or_else(F&& func) -> Optional<T> {
-            return has_value() ? *this : func(forward<T>(_data));
+        auto if_present(F&& func) -> void {
+            if (has_value()) func(forward<T>(_data));
         }
 
-        /**
-         * Apply the value of this optional to the function. If the optional is empty, an empty
-         * optional is returned.
-         *
-         * @tparam U Return type of the function.
-         * @tparam F A callable returning U.
-         * @param func
-         * @return If empty: The result of calling func wrapped in an optional,
-         *          else: An empty optional.
-         */
-        template <typename U, typename F>
-        auto transform(F&& func) -> Optional<U> {
+        /// @brief Apply the value to the function.
+        /// @tparam U Type of the value returned by F.
+        /// @tparam F A callable function: U<T>
+        /// @param func
+        /// @return If empty: An empty optional, Else: The result of calling func.
+        template <class U, class F>
+        auto map(F&& func) -> Optional<U> {
             return has_value() ? Optional<U>(func(forward<T>(_data))) : Optional<U>();
         }
 
@@ -755,6 +739,24 @@ namespace Rune {
             if (fst.has_value() && sec.has_value()) return fst.value() != sec.value();
             if (fst.has_value() || sec.has_value()) return true;
             return true;
+        }
+
+        /// @brief
+        /// @return An optional containing no value.
+        static auto empty() -> Optional<T> { return Optional<T>(); }
+
+        /// @brief Create an optional with the value.
+        /// @param value
+        /// @return An optional containing an instance of T.
+        static auto of(T&& value) -> Optional<T> { return Optional<T>(forward<T>(value)); }
+
+        /// @brief Create an optional with an inplace constructed instance of T.
+        /// @tparam Args
+        /// @param args Arguments that will be passed to the constructor of T.
+        /// @return An optional containing an instance of T.
+        template <typename... Args>
+        static auto of(Args&&... args) -> Optional<T> {
+            return Optional<T>(INPLACE, forward<Args>(args)...);
         }
     };
 

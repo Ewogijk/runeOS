@@ -58,9 +58,9 @@ namespace Rune {
     // IRQSafeSpinlock
     // ========================================================================================== //
 
-    SpinlockIRQSafe::SpinlockIRQSafe() = default;
+    IRQSpinlock::IRQSpinlock() = default;
 
-    void SpinlockIRQSafe::lock() {
+    void IRQSpinlock::lock() {
         Register flags = interrupt_irq_save();
         while (true) {
             if (!atomic_flag_test_and_set(&m_lock)) {
@@ -71,7 +71,7 @@ namespace Rune {
         }
     }
 
-    void SpinlockIRQSafe::unlock() {
+    void IRQSpinlock::unlock() {
         contract_assert(atomic_flag_test(&m_lock));
         auto flags = m_flags;
         atomic_flag_clear(&m_lock);
