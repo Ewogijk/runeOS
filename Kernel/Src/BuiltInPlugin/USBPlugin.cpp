@@ -18,22 +18,25 @@
 
 #include <Device/DeviceModule.h>
 #include <Device/Keyboard/HIDKeyboard.h>
+#include <Device/MassStorage/USB/BOTMassStorageDriver.h>
 #include <Device/USB/xHCI/xHCI.h>
 
 namespace Rune::BuiltInPlugin {
-    const PluginInfo PS2KEYBOARD_INFO = {
+    const PluginInfo USB_INFO = {
         .name    = "USB",
         .vendor  = "Ewogijk",
         .version = {.major = 1, .minor = 0, .patch = 0, .pre_release = ""}
     };
 
-    auto USBPlugin::get_info() const -> PluginInfo { return PS2KEYBOARD_INFO; }
+    auto USBPlugin::get_info() const -> PluginInfo { return USB_INFO; }
 
     auto USBPlugin::load() -> bool {
         auto* ds = System::instance().get_module<Device::DeviceModule>(ModuleSelector::DEVICE);
         return ds->register_device_driver(
                    SharedPointer<Device::Driver>(new Device::USB::XHCIDriver()))
                && ds->register_device_driver(
-                   SharedPointer<Device::Driver>(new Device::HIDKeyboardDriver()));
+                   SharedPointer<Device::Driver>(new Device::HIDKeyboardDriver()))
+               && ds->register_device_driver(
+                   SharedPointer<Device::Driver>(new Device::BOTMassStorageDriver()));
     }
 } // namespace Rune::BuiltInPlugin
