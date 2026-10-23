@@ -175,9 +175,9 @@ namespace Rune::Memory {
         int errCode = is_reserved_or_bit_map_address(p_addr, frames);
         if (errCode < 0) {
             if (errCode == -1) {
-                WARN("{:0=#16x}: Is bitmap memory");
+                WARN("{:0=#16x}: Is bitmap memory", p_addr);
             } else {
-                WARN("{:0=#16x}: Is reserved memory");
+                WARN("{:0=#16x}: Is reserved memory", p_addr);
             }
             return false;
         }

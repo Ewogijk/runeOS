@@ -347,7 +347,7 @@ namespace Rune::Device::USB {
     XHCIDriver::add_endpoint_context(const UniquePointer<InputContext>&              ic,
                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                                      const Endpoint& endpoint) -> bool {
-        auto port_speed = PortSpeed(dc_sys_memory->m_device_context.m_slot_context.m_dw0.speed());
+        auto port_speed = PortSpeed(dc_sys_memory->m_device_context->m_slot_context.m_dw0.speed());
         if (endpoint.m_transfer_type == TransferType::NONE) return true;
 
         U8 dci = endpoint.m_transfer_type == TransferType::CONTROL
@@ -458,10 +458,11 @@ namespace Rune::Device::USB {
         ic->m_endpoint_contexts[dci - 1].m_dw0.set_interval(interval);
         ic->m_endpoint_contexts[dci - 1].m_dw0.set_mult(mult);
 
+        auto& tr = dc_sys_memory->m_transfer_rings[dci - 1];
+        if (!tr) tr = Memory::DMA::shared_pointer_of<DeviceContextSystemMemory::SlotTransferRing>();
+        if (!tr) return false;
         PhysicalAddr tr_phys = 0;
-        if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&dc_sys_memory->m_transfer_rings[dci - 1]),
-                tr_phys))
+        if (!Memory::virtual_to_physical_address(memory_pointer_to_addr(tr.get()), tr_phys))
             return false;
         ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_ptr(tr_phys >> SHIFT_4);
         ic->m_endpoint_contexts[dci - 1].m_tr_dequeue_ptr.set_DCS(true);
@@ -498,11 +499,12 @@ namespace Rune::Device::USB {
 
         constexpr U8 MAX_DCI = 32;
         for (U8 i = 2; i < MAX_DCI; i++) {
-            if (bit_check(ic->m_input_control_context.m_drop_context_flags, i))
-                dc_sys_memory->m_transfer_rings[i - 1].reset();
+            auto& tr = dc_sys_memory->m_transfer_rings[i - 1];
+            if (bit_check(ic->m_input_control_context.m_drop_context_flags, i) && tr) tr->reset();
 
             if (bit_check(ic->m_input_control_context.m_add_context_flags, i)) {
-                if (!dc_sys_memory->m_transfer_rings[i - 1].init()) return false;
+                // The ring was allocated when the endpoint context was added
+                if (!tr || !tr->init()) return false;
             }
         }
         return true;
@@ -576,7 +578,7 @@ namespace Rune::Device::USB {
 
         // Copy the current slot context as a safeguard against accidental reconfiguration
         memcpy(&ic->m_slot_context,
-               &dc_sys_memory->m_device_context.m_slot_context,
+               &dc_sys_memory->m_device_context->m_slot_context,
                sizeof(SlotContext));
         ic->m_slot_context.m_dw3.set_usb_device_address(0);
         ic->m_slot_context.m_dw3.set_slot_state(0);
@@ -603,7 +605,7 @@ namespace Rune::Device::USB {
             // Try to reset the old alternate setting
             memset(reinterpret_cast<void*>(ic.get()), 0, sizeof(InputContext));
             memcpy(&ic->m_slot_context,
-                   &dc_sys_memory->m_device_context.m_slot_context,
+                   &dc_sys_memory->m_device_context->m_slot_context,
                    sizeof(SlotContext));
             ic->m_slot_context.m_dw3.set_usb_device_address(0);
             ic->m_slot_context.m_dw3.set_slot_state(0);
@@ -686,7 +688,8 @@ namespace Rune::Device::USB {
                 endpoint_number,
                 transfer_type.to_string(),
                 direction.to_string())
-            auto&                         tr = dc_sys_memory->m_transfer_rings[dci - 1];
+            if (!dc_sys_memory->m_transfer_rings[dci - 1]) return false;
+            auto&                         tr = *dc_sys_memory->m_transfer_rings[dci - 1];
             SetTRDequeuePointerCommandTRB set_tr_cmd;
             set_tr_cmd.m_control.set_trb_type(SetTRDequeuePointerCommandTRB::TYPE);
             set_tr_cmd.m_control.set_endpoint_id(dci);
@@ -734,7 +737,7 @@ namespace Rune::Device::USB {
                     auto ic = UniquePointer<InputContext>(reinterpret_cast<InputContext*>(
                         Memory::DMA::allocate_zeroed(sizeof(InputContext))));
                     memcpy(&ic->m_slot_context,
-                           &dc_sys_memory->m_device_context.m_slot_context,
+                           &dc_sys_memory->m_device_context->m_slot_context,
                            sizeof(SlotContext));
                     ic->m_slot_context.m_dw3.set_usb_device_address(0);
                     ic->m_slot_context.m_dw3.set_slot_state(0);
@@ -789,7 +792,8 @@ namespace Rune::Device::USB {
                     IORequestStatus::FAILED);
         }
 
-        auto& ep0_tr = dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
+        // EP0 ring is allocated together with the device context system memory
+        auto& ep0_tr = *dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
         bool  is_in =
             (control_transfer_request.m_request_type & RequestType::DIRECTION_DEVICE_TO_HOST) != 0;
         bool has_data = control_transfer_request.m_length > 0;
@@ -897,8 +901,12 @@ namespace Rune::Device::USB {
               data_transfer_request.m_length);
         U8    dci = (data_transfer_request.m_endpoint_number * 2)
                     + data_transfer_request.m_direction.to_value();
-        auto& tr  = dc_sys_mem->m_transfer_rings[dci - 1];
-        U16 mps = dc_sys_mem->m_device_context.m_endpoint_contexts[dci - 1].m_dw1.max_packet_size();
+        if (!dc_sys_mem->m_transfer_rings[dci - 1])
+            // Endpoint was never configured
+            return CPU::Promise<IORequestStatus>::make_completed_future(
+                IORequestStatus::BAD_ARGUMENT);
+        auto& tr = *dc_sys_mem->m_transfer_rings[dci - 1];
+        U16 mps = dc_sys_mem->m_device_context->m_endpoint_contexts[dci - 1].m_dw1.max_packet_size();
         if (mps == 0)
             // Broken endpoint
             return CPU::Promise<IORequestStatus>::make_completed_future(
@@ -994,7 +1002,11 @@ namespace Rune::Device::USB {
               isoch_transfer_request.m_length);
         U8       dci = (isoch_transfer_request.m_endpoint_number * 2)
                        + isoch_transfer_request.m_direction.to_value();
-        auto&    tr  = dc_sys_mem->m_transfer_rings[dci - 1];
+        if (!dc_sys_mem->m_transfer_rings[dci - 1])
+            // Endpoint was never configured
+            return CPU::Promise<IORequestStatus>::make_completed_future(
+                IORequestStatus::BAD_ARGUMENT);
+        auto&    tr  = *dc_sys_mem->m_transfer_rings[dci - 1];
         IsochTRB trb;
         trb.m_control.set_trb_type(IsochTRB::TYPE);
         trb.m_status.set_trb_transfer_length(isoch_transfer_request.m_length);
@@ -1356,13 +1368,18 @@ namespace Rune::Device::USB {
             dc_sys_mem->m_ep_states[i] = EndpointState::DISABLED;
 
         dc_sys_mem->m_slot_ID = slot_ID;
-        // Initialize the EP0 transfer ring Link TRB
-        if (!dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1].init())
-            return {};
+        // Device context and rings must be physically contiguous -> Allocate them as DMA memory
+        dc_sys_mem->m_device_context = Memory::DMA::unique_pointer_of<DeviceContext>();
+        if (!dc_sys_mem->m_device_context) return {};
+
+        // Allocate the EP0 transfer ring and initialize its Link TRB
+        auto& ep0_tr = dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1];
+        ep0_tr       = Memory::DMA::shared_pointer_of<DeviceContextSystemMemory::SlotTransferRing>();
+        if (!ep0_tr || !ep0_tr->init()) return {};
 
         PhysicalAddr device_context_phys = 0;
         if (!Memory::virtual_to_physical_address(
-                memory_pointer_to_addr(&dc_sys_mem->m_device_context),
+                memory_pointer_to_addr(dc_sys_mem->m_device_context.get()),
                 device_context_phys))
             return {};
 
@@ -1425,7 +1442,8 @@ namespace Rune::Device::USB {
         PhysicalAddr tr_phys = 0;
         if (!Memory::virtual_to_physical_address(
                 memory_pointer_to_addr(
-                    &dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1]),
+                    dc_sys_mem->m_transfer_rings[DeviceContextDoorbellTarget::EP0_CONTROL - 1]
+                        .get()),
                 tr_phys))
             return {};
         ep0.m_tr_dequeue_ptr.set_ptr(tr_phys >> 4);

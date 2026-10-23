@@ -93,7 +93,7 @@ namespace Rune::Device {
     void publish_key_event(Ember::VirtualKey key, U8 modifiers, bool key_down) {
         auto key_event = build_key_event(key, modifiers, key_down);
         g_key_event_buffer.append(key_event);
-        DEBUG("KeyEvent[{},{},{}]",
+        TRACE("KeyEvent[{},{},{}]",
               key_event.virtual_key().to_string(),
               byte_get(key_event.event_code(), 1),
               key_event.is_key_down())
@@ -228,9 +228,8 @@ namespace Rune::Device {
                     device_handle,
                     kb_ctx->m_interrupt_in_endpoint);
                 IORequest recovery_req = {.m_in_data = &clear_endpoint_halt, .m_out_data = nullptr};
-                auto      recovery_st =
-                    dm->control_device(kb_ctx->m_keyboard->bus_device()->get_handle(), recovery_req)
-                        .get();
+                dm->control_device(kb_ctx->m_keyboard->bus_device()->get_handle(), recovery_req)
+                    .get();
 
                 CriticalSection<IRQSpinlock> _(kb_ctx->m_lock);
                 if (!kb_ctx->m_run_polling_thread) break;
@@ -243,7 +242,7 @@ namespace Rune::Device {
             }
             recovery_attempts = 0;
 
-            DEBUG("{}", String::join(", ", keyboard_report.get(), int_in_ep.m_max_packet_size))
+            TRACE("Report: {}", String::join(", ", keyboard_report.get(), int_in_ep.m_max_packet_size))
             make_hid_keyboard_frame(kb_ctx->m_key_code_input_report,
                                     keyboard_report.get(),
                                     int_in_ep.m_max_packet_size,
