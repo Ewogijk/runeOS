@@ -31,12 +31,11 @@ namespace Rune::Device {
                                          const String&         revision,
                                          const String&         serial_number,
                                          DeviceType            device_type,
-                                         const BasicDeviceID&  device_ID,
                                          MassStorageDeviceType mass_storage_device_type,
                                          U64                   sector_count,
                                          U32                   sector_size,
                                          PartitionRange        partition_range)
-        : BasicDevice(handle, name, oem, revision, serial_number, device_type, device_ID),
+        : Device(handle, name, oem, revision, serial_number, device_type),
           m_mass_storage_device_type(mass_storage_device_type),
           m_total_sector_count(sector_count),
           m_used_sector_count(0),

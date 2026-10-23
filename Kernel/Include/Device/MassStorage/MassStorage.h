@@ -23,6 +23,9 @@ namespace Rune::Device {
     // MassStorageDevice
     // ========================================================================================== //
 
+    static constexpr char const* RUNE_PARTITION_TYPE_GUID = "8fa4455d-2d55-45ba-8bca-cbcedf48bdf6";
+    static constexpr char const* ROOT_PARTITION_GUID      = "7574b273-9503-4d83-8617-678d4c2d30c0";
+
     /// @brief The PartitionRange defines the start and end lba of a partition.
     struct PartitionRange {
         /// @brief The partition spans the whole physical device.
@@ -33,14 +36,17 @@ namespace Rune::Device {
 
 #define MASS_STORAGE_DEVICE_TYPES(X)                                                               \
     X(MassStorageDeviceType, PHYSICAL, 0x1)                                                        \
-    X(MassStorageDeviceType, PARTITION, 0x2)                                                       \
-    X(MassStorageDeviceType, BOOT_PARTITION, 0x3)
+    X(MassStorageDeviceType, EFI_SYSTEM_PARTITION, 0x2)                                            \
+    X(MassStorageDeviceType, ROOT_PARTITION, 0x3)                                                  \
+    X(MassStorageDeviceType, GENERIC_PARTITION, 0x4)
 
-    /// @brief Classification of mass storage devices depending on what type of data is stored.
+    /// @brief Defines what a mass storage device represents.
     ///
     /// - PHYSICAL: A mass storage device backed by a physical device.
-    /// - PARTITION: A generic partition on a physical mass storage device.
-    /// - BOOT_PARTITION: The EFI system partition containing the bootloader and kernel ELF.
+    /// - EFI_SYSTEM_PARTITION: A EFI system partition.
+    /// - ROOT_PARTITION: The device represents the partition that should be mounted as root of the
+    ///                     VFS.
+    /// - GENERIC_PARTITION: A generic partition on a physical mass storage device.
     DECLARE_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0) // NOLINT
 
     /// @brief A MassStorageDevice contains the mass storage device type additionally to all
@@ -50,7 +56,7 @@ namespace Rune::Device {
     /// physical device. So multiple partitions or devices can be mapped to a single physical
     /// device. In the special case where a partition spans the whole device, a mass storage device
     /// indeed represents a single physical device.
-    class MassStorageDevice : public BasicDevice {
+    class MassStorageDevice : public Device {
         MassStorageDeviceType m_mass_storage_device_type;
         U64                   m_total_sector_count;
         U64                   m_used_sector_count;
@@ -64,7 +70,6 @@ namespace Rune::Device {
                           const String&         revision,
                           const String&         serial_number,
                           DeviceType            device_type,
-                          const BasicDeviceID&  device_ID,
                           MassStorageDeviceType mass_storage_device_type,
                           U64                   sector_count,
                           U32                   sector_size,
@@ -96,7 +101,13 @@ namespace Rune::Device {
     };
 
     // ========================================================================================== //
-    // Mass Storage Device Request
+    // IO Request
+    //
+    // The IORequest struct shall be set up as followed:
+    //      io_request.m_in_data: MassStorageRequest*
+    //      io_request.m_out_data: size_t*
+    //
+    // Out data defines the number of bytes transferred.
     // ========================================================================================== //
 
 #define MSD_REQUEST_TYPES(X)                                                                       \
