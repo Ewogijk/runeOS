@@ -19,7 +19,7 @@
 
 #include <Memory/Paging.h>
 
-#include <Device/MassStorage/AHCI/GPT.h>
+#include <Device/MassStorage/GPT.h>
 
 namespace Rune::Device {
     // ========================================================================================== //
@@ -204,18 +204,29 @@ namespace Rune::Device {
                 return send_ata_command(buf, bufSize, read_dma_FIS);
             };
         // NOLINTEND
-        GPTScanResult scan_res = gpt_scan_device(sectorReader, physical_device->sector_size());
-        if (scan_res.status == GPTScanStatus::DETECTED) {
-            int i = 0;
-            for (auto& partition : scan_res.partition_table) {
-                bool is_boot_partition = memcmp(partition.unique_partition_guid.buf.data(),
-                                                BOOT_PARTITION_GUID.data(),
-                                                GUID::SIZE)
-                                         == 0;
+        auto gpt = gpt_scan_device(sectorReader, physical_device->sector_size());
+        if (gpt.has_value()) {
+            int  i = 0;
+            GUID efi_system_partition =
+                GUID::from_string(GUID::EFI_SYSTEM_PARTITION).value_or(GUID{});
+            GUID root_partition = GUID::from_string(ROOT_PARTITION_GUID).value_or(GUID{});
+            for (auto& partition : gpt.value().m_partition_table) {
+                bool is_efi_system_partition = memcmp(partition.m_partition_type_guid.m_buf.data(),
+                                                      efi_system_partition.m_buf.data(),
+                                                      GUID::SIZE)
+                                               == 0;
+                bool is_root_partition     = memcmp(partition.m_unique_partition_guid.m_buf.data(),
+                                                    root_partition.m_buf.data(),
+                                                    GUID::SIZE)
+                                             == 0;
+                MassStorageDeviceType msdt = MassStorageDeviceType::NONE;
+                if (is_efi_system_partition) {
+                    msdt = MassStorageDeviceType::EFI_SYSTEM_PARTITION;
+                } else {
+                    msdt = is_root_partition ? MassStorageDeviceType::ROOT_PARTITION
+                                             : MassStorageDeviceType::GENERIC_PARTITION;
+                }
 
-                MassStorageDeviceType msdt = is_boot_partition
-                                                 ? MassStorageDeviceType::BOOT_PARTITION
-                                                 : MassStorageDeviceType::PARTITION;
                 SharedPointer<Device> part_device(new AHCIDevice(
                     ds->get_device_handle(),
                     String::format("{} P{}", physical_device->get_name(), i),
@@ -225,9 +236,9 @@ namespace Rune::Device {
                     DeviceType::MASS_STORAGE_DEVICE,
                     ID_ATA_DEVICE,
                     msdt,
-                    partition.ending_lba - partition.starting_lba,
+                    partition.m_ending_lba - partition.m_starting_lba + 1,
                     physical_device->sector_size(),
-                    {.m_start = partition.starting_lba, .m_end = partition.ending_lba},
+                    {.m_start = partition.m_starting_lba, .m_end = partition.m_ending_lba},
                     port_engine));
                 ds->register_device(physical_device, part_device);
                 i++;
@@ -305,12 +316,14 @@ namespace Rune::Device {
                             revision,
                             serial_number,
                             device_type,
-                            device_ID,
                             mass_storage_device_type,
                             sector_count,
                             sector_size,
                             partition_range),
+          m_device_ID(move(device_ID)),
           m_port_engine(port_engine) {}
+
+    auto AHCIDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
 
     auto AHCIDevice::port_engine() const -> const SharedPointer<PortEngine>& {
         return m_port_engine;

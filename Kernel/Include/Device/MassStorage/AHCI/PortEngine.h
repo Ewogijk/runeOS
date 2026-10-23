@@ -22,60 +22,6 @@
 #include <Device/MassStorage/MassStorage.h>
 
 namespace Rune::Device {
-    // runeOS PartitionType GUID: 8fa4455d-2d55-45ba-8bca-cbcedf48bdf6
-    constexpr Array<U8, 16> PARTITION_TYPE_GUID = {0x5d,
-                                                   0x45,
-                                                   0xa4,
-                                                   0x8f,
-                                                   0x55,
-                                                   0x2d,
-                                                   0xba,
-                                                   0x45,
-                                                   0x8b,
-                                                   0xca,
-                                                   0xcb,
-                                                   0xce,
-                                                   0xdf,
-                                                   0x48,
-                                                   0xbd,
-                                                   0xf6};
-
-    // Boot Partition GUID: 4d3f0533-902a-4642-b125-728c910c1f79
-    constexpr Array<U8, 16> BOOT_PARTITION_GUID = {0x33,
-                                                   0x05,
-                                                   0x3f,
-                                                   0x4d,
-                                                   0x2a,
-                                                   0x90,
-                                                   0x42,
-                                                   0x46,
-                                                   0xb1,
-                                                   0x25,
-                                                   0x72,
-                                                   0x8c,
-                                                   0x91,
-                                                   0x0c,
-                                                   0x1f,
-                                                   0x79};
-
-    // Generic Partition GUID: 7574b273-9503-4d83-8617-678d4c2d30c0
-    constexpr Array<U8, 16> GENERIC_PARTITION_GUID = {0x73,
-                                                      0xb2,
-                                                      0x74,
-                                                      0x75,
-                                                      0x03,
-                                                      0x95,
-                                                      0x83,
-                                                      0x4d,
-                                                      0x86,
-                                                      0x17,
-                                                      0x67,
-                                                      0x8d,
-                                                      0x4c,
-                                                      0x2d,
-                                                      0x30,
-                                                      0xc0};
-
     /// @brief Part of the ATA Identify Device data.
     struct ATAIdentifyDeviceData {
         String m_serial_number;
@@ -148,6 +94,7 @@ namespace Rune::Device {
     // ========================================================================================== //
 
     class AHCIDevice : public MassStorageDevice {
+        BasicDeviceID             m_device_ID;
         SharedPointer<PortEngine> m_port_engine;
 
       public:
@@ -164,9 +111,13 @@ namespace Rune::Device {
                    PartitionRange                   partition_range,
                    const SharedPointer<PortEngine>& port_engine);
 
+        [[nodiscard]] auto device_ID() const -> const DeviceID* override;
+
         /// @brief
         /// @return The port engine handling the ATA device.
         [[nodiscard]] auto port_engine() const -> const SharedPointer<PortEngine>&;
+
+
     };
 } // namespace Rune::Device
 
