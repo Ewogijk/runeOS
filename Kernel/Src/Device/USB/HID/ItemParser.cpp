@@ -81,7 +81,7 @@ namespace Rune::Device::USB {
         for (U8 i = 0; i < data_size; i++) {
             data_str += String::format("{:0>2x}", data[i]);
         }
-        DEBUG("{}({}, {}, {:0=#8b}, {})",
+        TRACE("{}({}, {}, {:0=#8b}, {})",
               prefix->type().to_string(),
               prefix->item_tag().to_string(),
               prefix->size(),

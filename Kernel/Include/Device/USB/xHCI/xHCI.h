@@ -64,11 +64,22 @@ namespace Rune::Device::USB {
     /// @brief Mapping of the device context and transfer rings to a slot.
     struct DeviceContextSystemMemory {
         static constexpr size_t TRANSFER_RING_SIZE = 64;
+        using SlotTransferRing                     = TransferRing<TRANSFER_RING_SIZE>;
 
-        DeviceContext m_device_context;
-        /// @brief Slot transfer rings. Note: Can use DeviceContextDoorbellTarget::ENUM - 1
+        // The xHC accesses the device context and ring segments by physical address, so each must
+        // be physically contiguous. Only DMA objects of at most a page are guaranteed to be, as the
+        // heap maps larger objects page by page.
+        static_assert(sizeof(DeviceContext) <= 4 * MemoryUnit::KiB,
+                      "Device context must fit into a single page");
+        static_assert(sizeof(SlotTransferRing) <= 4 * MemoryUnit::KiB,
+                      "Transfer ring segment must fit into a single page");
+
+        /// @brief Output device context owned by the xHC, allocated as DMA memory.
+        UniquePointer<DeviceContext> m_device_context;
+        /// @brief Slot transfer rings, each allocated as DMA memory when its endpoint is added.
+        ///         Empty for unused endpoints. Note: Can use DeviceContextDoorbellTarget::ENUM - 1
         ///         for indexed access (Doorbell targets are 1-based).
-        Array<TransferRing<TRANSFER_RING_SIZE>, DeviceContext::MAX_ENDPOINTS> m_transfer_rings;
+        Array<SharedPointer<SlotTransferRing>, DeviceContext::MAX_ENDPOINTS> m_transfer_rings;
         /// @brief Driver maintained state machine of the endpoints - $4.8.3
         Array<EndpointState, DeviceContext::MAX_ENDPOINTS> m_ep_states{EndpointState::DISABLED};
         U8                                                 m_slot_ID;
