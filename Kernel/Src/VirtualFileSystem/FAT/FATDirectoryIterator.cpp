@@ -233,8 +233,10 @@ namespace Rune::VFS {
 
         switch (_it_mode) { // NOLINT All cases are handled
             case DirectoryIterationMode::LIST_DIRECTORY:
-                // Skip all empty file entries in between used entries
-                while (_current_entry->is_empty_middle()) {
+                // Skip all empty file entries and the volume label in between used entries
+                while (_current_entry->is_empty_middle()
+                       || (_current_entry->has_attribute(FATFileAttribute::VOLUME_ID)
+                           && !_current_entry->has_attribute(FATFileAttribute::LONG_FILE_NAME))) {
                     advance();
                     if (_state != DirectoryIteratorState::ITERATING) return *this;
                 }
