@@ -44,12 +44,12 @@ namespace Rune::VFS {
     /**
      * Modes of iteration define, how a directory is iterated:
      * <ul>
-     *  <li>LIST_DIRECTORY: Iterate over all used file entries. Long file name and empty entries are
-     * not returned. Iteration stops at the last used file entry.</li> <li>LIST_ALL: Iterate over
-     * all file entries including empty entries. Long file name entries are not returned. Iteration
-     * stops at the end of all allocated clusters.</li> <li>ATOMIC: Iterate atomically over all file
-     * entries, that is each used, empty and long file name entry is returned. Iteration stops at
-     * the end of all allocated clusters.</li>
+     *  <li>LIST_DIRECTORY: Iterate over all used file entries. Long file name, volume label and
+     * empty entries are not returned. Iteration stops at the last used file entry.</li>
+     * <li>LIST_ALL: Iterate over all file entries including empty entries. Long file name entries
+     * are not returned. Iteration stops at the end of all allocated clusters.</li> <li>ATOMIC:
+     * Iterate atomically over all file entries, that is each used, empty and long file name entry
+     * is returned. Iteration stops at the end of all allocated clusters.</li>
      * </ul>
      */
 #define DIRECTORY_ITERATION_MODES(X)                                                               \
