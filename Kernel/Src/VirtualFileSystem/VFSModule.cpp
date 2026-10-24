@@ -45,7 +45,7 @@ namespace Rune::VFS {
         auto           msd_list =
             ds->get_devices<Device::MassStorageDevice>(Device::DeviceType::MASS_STORAGE_DEVICE);
         for (auto& msd : msd_list) {
-            if (msd->mass_storage_device_type() == Device::MassStorageDeviceType::PARTITION) {
+            if (msd->mass_storage_device_type() == Device::MassStorageDeviceType::ROOT_PARTITION) {
                 msd_handle = msd->get_handle();
                 break;
             }
@@ -390,17 +390,22 @@ namespace Rune::VFS {
         if (!path.is_absolute()) // Cannot resolve relative paths
             return false;
 
-        Path remaining = path;
-        while (!remaining.is_root()) {
-            MountPointInfo         mpi    = resolve(path);
+        Path           remaining = path;
+        MountPointInfo mpi       = resolve(remaining);
+        while (true) {
             UniquePointer<Driver>* driver = _driver_table.find(mpi.m_driver_name)->value;
             if (driver == nullptr) return false;
 
-            auto relative = remaining.relative_to(mpi.m_mount_point);
-            if (!(*driver)->is_valid_file_path(relative)) return false;
-            remaining = remaining.common_path(mpi.m_mount_point);
+            // Let the filesystem mounted at mpi validate its part of the path
+            if (!(*driver)->is_valid_file_path(remaining.relative_to(mpi.m_mount_point)))
+                return false;
+            if (mpi.m_mount_point.is_root()) return true;
+
+            // The mount point folder itself belongs to the filesystem it is mounted on. Resolve
+            // its parent, otherwise resolve() matches the mount point again
+            remaining = mpi.m_mount_point;
+            mpi       = resolve(remaining.get_parent());
         }
-        return true;
     }
 
     auto VFSModule::create(const Path& path, U8 attributes) -> IOStatus {
