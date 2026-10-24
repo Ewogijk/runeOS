@@ -67,8 +67,10 @@ namespace Rune {
         if (path.to_string().is_empty()) return {};
         if (is_absolute() != path.is_absolute()) return {};
         if (*this == path) return *this;
-        LinkedListIterator<String> o_it = path.split().begin();
-        LinkedListIterator<String> t_it = split().begin();
+        LinkedList<String>         o_split = path.split();
+        LinkedList<String>         t_split = split();
+        LinkedListIterator<String> o_it    = o_split.begin();
+        LinkedListIterator<String> t_it    = t_split.begin();
         Path                       common(is_absolute() ? String() + UNIX_PATH_SEPARATOR : "");
         while (t_it.has_next() && o_it.has_next()) {
             if (*t_it != *o_it) break;
