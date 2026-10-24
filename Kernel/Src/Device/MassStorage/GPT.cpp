@@ -194,11 +194,13 @@ namespace Rune::Device {
         auto buf_size = header.m_size_of_partition_entry * header.m_number_of_partition_entries;
         if (!memory_is_aligned(buf_size, sector_size))
             buf_size = memory_align(buf_size, sector_size, true);
-        U8  partition_table_buf[buf_size]; // NOLINT size is dynamic -> cannot use Array
-        U32 b_pos = 0;
-        U64 c_lba = header.m_partition_entry_lba;
+
+        /// buf_size can be huge (~16KiB), so it is best to heap allocate the buffer
+        auto partition_table_buf = UniquePointer<U8>(new U8[buf_size]);
+        U32  b_pos               = 0;
+        U64  c_lba               = header.m_partition_entry_lba;
         while (b_pos < buf_size) {
-            size_t bytes_read = sector_reader(&partition_table_buf[b_pos],
+            size_t bytes_read = sector_reader(&partition_table_buf.get()[b_pos],
                                               forward<size_t>(sector_size),
                                               forward<U64>(c_lba));
             if (bytes_read != sector_size) {
@@ -211,7 +213,7 @@ namespace Rune::Device {
 
         // Compute partition table CRC
         U32 p_t_crc_32 =
-            compute_crc_32_checksum(partition_table_buf,
+            compute_crc_32_checksum(partition_table_buf.get(),
                                     static_cast<size_t>(header.m_size_of_partition_entry)
                                         * header.m_number_of_partition_entries);
         if (p_t_crc_32 != header.m_partition_entry_array_crc_32) {
@@ -238,7 +240,7 @@ namespace Rune::Device {
         U32                                p_e_buf_idx = 0;
         while (p_e_buf_idx < header.m_number_of_partition_entries) {
             size_t byte_offset = p_e_buf_idx * header.m_size_of_partition_entry;
-            if (memcmp(zeroes.data(), &partition_table_buf[byte_offset], GUID::SIZE) == 0) {
+            if (memcmp(zeroes.data(), &partition_table_buf.get()[byte_offset], GUID::SIZE) == 0) {
                 // Unused entry
                 p_e_buf_idx++;
                 continue;
@@ -246,30 +248,30 @@ namespace Rune::Device {
             GPTPartitionTableEntry pt_e;
             size_t                 pte_offset = 0;
             memcpy(pt_e.m_partition_type_guid.m_buf.data(),
-                   &partition_table_buf[byte_offset],
+                   &partition_table_buf.get()[byte_offset],
                    GUID::SIZE);
 
             pte_offset += GUID::SIZE;
             memcpy(pt_e.m_unique_partition_guid.m_buf.data(),
-                   &partition_table_buf[byte_offset + pte_offset],
+                   &partition_table_buf.get()[byte_offset + pte_offset],
                    GUID::SIZE);
 
             pte_offset += GUID::SIZE;
             pt_e.m_starting_lba =
-                LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+                LittleEndian::to_U64(&partition_table_buf.get()[byte_offset + pte_offset]);
 
             pte_offset += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
             pt_e.m_ending_lba =
-                LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+                LittleEndian::to_U64(&partition_table_buf.get()[byte_offset + pte_offset]);
 
             pte_offset += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
             pt_e.m_attributes =
-                LittleEndian::to_U64(&partition_table_buf[byte_offset + pte_offset]);
+                LittleEndian::to_U64(&partition_table_buf.get()[byte_offset + pte_offset]);
 
             pte_offset += GPTPartitionTableEntry::LBA_AND_ATTRIBUTES_SIZE;
             Array<U16, GPTPartitionTableEntry::PARTITION_NAME_SIZE> name_buf;
             memcpy(name_buf.data(),
-                   &partition_table_buf[byte_offset + pte_offset],
+                   &partition_table_buf.get()[byte_offset + pte_offset],
                    static_cast<size_t>(GPTPartitionTableEntry::PARTITION_NAME_SIZE) * 2);
             pt_e.m_name = decode_gpt_string(name_buf);
 
