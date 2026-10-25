@@ -101,14 +101,13 @@ namespace Rune::Device::USB {
             return true;
         }
         if (prefix->item_tag() == HIDItemTag::POP) {
-            bool is_pop_successful =
-                m_global_item_state_table_stack.remove_back()
-                    .map<bool>([this](LinkedList<ShortItem> table) -> bool {
-                        m_global_item_state_table.clear();
-                        m_global_item_state_table = move(table);
-                        return true;
-                    })
-                    .value_or(false);
+            bool is_pop_successful = m_global_item_state_table_stack.remove_back()
+                                         .map<bool>([this](LinkedList<ShortItem> table) -> bool {
+                                             m_global_item_state_table.clear();
+                                             m_global_item_state_table = move(table);
+                                             return true;
+                                         })
+                                         .value_or(false);
             if (!is_pop_successful) {
                 WARN("Failed to pop global item state table");
                 return false;

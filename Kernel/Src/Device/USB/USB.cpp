@@ -181,6 +181,14 @@ namespace Rune::Device::USB {
 
     DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0)
 
+    auto ControlTransferRequest::direction() const -> Direction {
+        return Direction(static_cast<U8>(bit_check(m_index, 7)));
+    }
+
+    auto ControlTransferRequest::endpoint_number() const -> U8 { return nibble_get(m_index, 0); }
+
+    auto ControlTransferRequest::interface_number() const -> U8 { return byte_get(m_index, 0); }
+
     auto ControlTransferRequest::of(Ember::Handle handle,
                                     U8            bm_request_type,
                                     U8            b_request,

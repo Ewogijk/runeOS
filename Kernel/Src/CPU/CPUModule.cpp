@@ -324,8 +324,6 @@ namespace Rune::CPU {
                 case ThreadState::RUNNING:
                     // Do not stop the running thread because we do not want a context switch to
                     // happen
-                    WARN("{}: Thread is executing, will not stop",
-                         thread_to_stop->get_unique_name())
                     return true;
                 case ThreadState::BLOCK_PENDING:
                     if (g_scheduler.get_running_thread()->get_handle()
@@ -387,7 +385,7 @@ namespace Rune::CPU {
         auto maybe_wait_list = _joining_threads.find(handle);
         if (maybe_wait_list == _joining_threads.end()) {
             _joining_threads[handle] = LinkedList<SharedPointer<Thread>>();
-            maybe_wait_list                  = _joining_threads.find(handle);
+            maybe_wait_list          = _joining_threads.find(handle);
         }
         DEBUG("{}: Sync with {}",
               calling_thread->get_unique_name(),

@@ -344,6 +344,21 @@ namespace Rune::Device::USB {
         U16                   m_length       = 0; // wLength
         void*                 m_data_buffer  = nullptr;
 
+        /// @brief
+        /// @return If wIndex specifies an endpoint: The direction of the endpoint.
+        ///         Otherwise: The value is not defined.
+        [[nodiscard]] auto direction() const -> Direction;
+
+        /// @brief
+        /// @return @return If wIndex specifies an endpoint: The endpoint number.
+        ///         Otherwise: The value is not defined.
+        [[nodiscard]] auto endpoint_number() const -> U8;
+
+        /// @brief
+        /// @return @return If wIndex specifies an interface: The interface number.
+        ///         Otherwise: The value is not defined.
+        [[nodiscard]] auto interface_number() const -> U8;
+
         /// @brief Create a control transfer request.
         /// @param handle Handle of a FunctionDevice.
         /// @param bm_request_type bmRequestType.
