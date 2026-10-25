@@ -242,7 +242,8 @@ namespace Rune::Device {
             }
             recovery_attempts = 0;
 
-            TRACE("Report: {}", String::join(", ", keyboard_report.get(), int_in_ep.m_max_packet_size))
+            TRACE("Report: {}",
+                  String::join(", ", keyboard_report.get(), int_in_ep.m_max_packet_size))
             make_hid_keyboard_frame(kb_ctx->m_key_code_input_report,
                                     keyboard_report.get(),
                                     int_in_ep.m_max_packet_size,

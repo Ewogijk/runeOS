@@ -58,7 +58,7 @@ namespace Rune::Device::USB {
     };
 
     // ========================================================================================== //
-    // XHCIDriver
+    // Device Context System Memory
     // ========================================================================================== //
 
     /// @brief Mapping of the device context and transfer rings to a slot.
@@ -85,6 +85,96 @@ namespace Rune::Device::USB {
         U8                                                 m_slot_ID;
     };
 
+    // ========================================================================================== //
+    // Control Transfer Interception
+    // ========================================================================================== //
+
+    class XHCIDriver;
+
+    /// @brief An interceptor for control transfers that does xHC reconfiguration before forwarding
+    ///         the request to the USB device.
+    class ControlTransferInterceptor {
+      public:
+        virtual ~ControlTransferInterceptor() = default;
+
+        /// @brief Try to intercept the control transfer request.
+        /// @return HANDLED: The interception and ctr forwarding was successful.
+        ///         Other statuses: An error occurred while intercepting ctr.
+        ///         Empty optional: ctr was not intercepted. The xHCI shall forward ctr itself.
+        ///
+        /// The interceptor shall verify that ctr is a request it wants to intercept by examining
+        /// the contents.
+        ///
+        /// If the interceptor decides to intercept ctr, it shall update the xHC as required and
+        /// then forward ctr itself to the USB device and return the status of the IORequest.
+        virtual auto intercept(XHCIDriver&                                     driver,
+                               ControlTransferRequest*                         ctr,
+                               TransferResponse*                               tr,
+                               const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                               const SharedPointer<CompositeDevice>&           composite_device,
+                               const SharedPointer<FunctionDevice>&            function_device)
+            -> Optional<CPU::Future<IORequestStatus>> = 0;
+    };
+
+    /// @brief Update the xHC alternate setting of the endpoint context and update the active
+    ///         setting of the function device.
+    ///
+    /// The interceptor will:
+    /// 1. Update the xHC endpoint context
+    /// 2. Forward the SET_INTERFACE request to the USB device
+    /// 3. Update the active setting of the function device
+    ///
+    /// If the SET_INTERFACE request fails, the xHC endpoint context configuration will be reverted
+    /// to the old configuration. Should this fail the xHC and USB device will not be in a synced
+    /// state and communication is no longer possible.
+    class SetInterfaceInterceptor : public ControlTransferInterceptor {
+      public:
+        auto intercept(XHCIDriver&                                     driver,
+                       ControlTransferRequest*                         ctr,
+                       TransferResponse*                               tr,
+                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                       const SharedPointer<CompositeDevice>&           composite_device,
+                       const SharedPointer<FunctionDevice>&            function_device)
+            -> Optional<CPU::Future<IORequestStatus>> override;
+    };
+
+    /// @brief Transition the xHC endpoint contexts to the STOPPED state before forwarding the
+    ///         CLEAR_FEATURE(ENDPOINT_HALT) to the USB device.
+    ///
+    /// When a USB device reports a stall error, the xHC endpoint contexts require a reset as well.
+    /// The interceptor will:
+    /// 1. Transition the xHC endpoint context to a functional state
+    ///     1.1 If the endpoint state is HALTED: Send "Reset Endpoint"
+    ///     1.2 If the endpoint state is ERROR: Send "Set TR Dequeue Pointer"
+    ///     1.3 Otherwise: Reset the USB device's data toggle (USB2) or sequence number (USB3.2).
+    /// 2. Forward the CLEAR_FEATURE(ENDPOINT_HALT) to the USB device.
+    class ClearFeatureEndpointHaltInterceptor : public ControlTransferInterceptor {
+      public:
+        auto intercept(XHCIDriver&                                     driver,
+                       ControlTransferRequest*                         ctr,
+                       TransferResponse*                               tr,
+                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                       const SharedPointer<CompositeDevice>&           composite_device,
+                       const SharedPointer<FunctionDevice>&            function_device)
+            -> Optional<CPU::Future<IORequestStatus>> override;
+    };
+
+    // ========================================================================================== //
+    // Inflight TD
+    // ========================================================================================== //
+
+#define RECOVERIES(X)                                                                              \
+    X(TransferEventErrorRecovery, ABORT_TD, 0x1)                                                   \
+    X(TransferEventErrorRecovery, SKIP_TRANSFER_EVENT, 0x2)
+
+    /// @brief The recovery instructions will be used by the interrupt handler to decide what to do
+    ///         when an error on a transfer event was detected.
+    ///
+    /// - NONE: No error was detected.
+    /// - ABORT_TD: Abort all inflight TRBs of the TD.
+    /// - SKIP_TRANSFER_EVENT: Skip this transfer event, do not resolve a TD.
+    DECLARE_ENUM(TransferEventErrorRecovery, RECOVERIES, 0x0) // NOLINT
+
     /// @brief An inflight transfer descriptor (TD) is a collection of TRBs that have been sent to
     ///         the xHC but not yet handled.
     ///
@@ -101,7 +191,21 @@ namespace Rune::Device::USB {
         TransferResponse*                  m_response     = nullptr;
         U8                                 m_slot_ID      = 0;
         U8                                 m_DCI          = 0;
+
+        /// @brief Get the index of the inflight trb with the given address.
+        /// @param inflight_trb_address
+        /// @return Index of the inflight trb if found, else an empty optional.
+        auto index_of(PhysicalAddr inflight_trb_address) -> Optional<U8>;
+
+        /// @brief Update the residual bytes for the given transfer event TRB if no residual bytes
+        ///         have been set yet.
+        /// @param te
+        void update_residual_bytes(TransferEventTRB* te);
     };
+
+    // ========================================================================================== //
+    // XHCIDriver
+    // ========================================================================================== //
 
     /// @brief Implementation of the eXtensible Host Controller Interface rev 2.0 specification.
     ///
@@ -186,7 +290,7 @@ namespace Rune::Device::USB {
         HashMap<PhysicalAddr, CPU::Promise<CommandCompletionEventTRB>>
             m_inflight_command_trb_tracker;
 
-        /// @brief Guards m_inflight_trb_table, m_inflight_command_trb_table and
+        /// @brief Guards m_inflight_trb_tracker, m_inflight_command_trb_tracker and
         ///         DeviceContextSystemMemory::m_ep_states. Request-submitting threads insert
         ///         entries, while the delayed event-TRB handler (running on a worker thread) looks
         ///         them up and removes them. Never held across a Future::get().
@@ -214,6 +318,74 @@ namespace Rune::Device::USB {
         HashMap<U8, SharedPointer<DeviceContextSystemMemory>> m_dc_system_memory_by_slot;
 
         // ====================================================================================== //
+        // Control Transfer Interception
+        // ====================================================================================== //
+
+        friend SetInterfaceInterceptor;
+        friend ClearFeatureEndpointHaltInterceptor;
+        Array<UniquePointer<ControlTransferInterceptor>, 2> m_control_transfer_interceptors;
+
+        // ====================================================================================== //
+        // Endpoint Context State Machine Handling
+        // ====================================================================================== //
+
+        /// @brief Enable the default control endpoint on the device and transition the endpoint
+        ///         context from Disabled to Running.
+        /// @param dc_sys_mem
+        /// @param port_idx
+        /// @param port_speed
+        /// @return The control endpoint max packet size.
+        auto address_device(const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                            U8                                              port_idx,
+                            PortSpeed port_speed) -> Optional<U16>;
+
+        /// @brief Send a configure endpoint command to the xHC and update the endpoint states when
+        ///         the command succeeded.
+        /// @param ic
+        /// @param dc_sys_memory
+        /// @return The completion code of the TRB transfer.
+        ///
+        /// If an endpoint is dropped: Transition to the DISABLED state.
+        /// If an endpoint is added: Transition to the RUNNING state.
+        auto configure_endpoint(const UniquePointer<InputContext>&              ic,
+                                const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
+            -> CompletionCode;
+
+        /// @brief Send the Reset Endpoint command and transition from HALTED to STOPPED.
+        ///        Expects m_recovery_lock to be held.
+        /// @return True: The command finished successfully, False: Otherwise
+        auto reset_endpoint(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory, U8 dci)
+            -> bool;
+
+        /// @brief Send "Set TR Dequeue Pointer", set DCS to PCS of the transfer ring and transition
+        ///         from ERROR to STOPPED or keep the state in STOPPED.
+        /// @param dc_sys_memory
+        /// @param dci
+        /// @return True: The command finished successfully, False: Otherwise
+        auto set_tr_dequeue_pointer(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    U8                                              dci) -> bool;
+
+        /// @brief Send a stop endpoint command to the given endpoint and transition to the STOPPED
+        ///         state.
+        /// @param dc_sys_memory
+        /// @param dci
+        /// @param endpoint
+        /// @return True: The command finished successfully, False: Otherwise
+        auto stop_endpoint(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                           U8                                              dci,
+                           const Endpoint&                                 endpoint) -> bool;
+
+        /// @brief Ring the doorbell of the target and transition from STOPPED to RUNNING.
+        auto ring_doorbell(const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                           U8                                              dci,
+                           DeviceContextDoorbellTarget doorbell_target) const -> void;
+
+        /// @brief Check if any transfer event error has happened and transition to HALTED or ERROR.
+        /// @param te Transfer event TRB.
+        /// @return
+        auto check_transfer_event_errors(TransferEventTRB* te) -> TransferEventErrorRecovery;
+
+        // ====================================================================================== //
         // Event TRB Handling
         // ====================================================================================== //
 
@@ -229,6 +401,8 @@ namespace Rune::Device::USB {
                                TransferResponse*   response,
                                U8                  slot_ID,
                                U8                  dci) -> CPU::Future<IORequestStatus>;
+
+        void resolve_inflightTD(TransferEventTRB* te);
 
         /// @brief Abort all inflight TDs for the given slot and DCI. All promises will be resolved
         ///         with status. Expects the m_inflight_tracker_lock to be held.
@@ -258,18 +432,11 @@ namespace Rune::Device::USB {
         // Endpoint Configuration
         // ====================================================================================== //
 
-        auto drop_endpoint_context(const UniquePointer<InputContext>&              ic,
-                                   const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                                   const Endpoint& endpoint) -> bool;
-
-        /// @brief Set the drop bit for all endpoints of alt in ic. If an endpoint is running it
-        ///         will be stopped.
-        /// @return True: All running endpoints are stopped.
-        ///         False: Otherwise.
-        auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
-                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                                    const AlternateSetting& alt_setting) -> bool;
-
+        /// @brief Configure the endpoint and add it to the add context of the input context.
+        /// @param ic
+        /// @param dc_sys_memory
+        /// @param endpoint
+        /// @return True: The configuration succeeded, False: Otherwise.
         static auto
         add_endpoint_context(const UniquePointer<InputContext>&              ic,
                              const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
@@ -283,12 +450,29 @@ namespace Rune::Device::USB {
                               const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                               const AlternateSetting&                         alt_setting) -> bool;
 
+        /// @brief Add the endpoint to the drop context of the input context and send a
+        ///         StopEndpointCommandTRB if the endpoint is running.
+        /// @param ic
+        /// @param dc_sys_memory
+        /// @param endpoint
+        /// @return True: The endpoint could not be stopped, False: Otherwise.
+        auto drop_endpoint_context(const UniquePointer<InputContext>&              ic,
+                                   const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                   const Endpoint& endpoint) -> bool;
+
+        /// @brief Set the drop bit for all endpoints of alt in ic. If an endpoint is running it
+        ///         will be stopped.
+        /// @return True: All running endpoints are stopped.
+        ///         False: Otherwise.
+        auto drop_endpoint_contexts(const UniquePointer<InputContext>&              ic,
+                                    const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
+                                    const AlternateSetting& alt_setting) -> bool;
+
         /// @brief
         /// @return The index of the last valid endpoint context.
         static auto
-        compute_context_entries(const UniquePointer<InputContext>&              ic,
-                                const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
-            -> U8;
+        get_context_entries(const UniquePointer<InputContext>&              ic,
+                            const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> U8;
 
         /// @brief  Clear the transfer ring of all endpoints where the drop bit is set and init the
         ///         transfer rings of all endpoints where the add bit is set.
@@ -297,15 +481,6 @@ namespace Rune::Device::USB {
         auto update_endpoint_transfer_ring_states(
             const UniquePointer<InputContext>&              ic,
             const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> bool;
-
-        /// @brief Send a configure endpoint command to the xHC and update the endpoint states when
-        /// the command succeeded.
-        /// @param ic
-        /// @param dc_sys_memory
-        /// @return
-        auto send_configure_endpoint_command(
-            const UniquePointer<InputContext>&              ic,
-            const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory) -> CompletionCode;
 
         /// @brief Reconfigure the endpoints of one interface for a USB SET_INTERFACE request via a
         ///         Configure Endpoint Command §4.3.6, before the request itself is forwarded to the
@@ -323,41 +498,12 @@ namespace Rune::Device::USB {
                                       const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory)
             -> bool;
 
-        /// @brief Transition an endpoint context from HALTED or ERROR states to the STOPPED state.
-        ///        Expects m_recovery_lock to be held.
-        auto reset_endpoint(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
-                            U8                                              endpoint_number,
-                            Direction                                       direction,
-                            TransferType                                    transfer_type) -> bool;
-
         /// @brief Reset the endpoint context transfer ring and transition to the RUNNING state.
         ///        Expects m_recovery_lock to be held.
         auto reset_data_toggle(const SharedPointer<DeviceContextSystemMemory>& dc_sys_memory,
                                const SharedPointer<FunctionDevice>&            function_device,
                                U8                                              endpoint_number,
                                Direction                                       direction) -> bool;
-
-        // ====================================================================================== //
-        // IO Requests
-        // ====================================================================================== //
-
-        /// @brief Send a control transfer §3.2.9 and §4.11.2.2
-        auto
-        handle_control_transfer_request(const ControlTransferRequest& control_transfer_request,
-                                        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                        TransferResponse* response) -> CPU::Future<IORequestStatus>;
-
-        /// @brief Send a bulk or interrupt transfer §3.2.10 and §4.11.2.1
-        auto handle_bulk_interrupt_transfer_request(
-            const DataTransferRequest&                      data_transfer_request,
-            const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-            TransferResponse* response) -> CPU::Future<IORequestStatus>;
-
-        /// @brief Send an isochronous transfer §3.2.11 and §4.11.2.3.
-        auto
-        handle_isoch_transfer_request(const IsochDataTransferRequest& isoch_transfer_request,
-                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                      TransferResponse* response) -> CPU::Future<IORequestStatus>;
 
         // ====================================================================================== //
         // Host Controller Initialization
@@ -385,10 +531,6 @@ namespace Rune::Device::USB {
 
         auto allocate_device_context_system_memory(U8 slot_ID)
             -> SharedPointer<DeviceContextSystemMemory>;
-
-        auto send_address_device_command(const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
-                                         U8                                              port_idx,
-                                         PortSpeed port_speed) -> Optional<U16>;
 
         auto update_max_packet_size(const DeviceDescriptor& dd_partial,
                                     U16                     max_packet_size,
@@ -450,6 +592,28 @@ namespace Rune::Device::USB {
 
         auto perform_device_initialization(volatile PortRegisterSet& prs, U8 port, bool is_usb2)
             -> bool;
+
+        // ====================================================================================== //
+        // IO Requests
+        // ====================================================================================== //
+
+        /// @brief Send a control transfer §3.2.9 and §4.11.2.2
+        auto
+        handle_control_transfer_request(const ControlTransferRequest& control_transfer_request,
+                                        const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                                        TransferResponse* response) -> CPU::Future<IORequestStatus>;
+
+        /// @brief Send a bulk or interrupt transfer §3.2.10 and §4.11.2.1
+        auto handle_bulk_interrupt_transfer_request(
+            const DataTransferRequest&                      data_transfer_request,
+            const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+            TransferResponse* response) -> CPU::Future<IORequestStatus>;
+
+        /// @brief Send an isochronous transfer §3.2.11 and §4.11.2.3.
+        auto
+        handle_isoch_transfer_request(const IsochDataTransferRequest& isoch_transfer_request,
+                                      const SharedPointer<DeviceContextSystemMemory>& dc_sys_mem,
+                                      TransferResponse* response) -> CPU::Future<IORequestStatus>;
 
       public:
         static const PCIDeviceID ID_XHCI;

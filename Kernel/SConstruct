@@ -252,8 +252,11 @@ def configure_compiler(env: Environment) -> None:
     nasm_include_dir = str(Path.cwd() / "Src" / "KRE" / "HAL" / build_env["arch"])
     build_env.Append(NASMPATH=[nasm_include_dir])
     # Flags
+    # -w+reloc-rel-dword: Warns if a jump is bigger than +-2GiB, triggered by "extern" symbols since nasm cannot resolve
+    #                     where the jump ends up. Warnings are false positives and would be caught by the linker.
     env["ASFLAGS"] = [
         "-Wall",
+        "-w+reloc-rel-dword",
         "-f",
         "elf64",
         "-I",

@@ -848,11 +848,11 @@ namespace Rune::Device::USB {
         return (m_register & PTR_MASK) >> PTR_SHIFT;
     }
     auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_DCS(bool v) -> void {
-        m_register = v ? bit_set(m_register, DCS_BIT_OFFSET) : bit_clear(m_register, DCS_BIT_OFFSET);
+        m_register =
+            v ? bit_set(m_register, DCS_BIT_OFFSET) : bit_clear(m_register, DCS_BIT_OFFSET);
     }
     auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_SCT(U8 val) -> void {
-        m_register =
-            (m_register & ~SCT_MASK) | ((static_cast<U32>(val) << SCT_SHIFT) & SCT_MASK);
+        m_register = (m_register & ~SCT_MASK) | ((static_cast<U32>(val) << SCT_SHIFT) & SCT_MASK);
     }
     auto SetTRDequeuePointerCommandTRB::DequeuePtrLoDWord::set_ptr(U32 val) -> void {
         // DCS and SCT share this DWord -> Preserve them
@@ -863,8 +863,8 @@ namespace Rune::Device::USB {
         return static_cast<U16>((m_register & STREAM_ID_MASK) >> SHIFT_16);
     }
     auto SetTRDequeuePointerCommandTRB::StreamIDDWord::set_stream_id(U16 val) -> void {
-        m_register = (m_register & ~STREAM_ID_MASK)
-                     | ((static_cast<U32>(val) << SHIFT_16) & STREAM_ID_MASK);
+        m_register =
+            (m_register & ~STREAM_ID_MASK) | ((static_cast<U32>(val) << SHIFT_16) & STREAM_ID_MASK);
     }
 
     [[nodiscard]] auto SetTRDequeuePointerCommandTRB::ControlDWord::cycle() const -> bool {
