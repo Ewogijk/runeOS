@@ -113,14 +113,14 @@ namespace Rune::Device::USB {
     static_assert(sizeof(SlotContext) == XHCI_CONTEXT_DWORDS * sizeof(U32));
 
 #define EP_STATES(X)                                                                               \
-    X(EndpointState, DISABLED, 0x0)                                                                \
-    X(EndpointState, RUNNING, 0x1)                                                                 \
-    X(EndpointState, HALTED, 0x2)                                                                  \
-    X(EndpointState, STOPPED, 0x3)                                                                 \
-    X(EndpointState, ERROR, 0x4)
+    X(DISABLED, 0x0)                                                                               \
+    X(RUNNING, 0x1)                                                                                \
+    X(HALTED, 0x2)                                                                                 \
+    X(STOPPED, 0x3)                                                                                \
+    X(ERROR, 0x4)
 
     /// @brief Endpoint states - $4.8.3
-    DECLARE_TYPED_ENUM(EndpointState, U8, EP_STATES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(EndpointState, EP_STATES, 0xFF, U8) // NOLINT
 
     /// @brief Endpoint Context — describes one endpoint (xHCI 2.0 §6.2.3 Table 6-9).
     struct EndpointContext {

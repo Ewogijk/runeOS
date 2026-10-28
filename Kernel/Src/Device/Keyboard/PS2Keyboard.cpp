@@ -24,30 +24,27 @@
 
 namespace Rune::Device {
 #define PORTS(X)                                                                                   \
-    X(Port, DATA, 0x60)                                                                            \
-    X(Port, COMMAND_WRITE, 0x64)                                                                   \
-    X(Port, STATUS_READ, 0x64)
+    X(DATA, 0x60)                                                                                  \
+    X(COMMAND_WRITE, 0x64)                                                                         \
+    X(STATUS_READ, 0x64)
 
-    DECLARE_TYPED_ENUM(Port, U8, PORTS, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Port, U8, PORTS, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Port, PORTS, 0x0, U8) // NOLINT
 
-#define COMMANDS(X) X(Command, GET_SET_SCANCODE_SET, 0xF0)
+#define COMMANDS(X) X(GET_SET_SCANCODE_SET, 0xF0)
 
-    DECLARE_TYPED_ENUM(Command, U8, COMMANDS, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Command, U8, COMMANDS, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Command, COMMANDS, 0x0, U8) // NOLINT
 
 #define RESPONSES(X)                                                                               \
-    X(Response, KEY_ERROR_OR_BUF_OVERRUN, 0x00)                                                    \
-    X(Response, SELF_TEST_PASSED, 0xAA)                                                            \
-    X(Response, ECHO, 0xEE)                                                                        \
-    X(Response, ACK, 0xFA)                                                                         \
-    X(Response, SELF_TEST_FAILED, 0xFC)                                                            \
-    X(Response, SELF_TEST_FAILED2, 0xFD)                                                           \
-    X(Response, RESEND, 0xFE)                                                                      \
-    X(Response, KEY_ERROR_OR_BUF_OVERRUN2, 0xFF)
+    X(KEY_ERROR_OR_BUF_OVERRUN, 0x00)                                                              \
+    X(SELF_TEST_PASSED, 0xAA)                                                                      \
+    X(ECHO, 0xEE)                                                                                  \
+    X(ACK, 0xFA)                                                                                   \
+    X(SELF_TEST_FAILED, 0xFC)                                                                      \
+    X(SELF_TEST_FAILED2, 0xFD)                                                                     \
+    X(RESEND, 0xFE)                                                                                \
+    X(KEY_ERROR_OR_BUF_OVERRUN2, 0xFF)
 
-    DECLARE_TYPED_ENUM(Response, U8, RESPONSES, 0x01) // NOLINT
-    DEFINE_TYPED_ENUM(Response, U8, RESPONSES, 0x01)  // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Response, RESPONSES, 0x01, U8) // NOLINT
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                          PS2 Scan Code Set 1
@@ -65,7 +62,7 @@ namespace Rune::Device {
     /// Make codes that are not listed are implicitly Key::NONE, that is the key is either unknown
     /// or a modifier key, which is decoded by "decode_modifier_bit" instead.
     // clang-format off
-    constexpr Key::_E SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
+    constexpr Key SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
         /* 0x00 */ Key::NONE,          Key::ESCAPE,        Key::ONE,           Key::TWO,
         /* 0x04 */ Key::THREE,         Key::FOUR,          Key::FIVE,          Key::SIX,
         /* 0x08 */ Key::SEVEN,         Key::EIGHT,         Key::NINE,          Key::ZERO,
@@ -93,7 +90,7 @@ namespace Rune::Device {
 
     /// @brief Maps a scan code set 1 make code that is prefixed with the extended byte to it's
     ///         virtual key.
-    constexpr Key::_E E_0_SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
+    constexpr Key E_0_SCAN_CODE_DECODER[MAKE_CODE_COUNT] = {
         /* 0x00 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
         /* 0x04 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
         /* 0x08 */ Key::NONE,          Key::NONE,          Key::NONE,          Key::NONE,
@@ -193,7 +190,7 @@ namespace Rune::Device {
     const BasicDeviceID PS2Keyboard::ID_PS2_KEYBOARD("PS2 Keyboard");
 
     PS2Keyboard::PS2Keyboard()
-        : _irq_handler([](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+        : _irq_handler([](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState {
               SILENCE_UNUSED(i_frame);
               return CPU::InterruptState::PENDING;
           }) {}
@@ -256,7 +253,7 @@ namespace Rune::Device {
 
     auto PS2Keyboard::bind(const SharedPointer<Device>& device) -> bool {
         SILENCE_UNUSED(device)
-        _irq_handler = [this](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+        _irq_handler = [this](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState {
             SILENCE_UNUSED(i_frame);
             handle_scan_code(CPU::in_b(DATA_REGISTER));
             return CPU::InterruptState::HANDLED;

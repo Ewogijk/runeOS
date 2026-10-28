@@ -33,9 +33,9 @@
 namespace Rune::CPU {
 
 #define CPU_EVENT_HOOKS(X)                                                                         \
-    X(EventHook, THREAD_CREATED, 0x1)                                                              \
-    X(EventHook, THREAD_STOPPED, 0x2)                                                              \
-    X(EventHook, THREAD_PREEMPTED, 0x3)
+    X(THREAD_CREATED, 0x1)                                                                         \
+    X(THREAD_STOPPED, 0x2)                                                                         \
+    X(THREAD_PREEMPTED, 0x3)
 
     /// @brief CPU module event hooks
     ///
@@ -46,7 +46,7 @@ namespace Rune::CPU {
     ///                         terminated and next to be scheduled thread.
     /// - THREAD_PREEMPTED: A context switch is about to happen.
     ///                     Event Context - Thread*: The next thread that will be scheduled.
-    DECLARE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0) // NOLINT
 
     /// @brief Event context of the "THREAD_STOPPED" event hook.
     struct ThreadPreemptionContext {

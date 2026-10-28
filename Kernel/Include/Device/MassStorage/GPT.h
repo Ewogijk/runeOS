@@ -115,10 +115,10 @@ namespace Rune::Device {
     };
 
 #define GPT_SCAN_STATUSES(X)                                                                       \
-    X(GPTError, NOT_DETECTED, 0x1)                                                                 \
-    X(GPTError, CORRUPT_HEADER, 0x2)                                                               \
-    X(GPTError, CORRUPT_PARTITION_TABLE, 0x3)                                                      \
-    X(GPTError, STORAGE_DEV_ERROR, 0x4)
+    X(NOT_DETECTED, 0x1)                                                                           \
+    X(CORRUPT_HEADER, 0x2)                                                                         \
+    X(CORRUPT_PARTITION_TABLE, 0x3)                                                                \
+    X(STORAGE_DEV_ERROR, 0x4)
 
     /// @brief Possible errors when parsing a GPT.
     ///
@@ -126,7 +126,7 @@ namespace Rune::Device {
     /// - CORRUPT_HEADER: The CRC of the header is wrong.
     /// - CORRUPT_PARTITION_TABLE: The CRC of the partition table is wrong.
     /// - STORAGE_DEV_ERROR: The storage device had an error.
-    DECLARE_ENUM(GPTError, GPT_SCAN_STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(GPTError, GPT_SCAN_STATUSES, 0x0) // NOLINT
 
     /// @brief End result of trying to detect a GPT on a storage device.
     ///

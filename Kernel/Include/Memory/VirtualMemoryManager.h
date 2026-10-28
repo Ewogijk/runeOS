@@ -22,13 +22,13 @@
 namespace Rune::Memory {
 
 #define VMMStartFailures(X)                                                                        \
-    X(VMMStartFailure, BASE_PT_ALLOC_FAIL, 0x1)                                                    \
-    X(VMMStartFailure, HHDM_MAPPING_FAIL, 0x2)                                                     \
-    X(VMMStartFailure, KERNEL_CODE_MAPPING_FAIL, 0x3)                                              \
-    X(VMMStartFailure, PMM_MAPPING_FAIL, 0x4)                                                      \
-    X(VMMStartFailure, KERNEL_HEAP_MAPPING_FAIL, 0x5)
+    X(BASE_PT_ALLOC_FAIL, 0x1)                                                                     \
+    X(HHDM_MAPPING_FAIL, 0x2)                                                                      \
+    X(KERNEL_CODE_MAPPING_FAIL, 0x3)                                                               \
+    X(PMM_MAPPING_FAIL, 0x4)                                                                       \
+    X(KERNEL_HEAP_MAPPING_FAIL, 0x5)
 
-    DECLARE_ENUM(VMMStartFailure, VMMStartFailures, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(VMMStartFailure, VMMStartFailures, 0x0) // NOLINT
 
     /**
      * Result of allocating pages for a kernel memory region.

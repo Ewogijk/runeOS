@@ -17,7 +17,6 @@
 #include <KRE/BitsAndBytes.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0)
 
     FileEntryManager::FileEntryManager(SharedPointer<FATEngine> fat_engine,
                                        VolumeManager*           volume_manager)

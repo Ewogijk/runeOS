@@ -33,13 +33,13 @@ namespace Ember {
      * <ul>
      */
 #define NODE_ATTRIBUTES(X)                                                                         \
-    X(NodeAttribute, READONLY, 0x01)                                                               \
-    X(NodeAttribute, HIDDEN, 0x02)                                                                 \
-    X(NodeAttribute, SYSTEM, 0x04)                                                                 \
-    X(NodeAttribute, DIRECTORY, 0x08)                                                              \
-    X(NodeAttribute, FILE, 0x10)
+    X(READONLY, 0x01)                                                                              \
+    X(HIDDEN, 0x02)                                                                                \
+    X(SYSTEM, 0x04)                                                                                \
+    X(DIRECTORY, 0x08)                                                                             \
+    X(FILE, 0x10)
 
-    DECLARE_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(NodeAttribute, NODE_ATTRIBUTES, 0x0) // NOLINT
 
     /**
      * @brief The mode of operation for a node.
@@ -50,11 +50,11 @@ namespace Ember {
      * </ul>
      */
 #define IO_MODES(X)                                                                                \
-    X(IOMode, READ, 0x1)                                                                           \
-    X(IOMode, WRITE, 0x2)                                                                          \
-    X(IOMode, APPEND, 0x3)
+    X(READ, 0x1)                                                                                   \
+    X(WRITE, 0x2)                                                                                  \
+    X(APPEND, 0x3)
 
-    DECLARE_ENUM(IOMode, IO_MODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(IOMode, IO_MODES, 0x0) // NOLINT
 
     /**
      * @brief Seek modes describe how the new cursor position will be calculated.
@@ -65,11 +65,11 @@ namespace Ember {
      * </ul>
      */
 #define SEEK_MODE(X)                                                                               \
-    X(SeekMode, BEGIN, 0x1)                                                                        \
-    X(SeekMode, CURSOR, 0x2)                                                                       \
-    X(SeekMode, END, 0x3)
+    X(BEGIN, 0x1)                                                                                  \
+    X(CURSOR, 0x2)                                                                                 \
+    X(END, 0x3)
 
-    DECLARE_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SeekMode, SEEK_MODE, 0x0) // NOLINT
 
     /**
      * @brief General information about a node.

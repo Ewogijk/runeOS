@@ -26,16 +26,16 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define REQUEST_TYPES(X)                                                                           \
-    X(RequestType, DIRECTION_HOST_TO_DEVICE, 0b00000000)                                           \
-    X(RequestType, DIRECTION_DEVICE_TO_HOST, 0b10000000)                                           \
-    X(RequestType, TYPE_STANDARD, 0b00000000)                                                      \
-    X(RequestType, TYPE_CLASS, 0b00100000)                                                         \
-    X(RequestType, TYPE_VENDOR, 0b01000000)                                                        \
-    X(RequestType, RECIPIENT_DEVICE, 0b00000000)                                                   \
-    X(RequestType, RECIPIENT_INTERFACE, 0b00000001)                                                \
-    X(RequestType, RECIPIENT_ENDPOINT, 0b00000010)                                                 \
-    X(RequestType, RECIPIENT_OTHER, 0b00000011)                                                    \
-    X(RequestType, RECIPIENT_VENDOR, 0b00011111)
+    X(DIRECTION_HOST_TO_DEVICE, 0b00000000)                                                        \
+    X(DIRECTION_DEVICE_TO_HOST, 0b10000000)                                                        \
+    X(TYPE_STANDARD, 0b00000000)                                                                   \
+    X(TYPE_CLASS, 0b00100000)                                                                      \
+    X(TYPE_VENDOR, 0b01000000)                                                                     \
+    X(RECIPIENT_DEVICE, 0b00000000)                                                                \
+    X(RECIPIENT_INTERFACE, 0b00000001)                                                             \
+    X(RECIPIENT_ENDPOINT, 0b00000010)                                                              \
+    X(RECIPIENT_OTHER, 0b00000011)                                                                 \
+    X(RECIPIENT_VENDOR, 0b00011111)
 
     /// @brief Bit flags composing the bmRequestType field of a Setup packet — USB 3.2 Table 9-3.
     ///
@@ -53,7 +53,7 @@ namespace Rune::Device::USB {
     /// - RECIPIENT_OTHER (bits 4..0 = 3): Request targets an element not covered by the other
     /// recipients.
     /// - RECIPIENT_VENDOR (bits 4..0 = 31): Vendor specific recipient.
-    DECLARE_TYPED_ENUM(RequestType, U8, REQUEST_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(RequestType, REQUEST_TYPES, 0x0, U8) // NOLINT
 
     /// @brief Bit mask to get the direction from bmRequestType.
     constexpr U8 REQUEST_TYPE_DIRECTION_MASK = 0b10000000;
@@ -67,32 +67,32 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define STANDARD_REQUEST_CODES(X)                                                                  \
-    X(StandardRequestCode, GET_STATUS, 0x00)                                                       \
-    X(StandardRequestCode, CLEAR_FEATURE, 0x01)                                                    \
-    X(StandardRequestCode, SET_FEATURE, 0x03)                                                      \
-    X(StandardRequestCode, SET_ADDRESS, 0x05)                                                      \
-    X(StandardRequestCode, GET_DESCRIPTOR, 0x06)                                                   \
-    X(StandardRequestCode, SET_DESCRIPTOR, 0x07)                                                   \
-    X(StandardRequestCode, GET_CONFIGURATION, 0x08)                                                \
-    X(StandardRequestCode, SET_CONFIGURATION, 0x09)                                                \
-    X(StandardRequestCode, GET_INTERFACE, 0x0A)                                                    \
-    X(StandardRequestCode, SET_INTERFACE, 0x0B)                                                    \
-    X(StandardRequestCode, SYNCH_FRAME, 0x0C)                                                      \
-    X(StandardRequestCode, SET_ENCRYPTION, 0x0D)                                                   \
-    X(StandardRequestCode, GET_ENCRYPTION, 0x0E)                                                   \
-    X(StandardRequestCode, SET_HANDSHAKE, 0x0F)                                                    \
-    X(StandardRequestCode, GET_HANDSHAKE, 0x10)                                                    \
-    X(StandardRequestCode, SET_CONNECTION, 0x11)                                                   \
-    X(StandardRequestCode, SET_SECURITY_DATA, 0x12)                                                \
-    X(StandardRequestCode, GET_SECURITY_DATA, 0x13)                                                \
-    X(StandardRequestCode, SET_WUSB_DATA, 0x14)                                                    \
-    X(StandardRequestCode, LOOPBACK_DATA_WRITE, 0x15)                                              \
-    X(StandardRequestCode, LOOPBACK_DATA_READ, 0x16)                                               \
-    X(StandardRequestCode, SET_INTERFACE_DS, 0x17)                                                 \
-    X(StandardRequestCode, GET_FW_STATUS, 0x1A)                                                    \
-    X(StandardRequestCode, SET_FW_STATUS, 0x1B)                                                    \
-    X(StandardRequestCode, SET_SEL, 0x30)                                                          \
-    X(StandardRequestCode, SET_ISOCH_DELAY, 0x31)
+    X(GET_STATUS, 0x00)                                                                            \
+    X(CLEAR_FEATURE, 0x01)                                                                         \
+    X(SET_FEATURE, 0x03)                                                                           \
+    X(SET_ADDRESS, 0x05)                                                                           \
+    X(GET_DESCRIPTOR, 0x06)                                                                        \
+    X(SET_DESCRIPTOR, 0x07)                                                                        \
+    X(GET_CONFIGURATION, 0x08)                                                                     \
+    X(SET_CONFIGURATION, 0x09)                                                                     \
+    X(GET_INTERFACE, 0x0A)                                                                         \
+    X(SET_INTERFACE, 0x0B)                                                                         \
+    X(SYNCH_FRAME, 0x0C)                                                                           \
+    X(SET_ENCRYPTION, 0x0D)                                                                        \
+    X(GET_ENCRYPTION, 0x0E)                                                                        \
+    X(SET_HANDSHAKE, 0x0F)                                                                         \
+    X(GET_HANDSHAKE, 0x10)                                                                         \
+    X(SET_CONNECTION, 0x11)                                                                        \
+    X(SET_SECURITY_DATA, 0x12)                                                                     \
+    X(GET_SECURITY_DATA, 0x13)                                                                     \
+    X(SET_WUSB_DATA, 0x14)                                                                         \
+    X(LOOPBACK_DATA_WRITE, 0x15)                                                                   \
+    X(LOOPBACK_DATA_READ, 0x16)                                                                    \
+    X(SET_INTERFACE_DS, 0x17)                                                                      \
+    X(GET_FW_STATUS, 0x1A)                                                                         \
+    X(SET_FW_STATUS, 0x1B)                                                                         \
+    X(SET_SEL, 0x30)                                                                               \
+    X(SET_ISOCH_DELAY, 0x31)
 
     /// @brief Standard device request codes (bRequest field) — USB 3.2 Table 9-5.
     ///
@@ -122,26 +122,26 @@ namespace Rune::Device::USB {
     /// - SET_FW_STATUS (0x1B): Sets firmware status.
     /// - SET_SEL (0x30): Sets system exit latency values (USB 3.x).
     /// - SET_ISOCH_DELAY (0x31): Sets isochronous delay in the host (USB 3.x).
-    DECLARE_TYPED_ENUM(StandardRequestCode, U8, STANDARD_REQUEST_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(StandardRequestCode, STANDARD_REQUEST_CODES, 0xFF, U8) // NOLINT
 
     // ========================================================================================== //
     // Descriptor Types — USB 3.2 §9.4, Table 9-6
     // ========================================================================================== //
 
 #define DESCRIPTOR_TYPES(X)                                                                        \
-    X(DescriptorType, DEVICE, 0x01)                                                                \
-    X(DescriptorType, CONFIGURATION, 0x02)                                                         \
-    X(DescriptorType, STRING, 0x03)                                                                \
-    X(DescriptorType, INTERFACE, 0x04)                                                             \
-    X(DescriptorType, ENDPOINT, 0x05)                                                              \
-    X(DescriptorType, INTERFACE_POWER, 0x08)                                                       \
-    X(DescriptorType, OTG, 0x09)                                                                   \
-    X(DescriptorType, DEBUG, 0x0A)                                                                 \
-    X(DescriptorType, INTERFACE_ASSOCIATION, 0x0B)                                                 \
-    X(DescriptorType, BOS, 0x0F)                                                                   \
-    X(DescriptorType, DEVICE_CAPABILITY, 0x10)                                                     \
-    X(DescriptorType, SUPERSPEED_USB_ENDPOINT_COMPANION, 0x30)                                     \
-    X(DescriptorType, SUPERSPEEDPLUS_ISOCHRONOUS_ENDPOINT_COMPANION, 0x31)
+    X(DEVICE, 0x01)                                                                                \
+    X(CONFIGURATION, 0x02)                                                                         \
+    X(STRING, 0x03)                                                                                \
+    X(INTERFACE, 0x04)                                                                             \
+    X(ENDPOINT, 0x05)                                                                              \
+    X(INTERFACE_POWER, 0x08)                                                                       \
+    X(OTG, 0x09)                                                                                   \
+    X(DEBUG, 0x0A)                                                                                 \
+    X(INTERFACE_ASSOCIATION, 0x0B)                                                                 \
+    X(BOS, 0x0F)                                                                                   \
+    X(DEVICE_CAPABILITY, 0x10)                                                                     \
+    X(SUPERSPEED_USB_ENDPOINT_COMPANION, 0x30)                                                     \
+    X(SUPERSPEEDPLUS_ISOCHRONOUS_ENDPOINT_COMPANION, 0x31)
 
     /// @brief Descriptor type codes — USB 3.2 Table 9-6.
     ///
@@ -162,27 +162,27 @@ namespace Rune::Device::USB {
     /// - SUPERSPEED_USB_ENDPOINT_COMPANION (0x30): SuperSpeed Endpoint Companion.
     /// - SUPERSPEEDPLUS_ISOCHRONOUS_ENDPOINT_COMPANION (0x31): SuperSpeedPlus Isochronous
     /// Companion.
-    DECLARE_TYPED_ENUM(DescriptorType, U8, DESCRIPTOR_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DescriptorType, DESCRIPTOR_TYPES, 0xFF, U8) // NOLINT
 
     // ========================================================================================== //
     // Standard Feature Selectors — USB 3.2 §9.4, Table 9-7
     // ========================================================================================== //
 
 #define STANDARD_FEATURE_SELECTORS(X)                                                              \
-    X(StandardFeatureSelector, ENDPOINT_HALT, 0x00)                                                \
-    X(StandardFeatureSelector, FUNCTION_SUSPEND, 0x00)                                             \
-    X(StandardFeatureSelector, DEVICE_REMOTE_WAKEUP, 0x01)                                         \
-    X(StandardFeatureSelector, TEST_MODE, 0x02)                                                    \
-    X(StandardFeatureSelector, B_HNP_ENABLE, 0x03)                                                 \
-    X(StandardFeatureSelector, A_HNP_SUPPORT, 0x04)                                                \
-    X(StandardFeatureSelector, A_ALT_HNP_SUPPORT, 0x05)                                            \
-    X(StandardFeatureSelector, WUSB_DEVICE, 0x06)                                                  \
-    X(StandardFeatureSelector, U1_ENABLE, 0x30)                                                    \
-    X(StandardFeatureSelector, U2_ENABLE, 0x31)                                                    \
-    X(StandardFeatureSelector, LTM_ENABLE, 0x32)                                                   \
-    X(StandardFeatureSelector, B3_NTF_HOST_REL, 0x33)                                              \
-    X(StandardFeatureSelector, B3_RSP_ENABLE, 0x34)                                                \
-    X(StandardFeatureSelector, LDM_ENABLE, 0x35)
+    X(ENDPOINT_HALT, 0x00)                                                                         \
+    X(FUNCTION_SUSPEND, 0x00)                                                                      \
+    X(DEVICE_REMOTE_WAKEUP, 0x01)                                                                  \
+    X(TEST_MODE, 0x02)                                                                             \
+    X(B_HNP_ENABLE, 0x03)                                                                          \
+    X(A_HNP_SUPPORT, 0x04)                                                                         \
+    X(A_ALT_HNP_SUPPORT, 0x05)                                                                     \
+    X(WUSB_DEVICE, 0x06)                                                                           \
+    X(U1_ENABLE, 0x30)                                                                             \
+    X(U2_ENABLE, 0x31)                                                                             \
+    X(LTM_ENABLE, 0x32)                                                                            \
+    X(B3_NTF_HOST_REL, 0x33)                                                                       \
+    X(B3_RSP_ENABLE, 0x34)                                                                         \
+    X(LDM_ENABLE, 0x35)
 
     /// @brief Standard feature selector values (wValue for SET_FEATURE / CLEAR_FEATURE) —
     ///        USB 3.2 Table 9-7.
@@ -204,7 +204,7 @@ namespace Rune::Device::USB {
     /// - B3_NTF_HOST_REL (0x33): OTG use only (Device recipient).
     /// - B3_RSP_ENABLE (0x34): OTG use only (Device recipient).
     /// - LDM_ENABLE (0x35): Enable Precision Time Measurement LDM (Device recipient).
-    DECLARE_TYPED_ENUM(StandardFeatureSelector, U8, STANDARD_FEATURE_SELECTORS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(StandardFeatureSelector, STANDARD_FEATURE_SELECTORS, 0xFF, U8) // NOLINT
 
 } // namespace Rune::Device::USB
 

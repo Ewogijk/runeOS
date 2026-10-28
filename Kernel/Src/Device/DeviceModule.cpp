@@ -110,12 +110,11 @@ namespace Rune::Device {
             ERROR("Failed to configure the root device.");
             return false;
         }
-        constexpr int         RADIX_DECIMAL = 10;
         SharedPointer<Device> root_device(
             new BasicDevice(root_device_handle,
                             ACPIDriver::ID_ACPI.get_string_ID(),
                             acpi_info.m_oem,
-                            int_to_string(acpi_info.m_revision, RADIX_DECIMAL),
+                            int_to_string(acpi_info.m_revision, Radix::DECIMAL),
                             "",
                             DeviceType::GENERIC,
                             ACPIDriver::ID_ACPI));

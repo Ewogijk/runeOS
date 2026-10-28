@@ -49,16 +49,15 @@ namespace Rune::Memory {
     constexpr U8 IS_DIRTY_BIT            = 6;
 
 #define X86_64_PAGEFLAGS(X)                                                                        \
-    X(x86_64PageFlag, PRESENT, 0x01)                                                               \
-    X(x86_64PageFlag, WRITE_ALLOWED, 0x02)                                                         \
-    X(x86_64PageFlag, USER_MODE_ACCESS, 0x04)                                                      \
-    X(x86_64PageFlag, WRITE_THROUGH, 0x08)                                                         \
-    X(x86_64PageFlag, CACHE_DISABLE, 0x10)                                                         \
-    X(x86_64PageFlag, ACCESSED, 0x20)                                                              \
-    X(x86_64PageFlag, DIRTY, 0x40)
+    X(PRESENT, 0x01)                                                                               \
+    X(WRITE_ALLOWED, 0x02)                                                                         \
+    X(USER_MODE_ACCESS, 0x04)                                                                      \
+    X(WRITE_THROUGH, 0x08)                                                                         \
+    X(CACHE_DISABLE, 0x10)                                                                         \
+    X(ACCESSED, 0x20)                                                                              \
+    X(DIRTY, 0x40)
 
-    DECLARE_TYPED_ENUM(x86_64PageFlag, U16, X86_64_PAGEFLAGS, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(x86_64PageFlag, U16, X86_64_PAGEFLAGS, 0x0)
+    EMBER_DEFINE_SMART_ENUM(x86_64PageFlag, X86_64_PAGEFLAGS, 0x0, U16) // NOLINT
 
     auto to_x86_64_flags(U16 flags) -> U16 {
         return flags; // Page flag values are already x86_64 flags
@@ -245,10 +244,6 @@ namespace Rune::Memory {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  Page Table Hierarchy Manipulations
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    DEFINE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0)
-
-    DEFINE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0)
 
     auto allocate_page(const PageTable&       base_pt,
                        VirtualAddr            v_addr,

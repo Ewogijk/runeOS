@@ -21,16 +21,16 @@
 namespace Rune::Device {
 
 #define ACPI_REQUESTS(X)                                                                           \
-    X(ACPIREQUEST, GET_ACPI_INFO, 0x1)                                                             \
-    X(ACPIREQUEST, SHUTDOWN, 0x2)                                                                  \
-    X(ACPIREQUEST, REBOOT, 0x3)
+    X(GET_ACPI_INFO, 0x1)                                                                          \
+    X(SHUTDOWN, 0x2)                                                                               \
+    X(REBOOT, 0x3)
 
     /// @brief All supported ACPI requests.
     ///
     /// - GET_ACPI_INFO: Get the OEM and Revision of ACPI.
     /// - SHUTDOWN: Shut the system down.
     /// - REBOOT: Reboot the system.
-    DECLARE_ENUM(ACPIRequest, ACPI_REQUESTS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ACPIRequest, ACPI_REQUESTS, 0x0) // NOLINT
 
     struct ACPIInfo {
         String m_oem;

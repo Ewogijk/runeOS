@@ -22,8 +22,6 @@ namespace Rune::Device::USB {
     // Class-Specific Requests — BOT 1.0 §3
     // ========================================================================================== //
 
-    DEFINE_TYPED_ENUM(BOTClassRequest, U8, BOT_CLASS_REQUESTS, 0x00)
-
     auto bot_build_mass_storage_reset_request(const SharedPointer<FunctionDevice>& msd_device,
                                               U16 interface_number) -> ControlTransferRequest {
         return USB::ControlTransferRequest::of(msd_device->get_handle(),
@@ -76,8 +74,6 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
     // Command Status Wrapper — BOT 1.0 §5.2
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(CSWStatus, U8, CSW_STATUS_CODES, 0xFF)
 
     auto CommandStatusWrapper::status() const -> CSWStatus { return CSWStatus(m_status); }
 

@@ -20,8 +20,6 @@
 #include <Memory/VirtualMemory.h>
 
 namespace Rune::Memory {
-    DEFINE_ENUM(VMMStartFailure, VMMStartFailures, 0x0)
-
     auto VirtualMemoryManager::allocate_kernel_space_entries(const Memory::PageTable& base_pt,
                                                              VirtualAddr              v_start,
                                                              const MemoryRegion&      p_reg,

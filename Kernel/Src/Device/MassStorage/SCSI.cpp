@@ -17,17 +17,10 @@
 #include <KRE/Utility.h>
 
 namespace Rune::Device {
-    // ========================================================================================== //
-    // Operation Codes — §3.0
-    // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(SCSIOperationCode, U8, SCSI_OPERATION_CODES, 0xFF)
 
     // ========================================================================================== //
     // Sense Data — §2.4
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(SCSISenseKey, U8, SCSI_SENSE_KEYS, 0xFF)
 
     auto SCSIFixedSenseData::is_fixed_format() const -> bool {
         return m_response_code == RESPONSE_CODE_CURRENT
@@ -55,10 +48,6 @@ namespace Rune::Device {
     // ========================================================================================== //
     // INQUIRY — §3.6
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(SCSIPeripheralQualifier, U8, SCSI_PERIPHERAL_QUALIFIERS, 0xFF)
-
-    DEFINE_TYPED_ENUM(SCSIPeripheralDeviceType, U8, SCSI_PERIPHERAL_DEVICE_TYPES, 0xFF)
 
     auto SCSIInquiryCDB::standard(U16 allocation_length) -> SCSIInquiryCDB {
         SCSIInquiryCDB cdb;
@@ -98,17 +87,9 @@ namespace Rune::Device {
     // Vital Product Data — §4.4
     // ========================================================================================== //
 
-    DEFINE_TYPED_ENUM(SCSIVPDPageCode, U8, SCSI_VPD_PAGE_CODES, 0xFF)
-
     auto SCSIVPDPageHeader::page_length() const -> U16 {
         return BigEndian::to_U16(m_page_length.data());
     }
-
-    DEFINE_TYPED_ENUM(SCSICodeSet, U8, SCSI_CODE_SETS, 0xFF)
-
-    DEFINE_TYPED_ENUM(SCSIAssociation, U8, SCSI_ASSOCIATIONS, 0xFF)
-
-    DEFINE_TYPED_ENUM(SCSIIdentifierType, U8, SCSI_IDENTIFIER_TYPES, 0xFF)
 
     auto SCSIIdentificationDescriptor::code_set() const -> SCSICodeSet {
         return SCSICodeSet(static_cast<U8>(m_code_set));

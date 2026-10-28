@@ -90,17 +90,17 @@ namespace Rune::Device {
         U8             m_lun         = 0;
         const U8*      m_cdb         = nullptr; // Command block
         U8             m_cdb_size    = 0;       // 1..16 bytes
-        USB::Direction m_direction   = USB::Direction::NONE;
+        USB::Direction m_direction   = {};
         void*          m_data_buffer = nullptr;
         U32            m_data_size   = 0;
     };
 
 #define BOT_STATUS_CODES(X)                                                                        \
-    X(BOTStatus, OKAY, 0x1)                                                                        \
-    X(BOTStatus, FAILED, 0x2)                                                                      \
-    X(BOTStatus, TRANSPORT_ERROR, 0x3)                                                             \
-    X(BOTStatus, DEVICE_ERROR, 0x4)                                                                \
-    X(BOTStatus, BAD_ARGUMENT, 0x5)
+    X(OKAY, 0x1)                                                                                   \
+    X(FAILED, 0x2)                                                                                 \
+    X(TRANSPORT_ERROR, 0x3)                                                                        \
+    X(DEVICE_ERROR, 0x4)                                                                           \
+    X(BAD_ARGUMENT, 0x5)
 
     /// @brief The final status of a BOT request.
     ///
@@ -109,7 +109,7 @@ namespace Rune::Device {
     /// - TRANSPORT_ERROR: A transmission error happened, Reset recovery was performed.
     /// - DEVICE_ERROR: Reset recovery has failed or the device was broken from a prior request.
     /// - BAD_ARGUMENT: Invalid command, nothing was sent.
-    DECLARE_ENUM(BOTStatus, BOT_STATUS_CODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(BOTStatus, BOT_STATUS_CODES, 0x0) // NOLINT
 
     /// @brief A response of a BOT request.
     struct BOTResponse {

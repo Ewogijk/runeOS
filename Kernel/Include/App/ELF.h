@@ -36,47 +36,47 @@ namespace Rune::App {
      * 32 or 64 bit ELF file.
      */
 #define CLASSES(X)                                                                                 \
-    X(Class, ELF32, 1)                                                                             \
-    X(Class, ELF64, 2)
+    X(ELF32, 1)                                                                                    \
+    X(ELF64, 2)
 
-    DECLARE_TYPED_ENUM(Class, U8, CLASSES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Class, CLASSES, 0, U8) // NOLINT
 
     /**
      * Defines what kind of information an ELF contains.
      */
 #define OBJECT_FILE_TYPES(X)                                                                       \
-    X(ObjectFileType, REL, 0x0001)                                                                 \
-    X(ObjectFileType, EXEC, 0x0002)                                                                \
-    X(ObjectFileType, DYN, 0x0003)                                                                 \
-    X(ObjectFileType, CORE, 0x0004)                                                                \
-    X(ObjectFileType, LOOS, 0xFE00)                                                                \
-    X(ObjectFileType, HIOS, 0xFEFF)                                                                \
-    X(ObjectFileType, LO_PROC, 0xFF00)                                                             \
-    X(ObjectFileType, HI_PROC, 0xFFFF)
+    X(REL, 0x0001)                                                                                 \
+    X(EXEC, 0x0002)                                                                                \
+    X(DYN, 0x0003)                                                                                 \
+    X(CORE, 0x0004)                                                                                \
+    X(LOOS, 0xFE00)                                                                                \
+    X(HIOS, 0xFEFF)                                                                                \
+    X(LO_PROC, 0xFF00)                                                                             \
+    X(HI_PROC, 0xFFFF)
 
-    DECLARE_TYPED_ENUM(ObjectFileType, U16, OBJECT_FILE_TYPES, 0x0000) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ObjectFileType, OBJECT_FILE_TYPES, 0x0000, U16) // NOLINT
 
     /**
      * Describes what kind of information a section contains.
      */
 #define SECTION_TYPES(X)                                                                           \
-    X(SectionType, PROG_BITS, 0x1)                                                                 \
-    X(SectionType, SYM_TAB, 0x2)                                                                   \
-    X(SectionType, STR_TAB, 0x3)                                                                   \
-    X(SectionType, RELA, 0x4)                                                                      \
-    X(SectionType, HASH, 0x5)                                                                      \
-    X(SectionType, DYNAMIC, 0x6)                                                                   \
-    X(SectionType, NOTE, 0x7)                                                                      \
-    X(SectionType, NO_BITS, 0x8)                                                                   \
-    X(SectionType, REL, 0x9)                                                                       \
-    X(SectionType, SHLIB, 0xA)                                                                     \
-    X(SectionType, DYN_SYM, 0xB)                                                                   \
-    X(SectionType, LO_PROC, 0x70000000)                                                            \
-    X(SectionType, HI_RPOC, 0x7FFFFFFF)                                                            \
-    X(SectionType, LO_USER, 0x80000000)                                                            \
-    X(SectionType, HI_USER, 0xFFFFFFFF)
+    X(PROG_BITS, 0x1)                                                                              \
+    X(SYM_TAB, 0x2)                                                                                \
+    X(STR_TAB, 0x3)                                                                                \
+    X(RELA, 0x4)                                                                                   \
+    X(HASH, 0x5)                                                                                   \
+    X(DYNAMIC, 0x6)                                                                                \
+    X(NOTE, 0x7)                                                                                   \
+    X(NO_BITS, 0x8)                                                                                \
+    X(REL, 0x9)                                                                                    \
+    X(SHLIB, 0xA)                                                                                  \
+    X(DYN_SYM, 0xB)                                                                                \
+    X(LO_PROC, 0x70000000)                                                                         \
+    X(HI_RPOC, 0x7FFFFFFF)                                                                         \
+    X(LO_USER, 0x80000000)                                                                         \
+    X(HI_USER, 0xFFFFFFFF)
 
-    DECLARE_TYPED_ENUM(SectionType, U32, SECTION_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SectionType, SECTION_TYPES, 0x0, U32) // NOLINT
 
     /**
      * Section flags.
@@ -88,38 +88,38 @@ namespace Rune::App {
      * </ol>
      */
 #define SECTION_ATTRIBUTES(X)                                                                      \
-    X(SectionAttribute, WRITE, 0x1)                                                                \
-    X(SectionAttribute, ALLOC, 0x2)                                                                \
-    X(SectionAttribute, EXEC_INSTR, 0x4)                                                           \
-    X(SectionAttribute, MASK_PROC, 0xF0000000)
+    X(WRITE, 0x1)                                                                                  \
+    X(ALLOC, 0x2)                                                                                  \
+    X(EXEC_INSTR, 0x4)                                                                             \
+    X(MASK_PROC, 0xF0000000)
 
-    DECLARE_TYPED_ENUM(SectionAttribute, U32, SECTION_ATTRIBUTES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SectionAttribute, SECTION_ATTRIBUTES, 0, U32) // NOLINT
 
     /**
      * Describes twat kind of information a segment contains.
      */
 #define SEGMENT_TYPES(X)                                                                           \
-    X(SegmentType, LOAD, 0x1)                                                                      \
-    X(SegmentType, DYNAMIC, 0x2)                                                                   \
-    X(SegmentType, INTERP, 0x3)                                                                    \
-    X(SegmentType, NOTE, 0x4)                                                                      \
-    X(SegmentType, SHLIB, 0x5)                                                                     \
-    X(SegmentType, PHDR, 0x6)                                                                      \
-    X(SegmentType, LO_PROC, 0x70000000)                                                            \
-    X(SegmentType, HI_PROC, 0x7FFFFFFF)
+    X(LOAD, 0x1)                                                                                   \
+    X(DYNAMIC, 0x2)                                                                                \
+    X(INTERP, 0x3)                                                                                 \
+    X(NOTE, 0x4)                                                                                   \
+    X(SHLIB, 0x5)                                                                                  \
+    X(PHDR, 0x6)                                                                                   \
+    X(LO_PROC, 0x70000000)                                                                         \
+    X(HI_PROC, 0x7FFFFFFF)
 
-    DECLARE_TYPED_ENUM(SegmentType, U32, SEGMENT_TYPES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SegmentType, SEGMENT_TYPES, 0, U32) // NOLINT
 
     /**
      * Segment flags.
      */
 #define SEGMENT_PERMISSIONS(X)                                                                     \
-    X(SegmentPermission, EXECUTE, 0x1)                                                             \
-    X(SegmentPermission, WRITE, 0x2)                                                               \
-    X(SegmentPermission, READ, 0x4)                                                                \
-    X(SegmentPermission, UNDEFINED, 0xF0000000)
+    X(EXECUTE, 0x1)                                                                                \
+    X(WRITE, 0x2)                                                                                  \
+    X(READ, 0x4)                                                                                   \
+    X(UNDEFINED, 0xF0000000)
 
-    DECLARE_TYPED_ENUM(SegmentPermission, U32, SEGMENT_PERMISSIONS, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SegmentPermission, SEGMENT_PERMISSIONS, 0, U32) // NOLINT
 
     /**
      * Processor independent information about how to parse an ELF file.

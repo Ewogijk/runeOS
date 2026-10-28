@@ -15,7 +15,6 @@
 #include <VirtualFileSystem/DirectoryStream.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0)
 
     DirectoryStream::DirectoryStream(const Function<void()>& on_close)
         : _closed(false),

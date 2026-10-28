@@ -297,20 +297,20 @@ namespace Rune {
 #endif
 
 #define MEMORY_UNITS(X)                                                                            \
-    X(MemoryUnit, B, 1)                                                                            \
-    X(MemoryUnit, KB, 1000)                                                                        \
-    X(MemoryUnit, MB, 1000000)                                                                     \
-    X(MemoryUnit, GB, 1000000000)                                                                  \
-    X(MemoryUnit, TB, 1000000000000)                                                               \
-    X(MemoryUnit, KiB, 1024)                                                                       \
-    X(MemoryUnit, MiB, 1048576)                                                                    \
-    X(MemoryUnit, GiB, 1073741824)                                                                 \
-    X(MemoryUnit, TiB, 1099511627776)
+    X(B, 1)                                                                                        \
+    X(KB, 1000)                                                                                    \
+    X(MB, 1000000)                                                                                 \
+    X(GB, 1000000000)                                                                              \
+    X(TB, 1000000000000)                                                                           \
+    X(KiB, 1024)                                                                                   \
+    X(MiB, 1048576)                                                                                \
+    X(GiB, 1073741824)                                                                             \
+    X(TiB, 1099511627776)
 
     /**
      * A memory unit e.g. kilobytes.
      */
-    DECLARE_TYPED_ENUM(MemoryUnit, MemorySize, MEMORY_UNITS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MemoryUnit, MEMORY_UNITS, 0x0, MemorySize) // NOLINT
 
     /**
      * Reformat the given bytes to another memory unit.
@@ -367,18 +367,18 @@ namespace Rune {
     /// information is available, the type may also describe which type of data is stored in the
     /// region (e.g. kernel code).
 #define MEMORY_REGION_TYPES(X)                                                                     \
-    X(MemoryRegionType, USABLE, 0x1)                                                               \
-    X(MemoryRegionType, USED, 0x2)                                                                 \
-    X(MemoryRegionType, RESERVED, 0x3)                                                             \
-    X(MemoryRegionType, USERSPACE, 0x4)                                                            \
-    X(MemoryRegionType, HHDM, 0x5)                                                                 \
-    X(MemoryRegionType, PMM_RESERVED, 0x6)                                                         \
-    X(MemoryRegionType, KERNEL_HEAP, 0x7)                                                          \
-    X(MemoryRegionType, KERNEL_CODE, 0x8)                                                          \
-    X(MemoryRegionType, ACPI, 0x9)                                                                 \
-    X(MemoryRegionType, BOOTLOADER_RECLAIMABLE, 0xA)
+    X(USABLE, 0x1)                                                                                 \
+    X(USED, 0x2)                                                                                   \
+    X(RESERVED, 0x3)                                                                               \
+    X(USERSPACE, 0x4)                                                                              \
+    X(HHDM, 0x5)                                                                                   \
+    X(PMM_RESERVED, 0x6)                                                                           \
+    X(KERNEL_HEAP, 0x7)                                                                            \
+    X(KERNEL_CODE, 0x8)                                                                            \
+    X(ACPI, 0x9)                                                                                   \
+    X(BOOTLOADER_RECLAIMABLE, 0xA)
 
-    DECLARE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0) // NOLINT
 
     /**
      * A region of memory in the computers RAM.

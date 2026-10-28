@@ -28,10 +28,10 @@ namespace Rune {
      * </ul>
      */
 #define GATE_TYPES(X)                                                                              \
-    X(GateType, INTERRUPT_GATE, 0xE)                                                               \
-    X(GateType, TRAP_GATE, 0xF)
+    X(INTERRUPT_GATE, 0xE)                                                                         \
+    X(TRAP_GATE, 0xF)
 
-    DECLARE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(GateType, GATE_TYPES, 0x0, U8) // NOLINT
 
     /**
      * @brief Gate descriptor IST.

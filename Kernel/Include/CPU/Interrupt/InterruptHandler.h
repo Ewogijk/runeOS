@@ -24,14 +24,14 @@
 namespace Rune::CPU {
 
 #define INTERRUPT_STATES(X)                                                                        \
-    X(InterruptState, PENDING, 0x1)                                                                \
-    X(InterruptState, HANDLED, 0x2)
+    X(PENDING, 0x1)                                                                                \
+    X(HANDLED, 0x2)
 
     /// @brief The state of an interrupt after running an interrupt handler.
     ///
     /// - PENDING: The interrupt has not been handled yet.
     /// - HANDLED: The interrupt has been successfully handled.
-    DECLARE_ENUM(InterruptState, INTERRUPT_STATES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(InterruptState, INTERRUPT_STATES, 0x0) // NOLINT
 
     /// @brief The InterruptFrame defines what interrupt was raised by the CPU and the CPU state
     ///         at the time of the interrupt.

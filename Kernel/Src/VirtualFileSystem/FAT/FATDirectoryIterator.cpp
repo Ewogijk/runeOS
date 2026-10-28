@@ -17,7 +17,6 @@
 #include <KRE/BitsAndBytes.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0)
 
     void FATDirectoryIterator::get_next_cluster() {
         // If the iterator has not started yet read the cluster mentioned in the directory file

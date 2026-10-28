@@ -31,11 +31,11 @@ namespace Rune::VFS {
     //////////////////////////////////////////////////////////////////////////////////
 
 #define FAT_TYPES(X)                                                                               \
-    X(FATType, FAT12, 0x1)                                                                         \
-    X(FATType, FAT16, 0x2)                                                                         \
-    X(FATType, FAT32, 0x3)
+    X(FAT12, 0x1)                                                                                  \
+    X(FAT16, 0x2)                                                                                  \
+    X(FAT32, 0x3)
 
-    DECLARE_ENUM(FATType, FAT_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(FATType, FAT_TYPES, 0x0) // NOLINT
 
     struct BIOSParameterBlock {
         static constexpr U8     ROOT_ENTRY_COUNT_FACTOR = 32;
@@ -143,15 +143,15 @@ namespace Rune::VFS {
     };
 
 #define FAT_FILE_ATTRIBUTES(X)                                                                     \
-    X(FATFileAttribute, READONLY, 0x01)                                                            \
-    X(FATFileAttribute, HIDDEN, 0x02)                                                              \
-    X(FATFileAttribute, SYSTEM, 0x04)                                                              \
-    X(FATFileAttribute, VOLUME_ID, 0x08)                                                           \
-    X(FATFileAttribute, DIRECTORY, 0x10)                                                           \
-    X(FATFileAttribute, ARCHIVE, 0x20)                                                             \
-    X(FATFileAttribute, LONG_FILE_NAME, 0x0F)
+    X(READONLY, 0x01)                                                                              \
+    X(HIDDEN, 0x02)                                                                                \
+    X(SYSTEM, 0x04)                                                                                \
+    X(VOLUME_ID, 0x08)                                                                             \
+    X(DIRECTORY, 0x10)                                                                             \
+    X(ARCHIVE, 0x20)                                                                               \
+    X(LONG_FILE_NAME, 0x0F)
 
-    DECLARE_ENUM(FATFileAttribute, FAT_FILE_ATTRIBUTES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(FATFileAttribute, FAT_FILE_ATTRIBUTES, 0x0) // NOLINT
 
     struct FileEntry {
         static constexpr U8 SHORT_NAME_SIZE      = 11;

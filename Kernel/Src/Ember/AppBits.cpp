@@ -16,13 +16,10 @@
 #include <Ember/AppBits.h>
 
 namespace Ember {
-    DEFINE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0)
 
     // ========================================================================================== //
     // KeyEvent
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(VirtualKey, U8, VIRTUAL_KEYS, 0x0)
 
     const KeyEvent KeyEvent::NONE = KeyEvent();
 

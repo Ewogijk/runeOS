@@ -29,9 +29,9 @@ namespace Rune::Device {
     // ========================================================================================== //
 
 #define DEVICE_ID_TYPES(X)                                                                         \
-    X(DeviceIDType, STRING, 0x1)                                                                   \
-    X(DeviceIDType, PCI, 0x2)                                                                      \
-    X(DeviceIDType, USB, 0x3)
+    X(STRING, 0x1)                                                                                 \
+    X(PCI, 0x2)                                                                                    \
+    X(USB, 0x3)
 
     /// @brief Helper type to differentiate between DeviceID subclasses.
     ///
@@ -39,7 +39,7 @@ namespace Rune::Device {
     ///
     /// - STRING: StringDeviceID class
     /// - PCI: PCIDeviceID class
-    DECLARE_ENUM(DeviceIDType, DEVICE_ID_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DeviceIDType, DEVICE_ID_TYPES, 0x0) // NOLINT
 
     /// @brief Base type for a context-aware device ID (CAD ID) that is used to match devices and
     /// device drivers.
@@ -80,11 +80,11 @@ namespace Rune::Device {
     using Handle = U16;
 
 #define DEVICE_TYPES(X)                                                                            \
-    X(DeviceType, GENERIC, 0x1)                                                                    \
-    X(DeviceType, KEYBOARD, 0x2)                                                                   \
-    X(DeviceType, MASS_STORAGE_DEVICE, 0x3)                                                        \
-    X(DeviceType, USB_COMPOSITE_DEVICE, 0x4)                                                       \
-    X(DeviceType, USB_FUNCTION_DEVICE, 0x5)
+    X(GENERIC, 0x1)                                                                                \
+    X(KEYBOARD, 0x2)                                                                               \
+    X(MASS_STORAGE_DEVICE, 0x3)                                                                    \
+    X(USB_COMPOSITE_DEVICE, 0x4)                                                                   \
+    X(USB_FUNCTION_DEVICE, 0x5)
 
     /// @brief Describes the general functionality of a device and to which interface type it can be
     ///         safely cast.
@@ -99,7 +99,7 @@ namespace Rune::Device {
     ///     - Interface: CompositeDevice
     /// - USB_FUNCTION_DEVICE: A USB device representing a USB function.
     ///     - Interface: FunctionDevice
-    DECLARE_ENUM(DeviceType, DEVICE_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DeviceType, DEVICE_TYPES, 0x0) // NOLINT
 
     /// @brief A device connected to the system e.g., a keyboard.
     ///
@@ -228,14 +228,14 @@ namespace Rune::Device {
     };
 
 #define IO_REQUEST_STATES(X)                                                                       \
-    X(IORequestStatus, UNSUPPORTED, 0x1)                                                           \
-    X(IORequestStatus, UNKNOWN_DEVICE, 0x2)                                                        \
-    X(IORequestStatus, DEVICE_NOT_OPERATIONAL, 0x3)                                                \
-    X(IORequestStatus, UNKNOWN_DRIVER, 0x4)                                                        \
-    X(IORequestStatus, BAD_ARGUMENT, 0x5)                                                          \
-    X(IORequestStatus, FAILED, 0x6)                                                                \
-    X(IORequestStatus, ABORTED, 0x7)                                                               \
-    X(IORequestStatus, HANDLED, 0x8)
+    X(UNSUPPORTED, 0x1)                                                                            \
+    X(UNKNOWN_DEVICE, 0x2)                                                                         \
+    X(DEVICE_NOT_OPERATIONAL, 0x3)                                                                 \
+    X(UNKNOWN_DRIVER, 0x4)                                                                         \
+    X(BAD_ARGUMENT, 0x5)                                                                           \
+    X(FAILED, 0x6)                                                                                 \
+    X(ABORTED, 0x7)                                                                                \
+    X(HANDLED, 0x8)
 
     /// @brief An IO Request status encodes the status of a request after the action was performed
     ///         by a driver.
@@ -251,7 +251,7 @@ namespace Rune::Device {
     /// - ABORTED: The IO request has not failed but was aborted, because for example it is not
     ///             supported by the device.
     /// - HANDLED: The IO request was handled, and the response contains valid data.
-    DECLARE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0) // NOLINT
 
     /// @brief A device driver operates devices in the system.
     class Driver {

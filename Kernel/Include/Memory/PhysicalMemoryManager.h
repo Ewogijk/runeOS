@@ -28,11 +28,11 @@ namespace Rune::Memory {
      * Reasons why the start of the pmm can fail.
      */
 #define PMM_START_FAILURES(X)                                                                      \
-    X(PMMStartFailure, MEMORY_RANGE_DETECTION_FAILED, 0x1)                                         \
-    X(PMMStartFailure, OUT_OF_MEMORY, 0x2)                                                         \
-    X(PMMStartFailure, MEMORY_INDEX_INIT_FAILED, 0x3)
+    X(MEMORY_RANGE_DETECTION_FAILED, 0x1)                                                          \
+    X(OUT_OF_MEMORY, 0x2)                                                                          \
+    X(MEMORY_INDEX_INIT_FAILED, 0x3)
 
-    DECLARE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0) // NOLINT
 
     /**
      * The physical memory manager allocates and frees page frames. It also ensures that reserved

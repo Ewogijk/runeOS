@@ -24,83 +24,83 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define TRB_TYPE_VALUES(X)                                                                         \
-    X(TRBType, NORMAL, 1)                                                                          \
-    X(TRBType, SETUP_STAGE, 2)                                                                     \
-    X(TRBType, DATA_STAGE, 3)                                                                      \
-    X(TRBType, STATUS_STAGE, 4)                                                                    \
-    X(TRBType, ISOCH, 5)                                                                           \
-    X(TRBType, LINK, 6)                                                                            \
-    X(TRBType, EVENT_DATA, 7)                                                                      \
-    X(TRBType, NO_OP, 8)                                                                           \
-    X(TRBType, ENABLE_SLOT, 9)                                                                     \
-    X(TRBType, DISABLE_SLOT, 10)                                                                   \
-    X(TRBType, ADDRESS_DEVICE, 11)                                                                 \
-    X(TRBType, CONFIGURE_ENDPOINT, 12)                                                             \
-    X(TRBType, EVALUATE_CONTEXT, 13)                                                               \
-    X(TRBType, RESET_ENDPOINT, 14)                                                                 \
-    X(TRBType, STOP_ENDPOINT, 15)                                                                  \
-    X(TRBType, SET_TR_DEQUEUE_PTR, 16)                                                             \
-    X(TRBType, RESET_DEVICE, 17)                                                                   \
-    X(TRBType, FORCE_EVENT, 18)                                                                    \
-    X(TRBType, NEGOTIATE_BANDWIDTH, 19)                                                            \
-    X(TRBType, SET_LATENCY_TOLERANCE, 20)                                                          \
-    X(TRBType, GET_PORT_BANDWIDTH, 21)                                                             \
-    X(TRBType, FORCE_HEADER, 22)                                                                   \
-    X(TRBType, NO_OP_COMMAND, 23)                                                                  \
-    X(TRBType, GET_EXTENDED_PROPERTY, 24)                                                          \
-    X(TRBType, SET_EXTENDED_PROPERTY, 25)                                                          \
-    X(TRBType, TRANSFER_EVENT, 32)                                                                 \
-    X(TRBType, CMD_COMPLETION, 33)                                                                 \
-    X(TRBType, PORT_STATUS_CHANGE, 34)                                                             \
-    X(TRBType, BANDWIDTH_REQUEST, 35)                                                              \
-    X(TRBType, DOORBELL_EVENT, 36)                                                                 \
-    X(TRBType, HOST_CONTROLLER_EVENT, 37)                                                          \
-    X(TRBType, DEVICE_NOTIFICATION, 38)                                                            \
-    X(TRBType, MFINDEX_WRAP, 39)
+    X(NORMAL, 1)                                                                                   \
+    X(SETUP_STAGE, 2)                                                                              \
+    X(DATA_STAGE, 3)                                                                               \
+    X(STATUS_STAGE, 4)                                                                             \
+    X(ISOCH, 5)                                                                                    \
+    X(LINK, 6)                                                                                     \
+    X(EVENT_DATA, 7)                                                                               \
+    X(NO_OP, 8)                                                                                    \
+    X(ENABLE_SLOT, 9)                                                                              \
+    X(DISABLE_SLOT, 10)                                                                            \
+    X(ADDRESS_DEVICE, 11)                                                                          \
+    X(CONFIGURE_ENDPOINT, 12)                                                                      \
+    X(EVALUATE_CONTEXT, 13)                                                                        \
+    X(RESET_ENDPOINT, 14)                                                                          \
+    X(STOP_ENDPOINT, 15)                                                                           \
+    X(SET_TR_DEQUEUE_PTR, 16)                                                                      \
+    X(RESET_DEVICE, 17)                                                                            \
+    X(FORCE_EVENT, 18)                                                                             \
+    X(NEGOTIATE_BANDWIDTH, 19)                                                                     \
+    X(SET_LATENCY_TOLERANCE, 20)                                                                   \
+    X(GET_PORT_BANDWIDTH, 21)                                                                      \
+    X(FORCE_HEADER, 22)                                                                            \
+    X(NO_OP_COMMAND, 23)                                                                           \
+    X(GET_EXTENDED_PROPERTY, 24)                                                                   \
+    X(SET_EXTENDED_PROPERTY, 25)                                                                   \
+    X(TRANSFER_EVENT, 32)                                                                          \
+    X(CMD_COMPLETION, 33)                                                                          \
+    X(PORT_STATUS_CHANGE, 34)                                                                      \
+    X(BANDWIDTH_REQUEST, 35)                                                                       \
+    X(DOORBELL_EVENT, 36)                                                                          \
+    X(HOST_CONTROLLER_EVENT, 37)                                                                   \
+    X(DEVICE_NOTIFICATION, 38)                                                                     \
+    X(MFINDEX_WRAP, 39)
 
-    DECLARE_TYPED_ENUM(TRBType, U8, TRB_TYPE_VALUES, 0)
+    EMBER_DEFINE_SMART_ENUM(TRBType, TRB_TYPE_VALUES, 0, U8)
 
     // ========================================================================================== //
     // Completion Codes (xHCI 2.0 §6.4.5 Table 6-90)
     // ========================================================================================== //
 
 #define COMPLETION_CODE_VALUES(X)                                                                  \
-    X(CompletionCode, INVALID, 0)                                                                  \
-    X(CompletionCode, SUCCESS, 1)                                                                  \
-    X(CompletionCode, DATA_BUFFER_ERROR, 2)                                                        \
-    X(CompletionCode, BABBLE_ERROR, 3)                                                             \
-    X(CompletionCode, USB_TRANSACTION_ERROR, 4)                                                    \
-    X(CompletionCode, TRB_ERROR, 5)                                                                \
-    X(CompletionCode, STALL_ERROR, 6)                                                              \
-    X(CompletionCode, RESOURCE_ERROR, 7)                                                           \
-    X(CompletionCode, BANDWIDTH_ERROR, 8)                                                          \
-    X(CompletionCode, NO_SLOTS_AVAILABLE, 9)                                                       \
-    X(CompletionCode, INVALID_STREAM_TYPE_ERROR, 10)                                               \
-    X(CompletionCode, SHORT_PACKET, 13)                                                            \
-    X(CompletionCode, RING_UNDERRUN, 14)                                                           \
-    X(CompletionCode, RING_OVERRUN, 15)                                                            \
-    X(CompletionCode, VF_ENVENT_RING_FULL, 16)                                                     \
-    X(CompletionCode, PARAMETER_ERROR, 17)                                                         \
-    X(CompletionCode, BANDWIDTH_OVERRUN, 18)                                                       \
-    X(CompletionCode, CONTEXT_STATE_ERROR, 19)                                                     \
-    X(CompletionCode, NO_PING_RESPONSE, 20)                                                        \
-    X(CompletionCode, EVENT_RING_FULL, 21)                                                         \
-    X(CompletionCode, INCOMPATIBLE_DEVICE, 22)                                                     \
-    X(CompletionCode, MISSED_SERVICE, 23)                                                          \
-    X(CompletionCode, CMD_RING_STOPPED, 24)                                                        \
-    X(CompletionCode, CMD_ABORTED, 25)                                                             \
-    X(CompletionCode, STOPPED, 26)                                                                 \
-    X(CompletionCode, STOPPED_LEN_INVAL, 27)                                                       \
-    X(CompletionCode, STOPPED_SHORT_PACKET, 28)                                                    \
-    X(CompletionCode, MAX_EXIT_LATENCY_TOO_LARGE, 29)                                              \
-    X(CompletionCode, ISOCH_BUFFER_OVERRUN, 31)                                                    \
-    X(CompletionCode, EVENT_LOST, 32)                                                              \
-    X(CompletionCode, UNDEFINED, 33)                                                               \
-    X(CompletionCode, INVALID_STREAM_ID, 34)                                                       \
-    X(CompletionCode, SECONDARY_BANDWIDTH_ERROR, 35)                                               \
-    X(CompletionCode, SPLIT_TRANSACTION, 36)
+    X(INVALID, 0)                                                                                  \
+    X(SUCCESS, 1)                                                                                  \
+    X(DATA_BUFFER_ERROR, 2)                                                                        \
+    X(BABBLE_ERROR, 3)                                                                             \
+    X(USB_TRANSACTION_ERROR, 4)                                                                    \
+    X(TRB_ERROR, 5)                                                                                \
+    X(STALL_ERROR, 6)                                                                              \
+    X(RESOURCE_ERROR, 7)                                                                           \
+    X(BANDWIDTH_ERROR, 8)                                                                          \
+    X(NO_SLOTS_AVAILABLE, 9)                                                                       \
+    X(INVALID_STREAM_TYPE_ERROR, 10)                                                               \
+    X(SHORT_PACKET, 13)                                                                            \
+    X(RING_UNDERRUN, 14)                                                                           \
+    X(RING_OVERRUN, 15)                                                                            \
+    X(VF_ENVENT_RING_FULL, 16)                                                                     \
+    X(PARAMETER_ERROR, 17)                                                                         \
+    X(BANDWIDTH_OVERRUN, 18)                                                                       \
+    X(CONTEXT_STATE_ERROR, 19)                                                                     \
+    X(NO_PING_RESPONSE, 20)                                                                        \
+    X(EVENT_RING_FULL, 21)                                                                         \
+    X(INCOMPATIBLE_DEVICE, 22)                                                                     \
+    X(MISSED_SERVICE, 23)                                                                          \
+    X(CMD_RING_STOPPED, 24)                                                                        \
+    X(CMD_ABORTED, 25)                                                                             \
+    X(STOPPED, 26)                                                                                 \
+    X(STOPPED_LEN_INVAL, 27)                                                                       \
+    X(STOPPED_SHORT_PACKET, 28)                                                                    \
+    X(MAX_EXIT_LATENCY_TOO_LARGE, 29)                                                              \
+    X(ISOCH_BUFFER_OVERRUN, 31)                                                                    \
+    X(EVENT_LOST, 32)                                                                              \
+    X(UNDEFINED, 33)                                                                               \
+    X(INVALID_STREAM_ID, 34)                                                                       \
+    X(SECONDARY_BANDWIDTH_ERROR, 35)                                                               \
+    X(SPLIT_TRANSACTION, 36)
 
-    DECLARE_TYPED_ENUM(CompletionCode, U8, COMPLETION_CODE_VALUES, 255)
+    EMBER_DEFINE_SMART_ENUM(CompletionCode, COMPLETION_CODE_VALUES, 255, U8)
 
     // ========================================================================================== //
     // Transfer Request Block (TRB) — xHCI 2.0 §6.4

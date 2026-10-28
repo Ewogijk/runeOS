@@ -29,8 +29,6 @@
 #include <App/VoidStream.h>
 
 namespace Rune::App {
-    DEFINE_ENUM(StdStream, STD_STREAMS, 0x0)
-
     auto AppModule::schedule_for_start(const SharedPointer<Info>&               app,
                                        const CPU::Stack&                        user_stack,
                                        UniquePointer<Ember::ThreadLaunchPacket> tlp,

@@ -22,53 +22,53 @@ namespace Ember {
 
     ///@brief The memory system call handles.
 #define MEMORY_SYSCALLS(X)                                                                         \
-    X(Memory, GET_PAGE_SIZE, 100)                                                                  \
-    X(Memory, ALLOCATE_PAGE, 101)                                                                  \
-    X(Memory, FREE_PAGE, 102)
+    X(GET_PAGE_SIZE, 100)                                                                          \
+    X(ALLOCATE_PAGE, 101)                                                                          \
+    X(FREE_PAGE, 102)
 
-    DECLARE_TYPED_ENUM(Memory, Handle, MEMORY_SYSCALLS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Memory, MEMORY_SYSCALLS, 0x0, Handle) // NOLINT
 
     /// @brief @brief The threading system call handles.
 #define THREADING_SYSCALLS(X)                                                                      \
-    X(Threading, MUTEX_CREATE, 200)                                                                \
-    X(Threading, MUTEX_LOCK, 201)                                                                  \
-    X(Threading, MUTEX_UNLOCK, 202)                                                                \
-    X(Threading, MUTEX_FREE, 203)                                                                  \
-    X(Threading, THREAD_GET_ID, 204)                                                               \
-    X(Threading, THREAD_CONTROL_BLOCK_SET, 205)
+    X(MUTEX_CREATE, 200)                                                                           \
+    X(MUTEX_LOCK, 201)                                                                             \
+    X(MUTEX_UNLOCK, 202)                                                                           \
+    X(MUTEX_FREE, 203)                                                                             \
+    X(THREAD_GET_ID, 204)                                                                          \
+    X(THREAD_CONTROL_BLOCK_SET, 205)
 
-    DECLARE_TYPED_ENUM(Threading, Handle, THREADING_SYSCALLS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Threading, THREADING_SYSCALLS, 0x0, Handle) // NOLINT
 
     ///@brief The VFS system call handles.
 #define VFS_SYSCALLS(X)                                                                            \
-    X(VFS, GET_NODE_INFO, 300)                                                                     \
-    X(VFS, GET_NODE_INFO_BY_ID, 301)                                                               \
-    X(VFS, CREATE, 302)                                                                            \
-    X(VFS, OPEN, 303)                                                                              \
-    X(VFS, DELETE, 304)                                                                            \
-    X(VFS, CLOSE, 305)                                                                             \
-    X(VFS, READ, 306)                                                                              \
-    X(VFS, WRITE, 307)                                                                             \
-    X(VFS, SEEK, 308)                                                                              \
-    X(VFS, DIRECTORY_STREAM_OPEN, 309)                                                             \
-    X(VFS, DIRECTORY_STREAM_NEXT, 310)                                                             \
-    X(VFS, DIRECTORY_STREAM_CLOSE, 311)
+    X(GET_NODE_INFO, 300)                                                                          \
+    X(GET_NODE_INFO_BY_ID, 301)                                                                    \
+    X(CREATE, 302)                                                                                 \
+    X(OPEN, 303)                                                                                   \
+    X(DELETE, 304)                                                                                 \
+    X(CLOSE, 305)                                                                                  \
+    X(READ, 306)                                                                                   \
+    X(WRITE, 307)                                                                                  \
+    X(SEEK, 308)                                                                                   \
+    X(DIRECTORY_STREAM_OPEN, 309)                                                                  \
+    X(DIRECTORY_STREAM_NEXT, 310)                                                                  \
+    X(DIRECTORY_STREAM_CLOSE, 311)
 
-    DECLARE_TYPED_ENUM(VFS, Handle, VFS_SYSCALLS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(VFS, VFS_SYSCALLS, 0x0, Handle) // NOLINT
 
     ///@brief The app system call handles.
 #define APP_SYSCALLS(X)                                                                            \
-    X(App, READ_STDIN, 400)                                                                        \
-    X(App, WRITE_STDOUT, 401)                                                                      \
-    X(App, WRITE_STDERR, 402)                                                                      \
-    X(App, GET_ID, 403)                                                                            \
-    X(App, START, 404)                                                                             \
-    X(App, EXIT, 405)                                                                              \
-    X(App, JOIN, 406)                                                                              \
-    X(App, CURRENT_DIRECTORY, 407)                                                                 \
-    X(App, CHANGE_DIRECTORY, 408)
+    X(READ_STDIN, 400)                                                                             \
+    X(WRITE_STDOUT, 401)                                                                           \
+    X(WRITE_STDERR, 402)                                                                           \
+    X(GET_ID, 403)                                                                                 \
+    X(START, 404)                                                                                  \
+    X(EXIT, 405)                                                                                   \
+    X(JOIN, 406)                                                                                   \
+    X(CURRENT_DIRECTORY, 407)                                                                      \
+    X(CHANGE_DIRECTORY, 408)
 
-    DECLARE_TYPED_ENUM(App, Handle, APP_SYSCALLS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(App, APP_SYSCALLS, 0x0, Handle) // NOLINT
 } // namespace Ember
 
 #endif // EMBER_SYSTEMCALLHANDLE_H

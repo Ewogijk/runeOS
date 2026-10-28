@@ -32,10 +32,10 @@
 namespace Rune::VFS {
 
 #define VFS_EVENT_HOOKS(X)                                                                         \
-    X(EventHook, NODE_OPENED, 0x1)                                                                 \
-    X(EventHook, NODE_CLOSED, 0x2)                                                                 \
-    X(EventHook, DIRECTORY_STREAM_OPENED, 0x3)                                                     \
-    X(EventHook, DIRECTORY_STREAM_CLOSED, 0x4)
+    X(NODE_OPENED, 0x1)                                                                            \
+    X(NODE_CLOSED, 0x2)                                                                            \
+    X(DIRECTORY_STREAM_OPENED, 0x3)                                                                \
+    X(DIRECTORY_STREAM_CLOSED, 0x4)
 
     /// @brief All event hooks of the filesystem subsystem.
     ///
@@ -45,7 +45,7 @@ namespace Rune::VFS {
     ///     the opened directory stream, U16*.
     /// - DIRECTORY_STREAM_CLOSED: A directory stream has been opened. Event Context: The handle of
     ///     the closed directory stream, U16*.
-    DECLARE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
 
     /**
      * @brief Mapping of a mount point (path) to a driver name and storage device ID.

@@ -21,7 +21,6 @@ sources = [
     build_env.File("FileStream.cpp"),
     build_env.File("Node.cpp"),
     build_env.File("Path.cpp"),
-    build_env.File("Status.cpp"),
     build_env.File("VFSModule.cpp"),
     build_env.File("FAT/FAT.cpp"),
     build_env.File("FAT/FAT32Engine.cpp"),

@@ -34,12 +34,12 @@ namespace Rune::VFS {
      * </ul>
      */
 #define DIRECTORY_ITERATOR_STATES(X)                                                               \
-    X(DirectoryIteratorState, ITERATING, 0x1)                                                      \
-    X(DirectoryIteratorState, END_OF_DIRECTORY, 0x2)                                               \
-    X(DirectoryIteratorState, CORRUPT_LFN_ENTRY, 0x3)                                              \
-    X(DirectoryIteratorState, DEV_ERROR, 0x4)
+    X(ITERATING, 0x1)                                                                              \
+    X(END_OF_DIRECTORY, 0x2)                                                                       \
+    X(CORRUPT_LFN_ENTRY, 0x3)                                                                      \
+    X(DEV_ERROR, 0x4)
 
-    DECLARE_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DirectoryIteratorState, DIRECTORY_ITERATOR_STATES, 0x0) // NOLINT
 
     /**
      * Modes of iteration define, how a directory is iterated:
@@ -53,11 +53,11 @@ namespace Rune::VFS {
      * </ul>
      */
 #define DIRECTORY_ITERATION_MODES(X)                                                               \
-    X(DirectoryIterationMode, LIST_DIRECTORY, 0x1)                                                 \
-    X(DirectoryIterationMode, LIST_ALL, 0x2)                                                       \
-    X(DirectoryIterationMode, ATOMIC, 0x3)
+    X(LIST_DIRECTORY, 0x1)                                                                         \
+    X(LIST_ALL, 0x2)                                                                               \
+    X(ATOMIC, 0x3)
 
-    DECLARE_ENUM(DirectoryIterationMode, DIRECTORY_ITERATION_MODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DirectoryIterationMode, DIRECTORY_ITERATION_MODES, 0x0) // NOLINT
 
     /**
      * Modes of iteration define, how a directory is iterated:
@@ -69,12 +69,12 @@ namespace Rune::VFS {
      * </ul>
      */
 #define NAVIGATION_STATUSES(X)                                                                     \
-    X(NavigationStatus, FOUND, 0x1)                                                                \
-    X(NavigationStatus, NOT_FOUND, 0x2)                                                            \
-    X(NavigationStatus, BAD_PATH, 0x3)                                                             \
-    X(NavigationStatus, DEV_ERROR, 0x3)
+    X(FOUND, 0x1)                                                                                  \
+    X(NOT_FOUND, 0x2)                                                                              \
+    X(BAD_PATH, 0x3)                                                                               \
+    X(DEV_ERROR, 0x3)
 
-    DECLARE_ENUM(NavigationStatus, NAVIGATION_STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(NavigationStatus, NAVIGATION_STATUSES, 0x0) // NOLINT
 
     /**
      * Status and possibly the target file (Status == Found).

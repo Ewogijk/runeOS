@@ -120,8 +120,6 @@ namespace Rune::Device {
     // GPTPartitionTableEntry
     // ========================================================================================== //
 
-    DEFINE_ENUM(GPTError, GPT_SCAN_STATUSES, 0x0)
-
     auto decode_gpt_string(Array<U16, GPTPartitionTableEntry::PARTITION_NAME_SIZE> name_buf)
         -> String {
         // name_buf is UTF-16LE encoded

@@ -44,6 +44,10 @@ namespace Rune::CPU {
     /// @return The size of a physical address in bits.
     auto cpuid_get_physical_address_width() -> U8;
 
+    /// @brief
+    /// @return True: The systems supports APIC, False: Otherwise.
+    auto cpuid_is_apic_supported() -> bool;
+
 } // namespace Rune::CPU
 
 #endif // RUNEOS_CPUID_H

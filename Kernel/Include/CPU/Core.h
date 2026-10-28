@@ -58,10 +58,10 @@ namespace Rune::CPU {
      *
      */
 #define PRIVILEGE_LEVELS(X)                                                                        \
-    X(PrivilegeLevel, KERNEL, 0x1)                                                                 \
-    X(PrivilegeLevel, USER, 0x2)
+    X(KERNEL, 0x1)                                                                                 \
+    X(USER, 0x2)
 
-    DECLARE_TYPED_ENUM(PrivilegeLevel, U8, PRIVILEGE_LEVELS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PrivilegeLevel, PRIVILEGE_LEVELS, 0x0, U8) // NOLINT
 
     /**
      * @brief General information about an entry in the interrupt vector table of the processor.

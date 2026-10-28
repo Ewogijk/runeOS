@@ -37,18 +37,18 @@ namespace Crucible {
      * </ul>
      */
 #define TOKEN_TYPES(X)                                                                             \
-    X(TokenType, END, 0x1)                                                                         \
-    X(TokenType, UNEXPECTED_TOKEN, 0x2)                                                            \
-    X(TokenType, PATH, 0x3)                                                                        \
-    X(TokenType, IDENTIFIER, 0x4)                                                                  \
-    X(TokenType, ESCAPE_CODE, 0x5)                                                                 \
-    X(TokenType, DOLLAR, 0x6)                                                                      \
-    X(TokenType, DASH, 0x7)                                                                        \
-    X(TokenType, ASSIGNMENT, 0x8)                                                                  \
-    X(TokenType, QUOTE, 0x9)                                                                       \
-    X(TokenType, REDIRECT, 0xA)
+    X(END, 0x1)                                                                                    \
+    X(UNEXPECTED_TOKEN, 0x2)                                                                       \
+    X(PATH, 0x3)                                                                                   \
+    X(IDENTIFIER, 0x4)                                                                             \
+    X(ESCAPE_CODE, 0x5)                                                                            \
+    X(DOLLAR, 0x6)                                                                                 \
+    X(DASH, 0x7)                                                                                   \
+    X(ASSIGNMENT, 0x8)                                                                             \
+    X(QUOTE, 0x9)                                                                                  \
+    X(REDIRECT, 0xA)
 
-    DECLARE_ENUM(TokenType, TOKEN_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TokenType, TOKEN_TYPES, 0x0) // NOLINT
 
     /**
      * @brief A token from an input string, e.g. $hi -> Token(ENV_NAME, "hi")

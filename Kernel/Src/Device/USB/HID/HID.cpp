@@ -20,26 +20,8 @@
 
 namespace Rune::Device::USB {
     // ========================================================================================== //
-    // Descriptors — HID 1.11 §6
-    // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(HIDDescriptorType, U8, HID_DESCRIPTOR_TYPES, 0x00)
-    DEFINE_TYPED_ENUM(HIDCountryCode, U8, HID_COUNTRY_CODES, 0xFF)
-    DEFINE_TYPED_ENUM(HIDItemType, U8, HID_ITEM_TYPES, 0xFF)
-    DEFINE_TYPED_ENUM(HIDItemTag, U8, HID_ITEM_TAGS, 0x00)
-    DEFINE_TYPED_ENUM(HIDDataFlag, U8, HID_DATA_FLAGS, 0x0)
-    DEFINE_TYPED_ENUM(HIDCollectionType, U8, HID_COLLECTION_TYPES, 0xFF)
-    DEFINE_TYPED_ENUM(HIDPhysicalBias, U8, HID_PHYSICAL_BIASES, 0)
-    DEFINE_TYPED_ENUM(HIDPhysicalQualifier, U8, HID_PHYSICAL_QUALIFIERS, 0)
-    DEFINE_TYPED_ENUM(HIDPhysicalDesignator, U8, HID_PHYSICAL_DESIGNATORS, 0x00)
-
-    // ========================================================================================== //
     // Class-Specific Requests — HID 1.11 §7.2
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(HIDClassRequest, U8, HID_CLASS_REQUESTS, 0x00)
-    DEFINE_TYPED_ENUM(HIDReportType, U8, HID_REPORT_TYPES, 0x00)
-    DEFINE_TYPED_ENUM(HIDProtocolMode, U8, HID_PROTOCOL_MODES, 0xFF)
 
     auto hid_build_set_protocol_request(const SharedPointer<FunctionDevice>& hid_device,
                                         U16                                  interface_number,

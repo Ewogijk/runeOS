@@ -15,7 +15,6 @@
 #include <CPU/Time/Timer.h>
 
 namespace Rune::CPU {
-    DEFINE_ENUM(TimerMode, TIMER_MODES, 0x0)
 
     Timer::Timer() : _mode(TimerMode::NONE), _freq_hz(0), _quantum(0) {}
 

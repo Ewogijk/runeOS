@@ -33,14 +33,14 @@ namespace Rune::CPU {
     ///             to fulfill before it will be scheduled again.
     /// - STOPPED: The thread has finished execution, but its heap memory has yet to be freed.
 #define THREAD_STATES(X)                                                                           \
-    X(ThreadState, CREATED, 0x1)                                                                   \
-    X(ThreadState, READY, 0x2)                                                                     \
-    X(ThreadState, RUNNING, 0x3)                                                                   \
-    X(ThreadState, BLOCK_PENDING, 0x4)                                                             \
-    X(ThreadState, BLOCKED, 0x5)                                                                   \
-    X(ThreadState, STOPPED, 0x6)
+    X(CREATED, 0x1)                                                                                \
+    X(READY, 0x2)                                                                                  \
+    X(RUNNING, 0x3)                                                                                \
+    X(BLOCK_PENDING, 0x4)                                                                          \
+    X(BLOCKED, 0x5)                                                                                \
+    X(STOPPED, 0x6)
 
-    DECLARE_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ThreadState, THREAD_STATES, 0x0) // NOLINT
 
     /// @brief The scheduling policy describes the priority of a group of threads.
     /// @param X
@@ -49,11 +49,11 @@ namespace Rune::CPU {
     /// - Normal:
     /// - Background: Lowest priority.
 #define SCHEDULING_POLICIES(X)                                                                     \
-    X(SchedulingPolicy, LOW_LATENCY, 0x1)                                                          \
-    X(SchedulingPolicy, NORMAL, 0x2)                                                               \
-    X(SchedulingPolicy, BACKGROUND, 0x3)
+    X(LOW_LATENCY, 0x1)                                                                            \
+    X(NORMAL, 0x2)                                                                                 \
+    X(BACKGROUND, 0x3)
 
-    DECLARE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0) // NOLINT
 
     /**
      * @brief A thread stack.

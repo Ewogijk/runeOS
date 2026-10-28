@@ -23,10 +23,10 @@
 
 namespace Rune::Device {
 #define SATA_DEVICE_TYPES(X)                                                                       \
-    X(SATADeviceType, ATA, 0x00000101)                                                             \
-    X(SATADeviceType, ATAPI, 0xEB140101)                                                           \
-    X(SATADeviceType, SEMB, 0xC33C0101)                                                            \
-    X(SATADeviceType, PM, 0x96690101)
+    X(ATA, 0x00000101)                                                                             \
+    X(ATAPI, 0xEB140101)                                                                           \
+    X(SEMB, 0xC33C0101)                                                                            \
+    X(PM, 0x96690101)
 
     /// Device type identified from the SIG register after reset — AHCI 1.3.1 §3.3.13
     ///
@@ -37,14 +37,14 @@ namespace Rune::Device {
     /// - ATAPI (0xEB140101): ATAPI device (optical drive, tape).
     /// - SEMB  (0xC33C0101): Enclosure Management Bridge.
     /// - PM    (0x96690101): Port Multiplier.
-    DECLARE_TYPED_ENUM(SATADeviceType, U32, SATA_DEVICE_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SATADeviceType, SATA_DEVICE_TYPES, 0x0, U32) // NOLINT
 
 #define INTERFACE_POWER_MANAGEMENT_TYPES(X)                                                        \
-    X(InterfacePowerManagement, DEVICE_ABSENT, 0x0)                                                \
-    X(InterfacePowerManagement, IPM_ACTIVE, 0x1)                                                   \
-    X(InterfacePowerManagement, IPM_PARTIAL, 0x2)                                                  \
-    X(InterfacePowerManagement, IPM_SLUMBER, 0x6)                                                  \
-    X(InterfacePowerManagement, DEVICE_SLEEP, 0x8)
+    X(DEVICE_ABSENT, 0x0)                                                                          \
+    X(IPM_ACTIVE, 0x1)                                                                             \
+    X(IPM_PARTIAL, 0x2)                                                                            \
+    X(IPM_SLUMBER, 0x6)                                                                            \
+    X(DEVICE_SLEEP, 0x8)
 
     /// Current interface power-management state — AHCI 1.3.1 §3.3.10 (SSTS.IPM, bits [11:8])
     ///
@@ -53,16 +53,16 @@ namespace Rune::Device {
     /// - IPM_PARTIAL   (0x2): Interface in Partial power-management state.
     /// - IPM_SLUMBER   (0x6): Interface in Slumber power-management state.
     /// - DEVICE_SLEEP  (0x8): Interface in DevSleep power-management state.
-    DECLARE_TYPED_ENUM(InterfacePowerManagement,
-                       U8,
+    EMBER_DEFINE_SMART_ENUM(InterfacePowerManagement,
                        INTERFACE_POWER_MANAGEMENT_TYPES,
-                       0x10) // NOLINT
+                       0x10,
+                       U8) // NOLINT
 
 #define INTERFACE_SPEED_TYPES(X)                                                                   \
-    X(InterfaceSpeed, DEVICE_ABSENT, 0x0)                                                          \
-    X(InterfaceSpeed, GEN1_1DOT5Gbps, 0x1)                                                         \
-    X(InterfaceSpeed, GEN2_3GBPS, 0x2)                                                             \
-    X(InterfaceSpeed, GEN3_6GBPS, 0x3)
+    X(DEVICE_ABSENT, 0x0)                                                                          \
+    X(GEN1_1DOT5Gbps, 0x1)                                                                         \
+    X(GEN2_3GBPS, 0x2)                                                                             \
+    X(GEN3_6GBPS, 0x3)
 
     /// Negotiated interface speed — AHCI 1.3.1 §3.3.10 (SSTS.SPD, bits [7:4])
     ///
@@ -70,13 +70,13 @@ namespace Rune::Device {
     /// - GEN1_1DOT5Gbps  (0x1): Gen 1 — 1.5 Gbps.
     /// - GEN2_3GBPS      (0x2): Gen 2 — 3 Gbps.
     /// - GEN3_6GBPS      (0x3): Gen 3 — 6 Gbps.
-    DECLARE_TYPED_ENUM(InterfaceSpeed, U8, INTERFACE_SPEED_TYPES, 0x4) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(InterfaceSpeed, INTERFACE_SPEED_TYPES, 0x4, U8) // NOLINT
 
 #define DEVICE_DETECTION_VALUES(X)                                                                 \
-    X(DeviceDetection, DEVICE_ABSENT, 0x0)                                                         \
-    X(DeviceDetection, DEVICE_DETECTED, 0x1)                                                       \
-    X(DeviceDetection, DEVICE_ACTIVE, 0x3)                                                         \
-    X(DeviceDetection, DEVICE_INACTIVE, 0x4)
+    X(DEVICE_ABSENT, 0x0)                                                                          \
+    X(DEVICE_DETECTED, 0x1)                                                                        \
+    X(DEVICE_ACTIVE, 0x3)                                                                          \
+    X(DEVICE_INACTIVE, 0x4)
 
     /// Device detection state reported by SSTS.DET — AHCI 1.3.1 §3.3.10 (bits [3:0])
     ///
@@ -84,7 +84,7 @@ namespace Rune::Device {
     /// - DEVICE_DETECTED (0x1): Device presence detected but Phy not yet established.
     /// - DEVICE_ACTIVE   (0x3): Device detected and Phy communication established.
     /// - DEVICE_INACTIVE (0x4): Phy in offline mode (SCTL.DET was set to 4).
-    DECLARE_TYPED_ENUM(DeviceDetection, U8, DEVICE_DETECTION_VALUES, 0x8) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DeviceDetection, DEVICE_DETECTION_VALUES, 0x8, U8) // NOLINT
 
     /**
      * Port Command List Base Address register (CLB) — AHCI 1.3.1 §3.3.1

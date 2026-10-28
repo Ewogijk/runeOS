@@ -18,19 +18,17 @@
 
 namespace Rune::CPU {
 #define CHANNELS(X)                                                                                \
-    X(Channel, ZERO, 0x40)                                                                         \
-    X(Channel, COMMAND, 0x43)
+    X(ZERO, 0x40)                                                                                  \
+    X(COMMAND, 0x43)
 
-    DECLARE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Channel, U8, CHANNELS, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Channel, CHANNELS, 0x0, U8) // NOLINT
 
-#define MODES(X) X(Mode, SQUARE_WAVE_GENERATOR, 0x36)
+#define MODES(X) X(SQUARE_WAVE_GENERATOR, 0x36)
 
-    DECLARE_TYPED_ENUM(Mode, U8, MODES, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Mode, U8, MODES, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Mode, MODES, 0x0, U8) // NOLINT
 
     PIT::PIT()
-        : _irq_handler([](InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+        : _irq_handler([](InterruptFrame* i_frame) -> Rune::CPU::InterruptState {
               SILENCE_UNUSED(i_frame);
               return InterruptState::PENDING;
           }) {}
@@ -82,7 +80,7 @@ namespace Rune::CPU {
         out_b(Channel::ZERO, byte_get(pit_divider, 0)); // Transmit low byte first
         out_b(Channel::ZERO, byte_get(pit_divider, 1)); // Then high byte
 
-        _irq_handler = [this](InterruptFrame* i_frame) -> Rune::CPU::InterruptState::_E {
+        _irq_handler = [this](InterruptFrame* i_frame) -> Rune::CPU::InterruptState {
             SILENCE_UNUSED(i_frame)
             _count++;
             _sleeping_threads.update_wake_time(_time_between_irq);

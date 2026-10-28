@@ -19,7 +19,6 @@
 #include <KRE/Memory.h>
 
 namespace Rune {
-    DEFINE_TYPED_ENUM(GateType, U8, GATE_TYPES, 0x0)
 
     Array<GateDescriptor, INTERRUPT_VECTOR_COUNT> GD; // NOLINT compiler error when declared const
     /**
