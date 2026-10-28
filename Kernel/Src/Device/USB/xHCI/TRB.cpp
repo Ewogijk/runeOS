@@ -18,9 +18,6 @@
 
 namespace Rune::Device::USB {
 
-    DEFINE_TYPED_ENUM(TRBType, U8, TRB_TYPE_VALUES, 0)
-    DEFINE_TYPED_ENUM(CompletionCode, U8, COMPLETION_CODE_VALUES, 255)
-
     // ========================================================================================== //
     // Transfer Request Block (TRB) — xHCI 2.0 §6.4
     // All TRBs are exactly 16 bytes (four DWORDs).

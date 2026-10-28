@@ -15,8 +15,6 @@
 #include <App/App.h>
 
 namespace Rune::App {
-    DEFINE_ENUM(LoadStatus, LOAD_STATUSES, 0x0)
-
     auto operator==(const Info& one, const Info& two) -> bool { return one.handle == two.handle; }
 
     auto operator!=(const Info& one, const Info& two) -> bool { return one.handle != two.handle; }

@@ -27,16 +27,6 @@ namespace Rune::Device::USB {
     }
 
     // ========================================================================================== //
-    // USB Endpoint Descriptor
-    // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(Direction, U8, ENDPOINT_DIRECTIONS, 0xFF)
-    DEFINE_TYPED_ENUM(TransferType, U8, ENDPOINT_TRANSFER_TYPES, 0xFF)
-    DEFINE_TYPED_ENUM(SyncType, U8, ENDPOINT_SYNC_TYPES, 0xFF)
-    DEFINE_TYPED_ENUM(IsochronousUsageType, U8, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF)
-    DEFINE_TYPED_ENUM(InterruptUsageType, U8, INTERRUPT_ENDPOINT_USAGE_TYPES, 0xFF)
-
-    // ========================================================================================== //
     // USB String Descriptor — USB 3.2 §9.6.9
     // ========================================================================================== //
 

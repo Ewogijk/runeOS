@@ -109,18 +109,18 @@ namespace Rune::CPU {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 #define MODEL_SPECIFIC_REGISTERS(X)                                                                \
-    X(ModelSpecificRegister, STAR, 0xC0000081)                                                     \
-    X(ModelSpecificRegister, LSTAR, 0xC0000082)                                                    \
-    X(ModelSpecificRegister, FMASK, 0xC0000084)                                                    \
-    X(ModelSpecificRegister, EFER, 0xC0000080)                                                     \
-    X(ModelSpecificRegister, FS_Base, 0xC0000100)                                                  \
-    X(ModelSpecificRegister, GS_Base, 0xC0000101)                                                  \
-    X(ModelSpecificRegister, KERNEL_GS_BASE, 0xC0000102)
+    X(STAR, 0xC0000081)                                                                            \
+    X(LSTAR, 0xC0000082)                                                                           \
+    X(FMASK, 0xC0000084)                                                                           \
+    X(EFER, 0xC0000080)                                                                            \
+    X(FS_Base, 0xC0000100)                                                                         \
+    X(GS_Base, 0xC0000101)                                                                         \
+    X(KERNEL_GS_BASE, 0xC0000102)
 
     /**
      * ID's of model specific registers.
      */
-    DECLARE_TYPED_ENUM(ModelSpecificRegister, U32, MODEL_SPECIFIC_REGISTERS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ModelSpecificRegister, MODEL_SPECIFIC_REGISTERS, 0x0, U32) // NOLINT
 
     /**
      * @brief Write the value to the MSR with the given ID.

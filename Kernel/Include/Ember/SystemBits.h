@@ -31,14 +31,14 @@ namespace Ember {
 #define LOG_LEVEL_FATAL 0x6
 
 #define LOG_LEVELS(X)                                                                              \
-    X(LogLevel, TRACE, LOG_LEVEL_TRACE)                                                            \
-    X(LogLevel, DEBUG, LOG_LEVEL_DEBUG)                                                            \
-    X(LogLevel, INFO, LOG_LEVEL_INFO)                                                              \
-    X(LogLevel, WARN, LOG_LEVEL_WARN)                                                              \
-    X(LogLevel, ERROR, LOG_LEVEL_ERROR)                                                            \
-    X(LogLevel, FATAL, LOG_LEVEL_FATAL)
+    X(TRACE, LOG_LEVEL_TRACE)                                                                      \
+    X(DEBUG, LOG_LEVEL_DEBUG)                                                                      \
+    X(INFO, LOG_LEVEL_INFO)                                                                        \
+    X(WARN, LOG_LEVEL_WARN)                                                                        \
+    X(ERROR, LOG_LEVEL_ERROR)                                                                      \
+    X(FATAL, LOG_LEVEL_FATAL)
 
-    DECLARE_TYPED_ENUM(LogLevel, U8, LOG_LEVELS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(LogLevel, LOG_LEVELS, 0x0, U8) // NOLINT
 
     // ====================================================================================== //
     // Log Event

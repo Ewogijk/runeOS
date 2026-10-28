@@ -31,11 +31,11 @@ namespace Rune::CPU {
      * </ul>
      */
 #define EXCEPTION_TYPES(X)                                                                         \
-    X(ExceptionType, DIVISION_BY_ZERO, 0x1)                                                        \
-    X(ExceptionType, DOUBLE_FAULT, 0x2)                                                            \
-    X(ExceptionType, PAGE_FAULT, 0x3)
+    X(DIVISION_BY_ZERO, 0x1)                                                                       \
+    X(DOUBLE_FAULT, 0x2)                                                                           \
+    X(PAGE_FAULT, 0x3)
 
-    DECLARE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0) // NOLINT
 
     /// @brief An entry in the exception table containing general info about an exception.
     struct ExceptionTableEntry {

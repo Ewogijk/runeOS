@@ -144,14 +144,14 @@ namespace Rune::CPU {
      *
      */
 #define GDT_OFFSETS(X)                                                                             \
-    X(GDTOffset, NUULL, 0x00)                                                                      \
-    X(GDTOffset, KERNEL_CODE, 0x08)                                                                \
-    X(GDTOffset, KERNEL_DATA, 0x10)                                                                \
-    X(GDTOffset, USER_DATA, 0x18)                                                                  \
-    X(GDTOffset, USER_CODE, 0x20)                                                                  \
-    X(GDTOffset, TSS, 0x28)
+    X(NUULL, 0x00)                                                                                 \
+    X(KERNEL_CODE, 0x08)                                                                           \
+    X(KERNEL_DATA, 0x10)                                                                           \
+    X(USER_DATA, 0x18)                                                                             \
+    X(USER_CODE, 0x20)                                                                             \
+    X(TSS, 0x28)
 
-    DECLARE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(GDTOffset, GDT_OFFSETS, 0xFF, U16) // NOLINT
 
     /**
      * @brief Setup a null descriptor, kernel mode code and data segment, user mode code and data

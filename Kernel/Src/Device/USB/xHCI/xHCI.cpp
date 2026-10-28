@@ -195,8 +195,6 @@ namespace Rune::Device::USB {
     // Inflight TD
     // ========================================================================================== //
 
-    DEFINE_ENUM(TransferEventErrorRecovery, RECOVERIES, 0x0)
-
     auto InflightTD::index_of(PhysicalAddr inflight_trb_address) -> Optional<U8> {
         Optional<U8> td_index;
         for (U8 i = 0; i < m_count; i++) {

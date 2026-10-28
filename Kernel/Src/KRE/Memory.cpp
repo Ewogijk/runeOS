@@ -17,7 +17,6 @@
 #include <KRE/Utility.h>
 
 namespace Rune {
-    DEFINE_TYPED_ENUM(MemoryUnit, MemorySize, MEMORY_UNITS, 0x0)
 
     auto memory_bytes_in(const MemorySize bytes, const MemoryUnit unit) -> MemoryFloatSize {
         return static_cast<MemoryFloatSize>(bytes) / static_cast<MemorySize>(unit);
@@ -38,8 +37,6 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      Memory Region
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
-
-    DEFINE_ENUM(MemoryRegionType, MEMORY_REGION_TYPES, 0x0)
 
     auto MemoryRegion::end() const -> MemoryAddr {
         constexpr auto max = static_cast<MemoryAddr>(-1);

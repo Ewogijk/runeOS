@@ -32,9 +32,9 @@ namespace Rune::App {
     /// When m_status == LoadStatus::LOADED, then m_info, m_stack, and m_tlp will contain defined
     /// values otherwise not.
     struct ElFLoadResult {
-        LoadStatus                        m_status = LoadStatus::NONE;
-        SharedPointer<Info>               m_app;
-        CPU::Stack                        m_user_stack = {};
+        LoadStatus                               m_status = LoadStatus::NONE;
+        SharedPointer<Info>                      m_app;
+        CPU::Stack                               m_user_stack = {};
         UniquePointer<Ember::ThreadLaunchPacket> m_tlp;
 
         static auto build_error_result(LoadStatus status) -> ElFLoadResult;

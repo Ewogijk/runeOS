@@ -278,15 +278,15 @@ namespace Rune::Memory {
      * A page flag represents a property of a page table entry.
      */
 #define PAGE_FLAGS(X)                                                                              \
-    X(PageFlag, PRESENT, 0x01)                                                                     \
-    X(PageFlag, WRITE_ALLOWED, 0x02)                                                               \
-    X(PageFlag, USER_MODE_ACCESS, 0x04)                                                            \
-    X(PageFlag, WRITE_THROUGH, 0x08)                                                               \
-    X(PageFlag, CACHE_DISABLE, 0x10)                                                               \
-    X(PageFlag, ACCESSED, 0x20)                                                                    \
-    X(PageFlag, DIRTY, 0x40)
+    X(PRESENT, 0x01)                                                                               \
+    X(WRITE_ALLOWED, 0x02)                                                                         \
+    X(USER_MODE_ACCESS, 0x04)                                                                      \
+    X(WRITE_THROUGH, 0x08)                                                                         \
+    X(CACHE_DISABLE, 0x10)                                                                         \
+    X(ACCESSED, 0x20)                                                                              \
+    X(DIRTY, 0x40)
 
-    DECLARE_TYPED_ENUM(PageFlag, U16, PAGE_FLAGS, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PageFlag, PAGE_FLAGS, 0, U16) // NOLINT
 
     /**
      * A status code describing the outcome of accessing the page table structures.
@@ -298,12 +298,12 @@ namespace Rune::Memory {
      * </ol>
      */
 #define PAGE_TABLE_ACCESS_STATUSES(X)                                                              \
-    X(PageTableAccessStatus, OKAY, 0x1)                                                            \
-    X(PageTableAccessStatus, ALLOC_ERROR, 0x2)                                                     \
-    X(PageTableAccessStatus, FREE_ERROR, 0x3)                                                      \
-    X(PageTableAccessStatus, PAGE_TABLE_ENTRY_MISSING, 0x4)
+    X(OKAY, 0x1)                                                                                   \
+    X(ALLOC_ERROR, 0x2)                                                                            \
+    X(FREE_ERROR, 0x3)                                                                             \
+    X(PAGE_TABLE_ENTRY_MISSING, 0x4)
 
-    DECLARE_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PageTableAccessStatus, PAGE_TABLE_ACCESS_STATUSES, 0) // NOLINT
 
     /// @brief Describes the outcome of accessing the page table hierarchy and performing an
     ///         operation (e.g allocation).

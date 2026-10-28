@@ -30,16 +30,16 @@ namespace Heimdall {
     };
 
 #define TEST_RESULTS(X)                                                                            \
-    X(TestResult, PASS, 0x1)                                                                       \
-    X(TestResult, FAIL, 0x2)                                                                       \
-    X(TestResult, CONFIG_ERROR, 0x3)
+    X(PASS, 0x1)                                                                                   \
+    X(FAIL, 0x2)                                                                                   \
+    X(CONFIG_ERROR, 0x3)
 
     /// @brief All possible test results.
     ///
     /// PASS: A single or the overall test is pass.<br>
     /// FAIL: A single or the overall test is fail.<br>
     /// CONFIG_ERROR: Heimdall could not be configured.<br>
-    DECLARE_ENUM(TestResult, TEST_RESULTS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TestResult, TEST_RESULTS, 0x0) // NOLINT
 
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                  List Wrapper for Test

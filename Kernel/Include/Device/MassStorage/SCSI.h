@@ -32,39 +32,39 @@ namespace Rune::Device {
     // ========================================================================================== //
 
 #define SCSI_OPERATION_CODES(X)                                                                    \
-    X(SCSIOperationCode, TEST_UNIT_READY, 0x00)                                                    \
-    X(SCSIOperationCode, REQUEST_SENSE, 0x03)                                                      \
-    X(SCSIOperationCode, INQUIRY, 0x12)                                                            \
-    X(SCSIOperationCode, READ_CAPACITY_10, 0x25)                                                   \
-    X(SCSIOperationCode, READ_10, 0x28)                                                            \
-    X(SCSIOperationCode, WRITE_10, 0x2A)                                                           \
-    X(SCSIOperationCode, READ_16, 0x88)                                                            \
-    X(SCSIOperationCode, WRITE_16, 0x8A)                                                           \
-    X(SCSIOperationCode, SERVICE_ACTION_IN_16, 0x9E)
+    X(TEST_UNIT_READY, 0x00)                                                                       \
+    X(REQUEST_SENSE, 0x03)                                                                         \
+    X(INQUIRY, 0x12)                                                                               \
+    X(READ_CAPACITY_10, 0x25)                                                                      \
+    X(READ_10, 0x28)                                                                               \
+    X(WRITE_10, 0x2A)                                                                              \
+    X(READ_16, 0x88)                                                                               \
+    X(WRITE_16, 0x8A)                                                                              \
+    X(SERVICE_ACTION_IN_16, 0x9E)
 
     /// @brief Operation codes of the supported commands — §3.0. READ CAPACITY (16) is the service
     ///         action 10h of SERVICE_ACTION_IN_16.
-    DECLARE_TYPED_ENUM(SCSIOperationCode, U8, SCSI_OPERATION_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIOperationCode, SCSI_OPERATION_CODES, 0xFF, U8) // NOLINT
 
     // ========================================================================================== //
     // Sense Data — §2.4
     // ========================================================================================== //
 
 #define SCSI_SENSE_KEYS(X)                                                                         \
-    X(SCSISenseKey, NO_SENSE, 0x0)                                                                 \
-    X(SCSISenseKey, RECOVERED_ERROR, 0x1)                                                          \
-    X(SCSISenseKey, NOT_READY, 0x2)                                                                \
-    X(SCSISenseKey, MEDIUM_ERROR, 0x3)                                                             \
-    X(SCSISenseKey, HARDWARE_ERROR, 0x4)                                                           \
-    X(SCSISenseKey, ILLEGAL_REQUEST, 0x5)                                                          \
-    X(SCSISenseKey, UNIT_ATTENTION, 0x6)                                                           \
-    X(SCSISenseKey, DATA_PROTECT, 0x7)                                                             \
-    X(SCSISenseKey, BLANK_CHECK, 0x8)                                                              \
-    X(SCSISenseKey, VENDOR_SPECIFIC, 0x9)                                                          \
-    X(SCSISenseKey, COPY_ABORTED, 0xA)                                                             \
-    X(SCSISenseKey, ABORTED_COMMAND, 0xB)                                                          \
-    X(SCSISenseKey, VOLUME_OVERFLOW, 0xD)                                                          \
-    X(SCSISenseKey, MISCOMPARE, 0xE)
+    X(NO_SENSE, 0x0)                                                                               \
+    X(RECOVERED_ERROR, 0x1)                                                                        \
+    X(NOT_READY, 0x2)                                                                              \
+    X(MEDIUM_ERROR, 0x3)                                                                           \
+    X(HARDWARE_ERROR, 0x4)                                                                         \
+    X(ILLEGAL_REQUEST, 0x5)                                                                        \
+    X(UNIT_ATTENTION, 0x6)                                                                         \
+    X(DATA_PROTECT, 0x7)                                                                           \
+    X(BLANK_CHECK, 0x8)                                                                            \
+    X(VENDOR_SPECIFIC, 0x9)                                                                        \
+    X(COPY_ABORTED, 0xA)                                                                           \
+    X(ABORTED_COMMAND, 0xB)                                                                        \
+    X(VOLUME_OVERFLOW, 0xD)                                                                        \
+    X(MISCOMPARE, 0xE)
 
     /// @brief Error class of a failed command — §2.4.1.5, Table 27.
     ///
@@ -77,7 +77,7 @@ namespace Rune::Device {
     /// - ABORTED_COMMAND: The device aborted the command, retrying may succeed.
     ///
     /// 0xC is obsolete and 0xF reserved, NONE (0xFF) marks them.
-    DECLARE_TYPED_ENUM(SCSISenseKey, U8, SCSI_SENSE_KEYS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSISenseKey, SCSI_SENSE_KEYS, 0xFF, U8) // NOLINT
 
     /// @brief Fixed format sense data (response codes 70h/71h) — §2.4.1.2, Table 26.
     ///
@@ -153,9 +153,9 @@ namespace Rune::Device {
     // ========================================================================================== //
 
 #define SCSI_PERIPHERAL_QUALIFIERS(X)                                                              \
-    X(SCSIPeripheralQualifier, CONNECTED, 0x0)                                                     \
-    X(SCSIPeripheralQualifier, NOT_CONNECTED, 0x1)                                                 \
-    X(SCSIPeripheralQualifier, NOT_SUPPORTED, 0x3)
+    X(CONNECTED, 0x0)                                                                              \
+    X(NOT_CONNECTED, 0x1)                                                                          \
+    X(NOT_SUPPORTED, 0x3)
 
     /// @brief Peripheral qualifier — §3.6.2, Table 47.
     ///
@@ -163,29 +163,29 @@ namespace Rune::Device {
     ///   This does not mean it is ready.
     /// - NOT_CONNECTED: The LU supports the device type, but no device is connected.
     /// - NOT_SUPPORTED: The LU cannot have a device, peripheral device type is 1Fh.
-    DECLARE_TYPED_ENUM(SCSIPeripheralQualifier, U8, SCSI_PERIPHERAL_QUALIFIERS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIPeripheralQualifier, SCSI_PERIPHERAL_QUALIFIERS, 0xFF, U8) // NOLINT
 
 #define SCSI_PERIPHERAL_DEVICE_TYPES(X)                                                            \
-    X(SCSIPeripheralDeviceType, DIRECT_ACCESS_BLOCK, 0x00)                                         \
-    X(SCSIPeripheralDeviceType, SEQUENTIAL_ACCESS, 0x01)                                           \
-    X(SCSIPeripheralDeviceType, PRINTER, 0x02)                                                     \
-    X(SCSIPeripheralDeviceType, PROCESSOR, 0x03)                                                   \
-    X(SCSIPeripheralDeviceType, WRITE_ONCE, 0x04)                                                  \
-    X(SCSIPeripheralDeviceType, CD_DVD, 0x05)                                                      \
-    X(SCSIPeripheralDeviceType, OPTICAL_MEMORY, 0x07)                                              \
-    X(SCSIPeripheralDeviceType, MEDIUM_CHANGER, 0x08)                                              \
-    X(SCSIPeripheralDeviceType, STORAGE_ARRAY_CONTROLLER, 0x0C)                                    \
-    X(SCSIPeripheralDeviceType, ENCLOSURE_SERVICES, 0x0D)                                          \
-    X(SCSIPeripheralDeviceType, SIMPLIFIED_DIRECT_ACCESS, 0x0E)                                    \
-    X(SCSIPeripheralDeviceType, OPTICAL_CARD_READER_WRITER, 0x0F)                                  \
-    X(SCSIPeripheralDeviceType, BRIDGE_CONTROLLER, 0x10)                                           \
-    X(SCSIPeripheralDeviceType, OBJECT_BASED_STORAGE, 0x11)                                        \
-    X(SCSIPeripheralDeviceType, AUTOMATION_DRIVE_INTERFACE, 0x12)                                  \
-    X(SCSIPeripheralDeviceType, WELL_KNOWN_LOGICAL_UNIT, 0x1E)                                     \
-    X(SCSIPeripheralDeviceType, UNKNOWN, 0x1F)
+    X(DIRECT_ACCESS_BLOCK, 0x00)                                                                   \
+    X(SEQUENTIAL_ACCESS, 0x01)                                                                     \
+    X(PRINTER, 0x02)                                                                               \
+    X(PROCESSOR, 0x03)                                                                             \
+    X(WRITE_ONCE, 0x04)                                                                            \
+    X(CD_DVD, 0x05)                                                                                \
+    X(OPTICAL_MEMORY, 0x07)                                                                        \
+    X(MEDIUM_CHANGER, 0x08)                                                                        \
+    X(STORAGE_ARRAY_CONTROLLER, 0x0C)                                                              \
+    X(ENCLOSURE_SERVICES, 0x0D)                                                                    \
+    X(SIMPLIFIED_DIRECT_ACCESS, 0x0E)                                                              \
+    X(OPTICAL_CARD_READER_WRITER, 0x0F)                                                            \
+    X(BRIDGE_CONTROLLER, 0x10)                                                                     \
+    X(OBJECT_BASED_STORAGE, 0x11)                                                                  \
+    X(AUTOMATION_DRIVE_INTERFACE, 0x12)                                                            \
+    X(WELL_KNOWN_LOGICAL_UNIT, 0x1E)                                                               \
+    X(UNKNOWN, 0x1F)
 
     /// @brief Peripheral device type — §3.6.2, Table 48. Obsolete and reserved types map to NONE.
-    DECLARE_TYPED_ENUM(SCSIPeripheralDeviceType, U8, SCSI_PERIPHERAL_DEVICE_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIPeripheralDeviceType, SCSI_PERIPHERAL_DEVICE_TYPES, 0xFF, U8) // NOLINT
 
     /// @brief INQUIRY CDB — §3.6.1, Table 45.
     struct SCSIInquiryCDB {
@@ -275,9 +275,9 @@ namespace Rune::Device {
     // ========================================================================================== //
 
 #define SCSI_VPD_PAGE_CODES(X)                                                                     \
-    X(SCSIVPDPageCode, SUPPORTED_VPD_PAGES, 0x00)                                                  \
-    X(SCSIVPDPageCode, UNIT_SERIAL_NUMBER, 0x80)                                                   \
-    X(SCSIVPDPageCode, DEVICE_IDENTIFICATION, 0x83)
+    X(SUPPORTED_VPD_PAGES, 0x00)                                                                   \
+    X(UNIT_SERIAL_NUMBER, 0x80)                                                                    \
+    X(DEVICE_IDENTIFICATION, 0x83)
 
     /// @brief VPD page codes — §4.4.1, Table 267.
     ///
@@ -285,7 +285,7 @@ namespace Rune::Device {
     ///   Mandatory if any VPD page is supported.
     /// - UNIT_SERIAL_NUMBER (80h): ASCII serial number, all spaces if not available — §4.4.10.
     /// - DEVICE_IDENTIFICATION (83h): List of identification descriptors — §4.4.7. Mandatory.
-    DECLARE_TYPED_ENUM(SCSIVPDPageCode, U8, SCSI_VPD_PAGE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIVPDPageCode, SCSI_VPD_PAGE_CODES, 0xFF, U8) // NOLINT
 
     /// @brief Header of every VPD page — §4.4.2, Table 268; §4.4.7, Table 275.
     ///
@@ -303,33 +303,33 @@ namespace Rune::Device {
     static_assert(sizeof(SCSIVPDPageHeader) == 4); // NOLINT
 
 #define SCSI_CODE_SETS(X)                                                                          \
-    X(SCSICodeSet, BINARY, 0x1)                                                                    \
-    X(SCSICodeSet, ASCII, 0x2)
+    X(BINARY, 0x1)                                                                                 \
+    X(ASCII, 0x2)
 
     /// @brief Encoding of an identifier — §4.4.7, Table 277.
-    DECLARE_TYPED_ENUM(SCSICodeSet, U8, SCSI_CODE_SETS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSICodeSet, SCSI_CODE_SETS, 0xFF, U8) // NOLINT
 
 #define SCSI_ASSOCIATIONS(X)                                                                       \
-    X(SCSIAssociation, LOGICAL_UNIT, 0x0)                                                          \
-    X(SCSIAssociation, TARGET_PORT, 0x1)                                                           \
-    X(SCSIAssociation, TARGET_DEVICE, 0x2)
+    X(LOGICAL_UNIT, 0x0)                                                                           \
+    X(TARGET_PORT, 0x1)                                                                            \
+    X(TARGET_DEVICE, 0x2)
 
     /// @brief Entity an identifier describes — §4.4.7, Table 279.
     ///
     /// - LOGICAL_UNIT: The addressed LU, the identifier is the same on every path to it.
     /// - TARGET_PORT: The port that received the request.
     /// - TARGET_DEVICE: The SCSI target device that contains the addressed LU.
-    DECLARE_TYPED_ENUM(SCSIAssociation, U8, SCSI_ASSOCIATIONS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIAssociation, SCSI_ASSOCIATIONS, 0xFF, U8) // NOLINT
 
 #define SCSI_IDENTIFIER_TYPES(X)                                                                   \
-    X(SCSIIdentifierType, VENDOR_SPECIFIC, 0x0)                                                    \
-    X(SCSIIdentifierType, T10_VENDOR_ID, 0x1)                                                      \
-    X(SCSIIdentifierType, EUI_64, 0x2)                                                             \
-    X(SCSIIdentifierType, NAA, 0x3)                                                                \
-    X(SCSIIdentifierType, RELATIVE_TARGET_PORT, 0x4)                                               \
-    X(SCSIIdentifierType, TARGET_PORT_GROUP, 0x5)                                                  \
-    X(SCSIIdentifierType, LOGICAL_UNIT_GROUP, 0x6)                                                 \
-    X(SCSIIdentifierType, MD5_LOGICAL_UNIT, 0x7)
+    X(VENDOR_SPECIFIC, 0x0)                                                                        \
+    X(T10_VENDOR_ID, 0x1)                                                                          \
+    X(EUI_64, 0x2)                                                                                 \
+    X(NAA, 0x3)                                                                                    \
+    X(RELATIVE_TARGET_PORT, 0x4)                                                                   \
+    X(TARGET_PORT_GROUP, 0x5)                                                                      \
+    X(LOGICAL_UNIT_GROUP, 0x6)                                                                     \
+    X(MD5_LOGICAL_UNIT, 0x7)
 
     /// @brief Format and assignment authority of an identifier — §4.4.7, Table 280.
     ///
@@ -339,7 +339,7 @@ namespace Rune::Device {
     /// - NAA: FC-PH/FC-FS Name_Identifier.
     /// - RELATIVE_TARGET_PORT, TARGET_PORT_GROUP, LOGICAL_UNIT_GROUP: 4 byte binary number.
     /// - MD5_LOGICAL_UNIT: Only used if no EUI_64 or NAA identifier is available.
-    DECLARE_TYPED_ENUM(SCSIIdentifierType, U8, SCSI_IDENTIFIER_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIIdentifierType, SCSI_IDENTIFIER_TYPES, 0xFF, U8) // NOLINT
 
     /// @brief Header of an identification descriptor of the Device Identification VPD page —
     ///         §4.4.7, Table 276. The identifier follows immediately.

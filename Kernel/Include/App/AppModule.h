@@ -43,11 +43,11 @@ namespace Rune::App {
      * </ul>
      */
 #define STD_STREAMS(X)                                                                             \
-    X(StdStream, IN, 0x1)                                                                          \
-    X(StdStream, OUT, 0x2)                                                                         \
-    X(StdStream, ERR, 0x3)
+    X(IN, 0x1)                                                                                     \
+    X(OUT, 0x2)                                                                                    \
+    X(ERR, 0x3)
 
-    DECLARE_ENUM(StdStream, STD_STREAMS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(StdStream, STD_STREAMS, 0x0) // NOLINT
 
     /**
      * The App subsystem is responsible for starting and managing Apps.

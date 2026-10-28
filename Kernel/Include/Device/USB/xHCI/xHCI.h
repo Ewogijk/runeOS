@@ -164,8 +164,8 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define RECOVERIES(X)                                                                              \
-    X(TransferEventErrorRecovery, ABORT_TD, 0x1)                                                   \
-    X(TransferEventErrorRecovery, SKIP_TRANSFER_EVENT, 0x2)
+    X(ABORT_TD, 0x1)                                                                               \
+    X(SKIP_TRANSFER_EVENT, 0x2)
 
     /// @brief The recovery instructions will be used by the interrupt handler to decide what to do
     ///         when an error on a transfer event was detected.
@@ -173,7 +173,7 @@ namespace Rune::Device::USB {
     /// - NONE: No error was detected.
     /// - ABORT_TD: Abort all inflight TRBs of the TD.
     /// - SKIP_TRANSFER_EVENT: Skip this transfer event, do not resolve a TD.
-    DECLARE_ENUM(TransferEventErrorRecovery, RECOVERIES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TransferEventErrorRecovery, RECOVERIES, 0x0) // NOLINT
 
     /// @brief An inflight transfer descriptor (TD) is a collection of TRBs that have been sent to
     ///         the xHC but not yet handled.

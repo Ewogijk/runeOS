@@ -25,12 +25,12 @@
 namespace Rune::VFS {
 
 #define VOLUME_ACCESS_STATUSES(X)                                                                  \
-    X(VolumeAccessStatus, OKAY, 0x1)                                                               \
-    X(VolumeAccessStatus, NOT_FOUND, 0x2)                                                          \
-    X(VolumeAccessStatus, BAD_PATH, 0x3)                                                           \
-    X(VolumeAccessStatus, DEV_ERROR, 0x4)
+    X(OKAY, 0x1)                                                                                   \
+    X(NOT_FOUND, 0x2)                                                                              \
+    X(BAD_PATH, 0x3)                                                                               \
+    X(DEV_ERROR, 0x4)
 
-    DECLARE_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(VolumeAccessStatus, VOLUME_ACCESS_STATUSES, 0x0) // NOLINT
 
     /**
      * High level search and manipulations of FAT file entries.

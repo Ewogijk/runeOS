@@ -22,20 +22,19 @@
 namespace Rune::CPU {
 
 #define Ports(X)                                                                                   \
-    X(Port, COMMAND1, 0x20)                                                                        \
-    X(Port, DATA1, 0x21)                                                                           \
-    X(Port, COMMAND2, 0xA0)                                                                        \
-    X(Port, DATA2, 0xA1)
+    X(COMMAND1, 0x20)                                                                              \
+    X(DATA1, 0x21)                                                                                 \
+    X(COMMAND2, 0xA0)                                                                              \
+    X(DATA2, 0xA1)
 
-    DECLARE_TYPED_ENUM(Port, U8, Ports, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Port, U8, Ports, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Port, Ports, 0x0, U8) // NOLINT
 
 #define ICW1_VALUES(X)                                                                             \
-    X(ICW1, REQUIRE_ICW4, 0x01)                                                                    \
-    X(ICW1, SINGLE_MODE, 0x02)                                                                     \
-    X(ICW1, INTERVAL4, 0x04)                                                                       \
-    X(ICW1, LEVEL_TRIGGERED, 0x08)                                                                 \
-    X(ICW1, INIT, 0x10)
+    X(REQUIRE_ICW4, 0x01)                                                                          \
+    X(SINGLE_MODE, 0x02)                                                                           \
+    X(INTERVAL4, 0x04)                                                                             \
+    X(LEVEL_TRIGGERED, 0x08)                                                                       \
+    X(INIT, 0x10)
 
     /// @brief
     ///
@@ -44,37 +43,34 @@ namespace Rune::CPU {
     /// - INTERVAL4: 1 - Call Address Interval = 4, 0 - CAI = 8
     /// - LEVEL_TRIGGERED: 1 - Level triggered mode, 0 - Edge triggered mode
     /// - INIT: 1 - Initialize pic, 0 - Do Not
-    DECLARE_TYPED_ENUM(ICW1, U8, ICW1_VALUES, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(ICW1, U8, ICW1_VALUES, 0x0)
+    EMBER_DEFINE_SMART_ENUM(ICW1, ICW1_VALUES, 0x0, U8) // NOLINT
 
 #define ICW2_VALUES(X)                                                                             \
-    X(ICW2, PIC1_IRQ_OFFSET, 0x20)                                                                 \
-    X(ICW2, PIC2_IRQ_OFFSET, 0x28)
+    X(PIC1_IRQ_OFFSET, 0x20)                                                                       \
+    X(PIC2_IRQ_OFFSET, 0x28)
 
     /// @brief
     ///
     /// - PIC1_IRQ_OFFSET: Interrupt offset of the pic 1
     /// - PIC2_IRQ_OFFSET: Interrupt offset of the pic 2
-    DECLARE_TYPED_ENUM(ICW2, U8, ICW2_VALUES, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(ICW2, U8, ICW2_VALUES, 0x0)
+    EMBER_DEFINE_SMART_ENUM(ICW2, ICW2_VALUES, 0x0, U8) // NOLINT
 
 #define ICW3_VALUES(X)                                                                             \
-    X(ICW3, PIC1_PIC2_INPUT, 0x04)                                                                 \
-    X(ICW3, PIC2_ID, 0x02)
+    X(PIC1_PIC2_INPUT, 0x04)                                                                       \
+    X(PIC2_ID, 0x02)
 
     /// @brief
     ///
     /// - PIC1_PIC2_INPUT: The pins that receive input from pic 2 (our case: 0000 0100)
     /// - PIC2_ID: The id of the pic 2 (our case: 010 -> 2)
-    DECLARE_TYPED_ENUM(ICW3, U8, ICW3_VALUES, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(ICW3, U8, ICW3_VALUES, 0x0)
+    EMBER_DEFINE_SMART_ENUM(ICW3, ICW3_VALUES, 0x0, U8) // NOLINT
 
 #define ICW4_VALUES(X)                                                                             \
-    X(ICW4, MODE_8086, 0x01)                                                                       \
-    X(ICW4, AUTO_EOI, 0x02)                                                                        \
-    X(ICW4, MS, 0x04)                                                                              \
-    X(ICW4, BUFFERED_MODE, 0x08)                                                                   \
-    X(ICW4, SFNM, 0x10)
+    X(MODE_8086, 0x01)                                                                             \
+    X(AUTO_EOI, 0x02)                                                                              \
+    X(MS, 0x04)                                                                                    \
+    X(BUFFERED_MODE, 0x08)                                                                         \
+    X(SFNM, 0x10)
 
     /// @brief
     ///
@@ -83,21 +79,19 @@ namespace Rune::CPU {
     /// - MS: 1 - pic is master, 0 - pic is slave
     /// - BUFFERED_MODE: 1 - Enable buffered mode, 0 - Disable buffered mode
     /// - SFNM: 1 - Special fully nested mode, 0 - No SFNM
-    DECLARE_TYPED_ENUM(ICW4, U8, ICW4_VALUES, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(ICW4, U8, ICW4_VALUES, 0x0)
+    EMBER_DEFINE_SMART_ENUM(ICW4, ICW4_VALUES, 0x0, U8) // NOLINT
 
 #define COMMANDS(X)                                                                                \
-    X(Command, EOI, 0x20)                                                                          \
-    X(Command, READ_IRR, 0x0A)                                                                     \
-    X(Command, READ_ISR, 0x0B)
+    X(EOI, 0x20)                                                                                   \
+    X(READ_IRR, 0x0A)                                                                              \
+    X(READ_ISR, 0x0B)
 
     /// @brief
     ///
     /// - EOI: End of Interrupt
     /// - READ_IRR:
     /// - READ_ISR:
-    DECLARE_TYPED_ENUM(Command, U8, COMMANDS, 0x0) // NOLINT
-    DEFINE_TYPED_ENUM(Command, U8, COMMANDS, 0x0)
+    EMBER_DEFINE_SMART_ENUM(Command, COMMANDS, 0x0, U8) // NOLINT
 
     auto _8259PIC::probe() -> bool {
         constexpr U16 TEST_MASK = 0x1337;

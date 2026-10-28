@@ -24,12 +24,12 @@
 
 namespace Rune::VFS {
 #define NODE_IO_STATUSES(X)                                                                        \
-    X(NodeIOStatus, OKAY, 0x1)                                                                     \
-    X(NodeIOStatus, BAD_ARGS, 0x2)                                                                 \
-    X(NodeIOStatus, NOT_ALLOWED, 0x3)                                                              \
-    X(NodeIOStatus, NOT_SUPPORTED, 0x4)                                                            \
-    X(NodeIOStatus, DEV_ERROR, 0x5)                                                                \
-    X(NodeIOStatus, CLOSED, 0x6)
+    X(OKAY, 0x1)                                                                                   \
+    X(BAD_ARGS, 0x2)                                                                               \
+    X(NOT_ALLOWED, 0x3)                                                                            \
+    X(NOT_SUPPORTED, 0x4)                                                                          \
+    X(DEV_ERROR, 0x5)                                                                              \
+    X(CLOSED, 0x6)
 
     /// @brief End result of a node IO operation.
     ///
@@ -39,7 +39,7 @@ namespace Rune::VFS {
     ///             on a node in read mode.<br>
     /// NotSupported: The operation is not supported, e.g. node read on a directory<br>
     /// StorageDeviceError: Error on the underlying storage device.
-    DECLARE_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(NodeIOStatus, NODE_IO_STATUSES, 0x0) // NOLINT
 
     /**
      * @brief A node IO status and the number of bytes read, written or seeked on the storage

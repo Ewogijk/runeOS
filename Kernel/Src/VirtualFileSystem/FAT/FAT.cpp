@@ -18,9 +18,6 @@
 #include <KRE/Memory.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(FATType, FAT_TYPES, 0x0)
-
-    DEFINE_ENUM(FATFileAttribute, FAT_FILE_ATTRIBUTES, 0x0)
 
     const char* BIOSParameterBlock::RUNEOS_OEM = "runeOS  ";
 

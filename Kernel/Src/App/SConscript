@@ -19,7 +19,6 @@ build_env: Environment
 sources = [
     build_env.File("App.cpp"),
     build_env.File("AppModule.cpp"),
-    build_env.File("ELF.cpp"),
     build_env.File("ELFLoader.cpp"),
     build_env.File("TerminalStream.cpp"),
     build_env.File("VoidStream.cpp"),

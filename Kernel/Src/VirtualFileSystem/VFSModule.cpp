@@ -20,8 +20,6 @@
 #include <Device/MassStorage/MassStorage.h>
 
 namespace Rune::VFS {
-    DEFINE_ENUM(EventHook, VFS_EVENT_HOOKS, 0x0) // NOLINT
-
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                                      KernelSubsystem Overrides
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

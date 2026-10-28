@@ -447,22 +447,20 @@ CLINK {
     auto acpi_to_rune_execute(ACPI_EXECUTE_TYPE type, ACPI_OSD_EXEC_CALLBACK func, void* ctx)
         -> ACPI_STATUS {
         if (func == nullptr) return AE_BAD_PARAMETER;
-
-        static constexpr uintptr_t RADIX_HEX = 16;
         // Provide the addresses to func and ctx as hex strings to thread main
 
         auto tlp = ThreadLaunchPacketBuilder()
-                       .add_argument(int_to_string(memory_pointer_to_addr(func), RADIX_HEX))
-                       .add_argument(int_to_string(memory_pointer_to_addr(ctx), RADIX_HEX))
+                       .add_argument(int_to_string(memory_pointer_to_addr(func), Radix::HEX))
+                       .add_argument(int_to_string(memory_pointer_to_addr(ctx), Radix::HEX))
                        .main([](Ember::ThreadLaunchPacket* start_info) -> int {
                            // Parse the hex string addresses of func and ctx and cast to their
                            // respective types
                            uintptr_t ptr = 0;
-                           if (!parse_int<uintptr_t>(start_info->argv(0), RADIX_HEX, ptr))
+                           if (!parse_int<uintptr_t>(start_info->argv(0), Radix::HEX, ptr))
                                return -1;
                            auto func = reinterpret_cast<ACPI_OSD_EXEC_CALLBACK>(ptr);
 
-                           if (!parse_int<uintptr_t>(start_info->argv(1), RADIX_HEX, ptr))
+                           if (!parse_int<uintptr_t>(start_info->argv(1), Radix::HEX, ptr))
                                return -1;
                            auto* ctx = reinterpret_cast<void*>(ptr);
 
@@ -688,19 +686,19 @@ CLINK {
                                             .handler    = handler,
                                             .context    = ctx};
 
-        bool registered = System::instance()
-                              .get_module<CPU::CPUModule>(ModuleSelector::CPU)
-                              ->install_irq_handler(irq,
-                                                    int_ctx.dev_handle,
-                                                    int_ctx.dev_name,
-                                                    [&handler, &ctx](CPU::InterruptFrame* i_frame)
-                                                        -> Rune::CPU::InterruptState::_E {
-                                                        SILENCE_UNUSED(i_frame)
-                                                        UINT32 ret = handler(ctx);
-                                                        return ret == ACPI_INTERRUPT_HANDLED
-                                                                   ? CPU::InterruptState::HANDLED
-                                                                   : CPU::InterruptState::PENDING;
-                                                    });
+        bool registered =
+            System::instance()
+                .get_module<CPU::CPUModule>(ModuleSelector::CPU)
+                ->install_irq_handler(
+                    irq,
+                    int_ctx.dev_handle,
+                    int_ctx.dev_name,
+                    [&handler, &ctx](CPU::InterruptFrame* i_frame) -> Rune::CPU::InterruptState {
+                        SILENCE_UNUSED(i_frame)
+                        UINT32 ret = handler(ctx);
+                        return ret == ACPI_INTERRUPT_HANDLED ? CPU::InterruptState::HANDLED
+                                                             : CPU::InterruptState::PENDING;
+                    });
 
         if (!registered) return AE_ALREADY_EXISTS;
         g_osl_config.m_interrupt_handlers.add_back(int_ctx);

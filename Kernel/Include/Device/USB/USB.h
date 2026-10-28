@@ -314,10 +314,10 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define TRANSFER_REQUEST_TYPES(X)                                                                  \
-    X(TransferRequestType, CONTROL, 0x1)                                                           \
-    X(TransferRequestType, BULK, 0x2)                                                              \
-    X(TransferRequestType, INTERRUPT, 0x3)                                                         \
-    X(TransferRequestType, ISOCHRONOUS, 0x4)
+    X(CONTROL, 0x1)                                                                                \
+    X(BULK, 0x2)                                                                                   \
+    X(INTERRUPT, 0x3)                                                                              \
+    X(ISOCHRONOUS, 0x4)
 
     /// @brief The supported general transfer types.
     ///
@@ -325,7 +325,7 @@ namespace Rune::Device::USB {
     /// - BULK:        Bulk transfer on a bulk endpoint.
     /// - INTERRUPT:   Interrupt transfer on an interrupt endpoint.
     /// - ISOCHRONOUS: Isochronous transfer on an isochronous endpoint.
-    DECLARE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0) // NOLINT
 
     /// @brief The header of a transfer request identifies the calling function device and the
     ///         request type.

@@ -15,11 +15,6 @@
 #include <Device/USB/HID/UsageTables.h>
 
 namespace Rune::Device::USB {
-    DEFINE_TYPED_ENUM(HIDUsagePage, U16, HID_USAGE_PAGES, 0x0000)
-    DEFINE_TYPED_ENUM(HIDGenericDesktopPage, U16, HID_GENERIC_DESKTOP_PAGES, 0x0000)
-    DEFINE_TYPED_ENUM(HIDKeyboardUsage, U16, HID_KEYBOARD_USAGES, 0x0000)
-    DEFINE_TYPED_ENUM(HIDLEDUsage, U16, HID_LED_USAGES, 0x0000)
-
     auto hid_decode_usage(HIDUsagePage usage_page, U16 usage) -> String {
         if (usage_page == HIDUsagePage::NONE || usage == 0) return String::format("{}", usage);
 

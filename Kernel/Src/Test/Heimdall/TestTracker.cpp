@@ -20,7 +20,6 @@
 auto atexit(void (*func)()) -> int;
 
 namespace Heimdall {
-    DEFINE_ENUM(TestResult, TEST_RESULTS, 0x0)
 
     auto get_test_tracker() -> TestTracker& {
         static TestTracker test_registry;

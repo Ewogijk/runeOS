@@ -407,11 +407,11 @@ namespace Rune {
     // ========================================================================================== //
 
 #define RADIXES(X)                                                                                 \
-    X(Radix, DECIMAL, 10)                                                                          \
-    X(Radix, HEX, 16)
+    X(DECIMAL, 10)                                                                                 \
+    X(HEX, 16)
 
     /// @brief Common radix values.
-    DECLARE_ENUM(Radix, RADIXES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Radix, RADIXES, 0x0) // NOLINT
 
     template <class TNum>
     auto int_to_string(TNum num, Radix radix) -> String {

@@ -29,10 +29,10 @@ namespace Rune::VFS {
     ///     <li>IO_ERROR:         An IO error occurred while iterating the directory.</li>
     /// </ul>
 #define DIRECTORY_STREAM_STATUS_CODES(X)                                                           \
-    X(DirectoryStreamStatus, END_OF_DIRECTORY, 0x1)                                                \
-    X(DirectoryStreamStatus, IO_ERROR, 0x2)
+    X(END_OF_DIRECTORY, 0x1)                                                                       \
+    X(IO_ERROR, 0x2)
 
-    DECLARE_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DirectoryStreamStatus, DIRECTORY_STREAM_STATUS_CODES, 0x0) // NOLINT
 
     /// @brief Handle type of DirectoryStream.
     using DirectoryStreamHandle = U16;

@@ -160,10 +160,8 @@ namespace Rune::Device::USB {
     // EndpointContext::DW0 — xHCI 2.0 §6.2.3 Table 6-9
     // ========================================================================================== //
 
-    DEFINE_TYPED_ENUM(EndpointState, U8, EP_STATES, 0xFF)
-
     [[nodiscard]] auto EndpointContext::DW0::ep_state() const -> EndpointState {
-        return EndpointState::from_value(static_cast<U8>(m_register & EP_STATE_MASK));
+        return EndpointState(static_cast<U8>(m_register & EP_STATE_MASK));
     }
 
     [[nodiscard]] auto EndpointContext::DW0::mult() const -> U8 {

@@ -23,11 +23,11 @@
 
 namespace Rune::Device {
 #define FIS_TYPES(X)                                                                               \
-    X(FISType, DMA_SETUP, 0x41)                                                                    \
-    X(FISType, PIO_SETUP, 0x5F)                                                                    \
-    X(FISType, REG_H2D, 0x27)                                                                      \
-    X(FISType, REG_D2H, 0x34)                                                                      \
-    X(FISType, SET_D_BITS, 0xA1)
+    X(DMA_SETUP, 0x41)                                                                             \
+    X(PIO_SETUP, 0x5F)                                                                             \
+    X(REG_H2D, 0x27)                                                                               \
+    X(REG_D2H, 0x34)                                                                               \
+    X(SET_D_BITS, 0xA1)
 
     /// FIS type codes — SATA 3.5a §10.5
     ///
@@ -39,19 +39,19 @@ namespace Rune::Device {
     /// - REG_H2D    (0x27): Register Host-to-Device FIS — writes ATA command block registers.
     /// - REG_D2H    (0x34): Register Device-to-Host FIS — reports updated command block registers.
     /// - SET_D_BITS (0xA1): Set Device Bits FIS — updates shadow Status/Error bits (used by NCQ).
-    DECLARE_TYPED_ENUM(FISType, U8, FIS_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(FISType, FIS_TYPES, 0x0, U8) // NOLINT
 
 #define H2D_COMMANDS(X)                                                                            \
-    X(H2DCommand, IDENTIFY_DEVICE, 0xEC)                                                           \
-    X(H2DCommand, READ_DMA_EXTENDED, 0x25)                                                         \
-    X(H2DCommand, WRITE_DMA_EXTENDED, 0x35)
+    X(IDENTIFY_DEVICE, 0xEC)                                                                       \
+    X(READ_DMA_EXTENDED, 0x25)                                                                     \
+    X(WRITE_DMA_EXTENDED, 0x35)
 
     /// ATA command codes issued via Register H2D FIS — ACS-4 Rev 18
     ///
     /// - IDENTIFY_DEVICE    (0xEC): Returns 512 bytes of device identification data (§7.13).
     /// - READ_DMA_EXTENDED  (0x25): Reads up to 65535 sectors via DMA using 48-bit LBA (§7.21).
     /// - WRITE_DMA_EXTENDED (0x35): Writes up to 65535 sectors via DMA using 48-bit LBA (§7.57).
-    DECLARE_TYPED_ENUM(H2DCommand, U8, H2D_COMMANDS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(H2DCommand, H2D_COMMANDS, 0x0, U8) // NOLINT
 
     /**
      * DMA Setup FIS (type 0x41) — SATA 3.5a §10.5.9

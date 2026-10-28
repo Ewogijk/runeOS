@@ -20,10 +20,10 @@
 namespace Ember {
 
 #define STD_IO_TARGETS(X)                                                                          \
-    X(StdIOTarget, VOID, 0x1)                                                                      \
-    X(StdIOTarget, INHERIT, 0x2)                                                                   \
-    X(StdIOTarget, FILE, 0x3)                                                                      \
-    X(StdIOTarget, PIPE, 0x4)
+    X(VOID, 0x1)                                                                                   \
+    X(INHERIT, 0x2)                                                                                \
+    X(FILE, 0x3)                                                                                   \
+    X(PIPE, 0x4)
 
     /// @brief Describes to which target a std IO stream of an application can be connected.
     ///
@@ -34,7 +34,7 @@ namespace Ember {
     /// FILE: Only stdout/stderr: Redirect to the specified file, if it does not exist it will be
     ///         created.<br>
     /// PIPE: Connect the standard stream to the requested pipe.<br>
-    DECLARE_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(StdIOTarget, STD_IO_TARGETS, 0x0) // NOLINT
 
     /// @brief The configuration of a std IO stream.
     ///
@@ -53,107 +53,107 @@ namespace Ember {
     // ========================================================================================== //
 
 #define VIRTUAL_KEYS(VK)                                                                           \
-    VK(VirtualKey, A, 0x04)                                                                        \
-    VK(VirtualKey, B, 0x05)                                                                        \
-    VK(VirtualKey, C, 0x06)                                                                        \
-    VK(VirtualKey, D, 0x07)                                                                        \
-    VK(VirtualKey, E, 0x08)                                                                        \
-    VK(VirtualKey, F, 0x09)                                                                        \
-    VK(VirtualKey, G, 0x0A)                                                                        \
-    VK(VirtualKey, H, 0x0B)                                                                        \
-    VK(VirtualKey, I, 0x0C)                                                                        \
-    VK(VirtualKey, J, 0x0D)                                                                        \
-    VK(VirtualKey, K, 0x0E)                                                                        \
-    VK(VirtualKey, L, 0x0F)                                                                        \
-    VK(VirtualKey, M, 0x10)                                                                        \
-    VK(VirtualKey, N, 0x11)                                                                        \
-    VK(VirtualKey, O, 0x12)                                                                        \
-    VK(VirtualKey, P, 0x13)                                                                        \
-    VK(VirtualKey, Q, 0x14)                                                                        \
-    VK(VirtualKey, R, 0x15)                                                                        \
-    VK(VirtualKey, S, 0x16)                                                                        \
-    VK(VirtualKey, T, 0x17)                                                                        \
-    VK(VirtualKey, U, 0x18)                                                                        \
-    VK(VirtualKey, V, 0x19)                                                                        \
-    VK(VirtualKey, W, 0x1A)                                                                        \
-    VK(VirtualKey, X, 0x1B)                                                                        \
-    VK(VirtualKey, Y, 0x1C)                                                                        \
-    VK(VirtualKey, Z, 0x1D)                                                                        \
-    VK(VirtualKey, ONE, 0x1E)                                                                      \
-    VK(VirtualKey, TWO, 0x1F)                                                                      \
-    VK(VirtualKey, THREE, 0x20)                                                                    \
-    VK(VirtualKey, FOUR, 0x21)                                                                     \
-    VK(VirtualKey, FIVE, 0x22)                                                                     \
-    VK(VirtualKey, SIX, 0x23)                                                                      \
-    VK(VirtualKey, SEVEN, 0x24)                                                                    \
-    VK(VirtualKey, EIGHT, 0x25)                                                                    \
-    VK(VirtualKey, NINE, 0x26)                                                                     \
-    VK(VirtualKey, ZERO, 0x27)                                                                     \
-    VK(VirtualKey, ENTER, 0x28)                                                                    \
-    VK(VirtualKey, ESCAPE, 0x29)                                                                   \
-    VK(VirtualKey, BACKSPACE, 0x2A)                                                                \
-    VK(VirtualKey, TAB, 0x2B)                                                                      \
-    VK(VirtualKey, SPACE, 0x2C)                                                                    \
-    VK(VirtualKey, MINUS, 0x2D)                                                                    \
-    VK(VirtualKey, EQUAL, 0x2E)                                                                    \
-    VK(VirtualKey, LEFT_BRACKET, 0x2F)                                                             \
-    VK(VirtualKey, RIGHT_BRACKET, 0x30)                                                            \
-    VK(VirtualKey, BACKSLASH, 0x31)                                                                \
-    VK(VirtualKey, NON_US_HASH, 0x32)                                                              \
-    VK(VirtualKey, SEMICOLON, 0x33)                                                                \
-    VK(VirtualKey, APOSTROPHE, 0x34)                                                               \
-    VK(VirtualKey, GRAVE, 0x35)                                                                    \
-    VK(VirtualKey, COMMA, 0x36)                                                                    \
-    VK(VirtualKey, PERIOD, 0x37)                                                                   \
-    VK(VirtualKey, SLASH, 0x38)                                                                    \
-    VK(VirtualKey, CAPS_LOCK, 0x39)                                                                \
-    VK(VirtualKey, F1, 0x3A)                                                                       \
-    VK(VirtualKey, F2, 0x3B)                                                                       \
-    VK(VirtualKey, F3, 0x3C)                                                                       \
-    VK(VirtualKey, F4, 0x3D)                                                                       \
-    VK(VirtualKey, F5, 0x3E)                                                                       \
-    VK(VirtualKey, F6, 0x3F)                                                                       \
-    VK(VirtualKey, F7, 0x40)                                                                       \
-    VK(VirtualKey, F8, 0x41)                                                                       \
-    VK(VirtualKey, F9, 0x42)                                                                       \
-    VK(VirtualKey, F10, 0x43)                                                                      \
-    VK(VirtualKey, F11, 0x44)                                                                      \
-    VK(VirtualKey, F12, 0x45)                                                                      \
-    VK(VirtualKey, PRINT_SCREEN, 0x46)                                                             \
-    VK(VirtualKey, SCROLL_LOCK, 0x47)                                                              \
-    VK(VirtualKey, PAUSE, 0x48)                                                                    \
-    VK(VirtualKey, INSERT, 0x49)                                                                   \
-    VK(VirtualKey, HOME, 0x4A)                                                                     \
-    VK(VirtualKey, PAGE_UP, 0x4B)                                                                  \
-    VK(VirtualKey, DELETE, 0x4C)                                                                   \
-    VK(VirtualKey, END, 0x4D)                                                                      \
-    VK(VirtualKey, PAGE_DOWN, 0x4E)                                                                \
-    VK(VirtualKey, ARROW_RIGHT, 0x4F)                                                              \
-    VK(VirtualKey, ARROW_LEFT, 0x50)                                                               \
-    VK(VirtualKey, ARROW_DOWN, 0x51)                                                               \
-    VK(VirtualKey, ARROW_UP, 0x52)                                                                 \
-    VK(VirtualKey, NUM_LOCK, 0x53)                                                                 \
-    VK(VirtualKey, KP_DIVIDE, 0x54)                                                                \
-    VK(VirtualKey, KP_MULTIPLY, 0x55)                                                              \
-    VK(VirtualKey, KP_MINUS, 0x56)                                                                 \
-    VK(VirtualKey, KP_PLUS, 0x57)                                                                  \
-    VK(VirtualKey, KP_ENTER, 0x58)                                                                 \
-    VK(VirtualKey, KP_ONE, 0x59)                                                                   \
-    VK(VirtualKey, KP_TWO, 0x5A)                                                                   \
-    VK(VirtualKey, KP_THREE, 0x5B)                                                                 \
-    VK(VirtualKey, KP_FOUR, 0x5C)                                                                  \
-    VK(VirtualKey, KP_FIVE, 0x5D)                                                                  \
-    VK(VirtualKey, KP_SIX, 0x5E)                                                                   \
-    VK(VirtualKey, KP_SEVEN, 0x5F)                                                                 \
-    VK(VirtualKey, KP_EIGHT, 0x60)                                                                 \
-    VK(VirtualKey, KP_NINE, 0x61)                                                                  \
-    VK(VirtualKey, KP_ZERO, 0x62)                                                                  \
-    VK(VirtualKey, KP_PERIOD, 0x63)                                                                \
-    VK(VirtualKey, NON_US_BACKSLASH, 0x64)                                                         \
-    VK(VirtualKey, APPLICATION, 0x65)
+    VK(A, 0x04)                                                                                    \
+    VK(B, 0x05)                                                                                    \
+    VK(C, 0x06)                                                                                    \
+    VK(D, 0x07)                                                                                    \
+    VK(E, 0x08)                                                                                    \
+    VK(F, 0x09)                                                                                    \
+    VK(G, 0x0A)                                                                                    \
+    VK(H, 0x0B)                                                                                    \
+    VK(I, 0x0C)                                                                                    \
+    VK(J, 0x0D)                                                                                    \
+    VK(K, 0x0E)                                                                                    \
+    VK(L, 0x0F)                                                                                    \
+    VK(M, 0x10)                                                                                    \
+    VK(N, 0x11)                                                                                    \
+    VK(O, 0x12)                                                                                    \
+    VK(P, 0x13)                                                                                    \
+    VK(Q, 0x14)                                                                                    \
+    VK(R, 0x15)                                                                                    \
+    VK(S, 0x16)                                                                                    \
+    VK(T, 0x17)                                                                                    \
+    VK(U, 0x18)                                                                                    \
+    VK(V, 0x19)                                                                                    \
+    VK(W, 0x1A)                                                                                    \
+    VK(X, 0x1B)                                                                                    \
+    VK(Y, 0x1C)                                                                                    \
+    VK(Z, 0x1D)                                                                                    \
+    VK(ONE, 0x1E)                                                                                  \
+    VK(TWO, 0x1F)                                                                                  \
+    VK(THREE, 0x20)                                                                                \
+    VK(FOUR, 0x21)                                                                                 \
+    VK(FIVE, 0x22)                                                                                 \
+    VK(SIX, 0x23)                                                                                  \
+    VK(SEVEN, 0x24)                                                                                \
+    VK(EIGHT, 0x25)                                                                                \
+    VK(NINE, 0x26)                                                                                 \
+    VK(ZERO, 0x27)                                                                                 \
+    VK(ENTER, 0x28)                                                                                \
+    VK(ESCAPE, 0x29)                                                                               \
+    VK(BACKSPACE, 0x2A)                                                                            \
+    VK(TAB, 0x2B)                                                                                  \
+    VK(SPACE, 0x2C)                                                                                \
+    VK(MINUS, 0x2D)                                                                                \
+    VK(EQUAL, 0x2E)                                                                                \
+    VK(LEFT_BRACKET, 0x2F)                                                                         \
+    VK(RIGHT_BRACKET, 0x30)                                                                        \
+    VK(BACKSLASH, 0x31)                                                                            \
+    VK(NON_US_HASH, 0x32)                                                                          \
+    VK(SEMICOLON, 0x33)                                                                            \
+    VK(APOSTROPHE, 0x34)                                                                           \
+    VK(GRAVE, 0x35)                                                                                \
+    VK(COMMA, 0x36)                                                                                \
+    VK(PERIOD, 0x37)                                                                               \
+    VK(SLASH, 0x38)                                                                                \
+    VK(CAPS_LOCK, 0x39)                                                                            \
+    VK(F1, 0x3A)                                                                                   \
+    VK(F2, 0x3B)                                                                                   \
+    VK(F3, 0x3C)                                                                                   \
+    VK(F4, 0x3D)                                                                                   \
+    VK(F5, 0x3E)                                                                                   \
+    VK(F6, 0x3F)                                                                                   \
+    VK(F7, 0x40)                                                                                   \
+    VK(F8, 0x41)                                                                                   \
+    VK(F9, 0x42)                                                                                   \
+    VK(F10, 0x43)                                                                                  \
+    VK(F11, 0x44)                                                                                  \
+    VK(F12, 0x45)                                                                                  \
+    VK(PRINT_SCREEN, 0x46)                                                                         \
+    VK(SCROLL_LOCK, 0x47)                                                                          \
+    VK(PAUSE, 0x48)                                                                                \
+    VK(INSERT, 0x49)                                                                               \
+    VK(HOME, 0x4A)                                                                                 \
+    VK(PAGE_UP, 0x4B)                                                                              \
+    VK(DELETE, 0x4C)                                                                               \
+    VK(END, 0x4D)                                                                                  \
+    VK(PAGE_DOWN, 0x4E)                                                                            \
+    VK(ARROW_RIGHT, 0x4F)                                                                          \
+    VK(ARROW_LEFT, 0x50)                                                                           \
+    VK(ARROW_DOWN, 0x51)                                                                           \
+    VK(ARROW_UP, 0x52)                                                                             \
+    VK(NUM_LOCK, 0x53)                                                                             \
+    VK(KP_DIVIDE, 0x54)                                                                            \
+    VK(KP_MULTIPLY, 0x55)                                                                          \
+    VK(KP_MINUS, 0x56)                                                                             \
+    VK(KP_PLUS, 0x57)                                                                              \
+    VK(KP_ENTER, 0x58)                                                                             \
+    VK(KP_ONE, 0x59)                                                                               \
+    VK(KP_TWO, 0x5A)                                                                               \
+    VK(KP_THREE, 0x5B)                                                                             \
+    VK(KP_FOUR, 0x5C)                                                                              \
+    VK(KP_FIVE, 0x5D)                                                                              \
+    VK(KP_SIX, 0x5E)                                                                               \
+    VK(KP_SEVEN, 0x5F)                                                                             \
+    VK(KP_EIGHT, 0x60)                                                                             \
+    VK(KP_NINE, 0x61)                                                                              \
+    VK(KP_ZERO, 0x62)                                                                              \
+    VK(KP_PERIOD, 0x63)                                                                            \
+    VK(NON_US_BACKSLASH, 0x64)                                                                     \
+    VK(APPLICATION, 0x65)
 
     /// @brief 1-to-1 mapping of HID keyboard usages to virtual key codes.
-    DECLARE_TYPED_ENUM(VirtualKey, U8, VIRTUAL_KEYS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(VirtualKey, VIRTUAL_KEYS, 0x0, U8) // NOLINT
 
     /// @brief A key event represents a pressed/released key and the active modifiers at the time
     ///         of the key press.

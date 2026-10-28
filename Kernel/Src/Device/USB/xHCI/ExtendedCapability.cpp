@@ -18,8 +18,6 @@
 
 namespace Rune::Device::USB {
 
-    DEFINE_ENUM(ExtendedCapabilityCode, EXTENDED_CAPABILITY_CODE, 0x0)
-
     // ========================================================================================== //
     // ExtendedCapabilityPointerRegister::ECPR — xHCI 2.0 §7 Table 7-1
     // ========================================================================================== //

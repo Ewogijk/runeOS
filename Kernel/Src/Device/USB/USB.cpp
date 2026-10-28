@@ -179,8 +179,6 @@ namespace Rune::Device::USB {
     // Host Controller IO Requests
     // ========================================================================================== //
 
-    DEFINE_ENUM(TransferRequestType, TRANSFER_REQUEST_TYPES, 0x0)
-
     auto ControlTransferRequest::direction() const -> Direction {
         return Direction(static_cast<U8>(bit_check(m_index, 7)));
     }

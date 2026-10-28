@@ -36,9 +36,9 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define HID_DESCRIPTOR_TYPES(X)                                                                    \
-    X(HIDDescriptorType, HID, 0x21)                                                                \
-    X(HIDDescriptorType, REPORT, 0x22)                                                             \
-    X(HIDDescriptorType, PHYSICAL, 0x23)
+    X(HID, 0x21)                                                                                   \
+    X(REPORT, 0x22)                                                                                \
+    X(PHYSICAL, 0x23)
 
     /// @brief The class-specific descriptor types of a HID device — HID 1.11 §7.1.
     ///
@@ -49,49 +49,49 @@ namespace Rune::Device::USB {
     /// - HID (0x21): HID descriptor, names the subordinate descriptors of an interface.
     /// - REPORT (0x22): Report descriptor, always present.
     /// - PHYSICAL (0x23): Physical descriptor set, optional.
-    DECLARE_TYPED_ENUM(HIDDescriptorType, U8, HID_DESCRIPTOR_TYPES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDDescriptorType, HID_DESCRIPTOR_TYPES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // HID Descriptor — HID 1.11 §6.2.1
     // ========================================================================================== //
 
 #define HID_COUNTRY_CODES(X)                                                                       \
-    X(HIDCountryCode, NOT_SUPPORTED, 0)                                                            \
-    X(HIDCountryCode, ARABIC, 1)                                                                   \
-    X(HIDCountryCode, BELGIAN, 2)                                                                  \
-    X(HIDCountryCode, CANADIAN_BILINGUAL, 3)                                                       \
-    X(HIDCountryCode, CANADIAN_FRENCH, 4)                                                          \
-    X(HIDCountryCode, CZECH_REPUBLIC, 5)                                                           \
-    X(HIDCountryCode, DANISH, 6)                                                                   \
-    X(HIDCountryCode, FINNISH, 7)                                                                  \
-    X(HIDCountryCode, FRENCH, 8)                                                                   \
-    X(HIDCountryCode, GERMAN, 9)                                                                   \
-    X(HIDCountryCode, GREEK, 10)                                                                   \
-    X(HIDCountryCode, HEBREW, 11)                                                                  \
-    X(HIDCountryCode, HUNGARY, 12)                                                                 \
-    X(HIDCountryCode, INTERNATIONAL_ISO, 13)                                                       \
-    X(HIDCountryCode, ITALIAN, 14)                                                                 \
-    X(HIDCountryCode, JAPAN_KATAKANA, 15)                                                          \
-    X(HIDCountryCode, KOREAN, 16)                                                                  \
-    X(HIDCountryCode, LATIN_AMERICAN, 17)                                                          \
-    X(HIDCountryCode, NETHERLANDS_DUTCH, 18)                                                       \
-    X(HIDCountryCode, NORWEGIAN, 19)                                                               \
-    X(HIDCountryCode, PERSIAN_FARSI, 20)                                                           \
-    X(HIDCountryCode, POLAND, 21)                                                                  \
-    X(HIDCountryCode, PORTUGUESE, 22)                                                              \
-    X(HIDCountryCode, RUSSIA, 23)                                                                  \
-    X(HIDCountryCode, SLOVAKIA, 24)                                                                \
-    X(HIDCountryCode, SPANISH, 25)                                                                 \
-    X(HIDCountryCode, SWEDISH, 26)                                                                 \
-    X(HIDCountryCode, SWISS_FRENCH, 27)                                                            \
-    X(HIDCountryCode, SWISS_GERMAN, 28)                                                            \
-    X(HIDCountryCode, SWITZERLAND, 29)                                                             \
-    X(HIDCountryCode, TAIWAN, 30)                                                                  \
-    X(HIDCountryCode, TURKISH_Q, 31)                                                               \
-    X(HIDCountryCode, UK, 32)                                                                      \
-    X(HIDCountryCode, US, 33)                                                                      \
-    X(HIDCountryCode, YUGOSLAVIA, 34)                                                              \
-    X(HIDCountryCode, TURKISH_F, 35)
+    X(NOT_SUPPORTED, 0)                                                                            \
+    X(ARABIC, 1)                                                                                   \
+    X(BELGIAN, 2)                                                                                  \
+    X(CANADIAN_BILINGUAL, 3)                                                                       \
+    X(CANADIAN_FRENCH, 4)                                                                          \
+    X(CZECH_REPUBLIC, 5)                                                                           \
+    X(DANISH, 6)                                                                                   \
+    X(FINNISH, 7)                                                                                  \
+    X(FRENCH, 8)                                                                                   \
+    X(GERMAN, 9)                                                                                   \
+    X(GREEK, 10)                                                                                   \
+    X(HEBREW, 11)                                                                                  \
+    X(HUNGARY, 12)                                                                                 \
+    X(INTERNATIONAL_ISO, 13)                                                                       \
+    X(ITALIAN, 14)                                                                                 \
+    X(JAPAN_KATAKANA, 15)                                                                          \
+    X(KOREAN, 16)                                                                                  \
+    X(LATIN_AMERICAN, 17)                                                                          \
+    X(NETHERLANDS_DUTCH, 18)                                                                       \
+    X(NORWEGIAN, 19)                                                                               \
+    X(PERSIAN_FARSI, 20)                                                                           \
+    X(POLAND, 21)                                                                                  \
+    X(PORTUGUESE, 22)                                                                              \
+    X(RUSSIA, 23)                                                                                  \
+    X(SLOVAKIA, 24)                                                                                \
+    X(SPANISH, 25)                                                                                 \
+    X(SWEDISH, 26)                                                                                 \
+    X(SWISS_FRENCH, 27)                                                                            \
+    X(SWISS_GERMAN, 28)                                                                            \
+    X(SWITZERLAND, 29)                                                                             \
+    X(TAIWAN, 30)                                                                                  \
+    X(TURKISH_Q, 31)                                                                               \
+    X(UK, 32)                                                                                      \
+    X(US, 33)                                                                                      \
+    X(YUGOSLAVIA, 34)                                                                              \
+    X(TURKISH_F, 35)
 
     /// @brief bCountryCode of the HID descriptor: which country the hardware is localized for —
     ///         HID 1.11 §6.2.1.
@@ -99,7 +99,7 @@ namespace Rune::Device::USB {
     /// Most hardware is not localized and reports NOT_SUPPORTED (0). Keyboards may use the field
     /// to indicate the language of the key caps but are not required to. 36-255 are reserved, NONE
     /// (0xFF) marks an unrecognized code rather than a code the spec defines.
-    DECLARE_TYPED_ENUM(HIDCountryCode, U8, HID_COUNTRY_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDCountryCode, HID_COUNTRY_CODES, 0xFF, U8) // NOLINT
 
     /// @brief One subordinate class descriptor named by a HID descriptor — the (bDescriptorType,
     ///         wDescriptorLength) pair at offsets (3*n)+6 and (3*n)+7 of HID 1.11 §6.2.1.
@@ -173,10 +173,10 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define HID_ITEM_TYPES(X)                                                                          \
-    X(HIDItemType, MAIN, 0)                                                                        \
-    X(HIDItemType, GLOBAL, 1)                                                                      \
-    X(HIDItemType, LOCAL, 2)                                                                       \
-    X(HIDItemType, RESERVED, 3)
+    X(MAIN, 0)                                                                                     \
+    X(GLOBAL, 1)                                                                                   \
+    X(LOCAL, 2)                                                                                    \
+    X(RESERVED, 3)
 
     /// @brief bType of an item prefix, bits 3..2 — HID 1.11 §6.2.2.2.
     ///
@@ -184,36 +184,36 @@ namespace Rune::Device::USB {
     /// - GLOBAL (1): Describes subsequent items; persists until overridden.
     /// - LOCAL (2): Describes the next Main item only; cleared by it.
     /// - RESERVED (3): Only used by the long item format.
-    DECLARE_TYPED_ENUM(HIDItemType, U8, HID_ITEM_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDItemType, HID_ITEM_TYPES, 0xFF, U8) // NOLINT
 
 #define HID_ITEM_TAGS(X)                                                                           \
-    X(HIDItemTag, INPUT, 0x80)                                                                     \
-    X(HIDItemTag, OUTPUT, 0x90)                                                                    \
-    X(HIDItemTag, FEATURE, 0xB0)                                                                   \
-    X(HIDItemTag, COLLECTION, 0xA0)                                                                \
-    X(HIDItemTag, END_COLLECTION, 0xC0)                                                            \
-    X(HIDItemTag, USAGE_PAGE, 0x04)                                                                \
-    X(HIDItemTag, LOGICAL_MINIMUM, 0x14)                                                           \
-    X(HIDItemTag, LOGICAL_MAXIMUM, 0x24)                                                           \
-    X(HIDItemTag, PHYSICAL_MINIMUM, 0x34)                                                          \
-    X(HIDItemTag, PHYSICAL_MAXIMUM, 0x44)                                                          \
-    X(HIDItemTag, UNIT_EXPONENT, 0x54)                                                             \
-    X(HIDItemTag, UNIT, 0x64)                                                                      \
-    X(HIDItemTag, REPORT_SIZE, 0x74)                                                               \
-    X(HIDItemTag, REPORT_ID, 0x84)                                                                 \
-    X(HIDItemTag, REPORT_COUNT, 0x94)                                                              \
-    X(HIDItemTag, PUSH, 0xA4)                                                                      \
-    X(HIDItemTag, POP, 0xB4)                                                                       \
-    X(HIDItemTag, USAGE, 0x08)                                                                     \
-    X(HIDItemTag, USAGE_MINIMUM, 0x18)                                                             \
-    X(HIDItemTag, USAGE_MAXIMUM, 0x28)                                                             \
-    X(HIDItemTag, DESIGNATOR_INDEX, 0x38)                                                          \
-    X(HIDItemTag, DESIGNATOR_MINIMUM, 0x48)                                                        \
-    X(HIDItemTag, DESIGNATOR_MAXIMUM, 0x58)                                                        \
-    X(HIDItemTag, STRING_INDEX, 0x78)                                                              \
-    X(HIDItemTag, STRING_MINIMUM, 0x88)                                                            \
-    X(HIDItemTag, STRING_MAXIMUM, 0x98)                                                            \
-    X(HIDItemTag, DELIMITER, 0xA8)
+    X(INPUT, 0x80)                                                                                 \
+    X(OUTPUT, 0x90)                                                                                \
+    X(FEATURE, 0xB0)                                                                               \
+    X(COLLECTION, 0xA0)                                                                            \
+    X(END_COLLECTION, 0xC0)                                                                        \
+    X(USAGE_PAGE, 0x04)                                                                            \
+    X(LOGICAL_MINIMUM, 0x14)                                                                       \
+    X(LOGICAL_MAXIMUM, 0x24)                                                                       \
+    X(PHYSICAL_MINIMUM, 0x34)                                                                      \
+    X(PHYSICAL_MAXIMUM, 0x44)                                                                      \
+    X(UNIT_EXPONENT, 0x54)                                                                         \
+    X(UNIT, 0x64)                                                                                  \
+    X(REPORT_SIZE, 0x74)                                                                           \
+    X(REPORT_ID, 0x84)                                                                             \
+    X(REPORT_COUNT, 0x94)                                                                          \
+    X(PUSH, 0xA4)                                                                                  \
+    X(POP, 0xB4)                                                                                   \
+    X(USAGE, 0x08)                                                                                 \
+    X(USAGE_MINIMUM, 0x18)                                                                         \
+    X(USAGE_MAXIMUM, 0x28)                                                                         \
+    X(DESIGNATOR_INDEX, 0x38)                                                                      \
+    X(DESIGNATOR_MINIMUM, 0x48)                                                                    \
+    X(DESIGNATOR_MAXIMUM, 0x58)                                                                    \
+    X(STRING_INDEX, 0x78)                                                                          \
+    X(STRING_MINIMUM, 0x88)                                                                        \
+    X(STRING_MAXIMUM, 0x98)                                                                        \
+    X(DELIMITER, 0xA8)
 
     /// @brief Item tags of a Report descriptor — HID 1.11 §6.2.2.4 (Main), §6.2.2.7 (Global),
     ///         §6.2.2.8 (Local).
@@ -254,7 +254,7 @@ namespace Rune::Device::USB {
     ///   the device's String descriptors.
     /// - DELIMITER (0xA8): Opens (1) or closes (0) a set of alternative usages for one control.
     ///   Parsers must handle delimiters; supporting usages beyond the first is optional.
-    DECLARE_TYPED_ENUM(HIDItemTag, U8, HID_ITEM_TAGS, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDItemTag, HID_ITEM_TAGS, 0x00, U8) // NOLINT
 
     /// @brief The one byte prefix every Report descriptor item starts with — HID 1.11 §6.2.2.2.
     ///
@@ -306,24 +306,24 @@ namespace Rune::Device::USB {
     static_assert(sizeof(HIDItemPrefix) == 1); // NOLINT
 
 #define HID_DATA_FLAGS(X)                                                                          \
-    X(HIDDataFlag, DATA, 0)                                                                        \
-    X(HIDDataFlag, CONSTANT, 1)                                                                    \
-    X(HIDDataFlag, ARRAY, 2)                                                                       \
-    X(HIDDataFlag, VARIABLE, 3)                                                                    \
-    X(HIDDataFlag, ABSOLUTE, 4)                                                                    \
-    X(HIDDataFlag, RELATIVE, 5)                                                                    \
-    X(HIDDataFlag, NO_WRAP, 6)                                                                     \
-    X(HIDDataFlag, WRAP, 7)                                                                        \
-    X(HIDDataFlag, LINEAR, 8)                                                                      \
-    X(HIDDataFlag, NON_LINEAR, 9)                                                                  \
-    X(HIDDataFlag, PREFERRED, 10)                                                                  \
-    X(HIDDataFlag, NO_PREFERRED, 11)                                                               \
-    X(HIDDataFlag, NO_NULL_POSITION, 12)                                                           \
-    X(HIDDataFlag, NULL_STATE, 13)                                                                 \
-    X(HIDDataFlag, NON_VOLATILE, 14)                                                               \
-    X(HIDDataFlag, VOLATILE, 15)                                                                   \
-    X(HIDDataFlag, BIT_FIELD, 16)                                                                  \
-    X(HIDDataFlag, BUFFERED_BYTES, 17)
+    X(DATA, 0)                                                                                     \
+    X(CONSTANT, 1)                                                                                 \
+    X(ARRAY, 2)                                                                                    \
+    X(VARIABLE, 3)                                                                                 \
+    X(ABSOLUTE, 4)                                                                                 \
+    X(RELATIVE, 5)                                                                                 \
+    X(NO_WRAP, 6)                                                                                  \
+    X(WRAP, 7)                                                                                     \
+    X(LINEAR, 8)                                                                                   \
+    X(NON_LINEAR, 9)                                                                               \
+    X(PREFERRED, 10)                                                                               \
+    X(NO_PREFERRED, 11)                                                                            \
+    X(NO_NULL_POSITION, 12)                                                                        \
+    X(NULL_STATE, 13)                                                                              \
+    X(NON_VOLATILE, 14)                                                                            \
+    X(VOLATILE, 15)                                                                                \
+    X(BIT_FIELD, 16)                                                                               \
+    X(BUFFERED_BYTES, 17)
 
     /// @brief Both alternatives of every bit in the data of an Input, Output or Feature Main item
     ///         — HID 1.11 §6.2.2.5.
@@ -354,7 +354,7 @@ namespace Rune::Device::USB {
     ///   interaction. Reserved and zero for Input items.
     /// - bit 8, BIT_FIELD | BUFFERED_BYTES: Field is a fixed-size byte stream, not a numeric
     ///   value, and must be aligned on a byte boundary.
-    DECLARE_TYPED_ENUM(HIDDataFlag, U8, HID_DATA_FLAGS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDDataFlag, HID_DATA_FLAGS, 0xFF, U8) // NOLINT
 
     /// @brief The data bytes of an Input, Output or Feature Main item as the bitmap they are —
     ///         HID 1.11 §6.2.2.5.
@@ -375,13 +375,13 @@ namespace Rune::Device::USB {
     };
 
 #define HID_COLLECTION_TYPES(X)                                                                    \
-    X(HIDCollectionType, PHYSICAL, 0x00)                                                           \
-    X(HIDCollectionType, APPLICATION, 0x01)                                                        \
-    X(HIDCollectionType, LOGICAL, 0x02)                                                            \
-    X(HIDCollectionType, REPORT, 0x03)                                                             \
-    X(HIDCollectionType, NAMED_ARRAY, 0x04)                                                        \
-    X(HIDCollectionType, USAGE_SWITCH, 0x05)                                                       \
-    X(HIDCollectionType, USAGE_MODIFIER, 0x06)
+    X(PHYSICAL, 0x00)                                                                              \
+    X(APPLICATION, 0x01)                                                                           \
+    X(LOGICAL, 0x02)                                                                               \
+    X(REPORT, 0x03)                                                                                \
+    X(NAMED_ARRAY, 0x04)                                                                           \
+    X(USAGE_SWITCH, 0x05)                                                                          \
+    X(USAGE_MODIFIER, 0x06)
 
     /// @brief The data of a Collection Main item — HID 1.11 §6.2.2.6.
     ///
@@ -399,7 +399,7 @@ namespace Rune::Device::USB {
     /// - NAMED_ARRAY (0x04): An array of selector usages, so the array field itself can be named.
     /// - USAGE_SWITCH (0x05): Special-cases the meaning of the usages it contains.
     /// - USAGE_MODIFIER (0x06): Modifies the usage of the encompassing collection.
-    DECLARE_TYPED_ENUM(HIDCollectionType, U8, HID_COLLECTION_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDCollectionType, HID_COLLECTION_TYPES, 0xFF, U8) // NOLINT
 
     // ========================================================================================== //
     // Physical Descriptors — HID 1.11 §6.2.3
@@ -412,71 +412,71 @@ namespace Rune::Device::USB {
     // requested with GET_DESCRIPTOR(PHYSICAL) and a Descriptor Index of 0.
 
 #define HID_PHYSICAL_BIASES(X)                                                                     \
-    X(HIDPhysicalBias, RIGHT_HAND, 1)                                                              \
-    X(HIDPhysicalBias, LEFT_HAND, 2)                                                               \
-    X(HIDPhysicalBias, BOTH_HANDS, 3)                                                              \
-    X(HIDPhysicalBias, EITHER_HAND, 4)
+    X(RIGHT_HAND, 1)                                                                               \
+    X(LEFT_HAND, 2)                                                                                \
+    X(BOTH_HANDS, 3)                                                                               \
+    X(EITHER_HAND, 4)
 
     /// @brief Bits 7..5 of bPhysicalInfo: which hand a descriptor set characterizes — HID 1.11
     ///         §6.2.3. NONE (0) is the spec's "Not applicable"; 5-7 are reserved. A device that
     ///         only fits one hand does not return sets biased to the other.
-    DECLARE_TYPED_ENUM(HIDPhysicalBias, U8, HID_PHYSICAL_BIASES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDPhysicalBias, HID_PHYSICAL_BIASES, 0, U8) // NOLINT
 
 #define HID_PHYSICAL_QUALIFIERS(X)                                                                 \
-    X(HIDPhysicalQualifier, RIGHT, 1)                                                              \
-    X(HIDPhysicalQualifier, LEFT, 2)                                                               \
-    X(HIDPhysicalQualifier, BOTH, 3)                                                               \
-    X(HIDPhysicalQualifier, EITHER, 4)                                                             \
-    X(HIDPhysicalQualifier, CENTER, 5)
+    X(RIGHT, 1)                                                                                    \
+    X(LEFT, 2)                                                                                     \
+    X(BOTH, 3)                                                                                     \
+    X(EITHER, 4)                                                                                   \
+    X(CENTER, 5)
 
     /// @brief Bits 7..5 of bFlags: which side of the body the designator refers to — HID 1.11
     ///         §6.2.3. NONE (0) is the spec's "Not applicable"; 6 and 7 are reserved.
-    DECLARE_TYPED_ENUM(HIDPhysicalQualifier, U8, HID_PHYSICAL_QUALIFIERS, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDPhysicalQualifier, HID_PHYSICAL_QUALIFIERS, 0, U8) // NOLINT
 
 #define HID_PHYSICAL_DESIGNATORS(X)                                                                \
-    X(HIDPhysicalDesignator, HAND, 0x01)                                                           \
-    X(HIDPhysicalDesignator, EYEBALL, 0x02)                                                        \
-    X(HIDPhysicalDesignator, EYEBROW, 0x03)                                                        \
-    X(HIDPhysicalDesignator, EYELID, 0x04)                                                         \
-    X(HIDPhysicalDesignator, EAR, 0x05)                                                            \
-    X(HIDPhysicalDesignator, NOSE, 0x06)                                                           \
-    X(HIDPhysicalDesignator, MOUTH, 0x07)                                                          \
-    X(HIDPhysicalDesignator, UPPER_LIP, 0x08)                                                      \
-    X(HIDPhysicalDesignator, LOWER_LIP, 0x09)                                                      \
-    X(HIDPhysicalDesignator, JAW, 0x0A)                                                            \
-    X(HIDPhysicalDesignator, NECK, 0x0B)                                                           \
-    X(HIDPhysicalDesignator, UPPER_ARM, 0x0C)                                                      \
-    X(HIDPhysicalDesignator, ELBOW, 0x0D)                                                          \
-    X(HIDPhysicalDesignator, FOREARM, 0x0E)                                                        \
-    X(HIDPhysicalDesignator, WRIST, 0x0F)                                                          \
-    X(HIDPhysicalDesignator, PALM, 0x10)                                                           \
-    X(HIDPhysicalDesignator, THUMB, 0x11)                                                          \
-    X(HIDPhysicalDesignator, INDEX_FINGER, 0x12)                                                   \
-    X(HIDPhysicalDesignator, MIDDLE_FINGER, 0x13)                                                  \
-    X(HIDPhysicalDesignator, RING_FINGER, 0x14)                                                    \
-    X(HIDPhysicalDesignator, LITTLE_FINGER, 0x15)                                                  \
-    X(HIDPhysicalDesignator, HEAD, 0x16)                                                           \
-    X(HIDPhysicalDesignator, SHOULDER, 0x17)                                                       \
-    X(HIDPhysicalDesignator, HIP, 0x18)                                                            \
-    X(HIDPhysicalDesignator, WAIST, 0x19)                                                          \
-    X(HIDPhysicalDesignator, THIGH, 0x1A)                                                          \
-    X(HIDPhysicalDesignator, KNEE, 0x1B)                                                           \
-    X(HIDPhysicalDesignator, CALF, 0x1C)                                                           \
-    X(HIDPhysicalDesignator, ANKLE, 0x1D)                                                          \
-    X(HIDPhysicalDesignator, FOOT, 0x1E)                                                           \
-    X(HIDPhysicalDesignator, HEEL, 0x1F)                                                           \
-    X(HIDPhysicalDesignator, BALL_OF_FOOT, 0x20)                                                   \
-    X(HIDPhysicalDesignator, BIG_TOE, 0x21)                                                        \
-    X(HIDPhysicalDesignator, SECOND_TOE, 0x22)                                                     \
-    X(HIDPhysicalDesignator, THIRD_TOE, 0x23)                                                      \
-    X(HIDPhysicalDesignator, FOURTH_TOE, 0x24)                                                     \
-    X(HIDPhysicalDesignator, LITTLE_TOE, 0x25)                                                     \
-    X(HIDPhysicalDesignator, BROW, 0x26)                                                           \
-    X(HIDPhysicalDesignator, CHEEK, 0x27)
+    X(HAND, 0x01)                                                                                  \
+    X(EYEBALL, 0x02)                                                                               \
+    X(EYEBROW, 0x03)                                                                               \
+    X(EYELID, 0x04)                                                                                \
+    X(EAR, 0x05)                                                                                   \
+    X(NOSE, 0x06)                                                                                  \
+    X(MOUTH, 0x07)                                                                                 \
+    X(UPPER_LIP, 0x08)                                                                             \
+    X(LOWER_LIP, 0x09)                                                                             \
+    X(JAW, 0x0A)                                                                                   \
+    X(NECK, 0x0B)                                                                                  \
+    X(UPPER_ARM, 0x0C)                                                                             \
+    X(ELBOW, 0x0D)                                                                                 \
+    X(FOREARM, 0x0E)                                                                               \
+    X(WRIST, 0x0F)                                                                                 \
+    X(PALM, 0x10)                                                                                  \
+    X(THUMB, 0x11)                                                                                 \
+    X(INDEX_FINGER, 0x12)                                                                          \
+    X(MIDDLE_FINGER, 0x13)                                                                         \
+    X(RING_FINGER, 0x14)                                                                           \
+    X(LITTLE_FINGER, 0x15)                                                                         \
+    X(HEAD, 0x16)                                                                                  \
+    X(SHOULDER, 0x17)                                                                              \
+    X(HIP, 0x18)                                                                                   \
+    X(WAIST, 0x19)                                                                                 \
+    X(THIGH, 0x1A)                                                                                 \
+    X(KNEE, 0x1B)                                                                                  \
+    X(CALF, 0x1C)                                                                                  \
+    X(ANKLE, 0x1D)                                                                                 \
+    X(FOOT, 0x1E)                                                                                  \
+    X(HEEL, 0x1F)                                                                                  \
+    X(BALL_OF_FOOT, 0x20)                                                                          \
+    X(BIG_TOE, 0x21)                                                                               \
+    X(SECOND_TOE, 0x22)                                                                            \
+    X(THIRD_TOE, 0x23)                                                                             \
+    X(FOURTH_TOE, 0x24)                                                                            \
+    X(LITTLE_TOE, 0x25)                                                                            \
+    X(BROW, 0x26)                                                                                  \
+    X(CHEEK, 0x27)
 
     /// @brief bDesignator of a Physical descriptor: the body part that actuates an item — HID
     ///         1.11 §6.2.3. NONE (0x00) is the spec's "None"; 0x28-0xFF are reserved.
-    DECLARE_TYPED_ENUM(HIDPhysicalDesignator, U8, HID_PHYSICAL_DESIGNATORS, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDPhysicalDesignator, HID_PHYSICAL_DESIGNATORS, 0x00, U8) // NOLINT
 
     /// @brief Physical descriptor set 0 — HID 1.11 §6.2.3: how many descriptor sets the device
     ///         has and how long each one is.
@@ -556,12 +556,12 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define HID_CLASS_REQUESTS(X)                                                                      \
-    X(HIDClassRequest, GET_REPORT, 0x01)                                                           \
-    X(HIDClassRequest, GET_IDLE, 0x02)                                                             \
-    X(HIDClassRequest, GET_PROTOCOL, 0x03)                                                         \
-    X(HIDClassRequest, SET_REPORT, 0x09)                                                           \
-    X(HIDClassRequest, SET_IDLE, 0x0A)                                                             \
-    X(HIDClassRequest, SET_PROTOCOL, 0x0B)
+    X(GET_REPORT, 0x01)                                                                            \
+    X(GET_IDLE, 0x02)                                                                              \
+    X(GET_PROTOCOL, 0x03)                                                                          \
+    X(SET_REPORT, 0x09)                                                                            \
+    X(SET_IDLE, 0x0A)                                                                              \
+    X(SET_PROTOCOL, 0x0B)
 
     /// @brief bRequest of a HID class-specific request — HID 1.11 §7.2. All of them go over the
     ///         Default (control) pipe with the interface as recipient; 0x04-0x08 are reserved.
@@ -578,12 +578,12 @@ namespace Rune::Device::USB {
     /// - SET_IDLE (0x0A): Silence duplicate Input reports on the Interrupt In pipe.
     /// - SET_PROTOCOL (0x0B): Switch between boot and report protocol. Required only for devices
     ///   in the Boot Interface subclass.
-    DECLARE_TYPED_ENUM(HIDClassRequest, U8, HID_CLASS_REQUESTS, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDClassRequest, HID_CLASS_REQUESTS, 0x00, U8) // NOLINT
 
 #define HID_REPORT_TYPES(X)                                                                        \
-    X(HIDReportType, INPUT, 0x01)                                                                  \
-    X(HIDReportType, OUTPUT, 0x02)                                                                 \
-    X(HIDReportType, FEATURE, 0x03)
+    X(INPUT, 0x01)                                                                                 \
+    X(OUTPUT, 0x02)                                                                                \
+    X(FEATURE, 0x03)
 
     /// @brief The Report Type in the high byte of wValue for Get_Report and Set_Report — HID 1.11
     ///         §7.2.1. 0x04-0xFF are reserved.
@@ -591,11 +591,11 @@ namespace Rune::Device::USB {
     /// - INPUT (0x01): Data flowing device to host, defined by Input Main items.
     /// - OUTPUT (0x02): Data flowing host to device, defined by Output Main items.
     /// - FEATURE (0x03): Configuration data, defined by Feature Main items.
-    DECLARE_TYPED_ENUM(HIDReportType, U8, HID_REPORT_TYPES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDReportType, HID_REPORT_TYPES, 0x00, U8) // NOLINT
 
 #define HID_PROTOCOL_MODES(X)                                                                      \
-    X(HIDProtocolMode, BOOT, 0x00)                                                                 \
-    X(HIDProtocolMode, REPORT, 0x01)
+    X(BOOT, 0x00)                                                                                  \
+    X(REPORT, 0x01)
 
     /// @brief wValue of Set_Protocol and the one data byte of Get_Protocol — HID 1.11 §7.2.6.
     ///
@@ -608,7 +608,7 @@ namespace Rune::Device::USB {
     /// - BOOT (0x00): The fixed report format of the device's boot protocol, which needs no
     ///   Report descriptor parser.
     /// - REPORT (0x01): The report format the device's own Report descriptor declares.
-    DECLARE_TYPED_ENUM(HIDProtocolMode, U8, HID_PROTOCOL_MODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDProtocolMode, HID_PROTOCOL_MODES, 0xFF, U8) // NOLINT
 
     /// @brief Inhibit reporting on the INTERRUPT IN endpoint forever.
     constexpr U8 HID_SET_IDLE_DURATION_INDEFINITE = 0;
@@ -790,7 +790,7 @@ namespace Rune {
         static auto operator()(const Device::USB::HIDExtendedUsage& ext_usage) -> String {
             Device::USB::HIDUsagePage up(ext_usage.usage_page());
             String                    up_str = up.to_string();
-            if (up_str == g_ENUM_NONE) up_str = String::format("{}", ext_usage.usage_page());
+            if (up_str == g_ENUM_UNKNOWN) up_str = String::format("{}", ext_usage.usage_page());
             return String::format("{}:{}",
                                   up_str,
                                   Device::USB::hid_decode_usage(up, ext_usage.usage()));
@@ -807,7 +807,8 @@ namespace Rune {
                 // this case
                 Device::USB::HIDUsagePage up(range.m_min.usage_page());
                 String                    up_str = up.to_string();
-                if (up_str == g_ENUM_NONE) up_str = String::format("{}", range.m_min.usage_page());
+                if (up_str == g_ENUM_UNKNOWN)
+                    up_str = String::format("{}", range.m_min.usage_page());
                 return String::format("{}:{}-{}", up_str, range.m_min.usage(), range.m_max.usage());
             }
             StringRepresentation<Device::USB::HIDExtendedUsage> ext_usage_str_repr;

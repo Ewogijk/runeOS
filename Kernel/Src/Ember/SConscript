@@ -18,11 +18,6 @@ Import("build_env")
 build_env: Environment
 sources = [
     build_env.File("AppBits.cpp"),
-    build_env.File("Ember.cpp"),
-    build_env.File("Enum.cpp"),
-    build_env.File("MemoryBits.cpp"),
-    build_env.File("SystemBits.cpp"),
-    build_env.File("SystemCallHandle.cpp"),
     build_env.File("ThreadingBits.cpp"),
     build_env.File("VFSBits.cpp"),
 ]

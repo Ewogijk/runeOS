@@ -70,8 +70,6 @@ namespace Rune::CPU {
         14   // PAGE_FAULT
     };
 
-    DEFINE_ENUM(ExceptionType, EXCEPTION_TYPES, 0x0)
-
     struct x86InterruptContext {
         x86CoreState core_state;
         Register     i_vector;

@@ -28,29 +28,29 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define CLASS_CODES(X)                                                                             \
-    X(ClassCode, USE_INTERFACE_DESCRIPTOR, 0x00)                                                   \
-    X(ClassCode, AUDIO, 0x01)                                                                      \
-    X(ClassCode, CDC_CONTROL, 0x02)                                                                \
-    X(ClassCode, HID, 0x03)                                                                        \
-    X(ClassCode, PHYSICAL, 0x05)                                                                   \
-    X(ClassCode, IMAGE, 0x06)                                                                      \
-    X(ClassCode, PRINTER, 0x07)                                                                    \
-    X(ClassCode, MASS_STORAGE, 0x08)                                                               \
-    X(ClassCode, HUB, 0x09)                                                                        \
-    X(ClassCode, CDC_DATA, 0x0A)                                                                   \
-    X(ClassCode, SMART_CARD, 0x0B)                                                                 \
-    X(ClassCode, CONTENT_SECURITY, 0x0D)                                                           \
-    X(ClassCode, VIDEO, 0x0E)                                                                      \
-    X(ClassCode, PERSONAL_HEALTHCARE, 0x0F)                                                        \
-    X(ClassCode, AUDIO_VIDEO, 0x10)                                                                \
-    X(ClassCode, BILLBOARD, 0x11)                                                                  \
-    X(ClassCode, USB_TYPE_C_BRIDGE, 0x12)                                                          \
-    X(ClassCode, I3C, 0x3C)                                                                        \
-    X(ClassCode, DIAGNOSTIC, 0xDC)                                                                 \
-    X(ClassCode, WIRELESS_CONTROLLER, 0xE0)                                                        \
-    X(ClassCode, MISCELLANEOUS, 0xEF)                                                              \
-    X(ClassCode, APPLICATION_SPECIFIC, 0xFE)                                                       \
-    X(ClassCode, VENDOR_SPECIFIC, 0xFF)
+    X(USE_INTERFACE_DESCRIPTOR, 0x00)                                                              \
+    X(AUDIO, 0x01)                                                                                 \
+    X(CDC_CONTROL, 0x02)                                                                           \
+    X(HID, 0x03)                                                                                   \
+    X(PHYSICAL, 0x05)                                                                              \
+    X(IMAGE, 0x06)                                                                                 \
+    X(PRINTER, 0x07)                                                                               \
+    X(MASS_STORAGE, 0x08)                                                                          \
+    X(HUB, 0x09)                                                                                   \
+    X(CDC_DATA, 0x0A)                                                                              \
+    X(SMART_CARD, 0x0B)                                                                            \
+    X(CONTENT_SECURITY, 0x0D)                                                                      \
+    X(VIDEO, 0x0E)                                                                                 \
+    X(PERSONAL_HEALTHCARE, 0x0F)                                                                   \
+    X(AUDIO_VIDEO, 0x10)                                                                           \
+    X(BILLBOARD, 0x11)                                                                             \
+    X(USB_TYPE_C_BRIDGE, 0x12)                                                                     \
+    X(I3C, 0x3C)                                                                                   \
+    X(DIAGNOSTIC, 0xDC)                                                                            \
+    X(WIRELESS_CONTROLLER, 0xE0)                                                                   \
+    X(MISCELLANEOUS, 0xEF)                                                                         \
+    X(APPLICATION_SPECIFIC, 0xFE)                                                                  \
+    X(VENDOR_SPECIFIC, 0xFF)
 
     /// @brief USB base class code (bDeviceClass / bInterfaceClass).
     ///
@@ -77,43 +77,43 @@ namespace Rune::Device::USB {
     /// - MISCELLANEOUS (0xEF): Miscellaneous (IAD, RNDIS, …).
     /// - APPLICATION_SPECIFIC (0xFE): Application Specific (DFU, IrDA, …).
     /// - VENDOR_SPECIFIC (0xFF): Vendor Specific.
-    DECLARE_TYPED_ENUM(ClassCode, U8, CLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ClassCode, CLASS_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // HID (0x03) — subclass and protocol codes
     // ========================================================================================== //
 
-#define HID_SUBCLASS_CODES(X) X(HIDSubClass, BOOT_INTERFACE, 0x01)
+#define HID_SUBCLASS_CODES(X) X(BOOT_INTERFACE, 0x01)
 
     /// @brief Subclass codes for USB HID (class 0x03).
     ///
     /// - NONE (0x00): No subclass (auto-generated).
     /// - BOOT_INTERFACE (0x01): Boot Interface Subclass (keyboard / mouse).
-    DECLARE_TYPED_ENUM(HIDSubClass, U8, HID_SUBCLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDSubClass, HID_SUBCLASS_CODES, 0x00, U8) // NOLINT
 
 #define HID_PROTOCOL_CODES(X)                                                                      \
-    X(HIDProtocol, KEYBOARD, 0x01)                                                                 \
-    X(HIDProtocol, MOUSE, 0x02)
+    X(KEYBOARD, 0x01)                                                                              \
+    X(MOUSE, 0x02)
 
     /// @brief Protocol codes for USB HID Boot Interface (subclass 0x01).
     ///
     /// - NONE (0x00): None (auto-generated).
     /// - KEYBOARD (0x01): Keyboard.
     /// - MOUSE (0x02): Mouse.
-    DECLARE_TYPED_ENUM(HIDProtocol, U8, HID_PROTOCOL_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HIDProtocol, HID_PROTOCOL_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // Mass Storage (0x08) — subclass and protocol codes
     // ========================================================================================== //
 
 #define MASS_STORAGE_SUBCLASS_CODES(X)                                                             \
-    X(MassStorageSubClass, RBC, 0x01)                                                              \
-    X(MassStorageSubClass, ATAPI, 0x02)                                                            \
-    X(MassStorageSubClass, UFI, 0x04)                                                              \
-    X(MassStorageSubClass, SCSI, 0x06)                                                             \
-    X(MassStorageSubClass, LSD_FS, 0x07)                                                           \
-    X(MassStorageSubClass, IEEE_1667, 0x08)                                                        \
-    X(MassStorageSubClass, VENDOR, 0xFF)
+    X(RBC, 0x01)                                                                                   \
+    X(ATAPI, 0x02)                                                                                 \
+    X(UFI, 0x04)                                                                                   \
+    X(SCSI, 0x06)                                                                                  \
+    X(LSD_FS, 0x07)                                                                                \
+    X(IEEE_1667, 0x08)                                                                             \
+    X(VENDOR, 0xFF)
 
     /// @brief Subclass codes for USB Mass Storage (class 0x08).
     ///
@@ -124,14 +124,14 @@ namespace Rune::Device::USB {
     /// - LSD_FS (0x07): LSD FS.
     /// - IEEE_1667 (0x08): IEEE 1667.
     /// - VENDOR (0xFF): Vendor Specific.
-    DECLARE_TYPED_ENUM(MassStorageSubClass, U8, MASS_STORAGE_SUBCLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MassStorageSubClass, MASS_STORAGE_SUBCLASS_CODES, 0x00, U8) // NOLINT
 
 #define MASS_STORAGE_PROTOCOL_CODES(X)                                                             \
-    X(MassStorageProtocol, CBI_WITH_INTERRUPT, 0x00)                                               \
-    X(MassStorageProtocol, CBI_NO_INTERRUPT, 0x01)                                                 \
-    X(MassStorageProtocol, BULK_ONLY_TRANSPORT, 0x50)                                              \
-    X(MassStorageProtocol, UAS, 0x62)                                                              \
-    X(MassStorageProtocol, VENDOR, 0xFF)
+    X(CBI_WITH_INTERRUPT, 0x00)                                                                    \
+    X(CBI_NO_INTERRUPT, 0x01)                                                                      \
+    X(BULK_ONLY_TRANSPORT, 0x50)                                                                   \
+    X(UAS, 0x62)                                                                                   \
+    X(VENDOR, 0xFF)
 
     /// @brief Protocol codes for USB Mass Storage (class 0x08).
     ///
@@ -140,17 +140,17 @@ namespace Rune::Device::USB {
     /// - BULK_ONLY_TRANSPORT (0x50): Bulk-Only Transport (BOT/BBB) — most common.
     /// - UAS (0x62): USB Attached SCSI.
     /// - VENDOR (0xFF): Vendor Specific.
-    DECLARE_TYPED_ENUM(MassStorageProtocol, U8, MASS_STORAGE_PROTOCOL_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MassStorageProtocol, MASS_STORAGE_PROTOCOL_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // Hub (0x09) — protocol codes (subclass is always 0x00)
     // ========================================================================================== //
 
 #define HUB_PROTOCOL_CODES(X)                                                                      \
-    X(HubProtocol, FULL_SPEED, 0x00)                                                               \
-    X(HubProtocol, HI_SPEED_SINGLE_TT, 0x01)                                                       \
-    X(HubProtocol, HI_SPEED_MULTI_TT, 0x02)                                                        \
-    X(HubProtocol, SUPERSPEED, 0x03)
+    X(FULL_SPEED, 0x00)                                                                            \
+    X(HI_SPEED_SINGLE_TT, 0x01)                                                                    \
+    X(HI_SPEED_MULTI_TT, 0x02)                                                                     \
+    X(SUPERSPEED, 0x03)
 
     /// @brief Protocol codes for USB Hub (class 0x09, subclass 0x00).
     ///
@@ -158,26 +158,26 @@ namespace Rune::Device::USB {
     /// - HI_SPEED_SINGLE_TT (0x01): Hi-Speed Hub with single Transaction Translator.
     /// - HI_SPEED_MULTI_TT (0x02): Hi-Speed Hub with multiple Transaction Translators.
     /// - SUPERSPEED (0x03): SuperSpeed Hub.
-    DECLARE_TYPED_ENUM(HubProtocol, U8, HUB_PROTOCOL_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HubProtocol, HUB_PROTOCOL_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // CDC Control (0x02) — subclass codes
     // ========================================================================================== //
 
 #define CDC_SUBCLASS_CODES(X)                                                                      \
-    X(CDCSubClass, DIRECT_LINE_CONTROL, 0x01)                                                      \
-    X(CDCSubClass, ABSTRACT_CONTROL, 0x02)                                                         \
-    X(CDCSubClass, TELEPHONE_CONTROL, 0x03)                                                        \
-    X(CDCSubClass, MULTI_CHANNEL_CONTROL, 0x04)                                                    \
-    X(CDCSubClass, CAPI_CONTROL, 0x05)                                                             \
-    X(CDCSubClass, ETHERNET_NETWORKING, 0x06)                                                      \
-    X(CDCSubClass, ATM_NETWORKING, 0x07)                                                           \
-    X(CDCSubClass, WIRELESS_HANDSET_CONTROL, 0x08)                                                 \
-    X(CDCSubClass, DEVICE_MANAGEMENT, 0x09)                                                        \
-    X(CDCSubClass, MOBILE_DIRECT_LINE, 0x0A)                                                       \
-    X(CDCSubClass, OBEX, 0x0B)                                                                     \
-    X(CDCSubClass, ETHERNET_EMULATION, 0x0C)                                                       \
-    X(CDCSubClass, NETWORK_CONTROL, 0x0D)
+    X(DIRECT_LINE_CONTROL, 0x01)                                                                   \
+    X(ABSTRACT_CONTROL, 0x02)                                                                      \
+    X(TELEPHONE_CONTROL, 0x03)                                                                     \
+    X(MULTI_CHANNEL_CONTROL, 0x04)                                                                 \
+    X(CAPI_CONTROL, 0x05)                                                                          \
+    X(ETHERNET_NETWORKING, 0x06)                                                                   \
+    X(ATM_NETWORKING, 0x07)                                                                        \
+    X(WIRELESS_HANDSET_CONTROL, 0x08)                                                              \
+    X(DEVICE_MANAGEMENT, 0x09)                                                                     \
+    X(MOBILE_DIRECT_LINE, 0x0A)                                                                    \
+    X(OBEX, 0x0B)                                                                                  \
+    X(ETHERNET_EMULATION, 0x0C)                                                                    \
+    X(NETWORK_CONTROL, 0x0D)
 
     /// @brief Subclass codes for CDC Control (class 0x02).
     ///
@@ -194,27 +194,27 @@ namespace Rune::Device::USB {
     /// - OBEX (0x0B): OBEX.
     /// - ETHERNET_EMULATION (0x0C): Ethernet Emulation Model.
     /// - NETWORK_CONTROL (0x0D): Network Control Model.
-    DECLARE_TYPED_ENUM(CDCSubClass, U8, CDC_SUBCLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(CDCSubClass, CDC_SUBCLASS_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // Wireless Controller (0xE0) — subclass and protocol codes
     // ========================================================================================== //
 
 #define WIRELESS_SUBCLASS_CODES(X)                                                                 \
-    X(WirelessSubClass, RADIO_FREQUENCY, 0x01)                                                     \
-    X(WirelessSubClass, USB_WIRE_ADAPTER, 0x02)
+    X(RADIO_FREQUENCY, 0x01)                                                                       \
+    X(USB_WIRE_ADAPTER, 0x02)
 
     /// @brief Subclass codes for Wireless Controller (class 0xE0).
     ///
     /// - RADIO_FREQUENCY (0x01): RF Controller (Bluetooth, UWB, …).
     /// - USB_WIRE_ADAPTER (0x02): USB Wire Adapter.
-    DECLARE_TYPED_ENUM(WirelessSubClass, U8, WIRELESS_SUBCLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(WirelessSubClass, WIRELESS_SUBCLASS_CODES, 0x00, U8) // NOLINT
 
 #define WIRELESS_RF_PROTOCOL_CODES(X)                                                              \
-    X(WirelessRFProtocol, BLUETOOTH, 0x01)                                                         \
-    X(WirelessRFProtocol, UWB_RADIO_CONTROL, 0x02)                                                 \
-    X(WirelessRFProtocol, REMOTE_NDIS, 0x03)                                                       \
-    X(WirelessRFProtocol, BLUETOOTH_AMP, 0x04)
+    X(BLUETOOTH, 0x01)                                                                             \
+    X(UWB_RADIO_CONTROL, 0x02)                                                                     \
+    X(REMOTE_NDIS, 0x03)                                                                           \
+    X(BLUETOOTH_AMP, 0x04)
 
     /// @brief Protocol codes for Wireless RF Controller (class 0xE0, subclass 0x01).
     ///
@@ -222,23 +222,23 @@ namespace Rune::Device::USB {
     /// - UWB_RADIO_CONTROL (0x02): UWB Radio Control Interface.
     /// - REMOTE_NDIS (0x03): Remote NDIS.
     /// - BLUETOOTH_AMP (0x04): Bluetooth AMP Controller.
-    DECLARE_TYPED_ENUM(WirelessRFProtocol, U8, WIRELESS_RF_PROTOCOL_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(WirelessRFProtocol, WIRELESS_RF_PROTOCOL_CODES, 0x00, U8) // NOLINT
 
     // ========================================================================================== //
     // Application Specific (0xFE) — subclass codes
     // ========================================================================================== //
 
 #define APPLICATION_SPECIFIC_SUBCLASS_CODES(X)                                                     \
-    X(AppSpecificSubClass, DFU, 0x01)                                                              \
-    X(AppSpecificSubClass, IRDA_BRIDGE, 0x02)                                                      \
-    X(AppSpecificSubClass, TEST_MEASURE, 0x03)
+    X(DFU, 0x01)                                                                                   \
+    X(IRDA_BRIDGE, 0x02)                                                                           \
+    X(TEST_MEASURE, 0x03)
 
     /// @brief Subclass codes for Application Specific (class 0xFE).
     ///
     /// - DFU (0x01): Device Firmware Upgrade.
     /// - IRDA_BRIDGE (0x02): IrDA Bridge Device.
     /// - TEST_MEASURE (0x03): USB Test and Measurement Device.
-    DECLARE_TYPED_ENUM(AppSpecificSubClass, U8, APPLICATION_SPECIFIC_SUBCLASS_CODES, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(AppSpecificSubClass, APPLICATION_SPECIFIC_SUBCLASS_CODES, 0x00, U8) // NOLINT
 
     /// @brief Try to resolve the subclass_code to the subclass matching with the given class_code.
     /// @param class_code    Base class code (bDeviceClass / bInterfaceClass).

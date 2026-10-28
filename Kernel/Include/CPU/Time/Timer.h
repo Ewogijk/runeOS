@@ -29,10 +29,10 @@ namespace Rune::CPU {
      * </ul>
      */
 #define TIMER_MODES(X)                                                                             \
-    X(TimerMode, PERIODIC, 0x1)                                                                    \
-    X(TimerMode, ONE_SHOT, 0x2)
+    X(PERIODIC, 0x1)                                                                               \
+    X(ONE_SHOT, 0x2)
 
-    DECLARE_ENUM(TimerMode, TIMER_MODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TimerMode, TIMER_MODES, 0x0) // NOLINT
 
     /**
      * @brief A thread an it's wake time in nanoseconds.

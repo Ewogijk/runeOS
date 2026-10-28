@@ -15,10 +15,6 @@
 #include <CPU/Threading/Thread.h>
 
 namespace Rune::CPU {
-    DEFINE_ENUM(ThreadState, THREAD_STATES, 0x0)
-
-    DEFINE_ENUM(SchedulingPolicy, SCHEDULING_POLICIES, 0x0)
-
     Thread::Thread(Ember::Handle handle, const String& name) : Resource(handle, name) {}
 
     auto operator==(const Thread& one, const Thread& two) -> bool {

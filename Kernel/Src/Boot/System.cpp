@@ -116,8 +116,6 @@ namespace Rune {
     //                                      System
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    DEFINE_ENUM(ModuleSelector, MODULE_SELECTORS, 0x0)
-
     const Version System::KERNEL_VERSION = {.major       = MAJOR,
                                             .minor       = MINOR,
                                             .patch       = PATCH,

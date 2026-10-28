@@ -44,18 +44,18 @@ namespace Rune::Device::USB {
     };
 
 #define EXTENDED_CAPABILITY_CODE(X)                                                                \
-    X(ExtendedCapabilityCode, USB_LEGACY_SUPPORT, 0x1)                                             \
-    X(ExtendedCapabilityCode, SUPPORTED_PROTOCOL, 0x2)                                             \
-    X(ExtendedCapabilityCode, EXTENDED_POWER_MANAGEMENT, 0x3)                                      \
-    X(ExtendedCapabilityCode, IO_VIRTUALIZATION, 0x4)                                              \
-    X(ExtendedCapabilityCode, MESSAGE_INTERRUPT, 0x5)                                              \
-    X(ExtendedCapabilityCode, LOCAL_MEMORY, 0x6)                                                   \
-    X(ExtendedCapabilityCode, USB_DEBUG_CAPABILITY, 0xA)                                           \
-    X(ExtendedCapabilityCode, EXTENDED_MESSAGE_INTERRUPT, 0xF2)                                    \
-    X(ExtendedCapabilityCode, USB3_TUNNELING_SUPPORT, 0xF3)
+    X(USB_LEGACY_SUPPORT, 0x1)                                                                     \
+    X(SUPPORTED_PROTOCOL, 0x2)                                                                     \
+    X(EXTENDED_POWER_MANAGEMENT, 0x3)                                                              \
+    X(IO_VIRTUALIZATION, 0x4)                                                                      \
+    X(MESSAGE_INTERRUPT, 0x5)                                                                      \
+    X(LOCAL_MEMORY, 0x6)                                                                           \
+    X(USB_DEBUG_CAPABILITY, 0xA)                                                                   \
+    X(EXTENDED_MESSAGE_INTERRUPT, 0xF2)                                                            \
+    X(USB3_TUNNELING_SUPPORT, 0xF3)
 
     /// @brief xHCI Extended Capability Codes — §7 Table 7-2
-    DECLARE_ENUM(ExtendedCapabilityCode, EXTENDED_CAPABILITY_CODE, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ExtendedCapabilityCode, EXTENDED_CAPABILITY_CODE, 0x0) // NOLINT
 
     // ========================================================================================== //
     // Supported Protocol Capability — xHCI 2.0 §7.2

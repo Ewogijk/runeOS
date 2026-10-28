@@ -104,22 +104,22 @@ namespace Ember {
      * </ul>
      */
 #define STATUSES(X)                                                                                \
-    X(Status, OKAY, 0)                                                                             \
-    X(Status, BAD_ARG, -1)                                                                         \
-    X(Status, FAULT, -2)                                                                           \
-    X(Status, UNKNOWN_ID, -3)                                                                      \
-    X(Status, ACCESS_DENIED, -4)                                                                   \
-    X(Status, IO_ERROR, -5)                                                                        \
-    X(Status, DIRECTORY_STREAM_EOD, 1)                                                             \
-    X(Status, DIRECTORY_STREAM_HAS_MORE, 2)                                                        \
-    X(Status, NODE_NOT_FOUND, -100)                                                                \
-    X(Status, NODE_EXISTS, -101)                                                                   \
-    X(Status, NODE_IS_DIRECTORY, -102)                                                             \
-    X(Status, NODE_IS_FILE, -103)                                                                  \
-    X(Status, NODE_IN_USE, -104)                                                                   \
-    X(Status, NODE_CLOSED, -105)
+    X(OKAY, 0)                                                                                     \
+    X(BAD_ARG, -1)                                                                                 \
+    X(FAULT, -2)                                                                                   \
+    X(UNKNOWN_ID, -3)                                                                              \
+    X(ACCESS_DENIED, -4)                                                                           \
+    X(IO_ERROR, -5)                                                                                \
+    X(DIRECTORY_STREAM_EOD, 1)                                                                     \
+    X(DIRECTORY_STREAM_HAS_MORE, 2)                                                                \
+    X(NODE_NOT_FOUND, -100)                                                                        \
+    X(NODE_EXISTS, -101)                                                                           \
+    X(NODE_IS_DIRECTORY, -102)                                                                     \
+    X(NODE_IS_FILE, -103)                                                                          \
+    X(NODE_IN_USE, -104)                                                                           \
+    X(NODE_CLOSED, -105)
 
-    DECLARE_TYPED_ENUM(Status, StatusCode, STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Status, STATUSES, 0x0, StatusCode) // NOLINT
 } // namespace Ember
 
 #endif // EMBER_EMBER_H

@@ -19,9 +19,6 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    DEFINE_TYPED_ENUM(CacheType, U8, CACHE_TYPES, 0x0)
-
-    DEFINE_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0)
 
     ////////////////////////////////////////////////////////////////////////
     //

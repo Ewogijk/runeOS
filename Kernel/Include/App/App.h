@@ -33,18 +33,18 @@
 namespace Rune::App {
 
 #define LOAD_STATUSES(X)                                                                           \
-    X(LoadStatus, LOADED, 0x1)                                                                     \
-    X(LoadStatus, RUNNING, 0x2)                                                                    \
-    X(LoadStatus, IO_ERROR, 0x3)                                                                   \
-    X(LoadStatus, BAD_HEADER, 0x4)                                                                 \
-    X(LoadStatus, BAD_SEGMENT, 0x5)                                                                \
-    X(LoadStatus, MEMORY_ERROR, 0x6)                                                               \
-    X(LoadStatus, LOAD_ERROR, 0x7)                                                                 \
-    X(LoadStatus, BAD_VENDOR_INFO, 0x8)                                                            \
-    X(LoadStatus, BAD_STDIO, 0x9)
+    X(LOADED, 0x1)                                                                                 \
+    X(RUNNING, 0x2)                                                                                \
+    X(IO_ERROR, 0x3)                                                                               \
+    X(BAD_HEADER, 0x4)                                                                             \
+    X(BAD_SEGMENT, 0x5)                                                                            \
+    X(MEMORY_ERROR, 0x6)                                                                           \
+    X(LOAD_ERROR, 0x7)                                                                             \
+    X(BAD_VENDOR_INFO, 0x8)                                                                        \
+    X(BAD_STDIO, 0x9)
 
     /// @brief Status of the finished ELF loading.
-    DECLARE_ENUM(LoadStatus, LOAD_STATUSES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(LoadStatus, LOAD_STATUSES, 0x0) // NOLINT
 
     /// @brief The Bootstrap region is a memory region at the end of the user space directly
     ///         bordering the kernel space.

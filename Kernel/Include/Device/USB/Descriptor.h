@@ -125,45 +125,45 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define ENDPOINT_DIRECTIONS(X)                                                                     \
-    X(Direction, OUT, 0)                                                                           \
-    X(Direction, IN, 1)
+    X(OUT, 0)                                                                                      \
+    X(IN, 1)
 
     /// Direction encoded in bEndpointAddress bit 7 (Table 9-26).
-    DECLARE_TYPED_ENUM(Direction, U8, ENDPOINT_DIRECTIONS, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(Direction, ENDPOINT_DIRECTIONS, 0xFF, U8) // NOLINT
 
 #define ENDPOINT_TRANSFER_TYPES(X)                                                                 \
-    X(TransferType, CONTROL, 0)                                                                    \
-    X(TransferType, ISOCHRONOUS, 1)                                                                \
-    X(TransferType, BULK, 2)                                                                       \
-    X(TransferType, INTERRUPT, 3)
+    X(CONTROL, 0)                                                                                  \
+    X(ISOCHRONOUS, 1)                                                                              \
+    X(BULK, 2)                                                                                     \
+    X(INTERRUPT, 3)
 
     /// Transfer type encoded in bmAttributes bits 1..0 (Table 9-26).
-    DECLARE_TYPED_ENUM(TransferType, U8, ENDPOINT_TRANSFER_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(TransferType, ENDPOINT_TRANSFER_TYPES, 0xFF, U8) // NOLINT
 
 #define ENDPOINT_SYNC_TYPES(X)                                                                     \
-    X(SyncType, NO_SYNC, 0)                                                                        \
-    X(SyncType, ASYNC, 1)                                                                          \
-    X(SyncType, ADAPTIVE, 2)                                                                       \
-    X(SyncType, SYNC, 3)
+    X(NO_SYNC, 0)                                                                                  \
+    X(ASYNC, 1)                                                                                    \
+    X(ADAPTIVE, 2)                                                                                 \
+    X(SYNC, 3)
 
     /// Synchronization type encoded in bmAttributes bits 3..2 (isochronous endpoints only, Table
     /// 9-26).
-    DECLARE_TYPED_ENUM(SyncType, U8, ENDPOINT_SYNC_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SyncType, ENDPOINT_SYNC_TYPES, 0xFF, U8) // NOLINT
 
 #define ISOCHRONOUS_ENDPOINT_USAGE_TYPES(X)                                                        \
-    X(IsochronousUsageType, DATA, 0)                                                               \
-    X(IsochronousUsageType, FEEDBACK, 1)                                                           \
-    X(IsochronousUsageType, IMPLICIT_FEEDBACK_DATA, 2)
+    X(DATA, 0)                                                                                     \
+    X(FEEDBACK, 1)                                                                                 \
+    X(IMPLICIT_FEEDBACK_DATA, 2)
 
     /// Usage type encoded in bmAttributes bits 5..4 (isochronous endpoints only, Table 9-26).
-    DECLARE_TYPED_ENUM(IsochronousUsageType, U8, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(IsochronousUsageType, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF, U8) // NOLINT
 
 #define INTERRUPT_ENDPOINT_USAGE_TYPES(X)                                                          \
-    X(InterruptUsageType, PERIODDIC, 0)                                                            \
-    X(InterruptUsageType, NOTIFICATION, 1)
+    X(PERIODDIC, 0)                                                                                \
+    X(NOTIFICATION, 1)
 
     /// Usage type encoded in bmAttributes bits 5..4 (interrupt endpoints only, Table 9-26).
-    DECLARE_TYPED_ENUM(InterruptUsageType, U8, INTERRUPT_ENDPOINT_USAGE_TYPES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(InterruptUsageType, INTERRUPT_ENDPOINT_USAGE_TYPES, 0xFF, U8) // NOLINT
 
     /// @brief Describes one endpoint within an interface (Table 9-26).
     /// Always returned as part of GET_DESCRIPTOR(CONFIGURATION); not directly accessible.

@@ -33,8 +33,7 @@ namespace Rune::App {
     auto render_cursor(Ember::ThreadLaunchPacket* start_info) -> int {
         if (start_info->m_argc != 1) return -1;
         uintptr_t           ptr       = 0;
-        constexpr uintptr_t HEX_RADIX = 16;
-        if (!parse_int<uintptr_t>(start_info->argv(0), HEX_RADIX, ptr)) return -1;
+        if (!parse_int<uintptr_t>(start_info->argv(0), Radix::HEX, ptr)) return -1;
         auto*  state     = reinterpret_cast<TerminalState*>(ptr);
         double thickness = 1.0;
         while (state->keep_rendering_cursor) { // NOLINT function exits if ptr cannot be parsed
@@ -740,7 +739,7 @@ namespace Rune::App {
         if (_render_thread_handle == 0) {
             auto tlp =
                 ThreadLaunchPacketBuilder()
-                    .add_argument(int_to_string(reinterpret_cast<uintptr_t>(&_state), HEX_RADIX))
+                    .add_argument(int_to_string(reinterpret_cast<uintptr_t>(&_state), Radix::HEX))
                     .main(&render_cursor)
                     .build();
             _render_thread_handle = _cpu_module->schedule_new_thread(

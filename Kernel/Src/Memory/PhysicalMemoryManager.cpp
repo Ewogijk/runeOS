@@ -17,7 +17,6 @@
 #include <KRE/Math.h>
 
 namespace Rune::Memory {
-    DEFINE_ENUM(PMMStartFailure, PMM_START_FAILURES, 0x0)
 
     auto PhysicalMemoryManager::detect_memory_range() -> bool {
         _mem_base            = static_cast<PhysicalAddr>(-1);

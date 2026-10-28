@@ -16,8 +16,6 @@
 
 namespace Rune::Device::USB {
 
-    DEFINE_TYPED_ENUM(PortLinkState, U8, PORT_LINK_STATES, 0xFF) // NOLINT
-
     // ========================================================================================== //
     // Capability Parameters 1 — xHCI 2.0 §5.3.6 Table 5-13 (All RO)
     // ========================================================================================== //
@@ -189,8 +187,6 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
     // Port Status and Control — xHCI 2.0 §5.4.8 Table 5-27/5-29
     // ========================================================================================== //
-
-    DEFINE_ENUM(PortSpeed, PORT_SPEEDS, 0x0)
 
     [[nodiscard]] auto PORTSC::CCS() const volatile -> bool {
         return bit_check(m_register, CCS_BIT_OFFSET);
@@ -699,8 +695,6 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
     // Doorbell Register — xHCI 2.0 §5.6 Table 5-45
     // ========================================================================================== //
-
-    DEFINE_TYPED_ENUM(DeviceContextDoorbellTarget, U8, DEVICE_CONTEXT_DOORBELL_TARGETS, 0) // NOLINT
 
     [[nodiscard]] auto DoorbellRegister::db_target() const volatile -> U8 {
         return static_cast<U8>(m_register & DB_TARGET_MASK);

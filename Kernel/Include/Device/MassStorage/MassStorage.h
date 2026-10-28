@@ -35,10 +35,10 @@ namespace Rune::Device {
     };
 
 #define MASS_STORAGE_DEVICE_TYPES(X)                                                               \
-    X(MassStorageDeviceType, PHYSICAL, 0x1)                                                        \
-    X(MassStorageDeviceType, EFI_SYSTEM_PARTITION, 0x2)                                            \
-    X(MassStorageDeviceType, ROOT_PARTITION, 0x3)                                                  \
-    X(MassStorageDeviceType, GENERIC_PARTITION, 0x4)
+    X(PHYSICAL, 0x1)                                                                               \
+    X(EFI_SYSTEM_PARTITION, 0x2)                                                                   \
+    X(ROOT_PARTITION, 0x3)                                                                         \
+    X(GENERIC_PARTITION, 0x4)
 
     /// @brief Defines what a mass storage device represents.
     ///
@@ -47,7 +47,7 @@ namespace Rune::Device {
     /// - ROOT_PARTITION: The device represents the partition that should be mounted as root of the
     ///                     VFS.
     /// - GENERIC_PARTITION: A generic partition on a physical mass storage device.
-    DECLARE_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MassStorageDeviceType, MASS_STORAGE_DEVICE_TYPES, 0x0) // NOLINT
 
     /// @brief A MassStorageDevice contains the mass storage device type additionally to all
     ///         BasicDevice members.
@@ -111,8 +111,8 @@ namespace Rune::Device {
     // ========================================================================================== //
 
 #define MSD_REQUEST_TYPES(X)                                                                       \
-    X(MassStorageDeviceRequestType, READ, 0x1)                                                     \
-    X(MassStorageDeviceRequestType, WRITE, 0x2)
+    X(READ, 0x1)                                                                                   \
+    X(WRITE, 0x2)
 
     /// @brief Request types describe what action a mass storage device should perform.
     ///
@@ -122,7 +122,7 @@ namespace Rune::Device {
     /// - WRITE: Write at most m_buffer_size bytes of m_buffer starting at m_lba to the device. Only
     ///         a full sector can be read at a time, hence m_buffer_size must be a multiple of the
     ///         device sector size.
-    DECLARE_ENUM(MassStorageDeviceRequestType, MSD_REQUEST_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(MassStorageDeviceRequestType, MSD_REQUEST_TYPES, 0x0) // NOLINT
 
     /// @brief A request for a mass storage device.
     struct MassStorageDeviceRequest {

@@ -19,8 +19,6 @@
 #include <KRE/Memory.h>
 
 namespace Rune::CPU {
-    DEFINE_TYPED_ENUM(GDTOffset, U16, GDT_OFFSETS, 0xFF)
-
     void init_gdt(GlobalDescriptorTable* gdt, TaskStateSegment64* tss) {
         //////////////////////////////////
         // Null Descriptor

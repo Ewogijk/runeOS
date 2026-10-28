@@ -26,27 +26,27 @@ namespace Rune::Memory {
      * Describes if slab meta information is stored on or off a slab.
      */
 #define CACHE_TYPES(X)                                                                             \
-    X(CacheType, ON_SLAB, 0x1)                                                                     \
-    X(CacheType, OFF_SLAB, 0x2)
+    X(ON_SLAB, 0x1)                                                                                \
+    X(OFF_SLAB, 0x2)
 
-    DECLARE_TYPED_ENUM(CacheType, U8, CACHE_TYPES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(CacheType, CACHE_TYPES, 0x0, U8) // NOLINT
 
 /**
  * Reasons why the heap start can fail.
  */
 #define HEAP_START_FAILURE_CODES(X)                                                                \
-    X(HeapStartFailureCode, HEAP_NOT_MAPPED, 0x1)                                                  \
-    X(HeapStartFailureCode, BC_OBJECT_CACHE_ERROR, 0x2)                                            \
-    X(HeapStartFailureCode, BC_SLAB_ERROR, 0x3)                                                    \
-    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_ERROR, 0x4)                                         \
-    X(HeapStartFailureCode, BC_OBJECT_BUF_NODE_HASHMAP_ERROR, 0x5)                                 \
-    X(HeapStartFailureCode, BC_HASHNODE_ERROR, 0x6)                                                \
-    X(HeapStartFailureCode, BC_MEMORY_NODE_ERROR, 0x7)                                             \
-    X(HeapStartFailureCode, ALLOC_GP_OR_DMA_CACHE_ERROR, 0x8)                                      \
-    X(HeapStartFailureCode, GP_CACHE_ERROR, 0x9)                                                   \
-    X(HeapStartFailureCode, DMA_CACHE_ERROR, 0xA)
+    X(HEAP_NOT_MAPPED, 0x1)                                                                        \
+    X(BC_OBJECT_CACHE_ERROR, 0x2)                                                                  \
+    X(BC_SLAB_ERROR, 0x3)                                                                          \
+    X(BC_OBJECT_BUF_NODE_ERROR, 0x4)                                                               \
+    X(BC_OBJECT_BUF_NODE_HASHMAP_ERROR, 0x5)                                                       \
+    X(BC_HASHNODE_ERROR, 0x6)                                                                      \
+    X(BC_MEMORY_NODE_ERROR, 0x7)                                                                   \
+    X(ALLOC_GP_OR_DMA_CACHE_ERROR, 0x8)                                                            \
+    X(GP_CACHE_ERROR, 0x9)                                                                         \
+    X(DMA_CACHE_ERROR, 0xA)
 
-    DECLARE_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HeapStartFailureCode, HEAP_START_FAILURE_CODES, 0x0) // NOLINT
 
     /**
      * A specialized hash map for ObjectBufNodes.

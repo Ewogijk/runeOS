@@ -165,10 +165,10 @@ namespace Rune {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
 #define BYTE_ORDERS(X)                                                                             \
-    X(ByteOrder, LITTLE_ENDIAN, 1)                                                                 \
-    X(ByteOrder, BIG_ENDIAN, 2)
+    X(LITTLE_ENDIAN, 1)                                                                            \
+    X(BIG_ENDIAN, 2)
 
-    DECLARE_TYPED_ENUM(ByteOrder, U8, BYTE_ORDERS, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ByteOrder, BYTE_ORDERS, 0, U8) // NOLINT
 
     /**
      * Little endian conversions.

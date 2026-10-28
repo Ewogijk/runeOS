@@ -97,8 +97,6 @@ namespace Rune::CPU {
     //                                          Subsystem
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
 
-    DEFINE_ENUM(EventHook, CPU_EVENT_HOOKS, 0x0)
-
     auto create_thread(const String&                            thread_name,
                        UniquePointer<Ember::ThreadLaunchPacket> tlp,
                        PhysicalAddr                             base_pt_addr,

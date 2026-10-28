@@ -45,4 +45,11 @@ namespace Rune::CPU {
         cpuid_make_request(GET_PHYSICAL_VIRTUAL_ADDRESS_SIZES, &cpuid_response);
         return byte_get(cpuid_response.rax, 0);
     }
+
+    auto cpuid_is_apic_supported() -> bool {
+        constexpr U8 FEAT_APIC = 9;
+        CPUIDResponse cpuid_response;
+        cpuid_make_request(1, &cpuid_response);
+        return bit_check(cpuid_response.rdx, FEAT_APIC);
+    }
 } // namespace Rune::CPU

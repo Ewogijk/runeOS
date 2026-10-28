@@ -37,14 +37,14 @@ namespace Rune {
      * List of all kernel modules.
      */
 #define MODULE_SELECTORS(X)                                                                        \
-    X(ModuleSelector, MEMORY, 0x1)                                                                 \
-    X(ModuleSelector, CPU, 0x2)                                                                    \
-    X(ModuleSelector, DEVICE, 0x3)                                                                 \
-    X(ModuleSelector, VFS, 0x4)                                                                    \
-    X(ModuleSelector, APP, 0x5)                                                                    \
-    X(ModuleSelector, SYSTEMCALL, 0x6)
+    X(MEMORY, 0x1)                                                                                 \
+    X(CPU, 0x2)                                                                                    \
+    X(DEVICE, 0x3)                                                                                 \
+    X(VFS, 0x4)                                                                                    \
+    X(APP, 0x5)                                                                                    \
+    X(SYSTEMCALL, 0x6)
 
-    DECLARE_ENUM(ModuleSelector, MODULE_SELECTORS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ModuleSelector, MODULE_SELECTORS, 0x0) // NOLINT
 
     /**
      * A module loader is responsible to instantiate a kernel module and to prepare and finish up

@@ -36,8 +36,6 @@ namespace Rune::Device {
     // Device
     // ========================================================================================== //
 
-    DEFINE_ENUM(DeviceType, DEVICE_TYPES, 0x0)
-
     Device::Device(Handle        handle,
                    const String& name,
                    const String& oem,
@@ -84,11 +82,5 @@ namespace Rune::Device {
           m_device_ID(move(device_ID)) {}
 
     auto BasicDevice::device_ID() const -> const DeviceID* { return &m_device_ID; }
-
-    // ========================================================================================== //
-    // Driver
-    // ========================================================================================== //
-
-    DEFINE_ENUM(IORequestStatus, IO_REQUEST_STATES, 0x0)
 
 } // namespace Rune::Device

@@ -29,21 +29,21 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define PORT_LINK_STATES(X)                                                                        \
-    X(PortLinkState, U0, 0)                                                                        \
-    X(PortLinkState, U1, 1)                                                                        \
-    X(PortLinkState, U2, 2)                                                                        \
-    X(PortLinkState, U3, 3)                                                                        \
-    X(PortLinkState, DISABLED, 4)                                                                  \
-    X(PortLinkState, RX_DETECT, 5)                                                                 \
-    X(PortLinkState, INACTIVE, 6)                                                                  \
-    X(PortLinkState, POLLING, 7)                                                                   \
-    X(PortLinkState, RECOVERY, 8)                                                                  \
-    X(PortLinkState, HOT_RESET, 9)                                                                 \
-    X(PortLinkState, COMPLIANCE, 10)                                                               \
-    X(PortLinkState, TEST_MODE, 11)                                                                \
-    X(PortLinkState, RESUME, 15)
+    X(U0, 0)                                                                                       \
+    X(U1, 1)                                                                                       \
+    X(U2, 2)                                                                                       \
+    X(U3, 3)                                                                                       \
+    X(DISABLED, 4)                                                                                 \
+    X(RX_DETECT, 5)                                                                                \
+    X(INACTIVE, 6)                                                                                 \
+    X(POLLING, 7)                                                                                  \
+    X(RECOVERY, 8)                                                                                 \
+    X(HOT_RESET, 9)                                                                                \
+    X(COMPLIANCE, 10)                                                                              \
+    X(TEST_MODE, 11)                                                                               \
+    X(RESUME, 15)
 
-    DECLARE_TYPED_ENUM(PortLinkState, U8, PORT_LINK_STATES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PortLinkState, PORT_LINK_STATES, 0xFF, U8) // NOLINT
 
     // ========================================================================================== //
     // Capability Parameters 1 — xHCI 2.0 §5.3.6 Table 5-13 (All RO)
@@ -207,13 +207,13 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define PORT_SPEEDS(X)                                                                             \
-    X(PortSpeed, FULL_SPEED, 0x1)                                                                  \
-    X(PortSpeed, LOW_SPEED, 0x2)                                                                   \
-    X(PortSpeed, HIGH_SPEED, 0x3)                                                                  \
-    X(PortSpeed, SUPER_SPEED_GEN1_X1, 0x4)                                                         \
-    X(PortSpeed, SUPER_SPEED_PLUS_GEN2_X1, 0x5)                                                    \
-    X(PortSpeed, SUPER_SPEED_PLUS_GEN1_X2, 0x6)                                                    \
-    X(PortSpeed, SUPER_SPEED_PLUS_GEN2_X2, 0x7)
+    X(FULL_SPEED, 0x1)                                                                             \
+    X(LOW_SPEED, 0x2)                                                                              \
+    X(HIGH_SPEED, 0x3)                                                                             \
+    X(SUPER_SPEED_GEN1_X1, 0x4)                                                                    \
+    X(SUPER_SPEED_PLUS_GEN2_X1, 0x5)                                                               \
+    X(SUPER_SPEED_PLUS_GEN1_X2, 0x6)                                                               \
+    X(SUPER_SPEED_PLUS_GEN2_X2, 0x7)
 
     /// @brief USB Speed ID mappings.
     ///
@@ -224,7 +224,7 @@ namespace Rune::Device::USB {
     /// - SUPER_SPEED_PLUS_GEN2_X1: USB 3.1 10 Gb/s
     /// - SUPER_SPEED_PLUS_GEN1_X2: USB 3.2 5 Gb/s
     /// - SUPER_SPEED_PLUS_GEN2_X2: USB 3.2 10 Gb/s
-    DECLARE_ENUM(PortSpeed, PORT_SPEEDS, 0x0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PortSpeed, PORT_SPEEDS, 0x0) // NOLINT
 
     struct PORTSC {
         U32 m_register = 0;
@@ -635,43 +635,43 @@ namespace Rune::Device::USB {
     //          §5.6 Table 5-45. Doorbell Register 0 (the Host Controller Doorbell) decodes this
     //          field differently, see DoorbellRegister::HC_COMMAND_TARGET.
 #define DEVICE_CONTEXT_DOORBELL_TARGETS(X)                                                         \
-    X(DeviceContextDoorbellTarget, EP0_CONTROL, 1)                                                 \
-    X(DeviceContextDoorbellTarget, EP1_OUT, 2)                                                     \
-    X(DeviceContextDoorbellTarget, EP1_IN, 3)                                                      \
-    X(DeviceContextDoorbellTarget, EP2_OUT, 4)                                                     \
-    X(DeviceContextDoorbellTarget, EP2_IN, 5)                                                      \
-    X(DeviceContextDoorbellTarget, EP3_OUT, 6)                                                     \
-    X(DeviceContextDoorbellTarget, EP3_IN, 7)                                                      \
-    X(DeviceContextDoorbellTarget, EP4_OUT, 8)                                                     \
-    X(DeviceContextDoorbellTarget, EP4_IN, 9)                                                      \
-    X(DeviceContextDoorbellTarget, EP5_OUT, 10)                                                    \
-    X(DeviceContextDoorbellTarget, EP5_IN, 11)                                                     \
-    X(DeviceContextDoorbellTarget, EP6_OUT, 12)                                                    \
-    X(DeviceContextDoorbellTarget, EP6_IN, 13)                                                     \
-    X(DeviceContextDoorbellTarget, EP7_OUT, 14)                                                    \
-    X(DeviceContextDoorbellTarget, EP7_IN, 15)                                                     \
-    X(DeviceContextDoorbellTarget, EP8_OUT, 16)                                                    \
-    X(DeviceContextDoorbellTarget, EP8_IN, 17)                                                     \
-    X(DeviceContextDoorbellTarget, EP9_OUT, 18)                                                    \
-    X(DeviceContextDoorbellTarget, EP9_IN, 19)                                                     \
-    X(DeviceContextDoorbellTarget, EP10_OUT, 20)                                                   \
-    X(DeviceContextDoorbellTarget, EP10_IN, 21)                                                    \
-    X(DeviceContextDoorbellTarget, EP11_OUT, 22)                                                   \
-    X(DeviceContextDoorbellTarget, EP11_IN, 23)                                                    \
-    X(DeviceContextDoorbellTarget, EP12_OUT, 24)                                                   \
-    X(DeviceContextDoorbellTarget, EP12_IN, 25)                                                    \
-    X(DeviceContextDoorbellTarget, EP13_OUT, 26)                                                   \
-    X(DeviceContextDoorbellTarget, EP13_IN, 27)                                                    \
-    X(DeviceContextDoorbellTarget, EP14_OUT, 28)                                                   \
-    X(DeviceContextDoorbellTarget, EP14_IN, 29)                                                    \
-    X(DeviceContextDoorbellTarget, EP15_OUT, 30)                                                   \
-    X(DeviceContextDoorbellTarget, EP15_IN, 31)
+    X(EP0_CONTROL, 1)                                                                              \
+    X(EP1_OUT, 2)                                                                                  \
+    X(EP1_IN, 3)                                                                                   \
+    X(EP2_OUT, 4)                                                                                  \
+    X(EP2_IN, 5)                                                                                   \
+    X(EP3_OUT, 6)                                                                                  \
+    X(EP3_IN, 7)                                                                                   \
+    X(EP4_OUT, 8)                                                                                  \
+    X(EP4_IN, 9)                                                                                   \
+    X(EP5_OUT, 10)                                                                                 \
+    X(EP5_IN, 11)                                                                                  \
+    X(EP6_OUT, 12)                                                                                 \
+    X(EP6_IN, 13)                                                                                  \
+    X(EP7_OUT, 14)                                                                                 \
+    X(EP7_IN, 15)                                                                                  \
+    X(EP8_OUT, 16)                                                                                 \
+    X(EP8_IN, 17)                                                                                  \
+    X(EP9_OUT, 18)                                                                                 \
+    X(EP9_IN, 19)                                                                                  \
+    X(EP10_OUT, 20)                                                                                \
+    X(EP10_IN, 21)                                                                                 \
+    X(EP11_OUT, 22)                                                                                \
+    X(EP11_IN, 23)                                                                                 \
+    X(EP12_OUT, 24)                                                                                \
+    X(EP12_IN, 25)                                                                                 \
+    X(EP13_OUT, 26)                                                                                \
+    X(EP13_IN, 27)                                                                                 \
+    X(EP14_OUT, 28)                                                                                \
+    X(EP14_IN, 29)                                                                                 \
+    X(EP15_OUT, 30)                                                                                \
+    X(EP15_IN, 31)
 
     // NONE (0) is Reserved for Device Context Doorbells (xHCI 2.0 §5.6 Table 5-45).
-    DECLARE_TYPED_ENUM(DeviceContextDoorbellTarget,
-                       U8,
-                       DEVICE_CONTEXT_DOORBELL_TARGETS,
-                       0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DeviceContextDoorbellTarget,
+                            DEVICE_CONTEXT_DOORBELL_TARGETS,
+                            0,
+                            U8) // NOLINT
 
     struct DoorbellRegister {
         static constexpr U8 HC_COMMAND_TARGET = 0;

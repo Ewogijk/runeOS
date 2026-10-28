@@ -20,15 +20,14 @@
 
 namespace Ember {
 
+#define PAGE_PROTECTIONS(X)                                                                        \
+    X(READ, 0x1)                                                                                   \
+    X(WRITE, 0x2)
+
     ///@brief Page protection define how memory can be interacted with.
     /// - READ: The pages will be readonly.
     /// - WRITE: The pages will be readable and writable.
-#define PAGE_PROTECTIONS(X)                                                                        \
-    X(PageProtection, READ, 0x1)                                                                   \
-    X(PageProtection, WRITE, 0x2)
-
-    DECLARE_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0) // NOLINT
-
+    EMBER_DEFINE_SMART_ENUM(PageProtection, PAGE_PROTECTIONS, 0x0)
 } // namespace Ember
 
 #endif // EMBER_MEMORYBITS_H

@@ -86,13 +86,13 @@ namespace Rune::App {
     };
 
 #define ANSI_INTERPRETER_STATES(X)                                                                 \
-    X(ANSIInterpreterState, CHARACTER, 1)                                                          \
-    X(ANSIInterpreterState, C0_CONTROL_CODE, 2)                                                    \
-    X(ANSIInterpreterState, CSI_BEGIN, 3)                                                          \
-    X(ANSIInterpreterState, CSI_ARG, 4)                                                            \
-    X(ANSIInterpreterState, CSI_END, 5)
+    X(CHARACTER, 1)                                                                                \
+    X(C0_CONTROL_CODE, 2)                                                                          \
+    X(CSI_BEGIN, 3)                                                                                \
+    X(CSI_ARG, 4)                                                                                  \
+    X(CSI_END, 5)
 
-    DECLARE_ENUM(ANSIInterpreterState, ANSI_INTERPRETER_STATES, 0) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ANSIInterpreterState, ANSI_INTERPRETER_STATES, 0) // NOLINT
 
     /**
      * The state is shared with the cursor render thread, a pointer to the state will be passed to
@@ -178,7 +178,6 @@ namespace Rune::App {
      * providing an text output for applications.
      */
     class TerminalStream : public TextStream {
-        static constexpr uintptr_t HEX_RADIX       = 16;
         static constexpr U8        ASCII_DIGIT_MIN = 0x30;
         static constexpr U8        ASCII_DIGIT_MAX = 0x39;
 

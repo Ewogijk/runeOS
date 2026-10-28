@@ -29,8 +29,8 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define BOT_CLASS_REQUESTS(X)                                                                      \
-    X(BOTClassRequest, GET_MAX_LUN, 0xFE)                                                          \
-    X(BOTClassRequest, MASS_STORAGE_RESET, 0xFF)
+    X(GET_MAX_LUN, 0xFE)                                                                           \
+    X(MASS_STORAGE_RESET, 0xFF)
 
     /// @brief bRequest of a Bulk-Only Transport class-specific request — BOT 1.0 §3.1, §3.2. Both
     ///         go over the Default (control) pipe with the interface as recipient.
@@ -40,7 +40,7 @@ namespace Rune::Device::USB {
     /// - MASS_STORAGE_RESET (0xFF): Reset the device and its interface so it is ready for the next
     ///   CBW. Data toggles and endpoint STALL conditions are preserved. First step of the Reset
     ///   Recovery — BOT 1.0 §5.3.4.
-    DECLARE_TYPED_ENUM(BOTClassRequest, U8, BOT_CLASS_REQUESTS, 0x00) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(BOTClassRequest, BOT_CLASS_REQUESTS, 0x00, U8) // NOLINT
 
     /// @brief Create a Bulk-Only Mass Storage Reset request — BOT 1.0 §3.1.
     /// @param msd_device       The mass storage function device.
@@ -108,9 +108,9 @@ namespace Rune::Device::USB {
     // ========================================================================================== //
 
 #define CSW_STATUS_CODES(X)                                                                        \
-    X(CSWStatus, PASSED, 0x00)                                                                     \
-    X(CSWStatus, FAILED, 0x01)                                                                     \
-    X(CSWStatus, PHASE_ERROR, 0x02)
+    X(PASSED, 0x00)                                                                                \
+    X(FAILED, 0x01)                                                                                \
+    X(PHASE_ERROR, 0x02)
 
     /// @brief bCSWStatus of a Command Status Wrapper — BOT 1.0 §5.2, Table 5.3.
     ///
@@ -121,7 +121,7 @@ namespace Rune::Device::USB {
     ///   perform a Reset Recovery — BOT 1.0 §5.3.3.1.
     ///
     /// 0x03-0xFF are reserved, NONE (0xFF) marks an unrecognized status.
-    DECLARE_TYPED_ENUM(CSWStatus, U8, CSW_STATUS_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(CSWStatus, CSW_STATUS_CODES, 0xFF, U8) // NOLINT
 
     /// @brief The Command Status Wrapper (CSW) reports the result of a command from the device to
     ///         the host over the Bulk-In endpoint — BOT 1.0 §5.2.
