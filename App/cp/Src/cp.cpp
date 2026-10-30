@@ -93,8 +93,8 @@ auto get_node_info(const std::string& node, Ember::NodeInfo& out) -> int {
     switch (ret) {
         case Ember::Status::OKAY:           function_ret = 1; break;
         case Ember::Status::NODE_NOT_FOUND: function_ret = 0; break;
-        case Ember::Status::BAD_ARG:        std::cerr << "'" << node << "': Bad path." << std::endl; break;
-        default:                            std::cerr << "'" << node << "': IO error." << std::endl;
+        case Ember::Status::BAD_ARG: std::cerr << "'" << node << "': Bad path." << std::endl; break;
+        default:                     std::cerr << "'" << node << "': IO error." << std::endl;
     }
     out = node_info;
     return function_ret;

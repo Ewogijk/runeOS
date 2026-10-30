@@ -48,7 +48,7 @@ namespace Crucible {
             case TokenType::PATH:
             case TokenType::IDENTIFIER: return parse_command_sequence();
             case TokenType::DOLLAR:     return parse_env_var_declaration();
-            default:                    return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
+            default: return ParsedInput::make_error(_lexer.peek_token(), TokenType::IDENTIFIER);
         }
     }
 

@@ -32,7 +32,7 @@ namespace Rune::App {
 
     auto render_cursor(Ember::ThreadLaunchPacket* start_info) -> int {
         if (start_info->m_argc != 1) return -1;
-        uintptr_t           ptr       = 0;
+        uintptr_t ptr = 0;
         if (!parse_int<uintptr_t>(start_info->argv(0), Radix::HEX, ptr)) return -1;
         auto*  state     = reinterpret_cast<TerminalState*>(ptr);
         double thickness = 1.0;
