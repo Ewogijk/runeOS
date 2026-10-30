@@ -19,6 +19,8 @@
 #include <Test/Heimdall/Heimdall.h>
 
 #include <Test/UnitTest/KRE/Collections/RingBufferTest.h>
+#include <Test/UnitTest/KRE/EventBrokerTest.h>
+#include <Test/UnitTest/KRE/TypeTraitsTest.h>
 
 #include <Test/UnitTest/Memory/DMATest.h>
 

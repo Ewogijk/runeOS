@@ -411,6 +411,22 @@ namespace Rune {
         }
     };
 
+    template <>
+    struct Hash<void*> {
+        auto operator()(const void* key) const -> size_t {
+            Hash<U64> h;
+            return h(reinterpret_cast<uintptr_t>(key));
+        }
+    };
+
+    template <>
+    struct Hash<const void*> {
+        auto operator()(const void* key) const -> size_t {
+            Hash<U64> h;
+            return h(reinterpret_cast<uintptr_t>(key));
+        }
+    };
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//
     //                               std::function Port
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++//

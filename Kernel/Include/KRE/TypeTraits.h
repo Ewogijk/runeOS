@@ -101,6 +101,13 @@ namespace Rune {
         static bool constexpr value = true;
     };
 
+    /// @brief Check if a type is trivially copyable, i.e. it can be safely copied with memcpy.
+    /// @tparam T
+    template <class T>
+    struct is_trivially_copyable {
+        static bool constexpr value = __is_trivially_copyable(T);
+    };
+
     // ========================================================================================== //
     // Concepts
     // ========================================================================================== //
@@ -111,6 +118,8 @@ namespace Rune {
     concept FloatingPoint = is_floating_point<T>::value;
     template <typename T>
     concept Number = is_integral<T>::value || is_floating_point<T>::value;
+    template <typename T>
+    concept TriviallyCopyable = is_trivially_copyable<T>::value;
 
     // ========================================================================================== //
     // std::add_lvalue_reference port
