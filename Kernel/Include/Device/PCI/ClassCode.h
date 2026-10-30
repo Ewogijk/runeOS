@@ -121,9 +121,7 @@ namespace Rune::Device {
     /// - SOP_PQI_CONTROLLER (0x12): SOP controller using PQI.
     /// - SOP_PQI_STORAGE_AND_CONTROLLER (0x13): SOP storage device and controller using PQI.
     /// - SOP_NVME_QUEUING (0x21): SOP storage device using NVMe queuing interface.
-    EMBER_DEFINE_SMART_ENUM(SCSIProgrammingInterface,
-                            SCSI_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(SCSIProgrammingInterface, SCSI_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define ATA_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(SINGLE_STEPPING, 0x20)                                                                       \
@@ -133,9 +131,7 @@ namespace Rune::Device {
     ///
     /// - SINGLE_STEPPING (0x20): ATA with ADMA interface, single stepping.
     /// - CONTINUOUS_OPERATION (0x30): ATA with ADMA interface, continuous operation.
-    EMBER_DEFINE_SMART_ENUM(ATAProgrammingInterface,
-                            ATA_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(ATAProgrammingInterface, ATA_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define SERIAL_ATA_PROGRAMMING_INTERFACE_CODES(X)                                                  \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -177,9 +173,7 @@ namespace Rune::Device {
     /// - NVMHCI (0x01): NVMHCI interface.
     /// - NVME_IO_CONTROLLER (0x02): NVM Express I/O controller.
     /// - NVME_ADMINISTRATIVE_CONTROLLER (0x03): NVM Express administrative controller.
-    EMBER_DEFINE_SMART_ENUM(NVMProgrammingInterface,
-                            NVM_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(NVMProgrammingInterface, NVM_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define UFS_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -190,9 +184,7 @@ namespace Rune::Device {
     ///
     /// - VENDOR_SPECIFIC (0x00): Vendor-specific interface.
     /// - UFSHCI (0x01): Universal Flash Storage Host Controller Interface.
-    EMBER_DEFINE_SMART_ENUM(UFSProgrammingInterface,
-                            UFS_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(UFSProgrammingInterface, UFS_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define NETWORK_SUB_CLASS_CODES(X)                                                                 \
     X(ETHERNET_CONTROLLER, 0x0)                                                                    \
@@ -242,9 +234,7 @@ namespace Rune::Device {
     ///
     /// - VGA_COMPATIBLE (0x00): VGA-compatible controller.
     /// - COMPATIBLE_8514 (0x01): 8514-compatible controller.
-    EMBER_DEFINE_SMART_ENUM(VGAProgrammingInterface,
-                            VGA_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(VGAProgrammingInterface, VGA_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define MULTIMEDIA_SUB_CLASS_CODES(X)                                                              \
     X(VIDEO_DEVICE, 0x0)                                                                           \
@@ -270,9 +260,7 @@ namespace Rune::Device {
     ///
     /// - HD_AUDIO_1_0 (0x00): High Definition Audio 1.0 compatible.
     /// - HD_AUDIO_1_0_VENDOR_EXTENSIONS (0x80): HD-A 1.0 compatible with vendor extensions.
-    EMBER_DEFINE_SMART_ENUM(HDAudioProgrammingInterface,
-                            HD_AUDIO_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(HDAudioProgrammingInterface, HD_AUDIO_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define MEMORY_SUB_CLASS_CODES(X)                                                                  \
     X(RAM, 0x0)                                                                                    \
@@ -374,9 +362,7 @@ namespace Rune::Device {
     /// - GPIB_CONTROLLER (0x04): GPIB (IEEE 488.1/2) controller.
     /// - SMART_CARD (0x05): Smart Card controller.
     /// - OTHER (0x80): Other communications device.
-    EMBER_DEFINE_SMART_ENUM(SimpleCommunicationSubClass,
-                            SIMPLE_COMMUNICATION_SUB_CLASS_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(SimpleCommunicationSubClass, SIMPLE_COMMUNICATION_SUB_CLASS_CODES, 0xFF)
 
 #define SERIAL_CONTROLLER_PROGRAMMING_INTERFACE_CODES(X)                                           \
     X(GENERIC_XT_COMPATIBLE, 0x0)                                                                  \
@@ -433,9 +419,7 @@ namespace Rune::Device {
     /// - HAYES_16550_COMPATIBLE (0x02): Hayes compatible modem, 16550-compatible interface.
     /// - HAYES_16650_COMPATIBLE (0x03): Hayes compatible modem, 16650-compatible interface.
     /// - HAYES_16750_COMPATIBLE (0x04): Hayes compatible modem, 16750-compatible interface.
-    EMBER_DEFINE_SMART_ENUM(ModemProgrammingInterface,
-                            MODEM_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(ModemProgrammingInterface, MODEM_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define BASE_SYSTEM_PERIPHERAL_SUB_CLASS_CODES(X)                                                  \
     X(PIC, 0x0)                                                                                    \
@@ -477,9 +461,7 @@ namespace Rune::Device {
     /// - EISA (0x02): EISA PIC.
     /// - IO_APIC (0x10): I/O APIC interrupt controller.
     /// - IOX_APIC (0x20): I/O(x) APIC interrupt controller.
-    EMBER_DEFINE_SMART_ENUM(PICProgrammingInterface,
-                            PIC_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(PICProgrammingInterface, PIC_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define DMA_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(GENERIC_8237, 0x0)                                                                           \
@@ -491,9 +473,7 @@ namespace Rune::Device {
     /// - GENERIC_8237 (0x00): Generic 8237 DMA controller.
     /// - ISA (0x01): ISA DMA controller.
     /// - EISA (0x02): EISA DMA controller.
-    EMBER_DEFINE_SMART_ENUM(DMAProgrammingInterface,
-                            DMA_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(DMAProgrammingInterface, DMA_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define SYSTEM_TIMER_PROGRAMMING_INTERFACE_CODES(X)                                                \
     X(GENERIC_8254, 0x0)                                                                           \
@@ -519,9 +499,7 @@ namespace Rune::Device {
     ///
     /// - GENERIC (0x00): Generic RTC controller.
     /// - ISA (0x01): ISA RTC controller.
-    EMBER_DEFINE_SMART_ENUM(RTCProgrammingInterface,
-                            RTC_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(RTCProgrammingInterface, RTC_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define INPUT_DEVICE_SUB_CLASS_CODES(X)                                                            \
     X(KEYBOARD_CONTROLLER, 0x0)                                                                    \
@@ -643,10 +621,7 @@ namespace Rune::Device {
     /// - XHCI (0x30): eXtensible Host Controller Interface (USB 3.x).
     /// - NO_SPECIFIC_INTERFACE (0x80): No specific programming interface.
     /// - USB_DEVICE (0xFE): USB device (not a host controller).
-    EMBER_DEFINE_SMART_ENUM(USBProgrammingInterface,
-                            USB_PROGRAMMING_INTERFACE_CODES,
-                            0xFF,
-                            U8)
+    EMBER_DEFINE_SMART_ENUM(USBProgrammingInterface, USB_PROGRAMMING_INTERFACE_CODES, 0xFF, U8)
 
 #define IPMI_PROGRAMMING_INTERFACE_CODES(X)                                                        \
     X(SMIC, 0x0)                                                                                   \
@@ -658,9 +633,7 @@ namespace Rune::Device {
     /// - SMIC (0x00): IPMI SMIC interface.
     /// - KEYBOARD_CONTROLLER_STYLE (0x01): IPMI Keyboard Controller Style interface.
     /// - BLOCK_TRANSFER (0x02): IPMI Block Transfer interface.
-    EMBER_DEFINE_SMART_ENUM(IPMIProgrammingInterface,
-                            IPMI_PROGRAMMING_INTERFACE_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(IPMIProgrammingInterface, IPMI_PROGRAMMING_INTERFACE_CODES, 0xFF)
 
 #define WIRELESS_SUB_CLASS_CODES(X)                                                                \
     X(IRDA, 0x0)                                                                                   \
@@ -743,9 +716,7 @@ namespace Rune::Device {
     ///   frequency test/measurement.
     /// - MANAGEMENT_CARD (0x20): Management card.
     /// - OTHER (0x80): Other data acquisition/signal processing controller.
-    EMBER_DEFINE_SMART_ENUM(DataAcquisitionSubClass,
-                            DATA_ACQUISITION_SUB_CLASS_CODES,
-                            0xFF)
+    EMBER_DEFINE_SMART_ENUM(DataAcquisitionSubClass, DATA_ACQUISITION_SUB_CLASS_CODES, 0xFF)
 
 #define PROCESSING_ACCELERATOR_SUB_CLASS_CODES(X) X(PROCESSING_ACCELERATOR, 0x0)
 

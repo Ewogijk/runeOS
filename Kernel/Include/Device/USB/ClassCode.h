@@ -238,10 +238,7 @@ namespace Rune::Device::USB {
     /// - DFU (0x01): Device Firmware Upgrade.
     /// - IRDA_BRIDGE (0x02): IrDA Bridge Device.
     /// - TEST_MEASURE (0x03): USB Test and Measurement Device.
-    EMBER_DEFINE_SMART_ENUM(AppSpecificSubClass,
-                            APPLICATION_SPECIFIC_SUBCLASS_CODES,
-                            0x00,
-                            U8)
+    EMBER_DEFINE_SMART_ENUM(AppSpecificSubClass, APPLICATION_SPECIFIC_SUBCLASS_CODES, 0x00, U8)
 
     /// @brief Try to resolve the subclass_code to the subclass matching with the given class_code.
     /// @param class_code    Base class code (bDeviceClass / bInterfaceClass).

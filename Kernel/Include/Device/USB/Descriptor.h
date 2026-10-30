@@ -156,10 +156,7 @@ namespace Rune::Device::USB {
     X(IMPLICIT_FEEDBACK_DATA, 2)
 
     /// Usage type encoded in bmAttributes bits 5..4 (isochronous endpoints only, Table 9-26).
-    EMBER_DEFINE_SMART_ENUM(IsochronousUsageType,
-                            ISOCHRONOUS_ENDPOINT_USAGE_TYPES,
-                            0xFF,
-                            U8)
+    EMBER_DEFINE_SMART_ENUM(IsochronousUsageType, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF, U8)
 
 #define INTERRUPT_ENDPOINT_USAGE_TYPES(X)                                                          \
     X(PERIODDIC, 0)                                                                                \
