@@ -62,7 +62,7 @@ namespace Rune::SystemCall {
 
             case VFS::IOStatus::NOT_FOUND: return Ember::Status::NODE_NOT_FOUND;
             case VFS::IOStatus::BAD_PATH:  return Ember::Status::BAD_ARG;
-            default:                       return Ember::Status::IO_ERROR; // DEV_ERROR and DEV_UNKNOWN
+            default: return Ember::Status::IO_ERROR; // DEV_ERROR and DEV_UNKNOWN
         }
     }
 
@@ -123,7 +123,7 @@ namespace Rune::SystemCall {
             case VFS::IOStatus::CREATED:       return Ember::Status::OKAY;
             case VFS::IOStatus::FOUND:         return Ember::Status::NODE_EXISTS;
             case VFS::IOStatus::BAD_ATTRIBUTE: return Ember::Status::BAD_ARG;
-            default:                           return Ember::Status::IO_ERROR; // DEV_ERROR or StorageDevUnknown
+            default: return Ember::Status::IO_ERROR; // DEV_ERROR or StorageDevUnknown
         }
     }
 
@@ -175,7 +175,7 @@ namespace Rune::SystemCall {
             case VFS::IOStatus::DELETED:       return Ember::Status::OKAY;
             case VFS::IOStatus::ACCESS_DENIED: return Ember::Status::NODE_IN_USE;
             case VFS::IOStatus::NOT_FOUND:     return Ember::Status::NODE_NOT_FOUND;
-            default:                           return Ember::Status::IO_ERROR; // DEV_ERROR or DEV_UNKNOWN
+            default: return Ember::Status::IO_ERROR; // DEV_ERROR or DEV_UNKNOWN
         }
     }
 
@@ -240,7 +240,7 @@ namespace Rune::SystemCall {
             return Ember::Status::BAD_ARG;
 
         switch (auto [status, byte_count] = node->write(k_buf, u_buf_size); status) {
-            case VFS::NodeIOStatus::OKAY:          return static_cast<Ember::StatusCode>(byte_count);
+            case VFS::NodeIOStatus::OKAY: return static_cast<Ember::StatusCode>(byte_count);
             case VFS::NodeIOStatus::NOT_SUPPORTED: return Ember::Status::NODE_IS_DIRECTORY;
             case VFS::NodeIOStatus::NOT_ALLOWED:   return Ember::Status::ACCESS_DENIED;
             case VFS::NodeIOStatus::CLOSED:        return Ember::Status::NODE_CLOSED;
@@ -265,7 +265,7 @@ namespace Rune::SystemCall {
 
         switch (auto [status, byte_count] = node->seek(k_seek_mode, static_cast<int>(offset));
                 status) {
-            case VFS::NodeIOStatus::OKAY:          return static_cast<Ember::StatusCode>(byte_count);
+            case VFS::NodeIOStatus::OKAY: return static_cast<Ember::StatusCode>(byte_count);
             case VFS::NodeIOStatus::NOT_SUPPORTED: return Ember::Status::NODE_IS_DIRECTORY;
             case VFS::NodeIOStatus::CLOSED:        return Ember::Status::NODE_CLOSED;
             default:                               return Ember::Status::IO_ERROR; // DEV_ERROR
@@ -297,7 +297,7 @@ namespace Rune::SystemCall {
                 return Ember::Status::NODE_IS_FILE; // Path is made absolute -> Path must be a file
             case VFS::IOStatus::OUT_OF_HANDLES: return Ember::Status::IO_ERROR;
             case VFS::IOStatus::NOT_FOUND:      return Ember::Status::NODE_NOT_FOUND;
-            default:                            return Ember::Status::IO_ERROR; // DEV_ERROR or DEV_UNKNOWN
+            default: return Ember::Status::IO_ERROR; // DEV_ERROR or DEV_UNKNOWN
         }
     }
 

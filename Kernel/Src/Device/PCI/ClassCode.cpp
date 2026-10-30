@@ -22,9 +22,9 @@ namespace Rune::Device {
                 return MassStorageSubClass(subclass_code).to_string();
             case BaseClass::NETWORK_CONTROLLER: return NetworkSubClass(subclass_code).to_string();
             case BaseClass::DISPLAY_CONTROLLER: return DisplaySubClass(subclass_code).to_string();
-            case BaseClass::MULTIMEDIA_DEVICE:  return MultimediaSubClass(subclass_code).to_string();
-            case BaseClass::MEMORY_CONTROLLER:  return MemorySubClass(subclass_code).to_string();
-            case BaseClass::BRIDGE_DEVICE:      return BridgeSubClass(subclass_code).to_string();
+            case BaseClass::MULTIMEDIA_DEVICE: return MultimediaSubClass(subclass_code).to_string();
+            case BaseClass::MEMORY_CONTROLLER: return MemorySubClass(subclass_code).to_string();
+            case BaseClass::BRIDGE_DEVICE:     return BridgeSubClass(subclass_code).to_string();
             case BaseClass::SIMPLE_COMMUNICATION_CONTROLLER:
                 return SimpleCommunicationSubClass(subclass_code).to_string();
             case BaseClass::BASE_SYSTEM_PERIPHERAL:

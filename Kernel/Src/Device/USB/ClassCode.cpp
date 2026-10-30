@@ -19,9 +19,9 @@ namespace Rune::Device::USB {
 
     auto subclass_code_resolve(ClassCode class_code, U8 subclass_code) -> String {
         switch (class_code) {
-            case ClassCode::CDC_CONTROL:         return CDCSubClass(subclass_code).to_string();
-            case ClassCode::HID:                 return HIDSubClass(subclass_code).to_string();
-            case ClassCode::MASS_STORAGE:        return MassStorageSubClass(subclass_code).to_string();
+            case ClassCode::CDC_CONTROL:  return CDCSubClass(subclass_code).to_string();
+            case ClassCode::HID:          return HIDSubClass(subclass_code).to_string();
+            case ClassCode::MASS_STORAGE: return MassStorageSubClass(subclass_code).to_string();
             case ClassCode::WIRELESS_CONTROLLER: return WirelessSubClass(subclass_code).to_string();
             case ClassCode::APPLICATION_SPECIFIC:
                 return AppSpecificSubClass(subclass_code).to_string();
