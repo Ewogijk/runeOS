@@ -36,18 +36,16 @@ done
 echo \> Formatting C/C++ Code
 echo \> ===========================================
 echo \> Formatting Kernel code...
-find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
-              -path 'Kernel/Build' -prune -o \
-              -name '*.h' -o \
-              -name '*.cpp' -print | \
+find Kernel/ \( -path 'Kernel/Include/Device/ACPI/ACPICA' -o -path 'Kernel/Build' \) -prune \
+              -o \( -name '*.h' -o -name '*.cpp' \) \
+              -print | \
               xargs clang-format -i
 echo \> '                         ' OKAY
 
 echo \> Formatting App code...
-find App/ -path App/Freya/subprojects -prune -o \
-          -wholename 'App/**/Build' -prune -o \
-          -name '*.h' -o \
-          -name '*.cpp' -print | \
+find App/ \( -path App/Freya/subprojects -o -wholename 'App/**/Build' \) -prune \
+          -o \( -name '*.h' -o -name '*.cpp' \) \
+          -print | \
           xargs clang-format -i
 echo \> '                         ' OKAY
 echo

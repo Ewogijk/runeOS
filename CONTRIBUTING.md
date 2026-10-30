@@ -189,10 +189,10 @@ This feature solves this problem by doing this and that...
 
 ### C/C++ Code Style
 
-The C/C++ code formatter is `clang-format-19`. Use it with the following command:
+The C/C++ code formatter is `clang-format-23`. Use it with the following command:
 
 ```shell
-clang-format-19 -i SRC_FILES
+clang-format-23 -i SRC_FILES
 ```
 
 Naming conventions are not covered by clang-format. Please adhere to the following guidelines:
