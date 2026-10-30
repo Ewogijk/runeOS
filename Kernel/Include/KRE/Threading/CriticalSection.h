@@ -50,6 +50,6 @@ namespace Rune {
             -> CriticalSection<LockType>&                                               = delete;
         auto operator=(CriticalSection<LockType>&& other) -> CriticalSection<LockType>& = delete;
     };
-} // namespace Rune::CPU
+} // namespace Rune
 
 #endif // RUNEOS_LOCKGUARD_H

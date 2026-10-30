@@ -690,7 +690,9 @@ namespace Rune {
         /// @param default_value A default value to be returned if the optional is empty.
         /// @return A reference to the contained value or the default value.
         template <class U = RemoveCV<T>::type>
-        auto value_or(U&& default_value) && -> T { return has_value() ? _data : default_value; }
+        auto value_or(U&& default_value) && -> T {
+            return has_value() ? _data : default_value;
+        }
 
         /// @brief Apply the value to the function. If the optional is empty, this function call
         ///         will be a NOP.

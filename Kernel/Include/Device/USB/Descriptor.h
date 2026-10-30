@@ -156,7 +156,10 @@ namespace Rune::Device::USB {
     X(IMPLICIT_FEEDBACK_DATA, 2)
 
     /// Usage type encoded in bmAttributes bits 5..4 (isochronous endpoints only, Table 9-26).
-    EMBER_DEFINE_SMART_ENUM(IsochronousUsageType, ISOCHRONOUS_ENDPOINT_USAGE_TYPES, 0xFF, U8) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(IsochronousUsageType,
+                            ISOCHRONOUS_ENDPOINT_USAGE_TYPES,
+                            0xFF,
+                            U8)
 
 #define INTERRUPT_ENDPOINT_USAGE_TYPES(X)                                                          \
     X(PERIODDIC, 0)                                                                                \
@@ -169,15 +172,15 @@ namespace Rune::Device::USB {
     /// Always returned as part of GET_DESCRIPTOR(CONFIGURATION); not directly accessible.
     /// Never present for endpoint zero (the default control pipe).
     struct EndpointDescriptor {
-        U8 m_length;           // = 7
-        U8 m_descriptor_type;  // = 5 (ENDPOINT)
-        U8 m_endpoint_address; // bits 3..0 = endpoint number; bit 7 = direction (1=IN, 0=OUT;
-                               // ignored for control)
-        U8 m_bm_attributes;    // bits 1..0 = transfer type; bits 3..2 = sync type (iso only);
-                               // bits 5..4 = usage type (iso/interrupt)
-        U16 m_max_packet_size; // max packet size this endpoint can send/receive for this
-                               // configuration
-        U8 m_interval; // polling interval in 125 μs units; reserved for SuperSpeed bulk/control
+        U8  m_length;           // = 7
+        U8  m_descriptor_type;  // = 5 (ENDPOINT)
+        U8  m_endpoint_address; // bits 3..0 = endpoint number; bit 7 = direction (1=IN, 0=OUT;
+                                // ignored for control)
+        U8  m_bm_attributes;    // bits 1..0 = transfer type; bits 3..2 = sync type (iso only);
+                                // bits 5..4 = usage type (iso/interrupt)
+        U16 m_max_packet_size;  // max packet size this endpoint can send/receive for this
+                                // configuration
+        U8  m_interval; // polling interval in 125 μs units; reserved for SuperSpeed bulk/control
 
         [[nodiscard]] auto endpoint_number() const -> U8 {
             return m_endpoint_address & ENDPOINT_NUMBER_MASK;
@@ -221,11 +224,11 @@ namespace Rune::Device::USB {
     ///         descriptor (except the default control pipe) in the configuration blob; not
     ///         directly accessible via GET_DESCRIPTOR.
     struct SuperSpeedEndpointCompanionDescriptor {
-        U8 m_length;          // = 6
-        U8 m_descriptor_type; // = 0x30 (SUPERSPEED_USB_ENDPOINT_COMPANION)
-        U8 m_max_burst;       // bMaxBurst: max packets per burst minus one, 0..15; 0 for control
-        U8 m_bm_attributes;   // bulk: bits 4..0 MaxStreams; iso: bits 1..0 Mult, bit 7 SSP ISO
-                              // Companion; reserved for control/interrupt
+        U8  m_length;          // = 6
+        U8  m_descriptor_type; // = 0x30 (SUPERSPEED_USB_ENDPOINT_COMPANION)
+        U8  m_max_burst;       // bMaxBurst: max packets per burst minus one, 0..15; 0 for control
+        U8  m_bm_attributes;   // bulk: bits 4..0 MaxStreams; iso: bits 1..0 Mult, bit 7 SSP ISO
+                               // Companion; reserved for control/interrupt
         U16 m_bytes_per_interval; // wBytesPerInterval: total bytes per service interval (periodic)
 
         /// Valid only for bulk endpoints; 0 means the endpoint defines no streams.

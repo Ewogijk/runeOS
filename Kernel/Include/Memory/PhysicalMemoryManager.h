@@ -49,7 +49,7 @@ namespace Rune::Memory {
         MemoryMap*   _mem_map;   // Memory map, required for memory protection
         bool         _init;
 
-        MemorySize      _largest_free_block;
+        MemorySize _largest_free_block;
         // NOLINTEND
 
         [[nodiscard]] auto to_page_frame(PhysicalAddr addr) const -> PageFrameIndex;

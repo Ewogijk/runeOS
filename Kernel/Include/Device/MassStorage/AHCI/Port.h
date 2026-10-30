@@ -54,9 +54,9 @@ namespace Rune::Device {
     /// - IPM_SLUMBER   (0x6): Interface in Slumber power-management state.
     /// - DEVICE_SLEEP  (0x8): Interface in DevSleep power-management state.
     EMBER_DEFINE_SMART_ENUM(InterfacePowerManagement,
-                       INTERFACE_POWER_MANAGEMENT_TYPES,
-                       0x10,
-                       U8) // NOLINT
+                            INTERFACE_POWER_MANAGEMENT_TYPES,
+                            0x10,
+                            U8)
 
 #define INTERFACE_SPEED_TYPES(X)                                                                   \
     X(DEVICE_ABSENT, 0x0)                                                                          \

@@ -136,7 +136,7 @@ namespace Crucible {
         std::string _value;
 
       public:
-        explicit IdentifierOrPath(std::string  value);
+        explicit IdentifierOrPath(std::string value);
 
         auto get_text() -> std::string override;
 

@@ -21,8 +21,8 @@
 #include <KRE/Logging.h>
 #include <KRE/Memory.h>
 
-#include <KRE/Threading/InterruptLock.h>
 #include <CPU/Threading/MultiLevelQueue.h>
+#include <KRE/Threading/InterruptLock.h>
 
 namespace Rune::CPU {
     /// @brief A scheduler using a multilevel queue with policies grouping threads of the same

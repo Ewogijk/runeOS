@@ -38,7 +38,7 @@ inline constexpr char g_ENUM_UNKNOWN[] = "??"; // NOLINT cppcoreguidelines-avoid
                                                                                                    \
         constexpr ClassName(EnumType value) : m_value(value) {}                                    \
                                                                                                    \
-        constexpr ClassName(ValueType value) { EnumDefs(IMPL_ENUM_CONSTRUCT_FROM_VALUE) } \
+        constexpr ClassName(ValueType value) { EnumDefs(IMPL_ENUM_CONSTRUCT_FROM_VALUE) }          \
                                                                                                    \
         constexpr operator EnumType() const { return m_value; }                                    \
                                                                                                    \
@@ -62,7 +62,7 @@ inline constexpr char g_ENUM_UNKNOWN[] = "??"; // NOLINT cppcoreguidelines-avoid
                                                                                                    \
         constexpr ClassName(EnumType value) : m_value(value) {}                                    \
                                                                                                    \
-        constexpr ClassName(int value) { EnumDefs(IMPL_ENUM_CONSTRUCT_FROM_VALUE) }       \
+        constexpr ClassName(int value) { EnumDefs(IMPL_ENUM_CONSTRUCT_FROM_VALUE) }                \
                                                                                                    \
         constexpr operator EnumType() const { return m_value; }                                    \
                                                                                                    \

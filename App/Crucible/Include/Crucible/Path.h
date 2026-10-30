@@ -47,7 +47,7 @@ namespace Crucible {
 
         explicit Path(char c);
 
-        explicit Path(std::string  path);
+        explicit Path(std::string path);
 
         /**
          * @brief Get the path separator.
