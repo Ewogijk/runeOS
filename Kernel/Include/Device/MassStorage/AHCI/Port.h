@@ -53,10 +53,7 @@ namespace Rune::Device {
     /// - IPM_PARTIAL   (0x2): Interface in Partial power-management state.
     /// - IPM_SLUMBER   (0x6): Interface in Slumber power-management state.
     /// - DEVICE_SLEEP  (0x8): Interface in DevSleep power-management state.
-    EMBER_DEFINE_SMART_ENUM(InterfacePowerManagement,
-                            INTERFACE_POWER_MANAGEMENT_TYPES,
-                            0x10,
-                            U8)
+    EMBER_DEFINE_SMART_ENUM(InterfacePowerManagement, INTERFACE_POWER_MANAGEMENT_TYPES, 0x10, U8)
 
 #define INTERFACE_SPEED_TYPES(X)                                                                   \
     X(DEVICE_ABSENT, 0x0)                                                                          \

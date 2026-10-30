@@ -185,10 +185,7 @@ namespace Rune::Device {
     X(UNKNOWN, 0x1F)
 
     /// @brief Peripheral device type — §3.6.2, Table 48. Obsolete and reserved types map to NONE.
-    EMBER_DEFINE_SMART_ENUM(SCSIPeripheralDeviceType,
-                            SCSI_PERIPHERAL_DEVICE_TYPES,
-                            0xFF,
-                            U8)
+    EMBER_DEFINE_SMART_ENUM(SCSIPeripheralDeviceType, SCSI_PERIPHERAL_DEVICE_TYPES, 0xFF, U8)
 
     /// @brief INQUIRY CDB — §3.6.1, Table 45.
     struct SCSIInquiryCDB {
