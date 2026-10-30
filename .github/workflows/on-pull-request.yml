@@ -10,31 +10,29 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install ruff and clang-format
         run: |
-          echo \> Installing clang-format-22
+          echo \> Installing clang-format-23
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 22
-          sudo apt-get install -y clang-format-22
-          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+          sudo ./llvm.sh 23
+          sudo apt-get install -y clang-format-23
+          sudo ln -s $(which clang-format-23) /usr/local/bin/clang-format
           echo \> Verifying clang-format installation:
           clang-format --version
           echo \> Installing ruff
           pip install ruff==0.16.2
           echo \> Verifying Ruff installation:
-          echo ruff --version
+          ruff --version
       - name: Check C/C++ Code Formatting
         run: |
           echo \> Check Kernel code
-          find Kernel/ -path 'Kernel/Include/Device/ACPI/ACPICA' -prune -o \
-              -path 'Kernel/Build' -prune -o \
-              -name '*.h' -o \
-              -name '*.cpp' -print | \
+          find Kernel/ \( -path 'Kernel/Include/Device/ACPI/ACPICA' -o -path 'Kernel/Build' \) -prune \
+              -o \( -name '*.h' -o -name '*.cpp' \) \
+              -print | \
               xargs clang-format --dry-run -Werror
           echo \> Check App code
-          find App/ -path App/Freya/subprojects -prune -o \
-              -name 'App/**/Build' -prune -o \
-              -name '*.h' -o \
-              -name '*.cpp' -print | \
+          find App/ \( -path App/Freya/subprojects -o -wholename 'App/**/Build' \) -prune \
+              -o \( -name '*.h' -o -name '*.cpp' \) \
+              -print | \
               xargs clang-format --dry-run -Werror
       - name: Check Python Code Formatting
         run: |
@@ -53,9 +51,9 @@ jobs:
           sudo apt update && sudo apt install -y build-essential nasm ninja-build qemu-system-x86 dosfstools gdb
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 22
-          sudo apt-get install -y clang-format-22
-          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+          sudo ./llvm.sh 23
+          sudo apt-get install -y clang-format-23
+          sudo ln -s $(which clang-format-23) /usr/local/bin/clang-format
           echo \> Verifying clang-format installation:
           clang-format --version
           echo \> Installing python dependencies
@@ -159,19 +157,19 @@ jobs:
           echo \> Installing ruff and scons
           pip install ruff==0.16.2 scons==4.11.1
           echo \> Verifying ruff installation:
-          echo ruff --version
+          ruff --version
           echo \> Verifying scons installation:
-          echo scons --version
+          scons --version
 #          echo \> Installing clang-tidy and clang-format
 #          sudo apt install clang-tidy
 #          echo \> Verifying clang-tidy installation:
 #          echo clang-tidy --version
-#          echo \> Installing clang-format-22
+#          echo \> Installing clang-format-23
 #          wget https://apt.llvm.org/llvm.sh
 #          chmod +x llvm.sh
-#          sudo ./llvm.sh 22
-#          sudo apt-get install -y clang-format-22
-#          sudo ln -s $(which clang-format-22) /usr/local/bin/clang-format
+#          sudo ./llvm.sh 23
+#          sudo apt-get install -y clang-format-23
+#          sudo ln -s $(which clang-format-23) /usr/local/bin/clang-format
 #          echo \> Verifying clang-format installation:
 #          clang-format --version
 
