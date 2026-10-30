@@ -116,8 +116,6 @@ namespace Rune::Device {
         /// @brief
         /// @return The port engine handling the ATA device.
         [[nodiscard]] auto port_engine() const -> const SharedPointer<PortEngine>&;
-
-
     };
 } // namespace Rune::Device
 

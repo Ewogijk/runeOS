@@ -121,7 +121,9 @@ namespace Rune::Device {
     /// - SOP_PQI_CONTROLLER (0x12): SOP controller using PQI.
     /// - SOP_PQI_STORAGE_AND_CONTROLLER (0x13): SOP storage device and controller using PQI.
     /// - SOP_NVME_QUEUING (0x21): SOP storage device using NVMe queuing interface.
-    EMBER_DEFINE_SMART_ENUM(SCSIProgrammingInterface, SCSI_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SCSIProgrammingInterface,
+                            SCSI_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define ATA_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(SINGLE_STEPPING, 0x20)                                                                       \
@@ -131,7 +133,9 @@ namespace Rune::Device {
     ///
     /// - SINGLE_STEPPING (0x20): ATA with ADMA interface, single stepping.
     /// - CONTINUOUS_OPERATION (0x30): ATA with ADMA interface, continuous operation.
-    EMBER_DEFINE_SMART_ENUM(ATAProgrammingInterface, ATA_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ATAProgrammingInterface,
+                            ATA_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define SERIAL_ATA_PROGRAMMING_INTERFACE_CODES(X)                                                  \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -144,8 +148,8 @@ namespace Rune::Device {
     /// - AHCI (0x01): AHCI 1.0 interface.
     /// - SERIAL_STORAGE_BUS (0x02): Serial Storage Bus interface.
     EMBER_DEFINE_SMART_ENUM(SerialATAProgrammingInterface,
-                 SERIAL_ATA_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            SERIAL_ATA_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define SERIAL_ATTACHED_SCSI_PROGRAMMING_INTERFACE_CODES(X)                                        \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -157,8 +161,8 @@ namespace Rune::Device {
     /// - VENDOR_SPECIFIC (0x00): Vendor-specific interface.
     /// - OBSOLETE (0x01): Obsolete.
     EMBER_DEFINE_SMART_ENUM(SerialAttachedSCSIProgrammingInterface,
-                 SERIAL_ATTACHED_SCSI_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            SERIAL_ATTACHED_SCSI_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define NVM_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -173,7 +177,9 @@ namespace Rune::Device {
     /// - NVMHCI (0x01): NVMHCI interface.
     /// - NVME_IO_CONTROLLER (0x02): NVM Express I/O controller.
     /// - NVME_ADMINISTRATIVE_CONTROLLER (0x03): NVM Express administrative controller.
-    EMBER_DEFINE_SMART_ENUM(NVMProgrammingInterface, NVM_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(NVMProgrammingInterface,
+                            NVM_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define UFS_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(VENDOR_SPECIFIC, 0x0)                                                                        \
@@ -184,7 +190,9 @@ namespace Rune::Device {
     ///
     /// - VENDOR_SPECIFIC (0x00): Vendor-specific interface.
     /// - UFSHCI (0x01): Universal Flash Storage Host Controller Interface.
-    EMBER_DEFINE_SMART_ENUM(UFSProgrammingInterface, UFS_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(UFSProgrammingInterface,
+                            UFS_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define NETWORK_SUB_CLASS_CODES(X)                                                                 \
     X(ETHERNET_CONTROLLER, 0x0)                                                                    \
@@ -234,7 +242,9 @@ namespace Rune::Device {
     ///
     /// - VGA_COMPATIBLE (0x00): VGA-compatible controller.
     /// - COMPATIBLE_8514 (0x01): 8514-compatible controller.
-    EMBER_DEFINE_SMART_ENUM(VGAProgrammingInterface, VGA_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(VGAProgrammingInterface,
+                            VGA_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define MULTIMEDIA_SUB_CLASS_CODES(X)                                                              \
     X(VIDEO_DEVICE, 0x0)                                                                           \
@@ -260,7 +270,9 @@ namespace Rune::Device {
     ///
     /// - HD_AUDIO_1_0 (0x00): High Definition Audio 1.0 compatible.
     /// - HD_AUDIO_1_0_VENDOR_EXTENSIONS (0x80): HD-A 1.0 compatible with vendor extensions.
-    EMBER_DEFINE_SMART_ENUM(HDAudioProgrammingInterface, HD_AUDIO_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(HDAudioProgrammingInterface,
+                            HD_AUDIO_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define MEMORY_SUB_CLASS_CODES(X)                                                                  \
     X(RAM, 0x0)                                                                                    \
@@ -315,8 +327,8 @@ namespace Rune::Device {
     /// - STANDARD (0x00): Standard PCI-to-PCI bridge.
     /// - SUBTRACTIVE_DECODE (0x01): Subtractive decode PCI-to-PCI bridge.
     EMBER_DEFINE_SMART_ENUM(PCIBridgeProgrammingInterface,
-                 PCI_BRIDGE_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            PCI_BRIDGE_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define SEMI_TRANSPARENT_BRIDGE_PROGRAMMING_INTERFACE_CODES(X)                                     \
     X(PRIMARY_FACING_HOST, 0x40)                                                                   \
@@ -328,8 +340,8 @@ namespace Rune::Device {
     /// - PRIMARY_FACING_HOST (0x40): Primary PCI bus side facing the system host processor.
     /// - SECONDARY_FACING_HOST (0x80): Secondary PCI bus side facing the system host processor.
     EMBER_DEFINE_SMART_ENUM(SemiTransparentBridgeProgrammingInterface,
-                 SEMI_TRANSPARENT_BRIDGE_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            SEMI_TRANSPARENT_BRIDGE_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define ADVANCED_SWITCHING_BRIDGE_PROGRAMMING_INTERFACE_CODES(X)                                   \
     X(CUSTOM, 0x0)                                                                                 \
@@ -341,8 +353,8 @@ namespace Rune::Device {
     /// - CUSTOM (0x00): Custom interface.
     /// - ASI_SIG_PORTAL (0x01): ASI-SIG defined portal interface.
     EMBER_DEFINE_SMART_ENUM(AdvancedSwitchingBridgeProgrammingInterface,
-                 ADVANCED_SWITCHING_BRIDGE_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            ADVANCED_SWITCHING_BRIDGE_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define SIMPLE_COMMUNICATION_SUB_CLASS_CODES(X)                                                    \
     X(SERIAL_CONTROLLER, 0x0)                                                                      \
@@ -362,7 +374,9 @@ namespace Rune::Device {
     /// - GPIB_CONTROLLER (0x04): GPIB (IEEE 488.1/2) controller.
     /// - SMART_CARD (0x05): Smart Card controller.
     /// - OTHER (0x80): Other communications device.
-    EMBER_DEFINE_SMART_ENUM(SimpleCommunicationSubClass, SIMPLE_COMMUNICATION_SUB_CLASS_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(SimpleCommunicationSubClass,
+                            SIMPLE_COMMUNICATION_SUB_CLASS_CODES,
+                            0xFF)
 
 #define SERIAL_CONTROLLER_PROGRAMMING_INTERFACE_CODES(X)                                           \
     X(GENERIC_XT_COMPATIBLE, 0x0)                                                                  \
@@ -384,8 +398,8 @@ namespace Rune::Device {
     /// - COMPATIBLE_16850 (0x05): 16850-compatible serial controller.
     /// - COMPATIBLE_16950 (0x06): 16950-compatible serial controller.
     EMBER_DEFINE_SMART_ENUM(SerialControllerProgrammingInterface,
-                 SERIAL_CONTROLLER_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            SERIAL_CONTROLLER_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define PARALLEL_PORT_PROGRAMMING_INTERFACE_CODES(X)                                               \
     X(STANDARD, 0x0)                                                                               \
@@ -402,8 +416,8 @@ namespace Rune::Device {
     /// - IEEE1284_CONTROLLER (0x03): IEEE1284 controller.
     /// - IEEE1284_TARGET (0xFE): IEEE1284 target device (not a controller).
     EMBER_DEFINE_SMART_ENUM(ParallelPortProgrammingInterface,
-                 PARALLEL_PORT_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            PARALLEL_PORT_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define MODEM_PROGRAMMING_INTERFACE_CODES(X)                                                       \
     X(GENERIC, 0x0)                                                                                \
@@ -419,7 +433,9 @@ namespace Rune::Device {
     /// - HAYES_16550_COMPATIBLE (0x02): Hayes compatible modem, 16550-compatible interface.
     /// - HAYES_16650_COMPATIBLE (0x03): Hayes compatible modem, 16650-compatible interface.
     /// - HAYES_16750_COMPATIBLE (0x04): Hayes compatible modem, 16750-compatible interface.
-    EMBER_DEFINE_SMART_ENUM(ModemProgrammingInterface, MODEM_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(ModemProgrammingInterface,
+                            MODEM_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define BASE_SYSTEM_PERIPHERAL_SUB_CLASS_CODES(X)                                                  \
     X(PIC, 0x0)                                                                                    \
@@ -444,8 +460,8 @@ namespace Rune::Device {
     /// - ROOT_COMPLEX_EVENT_COLLECTOR (0x07): Root Complex Event Collector.
     /// - OTHER (0x80): Other system peripheral.
     EMBER_DEFINE_SMART_ENUM(BaseSystemPeripheralSubClass,
-                 BASE_SYSTEM_PERIPHERAL_SUB_CLASS_CODES,
-                 0xFF) // NOLINT
+                            BASE_SYSTEM_PERIPHERAL_SUB_CLASS_CODES,
+                            0xFF)
 
 #define PIC_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(GENERIC_8259, 0x0)                                                                           \
@@ -461,7 +477,9 @@ namespace Rune::Device {
     /// - EISA (0x02): EISA PIC.
     /// - IO_APIC (0x10): I/O APIC interrupt controller.
     /// - IOX_APIC (0x20): I/O(x) APIC interrupt controller.
-    EMBER_DEFINE_SMART_ENUM(PICProgrammingInterface, PIC_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(PICProgrammingInterface,
+                            PIC_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define DMA_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(GENERIC_8237, 0x0)                                                                           \
@@ -473,7 +491,9 @@ namespace Rune::Device {
     /// - GENERIC_8237 (0x00): Generic 8237 DMA controller.
     /// - ISA (0x01): ISA DMA controller.
     /// - EISA (0x02): EISA DMA controller.
-    EMBER_DEFINE_SMART_ENUM(DMAProgrammingInterface, DMA_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DMAProgrammingInterface,
+                            DMA_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define SYSTEM_TIMER_PROGRAMMING_INTERFACE_CODES(X)                                                \
     X(GENERIC_8254, 0x0)                                                                           \
@@ -488,8 +508,8 @@ namespace Rune::Device {
     /// - EISA (0x02): EISA system timers (two timers).
     /// - HIGH_PERFORMANCE_EVENT_TIMER (0x03): High Performance Event Timer.
     EMBER_DEFINE_SMART_ENUM(SystemTimerProgrammingInterface,
-                 SYSTEM_TIMER_PROGRAMMING_INTERFACE_CODES,
-                 0xFF) // NOLINT
+                            SYSTEM_TIMER_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define RTC_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(GENERIC, 0x0)                                                                                \
@@ -499,7 +519,9 @@ namespace Rune::Device {
     ///
     /// - GENERIC (0x00): Generic RTC controller.
     /// - ISA (0x01): ISA RTC controller.
-    EMBER_DEFINE_SMART_ENUM(RTCProgrammingInterface, RTC_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(RTCProgrammingInterface,
+                            RTC_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define INPUT_DEVICE_SUB_CLASS_CODES(X)                                                            \
     X(KEYBOARD_CONTROLLER, 0x0)                                                                    \
@@ -527,7 +549,9 @@ namespace Rune::Device {
     ///
     /// - GENERIC (0x00): Generic gameport controller.
     /// - LEGACY (0x10): Legacy gameport interface.
-    EMBER_DEFINE_SMART_ENUM(GameportProgrammingInterface, GAMEPORT_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(GameportProgrammingInterface,
+                            GAMEPORT_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define DOCKING_STATION_SUB_CLASS_CODES(X)                                                         \
     X(GENERIC, 0x0)                                                                                \
@@ -599,7 +623,9 @@ namespace Rune::Device {
     ///
     /// - GENERIC (0x00): Generic IEEE 1394 interface.
     /// - OPEN_HCI (0x10): IEEE 1394 OpenHCI specification.
-    EMBER_DEFINE_SMART_ENUM(FireWireProgrammingInterface, FIREWIRE_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(FireWireProgrammingInterface,
+                            FIREWIRE_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define USB_PROGRAMMING_INTERFACE_CODES(X)                                                         \
     X(UHCI, 0x0)                                                                                   \
@@ -617,7 +643,10 @@ namespace Rune::Device {
     /// - XHCI (0x30): eXtensible Host Controller Interface (USB 3.x).
     /// - NO_SPECIFIC_INTERFACE (0x80): No specific programming interface.
     /// - USB_DEVICE (0xFE): USB device (not a host controller).
-    EMBER_DEFINE_SMART_ENUM(USBProgrammingInterface, USB_PROGRAMMING_INTERFACE_CODES, 0xFF, U8) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(USBProgrammingInterface,
+                            USB_PROGRAMMING_INTERFACE_CODES,
+                            0xFF,
+                            U8)
 
 #define IPMI_PROGRAMMING_INTERFACE_CODES(X)                                                        \
     X(SMIC, 0x0)                                                                                   \
@@ -629,7 +658,9 @@ namespace Rune::Device {
     /// - SMIC (0x00): IPMI SMIC interface.
     /// - KEYBOARD_CONTROLLER_STYLE (0x01): IPMI Keyboard Controller Style interface.
     /// - BLOCK_TRANSFER (0x02): IPMI Block Transfer interface.
-    EMBER_DEFINE_SMART_ENUM(IPMIProgrammingInterface, IPMI_PROGRAMMING_INTERFACE_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(IPMIProgrammingInterface,
+                            IPMI_PROGRAMMING_INTERFACE_CODES,
+                            0xFF)
 
 #define WIRELESS_SUB_CLASS_CODES(X)                                                                \
     X(IRDA, 0x0)                                                                                   \
@@ -679,8 +710,8 @@ namespace Rune::Device {
     /// - DATA (0x04): Data satellite controller.
     /// - OTHER (0x80): Other satellite communication controller.
     EMBER_DEFINE_SMART_ENUM(SatelliteCommunicationSubClass,
-                 SATELLITE_COMMUNICATION_SUB_CLASS_CODES,
-                 0xFF) // NOLINT
+                            SATELLITE_COMMUNICATION_SUB_CLASS_CODES,
+                            0xFF)
 
 #define ENCRYPTION_DECRYPTION_SUB_CLASS_CODES(X)                                                   \
     X(NETWORK_AND_COMPUTING, 0x0)                                                                  \
@@ -693,8 +724,8 @@ namespace Rune::Device {
     /// - ENTERTAINMENT (0x10): Entertainment encryption/decryption controller.
     /// - OTHER (0x80): Other encryption/decryption controller.
     EMBER_DEFINE_SMART_ENUM(EncryptionDecryptionSubClass,
-                 ENCRYPTION_DECRYPTION_SUB_CLASS_CODES,
-                 0xFF) // NOLINT
+                            ENCRYPTION_DECRYPTION_SUB_CLASS_CODES,
+                            0xFF)
 
 #define DATA_ACQUISITION_SUB_CLASS_CODES(X)                                                        \
     X(DPIO_MODULES, 0x0)                                                                           \
@@ -712,28 +743,28 @@ namespace Rune::Device {
     ///   frequency test/measurement.
     /// - MANAGEMENT_CARD (0x20): Management card.
     /// - OTHER (0x80): Other data acquisition/signal processing controller.
-    EMBER_DEFINE_SMART_ENUM(DataAcquisitionSubClass, DATA_ACQUISITION_SUB_CLASS_CODES, 0xFF) // NOLINT
+    EMBER_DEFINE_SMART_ENUM(DataAcquisitionSubClass,
+                            DATA_ACQUISITION_SUB_CLASS_CODES,
+                            0xFF)
 
-#define PROCESSING_ACCELERATOR_SUB_CLASS_CODES(X)                                                  \
-    X(PROCESSING_ACCELERATOR, 0x0)
+#define PROCESSING_ACCELERATOR_SUB_CLASS_CODES(X) X(PROCESSING_ACCELERATOR, 0x0)
 
     /// @brief Sub-classes for PCI base class PROCESSING_ACCELERATOR (0x12).
     ///
     /// - PROCESSING_ACCELERATOR (0x00): Processing accelerator (vendor-specific interface).
     EMBER_DEFINE_SMART_ENUM(ProcessingAcceleratorSubClass,
-                 PROCESSING_ACCELERATOR_SUB_CLASS_CODES,
-                 0xFF) // NOLINT
+                            PROCESSING_ACCELERATOR_SUB_CLASS_CODES,
+                            0xFF)
 
-#define NON_ESSENTIAL_INSTRUMENTATION_SUB_CLASS_CODES(X)                                           \
-    X(NON_ESSENTIAL_INSTRUMENTATION, 0x0)
+#define NON_ESSENTIAL_INSTRUMENTATION_SUB_CLASS_CODES(X) X(NON_ESSENTIAL_INSTRUMENTATION, 0x0)
 
     /// @brief Sub-classes for PCI base class NON_ESSENTIAL_INSTRUMENTATION (0x13).
     ///
     /// - NON_ESSENTIAL_INSTRUMENTATION (0x00): Non-essential instrumentation function
     ///   (vendor-specific interface).
     EMBER_DEFINE_SMART_ENUM(NonEssentialInstrumentationSubClass,
-                 NON_ESSENTIAL_INSTRUMENTATION_SUB_CLASS_CODES,
-                 0xFF) // NOLINT
+                            NON_ESSENTIAL_INSTRUMENTATION_SUB_CLASS_CODES,
+                            0xFF)
 
     /// @brief Try to resolve the subclass_code to the subclass matching with the given base_class.
     /// @param base_class Base class.

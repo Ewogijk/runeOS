@@ -57,7 +57,7 @@ namespace Crucible {
         TokenType   type;
         std::string text; // Value of the token e.g. "hi"
         size_t position;  // Start index of this token relative to the input e.g "123 hi" -> Token
-                         // "hi", character=4
+                          // "hi", character=4
     };
 
     class Lexer {

@@ -193,11 +193,11 @@ namespace Rune::CPU {
         ///
         /// Note: The user stack must already be setup! The scheduler cannot do so, because the user
         /// stack may be in another VAS and therefore inaccessible.
-        auto schedule_new_thread(const String&                     thread_name,
+        auto schedule_new_thread(const String&                            thread_name,
                                  UniquePointer<Ember::ThreadLaunchPacket> tlp,
-                                 PhysicalAddr                      base_pt_addr,
-                                 SchedulingPolicy                  policy,
-                                 Stack                             user_stack) -> Ember::Handle;
+                                 PhysicalAddr                             base_pt_addr,
+                                 SchedulingPolicy                         policy,
+                                 Stack user_stack) -> Ember::Handle;
 
         /**
          * @brief Mark the thread with the requested handle as terminated, except if it is the

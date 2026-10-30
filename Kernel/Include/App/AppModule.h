@@ -77,8 +77,8 @@ namespace Rune::App {
          * execution.
          * @return The assigned ID of the app.
          */
-        auto schedule_for_start(const SharedPointer<Info>&        app,
-                                const CPU::Stack&                 user_stack,
+        auto schedule_for_start(const SharedPointer<Info>&               app,
+                                const CPU::Stack&                        user_stack,
                                 UniquePointer<Ember::ThreadLaunchPacket> tlp,
                                 const Path& working_directory) -> Ember::Handle;
 

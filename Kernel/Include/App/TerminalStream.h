@@ -178,8 +178,8 @@ namespace Rune::App {
      * providing an text output for applications.
      */
     class TerminalStream : public TextStream {
-        static constexpr U8        ASCII_DIGIT_MIN = 0x30;
-        static constexpr U8        ASCII_DIGIT_MAX = 0x39;
+        static constexpr U8 ASCII_DIGIT_MIN = 0x30;
+        static constexpr U8 ASCII_DIGIT_MAX = 0x39;
 
         // Maximum size of the scroll back buffer, in case the scroll back buffer gets bigger
         // than the limit the oldest text lines must be discarded

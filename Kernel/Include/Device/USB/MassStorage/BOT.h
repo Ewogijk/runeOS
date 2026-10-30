@@ -68,11 +68,11 @@ namespace Rune::Device::USB {
     /// All fields are little-endian. The CBW must be sent as exactly 31 bytes, starting on a packet
     /// boundary. Since it is transferred directly from this struct, it must live in DMA memory.
     struct CommandBlockWrapper {
-        static constexpr U32 SIGNATURE        = 0x43425355; // "USBC"
-        static constexpr U8  FLAG_DATA_IN     = 0x80;       // bmCBWFlags bit 7
-        static constexpr U8  LUN_MASK         = 0x0F;       // bCBWLUN bits 3..0
-        static constexpr U8  MAX_LUN          = 15;
-        static constexpr U8  MAX_CDB_LENGTH   = 16;
+        static constexpr U32 SIGNATURE         = 0x43425355; // "USBC"
+        static constexpr U8  FLAG_DATA_IN      = 0x80;       // bmCBWFlags bit 7
+        static constexpr U8  LUN_MASK          = 0x0F;       // bCBWLUN bits 3..0
+        static constexpr U8  MAX_LUN           = 15;
+        static constexpr U8  MAX_CDB_LENGTH    = 16;
         static constexpr U8  TRANSMISSION_SIZE = 31;
 
         U32 m_signature            = 0;  // dCBWSignature

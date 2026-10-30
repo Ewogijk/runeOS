@@ -36,7 +36,7 @@ namespace Rune::Device {
     };
 
     struct HIDKeyboardContext {
-        static constexpr U8 MAX_RECOVERY_ATTEMPTS = 3;
+        static constexpr U8 MAX_RECOVERY_ATTEMPTS    = 3;
         static constexpr U8 RECOVERY_ATTEMPT_TIMEOUT = 25;
 
         SharedPointer<USB::FunctionDevice> m_keyboard;
@@ -45,9 +45,9 @@ namespace Rune::Device {
         USB::Endpoint                      m_interrupt_in_endpoint{};
         USB::HIDReport                     m_led_output_report{};
 
-        bool            m_run_polling_thread = false;
-        IRQSpinlock m_lock;
-        Ember::Handle   m_thread_handle;
+        bool          m_run_polling_thread = false;
+        IRQSpinlock   m_lock;
+        Ember::Handle m_thread_handle;
 
         HIDKeyboardFrame  m_last_keyboard_frame{};
         Ember::VirtualKey m_last_pressed = Ember::VirtualKey::NONE;

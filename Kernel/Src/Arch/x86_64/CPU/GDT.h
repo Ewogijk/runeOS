@@ -31,8 +31,8 @@ namespace Rune::CPU {
                                // allowed
             U8 direction_conforming : 1; // Code - 0: Exec =DPL, 1: Exec >=DPL | Data - 0: Grow up,
                                          // 1: Grow down
-            U8 executable                 : 1; // 0: Data segment, 1: Code segment
-            U8 s                          : 1; // 0: System segment, 1: Code/Data segment
+            U8 executable           : 1; // 0: Data segment, 1: Code segment
+            U8 s                    : 1; // 0: System segment, 1: Code/Data segment
             U8 descriptor_privilege_level : 2; // 0 (highest, kernel) - 3 (lowest, user app)
             U8 present                    : 1; // 0: Invalid, 1: Valid
         };
